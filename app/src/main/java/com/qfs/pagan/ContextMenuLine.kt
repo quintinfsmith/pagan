@@ -1,9 +1,7 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
-import android.content.Context
 import android.content.res.Configuration
-import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +17,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_row, context, attrs) {
+class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, null, primary_container, secondary_container) {
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_percussion: ButtonStd
@@ -29,11 +27,11 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
     lateinit var spacer: Space
 
     override fun init_properties() {
-        this.button_toggle_volume_control = this.findViewById(R.id.btnToggleVolCtl)
-        this.button_insert = this.findViewById(R.id.btnInsertLine)
-        this.button_remove = this.findViewById(R.id.btnRemoveLine)
-        this.button_choose_percussion = this.findViewById(R.id.btnChoosePercussion)
-        this.button_volume_popup = this.findViewById(R.id.btnLineVolumePopup)
+        this.button_toggle_volume_control = this.primary.findViewById(R.id.btnToggleVolCtl)
+        this.button_insert = this.primary.findViewById(R.id.btnInsertLine)
+        this.button_remove = this.primary.findViewById(R.id.btnRemoveLine)
+        this.button_choose_percussion = this.primary.findViewById(R.id.btnChoosePercussion)
+        this.button_volume_popup = this.primary.findViewById(R.id.btnLineVolumePopup)
 
         this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0), this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
@@ -46,13 +44,13 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             )
         }
 
-        if (this.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            this.findViewById<LinearLayout?>(R.id.llContextRow).addView(this.widget_volume)
+        if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            this.primary.findViewById<LinearLayout?>(R.id.llContextRow).addView(this.widget_volume)
             this.widget_volume.layoutParams.width = MATCH_PARENT
             this.widget_volume.layoutParams.height = WRAP_CONTENT
         }
 
-        this.spacer = this.findViewById<Space>(R.id.spacer)
+        this.spacer = this.primary.findViewById(R.id.spacer)
     }
 
     override fun refresh() {
@@ -73,7 +71,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
             this.button_choose_percussion.visibility = View.VISIBLE
             val instrument = opus_manager.get_percussion_instrument(line_offset)
             main.populate_active_percussion_names(false)
-            this.button_choose_percussion.text = if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            this.button_choose_percussion.text = if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 this.context.getString(
                     R.string.label_short_percussion,
                     instrument
@@ -101,7 +99,7 @@ class ContextMenuLine(context: Context, attrs: AttributeSet? = null): ContextMen
         } else {
             // Hiding volume control line for now (VOLCTLTMP)
             //this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
-            if (this.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 this.button_volume_popup.visibility = View.VISIBLE
                 this.widget_volume.visibility = View.GONE
             } else {

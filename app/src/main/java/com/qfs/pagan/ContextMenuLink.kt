@@ -1,24 +1,22 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.util.AttributeSet
 import android.view.View
+import android.view.ViewGroup
 import android.widget.RadioGroup
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
-class ContextMenuLink(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_linking, context, attrs) {
+class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_linking, null, primary_container, secondary_container) {
     lateinit var button_unlink: ButtonIcon
     lateinit var button_unlink_all: ButtonIcon
     lateinit var button_erase: ButtonIcon
     lateinit var radio_mode: RadioGroup
     lateinit var label: PaganTextView
     override fun init_properties() {
-        super.init_properties()
-        this.button_unlink = this.findViewById(R.id.btnUnLink)
-        this.button_unlink_all = this.findViewById(R.id.btnUnLinkAll)
-        this.button_erase = this.findViewById(R.id.btnEraseSelection)
-        this.label = this.findViewById(R.id.tvLinkLabel)
-        this.radio_mode = this.findViewById<RadioGroup?>(R.id.rgLinkMode)
+        this.button_unlink = this.primary.findViewById(R.id.btnUnLink)
+        this.button_unlink_all = this.primary.findViewById(R.id.btnUnLinkAll)
+        this.button_erase = this.primary.findViewById(R.id.btnEraseSelection)
+        this.label = this.primary.findViewById(R.id.tvLinkLabel)
+        this.radio_mode = this.primary.findViewById<RadioGroup?>(R.id.rgLinkMode)
     }
 
     override fun setup_interactions() {
@@ -41,24 +39,24 @@ class ContextMenuLink(context: Context, attrs: AttributeSet? = null): ContextMen
             label.text = when (button_id) {
                 R.id.rbLinkModeLink -> {
                     if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_link_range)
+                        this.context.resources.getString(R.string.label_link_range)
                     } else {
-                        resources.getString(R.string.label_link_beat)
+                        this.context.resources.getString(R.string.label_link_beat)
                     }
                 }
                 R.id.rbLinkModeMove -> {
                     if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_move_range)
+                        this.context.resources.getString(R.string.label_move_range)
                     } else {
-                        resources.getString(R.string.label_move_beat)
+                        this.context.resources.getString(R.string.label_move_beat)
                     }
                 }
                 // R.id.rbLinkModeCopy,
                 else -> {
                     if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        resources.getString(R.string.label_copy_range)
+                        this.context.resources.getString(R.string.label_copy_range)
                     } else {
-                        resources.getString(R.string.label_copy_beat)
+                        this.context.resources.getString(R.string.label_copy_beat)
                     }
                 }
             }
@@ -78,9 +76,9 @@ class ContextMenuLink(context: Context, attrs: AttributeSet? = null): ContextMen
 
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
             this.label.text = when (main.configuration.link_mode) {
-                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_range)
-                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_range)
-                PaganConfiguration.LinkMode.COPY -> resources.getString(R.string.label_copy_range)
+                PaganConfiguration.LinkMode.LINK -> this.context.resources.getString(R.string.label_link_range)
+                PaganConfiguration.LinkMode.MOVE -> this.context.resources.getString(R.string.label_move_range)
+                PaganConfiguration.LinkMode.COPY -> this.context.resources.getString(R.string.label_copy_range)
             }
 
             var output = false
@@ -100,9 +98,9 @@ class ContextMenuLink(context: Context, attrs: AttributeSet? = null): ContextMen
             )
         } else if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
             this.label.text = when (main.configuration.link_mode) {
-                PaganConfiguration.LinkMode.LINK -> resources.getString(R.string.label_link_beat)
-                PaganConfiguration.LinkMode.MOVE -> resources.getString(R.string.label_move_beat)
-                PaganConfiguration.LinkMode.COPY ->  resources.getString(R.string.label_copy_beat)
+                PaganConfiguration.LinkMode.LINK -> this.context.resources.getString(R.string.label_link_beat)
+                PaganConfiguration.LinkMode.MOVE -> this.context.resources.getString(R.string.label_move_beat)
+                PaganConfiguration.LinkMode.COPY ->  this.context.resources.getString(R.string.label_copy_beat)
             }
 
             val cursor_key = opus_manager.cursor.get_beatkey()

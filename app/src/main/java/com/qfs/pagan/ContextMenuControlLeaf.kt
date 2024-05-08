@@ -1,7 +1,5 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -15,7 +13,7 @@ import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.TrivialActionException
 
-class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, context, attrs) {
+class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container) {
     lateinit var widget_wrapper: LinearLayout
     lateinit var widget: ControlWidget
     // --------------------------------
@@ -27,11 +25,11 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
     private var _current_type: ControlEventType? = null
 
     override fun init_properties() {
-        this.widget_wrapper = this.findViewById(R.id.llCtlTarget)
-        this.button_split = this.findViewById(R.id.btnSplit)
-        this.button_insert = this.findViewById(R.id.btnInsert)
-        this.button_remove = this.findViewById(R.id.btnRemove)
-        this.button_unset = this.findViewById(R.id.btnUnset)
+        this.widget_wrapper = this.secondary!! as LinearLayout
+        this.button_split = this.primary.findViewById(R.id.btnSplit)
+        this.button_insert = this.primary.findViewById(R.id.btnInsert)
+        this.button_remove = this.primary.findViewById(R.id.btnRemove)
+        this.button_unset = this.primary.findViewById(R.id.btnUnset)
     }
 
     private fun get_controller(): ActiveControlSet.ActiveController {
@@ -243,6 +241,7 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val current_event = this.get_control_event()
+
         if (this.widget_wrapper.isEmpty() || cursor.ctl_type != this._current_type) {
             this.init_widget()
         } else {
@@ -282,7 +281,6 @@ class ContextMenuControlLeaf(context: Context, attrs: AttributeSet? = null): Con
         this.button_remove.isEnabled = cursor.position.isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
         this.widget.set_event(current_event)
-
     }
 
     fun get_control_event(): OpusControlEvent {

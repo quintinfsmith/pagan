@@ -1,7 +1,5 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -13,7 +11,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_control_line, context, attrs) {
+class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, null, primary_parent, secondary_parent) {
     lateinit var initial_widget_wrapper: LinearLayout
     lateinit var widget: ControlWidget
 
@@ -87,14 +85,13 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
     }
 
     override fun init_properties() {
-        super.init_properties()
-        this.initial_widget_wrapper = this.findViewById(R.id.llTarget)
+        this.initial_widget_wrapper = this.primary.findViewById(R.id.llTarget)
         this.init_widget()
     }
 
-    override fun refresh() {
-        super.refresh()
+    override fun setup_interactions() { }
 
+    override fun refresh() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
@@ -111,9 +108,5 @@ class ContextMenuControlLine(context: Context, attrs: AttributeSet? = null): Con
                 }
             )
         }
-    }
-
-    override fun setup_interactions() {
-        super.setup_interactions()
     }
 }

@@ -8,7 +8,6 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.view.GravityCompat
-import androidx.core.view.isEmpty
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
@@ -22,6 +21,7 @@ import kotlin.concurrent.thread
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     var project_change_flagged = false
+    var active_context_menu: ContextMenuView? = null
 
     override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentMainBinding {
         return FragmentMainBinding.inflate(inflater, container, false)
@@ -303,64 +303,75 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun refresh_context_menu() {
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-        if (llContextMenu.isEmpty()) {
-            return
-        }
-
-        (llContextMenu.getChildAt(0) as ContextMenuView).refresh()
+        this.active_context_menu?.refresh()
     }
 
     private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-        if (llContextMenu.isEmpty()) {
-            return false
-        }
+        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        val llContextMenuSecondary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
 
-        if (llContextMenu.getChildAt(0) !is T) {
+        if (this.active_context_menu !is T) {
             llContextMenu.removeAllViews()
+            llContextMenuSecondary.removeAllViews()
+            this.active_context_menu = null
             return false
         }
 
-        (llContextMenu.getChildAt(0) as ContextMenuView).refresh()
+        this.active_context_menu?.refresh()
+
         return true
     }
 
     fun clear_context_menu() {
-        val llContextMenu = this.activity!!.findViewById<LinearLayout?>(R.id.llContextMenu)
-        llContextMenu?.removeAllViews()
+        if (this.active_context_menu == null) {
+            return
+        }
+        if (this.active_context_menu!!.primary.parent != null) {
+            (this.active_context_menu!!.primary.parent as ViewGroup).removeAllViews()
+        }
+        if (this.active_context_menu!!.secondary != null) {
+            if (this.active_context_menu!!.secondary!!.parent != null) {
+                (this.active_context_menu!!.secondary!!.parent as ViewGroup).removeAllViews()
+            }
+        }
+
+        this.active_context_menu = null
     }
 
 
     internal fun set_context_menu_control_line() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLine>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuControlLine(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuControlLine(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 
     internal fun set_context_menu_line_control_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuControlLeaf(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuControlLeaf(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 
     internal fun set_context_menu_line_control_leaf_b() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafB>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuControlLeafB(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuControlLeafB(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 
     internal fun set_context_menu_linking() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLink>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuLink(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuLink(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 
@@ -371,33 +382,37 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
 
         if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuColumn(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuColumn(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 
     internal fun set_context_menu_line() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLine>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuLine(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuLine(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 
     internal fun set_context_menu_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuLeaf(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuLeaf(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 
     internal fun set_context_menu_leaf_percussion() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeafPercussion>()) {
-            val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenu)
-            val new_menu = ContextMenuLeafPercussion(this.activity!!)
-            llContextMenu.addView(new_menu)
+            this.active_context_menu = ContextMenuLeafPercussion(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
         }
     }
 

@@ -1,17 +1,15 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.util.AttributeSet
+import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.OpusLayerBase
 
-class ContextMenuColumn(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_column, context, attrs) {
+class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_column, null, primary_parent, secondary_parent) {
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
 
     override fun init_properties() {
-        super.init_properties()
-        this.button_insert = this.findViewById(R.id.btnInsertBeat)
-        this.button_remove = this.findViewById(R.id.btnRemoveBeat)
+        this.button_insert = this.primary.findViewById(R.id.btnInsertBeat)
+        this.button_remove = this.primary.findViewById(R.id.btnRemoveBeat)
     }
 
     override fun refresh() {

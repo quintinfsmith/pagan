@@ -1,13 +1,12 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.util.AttributeSet
 import android.view.View
+import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import kotlin.math.abs
 
-class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_cell, context, attrs) {
+class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
     lateinit var button_split: ButtonIcon
     lateinit var button_insert: ButtonIcon
     lateinit var button_unset: ButtonIcon
@@ -18,14 +17,14 @@ class ContextMenuLeaf(context: Context, attrs: AttributeSet? = null): ContextMen
     lateinit var ros_relative_option: RelativeOptionSelector
 
     override fun init_properties() {
-        this.button_split = this.findViewById(R.id.btnSplit)
-        this.button_insert = this.findViewById(R.id.btnInsert)
-        this.button_unset = this.findViewById(R.id.btnUnset)
-        this.button_remove = this.findViewById(R.id.btnRemove)
-        this.button_duration = this.findViewById(R.id.btnDuration)
-        this.ns_octave = this.findViewById(R.id.nsOctave)
-        this.ns_offset = this.findViewById(R.id.nsOffset)
-        this.ros_relative_option = this.findViewById(R.id.rosRelativeOption)
+        this.button_split = this.primary.findViewById(R.id.btnSplit)
+        this.button_insert = this.primary.findViewById(R.id.btnInsert)
+        this.button_unset = this.primary.findViewById(R.id.btnUnset)
+        this.button_remove = this.primary.findViewById(R.id.btnRemove)
+        this.button_duration = this.primary.findViewById(R.id.btnDuration)
+        this.ns_octave = this.primary.findViewById(R.id.nsOctave)
+        this.ns_offset = this.primary.findViewById(R.id.nsOffset)
+        this.ros_relative_option = this.primary.findViewById(R.id.rosRelativeOption)
     }
 
     override fun setup_interactions() {

@@ -1,11 +1,10 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.util.AttributeSet
 import android.view.View
+import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.BeatKey
 
-class ContextMenuLeafPercussion(context: Context, attrs: AttributeSet? = null): ContextMenuView(R.layout.contextmenu_cell_percussion, context, attrs) {
+class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell_percussion, null, primary_container, secondary_container) {
     lateinit var button_split: ButtonIcon
     lateinit var button_insert: ButtonIcon
     lateinit var button_unset: ButtonIcon
@@ -13,11 +12,11 @@ class ContextMenuLeafPercussion(context: Context, attrs: AttributeSet? = null): 
     lateinit var button_duration: ButtonStd
 
     override fun init_properties() {
-        this.button_split = this.findViewById(R.id.btnSplit)
-        this.button_insert = this.findViewById(R.id.btnInsert)
-        this.button_unset = this.findViewById(R.id.btnUnset)
-        this.button_remove = this.findViewById(R.id.btnRemove)
-        this.button_duration = this.findViewById(R.id.btnDuration)
+        this.button_split = this.primary.findViewById(R.id.btnSplit)
+        this.button_insert = this.primary.findViewById(R.id.btnInsert)
+        this.button_unset = this.primary.findViewById(R.id.btnUnset)
+        this.button_remove = this.primary.findViewById(R.id.btnRemove)
+        this.button_duration = this.primary.findViewById(R.id.btnDuration)
     }
 
     override fun refresh() {

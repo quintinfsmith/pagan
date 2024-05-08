@@ -67,15 +67,6 @@
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:contentDescription="Insert Line"/>
 
-        <com.qfs.pagan.ButtonIcon
-            android:visibility="gone"
-            android:theme="@style/icon_button"
-            android:id="@+id/btnLineVolumePopup"
-            app:srcCompat="@drawable/volume"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:layout_marginStart="@dimen/number_selector_spacing"
-            android:contentDescription="Line Volume"/>
     </LinearLayout>
 
 </LinearLayout>

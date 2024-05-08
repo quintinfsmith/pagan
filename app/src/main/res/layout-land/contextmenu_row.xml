@@ -34,15 +34,6 @@
         android:text="Instrument..." />
 
     <com.qfs.pagan.ButtonIcon
-        android:id="@+id/btnLineVolumePopup"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/volume"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_marginTop="@dimen/number_selector_spacing"
-        android:contentDescription="Line Volume"/>
-
-    <com.qfs.pagan.ButtonIcon
         android:id="@+id/btnToggleVolCtl"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/volume_plus"

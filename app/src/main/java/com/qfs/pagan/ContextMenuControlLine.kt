@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -11,8 +10,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, null, primary_parent, secondary_parent) {
-    lateinit var initial_widget_wrapper: LinearLayout
+class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent) {
     lateinit var widget: ControlWidget
 
     private var _current_type: ControlEventType? = null
@@ -50,7 +48,7 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
     }
 
     fun init_widget() {
-        this.initial_widget_wrapper.removeAllViews()
+        this.secondary!!.removeAllViews()
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -66,7 +64,7 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
 
         this._current_type = cursor.ctl_type
 
-        this.initial_widget_wrapper.addView(this.widget as View)
+        this.secondary!!.addView(this.widget as View)
         (this.widget as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         (this.widget as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
     }
@@ -85,7 +83,6 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
     }
 
     override fun init_properties() {
-        this.initial_widget_wrapper = this.primary.findViewById(R.id.llTarget)
         this.init_widget()
     }
 
@@ -95,7 +92,7 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        if (this.initial_widget_wrapper.isEmpty() || cursor.ctl_type != this._current_type) {
+        if (this.secondary!!.isEmpty() || cursor.ctl_type != this._current_type) {
             this.init_widget()
         } else {
             val controller = this.get_controller()

@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Space
 import android.widget.TextView
@@ -17,12 +16,11 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, null, primary_container, secondary_container) {
+class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container) {
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_percussion: ButtonStd
     lateinit var button_toggle_volume_control: ButtonIcon
-    lateinit var button_volume_popup: ButtonIcon
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
 
@@ -31,7 +29,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_insert = this.primary.findViewById(R.id.btnInsertLine)
         this.button_remove = this.primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = this.primary.findViewById(R.id.btnChoosePercussion)
-        this.button_volume_popup = this.primary.findViewById(R.id.btnLineVolumePopup)
 
         this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0), this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
@@ -44,11 +41,9 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             )
         }
 
-        if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            this.primary.findViewById<LinearLayout?>(R.id.llContextRow).addView(this.widget_volume)
-            this.widget_volume.layoutParams.width = MATCH_PARENT
-            this.widget_volume.layoutParams.height = WRAP_CONTENT
-        }
+        this.secondary!!.addView(this.widget_volume)
+        this.widget_volume.layoutParams.width = MATCH_PARENT
+        this.widget_volume.layoutParams.height = WRAP_CONTENT
 
         this.spacer = this.primary.findViewById(R.id.spacer)
     }
@@ -95,20 +90,12 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             //this.button_toggle_volume_control.setImageResource(R.drawable.volume_minus)
 
             this.widget_volume.visibility = View.GONE
-            this.button_volume_popup.visibility = View.GONE
         } else {
             // Hiding volume control line for now (VOLCTLTMP)
             //this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
-            if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                this.button_volume_popup.visibility = View.VISIBLE
-                this.widget_volume.visibility = View.GONE
-            } else {
-                this.button_volume_popup.visibility = View.GONE
-                this.widget_volume.visibility = View.VISIBLE
-                val controller = opus_manager.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume)
-                this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
+            val controller = opus_manager.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume)
+            this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
 
-            }
         }
 
     }
@@ -148,13 +135,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             }
 
             this.long_click_button_remove_line()
-        }
-
-        this.button_volume_popup.setOnClickListener {
-            val opus_manager = this.get_opus_manager()
-            val channel = opus_manager.cursor.channel
-            val line_offset = opus_manager.cursor.line_offset
-            this._line_volume_dialog(channel, line_offset)
         }
 
         // Hiding volume control line for now (VOLCTLTMP)

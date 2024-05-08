@@ -4,7 +4,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:paddingTop="@dimen/number_selector_spacing"
     android:paddingStart="@dimen/number_selector_spacing"
     android:paddingEnd="@dimen/number_selector_spacing"
@@ -19,11 +19,6 @@
         android:contentDescription="@string/cd_split"
         app:srcCompat="@drawable/split"/>
 
-    <Space
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_width="0dp"/>
-
     <com.qfs.pagan.ButtonIcon
         android:id="@+id/btnInsert"
         android:layout_width="@dimen/icon_button_width"
@@ -31,11 +26,6 @@
         android:contentDescription="@string/cd_insert"
         android:text="Insert"
         app:srcCompat="@drawable/insert" />
-
-    <Space
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_width="0dp"/>
 
     <com.qfs.pagan.ButtonIcon
         android:theme="@style/icon_button"
@@ -46,11 +36,6 @@
         android:text="Remove"
         app:srcCompat="@drawable/remove" />
 
-    <Space
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_width="0dp"/>
-
     <com.qfs.pagan.ButtonIcon
         android:theme="@style/icon_button"
         android:id="@+id/btnUnset"
@@ -59,12 +44,6 @@
         android:contentDescription="@string/cd_unset"
         android:text="Unset"
         app:srcCompat="@drawable/unset" />
-
-    <Space
-        android:visibility="gone"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_width="0dp"/>
 
     <com.qfs.pagan.ButtonStd
         android:visibility="gone"

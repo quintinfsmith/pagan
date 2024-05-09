@@ -311,9 +311,10 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         super.set_percussion_event(beat_key, position)
+        val activity = this.get_activity() ?: return
 
-        if (this.get_activity() == null) {
-            return
+        if (!activity.view_model.show_percussion) {
+            this.make_percussion_visible()
         }
 
         this._notify_cell_change(beat_key)
@@ -879,12 +880,22 @@ class OpusLayerInterface : OpusLayerCursor() {
         val ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y))!!
         var removed_row_count = this.channels[channel].size
 
+        val activity = this.get_activity()
+
+        val make_show_percussion = activity != null
+                && !activity.view_model.show_percussion
+                && !this.is_percussion(channel)
+                && this.channels.size == 2
+
+        if (make_show_percussion) {
+            this.make_percussion_visible()
+        }
+
         for ((type, controller) in this.channels[channel].controllers.get_all()) {
             if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
                 removed_row_count += 1
             }
         }
-
 
         for (line in this.channels[channel].lines) {
             for ((type, controller) in line.controllers.get_all()) {
@@ -893,6 +904,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
             }
         }
+
 
         super.remove_channel(channel)
 
@@ -907,15 +919,18 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                 }
             }
+
             UI_LOCK_FULL -> {}
         }
 
         val editor_table = this.get_editor_table() ?: return
+
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> {}
             UI_LOCK_PARTIAL -> {
                 editor_table.remove_rows(ctl_row, removed_row_count, true)
             }
+
             null -> {
                 this.runOnUiThread {
                     editor_table.remove_rows(ctl_row, removed_row_count)
@@ -923,6 +938,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
         }
     }
+
 
     private fun _ui_clear() {
         this.get_editor_table()?.clear()
@@ -971,6 +987,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun apply_undo() {
         super.apply_undo()
+        this.recache_line_maps()
         this.get_editor_table()?.apply_queued_cell_changes()
     }
 
@@ -1568,6 +1585,17 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     fun toggle_percussion_visibility() {
         val activity = this.get_activity() ?: return
+
+        if (this.channels.size <= 1) {
+            // TODO Throw error
+            return
+        }
+
+        if (activity.view_model.show_percussion && !this.channels.last().is_empty()) {
+            // TODO Throw error
+            return
+        }
+
         activity.view_model.show_percussion = !activity.view_model.show_percussion
 
         val editor_table = this.get_editor_table() ?: return
@@ -1642,6 +1670,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             ctl_line += 1
         }
+
     }
 
 
@@ -1682,14 +1711,14 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun make_percussion_visible() {
-        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
-            return
-        }
-
         val main = this._activity ?: return
         main.view_model.show_percussion = true
 
         this.recache_line_maps()
+
+        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
+            return
+        }
 
         val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
         if (channel_option_recycler.adapter != null) {
@@ -1698,7 +1727,19 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.update_percussion_visibility()
+        this.channels.last().lines.forEachIndexed { i: Int, line: OpusLine ->
+            editor_table.new_row(
+                this.get_visible_row_from_ctl_line(
+                    this.get_ctl_line_index(
+                        this.get_abs_offset(
+                            this.channels.size - 1,
+                            i
+                        )
+                    )
+                )!!,
+                line
+            )
+        }
     }
 
     override fun set_global_controller_initial_event(type: ControlEventType, event: OpusControlEvent) {

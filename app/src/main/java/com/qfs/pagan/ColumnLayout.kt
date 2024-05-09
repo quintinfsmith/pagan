@@ -41,7 +41,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
             this.addView(CellLayout(this, i), i)
         }
         this.notifyItemRangeChanged(0, y)
-        this.notifyItemRangeChanged(y + count,this.childCount - (y + count))
+        this.notifyItemRangeChanged(y + count, this.childCount - (y + count))
     }
 
     fun remove_cells(y: Int, count: Int) {

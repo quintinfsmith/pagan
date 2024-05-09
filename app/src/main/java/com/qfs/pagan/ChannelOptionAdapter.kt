@@ -161,15 +161,10 @@ class ChannelOptionAdapter(
     private fun interact_btnRemoveChannel(view: BackLinkView) {
         if (this._opus_manager.channels.size > 1) {
             val activity = this.get_activity()
-            if (this._opus_manager.channels.size == 2 && !activity.view_model.show_percussion) {
-                activity.view_model.show_percussion = true
-                val editor_table = this.get_activity().findViewById<EditorTable>(R.id.etEditorTable)
-
-                editor_table.update_percussion_visibility()
-            }
 
             val x = view.view_holder?.bindingAdapterPosition ?: return
             this._opus_manager.remove_channel(x)
+
         }
     }
 

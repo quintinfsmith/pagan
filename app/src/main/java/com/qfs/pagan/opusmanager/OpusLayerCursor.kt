@@ -135,83 +135,83 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         super.remove_channel(channel)
 
-        when (bkp_cursor.mode) {
-            OpusManagerCursor.CursorMode.Row -> {
-                val (new_channel, new_line_offset) = if (bkp_cursor.channel > channel) {
-                    Pair(
-                        bkp_cursor.channel - 1,
-                        bkp_cursor.line_offset
-                    )
-                } else if (bkp_cursor.channel == channel) {
-                    Pair(
-                        min(bkp_cursor.channel, this.channels.size - 1),
-                        0
-                    )
-                } else {
-                    Pair(
-                        bkp_cursor.channel,
-                        bkp_cursor.line_offset
-                    )
-                }
+        //when (bkp_cursor.mode) {
+        //    OpusManagerCursor.CursorMode.Row -> {
+        //        val (new_channel, new_line_offset) = if (bkp_cursor.channel > channel) {
+        //            Pair(
+        //                bkp_cursor.channel - 1,
+        //                bkp_cursor.line_offset
+        //            )
+        //        } else if (bkp_cursor.channel == channel) {
+        //            Pair(
+        //                min(bkp_cursor.channel, this.channels.size - 1),
+        //                0
+        //            )
+        //        } else {
+        //            Pair(
+        //                bkp_cursor.channel,
+        //                bkp_cursor.line_offset
+        //            )
+        //        }
 
-                this.cursor_select_row(new_channel, new_line_offset)
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val first_corner = bkp_cursor.range!!.first
-                val (first_channel, first_line_offset) = if (first_corner.channel > channel) {
-                    Pair(first_corner.channel - 1, first_corner.line_offset)
-                } else if (first_corner.channel == channel) {
-                    Pair(min(first_corner.channel, this.channels.size - 1), 0)
-                } else {
-                    Pair(first_corner.channel, first_corner.line_offset)
-                }
+        //        //this.cursor_select_row(new_channel, new_line_offset)
+        //    }
+        //    OpusManagerCursor.CursorMode.Range -> {
+        //        val first_corner = bkp_cursor.range!!.first
+        //        val (first_channel, first_line_offset) = if (first_corner.channel > channel) {
+        //            Pair(first_corner.channel - 1, first_corner.line_offset)
+        //        } else if (first_corner.channel == channel) {
+        //            Pair(min(first_corner.channel, this.channels.size - 1), 0)
+        //        } else {
+        //            Pair(first_corner.channel, first_corner.line_offset)
+        //        }
 
-                val second_corner = bkp_cursor.range!!.second
-                val (second_channel, second_line_offset) = if (second_corner.channel > channel) {
-                    Pair(second_corner.channel - 1, second_corner.line_offset)
-                } else if (second_corner.channel == channel) {
-                    Pair(min(second_corner.channel, this.channels.size - 1), 0)
-                } else {
-                    Pair(second_corner.channel, second_corner.line_offset)
-                }
+        //        val second_corner = bkp_cursor.range!!.second
+        //        val (second_channel, second_line_offset) = if (second_corner.channel > channel) {
+        //            Pair(second_corner.channel - 1, second_corner.line_offset)
+        //        } else if (second_corner.channel == channel) {
+        //            Pair(min(second_corner.channel, this.channels.size - 1), 0)
+        //        } else {
+        //            Pair(second_corner.channel, second_corner.line_offset)
+        //        }
 
-                this.cursor_select_range(
-                    BeatKey(first_channel, first_line_offset, first_corner.beat),
-                    BeatKey(second_channel, second_line_offset, second_corner.beat)
-                )
-            }
-            OpusManagerCursor.CursorMode.Single -> {
-                val (new_channel, new_line_offset, new_position) = if (bkp_cursor.channel > channel) {
-                    Triple(bkp_cursor.channel - 1, bkp_cursor.line_offset, bkp_cursor.position)
-                } else if (bkp_cursor.channel == channel) {
-                    val tmp_a = min(bkp_cursor.channel, this.channels.size - 1)
-                    Triple(
-                        tmp_a,
-                        0,
-                        this.get_first_position(
-                            BeatKey(tmp_a, 0, bkp_cursor.beat),
-                            listOf()
-                        )
-                    )
-                } else {
-                    Triple(bkp_cursor.channel, bkp_cursor.line_offset, bkp_cursor.position)
-                }
+        //       // this.cursor_select_range(
+        //       //     BeatKey(first_channel, first_line_offset, first_corner.beat),
+        //       //     BeatKey(second_channel, second_line_offset, second_corner.beat)
+        //       // )
+        //    }
+        //    OpusManagerCursor.CursorMode.Single -> {
+        //        val (new_channel, new_line_offset, new_position) = if (bkp_cursor.channel > channel) {
+        //            Triple(bkp_cursor.channel - 1, bkp_cursor.line_offset, bkp_cursor.position)
+        //        } else if (bkp_cursor.channel == channel) {
+        //            val tmp_a = min(bkp_cursor.channel, this.channels.size - 1)
+        //            Triple(
+        //                tmp_a,
+        //                0,
+        //                this.get_first_position(
+        //                    BeatKey(tmp_a, 0, bkp_cursor.beat),
+        //                    listOf()
+        //                )
+        //            )
+        //        } else {
+        //            Triple(bkp_cursor.channel, bkp_cursor.line_offset, bkp_cursor.position)
+        //        }
 
-                this.cursor_select(
-                    BeatKey(
-                        new_channel,
-                        new_line_offset,
-                        bkp_cursor.beat
-                    ),
-                    new_position
-                )
-            }
+        //        this.cursor_select(
+        //            BeatKey(
+        //                new_channel,
+        //                new_line_offset,
+        //                bkp_cursor.beat
+        //            ),
+        //            new_position
+        //        )
+        //    }
 
-            OpusManagerCursor.CursorMode.Column -> {
-                this.cursor_select_column(bkp_cursor.beat)
-            }
-            else -> {}
-        }
+        //    OpusManagerCursor.CursorMode.Column -> {
+        //        this.cursor_select_column(bkp_cursor.beat)
+        //    }
+        //    else -> {}
+        //}
     }
 
     override fun remove_beat(beat_index: Int) {

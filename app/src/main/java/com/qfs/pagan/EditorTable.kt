@@ -841,7 +841,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         val percussion_channel = opus_manager.channels.last()
         if (main.view_model.show_percussion) {
-            opus_manager.recache_line_maps()
             if (this._column_width_map.isNotEmpty()) {
                 var newly_visible_rows = 0
                 for (i in 0 until percussion_channel.size) {

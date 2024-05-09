@@ -332,8 +332,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             return
         }
 
-        if (this.active_context_menu!!.primary.parent != null) {
-            (this.active_context_menu!!.primary.parent as ViewGroup).removeAllViews()
+        if (this.active_context_menu!!.primary != null) {
+            if (this.active_context_menu!!.primary!!.parent != null) {
+                (this.active_context_menu!!.primary!!.parent as ViewGroup).removeAllViews()
+            }
         }
 
         if (this.active_context_menu!!.secondary != null) {
@@ -357,6 +359,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         } else {
             GONE
         }
+
         val secondary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         secondary.visibility = if (secondary.isNotEmpty()) {
             VISIBLE

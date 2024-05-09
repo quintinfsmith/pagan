@@ -17,14 +17,14 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var ros_relative_option: RelativeOptionSelector
 
     override fun init_properties() {
-        this.button_split = this.primary.findViewById(R.id.btnSplit)
-        this.button_insert = this.primary.findViewById(R.id.btnInsert)
-        this.button_unset = this.primary.findViewById(R.id.btnUnset)
-        this.button_remove = this.primary.findViewById(R.id.btnRemove)
-        this.button_duration = this.primary.findViewById(R.id.btnDuration)
-        this.ns_octave = this.primary.findViewById(R.id.nsOctave)
-        this.ns_offset = this.primary.findViewById(R.id.nsOffset)
-        this.ros_relative_option = this.primary.findViewById(R.id.rosRelativeOption)
+        this.button_split = this.primary!!.findViewById(R.id.btnSplit)
+        this.button_insert = this.primary!!.findViewById(R.id.btnInsert)
+        this.button_unset = this.primary!!.findViewById(R.id.btnUnset)
+        this.button_remove = this.primary!!.findViewById(R.id.btnRemove)
+        this.button_duration = this.primary!!.findViewById(R.id.btnDuration)
+        this.ns_octave = this.primary!!.findViewById(R.id.nsOctave)
+        this.ns_offset = this.primary!!.findViewById(R.id.nsOffset)
+        this.ros_relative_option = this.primary!!.findViewById(R.id.rosRelativeOption)
     }
 
     override fun setup_interactions() {

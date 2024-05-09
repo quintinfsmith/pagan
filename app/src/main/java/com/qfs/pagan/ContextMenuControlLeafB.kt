@@ -7,7 +7,7 @@ class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container:
     lateinit var button_erase: ButtonIcon
     lateinit var radio_mode: RadioGroup
     override fun init_properties() {
-        this.button_erase = this.primary.findViewById(R.id.btnEraseSelection)
+        this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
         this.radio_mode = this.secondary!!.findViewById<RadioGroup>(R.id.rgLinkMode)
     }
 

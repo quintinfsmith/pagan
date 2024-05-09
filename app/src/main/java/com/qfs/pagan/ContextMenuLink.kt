@@ -12,9 +12,9 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var radio_mode: RadioGroup
     lateinit var label: PaganTextView
     override fun init_properties() {
-        this.button_unlink = this.primary.findViewById(R.id.btnUnLink)
-        this.button_unlink_all = this.primary.findViewById(R.id.btnUnLinkAll)
-        this.button_erase = this.primary.findViewById(R.id.btnEraseSelection)
+        this.button_unlink = this.primary!!.findViewById(R.id.btnUnLink)
+        this.button_unlink_all = this.primary!!.findViewById(R.id.btnUnLinkAll)
+        this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
         this.label = this.secondary!!.findViewById(R.id.tvLinkLabel)
         this.radio_mode = this.secondary!!.findViewById<RadioGroup?>(R.id.rgLinkMode)
     }

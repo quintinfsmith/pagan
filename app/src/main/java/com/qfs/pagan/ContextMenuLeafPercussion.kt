@@ -12,11 +12,11 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     lateinit var button_duration: ButtonStd
 
     override fun init_properties() {
-        this.button_split = this.primary.findViewById(R.id.btnSplit)
-        this.button_insert = this.primary.findViewById(R.id.btnInsert)
-        this.button_unset = this.primary.findViewById(R.id.btnUnset)
-        this.button_remove = this.primary.findViewById(R.id.btnRemove)
-        this.button_duration = this.primary.findViewById(R.id.btnDuration)
+        this.button_split = this.primary!!.findViewById(R.id.btnSplit)
+        this.button_insert = this.primary!!.findViewById(R.id.btnInsert)
+        this.button_unset = this.primary!!.findViewById(R.id.btnUnset)
+        this.button_remove = this.primary!!.findViewById(R.id.btnRemove)
+        this.button_duration = this.primary!!.findViewById(R.id.btnDuration)
     }
 
     override fun refresh() {

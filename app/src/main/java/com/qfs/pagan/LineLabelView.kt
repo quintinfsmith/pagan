@@ -138,7 +138,11 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
     }
 
     fun get_activity(): MainActivity {
-        return (this.context as ContextThemeWrapper).baseContext as MainActivity
+        var context = this.context
+        while (context !is MainActivity) {
+            context = (context as ContextThemeWrapper).baseContext
+        }
+        return context
     }
 
 }

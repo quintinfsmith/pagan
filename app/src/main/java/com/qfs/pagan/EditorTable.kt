@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -775,8 +776,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun scroll_to_y(y: Int) {
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        this._line_label_layout.scrollTo(0, y * line_height)
-        this._scroll_view.scrollTo(0, y * line_height)
+        val target_y = y * line_height
+        Log.d("AAA", "${target_y + line_height} || ${this._scroll_view.measuredHeight}")
+
+        if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + line_height) {
+            val adj_target_y = target_y - this._scroll_view.measuredHeight + line_height
+            this._line_label_layout.scrollTo(0, adj_target_y)
+            this._scroll_view.scrollTo(0, adj_target_y)
+        } else {
+            this._line_label_layout.scrollTo(0, target_y)
+            this._scroll_view.scrollTo(0, target_y)
+        }
+
     }
 
 

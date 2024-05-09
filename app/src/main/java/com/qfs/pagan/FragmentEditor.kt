@@ -16,6 +16,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.File
 import java.io.FileInputStream
@@ -365,6 +366,54 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             VISIBLE
         } else {
             GONE
+        }
+        val opus_manager = this.get_main().get_opus_manager()
+        val cursor = opus_manager.cursor
+        val y = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Row,
+            OpusManagerCursor.CursorMode.Single -> {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                    CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+                    CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                    null -> {
+                        opus_manager.get_visible_row_from_ctl_line(
+                            opus_manager.get_ctl_line_index(
+                                opus_manager.get_abs_offset(
+                                    opus_manager.cursor.channel,
+                                    opus_manager.cursor.line_offset
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
+                    CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
+                    CtlLineLevel.Global ->  opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                    null -> opus_manager.get_visible_row_from_ctl_line(
+                        opus_manager.get_ctl_line_index(
+                            opus_manager.get_abs_offset(
+                                cursor.range!!.second.channel,
+                                cursor.range!!.second.line_offset
+                            )
+                        )
+                    )
+                }
+
+            }
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> null
+        } ?: return
+
+        // If the row is out of view, scrolls to it
+        thread {
+            this.get_main().runOnUiThread {
+                val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+                editor_table.scroll_to_y(y)
+            }
         }
     }
 

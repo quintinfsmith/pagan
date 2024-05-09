@@ -27,6 +27,7 @@
     <com.qfs.pagan.ButtonStd
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/choose_percussion_button"
+        android:paddingTop="@dimen/number_selector_spacing"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:layout_marginTop="@dimen/number_selector_spacing"
@@ -38,7 +39,7 @@
         app:srcCompat="@drawable/volume_plus"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
-        android:layout_marginStart="@dimen/number_selector_spacing"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Toggle Volume Control"/>
 
     <Space

@@ -24,4 +24,5 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove Beat" />
 
+
 </LinearLayout>

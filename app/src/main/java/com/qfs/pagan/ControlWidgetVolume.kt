@@ -26,7 +26,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
 
         this._slider.max = this._max
         this._slider.min = this._min
-        this._slider.progress = default.value.toInt()
+        this._slider.progress = default.value
 
         this._button.setOnClickListener {
             var context = this.context
@@ -34,7 +34,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
                 context = (context as ContextThemeWrapper).baseContext
             }
 
-            val dlg_default = this.get_event().value.toInt()
+            val dlg_default = this.get_event().value
             val dlg_title = context.getString(R.string.dlg_set_volume)
             context.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
                 val new_event = OpusVolumeEvent(new_value)

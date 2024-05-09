@@ -14,6 +14,7 @@
         android:layout_height="@dimen/icon_button_height"
         android:text="Split"
         android:contentDescription="@string/cd_split"
+
         app:srcCompat="@drawable/split"/>
 
     <com.qfs.pagan.ButtonIcon
@@ -22,6 +23,7 @@
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_insert"
         android:text="Insert"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/insert" />
 
     <com.qfs.pagan.ButtonIcon
@@ -31,6 +33,7 @@
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_remove"
         android:text="Remove"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/remove" />
 
     <com.qfs.pagan.ButtonIcon
@@ -40,6 +43,7 @@
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_unset"
         android:text="Unset"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/unset" />
 
     <com.qfs.pagan.ButtonStd
@@ -48,6 +52,7 @@
         android:id="@+id/btnDuration"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
+        android:layout_marginTop="@dimen/number_selector_spacing"
         android:text="T" />
 
 </LinearLayout>

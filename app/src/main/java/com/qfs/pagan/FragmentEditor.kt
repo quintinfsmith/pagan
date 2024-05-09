@@ -406,13 +406,31 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> null
-        } ?: return
+        }
+
+        val (beat, offset) = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Row -> Pair(null, 0f)
+            OpusManagerCursor.CursorMode.Column -> Pair(cursor.beat, 0f)
+            OpusManagerCursor.CursorMode.Single -> {
+                var tree = opus_manager.get_tree(cursor.get_beatkey())
+                var width = 1f
+                var offset = 0f
+                for (p in cursor.position) {
+                    width /= tree.size
+                    offset += p * width
+                    tree = tree[p]
+                }
+                Pair(cursor.beat, offset)
+            }
+            OpusManagerCursor.CursorMode.Range -> Pair(cursor.range!!.second.beat, 0f)
+            OpusManagerCursor.CursorMode.Unset -> Pair(null, 0f)
+        }
 
         // If the row is out of view, scrolls to it
         thread {
             this.get_main().runOnUiThread {
                 val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-                editor_table.scroll_to_y(y)
+                editor_table.scroll_to_position(x = beat, offset = offset, y = y)
             }
         }
     }
@@ -424,8 +442,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     internal fun set_context_menu_line_control_leaf() {
@@ -434,8 +452,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     internal fun set_context_menu_line_control_leaf_b() {
@@ -444,8 +462,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     internal fun set_context_menu_linking() {
@@ -454,8 +472,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     internal fun set_context_menu_column() {
@@ -469,8 +487,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     internal fun set_context_menu_line() {
@@ -479,8 +497,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     internal fun set_context_menu_leaf() {
@@ -489,8 +507,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     internal fun set_context_menu_leaf_percussion() {
@@ -499,8 +517,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
-            this.show_context_menus()
         }
+        this.show_context_menus()
     }
 
     fun shortcut_dialog() {

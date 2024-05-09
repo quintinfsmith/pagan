@@ -605,30 +605,25 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.notify_item_changed(y)
     }
 
-    fun scroll_to_position(x: Int? = null, y: Int? = null, position: List<Int>? = null, force: Boolean = false) {
+    fun scroll_to_position(x: Int? = null, y: Int? = null, offset: Float = 0f, force: Boolean = false) {
         if (x != null) {
             if (x >= this.get_opus_manager().beat_count) {
                 return
             } else if (force || this.get_position_visibility(x) < SECTION_VIEW_PARTIAL_OVERSIZED) {
-                this.scroll_to_x(x)
+                this.scroll_to_x(x, offset)
             }
         }
+
         if (y != null && (force || ! this.is_y_visible(y))) {
             this.scroll_to_y(y)
         }
-
-        // TODO: implement this, but only when *actually* necessary
-        //if (x != null && y != null && position != null) {
-        //    val leaf = this.get_leaf(x, y, position) ?: return
-        //    this.get_column_recycler().scrollBy(leaf.x.toInt(), 0)
-        //}
     }
 
     fun scroll_to_position(beat_key: BeatKey, position: List<Int>? = null) {
         if (beat_key.beat == -1) {
             return
         }
-
+        Log.d("AAA", "SCROLLA")
         val adj_beat_key = BeatKey(
             max(0, beat_key.channel),
             max(0, beat_key.line_offset),
@@ -644,10 +639,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             new_position.add(0)
         }
 
-        val y = opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+        val y = opus_manager.get_visible_row_from_ctl_line(
+            opus_manager.get_ctl_line_index(
+                opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
+            )
+        )
         if (position == null) {
             if (this.get_position_visibility(beat_key.beat) < SECTION_VIEW_PARTIAL_OVERSIZED) {
-                this.scroll_to_x(beat_key.beat)
+                this.scroll_to_x(beat_key.beat, 0f)
             }
         } else {
             var leaf_offset = 0
@@ -681,7 +680,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
 
-        if (!this.is_y_visible(y)) {
+        if (y != null && !this.is_y_visible(y)) {
             this.scroll_to_y(y)
         }
     }
@@ -765,25 +764,25 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         return y >= scroll_offset && y <= (scroll_offset + height)
     }
 
-    fun scroll_to_x(x: Int) {
+    fun scroll_to_x(x: Int, offset: Float = 0F) {
+        val int_offset = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset).toInt()
+
         this._main_scroll_locked = true
-        this.get_column_recycler().scrollToPosition(x)
+        (this.get_column_recycler().layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, int_offset)
         this._main_scroll_locked = false
         this._label_scroll_locked = true
-        this.column_label_recycler.scrollToPosition(x)
+        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, int_offset)
         this._label_scroll_locked = false
     }
 
     fun scroll_to_y(y: Int) {
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
         val target_y = y * line_height
-        Log.d("AAA", "${target_y + line_height} || ${this._scroll_view.measuredHeight}")
-
         if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + line_height) {
-            val adj_target_y = target_y - this._scroll_view.measuredHeight + line_height
+            val adj_target_y = target_y - (this._scroll_view.measuredHeight - (line_height * 1.5).toInt())
             this._line_label_layout.scrollTo(0, adj_target_y)
             this._scroll_view.scrollTo(0, adj_target_y)
-        } else {
+        } else if (target_y < this._scroll_view.scrollY) {
             this._line_label_layout.scrollTo(0, target_y)
             this._scroll_view.scrollTo(0, target_y)
         }

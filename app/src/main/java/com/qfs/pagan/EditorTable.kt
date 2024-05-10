@@ -19,6 +19,7 @@ import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
+import kotlin.experimental.or
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -776,34 +777,87 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
         val visible_range = layout_manager.findFirstVisibleItemPosition() .. layout_manager.findLastVisibleItemPosition()
         val target_offset = (max_width * offset).toInt()
-        val adj_offset =  if (x in visible_range) {
-            val target_column = layout_manager.getChildAt(x)
-            if (target_column!!.x + max_width > box_width) {
-                if (max_width < box_width) {
-                    box_width - max_width
-                } else {
-                }
-            } else if (target_column!!.x + target_offset + target_width > box_width) {
-            } else if (target_column!!.x + target_offset < 0) {
-            } else {
-            }
-        } else if (target_width >= box_width) {
-            (box_width - target_width) / 2
-        } else if (layout_manager.findLastCompletelyVisibleItemPosition() < x) {
-            if (max_width >= box_width) {
-                (box_width - (target_offset + target_width)) / 2
-            } else {
-                box_width - max_width
-            }
-        } else if (layout_manager.findFirstCompletelyVisibleItemPosition() > x) {
-            if (max_width >= box_width) {
-                (box_width - (target_offset + target_width)) / 2
-            } else {
-                0
-            }
-        } else {
-            return
+
+        val POSITION_TO_LEFT: Byte = 0
+        val POSITION_ON_SCREEN: Byte = 1
+        val POSITION_TO_RIGHT: Byte = 2
+        val FITS_ON_SCREEN: Byte = 4
+
+        /*
+            000 = INVALID
+            001 = left of screen
+            010 = on screen
+            011 = spilling off left
+            100 = right of screen
+            101 = INVALID
+            110 = spilling off right
+            111 = spilling off both sides of screen
+
+            invalid states:
+                0000
+                0101
+                1000
+                1010
+                1101
+                1111
+         */
+        var column_state: Byte = 0
+        var subdiv_state: Byte = 0
+
+        if (target_width <= box_width) {
+            subdiv_state = FITS_ON_SCREEN
         }
+        if (max_width <= box_width) {
+            column_state = FITS_ON_SCREEN
+        }
+
+        if (x in visible_range) {
+            val target_column = layout_manager.getChildAt(x)
+            if (target_column!!.x + target_width + target_offset > box_width) {
+                subdiv_state = subdiv_state or POSITION_TO_RIGHT
+                if (target_column.x + target_offset < box_width) {
+                    subdiv_state = subdiv_state or POSITION_ON_SCREEN
+                }
+                if (target_column.x + target_offset < 0) {
+                    subdiv_state = subdiv_state or POSITION_TO_LEFT
+                }
+
+            } else if (target_column.x + target_width + target_offset > 0) {
+                subdiv_state = subdiv_state or POSITION_ON_SCREEN
+                if (target_column.x + target_offset < 0) {
+                    subdiv_state = subdiv_state or POSITION_TO_LEFT
+                }
+            } else {
+                subdiv_state = subdiv_state or POSITION_TO_LEFT
+            }
+
+
+            if (target_column.x > box_width) {
+                column_state = column_state or POSITION_TO_RIGHT
+            } else if (target_column.x > 0) {
+                column_state = column_state or POSITION_ON_SCREEN
+                if (target_column.x + max_width > box_width) {
+                    column_state = column_state or POSITION_TO_RIGHT
+                }
+            } else {
+                column_state = column_state or POSITION_TO_LEFT
+                if (target_column.x + max_width > box_width) {
+                    column_state = column_state or POSITION_TO_RIGHT or POSITION_ON_SCREEN
+                } else if (target_column.x + max_width > 0) {
+                    column_state = column_state or POSITION_ON_SCREEN
+                }
+            }
+
+        } else if (x > visible_range.last) {
+            column_state = column_state or POSITION_TO_RIGHT
+            subdiv_state = subdiv_state or POSITION_TO_RIGHT
+        } else {
+            column_state = column_state or POSITION_TO_LEFT
+            subdiv_state = subdiv_state or POSITION_TO_LEFT
+        }
+
+
+
 
         this._main_scroll_locked = true
         layout_manager.scrollToPositionWithOffset(x, adj_offset)

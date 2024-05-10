@@ -605,12 +605,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.notify_item_changed(y)
     }
 
-    fun scroll_to_position(x: Int? = null, y: Int? = null, offset: Float = 0f, force: Boolean = false) {
+    fun scroll_to_position(x: Int? = null, y: Int? = null, offset: Float = 0f, offset_width: Float = 1f, force: Boolean = false) {
         if (x != null) {
             if (x >= this.get_opus_manager().beat_count) {
                 return
             } else if (force || this.get_position_visibility(x) < SECTION_VIEW_PARTIAL_OVERSIZED) {
-                this.scroll_to_x(x, offset)
+                this.scroll_to_x(x, offset, offset_width)
             }
         }
 
@@ -619,10 +619,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
+
     fun scroll_to_position(beat_key: BeatKey, position: List<Int>? = null) {
         if (beat_key.beat == -1) {
             return
         }
+
         Log.d("AAA", "SCROLLA")
         val adj_beat_key = BeatKey(
             max(0, beat_key.channel),
@@ -764,20 +766,58 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         return y >= scroll_offset && y <= (scroll_offset + height)
     }
 
-    fun scroll_to_x(x: Int, offset: Float = 0F) {
-        val int_offset = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset).toInt()
+    fun scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
+        val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
+
+        val box_width = this.get_column_recycler().measuredWidth
+
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val max_width = (this._column_width_maxes[x] * base_width).toInt()
+        val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
+        val visible_range = layout_manager.findFirstVisibleItemPosition() .. layout_manager.findLastVisibleItemPosition()
+        val target_offset = (max_width * offset).toInt()
+        val adj_offset =  if (x in visible_range) {
+            val target_column = layout_manager.getChildAt(x)
+            if (target_column!!.x + max_width > box_width) {
+                if (max_width < box_width) {
+                    box_width - max_width
+                } else {
+                }
+            } else if (target_column!!.x + target_offset + target_width > box_width) {
+            } else if (target_column!!.x + target_offset < 0) {
+            } else {
+            }
+        } else if (target_width >= box_width) {
+            (box_width - target_width) / 2
+        } else if (layout_manager.findLastCompletelyVisibleItemPosition() < x) {
+            if (max_width >= box_width) {
+                (box_width - (target_offset + target_width)) / 2
+            } else {
+                box_width - max_width
+            }
+        } else if (layout_manager.findFirstCompletelyVisibleItemPosition() > x) {
+            if (max_width >= box_width) {
+                (box_width - (target_offset + target_width)) / 2
+            } else {
+                0
+            }
+        } else {
+            return
+        }
 
         this._main_scroll_locked = true
-        (this.get_column_recycler().layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, int_offset)
+        layout_manager.scrollToPositionWithOffset(x, adj_offset)
         this._main_scroll_locked = false
+
         this._label_scroll_locked = true
-        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, int_offset)
+        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, adj_offset)
         this._label_scroll_locked = false
     }
 
     fun scroll_to_y(y: Int) {
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
         val target_y = y * line_height
+
         if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + line_height) {
             val adj_target_y = target_y - (this._scroll_view.measuredHeight - (line_height * 1.5).toInt())
             this._line_label_layout.scrollTo(0, adj_target_y)

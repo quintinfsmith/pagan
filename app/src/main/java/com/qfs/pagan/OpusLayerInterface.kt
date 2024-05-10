@@ -1096,13 +1096,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             this.withFragment { main ->
                 main.set_context_menu_line()
-                editor_table?.scroll_to_position(
-                    y = this.get_visible_row_from_ctl_line(
-                        this.get_ctl_line_index(
-                            this.get_abs_offset(channel, line_offset)
-                        )
-                    )
-                )
             }
         }
     }
@@ -1126,9 +1119,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.withFragment { main ->
                 main.set_context_menu_control_line()
             }
-
-            val scroll_to_row = this._cached_ctl_map_channel[Pair(channel, ctl_type)] ?: return@runOnUiThread
-            editor_table?.scroll_to_position(y = scroll_to_row)
         }
     }
 
@@ -1152,8 +1142,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                 main.set_context_menu_control_line()
             }
 
-            val scroll_to_row = this._cached_ctl_map_line[Triple(channel, line_offset, ctl_type)] ?: return@runOnUiThread
-            editor_table?.scroll_to_position(y = scroll_to_row)
         }
     }
 
@@ -1171,22 +1159,18 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.withFragment { main ->
                 main.set_context_menu_control_line()
             }
-
-            val scroll_to_row = this._cached_ctl_map_global[ctl_type] ?: return@runOnUiThread
-            editor_table?.scroll_to_position(y = scroll_to_row)
         }
     }
 
     override fun cursor_select_column(beat: Int) {
         super.cursor_select_column(beat)
         this.runOnUiThread {
+            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            editor_table.update_cursor(this.cursor)
+
             this.withFragment { main ->
                 main.set_context_menu_column()
             }
-
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.scroll_to_position(x = beat, force = false)
-            editor_table.update_cursor(this.cursor)
         }
     }
 

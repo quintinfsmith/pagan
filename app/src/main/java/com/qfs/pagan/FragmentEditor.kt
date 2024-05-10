@@ -408,9 +408,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             OpusManagerCursor.CursorMode.Unset -> null
         }
 
-        val (beat, offset) = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Row -> Pair(null, 0f)
-            OpusManagerCursor.CursorMode.Column -> Pair(cursor.beat, 0f)
+        val (beat, offset, offset_width) = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Row -> Triple(null, 0f, 0f)
+            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 0f)
             OpusManagerCursor.CursorMode.Single -> {
                 var tree = opus_manager.get_tree(cursor.get_beatkey())
                 var width = 1f
@@ -420,17 +420,17 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     offset += p * width
                     tree = tree[p]
                 }
-                Pair(cursor.beat, offset)
+                Triple(cursor.beat, offset, width)
             }
-            OpusManagerCursor.CursorMode.Range -> Pair(cursor.range!!.second.beat, 0f)
-            OpusManagerCursor.CursorMode.Unset -> Pair(null, 0f)
+            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 0f)
+            OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 0f)
         }
 
         // If the row is out of view, scrolls to it
         thread {
             this.get_main().runOnUiThread {
                 val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-                editor_table.scroll_to_position(x = beat, offset = offset, y = y)
+                editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width)
             }
         }
     }

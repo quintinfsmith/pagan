@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -19,7 +18,6 @@ import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
-import kotlin.experimental.or
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -610,7 +608,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (x != null) {
             if (x >= this.get_opus_manager().beat_count) {
                 return
-            } else if (force || this.get_position_visibility(x) < SECTION_VIEW_PARTIAL_OVERSIZED) {
+            } else {
                 this.scroll_to_x(x, offset, offset_width)
             }
         }
@@ -626,7 +624,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             return
         }
 
-        Log.d("AAA", "SCROLLA")
         val adj_beat_key = BeatKey(
             max(0, beat_key.channel),
             max(0, beat_key.line_offset),
@@ -778,86 +775,103 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val visible_range = layout_manager.findFirstVisibleItemPosition() .. layout_manager.findLastVisibleItemPosition()
         val target_offset = (max_width * offset).toInt()
 
-        val POSITION_TO_LEFT: Byte = 0
-        val POSITION_ON_SCREEN: Byte = 1
-        val POSITION_TO_RIGHT: Byte = 2
-        val FITS_ON_SCREEN: Byte = 4
+        val POSITION_ON_SCREEN: Int = 0
+        val POSITION_TO_RIGHT: Int = 1
+        val POSITION_TO_LEFT: Int = 2
+        val FITS_ON_SCREEN: Int = 3
 
-        /*
-            000 = INVALID
-            001 = left of screen
-            010 = on screen
-            011 = spilling off left
-            100 = right of screen
-            101 = INVALID
-            110 = spilling off right
-            111 = spilling off both sides of screen
+        val column_state = Array(4) { false }
+        val subdiv_state = Array(4) { false }
 
-            invalid states:
-                0000
-                0101
-                1000
-                1010
-                1101
-                1111
-         */
-        var column_state: Byte = 0
-        var subdiv_state: Byte = 0
-
-        if (target_width <= box_width) {
-            subdiv_state = FITS_ON_SCREEN
-        }
-        if (max_width <= box_width) {
-            column_state = FITS_ON_SCREEN
-        }
+        subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
+        column_state[FITS_ON_SCREEN] = max_width <= box_width
 
         if (x in visible_range) {
-            val target_column = layout_manager.getChildAt(x)
-            if (target_column!!.x + target_width + target_offset > box_width) {
-                subdiv_state = subdiv_state or POSITION_TO_RIGHT
-                if (target_column.x + target_offset < box_width) {
-                    subdiv_state = subdiv_state or POSITION_ON_SCREEN
-                }
-                if (target_column.x + target_offset < 0) {
-                    subdiv_state = subdiv_state or POSITION_TO_LEFT
-                }
-
+            val target_column = layout_manager.findViewByPosition(x)
+            if (target_column == null) {
+                // Shouldn't be Reachable
+                return
+            } else if (target_column.x + target_width + target_offset > box_width) {
+                subdiv_state[POSITION_TO_RIGHT] = true
+                subdiv_state[POSITION_ON_SCREEN] = target_column.x + target_offset < box_width
+                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
             } else if (target_column.x + target_width + target_offset > 0) {
-                subdiv_state = subdiv_state or POSITION_ON_SCREEN
-                if (target_column.x + target_offset < 0) {
-                    subdiv_state = subdiv_state or POSITION_TO_LEFT
-                }
+                subdiv_state[POSITION_ON_SCREEN] = true
+                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
             } else {
-                subdiv_state = subdiv_state or POSITION_TO_LEFT
+                subdiv_state[POSITION_TO_LEFT] = true
             }
 
 
             if (target_column.x > box_width) {
-                column_state = column_state or POSITION_TO_RIGHT
+                column_state[POSITION_TO_RIGHT] = true
             } else if (target_column.x > 0) {
-                column_state = column_state or POSITION_ON_SCREEN
-                if (target_column.x + max_width > box_width) {
-                    column_state = column_state or POSITION_TO_RIGHT
-                }
+                column_state[POSITION_ON_SCREEN] = true
+                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
             } else {
-                column_state = column_state or POSITION_TO_LEFT
-                if (target_column.x + max_width > box_width) {
-                    column_state = column_state or POSITION_TO_RIGHT or POSITION_ON_SCREEN
-                } else if (target_column.x + max_width > 0) {
-                    column_state = column_state or POSITION_ON_SCREEN
+                column_state[POSITION_TO_LEFT] = true
+                column_state[POSITION_ON_SCREEN] = target_column.x + max_width > 0
+                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
+            }
+        } else if (x > visible_range.last) {
+            column_state[POSITION_TO_RIGHT] = true
+            subdiv_state[POSITION_TO_RIGHT] = true
+        } else {
+            column_state[POSITION_TO_LEFT] = true
+            subdiv_state[POSITION_TO_LEFT] = true
+        }
+
+        var subdiv_int = 0
+        var column_int = 0
+        var offset = 1
+        for (i in 0 until 4) {
+            subdiv_int += offset * if (subdiv_state[i]) { 1 } else { 0 }
+            column_int += offset * if (column_state[i]) { 1 } else { 0 }
+            offset *= 2
+        }
+
+        // FITS, LEFT, RIGHT, ON SCREEN
+        val adj_offset = when (subdiv_int) {
+            // Center the section
+            0b0011,
+            0b0101,
+            0b0010,
+            0b0100 -> (box_width - target_width) / 2
+
+            // Try to scroll the column onto screen, then the section
+            0b1010 -> {
+                if (column_state[FITS_ON_SCREEN]) {
+                    box_width - max_width
+                } else {
+                    (0 - target_offset) + ((box_width - target_width) / 2)
                 }
             }
 
-        } else if (x > visible_range.last) {
-            column_state = column_state or POSITION_TO_RIGHT
-            subdiv_state = subdiv_state or POSITION_TO_RIGHT
-        } else {
-            column_state = column_state or POSITION_TO_LEFT
-            subdiv_state = subdiv_state or POSITION_TO_LEFT
+            // Align the end of the section with the end of the screen
+            0b1011 -> box_width - target_offset - target_width
+
+            // Try to scroll the column onto screen, then the section
+            0b1100 -> { 
+                if (column_state[FITS_ON_SCREEN]) {
+                    0
+                } else {
+                    box_width - target_offset - target_width - ((box_width - target_width) / 2)
+                }
+            }
+
+            // Align the start of the section with the start of the screen
+            0b1101 -> 0 - target_offset
+
+            // 0b0111 -> { }   // Nothing to be done
+            // 0b1001 -> { }   // Valid, but no need to do anything
+            // 0b0000 -> { }   // Invalid
+            // 0b0001 -> { }   // Invalid
+            // 0b0110 -> { }   // Invalid
+            // 0b1000 -> { }   // Invalid
+            // 0b1110 -> { }   // Invalid
+            // 0b1111 -> { }   // Invalid
+            else -> { return }     // Unreachable
         }
-
-
-
 
         this._main_scroll_locked = true
         layout_manager.scrollToPositionWithOffset(x, adj_offset)

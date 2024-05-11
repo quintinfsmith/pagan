@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -615,7 +616,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
 
-        if (y != null && (force || ! this.is_y_visible(y))) {
+        if (y != null) {
             this.scroll_to_y(y)
         }
     }
@@ -897,10 +898,61 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun scroll_to_y(y: Int) {
         val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        val target_y = y * line_height
+        val control_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt()
+        var target_y = 0
+        var count = 0
+        var working_line_height = line_height
+        val opus_manager = this.get_opus_manager()
+        for (channel in opus_manager.channels) {
+            for (line in channel.lines) {
+                if (count >= y) {
+                    break
+                }
 
-        if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + line_height) {
-            val adj_target_y = target_y - (this._scroll_view.measuredHeight - (line_height * 1.5).toInt())
+                target_y += line_height
+                working_line_height = line_height
+                count += 1
+                for ((type, controller) in line.controllers.get_all()) {
+                    if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                        continue
+                    }
+                    if (count >= y) {
+                        break
+                    }
+
+                    target_y += control_line_height
+                    working_line_height = control_line_height
+                    count += 1
+                }
+            }
+            for ((type, controller) in channel.controllers.get_all()) {
+                if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
+                    continue
+                }
+                if (count >= y) {
+                    break
+                }
+
+                target_y += control_line_height
+                working_line_height = control_line_height
+                count += 1
+            }
+        }
+
+        for ((type, controller) in this.get_opus_manager().controllers.get_all()) {
+            if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Global, type)) {
+                continue
+            }
+            if (count >= y) {
+                break
+            }
+            target_y += control_line_height
+            working_line_height = control_line_height
+            count += 1
+        }
+        Log.d("AAA", "$target_y, ${this._scroll_view.scrollY}")
+        if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + working_line_height) {
+            val adj_target_y = target_y - (this._scroll_view.measuredHeight - (working_line_height * 1.5).toInt())
             this._line_label_layout.scrollTo(0, adj_target_y)
             this._scroll_view.scrollTo(0, adj_target_y)
         } else if (target_y < this._scroll_view.scrollY) {

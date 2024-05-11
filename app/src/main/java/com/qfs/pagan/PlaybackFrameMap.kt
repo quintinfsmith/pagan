@@ -108,8 +108,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     override fun get_size(): Int {
-        // Not Used in playback, no need to implement at the moment
-        return 0
+        // subject to changing, really just an estimate
+        return this._cached_beat_frames?.last() ?: 0
     }
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {

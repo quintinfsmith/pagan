@@ -32,23 +32,21 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
 
         var current_ts = System.currentTimeMillis()
         while (!this.cancel_flagged) {
-            try {
-                val chunk = try {
-                    wave_generator.generate()
-                } catch (e: WaveGenerator.EmptyException) {
-                    empty_chunk
-                }
-
-                data_chunks.add(chunk)
-                val now = System.currentTimeMillis()
-                if (now - current_ts > min_delta) {
-                    handler.on_progress_update(chunk_count / total_chunk_count)
-                    current_ts = now
-                }
-                chunk_count += 1.0
-            } catch (e: Exception) {
+            val chunk = try {
+                wave_generator.generate()
+            } catch (e: WaveGenerator.EmptyException) {
+                empty_chunk
+            } catch (e: WaveGenerator.DeadException) {
                 break
             }
+
+            data_chunks.add(chunk)
+            val now = System.currentTimeMillis()
+            if (now - current_ts > min_delta) {
+                handler.on_progress_update(chunk_count / total_chunk_count)
+                current_ts = now
+            }
+            chunk_count += 1.0
         }
 
         wave_generator.frame = 0

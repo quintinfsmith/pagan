@@ -113,8 +113,14 @@ class MainActivity : AppCompatActivity() {
         var show_percussion = true
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
-            val frame_map = MidiFrameMap(sample_handle_manager)
-            frame_map.parse_midi(this.opus_manager.get_midi())
+            val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
+            (frame_map as PlaybackFrameMap).parse_opus()
+            val start_frame = frame_map.get_marked_frames()[0]
+
+            // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
+            for (i in start_frame .. start_frame + sample_handle_manager.buffer_size) {
+                (frame_map as PlaybackFrameMap).check_frame(i)
+            }
 
             this.export_handle = WavConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
 

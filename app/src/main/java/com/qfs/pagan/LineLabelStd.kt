@@ -10,10 +10,14 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)) {
-    val click_threshold = 250
+    val click_threshold_millis = 250
+    val click_threshold_pixels = 5
+    var press_position: Pair<Float, Float>? = null
     var press_timestamp: Long = 0
     init {
         this._set_colors()
@@ -175,8 +179,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         return if (touchEvent == null) {
             true
         } else if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-            Log.d("AAA", "DRAG?")
-            if (!column_layout.is_dragging()) {
+            val d = sqrt((touchEvent.x - this.press_position!!.first).pow(2f) + (touchEvent.y - this.press_position!!.second).pow(2f))
+            if (!column_layout.is_dragging() && d > this.click_threshold_pixels) {
                 column_layout.set_dragging_line(this.channel, this.line_offset)
                 (view!!.parent as LineLabelView).startDragAndDrop(
                     null,
@@ -189,9 +193,10 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
             column_layout.stop_dragging()
             this.press_timestamp = System.currentTimeMillis()
+            this.press_position = Pair(touchEvent.x, touchEvent.y)
             true
         } else if (touchEvent.action == MotionEvent.ACTION_UP) {
-            if (System.currentTimeMillis() - this.press_timestamp < this.click_threshold && !column_layout.is_dragging()) {
+            if (System.currentTimeMillis() - this.press_timestamp < this.click_threshold_millis && !column_layout.is_dragging()) {
                 performClick()
                 true
             } else {

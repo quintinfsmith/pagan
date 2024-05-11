@@ -167,11 +167,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
     fun touch_callback(view: View?, touchEvent: MotionEvent?): Boolean {
         var parent = view?.parent ?: return false
-        while (parent != null && parent !is LineLabelColumnLayout) {
+        while (parent !is LineLabelColumnLayout) {
             parent = parent.parent
-        }
-        if (parent == null) {
-            return false
         }
 
         val column_layout = parent as LineLabelColumnLayout

@@ -207,6 +207,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
             opus_manager.unset()
         } else {
             opus_manager.set_percussion_event_at_cursor()
+            this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
         }
     }
 

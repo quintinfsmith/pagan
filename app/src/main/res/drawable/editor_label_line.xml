@@ -15,7 +15,7 @@
     </shape>
 </item>
 
-<item android:top="-.5dp" android:elevation="0dp" android:id="@+id/tintable_lines">
+<item android:elevation="0dp" android:id="@+id/tintable_lines">
     <shape android:shape="rectangle">
         <solid android:color="#00000000"/>
         <stroke android:width="@dimen/stroke_leaf" android:color="#000000"/>

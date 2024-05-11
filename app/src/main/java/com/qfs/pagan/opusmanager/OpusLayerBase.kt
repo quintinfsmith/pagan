@@ -1630,7 +1630,7 @@ open class OpusLayerBase {
                 )
             )
         }
-    
+
         return LoadedJSONData(
             tuning_map = old_data.tuning_map,
             reflections = old_data.reflections,
@@ -1640,7 +1640,7 @@ open class OpusLayerBase {
             controllers = listOf(
                 ActiveControllerJSON(
                     ControlEventType.Tempo,
-                    ActiveControlSet.ActiveController.default_event(ControlEventType.Tempo),
+                    OpusTempoEvent(old_data.tempo),
                     listOf( )
                 )
             )

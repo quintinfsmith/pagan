@@ -409,8 +409,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Row -> Triple(null, 0f, 0f)
-            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 0f)
+            OpusManagerCursor.CursorMode.Row -> Triple(null, 0f, 1f)
+            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
             OpusManagerCursor.CursorMode.Single -> {
                 var tree = opus_manager.get_tree(cursor.get_beatkey())
                 var width = 1f
@@ -422,8 +422,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 }
                 Triple(cursor.beat, offset, width)
             }
-            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 0f)
-            OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 0f)
+            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
+            OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
         }
 
         // If the row is out of view, scrolls to it

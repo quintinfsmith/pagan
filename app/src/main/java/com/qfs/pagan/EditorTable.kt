@@ -608,8 +608,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         if (x != null) {
             if (x >= this.get_opus_manager().beat_count) {
                 return
-            } else {
+            } else if (! force) {
                 this.scroll_to_x(x, offset, offset_width)
+            } else {
+                this.forced_scroll_to_beat(x)
             }
         }
 
@@ -762,6 +764,17 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val scroll_offset = this._line_label_layout.scrollY / line_height
         val height = this._scroll_view.measuredHeight / line_height
         return y >= scroll_offset && y <= (scroll_offset + height)
+    }
+
+    fun forced_scroll_to_beat(x: Int) {
+        val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
+        this._main_scroll_locked = true
+        layout_manager.scrollToPositionWithOffset(x, 0)
+        this._main_scroll_locked = false
+
+        this._label_scroll_locked = true
+        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, 0)
+        this._label_scroll_locked = false
     }
 
     fun scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {

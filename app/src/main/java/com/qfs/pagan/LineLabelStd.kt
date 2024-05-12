@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
@@ -176,15 +175,17 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         return if (touchEvent == null) {
             true
         } else if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-            val d = sqrt((touchEvent.x - this.press_position!!.first).pow(2f) + (touchEvent.y - this.press_position!!.second).pow(2f))
-            if (!column_layout.is_dragging() && d > this.click_threshold_pixels) {
-                column_layout.set_dragging_line(this.channel, this.line_offset)
-                (view!!.parent as LineLabelView).startDragAndDrop(
-                    null,
-                    DragShadowBuilder(view),
-                    null,
-                    0
-                )
+            if (!column_layout.is_dragging()) {
+                val d = sqrt((touchEvent.x - this.press_position!!.first).pow(2f) + (touchEvent.y - this.press_position!!.second).pow(2f))
+                if (d > this.click_threshold_pixels) {
+                    column_layout.set_dragging_line(this.channel, this.line_offset)
+                    (view!!.parent as LineLabelView).startDragAndDrop(
+                        null,
+                        DragShadowBuilder(view),
+                        null,
+                        0
+                    )
+                }
             }
             true
         } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {

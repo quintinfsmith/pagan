@@ -1,5 +1,4 @@
 package com.qfs.pagan.opusmanager
-import android.util.Log
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -2785,7 +2784,6 @@ open class OpusLayerBase {
         val width = (to_key.beat - from_key.beat) + 1
         val count = ((this.beat_count - from_key.beat) / width) - 1
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
-        Log.d("AAA", "$width, $count, $beat_keys")
         for (beat_key in beat_keys) {
             val working_tree = this.get_tree(beat_key)
             for (i in 0 until count) {

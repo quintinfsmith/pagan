@@ -146,7 +146,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             return
         }
 
-        main.drawer_unlock()
 
         if (savedInstanceState != null) {
             val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
@@ -205,7 +204,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
-            main.drawer_lock()
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
             }
@@ -220,14 +218,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 }
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
-                main.drawer_unlock()
                 this.project_change_flagged = false
             }
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
             val main = this.get_main()
-            main.drawer_lock()
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
             main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
@@ -252,7 +248,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 this.view_model.backup_fragment_intent = null
-                main.drawer_unlock()
                 main.loading_reticle_hide()
                 this.project_change_flagged = false
             }

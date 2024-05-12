@@ -77,7 +77,6 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.apres.soundfontplayer.MidiFrameMap
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.pagan.ColorMap.Palette
@@ -372,6 +371,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        this.drawer_lock()
         this.view_model.color_map.set_fallback_palette(
             if (this.is_night_mode()) {
                 this.get_night_palette()
@@ -580,16 +580,6 @@ class MainActivity : AppCompatActivity() {
         }
         ///////////////////////////////////////////
 
-        when (navController.currentDestination?.id) {
-            R.id.EditorFragment -> {
-                this.drawer_unlock()
-            }
-
-            else -> {
-                this.drawer_lock()
-            }
-        }
-
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (navController.currentDestination?.id == R.id.EditorFragment) {
@@ -626,6 +616,12 @@ class MainActivity : AppCompatActivity() {
 
                 this@MainActivity.playback_stop()
                 this@MainActivity.playback_stop_midi_output()
+                this@MainActivity.drawer_unlock() // So the drawer can be closed with a swipe
+            }
+
+            override fun onDrawerClosed(drawerView: View) {
+                super.onDrawerClosed(drawerView)
+                this@MainActivity.drawer_lock() // so the drawer can't be opened with a swipe
             }
         })
 
@@ -653,9 +649,9 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             android.R.id.home -> {
                 val fragment = this.get_active_fragment()
-                if (fragment is FragmentEditor && this._binding.root.getDrawerLockMode(this.findViewById(R.id.config_drawer)) != DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
+                if (fragment is FragmentEditor) {
                     this.drawer_open()
-                }  else if (fragment !is FragmentEditor) {
+                } else {
                     val navController = findNavController(R.id.nav_host_fragment_content_main)
                     navController.popBackStack()
                 }
@@ -953,9 +949,6 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         if (fragment == R.id.EditorFragment) {
             this._has_seen_front_page = true
-            this.drawer_unlock()
-        } else {
-            this.drawer_lock()
         }
 
         navController.navigate(fragment)

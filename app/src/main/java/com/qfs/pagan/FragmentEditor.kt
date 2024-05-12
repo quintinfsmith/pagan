@@ -412,7 +412,13 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             OpusManagerCursor.CursorMode.Row -> Triple(null, 0f, 1f)
             OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
             OpusManagerCursor.CursorMode.Single -> {
-                var tree = opus_manager.get_tree(cursor.get_beatkey())
+                var tree = when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
+                    CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
+                    CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat)
+                    null -> opus_manager.get_tree(cursor.get_beatkey())
+                }
+
                 var width = 1f
                 var offset = 0f
                 for (p in cursor.position) {

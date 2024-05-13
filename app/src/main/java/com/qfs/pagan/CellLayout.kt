@@ -203,14 +203,9 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
     }
 
 
-    private fun get_beat_tree(beat_key: BeatKey? = null): OpusTree<OpusEventSTD> {
+    private fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEventSTD> {
         val opus_manager = this.get_opus_manager()
-        val checked_beat_key = beat_key ?: this.get_beat_key()
-        return if (checked_beat_key == null) {
-            OpusTree<OpusEventSTD>() // TODO: Maybe throw error?
-        } else {
-            opus_manager.get_tree(checked_beat_key)
-        }
+        return opus_manager.get_tree(beat_key)
     }
 
 

@@ -18,7 +18,6 @@
     <RadioGroup
         android:id="@+id/rgLinkMode"
         android:orientation="horizontal"
-        android:checkedButton="@id/rbLinkModeLink"
         android:layout_height="wrap_content"
         android:minHeight="41dp"
         android:layout_width="match_parent">

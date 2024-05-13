@@ -2262,12 +2262,11 @@ open class OpusLayerBase {
         this.transpose = new_transpose
     }
 
-    // TODO: Convert these functions to use ActiveControlSet ---------
-
     fun get_line_volume(channel: Int, line_offset: Int): Int {
-        return (this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value
+        return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
-    // ----------------------------------------------------------------
+
+
 
     fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
         val (from_key, to_key) = if (first.channel < second.channel) {
@@ -2811,7 +2810,25 @@ open class OpusLayerBase {
         }
     }
 
-    // TODO: overwrite_channel_ctl_range_horizontally
+    open fun overwrite_channel_ctl_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        val start = min(first_beat, second_beat)
+        val end = max(first_beat, second_beat)
+
+        val width = (end - start) + 1
+        val count = ((this.beat_count - start) / width) - 1
+        for (i in 0 until width) {
+            for (j in 0 until count) {
+                this.replace_channel_ctl_tree(
+                    type,
+                    channel,
+                    ((j + 1) * width) + (i + start),
+                    null,
+                    this.get_channel_ctl_tree(type, channel, (i + start))
+                )
+            }
+        }
+    }
+
 
     open fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
@@ -3007,6 +3024,21 @@ open class OpusLayerBase {
     open fun set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: OpusControlEvent) {
         val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
         controller.initial_event = event
+    }
+
+    fun get_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int): OpusControlEvent {
+        val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
+        return controller.initial_event
+    }
+
+    fun get_channel_controller_initial_event(type: ControlEventType, channel: Int): OpusControlEvent {
+        val controller = this.channels[channel].controllers.get_controller(type)
+        return controller.initial_event
+    }
+
+    fun get_global_controller_initial_event(type: ControlEventType): OpusControlEvent {
+        val controller = this.controllers.get_controller(type)
+        return controller.initial_event
     }
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

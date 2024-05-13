@@ -1363,6 +1363,12 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun overwrite_channel_ctl_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        this._remember {
+            super.overwrite_channel_ctl_range_horizontally(type, channel, first_beat, second_beat)
+        }
+    }
+
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
         this._remember {

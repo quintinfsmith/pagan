@@ -7,6 +7,7 @@ import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.pow
@@ -99,8 +100,9 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                     }
                 }
             } catch (e: OpusLayerLinks.BadRowLink) {
-                // TODO: Feedback
-                //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
+                // No Feedback.  feels Redundant
+            } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                // No Feedback.  feels Redundant
             }
             cursor.selecting_range = false
         } else if (cursor.selecting_range) {
@@ -116,9 +118,11 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                     }
                 }
             } catch (e: OpusLayerLinks.BadRowLink) {
-                // TODO: Feedback
-                //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
+                // No Feedback.  feels Redundant
+            } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                // No Feedback.  feels Redundant
             }
+
             cursor.selecting_range = false
         }
         opus_manager.cursor_select_row(this.channel, this.line_offset)

@@ -247,19 +247,49 @@ data class OpusManagerCursor(
         this.ctl_level = null
     }
 
+    fun select_line_ctl_first_corner(type: ControlEventType, beat_key: BeatKey) {
+        this.select(beat_key, listOf())
+        this.selecting_range = true
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Line
+    }
+
+    fun select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        this.select_range(beat_key_a, beat_key_b)
+
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Line
+    }
+
+
     fun select_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
         this.range = Pair(
             BeatKey(0,0, first_beat),
             BeatKey(0,0, second_beat)
         )
         this.mode = CursorMode.Range
+        this.ctl_type = type
+        this.ctl_level = CtlLineLevel.Global
     }
 
     fun select_global_ctl_end_point(type: ControlEventType, beat: Int) {
         this.select_ctl_at_global(beat, listOf(), type)
         this.selecting_range = true
+    }
+
+    fun select_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        this.range = Pair(
+            BeatKey(channel,0, first_beat),
+            BeatKey(channel,0, second_beat)
+        )
+        this.mode = CursorMode.Range
         this.ctl_type = type
-        this.ctl_level = CtlLineLevel.Global
+        this.ctl_level = CtlLineLevel.Channel
+    }
+
+    fun select_channel_ctl_end_point(type: ControlEventType, channel: Int, beat: Int) {
+        this.select_ctl_at_channel(channel, beat, listOf(), type)
+        this.selecting_range = true
     }
 
     //fun move_left() {

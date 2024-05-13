@@ -41,6 +41,7 @@ open class OpusLayerBase {
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
     class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) @ $startkey overflows")
     class EventlessTreeException: Exception("Tree requires event for operation")
+    class InvalidOverwriteCall: Exception()
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -2832,7 +2833,7 @@ open class OpusLayerBase {
 
     open fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
-            return // TODO Throw Error
+            throw InvalidOverwriteCall()
         }
         val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
         val original_tree = this.get_tree(beat_key)
@@ -2853,7 +2854,7 @@ open class OpusLayerBase {
 
     open fun overwrite_channel_ctl_row(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
         if (target_channel != original_channel) {
-            return // TODO: Throw Error
+            throw InvalidOverwriteCall()
         }
 
         val original_tree = this.get_channel_ctl_tree(type, original_channel, original_beat)
@@ -2864,7 +2865,7 @@ open class OpusLayerBase {
 
     open fun overwrite_line_ctl_row(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
         if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
-            return // TODO Throw Error
+            throw InvalidOverwriteCall()
         }
         val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
         val original_tree = this.get_line_ctl_tree(type, beat_key)

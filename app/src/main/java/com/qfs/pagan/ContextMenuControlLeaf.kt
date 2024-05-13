@@ -9,6 +9,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.TrivialActionException
@@ -66,9 +67,8 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
         this.widget = when (cursor.ctl_type!!) {
             ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, this.context, this::_widget_callback)
             ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_widget_callback)
-            else -> TODO()
-            //ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_widget_callback)
-        } as ControlWidget
+            ControlEventType.Reverb -> ControlWidgetReverb(controller.initial_event as OpusReverbEvent, this.context, this::_widget_callback)
+        }
 
         this._current_type = cursor.ctl_type
 

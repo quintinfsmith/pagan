@@ -121,7 +121,7 @@ class ProjectManager(data_dir: String) {
 
         return try {
             json.decodeFromString(string_content)
-        } catch (e: Exception) {// TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
+        } catch (e: Exception) { // TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
             // Corruption Protection: if the cache file is bad json, delete and rebuild
             File(this._cache_path).delete()
             this._cache_project_list()

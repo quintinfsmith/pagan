@@ -4,6 +4,7 @@ import android.content.Context
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 
 class LeafButtonCtlGlobal(
@@ -70,11 +71,18 @@ class LeafButtonCtlGlobal(
                         opus_manager.move_global_ctl_to_beat(beat)
                     }
 
-                    PaganConfiguration.LinkMode.LINK -> {/* Unreachable */
+                    PaganConfiguration.LinkMode.LINK -> { /* Unreachable */ }
+                }
+            } catch (e: Exception) {
+                when (e) {
+                    is IndexOutOfBoundsException,
+                    is OpusLayerBase.InvalidOverwriteCall -> {
+                        opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
+                    }
+                    else -> {
+                        throw e
                     }
                 }
-            } catch (e: IndexOutOfBoundsException) {
-                opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
             }
         }
     }

@@ -7,6 +7,7 @@ import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
@@ -58,8 +59,7 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         this.widget = when (cursor.ctl_type!!) {
             ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, this.context, this::_callback)
             ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_callback)
-            else -> TODO()
-            //ControlEventType.Reverb -> ControlWidgetReverb(this.context, this::_callback)
+            ControlEventType.Reverb -> ControlWidgetReverb(controller.initial_event as OpusReverbEvent, this.context, this::_callback)
         }
 
         this._current_type = cursor.ctl_type
@@ -97,11 +97,10 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         } else {
             val controller = this.get_controller()
             this.widget.set_event(
-                when(this._current_type) {
+                when(this._current_type!!) {
                     ControlEventType.Tempo -> controller.initial_event as OpusTempoEvent
-                    ControlEventType.Volume -> TODO()
-                    ControlEventType.Reverb -> TODO()
-                    null -> TODO()
+                    ControlEventType.Volume -> controller.initial_event as OpusVolumeEvent
+                    ControlEventType.Reverb -> controller.initial_event as OpusReverbEvent
                 }
             )
         }

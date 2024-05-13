@@ -70,6 +70,7 @@ import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
 import com.qfs.apres.MidiPlayer
+import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
@@ -1382,13 +1383,17 @@ class MainActivity : AppCompatActivity() {
             )
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
         } else {
-            this._midi_feedback_dispatcher.play_note(
-                midi_channel,
-                note,
-                bend,
-                velocity,
-                !opus_manager.is_tuning_standard() || !this.is_connected_to_physical_device()
-            )
+            try {
+                this._midi_feedback_dispatcher.play_note(
+                    midi_channel,
+                    note,
+                    bend,
+                    velocity,
+                    !opus_manager.is_tuning_standard() || !this.is_connected_to_physical_device()
+                )
+            } catch (e: VirtualMidiInputDevice.DisconnectedException) {
+                // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
+            }
         }
     }
 

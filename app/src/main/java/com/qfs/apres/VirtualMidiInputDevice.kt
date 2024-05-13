@@ -3,6 +3,7 @@ package com.qfs.apres
 import com.qfs.apres.event.MIDIEvent
 
 abstract class VirtualMidiInputDevice {
+    class DisconnectedException: Exception()
     private var midi_controller: MidiController? = null
     fun set_midi_controller(midi_controller: MidiController) {
         this.midi_controller = midi_controller
@@ -17,9 +18,11 @@ abstract class VirtualMidiInputDevice {
     }
 
     fun send_event(event: MIDIEvent) {
-        // TODO: Throw error?
         if (is_connected()) {
             this.midi_controller!!.broadcast_event(event)
+        } else {
+            throw DisconnectedException()
         }
+
     }
 }

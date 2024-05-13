@@ -97,41 +97,6 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         return (this.parent.parent as LineLabelColumnLayout).get_opus_manager()
     }
 
-    //override fun onTouch(view: View?, touchEvent: MotionEvent?): Boolean {
-    //    val column_layout = this.parent.parent as LineLabelColumnLayout
-
-    //    val opus_manager = this.get_opus_manager()
-    //    val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
-    //        opus_manager.get_ctl_line_from_visible_row( this.row )
-    //    )
-
-    //    // TODO; not sure what i'm going to do with this, might not be draggable
-    //    if (ctl_level != null) {
-    //        return false
-    //    }
-
-    //    return if (touchEvent == null) {
-    //        true
-    //    } else if (touchEvent.action == MotionEvent.ACTION_MOVE) {
-    //        val (channel, line_offset) = opus_manager.get_std_offset(pointer)
-    //        if (!column_layout.is_dragging()) {
-    //            column_layout.set_dragging_line(channel, line_offset)
-    //            (view as LineLabelView).startDragAndDrop(
-    //                null,
-    //                DragShadowBuilder(view),
-    //                null,
-    //                0
-    //            )
-    //        }
-    //        true
-    //    } else if (touchEvent.action == MotionEvent.ACTION_DOWN) {
-    //        column_layout.stop_dragging()
-    //        true
-    //    } else {
-    //        performClick()
-    //    }
-    //}
-
     fun reset_row(new_row: Int) {
         this.row = new_row
         this.set_inner_label()

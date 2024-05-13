@@ -29,7 +29,26 @@ class LeafButtonCtlLine(
     }
 
     override fun long_click(): Boolean {
-        TODO("Not yet implemented")
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val beat_key = this._get_beat_key()
+        if (cursor.ctl_level != CtlLineLevel.Line || !cursor.selecting_range) {
+            opus_manager.cursor_select_first_corner(beat_key)
+        } else if (!cursor.is_linking_range()) {
+            opus_manager.cursor_select_line_ctl_range(
+                this.control_type,
+                opus_manager.cursor.get_beatkey(),
+                beat_key
+            )
+        } else {
+            opus_manager.cursor_select_line_ctl_range(
+                this.control_type,
+                opus_manager.cursor.range!!.first,
+                beat_key
+            )
+        }
+
+        return true
     }
 
     override fun is_selected(): Boolean {

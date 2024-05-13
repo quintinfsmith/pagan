@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
@@ -104,6 +105,10 @@ class LeafButtonStd(
                         cursor.selecting_range = false
                         opus_manager.cursor_select(beat_key, this.position)
                         this.get_activity().feedback_msg(context.getString(R.string.feedback_bad_range))
+                    }
+                    is OpusLayerCursor.InvalidCursorState -> {
+                        // Shouldn't ever actually be possible
+                        throw e
                     }
                     else -> {
                         throw e

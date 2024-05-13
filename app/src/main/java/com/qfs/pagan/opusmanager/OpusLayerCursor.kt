@@ -4,6 +4,7 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 open class OpusLayerCursor: OpusLayerHistory() {
+    class InvalidCursorState: Exception()
     var cursor = OpusManagerCursor()
     private var _queued_cursor_selection: OpusManagerCursor? = null
 
@@ -790,6 +791,22 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.select_global_ctl_end_point(type, beat)
     }
 
+    open fun cursor_select_channel_ctl_range(type:ControlEventType, channel: Int, first: Int, second: Int) {
+        this.cursor.select_channel_ctl_range(type, channel, first, second)
+    }
+    open fun cursor_select_channel_ctl_end_point(type: ControlEventType, channel: Int, beat: Int) {
+        this.cursor.select_channel_ctl_end_point(type, channel, beat)
+    }
+
+    open fun cursor_select_line_ctl_first_corner(type: ControlEventType, beat_key: BeatKey) {
+        this.cursor.select_line_ctl_first_corner(type, beat_key)
+    }
+
+    open fun cursor_select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        this.cursor.select_line_ctl_range(type, beat_key_a, beat_key_b)
+    }
+
+
     fun get_tree(): OpusTree<OpusEventSTD> {
         return this.get_tree(
             this.cursor.get_beatkey(),
@@ -1147,7 +1164,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         } else if (this.cursor.selecting_range) {
             this.link_beats(beat_key, this.cursor.get_beatkey())
         } else {
-            // TODO: Raise Error
+            throw InvalidCursorState()
         }
     }
 
@@ -1161,7 +1178,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
             this.move_leaf(this.cursor.get_beatkey(), listOf(), beat_key, listOf())
         } else {
-            // TODO: Raise Error
+            throw InvalidCursorState()
         }
     }
 
@@ -1182,13 +1199,13 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 )
             )
         } else {
-            // TODO: Raise Error
+            throw InvalidCursorState()
         }
     }
+
     fun copy_global_ctl_to_beat(beat: Int) {
         if (this.cursor.ctl_level != CtlLineLevel.Global) {
-            // TODO: Raise Error
-            return
+            throw InvalidOverwriteCall()
         }
 
         if (this.cursor.is_linking_range()) {
@@ -1211,7 +1228,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 )
             )
         } else {
-            // TODO: Raise Error
+            throw InvalidCursorState()
         }
 
         val tree = this.get_global_ctl_tree(
@@ -1229,8 +1246,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     fun move_global_ctl_to_beat(beat: Int) {
         if (this.cursor.ctl_level != CtlLineLevel.Global) {
-            // TODO: Raise Error
-            return
+            throw InvalidOverwriteCall()
         }
 
         if (this.cursor.is_linking_range()) {
@@ -1250,7 +1266,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 listOf()
             )
         } else {
-            // TODO: Raise Error
+            throw InvalidCursorState()
         }
 
         val tree = this.get_global_ctl_tree(

@@ -86,6 +86,7 @@
     <string name="dlg_decline">No</string>
     <string name="dlg_set_tempo">Set Tempo (BPM)</string>
     <string name="dlg_set_radix">Radix</string>
+    <string name="dlg_set_reverb">Set Reverb Wetness (%)</string>
     <string name="dlg_change_name">Change Project Name</string>
     <string name="feedback_project_saved">Project Saved</string>
     <string name="dlg_transpose">Transpose</string>

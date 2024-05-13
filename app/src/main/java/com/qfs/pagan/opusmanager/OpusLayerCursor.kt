@@ -458,6 +458,36 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     )
                 )
             }
+            HistoryToken.CURSOR_SELECT_LINE_CTL_ROW -> {
+                this.queue_cursor_select(
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Single,
+                        channel = current_node.args[1] as Int,
+                        line_offset = current_node.args[2] as Int,
+                        ctl_level = CtlLineLevel.Line,
+                        ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    )
+                )
+            }
+            HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW -> {
+                this.queue_cursor_select(
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Row,
+                        ctl_level = CtlLineLevel.Channel,
+                        channel = current_node.args[1] as Int,
+                        ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    )
+                )
+            }
+            HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW -> {
+                this.queue_cursor_select(
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Row,
+                        ctl_level = CtlLineLevel.Global,
+                        ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    )
+                )
+            }
             else -> { }
         }
         super.apply_history_node(current_node, depth)
@@ -700,6 +730,32 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT,
                             listOf(beat_key, position)
+                        )
+                    }
+
+                    HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW,
+                            listOf(this.checked_cast<ControlEventType>(args[0]))
+                        )
+                    }
+                    HistoryToken.SET_CHANNEL_CTL_INITIAL_EVENT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW,
+                            listOf(
+                                this.checked_cast<ControlEventType>(args[0]),
+                                args[1] as Int
+                            )
+                        )
+                    }
+                    HistoryToken.SET_LINE_CTL_INITIAL_EVENT -> {
+                        this.push_to_history_stack(
+                            HistoryToken.CURSOR_SELECT_LINE_CTL_ROW,
+                            listOf(
+                                this.checked_cast<ControlEventType>(args[0]),
+                                args[1] as Int,
+                                args[2] as Int
+                            )
                         )
                     }
 

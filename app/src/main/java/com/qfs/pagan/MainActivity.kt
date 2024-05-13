@@ -1407,7 +1407,7 @@ class MainActivity : AppCompatActivity() {
     fun import_midi(path: String) {
         val bytes = this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
             FileInputStream(it.fileDescriptor).readBytes()
-        } ?: return // TODO. throw error?
+        } ?: throw InvalidMIDIFile(path)
 
         val midi = try {
             Midi.from_bytes(bytes)
@@ -1578,12 +1578,11 @@ class MainActivity : AppCompatActivity() {
             this.configuration.use_palette = this.view_model.color_map.use_palette
             this.configuration.save(this._config_path)
         } catch (e: FileNotFoundException) {
-            // TODO: ?Feedback? only happens on devices not properly put together (realme)
+            this.feedback_msg(resources.getString(R.string.config_file_not_found))
         }
     }
 
     fun get_drum_name(index: Int): String? {
-        // TODO: Remove/Separate populate_active_percussion_names.
         this.populate_active_percussion_names(false)
         return this.active_percussion_names[index + 27]
     }

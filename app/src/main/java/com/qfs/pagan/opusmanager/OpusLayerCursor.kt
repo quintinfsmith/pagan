@@ -847,10 +847,14 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 }
             }
             CtlLineLevel.Channel -> {
+                val ctl_type = this.cursor.ctl_type!!
                 if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                    TODO()
+                    val (key_a, key_b) = this.cursor.range!!
+                    val start = min(key_a.beat, key_b.beat)
+                    val end = max(key_a.beat, key_b.beat)
+                    this.unset_channel_ctl_range(ctl_type, key_a.channel, start, end)
+                    this.cursor_select_ctl_at_channel(ctl_type, key_a.channel, start, listOf())
                 } else {
-                    val ctl_type = this.cursor.ctl_type!!
                     val channel = this.cursor.channel
                     val beat = this.cursor.beat
                     val position = this.cursor.get_position()
@@ -860,10 +864,13 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 }
             }
             CtlLineLevel.Line -> {
+                val ctl_type = this.cursor.ctl_type!!
                 if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                    TODO()
+                    val beat_key = this.cursor.range!!.first
+
+                    this.unset_line_ctl_range(ctl_type, beat_key, this.cursor.range!!.second)
+                    this.cursor_select_ctl_at_line(ctl_type, beat_key, listOf())
                 } else {
-                    val ctl_type = this.cursor.ctl_type!!
                     val beat_key = this.cursor.get_beatkey()
                     val position = this.cursor.get_position()
 

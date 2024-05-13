@@ -66,7 +66,7 @@
 
     <string name="dlg_delete_title">Really Delete %1s?</string>
     <string name="feedback_delete">Deleted %1s</string>
-
+    <string name="config_file_not_found">Configuration can't be accessed</string>
 
     <string name="line_volume">Line Volume:</string>
     <string name="source_code_location">

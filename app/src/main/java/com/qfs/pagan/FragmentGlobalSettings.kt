@@ -57,7 +57,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
                         main.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
                     }
                 } else {
-                    // TODO
+                    throw FileNotFoundException()
                 }
             }
         }

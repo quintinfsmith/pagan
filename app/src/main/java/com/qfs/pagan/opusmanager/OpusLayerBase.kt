@@ -437,19 +437,6 @@ open class OpusLayerBase {
     }
 
     /**
-     * Get an ordered list the size of the number of channels in use, with values corresponding to the
-     * number of lines in each channel
-     */
-    fun get_channel_line_counts(): List<Int> {
-        // TODO: Use Array?
-        val output: MutableList<Int> = mutableListOf()
-        for (i in 0 until this.channels.size) {
-            output.add(this.channels[i].size)
-        }
-        return output
-    }
-
-    /**
      * Check if the tree at location [beat_key]/[position] has any absolute event
      * between it and the beginning of the opus on it's line.
      */

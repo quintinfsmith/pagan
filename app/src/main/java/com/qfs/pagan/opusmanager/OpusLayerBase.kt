@@ -2032,8 +2032,10 @@ open class OpusLayerBase {
             tree.reduce()
             tree.clear_singles()
         }
-
-        // TODO: Should probably figure out why i can get more tempo beats than note beats, but for just clip
+        /*
+            NOTE: tempo_line *could* have more beats than the opus if there is a tempo change
+            after the last NoteOff event. that gets ignored here
+         */
         return Triple(opus, tempo_line.subList(0, min(tempo_line.size, opus.size)), instrument_map)
     }
 

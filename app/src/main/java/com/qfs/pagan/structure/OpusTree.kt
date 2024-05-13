@@ -7,6 +7,7 @@ import kotlin.math.round
 
 class OpusTree<T> {
     class InvalidGetCall : Exception("Can't call get() on leaf")
+    class UntrackedInParentException: Exception("Parent assigned to tree has no record of the child")
     companion object {
         fun <T> from_json(json_tree: OpusTreeJSON<T>): OpusTree<T>  {
             var new_tree = OpusTree<T>()
@@ -39,7 +40,7 @@ class OpusTree<T> {
     fun get_parent(): OpusTree<T>? {
         return this.parent
     }
-    fun getIndex(): Int? {
+    fun get_index(): Int? {
         if (this.parent == null) {
             return null
         }
@@ -50,8 +51,7 @@ class OpusTree<T> {
             }
         }
 
-        // TODO: Throw error
-        return null
+        throw UntrackedInParentException()
     }
 
     fun set_size(new_size: Int, noclobber: Boolean = false) {
@@ -325,7 +325,7 @@ class OpusTree<T> {
         var tree = this
         val output = mutableListOf<Int>()
         while (tree.parent != null) {
-            output.add(tree.getIndex()!!)
+            output.add(tree.get_index()!!)
             tree = tree.parent!!
         }
         return output.reversed()
@@ -698,13 +698,13 @@ class OpusTree<T> {
             return Pair(0F, 1F)
         }
 
-        var ratio = top.getIndex()!!.toFloat() / top.parent!!.size.toFloat()
+        var ratio = top.get_index()!!.toFloat() / top.parent!!.size.toFloat()
         var total_divs = top.parent!!.size
 
         while (true) {
             top = top.parent!!
             if (top.parent != null) {
-                ratio = (ratio / top.parent!!.size.toFloat()) + (top.getIndex()!!.toFloat() / top.parent!!.size.toFloat())
+                ratio = (ratio / top.parent!!.size.toFloat()) + (top.get_index()!!.toFloat() / top.parent!!.size.toFloat())
                 total_divs *= top.parent!!.size
             } else {
                 break

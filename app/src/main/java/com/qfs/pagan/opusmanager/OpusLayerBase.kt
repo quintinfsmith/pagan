@@ -989,7 +989,7 @@ open class OpusLayerBase {
         tree.empty()
 
         if (tree.parent != null) {
-            val index = tree.getIndex()
+            val index = tree.get_index()
             tree.parent!!.divisions.remove(index)
         }
     }
@@ -2648,7 +2648,7 @@ open class OpusLayerBase {
                         var tmp_tree = tree
                         val position = mutableListOf<Int>()
                         while (tmp_tree != beat_tree) {
-                            position.add(0, tmp_tree.getIndex()!!)
+                            position.add(0, tmp_tree.get_index()!!)
                             tmp_tree = tmp_tree.get_parent()!!
                         }
 

@@ -150,8 +150,13 @@ class ChannelOptionAdapter(
     private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
-
-        opus_manager.toggle_percussion_visibility()
+        try {
+            opus_manager.toggle_percussion_visibility()
+        } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
+            return
+        } catch (e: OpusLayerInterface.HidingLastChannelException) {
+            return
+        }
 
         val remove_button = (view as ViewGroup).getChildAt(1) as TextView
         remove_button.text = this.get_percussion_visibility_button_text()

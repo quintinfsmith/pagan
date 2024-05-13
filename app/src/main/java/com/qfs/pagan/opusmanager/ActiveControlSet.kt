@@ -199,8 +199,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
     }
 
     fun get_all(): Array<Pair<ControlEventType, ActiveController>> {
-        // TODO: Guarantee some order
-        var keys = this.controllers.keys.toList()
+        var keys = this.controllers.keys.toList().sorted()
         return Array(this.controllers.size) {
             Pair(keys[it], this.controllers[keys[it]]!!)
         }

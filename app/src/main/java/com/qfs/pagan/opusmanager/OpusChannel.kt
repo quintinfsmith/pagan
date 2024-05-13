@@ -156,23 +156,6 @@ class OpusChannel(var uuid: Int) {
         return Pair(this.midi_bank, this.midi_program)
     }
 
-    // TODO: Implement
-    //fun swap_lines(first_index: Int, second_index: Int) {
-    //    // Adjust the new_index so it doesn't get confused
-    //    // when we pop() the old_index
-
-    //    if (first_index < 0) {
-    //        throw IndexOutOfBoundsException()
-    //    }
-    //    if (second_index >= this.lines.size) {
-    //        throw IndexOutOfBoundsException()
-    //    }
-
-    //    val tmp = this.lines[first_index]
-    //    this.lines[first_index] = this.lines[second_index]
-    //    this.lines[second_index] = tmp
-    //}
-
     fun get_line(index: Int): OpusLine {
         return this.lines[index]
     }

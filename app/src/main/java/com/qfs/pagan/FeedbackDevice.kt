@@ -44,8 +44,8 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         }
 
         override fun get_size(): Int {
-            // Not used in feedback// Not used in feedback// Not used in feedback// Not used in feedback
-            TODO("Not yet implemented")
+            // Not used in feedback
+            return 0
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {

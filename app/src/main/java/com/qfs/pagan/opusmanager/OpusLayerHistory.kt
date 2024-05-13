@@ -156,7 +156,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     )
                 }
 
-
                 HistoryToken.REMOVE_LINE -> {
                     this.remove_line(
                         current_node.args[0] as Int,

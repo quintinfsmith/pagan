@@ -1,15 +1,9 @@
 package com.qfs.pagan
 
 import android.util.Log
-import com.qfs.apres.Midi
-import com.qfs.apres.event.NoteOn
-import com.qfs.apres.event.SetTempo
-import com.qfs.apres.event.TimeSignature
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.pow
 
 const val CH_OPEN = '['
 const val CH_CLOSE = ']'
@@ -202,82 +196,6 @@ fun str_to_int(number: String, radix: Int): Int {
         output += index
     }
     return output
-}
-
-fun tree_from_midi(midi: Midi): OpusTree<Set<OpusEventSTD>> {
-    var beat_size = midi.get_ppqn()
-    var total_beat_offset = 0
-    var last_ts_change = 0
-    val beat_values: MutableList<OpusTree<Set<OpusEventSTD>>> = mutableListOf()
-    var max_tick = 0
-    val press_map = HashMap<Int, Pair<Int, Int>>()
-
-    for (pair in midi.get_all_events()) {
-        val tick = pair.first
-        val event = pair.second
-
-        max_tick = max(tick, max_tick)
-        val beat_index = ((tick - last_ts_change) / beat_size) + total_beat_offset
-        val inner_beat_offset = (tick - last_ts_change) % beat_size
-        if (event is NoteOn && event.get_velocity() > 0) {
-            while (beat_values.size <= beat_index) {
-                val new_tree = OpusTree<Set<OpusEventSTD>>()
-                new_tree.set_size(beat_size)
-                beat_values.add(new_tree)
-            }
-
-            val tree = beat_values[beat_index]
-            val eventset = if (tree[inner_beat_offset].is_event()) {
-                tree[inner_beat_offset].get_event()!!.toMutableSet()
-            } else {
-                mutableSetOf()
-            }
-
-            eventset.add(
-                OpusEventSTD(
-                    if (event.channel == 9) {
-                        event.get_note() - 27
-                    } else {
-                        event.get_note() - 21
-                    },
-                    event.channel,
-                    false
-                )
-            )
-
-            tree[inner_beat_offset].set_event(eventset)
-            press_map[event.get_note()] = Pair(beat_index, inner_beat_offset)
-        } else if (event is TimeSignature) {
-            total_beat_offset += (tick - last_ts_change) / beat_size
-            last_ts_change = tick
-            beat_size = midi.get_ppqn() / 2.toFloat().pow(event.get_denominator()).toInt()
-            //denominator = 2.toFloat().pow(event.get_denominator()).toInt()
-        } else if (event is SetTempo) {
-            //pass TODO (maybe)
-        }
-    }
-
-    total_beat_offset += (max_tick - last_ts_change) / beat_size
-    total_beat_offset += 1
-
-    val opus = OpusTree<Set<OpusEventSTD>>()
-    opus.set_size(total_beat_offset)
-
-    beat_values.forEachIndexed { i, beat_tree ->
-        if (! beat_tree.is_leaf()) {
-            for (subtree in beat_tree.divisions.values) {
-                subtree.clear_singles()
-            }
-        }
-        opus.set(i, beat_tree)
-    }
-
-    for ((_, beat) in opus.divisions) {
-        beat.flatten()
-        beat.reduce()
-        beat.clear_singles()
-    }
-    return opus
 }
 
 fun tlog(label: String, callback: () -> Unit) {

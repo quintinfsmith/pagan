@@ -20,6 +20,8 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 class OpusLayerInterface : OpusLayerCursor() {
+    class HidingNonEmptyPercussionException: Exception()
+    class HidingLastChannelException: Exception()
     companion object {
         const val UI_LOCK_FULL = 0
         const val UI_LOCK_PARTIAL = 1
@@ -338,7 +340,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        // TODO: Fix Code duplication with FragmentEditor
         this.runOnUiThread { main: MainActivity ->
             val btnChoosePercussion: TextView? = main.findViewById(R.id.btnChoosePercussion)
             if (btnChoosePercussion != null) {
@@ -1488,13 +1489,11 @@ class OpusLayerInterface : OpusLayerCursor() {
         val activity = this.get_activity() ?: return
 
         if (this.channels.size <= 1) {
-            // TODO Throw error
-            return
+            throw HidingLastChannelException()
         }
 
         if (activity.view_model.show_percussion && !this.channels.last().is_empty()) {
-            // TODO Throw error
-            return
+            throw HidingNonEmptyPercussionException()
         }
 
         activity.view_model.show_percussion = !activity.view_model.show_percussion

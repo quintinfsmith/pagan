@@ -188,11 +188,7 @@ class MainActivity : AppCompatActivity() {
                         return@thread
                     }
 
-                    /*
-                        TODO: Remember why i'm using a tmp file.
-                            It may not be necessary after the changes I made to the Midi Converter.
-                            (Now we can predict file size)
-                    */
+                    /* TMP file is necessary since we can't easily predict the exact frame count. */
                     val tmp_file = File("${this.filesDir}/.tmp_wav_data")
                     if (tmp_file.exists()) {
                         tmp_file.delete()

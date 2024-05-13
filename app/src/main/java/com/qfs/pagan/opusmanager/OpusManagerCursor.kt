@@ -22,7 +22,7 @@ data class OpusManagerCursor(
     class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
     class InvalidControlLevelException(actual: CtlLineLevel?, expected: CtlLineLevel?): Exception("Incorrect Control Level. Expected: $expected but got $actual")
 
-    var is_linking = false
+    var selecting_range = false
     override fun equals(other: Any?): Boolean {
         if (other !is OpusManagerCursor) {
             return false
@@ -82,7 +82,7 @@ data class OpusManagerCursor(
     }
 
     fun is_linking_range(): Boolean {
-        return this.mode == CursorMode.Range && this.is_linking
+        return this.mode == CursorMode.Range && this.selecting_range
     }
 
     fun clear() {
@@ -94,7 +94,7 @@ data class OpusManagerCursor(
         this.ctl_type = null
         this.position = listOf()
         this.range = null
-        this.is_linking = false
+        this.selecting_range = false
     }
 
     fun get_beatkey(): BeatKey {
@@ -123,7 +123,7 @@ data class OpusManagerCursor(
         this.line_offset = beat_key.line_offset
         this.beat = beat_key.beat
         this.position = position
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = null
         this.ctl_level = null
     }
@@ -132,7 +132,7 @@ data class OpusManagerCursor(
         this.mode = CursorMode.Row
         this.channel = channel
         this.line_offset = line_offset
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = null
         this.ctl_level = null
     }
@@ -140,7 +140,7 @@ data class OpusManagerCursor(
     fun select_column(beat: Int) {
         this.mode = CursorMode.Column
         this.beat = beat
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = null
         this.ctl_level = null
     }
@@ -151,7 +151,7 @@ data class OpusManagerCursor(
         this.line_offset = beat_key.line_offset
         this.beat = beat_key.beat
         this.position = position
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Line
     }
@@ -162,7 +162,7 @@ data class OpusManagerCursor(
         this.line_offset = 0
         this.beat = beat
         this.position = position
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Channel
     }
@@ -173,7 +173,7 @@ data class OpusManagerCursor(
         this.line_offset = 0
         this.beat = beat
         this.position = position
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Global
     }
@@ -182,7 +182,7 @@ data class OpusManagerCursor(
         this.mode = CursorMode.Row
         this.channel = channel
         this.line_offset = line_offset
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Line
     }
@@ -191,7 +191,7 @@ data class OpusManagerCursor(
         this.mode = CursorMode.Row
         this.channel = channel
         this.line_offset = 0
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Channel
     }
@@ -200,7 +200,7 @@ data class OpusManagerCursor(
         this.mode = CursorMode.Row
         this.channel = 0
         this.line_offset = 0
-        this.is_linking = false
+        this.selecting_range = false
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Global
     }
@@ -240,9 +240,9 @@ data class OpusManagerCursor(
         this.ctl_level = null
     }
 
-    fun select_to_link(beat_key: BeatKey) {
+    fun select_first_corner(beat_key: BeatKey) {
         this.select(beat_key, listOf())
-        this.is_linking = true
+        this.selecting_range = true
         this.ctl_type = null
         this.ctl_level = null
     }
@@ -257,7 +257,7 @@ data class OpusManagerCursor(
 
     fun select_global_ctl_end_point(type: ControlEventType, beat: Int) {
         this.select_ctl_at_global(beat, listOf(), type)
-        this.is_linking = true
+        this.selecting_range = true
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Global
     }
@@ -316,7 +316,7 @@ data class OpusManagerCursor(
 
     //fun settle(right_align: Boolean = false) {
     //    if (this.opus_manager.opus_beat_count == 0) {
-    //        // TODO: This'll problably bite me in the ass...
+    //        // NOTE: This'll problably bite me in the ass...
     //        return
     //    }
 

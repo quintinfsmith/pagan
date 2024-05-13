@@ -34,10 +34,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 }
 
                 HistoryToken.SET_LINE_VOLUME -> {
-                    this.set_line_volume(
+                    this.set_line_controller_initial_event(
+                        ControlEventType.Volume,
                         current_node.args[0] as Int,
                         current_node.args[1] as Int,
-                        current_node.args[2] as Int
+                        OpusVolumeEvent(current_node.args[2] as Int)
                     )
                 }
 
@@ -131,6 +132,30 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
                     )
                 }
+
+                HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT -> {
+                    this.set_global_controller_initial_event(
+                        current_node.args[0] as ControlEventType,
+                        this.checked_cast<OpusControlEvent>(current_node.args[1])
+                    )
+                }
+                HistoryToken.SET_CHANNEL_CTL_INITIAL_EVENT -> {
+                    this.set_channel_controller_initial_event(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        this.checked_cast<OpusControlEvent>(current_node.args[2])
+                    )
+                }
+
+                HistoryToken.SET_LINE_CTL_INITIAL_EVENT -> {
+                    this.set_line_controller_initial_event(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int,
+                        this.checked_cast<OpusControlEvent>(current_node.args[3])
+                    )
+                }
+
 
                 HistoryToken.REMOVE_LINE -> {
                     this.remove_line(
@@ -1129,12 +1154,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
-        val current_volume = this.get_line_volume(channel, line_offset)
-        this.push_to_history_stack(HistoryToken.SET_LINE_VOLUME, listOf(channel, line_offset, current_volume))
-        super.set_line_volume(channel, line_offset, volume)
-    }
-
     override fun set_project_name(new_name: String) {
         this.push_to_history_stack(HistoryToken.SET_PROJECT_NAME, listOf(this.project_name))
         super.set_project_name(new_name)
@@ -1354,6 +1373,49 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun set_global_controller_initial_event(type: ControlEventType, event: OpusControlEvent) {
+        this._remember {
+            this.push_to_history_stack(
+                HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT,
+                listOf(
+                    type,
+                    this.controllers.get_controller(type).initial_event
+                )
+            )
+            super.set_global_controller_initial_event(type, event)
+        }
+    }
+
+    override fun set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: OpusControlEvent) {
+        this._remember {
+            this.push_to_history_stack(
+                HistoryToken.SET_CHANNEL_CTL_INITIAL_EVENT,
+                listOf(
+                    type,
+                    channel,
+                    this.channels[channel].controllers.get_controller(type).initial_event
+                )
+            )
+            super.set_channel_controller_initial_event(type, channel, event)
+        }
+    }
+
+    override fun set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: OpusControlEvent) {
+        this._remember {
+            this.push_to_history_stack(
+                HistoryToken.SET_LINE_CTL_INITIAL_EVENT,
+                listOf(
+                    type,
+                    channel,
+                    line_offset,
+                    this.channels[channel].lines[line_offset].controllers.get_controller(type).initial_event
+                )
+            )
+            super.set_line_controller_initial_event(type, channel, line_offset, event)
+        }
+    }
+
+
     // Need a compound function so history can manage both at the same time
     open fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Int) {
         this._remember {
@@ -1361,4 +1423,5 @@ open class OpusLayerHistory : OpusLayerLinks() {
             this.set_transpose(transpose)
         }
     }
+
 }

@@ -23,7 +23,7 @@ class LeafButtonCtlGlobal(
     override fun long_click(): Boolean {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (!cursor.is_linking || cursor.ctl_level != CtlLineLevel.Global || cursor.ctl_type != this.control_type) {
+        if (!cursor.selecting_range || cursor.ctl_level != CtlLineLevel.Global || cursor.ctl_type != this.control_type) {
             opus_manager.cursor_select_global_ctl_end_point(
                 this.control_type,
                 this.get_beat()
@@ -57,7 +57,7 @@ class LeafButtonCtlGlobal(
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val beat = this.get_beat()
-        if (!cursor.is_linking || cursor.ctl_level != this.control_level || cursor.ctl_type != this.control_type) {
+        if (!cursor.selecting_range || cursor.ctl_level != this.control_level || cursor.ctl_type != this.control_type) {
             opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
         } else {
             try {

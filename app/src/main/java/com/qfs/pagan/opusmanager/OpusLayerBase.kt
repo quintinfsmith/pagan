@@ -40,6 +40,7 @@ open class OpusLayerBase {
     class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
     class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) @ $startkey overflows")
+    class EventlessTreeException: Exception("Tree requires event for operation")
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -183,9 +184,7 @@ open class OpusLayerBase {
             if (absolute >= this._cached_abs_line_map_map.size) {
                 throw IndexOutOfBoundsException()
             }
-            var item = this._cached_abs_line_map_map[absolute]
-            // TODO: Error Check
-            item!!.first
+            this._cached_abs_line_map_map[absolute].first
         } else {
             absolute
         }
@@ -2265,10 +2264,6 @@ open class OpusLayerBase {
 
     // TODO: Convert these functions to use ActiveControlSet ---------
 
-    open fun set_line_volume(channel: Int, line_offset: Int, volume: Int) {
-        this.channels[channel].set_line_volume(line_offset, volume)
-    }
-
     fun get_line_volume(channel: Int, line_offset: Int): Int {
         return (this.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value
     }
@@ -2613,8 +2608,7 @@ open class OpusLayerBase {
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
-            // TODO: Throw error?
-            return
+            throw EventlessTreeException()
         }
 
         tree.event!!.duration = duration

@@ -213,7 +213,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 title_text.text = resources.getString(R.string.label_volume_scrollbar, p1)
                 title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, p1)
-                opus_manager.set_line_volume(channel, line_offset, p1)
+                opus_manager.set_line_controller_initial_event(ControlEventType.Volume, channel, line_offset, OpusVolumeEvent(p1))
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }

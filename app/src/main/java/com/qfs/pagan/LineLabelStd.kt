@@ -102,8 +102,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                 // TODO: Feedback
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
             }
-            cursor.is_linking = false
-        } else if (cursor.is_linking) {
+            cursor.selecting_range = false
+        } else if (cursor.selecting_range) {
             val beat_key = opus_manager.cursor.get_beatkey()
             try {
                 when (this.get_activity().configuration.link_mode) {
@@ -119,7 +119,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                 // TODO: Feedback
                 //(this.context as MainActivity).feedback_msg("Can only row-link from first beat")
             }
-            cursor.is_linking = false
+            cursor.selecting_range = false
         }
         opus_manager.cursor_select_row(this.channel, this.line_offset)
     }

@@ -249,15 +249,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     /* Add handles that would be active but aren't because of a jump in position */
     private fun activate_active_handles(frame: Int) {
-        val handles = this.midi_frame_map.get_active_handles(frame)
-        for ((first_frame, handle) in handles) {
-            if (first_frame == frame) {
-                continue
-            }
-
+        val handles = this.midi_frame_map.get_active_handles(frame).toList()
+        val handles_adj = List<SampleHandle>(handles.size) {
+            val (first_frame, handle) = handles[it]
             handle.set_working_frame(frame - first_frame)
-            this.activate_sample_handles(mutableSetOf(handle), 0, 0, frame)
+            handle
         }
+
+        this.activate_sample_handles(handles_adj.toSet(), 0, 0, frame)
     }
 
     fun activate_sample_handles(handles: Set<SampleHandle>, core: Int, frame_in_core_chunk: Int, initial_frame: Int) {
@@ -267,7 +266,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
         for (handle in handles) {
             val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
-            handle.volume = handle.volume / handle_volume_factor // increase sample's volume so it take up the full range -1 .. 1 (the sample may be quieter)
+            handle.volume /= handle_volume_factor // increase sample's volume so it take up the full range -1 .. 1 (the sample may be quieter)
 
             val split_handles = Array<Pair<SampleHandle?, Int>>(this.core_count - core) { k: Int ->
                 Pair(

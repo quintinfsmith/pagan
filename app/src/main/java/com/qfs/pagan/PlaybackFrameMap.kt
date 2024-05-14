@@ -129,18 +129,21 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         for ((setter_id, range) in this._setter_range_map) {
             if (range.contains(frame)) {
                 setter_ids_to_remove.add(setter_id)
-                for (i in range) {
-                    this._setter_frame_map.remove(i)
-                }
-                for (handle in this._setter_map.remove(setter_id)!!()) {
-                    this._map_real_handle(handle, range.first)
-                    output.add(Pair(this._handle_range_map[handle.uuid]!!.first, handle))
-                }
             }
         }
 
         for (setter_id in setter_ids_to_remove) {
-            this._setter_range_map.remove(setter_id)
+            val range = this._setter_range_map[setter_id] ?: continue
+            val handle_getter = this._setter_map.remove(setter_id) ?: continue
+
+            for (handle in handle_getter()) {
+                this._map_real_handle(handle, range.first)
+                output.add(Pair(this._handle_range_map[handle.uuid]!!.first, handle))
+            }
+
+            for (i in range.first until frame) {
+                this._setter_frame_map.remove(i)
+            }
         }
 
         return output

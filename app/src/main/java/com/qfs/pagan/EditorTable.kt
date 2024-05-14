@@ -620,73 +620,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-
-    fun scroll_to_position(beat_key: BeatKey, position: List<Int>? = null) {
-        if (beat_key.beat == -1) {
-            return
-        }
-
-        val adj_beat_key = BeatKey(
-            max(0, beat_key.channel),
-            max(0, beat_key.line_offset),
-            beat_key.beat
-        )
-
-        val new_position = position?.toMutableList() ?: mutableListOf()
-        val opus_manager = this.get_opus_manager()
-
-        var tree = opus_manager.get_tree(adj_beat_key, new_position)
-        while (! tree.is_leaf()) {
-            tree = tree[0]
-            new_position.add(0)
-        }
-
-        val y = opus_manager.get_visible_row_from_ctl_line(
-            opus_manager.get_ctl_line_index(
-                opus_manager.get_abs_offset(beat_key.channel, beat_key.line_offset)
-            )
-        )
-        if (position == null) {
-            if (this.get_position_visibility(beat_key.beat) < SECTION_VIEW_PARTIAL_OVERSIZED) {
-                this.scroll_to_x(beat_key.beat, 0f)
-            }
-        } else {
-            var leaf_offset = 0
-            tree = this.get_opus_manager().get_tree(beat_key)
-            var sibling_weight = tree.get_max_child_weight()
-            val max_cell_weight = if (tree.is_leaf()) {
-                1f
-            } else {
-                (sibling_weight * tree.size).toFloat()
-            }
-
-            position.forEachIndexed { i: Int, x: Int ->
-                leaf_offset += sibling_weight * x
-                tree = tree[x]
-                if (i < position.size - 1) {
-                    sibling_weight /= max(tree.size, 1)
-                }
-            }
-
-            val max_column_weight = this._column_width_maxes[beat_key.beat].toFloat()
-            val position_offset = leaf_offset / max_cell_weight
-
-            val position_visibility = this.get_position_visibility(beat_key.beat, Pair(position_offset, sibling_weight.toFloat() / max_cell_weight))
-            if (position_visibility < SECTION_VIEW_PARTIAL_OVERSIZED) {
-                val leaf_width = resources.getDimension(R.dimen.base_leaf_width)
-                val precise_x = 0 - (leaf_width * (leaf_offset * max_column_weight / max_cell_weight)).toInt()
-                this.precise_scroll(
-                    beat_key.beat,
-                    precise_x
-                )
-            }
-        }
-
-        if (y != null && !this.is_y_visible(y)) {
-            this.scroll_to_y(y)
-        }
-    }
-
     fun get_position_visibility(beat: Int, section: Pair<Float, Float> = Pair(0f,1f)): Int {
         val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
         val first_visible = column_lm.findFirstVisibleItemPosition()
@@ -767,13 +700,23 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun forced_scroll_to_beat(x: Int) {
+        val box_width = this.get_column_recycler().measuredWidth
+
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val max_width = (this._column_width_maxes[x] * base_width).toInt()
+
         val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
         this._main_scroll_locked = true
-        layout_manager.scrollToPositionWithOffset(x, 0)
+        val offset = if (max_width >= box_width) {
+            (box_width - max_width) / 2
+        } else {
+            0
+        }
+        layout_manager.scrollToPositionWithOffset(x, offset)
         this._main_scroll_locked = false
 
         this._label_scroll_locked = true
-        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, 0)
+        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, offset)
         this._label_scroll_locked = false
     }
 

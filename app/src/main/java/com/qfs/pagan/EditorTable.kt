@@ -20,7 +20,6 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
@@ -620,85 +619,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun get_position_visibility(beat: Int, section: Pair<Float, Float> = Pair(0f,1f)): Int {
-        val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
-        val first_visible = column_lm.findFirstVisibleItemPosition()
-        val last_visible = column_lm.findLastVisibleItemPosition()
-
-        return if (beat in (first_visible + 1) until last_visible) {
-            SECTION_VIEW_COMPLETE
-        } else {
-            val visible_width = this.column_label_recycler.measuredWidth
-            val leaf_width = resources.getDimension(R.dimen.base_leaf_width)
-            val beat_leaf_count = this._column_width_maxes[beat]
-            val beat_width = beat_leaf_count * leaf_width
-
-            val section_start = (section.first * beat_width).roundToInt()
-            val section_end = ((section.first + section.second) * beat_width).roundToInt()
-
-            if (first_visible == last_visible) {
-                if (beat != first_visible) {
-                    SECTION_OUT_OF_VIEW
-                } else {
-                    val first_column = column_lm.findViewByPosition(first_visible)
-                    val fine_x = (first_column?.x ?: 0f).roundToInt()
-
-                    val beat_start_proceeds_view_start = section_start + fine_x > 0
-                    val beat_end_precedes_view_end = section_end + fine_x < visible_width
-                    val start_visible =
-                        beat_start_proceeds_view_start && (section_start + fine_x < visible_width)
-                    val end_visible = (section_end + fine_x > 0) && beat_end_precedes_view_end
-
-                    if (!beat_start_proceeds_view_start && !beat_end_precedes_view_end) {
-                        SECTION_VIEW_PARTIAL_OVERSIZED
-                    } else if (start_visible && end_visible) {
-                        SECTION_VIEW_COMPLETE
-                    } else if (start_visible) {
-                        SECTION_VIEW_PARTIAL_LEFT
-                    } else if (end_visible) {
-                        SECTION_VIEW_PARTIAL_RIGHT
-                    } else {
-                        SECTION_OUT_OF_VIEW
-                    }
-                }
-            } else {
-                val column = column_lm.findViewByPosition(beat)
-                val fine_x = (column?.x ?: 0f).roundToInt()
-
-                when (beat) {
-                    first_visible -> {
-                        if (section_start + fine_x > 0) {
-                            SECTION_VIEW_COMPLETE
-                        } else if (section_end + fine_x > 0) {
-                            SECTION_VIEW_PARTIAL_RIGHT
-                        } else {
-                            SECTION_OUT_OF_VIEW
-                        }
-                    }
-                    last_visible -> {
-                        if (section_end + fine_x < visible_width) {
-                            SECTION_VIEW_COMPLETE
-                        } else if (section_start + fine_x < visible_width) {
-                            SECTION_VIEW_PARTIAL_LEFT
-                        } else {
-                            SECTION_OUT_OF_VIEW
-                        }
-                    }
-                    else -> {
-                        SECTION_OUT_OF_VIEW
-                    }
-                }
-            }
-        }
-    }
-
-    fun is_y_visible(y: Int): Boolean {
-        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        val scroll_offset = this._line_label_layout.scrollY / line_height
-        val height = this._scroll_view.measuredHeight / line_height
-        return y >= scroll_offset && y <= (scroll_offset + height)
-    }
-
     fun forced_scroll_to_beat(x: Int) {
         val box_width = this.get_column_recycler().measuredWidth
 
@@ -900,28 +820,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             this._line_label_layout.scrollTo(0, target_y)
             this._scroll_view.scrollTo(0, target_y)
         }
-
     }
-
-
-    //  Unused. I don't know if i'll need them at any point
-    //fun get_leaf(beat_key: BeatKey, position: List<Int>): LeafButton? {
-    //    val y = this.get_opus_manager().get_abs_offset(beat_key.channel, beat_key.line_offset)
-    //    return this.get_leaf(beat_key.beat, y, position)
-    //}
-
-    //fun get_leaf(x: Int, y: Int, position: List<Int>): LeafButton? {
-    //    val column_view_holder = this.get_column_recycler().findViewHolderForAdapterPosition(x) ?: return null
-    //    val cell_recycler = (column_view_holder as ColumnRecyclerViewHolder).get_cell_recycler() ?: return null
-    //    val cell_view_holder = cell_recycler.findViewHolderForAdapterPosition(y) ?: return null
-    //    val cell_layout = (cell_view_holder as CellRecyclerViewHolder).get_cell_layout()
-    //    for (child in (cell_layout as ViewGroup).children) {
-    //        if ((child as LeafButton).position == position) {
-    //            return child
-    //        }
-    //    }
-    //    return null
-    //}
 
     fun get_scroll_offset(): Pair<Pair<Int, Int>, Pair<Int, Int>> {
         val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
@@ -957,72 +856,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
     fun get_column_recycler(): ColumnRecycler {
         return this._scroll_view.column_recycler
-    }
-
-    fun update_percussion_visibility() {
-        val main = this.get_activity()
-
-        val opus_manager = this.get_opus_manager()
-        val percussion_channel = opus_manager.channels.last()
-        if (main.view_model.show_percussion) {
-            if (this._column_width_map.isNotEmpty()) {
-                var newly_visible_rows = 0
-                for (i in 0 until percussion_channel.size) {
-                    val row = opus_manager.get_visible_row_from_ctl_line(
-                        opus_manager.get_ctl_line_index(
-                            opus_manager.get_abs_offset(
-                                opus_manager.channels.size - 1,
-                                i
-                            )
-                        )
-                    )!!
-
-                    val controllers = percussion_channel.lines[i].controllers.get_all()
-                    this.new_row(row, percussion_channel.lines[i])
-                    for (j in controllers.indices) {
-                        this.new_row(row + j, controllers[j].second)
-                    }
-                    newly_visible_rows += 1 + controllers.size
-                }
-
-                // Not using channel controls ATM
-                // Make visible the channel-specific control lines
-                //val row = opus_manager.get_visible_row_from_ctl_line(
-                //    opus_manager.get_ctl_line_index(
-                //        opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
-                //    )
-                //)!!
-                //val controllers = percussion_channel.controllers.get_all()
-                //for (i in controllers.indices) {
-                //    this.new_row(row + newly_visible_rows + i, controllers[i].second)
-                //}
-
-            }
-        } else {
-            val row = opus_manager.get_visible_row_from_ctl_line(
-                opus_manager.get_ctl_line_index(
-                    opus_manager.get_abs_offset(opus_manager.channels.size - 1, 0)
-                )
-            )!!
-            var remove_count = 0
-            for (line in percussion_channel.lines) {
-                remove_count += 1
-                for ((type, _) in line.controllers.get_all()) {
-                    if (opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                        remove_count += 1
-                    }
-                }
-            }
-
-            for ((type, _) in percussion_channel.controllers.get_all()) {
-                if (opus_manager.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
-                    remove_count += percussion_channel.controllers.size()
-                }
-            }
-
-            opus_manager.recache_line_maps()
-            this.remove_rows(row, remove_count)
-        }
     }
 
     fun swap_lines(line_a: Int, line_b: Int) {

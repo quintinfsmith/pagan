@@ -34,7 +34,6 @@
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:layout_height="wrap_content" />
-
         </LinearLayout>
 
         <LinearLayout
@@ -97,6 +96,38 @@
                     android:paddingStart="15dp"
                     android:paddingEnd="15dp" />
 
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/llPlaybackStereo"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                android:text="@string/label_settings_playback_stereo"
+                android:paddingStart="15dp"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <com.qfs.pagan.PaganSwitch
+                android:id="@+id/sPlaybackStereo"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/llLimitSamples"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                android:text="@string/label_settings_playback_limit_samples"
+                android:paddingStart="15dp"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <com.qfs.pagan.PaganSwitch
+                android:id="@+id/sLimitSamples"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"/>
         </LinearLayout>
         <LinearLayout
             android:id="@+id/llRelativeEnabled"

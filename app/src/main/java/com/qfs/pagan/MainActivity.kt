@@ -1917,7 +1917,11 @@ class MainActivity : AppCompatActivity() {
 
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
+        this.save_configuration()
+        this.init_audio_devices()
+    }
 
+    fun init_audio_devices() {
         this._midi_playback_device?.kill()
 
         if (this.get_soundfont() != null) {
@@ -1928,14 +1932,25 @@ class MainActivity : AppCompatActivity() {
                 sample_limit = this.configuration.playback_sample_limit
             )
 
-            this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, WaveGenerator.StereoMode.Mono)
+            this._midi_playback_device = PlaybackDevice(
+                this,
+                this.sample_handle_manager!!,
+                this.configuration.playback_stereo_mode
+            )
+
             this._feedback_sample_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
                 this.configuration.sample_rate / 4
             )
+
+            for (i in 0 until this._temporary_feedback_devices.size) {
+                this._temporary_feedback_devices[i]?.kill()
+                this._temporary_feedback_devices[i] = null
+            }
         } else {
-           this._midi_playback_device = null
+            this._midi_playback_device = null
+            this._feedback_sample_manager = null
         }
     }
 

@@ -13,6 +13,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
@@ -116,6 +117,30 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             main.save_configuration()
         }
 
+        val switch_stereo_playback = view.findViewById<PaganSwitch>(R.id.sPlaybackStereo)
+        switch_stereo_playback.isChecked = main.configuration.playback_stereo_mode == WaveGenerator.StereoMode.Stereo
+        switch_stereo_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
+            main.configuration.playback_stereo_mode = if (enabled) {
+                WaveGenerator.StereoMode.Stereo
+            } else {
+                WaveGenerator.StereoMode.Mono
+            }
+            main.save_configuration()
+            main.init_audio_devices()
+        }
+
+        val switch_limit_samples = view.findViewById<PaganSwitch>(R.id.sLimitSamples)
+        switch_limit_samples.isChecked = main.configuration.playback_sample_limit != null
+        switch_limit_samples.setOnCheckedChangeListener { _, enabled: Boolean ->
+            main.configuration.playback_sample_limit = if (enabled) {
+                1
+            } else {
+                null
+            }
+            main.save_configuration()
+            main.init_audio_devices()
+        }
+
         val sample_rate_value_text = view.findViewById<PaganTextView>(R.id.tvSampleRate)
         sample_rate_value_text.text = getString(R.string.config_label_sample_rate, main.configuration.sample_rate)
         val slider_playback_quality = view.findViewById<SeekBar>(R.id.sbPlaybackQuality)
@@ -144,9 +169,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                main.configuration.sample_rate = options[seekbar!!.progress]
                 main.set_sample_rate(main.configuration.sample_rate)
-                main.save_configuration()
             }
         })
 

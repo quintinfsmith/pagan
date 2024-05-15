@@ -50,6 +50,8 @@
     <string name="btn_landing_settings">Settings</string>
 
     <string name="label_settings_playback_quality">Playback Quality</string>
+    <string name="label_settings_playback_stereo">Playback in Stereo</string>
+    <string name="label_settings_playback_limit_samples">Playback: Limit 1 sample per note</string>
     <string name="label_settings_relative">Relative Input Mode:</string>
     <string name="label_settings_sf">Active Soundfont:</string>
     <string name="btn_settings_sfmute">Mute</string>

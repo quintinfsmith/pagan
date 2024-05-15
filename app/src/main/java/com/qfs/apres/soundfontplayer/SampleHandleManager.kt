@@ -23,6 +23,7 @@ class SampleHandleManager(
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val sample_handle_generator: SampleHandleGenerator
     val buffer_size: Int
+
     init {
         val core_count = Runtime.getRuntime().availableProcessors()
         this.buffer_size = target_buffer_size - (target_buffer_size % core_count)

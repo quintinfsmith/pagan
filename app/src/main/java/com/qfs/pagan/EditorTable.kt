@@ -20,6 +20,7 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
@@ -603,6 +604,27 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.notify_item_changed(y)
     }
 
+    fun align_column_labels() {
+        val layout_manager_columns = this.get_column_recycler().layoutManager!! as LinearLayoutManager
+        val layout_manager_labels = this.column_label_recycler.layoutManager!! as LinearLayoutManager
+
+        val column_position = layout_manager_columns.findFirstVisibleItemPosition()
+        val column = layout_manager_columns.findViewByPosition(column_position)
+
+        val label_position = layout_manager_labels.findFirstVisibleItemPosition()
+        val label = layout_manager_labels.findViewByPosition(label_position)
+        if (label?.x != column?.x) {
+            val new_offset = column?.x?.roundToInt() ?: 0
+            this._main_scroll_locked = true
+            layout_manager_columns.scrollToPositionWithOffset(column_position, new_offset)
+            this._main_scroll_locked = false
+            this._label_scroll_locked = true
+            layout_manager_labels.scrollToPositionWithOffset(column_position, new_offset)
+            this._label_scroll_locked = false
+        }
+
+    }
+
     fun scroll_to_position(x: Int? = null, y: Int? = null, offset: Float = 0f, offset_width: Float = 1f, force: Boolean = false) {
         if (x != null) {
             if (x >= this.get_opus_manager().beat_count) {
@@ -626,12 +648,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val max_width = (this._column_width_maxes[x] * base_width).toInt()
 
         val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
-        this._main_scroll_locked = true
         val offset = if (max_width >= box_width) {
             (box_width - max_width) / 2
         } else {
             0
         }
+
+        this._main_scroll_locked = true
         layout_manager.scrollToPositionWithOffset(x, offset)
         this._main_scroll_locked = false
 
@@ -738,8 +761,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             // Align the start of the section with the start of the screen
             0b1101 -> 0 - target_offset
 
-            // 0b0111 -> { }   // Nothing to be done
-            // 0b1001 -> { }   // Valid, but no need to do anything
+            0b0111,   // Overflowing,
+            0b1001 -> { // No need to scroll
+                this.align_column_labels()
+                return
+            }
             // 0b0000 -> { }   // Invalid
             // 0b0001 -> { }   // Invalid
             // 0b0110 -> { }   // Invalid

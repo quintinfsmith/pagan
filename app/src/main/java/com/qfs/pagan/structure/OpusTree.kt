@@ -507,6 +507,23 @@ class OpusTree<T> {
         return max_weight
     }
 
+    fun get_total_child_weight(): Int {
+        if (this.is_leaf()) {
+            return 1
+        }
+
+        var max_weight = 1
+        for (node in this.divisions.values) {
+            if (node.is_leaf()) {
+                continue
+            }
+
+            max_weight = max(max_weight, node.get_total_child_weight())
+        }
+
+        return max_weight * this.size
+    }
+
     fun get_set_tree(): OpusTree<Set<T>> {
         val output = OpusTree<Set<T>>()
         if (this.is_event()) {

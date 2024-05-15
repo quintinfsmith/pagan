@@ -503,7 +503,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val changed_beat_keys = mutableSetOf<Coordinate>()
         val done_keys = mutableSetOf<Coordinate>()
         val opus_manager = this.get_opus_manager()
-
         for (coord in cell_coords) {
             if (done_keys.contains(coord)) {
                 continue
@@ -573,6 +572,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 column_recycler_adapter.notify_cell_changed(coord.y, coord.x)
             }
         }
+
         if (this._queued_cell_notifications.isNotEmpty()) {
             this.apply_queued_cell_changes()
         }

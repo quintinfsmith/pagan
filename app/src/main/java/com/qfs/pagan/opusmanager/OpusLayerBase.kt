@@ -720,7 +720,6 @@ open class OpusLayerBase {
         }
 
         val parent_tree = tree.parent!!
-
         when (parent_tree.size) {
             1 -> this.remove_global_ctl_only(type, beat, position)
             2 -> this.remove_global_ctl_one_of_two(type, beat, position)
@@ -2228,16 +2227,37 @@ open class OpusLayerBase {
         this._setup_default_controllers()
 
         val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
-        tempo_line.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent> ->
-            if (!tree.is_eventless()) {
-                tempo_controller.events[i] = tree
+        tempo_line.forEachIndexed { i: Int, tempo_tree: OpusTree<OpusControlEvent> ->
+            // Limit the number of divisions in the tempo ctl line
+            if (!tempo_tree.is_eventless()) {
+                var max_leafs = 0
+                for (channel in this.channels) {
+                    for (line in channel.lines) {
+                        max_leafs = max(line.beats[i].get_total_child_weight(), max_leafs)
+                    }
+                }
+
+                if (max_leafs < tempo_tree.get_total_child_weight()) {
+                    tempo_tree.flatten()
+                    val new_tree = OpusTree<OpusControlEvent>()
+                    new_tree.set_size(max_leafs)
+
+                    for ((index, child) in tempo_tree.divisions) {
+                        if (child.is_event()) {
+                            new_tree.set(index * max_leafs / tempo_tree.size, child)
+                        }
+                    }
+
+                    new_tree.reduce()
+                    tempo_controller.events[i] = new_tree
+                } else {
+                    tempo_controller.events[i] = tempo_tree
+                }
             }
         }
 
         /*
             If the first leaf sets the tempo, use that as initial value instead of as a control event.
-            NOTE: This depends on the control being IMMEDIATE, so if that's no longer a guarantee this
-            needs to change.
          */
         val first_tempo_tree = tempo_controller.get_tree(0)
         val position = first_tempo_tree.get_first_event_tree_position()
@@ -2251,6 +2271,7 @@ open class OpusLayerBase {
                 ActiveControlSet.ActiveController.default_event(ControlEventType.Tempo)
             )
         }
+
 
         this.on_project_changed()
     }

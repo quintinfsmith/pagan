@@ -115,12 +115,12 @@ class MainActivity : AppCompatActivity() {
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
             val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
-            (frame_map as PlaybackFrameMap).parse_opus()
+            frame_map.parse_opus()
             val start_frame = frame_map.get_marked_frames()[0]
 
             // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
             for (i in start_frame .. start_frame + sample_handle_manager.buffer_size) {
-                (frame_map as PlaybackFrameMap).check_frame(i)
+                frame_map.check_frame(i)
             }
 
             this.export_handle = WavConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
@@ -1369,10 +1369,9 @@ class MainActivity : AppCompatActivity() {
         if (this._feedback_sample_manager != null) {
             if (this._temporary_feedback_devices[this._current_feedback_device] != null) {
                 this._temporary_feedback_devices[this._current_feedback_device]!!.kill()
+            } else {
+                this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
             }
-            this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(
-                this._feedback_sample_manager!!
-            )
 
             this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(
                 NoteOn79(
@@ -1461,21 +1460,17 @@ class MainActivity : AppCompatActivity() {
         }
         this.configuration.soundfont = filename
 
-        this.sample_handle_manager = SampleHandleManager(
-            this._soundfont!!,
-            this.configuration.sample_rate,
-            this.configuration.sample_rate,
-            sample_limit = this.configuration.playback_sample_limit
-        )
-
-        this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, WaveGenerator.StereoMode.Mono)
+        this.reinit_playback_device()
 
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
             this.configuration.sample_rate,
             this.configuration.sample_rate / 4,
         )
-
+        for (i in 0 until this._temporary_feedback_devices.size) {
+            this._temporary_feedback_devices[i]?.kill()
+            this._temporary_feedback_devices[i] = null
+        }
 
         this.update_channel_instruments()
 
@@ -1918,10 +1913,10 @@ class MainActivity : AppCompatActivity() {
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
         this.save_configuration()
-        this.init_audio_devices()
+        this.reinit_playback_device()
     }
 
-    fun init_audio_devices() {
+    fun reinit_playback_device() {
         this._midi_playback_device?.kill()
 
         if (this.get_soundfont() != null) {
@@ -1935,22 +1930,10 @@ class MainActivity : AppCompatActivity() {
             this._midi_playback_device = PlaybackDevice(
                 this,
                 this.sample_handle_manager!!,
-                this.configuration.playback_stereo_mode
+                this.configuration.playback_stereo_mode,
             )
-
-            this._feedback_sample_manager = SampleHandleManager(
-                this._soundfont!!,
-                this.configuration.sample_rate,
-                this.configuration.sample_rate / 4
-            )
-
-            for (i in 0 until this._temporary_feedback_devices.size) {
-                this._temporary_feedback_devices[i]?.kill()
-                this._temporary_feedback_devices[i] = null
-            }
         } else {
             this._midi_playback_device = null
-            this._feedback_sample_manager = null
         }
     }
 

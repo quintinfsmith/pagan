@@ -126,7 +126,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
                 WaveGenerator.StereoMode.Mono
             }
             main.save_configuration()
-            main.init_audio_devices()
+            main.reinit_playback_device()
         }
 
         val switch_limit_samples = view.findViewById<PaganSwitch>(R.id.sLimitSamples)
@@ -138,7 +138,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
                 null
             }
             main.save_configuration()
-            main.init_audio_devices()
+            main.reinit_playback_device()
         }
 
         val sample_rate_value_text = view.findViewById<PaganTextView>(R.id.tvSampleRate)

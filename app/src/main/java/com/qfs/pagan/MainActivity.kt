@@ -554,7 +554,7 @@ class MainActivity : AppCompatActivity() {
                         this.configuration.sample_rate, // Use Large buffer
                         sample_limit = this.configuration.playback_sample_limit
                     )
-                    this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, WaveGenerator.StereoMode.Mono)
+                    this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, this.configuration.playback_stereo_mode)
 
                     if (!this._midi_interface.output_devices_connected()) {
                         this._feedback_sample_manager = SampleHandleManager(

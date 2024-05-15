@@ -250,10 +250,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     /* Add handles that would be active but aren't because of a jump in position */
     private fun activate_active_handles(frame: Int) {
         val handles = this.midi_frame_map.get_active_handles(frame).toList()
-        val handles_adj = List<SampleHandle>(handles.size) {
-            val (first_frame, handle) = handles[it]
+        val handles_adj: MutableList<SampleHandle> = mutableListOf()
+        for ((first_frame, handle) in handles) {
+            if (first_frame == frame) {
+                continue
+            }
             handle.set_working_frame(frame - first_frame)
-            handle
+            handles_adj.add(handle)
         }
 
         this.activate_sample_handles(handles_adj.toSet(), 0, 0, frame)

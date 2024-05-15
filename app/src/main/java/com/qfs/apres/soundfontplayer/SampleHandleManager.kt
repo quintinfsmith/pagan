@@ -16,7 +16,9 @@ class SampleHandleManager(
         sample_rate,
         AudioFormat.ENCODING_PCM_FLOAT,
         AudioFormat.CHANNEL_OUT_STEREO
-    )) {
+    ),
+    var sample_limit: Int? = null
+    ) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
     private val sample_handle_generator: SampleHandleGenerator
@@ -82,6 +84,7 @@ class SampleHandleManager(
         val potential_instruments = preset.get_instruments(event.note, velocity)
         val sample_counts = arrayOf(0, 0, 0)
         val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
+        var sample_count = 0
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument?.get_samples(
                 event.note,
@@ -105,6 +108,14 @@ class SampleHandleManager(
                         sample_counts[1] += 1
                     }
                 }
+                sample_count += 1
+                if (this.sample_limit != null && sample_count >= this.sample_limit!!) {
+                    break
+                }
+            }
+
+            if (this.sample_limit != null && sample_count >= this.sample_limit!!) {
+                break
             }
         }
         for ((sample,p_instrument) in sample_pairs) {
@@ -136,7 +147,7 @@ class SampleHandleManager(
 
         val sample_counts = arrayOf(0, 0, 0)
         val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
-
+        var sample_count = 0
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument!!.get_samples(
                 event.get_note(),
@@ -151,35 +162,41 @@ class SampleHandleManager(
                         sample_counts[0] += 1
                         sample_counts[2] += 1
                     }
+
                     2 -> {
                         sample_counts[2] += 1
                         sample_counts[1] += 1
                     }
+
                     4 -> {
                         sample_counts[0] += 1
                         sample_counts[1] += 1
                     }
                 }
+                sample_count += 1
+                if (this.sample_limit != null && this.sample_limit!! <= sample_count) {
+                    break
+                }
             }
+        }
 
-            for (sample in samples) {
-                val new_handle = this.sample_handle_generator.get(
-                    event,
-                    sample,
-                    p_instrument.instrument?.global_zone ?: SampleDirective(),
-                    p_instrument,
-                    preset.global_zone,
-                    preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
-                    when (sample.sample!!.sampleType and 7) {
-                        1 -> sample_counts[1]
-                        2 -> sample_counts[0]
-                        4 -> sample_counts[2]
-                        else -> continue
-                    }
-                )
-                new_handle.volume = (event.get_velocity().toFloat() / 128F)
-                output.add(new_handle)
-            }
+        for ((sample, p_instrument) in sample_pairs) {
+            val new_handle = this.sample_handle_generator.get(
+                event,
+                sample,
+                p_instrument.instrument?.global_zone ?: SampleDirective(),
+                p_instrument,
+                preset.global_zone,
+                preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
+                when (sample.sample!!.sampleType and 7) {
+                    1 -> sample_counts[1]
+                    2 -> sample_counts[0]
+                    4 -> sample_counts[2]
+                    else -> continue
+                }
+            )
+            new_handle.volume = (event.get_velocity().toFloat() / 128F)
+            output.add(new_handle)
         }
 
         return output

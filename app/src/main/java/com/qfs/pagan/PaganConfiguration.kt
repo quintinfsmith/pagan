@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -20,7 +21,9 @@ data class PaganConfiguration(
     var use_palette: Boolean = false,
     var visible_line_controls: MutableSet<Pair<CtlLineLevel, ControlEventType>> = mutableSetOf(
         Pair(CtlLineLevel.Global, ControlEventType.Tempo)
-    )
+    ),
+    var playback_sample_limit: Int? = null,
+    var playback_stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo
 ) {
     enum class LinkMode {
         MOVE,

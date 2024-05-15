@@ -80,6 +80,7 @@ import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
+import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusLayerLinks
@@ -198,7 +199,8 @@ class MainActivity : AppCompatActivity() {
                     val exporter_sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         44100,
-                        44100
+                        44100,
+                        sample_limit = this.configuration.playback_sample_limit
                     )
                     this.view_model.export_wav(exporter_sample_handle_manager, tmp_file, object : WavConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
@@ -549,9 +551,10 @@ class MainActivity : AppCompatActivity() {
                     this.sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         this.configuration.sample_rate,
-                        this.configuration.sample_rate // Use Large buffer
+                        this.configuration.sample_rate, // Use Large buffer
+                        sample_limit = this.configuration.playback_sample_limit
                     )
-                    this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
+                    this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, WaveGenerator.StereoMode.Mono)
 
                     if (!this._midi_interface.output_devices_connected()) {
                         this._feedback_sample_manager = SampleHandleManager(
@@ -1461,10 +1464,11 @@ class MainActivity : AppCompatActivity() {
         this.sample_handle_manager = SampleHandleManager(
             this._soundfont!!,
             this.configuration.sample_rate,
-            this.configuration.sample_rate
+            this.configuration.sample_rate,
+            sample_limit = this.configuration.playback_sample_limit
         )
 
-        this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
+        this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, WaveGenerator.StereoMode.Mono)
 
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
@@ -1920,10 +1924,11 @@ class MainActivity : AppCompatActivity() {
             this.sample_handle_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
-                this.configuration.sample_rate
+                this.configuration.sample_rate,
+                sample_limit = this.configuration.playback_sample_limit
             )
 
-            this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!)
+            this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, WaveGenerator.StereoMode.Mono)
             this._feedback_sample_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,

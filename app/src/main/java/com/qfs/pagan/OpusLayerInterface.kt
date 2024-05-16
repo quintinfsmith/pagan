@@ -727,12 +727,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {
                 editor_table.remove_column(beat_index, true)
-                editor_table.update_cursor(this.cursor)
             }
             else -> {
                 this.runOnUiThread { main ->
                     editor_table.remove_column(beat_index)
-                    editor_table.update_cursor(this.cursor)
                 }
             }
         }

@@ -1358,7 +1358,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 this.cursor.channel == beat_key.channel && this.cursor.line_offset == beat_key.line_offset
             }
             OpusManagerCursor.CursorMode.Range -> {
-                beat_key in this.get_beatkeys_in_range(this.cursor.range!!.first, this.cursor.range!!.second)
+                val (first, second) = this.cursor.get_ordered_range()!!
+                beat_key in this.get_beatkeys_in_range(first, second)
             }
             OpusManagerCursor.CursorMode.Single -> {
                 val cposition = this.cursor.get_position()
@@ -1512,7 +1513,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 this.cursor.beat == beat
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = this.cursor.range!!
+                val (first, second) = this.cursor.get_ordered_range()!!
                 (min(first.beat, second.beat) .. max(first.beat, second.beat)).contains(beat)
             }
             else -> false

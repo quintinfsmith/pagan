@@ -400,7 +400,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 val coords_to_update = mutableListOf<Pair<Int, Int>>()
                 when (cursor.ctl_level) {
                     null -> {
-                        val (top_left, bottom_right) = cursor.range!!
+                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
                         for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
                             val y = try {
                                 opus_manager.get_visible_row_from_ctl_line(
@@ -418,7 +418,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                         }
                     }
                     else -> {
-                        val (top_left, bottom_right) = cursor.range!!
+                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
                         val y = when (cursor.ctl_level!!) {
                             // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
                             CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(

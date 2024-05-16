@@ -208,6 +208,19 @@ data class OpusManagerCursor(
     fun select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.mode = CursorMode.Range
 
+        this.range = Pair(beat_key_a, beat_key_b)
+
+        this.ctl_type = null
+        this.ctl_level = null
+    }
+
+    fun get_ordered_range(): Pair<BeatKey, BeatKey>? {
+        if (this.mode != CursorMode.Range) {
+            return null
+        }
+        val beat_key_a = this.range!!.first
+        val beat_key_b = this.range!!.second
+
         val (from_key, to_key) = if (beat_key_a.channel < beat_key_b.channel) {
             Pair(
                 BeatKey(beat_key_a.channel, beat_key_a.line_offset, -1),
@@ -234,10 +247,7 @@ data class OpusManagerCursor(
 
         from_key.beat = Integer.min(beat_key_a.beat, beat_key_b.beat)
         to_key.beat = Integer.max(beat_key_a.beat, beat_key_b.beat)
-        this.range = Pair(from_key, to_key)
-
-        this.ctl_type = null
-        this.ctl_level = null
+        return Pair(from_key, to_key)
     }
 
     fun select_first_corner(beat_key: BeatKey) {

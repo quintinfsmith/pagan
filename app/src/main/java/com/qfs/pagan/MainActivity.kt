@@ -1977,7 +1977,7 @@ class MainActivity : AppCompatActivity() {
                 cursor.beat
             }
             OpusManagerCursor.CursorMode.Range -> {
-                cursor.range!!.first.beat
+                cursor.get_ordered_range()!!.first.beat
             }
             else -> {
                 val editor_table = this.findViewById<EditorTable?>(R.id.etEditorTable)

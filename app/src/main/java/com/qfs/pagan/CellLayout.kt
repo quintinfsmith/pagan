@@ -26,7 +26,11 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
 
         this.removeAllViews()
         val opus_manager = this.get_opus_manager()
-        val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_visible_row(this.row))
+        val (pointer, control_level, control_type) = try {
+            opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_visible_row(this.row))
+        } catch (e: NullPointerException) {
+            return // Caused by an unfortunately timed refresh, shouldn't be a problem to ignore
+        }
 
         this.layoutParams.height = WRAP_CONTENT
 

@@ -82,10 +82,8 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
             }
 
             var output = false
-            for (beat_key in opus_manager.get_beatkeys_in_range(
-                opus_manager.cursor.range!!.first,
-                opus_manager.cursor.range!!.second
-            )) {
+            val (first_key, second_key) = opus_manager.cursor.get_ordered_range()!!
+            for (beat_key in opus_manager.get_beatkeys_in_range(first_key, second_key)) {
                 if (opus_manager.is_networked(beat_key)) {
                     output = true
                     break

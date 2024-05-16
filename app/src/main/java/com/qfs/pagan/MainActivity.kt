@@ -1340,7 +1340,10 @@ class MainActivity : AppCompatActivity() {
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
         if (!this._midi_interface.output_devices_connected()) {
-            this.connect_feedback_device()
+            if (this._feedback_sample_manager == null) {
+                this.connect_feedback_device()
+                this.update_channel_instruments()
+            }
         } else {
             this.disconnect_feedback_device()
             this._midi_interface.open_output_devices()
@@ -1445,9 +1448,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (this._feedback_sample_manager != null) {
-            this.disconnect_feedback_device()
-        }
 
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         try {
@@ -1460,16 +1460,7 @@ class MainActivity : AppCompatActivity() {
         this.configuration.soundfont = filename
 
         this.reinit_playback_device()
-
-        this._feedback_sample_manager = SampleHandleManager(
-            this._soundfont!!,
-            this.configuration.sample_rate,
-            this.configuration.sample_rate / 4,
-        )
-        for (i in 0 until this._temporary_feedback_devices.size) {
-            this._temporary_feedback_devices[i]?.kill()
-            this._temporary_feedback_devices[i] = null
-        }
+        this.connect_feedback_device()
 
         this.update_channel_instruments()
 
@@ -1991,13 +1982,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun disconnect_feedback_device() {
+        this._temporary_feedback_devices.forEachIndexed { i: Int, device: FeedbackDevice? ->
+            device?.kill()
+            this._temporary_feedback_devices[i] = null
+        }
         this._feedback_sample_manager = null
     }
 
     fun connect_feedback_device() {
-        if (this.configuration.soundfont != null && this._soundfont == null) {
-            this.set_soundfont(this.configuration.soundfont)
+        if (this._soundfont == null) {
+            return
         }
+
+        this.disconnect_feedback_device()
+        this._feedback_sample_manager = SampleHandleManager(
+            this._soundfont!!,
+            this.configuration.sample_rate,
+            this.configuration.sample_rate / 4,
+        )
     }
 
     fun block_physical_midi_output() {

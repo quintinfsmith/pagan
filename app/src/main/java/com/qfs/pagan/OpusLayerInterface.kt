@@ -719,9 +719,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        super.remove_beat(beat_index)
 
-        val editor_table = this.get_editor_table() ?: return
+        val editor_table = this.get_editor_table() ?: return super.remove_beat(beat_index)
 
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
@@ -734,6 +733,8 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
             }
         }
+
+        super.remove_beat(beat_index)
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>?) {

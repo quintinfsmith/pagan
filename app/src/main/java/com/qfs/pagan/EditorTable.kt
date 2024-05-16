@@ -614,12 +614,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val label_position = layout_manager_labels.findFirstVisibleItemPosition()
         val label = layout_manager_labels.findViewByPosition(label_position)
         if (label?.x != column?.x) {
-            val new_offset = column?.x?.roundToInt() ?: 0
+            val label_offset = label?.x ?: 0f
+            val new_offset = label_offset.roundToInt()
             this._main_scroll_locked = true
-            layout_manager_columns.scrollToPositionWithOffset(column_position, new_offset)
+            layout_manager_columns.scrollToPositionWithOffset(label_position, new_offset)
             this._main_scroll_locked = false
             this._label_scroll_locked = true
-            layout_manager_labels.scrollToPositionWithOffset(column_position, new_offset)
+            layout_manager_labels.scrollToPositionWithOffset(label_position, new_offset)
             this._label_scroll_locked = false
         }
 

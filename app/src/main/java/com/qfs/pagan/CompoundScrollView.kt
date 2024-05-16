@@ -13,7 +13,7 @@ class CompoundScrollView(editor_table: EditorTable): ScrollView(editor_table.con
 
     init {
         this.addView(this.column_recycler)
-        this.column_recycler.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        this.column_recycler.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         this.column_recycler.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
         this.overScrollMode = OVER_SCROLL_NEVER
 

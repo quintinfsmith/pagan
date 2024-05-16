@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.max
 import kotlin.math.min
@@ -68,7 +69,6 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
             maximum_visible = max(beat, maximum_visible)
             callback(beat, column_layout)
         }
-
     }
 
     fun remove_rows(index: Int, count: Int) {
@@ -102,8 +102,21 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
     }
 
     fun remove_column(index: Int) {
-        this._column_count -= 1
+        /* KLUDGE ALERT:
+            for some reason, the ColumnRecyclerAdapter and the ColumnLabel Adapter don't automatically scroll to the same place when removing an item.
+            everything aroun column_count -= 1 and notifyItemRemoved is just to keep the two recyclers aligned
+         */
+        val layout_manager = this._recycler.layoutManager as LinearLayoutManager
+        val item_position = layout_manager.findFirstVisibleItemPosition()
+        val item = layout_manager.findViewByPosition(item_position)
+        val original_offset = item?.x
+
         this.notifyItemRemoved(index)
+        this._column_count -= 1
+
+        if (original_offset != null) {
+            layout_manager.scrollToPositionWithOffset(item_position, original_offset.toInt())
+        }
     }
 
     //-------------------------------------------------------//

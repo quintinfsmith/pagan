@@ -719,7 +719,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun remove_beat(beat_index: Int) {
-
         val editor_table = this.get_editor_table() ?: return super.remove_beat(beat_index)
 
         when (this.get_ui_lock_level()) {
@@ -1166,9 +1165,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.cursor_select_column(beat)
         this.runOnUiThread {
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor)
 
             this.withFragment { main ->
+                editor_table.update_cursor(this.cursor)
                 main.set_context_menu_column()
             }
         }

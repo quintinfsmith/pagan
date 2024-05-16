@@ -874,10 +874,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
         when (cursor.ctl_level) {
             null -> {
                 if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                    val beat_key = this.cursor.range!!.first
+                    val (first_key, second_key) = this.cursor.get_ordered_range()!!
 
-                    this.unset_range(beat_key, this.cursor.range!!.second)
-                    this.cursor_select(beat_key, listOf())
+                    this.unset_range(first_key, second_key)
+                    this.cursor_select(first_key, listOf())
                 } else {
                     val beat_key = this.cursor.get_beatkey()
                     val position = this.cursor.get_position()
@@ -922,10 +922,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             CtlLineLevel.Line -> {
                 val ctl_type = this.cursor.ctl_type!!
                 if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                    val beat_key = this.cursor.range!!.first
+                    val (first_key, second_key) = this.cursor.get_ordered_range()!!
 
-                    this.unset_line_ctl_range(ctl_type, beat_key, this.cursor.range!!.second)
-                    this.cursor_select_ctl_at_line(ctl_type, beat_key, listOf())
+                    this.unset_line_ctl_range(ctl_type, first_key, second_key)
+                    this.cursor_select_ctl_at_line(ctl_type, first_key, listOf())
                 } else {
                     val beat_key = this.cursor.get_beatkey()
                     val position = this.cursor.get_position()
@@ -1002,7 +1002,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             this.cursor.selecting_range = false
             this.cursor_select(beat_key, this.get_first_position(beat_key))
         } else if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             this.unlink_range(first, second)
 
             this.cursor.selecting_range = false
@@ -1015,11 +1015,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
             val beat_key = this.cursor.get_beatkey()
             this.clear_link_pool(beat_key)
         } else if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            val beat_key = this.cursor.range!!.first
-            this.clear_link_pools_by_range(
-                beat_key,
-                this.cursor.range!!.second
-            )
+            val (first_key, second_key) = this.cursor.get_ordered_range()!!
+            this.clear_link_pools_by_range(first_key, second_key)
         }
 
         this.cursor.selecting_range = false
@@ -1029,8 +1026,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 this.cursor_select(beat_key, this.get_first_position(beat_key))
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, _) = this.cursor.range!!
-                this.cursor_select(first, this.get_first_position(first))
+                val (first_key, second_key) = this.cursor.get_ordered_range()!!
+                this.cursor_select(first_key, this.get_first_position(first_key))
             }
             else -> {}
         }

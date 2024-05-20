@@ -1,0 +1,8 @@
+- Added in-song tempo changes
+- Improved automatic scrolling behaviour
+
+Bugfixes:
+    - fixed a weird whirring affecting some soundfont samples
+    - fixed playback sometimes cutting off a little early
+    - Column alignment stability improved
+

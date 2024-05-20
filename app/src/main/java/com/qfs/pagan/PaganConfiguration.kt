@@ -23,7 +23,7 @@ data class PaganConfiguration(
         Pair(CtlLineLevel.Global, ControlEventType.Tempo)
     ),
     var playback_sample_limit: Int? = null,
-    var playback_stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Mono
+    var playback_stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo
 ) {
     enum class LinkMode {
         MOVE,

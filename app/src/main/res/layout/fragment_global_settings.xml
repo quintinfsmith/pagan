@@ -98,6 +98,7 @@
 
         </LinearLayout>
         <LinearLayout
+            android:visibility="gone"
             android:id="@+id/llPlaybackStereo"
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -114,6 +115,7 @@
                 android:layout_height="48dp"/>
         </LinearLayout>
         <LinearLayout
+            android:visibility="gone"
             android:id="@+id/llLimitSamples"
             android:orientation="horizontal"
             android:layout_width="match_parent"

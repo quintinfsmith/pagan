@@ -117,29 +117,29 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             main.save_configuration()
         }
 
-        val switch_stereo_playback = view.findViewById<PaganSwitch>(R.id.sPlaybackStereo)
-        switch_stereo_playback.isChecked = main.configuration.playback_stereo_mode == WaveGenerator.StereoMode.Stereo
-        switch_stereo_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
-            main.configuration.playback_stereo_mode = if (enabled) {
-                WaveGenerator.StereoMode.Stereo
-            } else {
-                WaveGenerator.StereoMode.Mono
-            }
-            main.save_configuration()
-            main.reinit_playback_device()
-        }
+        //val switch_stereo_playback = view.findViewById<PaganSwitch>(R.id.sPlaybackStereo)
+        //switch_stereo_playback.isChecked = main.configuration.playback_stereo_mode == WaveGenerator.StereoMode.Stereo
+        //switch_stereo_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
+        //    main.configuration.playback_stereo_mode = if (enabled) {
+        //        WaveGenerator.StereoMode.Stereo
+        //    } else {
+        //        WaveGenerator.StereoMode.Mono
+        //    }
+        //    main.save_configuration()
+        //    main.reinit_playback_device()
+        //}
 
-        val switch_limit_samples = view.findViewById<PaganSwitch>(R.id.sLimitSamples)
-        switch_limit_samples.isChecked = main.configuration.playback_sample_limit != null
-        switch_limit_samples.setOnCheckedChangeListener { _, enabled: Boolean ->
-            main.configuration.playback_sample_limit = if (enabled) {
-                1
-            } else {
-                null
-            }
-            main.save_configuration()
-            main.reinit_playback_device()
-        }
+        //val switch_limit_samples = view.findViewById<PaganSwitch>(R.id.sLimitSamples)
+        //switch_limit_samples.isChecked = main.configuration.playback_sample_limit != null
+        //switch_limit_samples.setOnCheckedChangeListener { _, enabled: Boolean ->
+        //    main.configuration.playback_sample_limit = if (enabled) {
+        //        1
+        //    } else {
+        //        null
+        //    }
+        //    main.save_configuration()
+        //    main.reinit_playback_device()
+        //}
 
         val sample_rate_value_text = view.findViewById<PaganTextView>(R.id.tvSampleRate)
         sample_rate_value_text.text = getString(R.string.config_label_sample_rate, main.configuration.sample_rate)

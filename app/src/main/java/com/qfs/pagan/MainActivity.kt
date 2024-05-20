@@ -80,6 +80,7 @@ import com.qfs.apres.soundfont.Riff
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
+import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusLayerLinks
@@ -510,6 +511,12 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             PaganConfiguration()
         }
+
+        // Temporary while i figure out why mono playback is more complicated than I assumed, force stereo & no limit on samples
+        this.configuration.playback_stereo_mode = WaveGenerator.StereoMode.Stereo
+        this.configuration.playback_sample_limit = null
+
+
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)

@@ -137,30 +137,30 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             // TODO: Implement ROM stereo modes
             val pan = sample_handle.pan
-            val (left_frame, right_frame) = when (sample_handle.stereo_mode and 7) {
-                1 -> { // mono
-                    if (this.stereo_mode == StereoMode.Stereo && pan != 0F) {
-                        if (pan > 0) {
-                            Pair(
-                                frame_value,
-                                (frame_value * (100 - pan.toInt()) / 100)
-                            )
+            val (left_frame, right_frame) = when (this.stereo_mode) {
+                StereoMode.Stereo -> when (sample_handle.stereo_mode and 7) {
+                    1 -> { // mono
+                        if (pan != 0F) {
+                            if (pan > 0) {
+                                Pair(
+                                    frame_value,
+                                    (frame_value * (100 - pan.toInt()) / 100)
+                                )
+                            } else {
+                                Pair(
+                                    frame_value * (100 + pan.toInt()) / 100,
+                                    frame_value
+                                )
+                            }
                         } else {
                             Pair(
-                                frame_value * (100 + pan.toInt()) / 100,
+                                frame_value,
                                 frame_value
                             )
                         }
-                    } else {
-                        Pair(
-                            frame_value,
-                            frame_value
-                        )
                     }
-                }
 
-                2 -> { // right
-                    if (this.stereo_mode == StereoMode.Stereo) {
+                    2 -> { // right
                         Pair(
                             0,
                             if (pan > 0F) {
@@ -169,16 +169,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                                 frame_value
                             }
                         )
-                    } else { // MONO
-                        Pair(
-                            frame_value,
-                            frame_value
-                        )
                     }
-                }
 
-                4 -> { // left
-                    if (this.stereo_mode == StereoMode.Stereo) {
+                    4 -> { // left
                         Pair(
                             if (pan < 0F) {
                                 (frame_value * (100 + pan.toInt())) / 100
@@ -187,21 +180,28 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                             },
                             0
                         )
-                    } else { // MONO (allowed if there is ONLY a left sample for an instrument
-                        Pair(
-                            frame_value,
-                            frame_value
-                        )
+                    }
+
+                    else -> Pair(0,0)
+                }
+                StereoMode.Mono -> {
+                    when (sample_handle.stereo_mode and 7) {
+                        1, 2, 4 -> {
+                            Pair(
+                                frame_value,
+                                frame_value
+                            )
+                        }
+                        else -> Pair(0, 0)
                     }
                 }
-
-                else -> Pair(0,0)
             }
 
             val right_value = when (sample_handle.stereo_mode and 7) {
                 1, 2 -> right_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
                 else -> 0f
             }
+
             working_int_array[(f * 2)] += right_value
 
             val left_value = when (sample_handle.stereo_mode and 7) {

@@ -39,6 +39,7 @@ class SoundFontPlayerUnitTest {
                 preset_instrument.instrument?.global_zone ?: SampleDirective(),
                 preset_instrument,
                 preset.global_zone,
+                preset.modulators.union(preset_instrument.instrument?.modulators ?: setOf()),
                 1
             )
 
@@ -55,6 +56,7 @@ class SoundFontPlayerUnitTest {
                 preset_instrument.instrument?.global_zone ?: SampleDirective(),
                 preset_instrument,
                 preset.global_zone,
+                preset.modulators.union(preset_instrument.instrument?.modulators ?: setOf())
             )
 
             assertEquals(

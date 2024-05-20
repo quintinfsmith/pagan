@@ -1,7 +1,10 @@
 package com.qfs.pagan
 
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusEventSTD
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -562,19 +565,129 @@ class OpusLayerBaseUnitTest {
     
     @Test
     fun test_get_global_ctl_tree() {
-        TODO()
+        val manager = OpusManager()
+        manager.new()
+
+        val event_a = OpusTempoEvent(100f)
+        manager.set_global_ctl_event(ControlEventType.Tempo, 2, listOf(), event_a)
+
+        manager.split_global_ctl_tree(ControlEventType.Tempo, 1, listOf(), 3)
+        val event_b = OpusTempoEvent(50f)
+        manager.set_global_ctl_event(ControlEventType.Tempo, 1, listOf(2), event_b)
+
+        assertEquals(
+            "Failed get_global_ctl_tree",
+            event_a,
+            manager.get_global_ctl_tree(ControlEventType.Tempo, 2, listOf()).event
+        )
+        assertEquals(
+            "Failed get_global_ctl_tree",
+            event_b,
+            manager.get_global_ctl_tree(ControlEventType.Tempo, 1, listOf(2)).event
+        )
     }
+
     @Test
     fun test_get_channel_ctl_tree() {
-        TODO()
+        val manager = OpusManager()
+        manager.new()
+        val type = ControlEventType.Volume
+
+        val event_a = OpusVolumeEvent(100)
+        manager.set_channel_ctl_event(type, 0, 0, listOf(), event_a)
+
+        manager.split_channel_ctl_tree(type, 0, 1, listOf(), 3)
+        val event_b = OpusVolumeEvent(50)
+        manager.set_channel_ctl_event(type, 0, 1, listOf(2), event_b)
+
+        assertEquals(
+            "Failed get_channel_ctl_tree",
+            event_a,
+            manager.get_channel_ctl_tree(type, 0, 0, listOf()).event
+        )
+        assertEquals(
+            "Failed get_channel_ctl_tree",
+            event_b,
+            manager.get_channel_ctl_tree(type, 0, 1, listOf(2)).event
+        )
     }
     @Test
     fun test_get_line_ctl_tree() {
-        TODO()
+        val manager = OpusManager()
+        manager.new()
+        val type = ControlEventType.Volume
+
+        val beat_key_a = BeatKey(0,0,0)
+        val event_a = OpusVolumeEvent(100)
+        manager.set_line_ctl_event(type, beat_key_a, listOf(), event_a)
+
+        val beat_key_b = BeatKey(0,0,1)
+        manager.split_line_ctl_tree(type, beat_key_b, listOf(), 3)
+        val event_b = OpusVolumeEvent(50)
+        manager.set_line_ctl_event(type, beat_key_b, listOf(2), event_b)
+
+        assertEquals(
+            "Failed get_line_ctl_tree",
+            event_a,
+            manager.get_line_ctl_tree(type, beat_key_a, listOf()).event
+        )
+        assertEquals(
+            "Failed get_line_ctl_tree",
+            event_b,
+            manager.get_line_ctl_tree(type, beat_key_b, listOf(2)).event
+        )
     }
+
     @Test
     fun test_overwrite_global_ctl_row() {
-        TODO()
+        val manager = OpusManager()
+        manager.new()
+        val type = ControlEventType.Tempo
+        val event = OpusTempoEvent(100F)
+
+        // Set Up first tree
+        manager.set_global_ctl_event(type, 0, listOf(), event)
+
+        // apply overwrite
+        manager.overwrite_global_ctl_row(type, 0)
+
+        for (beat in 0 until manager.beat_count) {
+            assertEquals(
+                "Failed overwrite_global_Ctl_row",
+                manager.get_global_ctl_tree(type, 0),
+                manager.get_global_ctl_tree(type, beat)
+            )
+        }
+        ////////////////////////
+        manager.new()
+        manager.set_beat_count(12)
+
+        // Set Up first tree
+        manager.set_global_ctl_event(type, 3, listOf(), event)
+        // add explicitly different tree
+        manager.split_global_ctl_tree(type, 0, listOf(), 3)
+
+        // apply overwrite
+        println(manager.controllers.get_controller(ControlEventType.Tempo).events.size)
+        manager.overwrite_global_ctl_row(type, 3)
+
+        for (beat in 0 until 3) {
+            assertNotEquals(
+                "Incorrectly overwrote some trees - overwrite_global_Ctl_row",
+                manager.get_global_ctl_tree(type, 3),
+                manager.get_global_ctl_tree(type, beat)
+            )
+        }
+
+        for (beat in 3 until manager.beat_count) {
+            assertEquals(
+                "Failed overwrite_global_Ctl_row",
+                manager.get_global_ctl_tree(type, 3),
+                manager.get_global_ctl_tree(type, beat)
+            )
+        }
+
+
     }
     @Test
     fun test_overwrite_channel_ctl_row() {

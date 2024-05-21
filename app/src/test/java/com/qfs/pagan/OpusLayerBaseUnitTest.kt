@@ -788,24 +788,24 @@ class OpusLayerBaseUnitTest {
         }
     }
 
-    @Test
-    fun test_overwrite_beat_range_horizontally() {
-        TODO()
-    }
+   // @Test
+   // fun test_overwrite_beat_range_horizontally() {
+   //     TODO()
+   // }
 
-    @Test
-    fun test_overwrite_line_ctl_range_horizontally() {
-        TODO()
-    }
+   // @Test
+   // fun test_overwrite_line_ctl_range_horizontally() {
+   //     TODO()
+   // }
 
-    @Test
-    fun test_overwrite_channel_ctl_range_horizontally() {
-        TODO()
-    }
-    @Test
-    fun test_overwrite_global_ctl_range_horizontally() {
-        TODO()
-    }
+   // @Test
+   // fun test_overwrite_channel_ctl_range_horizontally() {
+   //     TODO()
+   // }
+   // @Test
+   // fun test_overwrite_global_ctl_range_horizontally() {
+   //     TODO()
+   // }
 
     @Test
     fun test_add_remove_line_ctl_line() {

@@ -250,4 +250,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         return this.controllers[type]!!
     }
 
+    fun has_controller(type: ControlEventType): Boolean {
+        return this.controllers.containsKey(type)
+    }
 }

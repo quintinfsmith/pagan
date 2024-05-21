@@ -1218,6 +1218,9 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channel.set_beat_count(new_count)
         }
+        for ((_, controller) in this.controllers.get_all()) {
+            controller.set_beat_count(new_count)
+        }
     }
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
@@ -2972,6 +2975,10 @@ open class OpusLayerBase {
         return true
     }
 
+    fun has_global_controller(type: ControlEventType): Boolean {
+        return this.controllers.has_controller(type)
+    }
+
     fun add_global_ctl_line(type: ControlEventType) {
         this.controllers.new_controller(type)
         this.recache_line_maps()
@@ -2982,6 +2989,10 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
+    fun has_channel_controller(type: ControlEventType, channel: Int): Boolean {
+        return this.channels[channel].controllers.has_controller(type)
+    }
+
     fun add_channel_ctl_line(type: ControlEventType, channel: Int) {
         this.channels[channel].controllers.new_controller(type)
         this.recache_line_maps()
@@ -2990,6 +3001,10 @@ open class OpusLayerBase {
     fun remove_channel_ctl_line(type: ControlEventType, channel: Int) {
         this.channels[channel].controllers.remove_controller(type)
         this.recache_line_maps()
+    }
+
+    fun has_line_controller(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
+        return this.channels[channel].lines[line_offset].controllers.has_controller(type)
     }
 
     fun add_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {

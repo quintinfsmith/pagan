@@ -7,8 +7,10 @@ import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
@@ -1067,5 +1069,90 @@ class OpusLayerBaseUnitTest {
             event,
             manager.get_line_controller_initial_event(type, channel, line_offset)
         )
+    }
+
+    @Test
+    fun test_is_tuning_standard() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.set_tuning_map(
+            Array(12) {
+                Pair(it, 12)
+            }
+        )
+
+        assertTrue(
+            "tuning map of size 12 and all entries in form Pair(i, 12) should be standard",
+            manager.is_tuning_standard()
+        )
+
+        manager.set_tuning_map(
+            Array(7) {
+                Pair(it, 12)
+            }
+        )
+
+        assertTrue(
+            "tuning map should still be seen as standard when size != 12 but entries are all Pair(i, 12)",
+            manager.is_tuning_standard()
+        )
+
+        manager.set_tuning_map(
+            Array(24) {
+                Pair(it, 24)
+            }
+        )
+
+        assertFalse(
+            "tuning map should not be standard with entries Pair(i, 24)",
+            manager.is_tuning_standard()
+        )
+
+    }
+
+    @Test
+    fun test_set_tuning_map() {
+        val manager = OpusManager()
+        manager.new()
+        val channel = 0
+        val original_value = 12
+        manager.set_event(BeatKey(channel,0,0), listOf(), OpusEventSTD(original_value, channel, false, 1))
+
+        // First don't modify existing event
+        manager.set_tuning_map(
+            Array(4) {
+                Pair(it, 4)
+            },
+            false
+        )
+
+        assertEquals(
+            "Should not have changed event Value",
+            original_value,
+            manager.get_tree(BeatKey(channel,0,0), listOf()).event!!.note
+        )
+
+        // Return to original state
+        manager.set_tuning_map(
+            Array(12) {
+                Pair(it, 12)
+            },
+            false
+        )
+
+        // Now Modify the event
+        manager.set_tuning_map(
+            Array(4) {
+                Pair(it, 4)
+            }
+        )
+
+        assertEquals(
+            "Should have changed event Value",
+            4,
+            manager.get_tree(BeatKey(channel,0,0), listOf()).event!!.note
+        )
+
     }
 }

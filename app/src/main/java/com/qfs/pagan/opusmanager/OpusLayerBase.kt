@@ -2901,6 +2901,11 @@ open class OpusLayerBase {
         }
     }
 
+    /*
+        Checks if the tuning falls within 12-tone equal-temper tuning.
+        this means a tuning_map with less than 12 entries is still standard if
+        every entry is also ((some number) / 12)
+     */
     fun is_tuning_standard(): Boolean {
         val actuals = List<Double>(12) { i: Int ->
             i.toDouble() / 12.0

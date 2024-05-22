@@ -939,7 +939,7 @@ open class OpusLayerBase {
     }
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        var tree: OpusTree<OpusEventSTD> = this.get_tree(beat_key, position)
+        val tree: OpusTree<OpusEventSTD> = this.get_tree(beat_key, position)
         this._split_opus_tree<OpusEventSTD>(tree, splits)
     }
 
@@ -1277,12 +1277,12 @@ open class OpusLayerBase {
                     )
                 } else if (!current.tree.is_leaf()) {
                     val working_subdiv_size = current.size / current.tree.size
-                    for ((i, subtree) in current.tree.divisions) {
+                    for ((j, subtree) in current.tree.divisions) {
                         stack.add(
                             StackItem(
                                 subtree,
                                 current.tree.size,
-                                current.offset + (working_subdiv_size * i),
+                                current.offset + (working_subdiv_size * j),
                                 working_subdiv_size
                             )
                         )
@@ -1609,7 +1609,7 @@ open class OpusLayerBase {
             }
 
             val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
-            channel.lines.forEachIndexed { i: Int, line: OpusTreeJSON<OpusEventSTD> ->
+            for (i in channel.lines.indices) {
                 val new_controller = ActiveControllerJSON(
                     ControlEventType.Volume,
                     OpusVolumeEvent(channel.line_volumes[i]),
@@ -2043,7 +2043,7 @@ open class OpusLayerBase {
             opus.set(i, quantized_tree)
         }
 
-        tempo_line.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent> ->
+        for (tree in tempo_line) {
             tree.reduce()
             tree.clear_singles()
         }
@@ -2739,7 +2739,7 @@ open class OpusLayerBase {
                 this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
                 this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
 
-                for ((type, controller) in channel.lines[line_offset].controllers.controllers) {
+                for ((type, _) in channel.lines[line_offset].controllers.controllers) {
                     this._cached_abs_line_map_map.add(
                         Triple(
                             this._cached_std_line_map[keypair]!!,

@@ -1212,6 +1212,10 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
 
+        assertThrows(IndexOutOfBoundsException::class.java) {
+            manager.get_std_offset(2)
+        }
+
         manager.new_line(0)
         manager.new_line(0)
 
@@ -1240,5 +1244,12 @@ class OpusLayerBaseUnitTest {
                 abs += 1
             }
         }
+        val beat_key_a = BeatKey(0,0,0)
+        val beat_key_b = BeatKey(2,1,2)
+        assertEquals(
+            "get_abs_difference incorrect",
+            manager.get_abs_difference(beat_key_a, beat_key_b),
+            Pair(8,2)
+        )
     }
 }

@@ -259,24 +259,16 @@ open class OpusLayerBase {
             throw BadBeatKey(beat_key)
         }
 
-        try {
-            return this.channels[beat_key.channel].get_ctl_tree(
-                beat_key.line_offset,
-                type,
-                beat_key.beat,
-                position ?: listOf()
-            )
-        } catch (e: OpusTree.InvalidGetCall) {
-            throw e
-        }
+        return this.channels[beat_key.channel].get_ctl_tree(
+            beat_key.line_offset,
+            type,
+            beat_key.beat,
+            position ?: listOf()
+        )
     }
 
     fun get_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
-        try {
-            return this.controllers.get_controller(type).get_tree(beat, position)
-        } catch (e: OpusTree.InvalidGetCall) {
-            throw e
-        }
+        return this.controllers.get_controller(type).get_tree(beat, position)
     }
 
     /**

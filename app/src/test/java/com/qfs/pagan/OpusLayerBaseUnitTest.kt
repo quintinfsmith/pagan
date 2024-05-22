@@ -82,11 +82,46 @@ class OpusLayerBaseUnitTest {
 
     @Test
     fun test_get_proceding_leaf() {
-        // TODO("test_get_proceding_leaf")
+        val manager = OpusManager()
+        manager.new()
+        val first_beat_key = BeatKey(0,0,1)
+
+        manager.split_tree(first_beat_key, listOf(), 4)
+        manager.set_event(first_beat_key, listOf(3), OpusEventSTD(0,0, false))
+        manager.set_event(first_beat_key, listOf(2), OpusEventSTD(1,0, false))
+        val expected_leaf = manager.get_tree(first_beat_key, listOf(3))
+        assertEquals(
+            "get_proceding_leaf failed",
+            expected_leaf,
+            manager.get_proceding_leaf(first_beat_key, listOf(2))
+        )
+        assertEquals(
+            "get_proceding_leaf should be null",
+            null,
+            manager.get_proceding_leaf(BeatKey(0,0,3), listOf())
+        )
     }
+
     @Test
     fun test_get_preceding_leaf() {
-        //TODO("test_get_preceding_leaf")
+        val manager = OpusManager()
+        manager.new()
+        val first_beat_key = BeatKey(0,0,1)
+
+        manager.split_tree(first_beat_key, listOf(), 4)
+        manager.set_event(first_beat_key, listOf(3), OpusEventSTD(0,0, false))
+        manager.set_event(first_beat_key, listOf(2), OpusEventSTD(1,0, false))
+        val expected_leaf = manager.get_tree(first_beat_key, listOf(2))
+        assertEquals(
+            "get_preceding_leaf failed",
+            expected_leaf,
+            manager.get_preceding_leaf(first_beat_key, listOf(3))
+        )
+        assertEquals(
+            "get_preceding_leaf should be null",
+            null,
+            manager.get_preceding_leaf(BeatKey(0,0,0), listOf())
+        )
     }
 
     @Test
@@ -476,7 +511,9 @@ class OpusLayerBaseUnitTest {
         manager.insert_after(beat_key, listOf(0))
         assertEquals(beat_tree.size, initial_length + 1)
 
-        //manager.insert_after(beat_key, listOf())
+        assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
+            manager.insert_after(BeatKey(0,0,0), listOf())
+        }
     }
 
     @Test
@@ -500,6 +537,118 @@ class OpusLayerBaseUnitTest {
         val tree = manager.get_tree(beat_key, listOf(3))
         manager.remove(beat_key, listOf(2))
         assertEquals(tree, manager.get_tree(beat_key, listOf(2)))
+    }
+
+    @Test
+    fun test_remove_global_ctl() {
+        val manager = OpusManager()
+        manager.new()
+        val beat = 0
+        val type = ControlEventType.Tempo
+        manager.split_global_ctl_tree(type, beat, listOf(), 2)
+
+        val beat_tree = manager.get_global_ctl_tree(type, beat)
+
+        // Insert empty tree in the first beat
+        manager.insert_after_global_ctl(type, beat, listOf(0))
+
+        //Then remove that tree
+        manager.remove_global_ctl(type, beat, listOf(1))
+        assertEquals(beat_tree.size, 2)
+
+        // Check that the siblings get adjusted
+        for (i in 0 until 1) {
+            manager.insert_after_global_ctl(type, beat, listOf(0))
+        }
+
+        val tree = manager.get_global_ctl_tree(type, beat, listOf(2))
+        manager.remove_global_ctl(type, beat, listOf(1))
+        assertEquals(
+            tree,
+            manager.get_global_ctl_tree(type, beat, listOf(1))
+        )
+
+        manager.remove_global_ctl(type, beat, listOf(1))
+
+        assertTrue(
+            manager.get_global_ctl_tree(type, beat, listOf()).is_leaf()
+        )
+    }
+
+    @Test
+    fun test_remove_channel_ctl() {
+        val manager = OpusManager()
+        manager.new()
+        val type = ControlEventType.Volume
+        val channel = 0
+        val beat = 0
+
+        manager.split_channel_ctl_tree(type, channel, beat, listOf(), 2)
+
+        val beat_tree = manager.get_channel_ctl_tree(type, channel, beat)
+
+        // Insert empty tree in the first beat
+        manager.insert_after_channel_ctl(type, channel, beat, listOf(0))
+
+        //Then remove that tree
+        manager.remove_channel_ctl(type, channel, beat, listOf(1))
+        assertEquals(beat_tree.size, 2)
+
+        // Check that the siblings get adjusted
+        for (i in 0 until 1) {
+            manager.insert_after_channel_ctl(type, channel, beat, listOf(0))
+        }
+
+        val tree = manager.get_channel_ctl_tree(type, channel, beat, listOf(2))
+        manager.remove_channel_ctl(type, channel, beat, listOf(1))
+        assertEquals(
+            tree,
+            manager.get_channel_ctl_tree(type, channel, beat, listOf(1))
+        )
+
+        manager.remove_channel_ctl(type, channel, beat, listOf(1))
+
+        assertTrue(
+            manager.get_channel_ctl_tree(type, channel, beat, listOf()).is_leaf()
+        )
+    }
+
+    @Test
+    fun test_remove_line_ctl() {
+        val manager = OpusManager()
+        manager.new()
+        val type = ControlEventType.Volume
+        val beat_key = BeatKey(0, 0, 0)
+
+        manager.split_line_ctl_tree(type, beat_key, listOf(), 2)
+
+        val beat_tree = manager.get_line_ctl_tree(type, beat_key)
+
+        // Insert empty tree in the first beat
+        manager.insert_after_line_ctl(type, beat_key, listOf(0))
+
+        //Then remove that tree
+        manager.remove_line_ctl(type, beat_key, listOf(1))
+        assertEquals(beat_tree.size, 2)
+
+        // Check that the siblings get adjusted
+        for (i in 0 until 1) {
+            manager.insert_after_line_ctl(type, beat_key, listOf(0))
+        }
+
+        val tree = manager.get_line_ctl_tree(type, beat_key, listOf(2))
+        manager.remove_line_ctl(type, beat_key, listOf(1))
+        assertEquals(
+            tree,
+            manager.get_line_ctl_tree(type, beat_key, listOf(1))
+        )
+
+
+        manager.remove_line_ctl(type, beat_key, listOf(1))
+
+        assertTrue(
+            manager.get_line_ctl_tree(type, beat_key, listOf()).is_leaf()
+        )
     }
 
     @Test
@@ -1244,12 +1393,146 @@ class OpusLayerBaseUnitTest {
                 abs += 1
             }
         }
+
         val beat_key_a = BeatKey(0,0,0)
         val beat_key_b = BeatKey(2,1,2)
         assertEquals(
             "get_abs_difference incorrect",
             manager.get_abs_difference(beat_key_a, beat_key_b),
             Pair(8,2)
+        )
+    }
+
+    @Test
+    fun test_insert() {
+        val manager = OpusManager()
+        manager.new()
+        val test_event_a = OpusEventSTD(0,0,false)
+        manager.set_event(BeatKey(0,0,0), listOf(), test_event_a)
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        manager.insert(BeatKey(0,0,0), listOf(0))
+
+        assertEquals(
+            "Insert into beat_tree fail",
+            3,
+            manager.get_tree(BeatKey(0,0,0), listOf()).size
+        )
+
+        assertEquals(
+            "Insert into beat_tree didn't insert correctly",
+            test_event_a,
+            manager.get_tree(BeatKey(0,0,0), listOf(1)).event
+        )
+
+        assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
+            manager.insert(BeatKey(0,0,0), listOf())
+        }
+
+    }
+
+    @Test
+    fun test_set_unset_global() {
+        val manager = OpusManager()
+        manager.new()
+
+        // set/unset leaf
+        val beat = 0
+        val position: List<Int> = listOf()
+
+        val type = ControlEventType.Tempo
+        val test_event = OpusTempoEvent(1f)
+        manager.set_global_ctl_event(type, beat, position, test_event)
+        val tree = manager.get_global_ctl_tree(type, beat, position)
+        assertTrue(
+            "Failed to set global ctl event",
+            tree.is_event()
+        )
+
+        assertEquals(
+            "Set global ctl event, but set it wrong",
+            tree.get_event(),
+            test_event
+        )
+
+        manager.unset_global_ctl(type, beat, position)
+        assertFalse(
+            "Failed to unset tree",
+            manager.get_global_ctl_tree(type, beat, position).is_event()
+        )
+
+        manager.split_global_ctl_tree(type, beat, position, 2)
+        manager.set_global_ctl_event(type, beat, listOf(0), test_event)
+
+        manager.unset_global_ctl(type, beat, listOf(0))
+        assertFalse(
+            "Failed to unset tree",
+            manager.get_global_ctl_tree(type, beat, listOf(0)).is_event()
+        )
+
+    }
+
+    @Test
+    fun test_set_unset_channel() {
+        val manager = OpusManager()
+        manager.new()
+
+        // set/unset leaf
+        val beat = 0
+        val channel = 0
+        val position: List<Int> = listOf()
+
+        val type = ControlEventType.Volume
+        val test_event = OpusVolumeEvent(1)
+        manager.set_channel_ctl_event(type, channel, beat, position, test_event)
+
+        val tree = manager.get_channel_ctl_tree(type, channel, beat, position)
+        assertTrue(
+            "Failed to set global ctl event",
+            tree.is_event()
+        )
+
+        assertEquals(
+            "Set global ctl event, but set it wrong",
+            tree.get_event(),
+            test_event
+        )
+
+        manager.unset_channel_ctl(type, channel, beat, position)
+        assertFalse(
+            "Failed to unset tree",
+            manager.get_channel_ctl_tree(type, channel, beat, position).is_event()
+        )
+    }
+
+    @Test
+    fun test_set_unset_line() {
+        val manager = OpusManager()
+        manager.new()
+
+        // set/unset leaf
+        val beat_key = BeatKey(0,0,0)
+        val position: List<Int> = listOf()
+
+        val type = ControlEventType.Volume
+        val test_event = OpusVolumeEvent(1)
+        manager.set_line_ctl_event(type, beat_key, position, test_event)
+
+        val tree = manager.get_line_ctl_tree(type, beat_key, position)
+        assertTrue(
+            "Failed to set global ctl event",
+            tree.is_event()
+        )
+
+        assertEquals(
+            "Set global ctl event, but set it wrong",
+            tree.get_event(),
+            test_event
+        )
+
+        manager.unset_line_ctl(type, beat_key, position)
+        assertFalse(
+            "Failed to unset tree",
+            manager.get_line_ctl_tree(type, beat_key, position).is_event()
         )
     }
 }

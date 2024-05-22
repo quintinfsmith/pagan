@@ -24,7 +24,7 @@ data class OpusReverbEvent(var value: Float): OpusControlEvent()
 data class OpusEventSTD(
     var note: Int,
     var channel: Int,
-    var relative: Boolean,
+    var relative: Boolean = false,
     var duration: Int = 1
 ): OpusEvent
 

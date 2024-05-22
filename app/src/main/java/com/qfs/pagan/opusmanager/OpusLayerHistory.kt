@@ -1223,7 +1223,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         this._remember {
-            val (from_key, _) = this.get_ordered_beat_key_pair(first_key, second_key)
+            val (from_key, _) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
             if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
                 throw BadRowLink(from_key, channel, line_offset)
             }

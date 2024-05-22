@@ -46,6 +46,36 @@ open class OpusLayerBase {
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
         const val DEFAULT_NAME = "New Opus"
+
+        fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
+            val (from_key, to_key) = if (first.channel < second.channel) {
+                Pair(
+                    BeatKey(first.channel, first.line_offset, -1),
+                    BeatKey(second.channel, second.line_offset, -1)
+                )
+            } else if (first.channel == second.channel) {
+                Pair(
+                    BeatKey(
+                        first.channel,
+                        min(first.line_offset, second.line_offset),
+                        -1
+                    ),
+                    BeatKey(
+                        first.channel,
+                        max(first.line_offset, second.line_offset),
+                        -1
+                    )
+                )
+            } else {
+                Pair(
+                    BeatKey(second.channel, second.line_offset, -1),
+                    BeatKey(first.channel, first.line_offset, -1)
+                )
+            }
+            from_key.beat = min(first.beat, second.beat)
+            to_key.beat = max(first.beat, second.beat)
+            return Pair(from_key, to_key)
+        }
     }
 
     private var _channel_uuid_generator: Int = 0x00
@@ -2276,37 +2306,9 @@ open class OpusLayerBase {
 
 
 
-    fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
-        val (from_key, to_key) = if (first.channel < second.channel) {
-            Pair(
-                BeatKey(first.channel, first.line_offset, -1),
-                BeatKey(second.channel, second.line_offset, -1)
-            )
-        } else if (first.channel == second.channel) {
-            if (first.line_offset < second.line_offset) {
-                Pair(
-                    BeatKey(first.channel, first.line_offset, -1),
-                    BeatKey(second.channel, second.line_offset, -1)
-                )
-            } else {
-                Pair(
-                    BeatKey(second.channel, second.line_offset, -1),
-                    BeatKey(first.channel, first.line_offset, -1)
-                )
-            }
-        } else {
-            Pair(
-                BeatKey(second.channel, second.line_offset, -1),
-                BeatKey(first.channel, first.line_offset, -1)
-            )
-        }
-        from_key.beat = min(first.beat, second.beat)
-        to_key.beat = max(first.beat, second.beat)
-        return Pair(from_key, to_key)
-    }
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
         val overwrite_map = HashMap<BeatKey, OpusTree<OpusEventSTD>>()
 
         // Start OverFlow Check ////
@@ -2382,7 +2384,7 @@ open class OpusLayerBase {
 
     open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         this.overwrite_beat_range(beat_key, first_corner, second_corner)
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
         val from_keys = mutableSetOf<BeatKey>()
         val to_keys = mutableSetOf<BeatKey>()
 
@@ -2496,7 +2498,7 @@ open class OpusLayerBase {
     }
 
     private fun _copy_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
         val overwrite_map = HashMap<BeatKey, OpusTree<OpusControlEvent>>()
 
         // Start OverFlow Check ////
@@ -2770,7 +2772,7 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         val width = (to_key.beat - from_key.beat) + 1
         val count = ((this.beat_count - from_key.beat) / width) - 1
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -2803,7 +2805,7 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_line_ctl_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
 
         val width = (to_key.beat - from_key.beat) + 1
         val count = ((this.beat_count - from_key.beat) / width) - 1

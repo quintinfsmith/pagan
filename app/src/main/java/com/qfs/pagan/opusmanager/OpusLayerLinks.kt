@@ -79,7 +79,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     }
 
     open fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (i < from_key.channel || i > to_key.channel) {
                 return@forEachIndexed
@@ -402,7 +402,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     }
 
     open fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(target_a, target_b)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(target_a, target_b)
 
         val overlap = if (beat.beat in (from_key.beat .. to_key.beat)) {
             if (beat.channel in (from_key.channel..to_key.channel)) {
@@ -546,7 +546,7 @@ open class OpusLayerLinks : OpusLayerBase() {
 
 
     open fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        val (from_key, to_key) = this.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         // from_key -> to_key need to be first beat. it's a bit arbitrary but from a ui perspective makes it cleaner
         if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
             throw BadRowLink(from_key, channel, line_offset)

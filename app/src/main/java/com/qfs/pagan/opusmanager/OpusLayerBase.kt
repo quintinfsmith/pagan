@@ -180,21 +180,12 @@ open class OpusLayerBase {
     /**
      * Calculate which channel and line offset is denoted by the [absolute]th line
      */
-    fun get_std_offset(absolute: Int, check_line_map_map: Boolean = false): Pair<Int, Int> {
-        var adj_absolute = if (check_line_map_map) {
-            if (absolute >= this._cached_abs_line_map_map.size) {
-                throw IndexOutOfBoundsException()
-            }
-            this._cached_abs_line_map_map[absolute].first
-        } else {
-            absolute
-        }
-
-        if (adj_absolute >= this._cached_abs_line_map.size) {
+    fun get_std_offset(absolute: Int): Pair<Int, Int> {
+        if (absolute >= this._cached_abs_line_map.size) {
             throw IndexOutOfBoundsException()
         }
 
-        return this._cached_abs_line_map[adj_absolute]
+        return this._cached_abs_line_map[absolute]
     }
 
     /**

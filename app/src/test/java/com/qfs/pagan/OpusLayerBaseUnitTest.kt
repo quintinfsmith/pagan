@@ -2,7 +2,10 @@ package com.qfs.pagan
 
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusEventSTD
+import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.structure.OpusTree
@@ -1154,5 +1157,88 @@ class OpusLayerBaseUnitTest {
             manager.get_tree(BeatKey(channel,0,0), listOf()).event!!.note
         )
 
+    }
+
+    @Test
+    fun test_swap_lines() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0, 0)
+        val test_event = OpusEventSTD(1, 0, relative = true)
+        manager.set_event(BeatKey(0,0,0), listOf(), test_event)
+
+        val line_a = manager.channels[0].lines[0]
+        val line_b = manager.channels[0].lines[1]
+
+        manager.swap_lines(0, 0, 0, 1)
+        assertEquals(
+            "Failed to swap lines",
+            line_b,
+            manager.channels[0].lines[0]
+        )
+        assertEquals(
+            "Failed to swap lines",
+            line_a,
+            manager.channels[0].lines[1]
+        )
+
+        manager.new_line(1, 0)
+        manager.set_percussion_event(BeatKey(1,0,0), listOf())
+        assertThrows(OpusLayerBase.IncompatibleChannelException::class.java) {
+            manager.swap_lines(0, 0, 1, 0)
+        }
+
+        val p_line_a = manager.channels[1].lines[0]
+        val p_line_b = manager.channels[1].lines[1]
+
+        manager.swap_lines(1, 0, 1, 1)
+        assertEquals(
+            "Failed to swap percussion lines",
+            p_line_b,
+            manager.channels[1].lines[0]
+        )
+
+        assertEquals(
+            "Failed to swap percussion lines",
+            p_line_a,
+            manager.channels[1].lines[1]
+        )
+
+
+    }
+
+    @Test
+    fun test_std_abs_offset() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.new_line(0)
+        manager.new_line(0)
+
+        for (i in 1 until 3) {
+            manager.new_channel()
+            for (j in 0 until 3) {
+                manager.new_line(i)
+            }
+        }
+
+        var abs = 0
+        manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
+                assertEquals(
+                    "incorrect std_offset",
+                    Pair(i, j),
+                    manager.get_std_offset(abs)
+                )
+
+                assertEquals(
+                    "incorrect abs_offset",
+                    abs,
+                    manager.get_abs_offset(i, j)
+                )
+
+                abs += 1
+            }
+        }
     }
 }

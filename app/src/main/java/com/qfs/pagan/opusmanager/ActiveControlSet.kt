@@ -157,7 +157,6 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
 
         fun set_beat_count(beat_count: Int) {
             val current_beat_count = this.events.size
-            println("${this.type} CBC: $current_beat_count, new beat ocunt: $beat_count")
 
             if (beat_count > current_beat_count) {
                 for (i in current_beat_count until beat_count) {

@@ -592,7 +592,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     this.runOnUiThread { _: MainActivity ->
                         val controllers = output.controllers.get_all()
                         var control_line_count = 0
-                        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                        for ((type, _) in controllers) {
                             if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                                 control_line_count += 1
                             }
@@ -604,7 +604,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 UI_LOCK_PARTIAL -> {
                     val controllers = output.controllers.get_all()
                     var control_line_count = 0
-                    controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                    for ((type, _) in controllers) {
                         if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                             control_line_count += 1
                         }
@@ -727,7 +727,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 editor_table.remove_column(beat_index, true)
             }
             else -> {
-                this.runOnUiThread { main ->
+                this.runOnUiThread {
                     editor_table.remove_column(beat_index)
                 }
             }
@@ -863,7 +863,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table()
         editor_table?.clear()
-        this.runOnUiThread { main: MainActivity ->
+        this.runOnUiThread {
             editor_table?.precise_scroll(0, 0, 0, 0)
         }
         super.clear()
@@ -890,14 +890,14 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.make_percussion_visible()
         }
 
-        for ((type, controller) in this.channels[channel].controllers.get_all()) {
+        for ((type, _) in this.channels[channel].controllers.get_all()) {
             if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
                 removed_row_count += 1
             }
         }
 
         for (line in this.channels[channel].lines) {
-            for ((type, controller) in line.controllers.get_all()) {
+            for ((type, _) in line.controllers.get_all()) {
                 if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                     removed_row_count += 1
                 }

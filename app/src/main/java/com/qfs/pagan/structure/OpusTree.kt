@@ -19,7 +19,7 @@ class OpusTree<T> {
                     if (child_json == null) {
                         return@forEachIndexed
                     }
-                    new_tree.set(i, OpusTree.from_json(child_json!!))
+                    new_tree.set(i, OpusTree.from_json(child_json))
                 }
             }
             return new_tree

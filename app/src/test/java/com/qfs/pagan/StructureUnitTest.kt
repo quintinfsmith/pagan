@@ -1,36 +1,37 @@
 package com.qfs.pagan
 
+import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.greatest_common_denominator
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.Assert.*
-import com.qfs.pagan.structure.*
 
 class StructureUnitTest {
     @Test
     fun test_merge() {
-        var tree_a = OpusTree<Int>()
+        val tree_a = OpusTree<Int>()
         tree_a.set_size(120)
-        tree_a.get(80).set_size(40)
-        tree_a.get(80).get(0).set_event(1)
-        tree_a.get(0).set_event(1)
+        tree_a[80].set_size(40)
+        tree_a[80][0].set_event(1)
+        tree_a[0].set_event(1)
 
-        var tree_b = OpusTree<Int>()
+        val tree_b = OpusTree<Int>()
         tree_b.set_size(3)
-        tree_b.get(0).set_size(3)
-        tree_b.get(0).get(0).set_event(0)
+        tree_b[0].set_size(3)
+        tree_b[0][0].set_event(0)
 
-        var tree_c: OpusTree<Set<Int>> = tree_a.merge(tree_b.get_set_tree())
+        val tree_c: OpusTree<Set<Int>> = tree_a.merge(tree_b.get_set_tree())
 
-        assertEquals(tree_c.get(0).get_event(), setOf(0,1))
+        assertEquals(tree_c[0].get_event(), setOf(0,1))
     }
 
     @Test
     fun test_reduce() {
-        var tree = OpusTree<Int>()
+        val tree = OpusTree<Int>()
         tree.set_size(120)
-        tree.get(0).set_event(0)
-        tree.get(30).set_event(1)
-        tree.get(60).set_event(2)
-        tree.get(90).set_event(3)
+        tree[0].set_event(0)
+        tree[30].set_event(1)
+        tree[60].set_event(2)
+        tree[90].set_event(3)
         tree.reduce(4)
         assertEquals(4, tree.size)
     }

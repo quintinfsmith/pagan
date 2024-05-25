@@ -15,10 +15,10 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
-import java.lang.Integer.max
-import java.lang.Integer.min
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -42,6 +42,7 @@ open class OpusLayerBase {
     class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) @ $startkey overflows")
     class EventlessTreeException: Exception("Tree requires event for operation")
     class InvalidOverwriteCall: Exception()
+    class BlockedLeafException: Exception()
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -97,6 +98,9 @@ open class OpusLayerBase {
     // Value: first is always a pointer to cached_abs_line_map, second and third are pointers to the relative ctl lines
     private var _cached_abs_line_map_map = mutableListOf<Triple<Int, CtlLineLevel?, ControlEventType?>>()
     private var _cached_inv_abs_line_map_map = HashMap<Int, Int>()
+
+    private val _cache_blocked_leaf_map = HashMap<Pair<BeatKey, List<Int>>, MutableList<Triple<BeatKey, List<Int>, Float>>>()
+    private val _cache_inv_blocked_leaf_map = HashMap<Pair<BeatKey, List<Int>>, Triple<BeatKey, List<Int>, Float>>()
 
     //// RO Functions ////
     /**
@@ -912,6 +916,8 @@ open class OpusLayerBase {
         }
         val tree = this.get_tree(beat_key, position)
         tree.set_event(event)
+
+        this.update_blocked_leaf_cache(beat_key, position)
     }
 
     open fun set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: OpusControlEvent) {
@@ -940,22 +946,39 @@ open class OpusLayerBase {
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusEventSTD> = this.get_tree(beat_key, position)
-        this._split_opus_tree<OpusEventSTD>(tree, splits)
+        val block_key = Pair(beat_key, position)
+        val needs_recache = if (this._cache_inv_blocked_leaf_map.containsKey(block_key)) {
+            val (_, _, blocking_amount) = this._cache_inv_blocked_leaf_map[block_key]!!
+            if (blocking_amount > 1f / splits.toFloat()) {
+                throw BlockedLeafException()
+            }
+            true
+        } else {
+            false
+        }
+
+        this._split_opus_tree(tree, splits)
+
+        if (!needs_recache) {
+            return
+        }
+
+        this.recache_blocked_leaf(beat_key, position)
     }
 
     open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusControlEvent> = this.get_line_ctl_tree(type, beat_key, position)
-        this._split_opus_tree<OpusControlEvent>(tree, splits)
+        this._split_opus_tree(tree, splits)
     }
 
     open fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusControlEvent> = this.get_channel_ctl_tree(type, channel, beat, position)
-        this._split_opus_tree<OpusControlEvent>(tree, splits)
+        this._split_opus_tree(tree, splits)
     }
 
     open fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusControlEvent> = this.get_global_ctl_tree(type, beat, position)
-        this._split_opus_tree<OpusControlEvent>(tree, splits)
+        this._split_opus_tree(tree, splits)
     }
 
     private fun <T> _split_opus_tree(tree: OpusTree<T>, splits: Int) {
@@ -980,6 +1003,7 @@ open class OpusLayerBase {
     open fun unset(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         this._unset(tree)
+        this.update_blocked_leaf_cache(beat_key, position)
     }
     
     open fun unset_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -1522,6 +1546,9 @@ open class OpusLayerBase {
         }
         this.transpose = 0
         this.controllers.clear()
+
+        this._cache_blocked_leaf_map.clear()
+        this._cache_inv_blocked_leaf_map.clear()
     }
 
     open fun on_project_changed() {
@@ -2305,8 +2332,6 @@ open class OpusLayerBase {
     }
 
 
-
-
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
         val overwrite_map = HashMap<BeatKey, OpusTree<OpusEventSTD>>()
@@ -2621,6 +2646,7 @@ open class OpusLayerBase {
         }
 
         tree.event!!.duration = duration
+        this.update_blocked_leaf_cache(beat_key, position)
     }
 
     fun convert_all_events_to_absolute() {
@@ -3168,4 +3194,97 @@ open class OpusLayerBase {
         return output
     }
 
+    fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Float>> {
+        val (target_offset, target_width) = this.get_leaf_offset_and_width(beat_key, position)
+        val target_tree = this.get_tree(beat_key)
+
+        if (!target_tree.is_event() || target_tree.get_event()!!.duration == 1) {
+            return mutableListOf()
+        }
+
+        val duration_width = target_width * target_tree.get_event()!!.duration.toFloat()
+
+        var next_beat_key = beat_key
+        var next_position = position
+
+        val output = mutableListOf<Triple<BeatKey, List<Int>, Float>>()
+        val end = target_offset + duration_width
+        while (true) {
+            val next = this.get_proceding_leaf_position(next_beat_key, next_position) ?: break
+            next_beat_key = next.first
+            next_position = next.second
+            val (next_offset, next_width) = this.get_leaf_offset_and_width(next_beat_key, next_position)
+            val adj_offset = ((next_beat_key.beat - beat_key.beat) - (1f - target_offset)) + next_offset
+
+            if (adj_offset <= end) {
+                val amount = if (adj_offset + next_width <= end) {
+                    1f
+                } else {
+                    (end - adj_offset) / next_width
+                }
+                output.add(Triple(next_beat_key, next_position, amount))
+            } else {
+                break
+            }
+        }
+
+        return output
+    }
+
+    fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Float, Float> {
+        var target_tree = this.get_tree(beat_key)
+        var divisor = 1
+        var offset = 0F
+
+        for (p in position) {
+            offset += p.toFloat() / divisor.toFloat()
+            divisor *= target_tree.size
+            target_tree = target_tree[p]
+        }
+
+        return Pair(
+            offset,
+            (1f / divisor.toFloat())
+        )
+    }
+
+    fun update_blocked_leaf_cache(beat_key: BeatKey, position: List<Int>) {
+        val cache_key = Pair(beat_key, position)
+        this._cache_blocked_leaf_map[cache_key] = this.calculate_blocking_leafs(beat_key, position)
+        for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_leaf_map[cache_key]!!) {
+            this._cache_inv_blocked_leaf_map[Pair(blocked_beat_key, blocked_position)] = Triple(beat_key, position, blocked_amount)
+        }
+    }
+
+    fun recache_blocked_leaf(beat_key: BeatKey, position: List<Int>) {
+        val hash_key = Pair(beat_key, position)
+        val (original_key, original_position, blocked_amount) = this._cache_inv_blocked_leaf_map[hash_key] ?: return
+
+        val tree = this.get_tree(beat_key, position)
+        val chunk_amount = 1f / tree.size.toFloat()
+        for (i in 0 until tree.size) {
+            val new_position = List(position.size + 1) { j: Int ->
+                if (j == position.size) {
+                    i
+                } else {
+                    position[j]
+                }
+            }
+
+            val new_blocked_amount = max(0f, (blocked_amount - (chunk_amount * (i + 1))) * tree.size.toFloat())
+
+            this._cache_blocked_leaf_map[Pair(original_key, original_position)]!!.add(Triple(
+                beat_key,
+                new_position,
+                new_blocked_amount
+            ))
+
+            this._cache_inv_blocked_leaf_map[Pair(beat_key, new_position)] = Triple(
+                original_key,
+                original_position,
+                new_blocked_amount
+            )
+        }
+
+    }
 }

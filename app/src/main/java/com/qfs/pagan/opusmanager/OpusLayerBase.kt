@@ -2080,34 +2080,70 @@ open class OpusLayerBase {
         val percussion_map = HashMap<Int, Int>()
 
         // Calculate the number of lines needed per channel
-        for ((_, event_set) in mapped_events) {
-            val tmp_channel_counts = HashMap<Int, Int>()
+        val blocked_ranges = HashMap<Int, MutableList<MutableList<Pair<Float, Float>>>>()
+
+        // Map the events so i don't have to calculate overlaps twice
+        val event_line_offsets = mutableListOf<Int>()
+
+        for ((position, event_set) in mapped_events) {
             for (event in event_set) {
                 if (!midi_channel_map.contains(event.channel)) {
                     midi_channel_map[event.channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event.channel]!!
 
+                if (!blocked_ranges.containsKey(channel_index)) {
+                    blocked_ranges[channel_index] = mutableListOf()
+                }
+
+
                 if (event.channel == 9) {
                     if (!percussion_map.contains(event.note)) {
                         percussion_map[event.note] = percussion_map.size
+                        blocked_ranges[channel_index]!!.add(mutableListOf())
                     }
-                    tmp_channel_counts[channel_index] = percussion_map.size
+                    TODO(" NEED TO ADD CORRECT ppercussion line index here" )
                 } else {
-                    if (!tmp_channel_counts.contains(channel_index)) {
-                        tmp_channel_counts[channel_index] = 1
-                    } else {
-                        tmp_channel_counts[channel_index] = tmp_channel_counts[channel_index]!! + 1
+                    var working_width = 1F
+                    var working_start = position[0].first.toFloat()
+                    for ((i, size) in position.subList(1, position.size)) {
+                        working_width /= size
+                        working_start += (working_width * i)
                     }
+                    val working_end = (working_width * event.duration) + working_start
+
+
+                    var insertion_index = 0
+                    for (i in 0 until blocked_ranges[channel_index]!!.size) {
+                        for ((start, end) in blocked_ranges[channel_index]!![i]) {
+                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                insertion_index += 1
+                                break
+                            }
+                        }
+
+                        if (i == insertion_index) { // passed all the checks, no need to keep looping
+                            break
+                        }
+                    }
+
+                    if (insertion_index == blocked_ranges[channel_index]!!.size) {
+                        blocked_ranges[channel_index]!!.add(mutableListOf())
+                    }
+
+                    blocked_ranges[channel_index]!![insertion_index].add(Pair(working_start, working_end))
+                    event_line_offsets.add(insertion_index)
                 }
+
+            }
+        }
+
+        for ((channel, blocks) in blocked_ranges) {
+            while (channel >= channel_sizes.size) {
+                channel_sizes.add(0)
             }
 
-            for ((channel, size) in tmp_channel_counts) {
-                while (channel >= channel_sizes.size) {
-                    channel_sizes.add(0)
-                }
-                channel_sizes[channel] = max(channel_sizes[channel], size)
-            }
+            channel_sizes[channel] = max(1, blocks.size)
         }
 
         // Move Percussion to Last Opus Manager Channel
@@ -2144,7 +2180,6 @@ open class OpusLayerBase {
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEventSTD>>()
         for ((position, event_set) in mapped_events) {
-            val tmp_channel_counts = HashMap<Int, Int>()
             val event_list = event_set.toMutableList()
             event_list.sortWith(compareBy { 127 - it.note })
             for (event in event_list) {
@@ -2153,12 +2188,7 @@ open class OpusLayerBase {
                     percussion_channel = midi_channel_map[9]
                 }
 
-                val line_offset = if (event.channel == 9) {
-                    percussion_map[event.note]!!
-                } else {
-                    tmp_channel_counts[channel_index] ?: 0
-                }
-                tmp_channel_counts[channel_index] = line_offset + 1
+                val line_offset = event_line_offsets.removeFirst()
 
                 val working_position = mutableListOf<Int>()
                 var working_beatkey: BeatKey? = null

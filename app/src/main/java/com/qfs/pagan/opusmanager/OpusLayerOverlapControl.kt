@@ -4,15 +4,24 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 
 open class OpusLayerOverlapControl: OpusLayerBase() {
-    class BlockedLeafException: Exception()
+    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
 
     private val _cache_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, MutableList<Triple<BeatKey, List<Int>, Float>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, Triple<BeatKey, List<Int>, Float>>()
 
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
-        if (this.is_tree_blocked(beat_key, position)) {
-            throw BlockedLeafException()
+    fun _blocked_tree_check(beat_key: BeatKey, position: List<Int>) {
+        return
+        if (this.is_percussion(beat_key.channel)) {
+            return
         }
+
+        val (blocker_key, blocker_position, amount) = this._cache_inv_blocked_tree_map[Pair(beat_key, position)] ?: return
+
+        throw BlockedTreeException(beat_key, position, blocker_key, blocker_position)
+    }
+
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
+        this._blocked_tree_check(beat_key, position)
 
         super.set_event(beat_key, position, event)
 
@@ -129,9 +138,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     // ----------------------------- Layer Specific functions ---------------------
-    fun is_tree_blocked(beat_key: BeatKey, position: List<Int>): Boolean {
-        return this._cache_inv_blocked_tree_map.containsKey(Pair(beat_key, position))
-    }
 
     fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Float>> {
         val (target_offset, target_width) = this.get_leaf_offset_and_width(beat_key, position)

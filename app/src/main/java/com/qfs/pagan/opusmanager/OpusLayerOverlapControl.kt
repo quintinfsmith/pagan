@@ -32,15 +32,78 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        this.recache_blocked_beat_wrapper(beat_index, position) {
-            super.remove_beat(beat_index)
+        val decache = mutableSetOf<Pair<BeatKey, List<Int>>>()
+        for ((beat_key, position) in this._cache_blocked_tree_map.keys) {
+            if (beat_key.beat == beat_index) {
+                decache.add(Pair(beat_key, position))
+            }
+        }
+        for (cache_key in decache) {
+            for ((blocked_beat_key, blocked_position, _) in this._cache_blocked_tree_map.remove(cache_key)!!) {
+                this._cache_inv_blocked_tree_map.remove(Pair(blocked_beat_key, blocked_position))
+            }
+        }
+        decache.clear()
+
+        for ((beat_key, position) in this._cache_blocked_tree_map.keys) {
+            if (beat_key.beat > beat_index) {
+                val new_beat_key = BeatKey(
+                    beat_key.channel,
+                    beat_key.line_offset,
+                    beat_key.beat - 1
+                )
+                this._cache_blocked_tree_map[Pair(new_beat_key, position)] = this._cache_blocked_tree_map[Pair(beat_key, position)]!!
+            }
+        }
+
+        val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
+        for ((blocked_beat_key, blocked_position) in this._cache_inv_blocked_tree_map.keys) {
+            if (blocked_beat_key.beat != beat_index) {
+                continue
+            }
+            val (blocker_key, blocker_position, _) = this._cache_inv_blocked_tree_map[Pair(blocked_beat_key, blocked_position)]!!
+            needs_recache.add(Pair(blocker_key, blocker_position))
+        }
+
+
+        super.remove_beat(beat_index)
+
+        for ((blocker_key, blocker_position) in needs_recache) {
+            this.update_blocked_tree_cache(blocker_key, blocker_position)
         }
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>?) {
-        this.recache_blocked_beat_wrapper(beat_index, position) {
-            super.insert_beat(beat_index, beats_in_column)
+        val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
+        for ((blocked_beat_key, blocked_position) in this._cache_inv_blocked_tree_map.keys) {
+            if (blocked_beat_key.beat != beat_index) {
+                continue
+            }
+            val (blocker_key, blocker_position, _) = this._cache_inv_blocked_tree_map[Pair(blocked_beat_key, blocked_position)]!!
+            needs_recache.add(Pair(blocker_key, blocker_position))
         }
+
+        super.insert_beat(beat_index, beats_in_column)
+
+        for (cache_key in needs_recache) {
+            this.recache_blocked_tree(cache_key.first, cache_key.second)
+        }
+
+        val keys = this._cache_blocked_tree_map.keys.toList()
+        for ((beat_key, position) in keys) {
+            if (beat_key.beat <= beat_index) {
+                continue
+            }
+
+            val new_beat_key = BeatKey(
+                beat_key.channel,
+                beat_key.line_offset,
+                beat_key.beat + 1
+            )
+
+            this._cache_blocked_tree_map[Pair(new_beat_key, position)] = this._cache_blocked_tree_map.remove(Pair(beat_key, position))!!
+        }
+
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
@@ -192,32 +255,4 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         return output
     }
 
-    private fun <T> recache_blocked_beat_wrapper(beat: Int, callback: () -> T): T {
-        val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
-
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
-                val beat_key = BeatKey(i, j, beat)
-                val tree = this.get_tree(beat_key)
-                tree.traverse { working_tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
-                    val position = working_tree.get_path()
-                    val blocked_list = this._cache_blocked_tree_map.remove(Pair(beat_key, position)) ?: listOf()
-                    for ((blocked_beat_key, blocked_position, _) in blocked_list) {
-                        this._cache_inv_blocked_tree_map.remove(Pair(blocked_beat_key, blocked_position))
-                    }
-
-                    val (blocker_beat_key, blocker_position, amount) = this._cache_inv_blocked_tree_map[Pair(beat_key, position)] ?: return@traverse
-                    needs_recache.add(Pair(blocker_beat_key, blocker_position))
-                }
-            }
-        }
-
-        val output = callback()
-
-        for (cache_key in needs_recache) {
-            this.update_blocked_tree_cache(cache_key)
-        }
-
-        return output
-    }
 }

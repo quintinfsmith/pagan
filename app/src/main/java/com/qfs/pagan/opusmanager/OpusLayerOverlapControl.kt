@@ -130,7 +130,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     // ----------------------------- Layer Specific functions ---------------------
     fun is_tree_blocked(beat_key: BeatKey, position: List<Int>): Boolean {
-        TODO()
+        return this._cache_inv_blocked_tree_map.containsKey(Pair(beat_key, position))
     }
 
     fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Float>> {

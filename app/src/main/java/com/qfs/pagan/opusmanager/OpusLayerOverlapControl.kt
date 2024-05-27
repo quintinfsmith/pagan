@@ -11,13 +11,13 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     fun _blocked_tree_check(beat_key: BeatKey, position: List<Int>) {
         return
-        if (this.is_percussion(beat_key.channel)) {
-            return
-        }
-
         val (blocker_key, blocker_position, amount) = this._cache_inv_blocked_tree_map[Pair(beat_key, position)] ?: return
 
         throw BlockedTreeException(beat_key, position, blocker_key, blocker_position)
+    }
+
+    fun is_tree_blocked(beat_key: BeatKey, position: List<Int>): Boolean {
+        return this._cache_inv_blocked_tree_map.containsKey(Pair(beat_key, position))
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
@@ -142,7 +142,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Float>> {
         val (target_offset, target_width) = this.get_leaf_offset_and_width(beat_key, position)
-        val target_tree = this.get_tree(beat_key)
+        val target_tree = this.get_tree(beat_key, position)
 
         if (!target_tree.is_event() || target_tree.get_event()!!.duration == 1) {
             return mutableListOf()
@@ -160,7 +160,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             next_beat_key = next.first
             next_position = next.second
             val (next_offset, next_width) = this.get_leaf_offset_and_width(next_beat_key, next_position)
-            val adj_offset = ((next_beat_key.beat - beat_key.beat) - (1f - target_offset)) + next_offset
+            val adj_offset = (next_beat_key.beat - beat_key.beat).toFloat() + next_offset
 
             if (adj_offset <= end) {
                 val amount = if (adj_offset + next_width <= end) {
@@ -179,18 +179,18 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Float, Float> {
         var target_tree = this.get_tree(beat_key)
-        var divisor = 1
+        var width = 1F
         var offset = 0F
 
         for (p in position) {
-            offset += p.toFloat() / divisor.toFloat()
-            divisor *= target_tree.size
+            width /= target_tree.size
+            offset += p.toFloat() * width
             target_tree = target_tree[p]
         }
 
         return Pair(
             offset,
-            (1f / divisor.toFloat())
+            width
         )
     }
 

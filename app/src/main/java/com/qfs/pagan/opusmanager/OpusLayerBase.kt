@@ -42,6 +42,7 @@ open class OpusLayerBase {
     class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) @ $startkey overflows")
     class EventlessTreeException: Exception("Tree requires event for operation")
     class InvalidOverwriteCall: Exception()
+    class InvalidMergeException: Exception()
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -1145,6 +1146,33 @@ open class OpusLayerBase {
         val opus_channel = this.channels.removeAt(channel)
         this._channel_uuid_map.remove(opus_channel.uuid)
         this.recache_line_maps()
+    }
+
+    open fun merge_leafs(beat_key_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        val from_tree = this.get_tree(beat_key_from, position_from).copy()
+        val to_tree = this.get_tree(beat_key_to, position_to).copy()
+        val mid_tree = to_tree.merge(from_tree.get_set_tree())
+        mid_tree.flatten()
+
+        val new_tree = OpusTree<OpusEventSTD>()
+        new_tree.set_size(mid_tree.size)
+
+        for ((offset, eventset) in mid_tree.divisions) {
+            if (!eventset.is_event()) {
+                continue
+            }
+
+            if (eventset.event!!.size > 1) {
+                throw InvalidMergeException()
+            }
+
+            new_tree[offset].set_event(eventset.event!!.first())
+        }
+        new_tree.flatten()
+        //new_tree.reduce()
+
+        this.replace_tree(beat_key_to, position_to, new_tree)
+        this.unset(beat_key_from, position_from)
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {

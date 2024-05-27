@@ -1420,6 +1420,12 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun merge_leafs(beat_key_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        this._remember {
+            super.merge_leafs(beat_key_from, position_from, beat_key_to, position_to)
+        }
+    }
+
 
     // Need a compound function so history can manage both at the same time
     open fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Int) {

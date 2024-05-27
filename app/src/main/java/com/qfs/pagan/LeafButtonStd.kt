@@ -88,6 +88,9 @@ class LeafButtonStd(
                     PaganConfiguration.LinkMode.MOVE -> {
                         opus_manager.move_to_beat(beat_key)
                     }
+                    PaganConfiguration.LinkMode.MERGE -> {
+                        opus_manager.merge_into_beat(beat_key)
+                    }
                 }
                 opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
             } catch (e: Exception) {

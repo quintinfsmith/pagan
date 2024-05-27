@@ -32,6 +32,7 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
                 R.id.rbLinkModeLink -> PaganConfiguration.LinkMode.LINK
                 R.id.rbLinkModeMove -> PaganConfiguration.LinkMode.MOVE
                 R.id.rbLinkModeCopy -> PaganConfiguration.LinkMode.COPY
+                R.id.rbLinkModeMerge -> PaganConfiguration.LinkMode.MERGE
                 else -> PaganConfiguration.LinkMode.COPY
             }
             main.save_configuration()
@@ -49,6 +50,13 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
                         this.context.resources.getString(R.string.label_move_range)
                     } else {
                         this.context.resources.getString(R.string.label_move_beat)
+                    }
+                }
+                R.id.rbLinkModeMerge -> {
+                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                        this.context.resources.getString(R.string.label_merge_range)
+                    } else {
+                        this.context.resources.getString(R.string.label_merge_beat)
                     }
                 }
                 // R.id.rbLinkModeCopy,
@@ -71,6 +79,7 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
             PaganConfiguration.LinkMode.LINK -> R.id.rbLinkModeLink
             PaganConfiguration.LinkMode.MOVE -> R.id.rbLinkModeMove
             PaganConfiguration.LinkMode.COPY -> R.id.rbLinkModeCopy
+            PaganConfiguration.LinkMode.MERGE -> R.id.rbLinkModeMerge
         })
 
 
@@ -79,6 +88,7 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
                 PaganConfiguration.LinkMode.LINK -> this.context.resources.getString(R.string.label_link_range)
                 PaganConfiguration.LinkMode.MOVE -> this.context.resources.getString(R.string.label_move_range)
                 PaganConfiguration.LinkMode.COPY -> this.context.resources.getString(R.string.label_copy_range)
+                PaganConfiguration.LinkMode.MERGE -> this.context.resources.getString(R.string.label_merge_range)
             }
 
             var output = false
@@ -99,6 +109,7 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
                 PaganConfiguration.LinkMode.LINK -> this.context.resources.getString(R.string.label_link_beat)
                 PaganConfiguration.LinkMode.MOVE -> this.context.resources.getString(R.string.label_move_beat)
                 PaganConfiguration.LinkMode.COPY ->  this.context.resources.getString(R.string.label_copy_beat)
+                PaganConfiguration.LinkMode.MERGE -> this.context.resources.getString(R.string.label_merge_beat)
             }
 
             val cursor_key = opus_manager.cursor.get_beatkey()

@@ -1228,6 +1228,19 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
     }
 
+    fun merge_into_beat(beat_key: BeatKey) {
+        if (this.cursor.is_linking_range()) {
+            TODO()
+        } else if (this.cursor.selecting_range) {
+            if (this.is_percussion(this.cursor.get_beatkey().channel) != this.is_percussion(beat_key.channel)) {
+                throw MixedLinkException()
+            }
+            this.merge_leafs(this.cursor.get_beatkey(), listOf(), beat_key, listOf())
+        } else {
+            throw InvalidCursorState()
+        }
+    }
+
     fun move_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_linking_range()) {
             val (first, second) = this.cursor.range!!

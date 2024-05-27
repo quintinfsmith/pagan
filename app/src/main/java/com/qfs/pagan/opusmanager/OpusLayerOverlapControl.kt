@@ -40,6 +40,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
     }
 
+
     override fun remove_beat(beat_index: Int) {
         val decache = mutableSetOf<Pair<BeatKey, List<Int>>>()
         for ((beat_key, position) in this._cache_blocked_tree_map.keys) {
@@ -252,10 +253,27 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             null
         }
 
+        if (needs_recache != null) {
+            if (this._cache_blocked_tree_map.containsKey(needs_recache)) {
+                for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_tree_map[needs_recache]!!) {
+                    this._cache_inv_blocked_tree_map.remove(Pair(blocked_beat_key, blocked_position))
+                }
+            }
+        }
+
         val output = callback()
 
         if (needs_recache != null) {
-            this.update_blocked_tree_cache(needs_recache.first, needs_recache.second)
+            val recache_position = needs_recache.second.toMutableList()
+            while (true) {
+                try {
+                    this.get_tree(needs_recache.first, recache_position)
+                    break
+                } catch (e: OpusTree.InvalidGetCall) {
+                    recache_position.removeLast()
+                }
+            }
+            this.update_blocked_tree_cache(needs_recache.first, recache_position)
         }
 
         return output

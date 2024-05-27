@@ -1231,9 +1231,7 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channel.set_beat_count(new_count)
         }
-        for ((_, controller) in this.controllers.get_all()) {
-            controller.set_beat_count(new_count)
-        }
+        this.controllers.set_beat_count(new_count)
     }
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
@@ -2075,43 +2073,63 @@ open class OpusLayerBase {
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
         val channel_sizes = mutableListOf<Int>()
-        var percussion_channel: Int? = null
 
         val percussion_map = HashMap<Int, Int>()
 
         // Calculate the number of lines needed per channel
         val blocked_ranges = HashMap<Int, MutableList<MutableList<Pair<Float, Float>>>>()
+        val blocked_percussion_ranges = mutableListOf<MutableList<MutableList<Pair<Float, Float>>>>()
 
         // Map the events so i don't have to calculate overlaps twice
-        val event_line_offsets = mutableListOf<Int>()
+        val remapped_events = mutableListOf<Pair<List<Pair<Int, Int>>, MutableList<Pair<OpusEventSTD, Int>>>>()
 
         for ((position, event_set) in mapped_events) {
+            remapped_events.add(Pair(position, mutableListOf()))
             for (event in event_set) {
                 if (!midi_channel_map.contains(event.channel)) {
                     midi_channel_map[event.channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event.channel]!!
 
-                if (!blocked_ranges.containsKey(channel_index)) {
-                    blocked_ranges[channel_index] = mutableListOf()
+                var working_width = 1F
+                var working_start = position[0].first.toFloat()
+                for ((i, size) in position.subList(1, position.size)) {
+                    working_width /= size
+                    working_start += (working_width * i)
                 }
-
+                val working_end = (working_width * event.duration) + working_start
 
                 if (event.channel == 9) {
                     if (!percussion_map.contains(event.note)) {
-                        percussion_map[event.note] = percussion_map.size
-                        blocked_ranges[channel_index]!!.add(mutableListOf())
+                        percussion_map[event.note] = blocked_percussion_ranges.size
+                        blocked_percussion_ranges.add(mutableListOf())
                     }
-                    TODO(" NEED TO ADD CORRECT ppercussion line index here" )
-                } else {
-                    var working_width = 1F
-                    var working_start = position[0].first.toFloat()
-                    for ((i, size) in position.subList(1, position.size)) {
-                        working_width /= size
-                        working_start += (working_width * i)
-                    }
-                    val working_end = (working_width * event.duration) + working_start
+                    val index = percussion_map[event.note]!!
 
+                    var insertion_index = 0
+                    for (i in 0 until blocked_percussion_ranges[index].size) {
+                        for ((start, end) in blocked_percussion_ranges[index][i]) {
+                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                insertion_index += 1
+                                break
+                            }
+                        }
+
+                        if (i == insertion_index) { // passed all the checks, no need to keep looping
+                            break
+                        }
+                    }
+
+
+                    if (insertion_index == blocked_percussion_ranges[index].size) {
+                        blocked_percussion_ranges[index].add(mutableListOf())
+                    }
+                    blocked_percussion_ranges[index][insertion_index].add(Pair(working_start, working_end))
+                    remapped_events.last().second.add(Pair(event, insertion_index))
+                } else {
+                    if (!blocked_ranges.containsKey(channel_index)) {
+                        blocked_ranges[channel_index] = mutableListOf()
+                    }
 
                     var insertion_index = 0
                     for (i in 0 until blocked_ranges[channel_index]!!.size) {
@@ -2132,9 +2150,9 @@ open class OpusLayerBase {
                     }
 
                     blocked_ranges[channel_index]!![insertion_index].add(Pair(working_start, working_end))
-                    event_line_offsets.add(insertion_index)
-                }
 
+                    remapped_events.last().second.add(Pair(event, insertion_index))
+                }
             }
         }
 
@@ -2142,24 +2160,31 @@ open class OpusLayerBase {
             while (channel >= channel_sizes.size) {
                 channel_sizes.add(0)
             }
-
-            channel_sizes[channel] = max(1, blocks.size)
+            channel_sizes[channel] = blocks.size
         }
 
-        // Move Percussion to Last Opus Manager Channel
         if (midi_channel_map.containsKey(9)) {
-            val channel = midi_channel_map[9]!!
-            var new_channel = channel
+            // Add Percussion to channel_sizes list
+            val adj_channel = midi_channel_map[9]!!
+            while (adj_channel >= channel_sizes.size) {
+                channel_sizes.add(0)
+            }
+
+            for (blocks in blocked_percussion_ranges) {
+                channel_sizes[adj_channel] += blocks.size
+            }
+
+            // Move Percussion to Last Opus Manager Channel
             for ((mchannel, ochannel) in midi_channel_map) {
                 if (mchannel == 9) continue
-                if (ochannel > channel) {
-                    new_channel = max(new_channel, ochannel)
+                if (ochannel > adj_channel) {
                     midi_channel_map[mchannel] = ochannel - 1
                 }
             }
-            val percussion_line_count = channel_sizes.removeAt(channel)
+
+            val percussion_line_count = channel_sizes.removeAt(adj_channel)
+            midi_channel_map[9] = channel_sizes.size
             channel_sizes.add(percussion_line_count)
-            midi_channel_map[9] = new_channel
         } else {
             // If no percussion is found, add an empty percussion track
             midi_channel_map[9] = channel_sizes.size
@@ -2176,29 +2201,46 @@ open class OpusLayerBase {
             this.new_channel(lines = channel_sizes[channel])
         }
 
-        this.insert_beats(0, settree.size)
+        this.set_beat_count(settree.size)
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEventSTD>>()
-        for ((position, event_set) in mapped_events) {
-            val event_list = event_set.toMutableList()
-            event_list.sortWith(compareBy { 127 - it.note })
-            for (event in event_list) {
-                val channel_index = midi_channel_map[event.channel]!!
-                if (event.channel == 9) {
-                    percussion_channel = midi_channel_map[9]
-                }
 
-                val line_offset = event_line_offsets.removeFirst()
+        for ((position, event_set) in remapped_events) {
+            val event_list = event_set.toMutableList()
+            event_list.sortWith(compareBy { 127 - it.first.note })
+            for ((event, line_offset) in event_list) {
+                val channel_index = midi_channel_map[event.channel]!!
+
+
+                // line_offset needs to be recalculated HERE for percussion as the percussion block map will change size during init
+                val adj_line_offset = if (event.channel == 9) {
+                    var re_adj_line_offset = 0
+                    val coarse_index = percussion_map[event.note]!!
+                    for (i in 0 until coarse_index) {
+                        re_adj_line_offset += blocked_percussion_ranges[coarse_index].size
+                    }
+
+                    val new_offset = line_offset + re_adj_line_offset
+                    // While we're here, set the percussions' instruments
+                    this.set_percussion_instrument(new_offset, event.note)
+                    new_offset
+                } else {
+                    line_offset
+                }
 
                 val working_position = mutableListOf<Int>()
                 var working_beatkey: BeatKey? = null
 
                 position.forEachIndexed { i: Int, (x, size): Pair<Int, Int> ->
                     if (i == 0) {
-                        working_beatkey = BeatKey(channel_index, line_offset, x)
+                        working_beatkey = BeatKey(channel_index, adj_line_offset, x)
                     } else {
-                        if (this.get_tree(working_beatkey!!, working_position).size != size) {
-                            this.split_tree(working_beatkey!!, working_position, size)
+                        try {
+                            if (this.get_tree(working_beatkey!!, working_position).size != size) {
+                                this.split_tree(working_beatkey!!, working_position, size)
+                            }
+                        } catch (e: Exception) {
+                            throw e
                         }
                         working_position.add(x)
                     }
@@ -2249,12 +2291,6 @@ open class OpusLayerBase {
                         }
                     }
                 }
-            }
-        }
-
-        if (percussion_channel != null) {
-            for ((note, index) in percussion_map) {
-                this.set_percussion_instrument(index, note)
             }
         }
 

@@ -126,19 +126,14 @@ class OpusChannel(var uuid: Int) {
             for (line in this.lines) {
                 line.set_beat_count(new_beat_count)
             }
-            for (controller in this.controllers.controllers.values) {
-                controller.set_beat_count(new_beat_count)
-            }
         } else {
             for (line in this.lines) {
                 while (line.beats.size > new_beat_count) {
                     line.beats.removeLast()
                 }
             }
-            for (controller in this.controllers.controllers.values) {
-                controller.set_beat_count(new_beat_count)
-            }
         }
+        this.controllers.set_beat_count(new_beat_count)
 
         this._beat_count = new_beat_count
     }

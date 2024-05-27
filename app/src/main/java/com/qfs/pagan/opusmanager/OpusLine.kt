@@ -78,18 +78,13 @@ class OpusLine(var beats: MutableList<OpusTree<OpusEventSTD>>) {
         if (new_beat_count > original_size) {
             for (i in original_size until new_beat_count) {
                 this.beats.add(OpusTree())
-                for (controller in this.controllers.controllers.values) {
-                    controller.insert_beat(i)
-                }
             }
         } else {
             for (i in new_beat_count until original_size) {
                 this.beats.removeLast()
-                for (controller in this.controllers.controllers.values) {
-                    controller.remove_beat(new_beat_count)
-                }
             }
         }
+        this.controllers.set_beat_count(new_beat_count)
     }
 
     fun get_controller(type: ControlEventType): ActiveControlSet.ActiveController {

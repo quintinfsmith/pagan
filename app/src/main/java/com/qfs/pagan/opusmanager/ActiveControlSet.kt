@@ -252,4 +252,11 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
     fun has_controller(type: ControlEventType): Boolean {
         return this.controllers.containsKey(type)
     }
+
+    fun set_beat_count(new_count: Int) {
+        this.beat_count = new_count
+        for ((_, controller) in this.get_all()) {
+            controller.set_beat_count(new_count)
+        }
+    }
 }

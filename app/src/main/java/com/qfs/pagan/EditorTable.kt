@@ -179,6 +179,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Global, type)) {
                     continue
                 }
+
                 val ctl_tree = controller.get_beat(beat)
                 if (ctl_tree.is_leaf()) {
                     this._column_width_map[beat].add(1)

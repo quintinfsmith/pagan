@@ -21,7 +21,33 @@ class StructureUnitTest {
 
         val tree_c: OpusTree<Set<Int>> = tree_a.merge(tree_b.get_set_tree())
 
-        assertEquals(tree_c[0].get_event(), setOf(0,1))
+        assertEquals(tree_c[0].get_event(), setOf(0, 1))
+
+    }
+    @Test
+    fun test_merge_flatten_reduce() {
+        // weird thing happening when i merge exactly these Trees
+        // currently losing last event
+
+        val tree_aa = OpusTree<Int>()
+        tree_aa.set_size(2)
+        tree_aa[1].set_size(2)
+        tree_aa[0].set_event(0)
+        tree_aa[1][1].set_event(1)
+
+        val tree_ab = OpusTree<Int>()
+        tree_ab.set_size(2)
+        tree_ab[0].set_size(2)
+        tree_ab[0][1].set_event(2)
+
+        val tree_ac = tree_aa.merge(tree_ab.get_set_tree())
+        tree_ac.flatten()
+        tree_ac.reduce()
+
+        assertEquals(4, tree_ac.size)
+        assertEquals(0, tree_ac[0].get_event()!!.first())
+        assertEquals(2, tree_ac[1].get_event()!!.first())
+        assertEquals(1, tree_ac[3].get_event()!!.first())
     }
 
     @Test
@@ -33,6 +59,31 @@ class StructureUnitTest {
         tree[60].set_event(2)
         tree[90].set_event(3)
         tree.reduce(4)
+        assertEquals(4, tree.size)
+
+        val tree_a = OpusTree<Int>()
+        tree_a.set_size(8)
+        tree_a[0].set_event(0)
+        tree_a[2].set_event(1)
+        tree_a[4].set_event(2)
+        tree_a[6].set_event(3)
+        tree_a.reduce()
+
+        assertEquals(2, tree_a[0].size)
+        assertEquals(2, tree_a[1].size)
+        for (i in 0 until 2) {
+            assertEquals(tree_a[0][i].get_event(), i)
+            assertEquals(tree_a[1][i].get_event(), 2 + i)
+        }
+    }
+
+    @Test
+    fun test_clear_singles() {
+        val tree = OpusTree<Int>()
+        tree.set_size(1)
+        tree[0].set_size(1)
+        tree[0][0].set_size(4)
+        tree.clear_singles()
         assertEquals(4, tree.size)
     }
 

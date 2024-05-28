@@ -85,10 +85,67 @@ class OpusTree<T> {
         this.size = new_size
     }
 
+    private fun _reduce(denominator: Int, indices: MutableList<Pair<Int, OpusTree<T>>>, original_size: Int, parent_node: OpusTree<T>) {
+        val current_size = original_size / denominator
+
+        // Create separate lists to represent the new equal groupings
+        val split_indices = Array(denominator) {
+            mutableListOf<Pair<Int, OpusTree<T>>>()
+        }
+        parent_node.set_size(denominator)
+
+        // move the indices into their new lists
+        for ((i, subtree) in indices) {
+            val split_index = min(i / current_size, current_size)
+            //val split_index = i / current_size
+            split_indices[split_index].add(Pair(i % current_size, subtree.copy()))
+            println("($i / ${current_size} -> $split_index | ${i % current_size}")
+        }
+
+        for (i in 0 until denominator) {
+            val working_indices = split_indices[i]
+            if (working_indices.isEmpty() || parent_node.is_leaf()) {
+                continue
+            }
+
+            val working_node = parent_node[i]
+
+            // Get the most reduces version of each index
+            val minimum_divs = mutableSetOf<Int>()
+            for ((index, _) in working_indices) {
+                if (index == 0) {
+                    continue
+                }
+
+                val most_reduced: Int = current_size / greatest_common_denominator(
+                    current_size,
+                    index
+                )
+
+                if (most_reduced > 1) {
+                    minimum_divs.add(most_reduced)
+                }
+            }
+
+            val sorted_minimum_divs = minimum_divs.toMutableList()
+            sorted_minimum_divs.sort()
+            if (sorted_minimum_divs.isNotEmpty()) {
+                this._reduce(sorted_minimum_divs[0], working_indices, current_size, working_node)
+            } else {
+                val (_, event_tree) = working_indices.removeFirst()
+                if (event_tree.is_event()) {
+                    working_node.set_event(event_tree.get_event()!!)
+                }
+            }
+        }
+    }
+
     fun reduce(target_size: Int = 1) {
+        println("reducing>..")
         if (this.is_leaf()) {
             return
         }
+        println("FLAT? ${this.is_flat()}")
         if (!this.is_flat()) {
             this.flatten()
         }
@@ -97,86 +154,19 @@ class OpusTree<T> {
         for ((key, child_node) in this.divisions) {
             indices.add(Pair(key, child_node))
         }
+        println("ORIGINAL: ${this.size}")
         indices.sortWith(compareBy { it.first })
 
         val place_holder: OpusTree<T> = this.copy()
-        val stack = mutableListOf(
-            ReducerTuple(
-                target_size,
-                indices,
-                this.size,
-                place_holder
-            )
-        )
+        this._reduce(target_size, indices, this.size, place_holder)
 
-        while (stack.size > 0) {
-            val element = stack.removeAt(0)
-            val denominator: Int = element.denominator
-            val original_size: Int = element.original_size
-            val parent_node: OpusTree<T> = element.parent_node
-            val current_size = original_size / denominator
-
-            // Create separate lists to represent the new equal groupings
-            val split_indices = Array(denominator) {
-                mutableListOf<Pair<Int, OpusTree<T>>>()
-            }
-            parent_node.set_size(denominator)
-
-            // move the indices into their new lists
-            for ((i, subtree) in element.indices) {
-                val split_index = min(i / current_size, current_size)
-                //val split_index = i / current_size
-                split_indices[split_index].add(Pair(i % current_size, subtree.copy()))
-            }
-
-            for (i in 0 until denominator) {
-                val working_indices = split_indices[i]
-                if (working_indices.isEmpty() || parent_node.is_leaf()) {
-                    continue
-                }
-
-                val working_node = parent_node[i]
-
-                // Get the most reduces version of each index
-                val minimum_divs = mutableSetOf<Int>()
-                for ((index, _) in working_indices) {
-                    if (index == 0) {
-                        continue
-                    }
-
-                    val most_reduced: Int = current_size / greatest_common_denominator(
-                        current_size,
-                        index
-                    )
-
-                    if (most_reduced > 1) {
-                        minimum_divs.add(most_reduced)
-                    }
-                }
-                val sorted_minimum_divs = minimum_divs.toMutableList()
-                sorted_minimum_divs.sort()
-                if (sorted_minimum_divs.isNotEmpty()) {
-                    stack.add(
-                        ReducerTuple(
-                            sorted_minimum_divs[0],
-                            working_indices,
-                            current_size,
-                            working_node
-                        )
-                    )
-                } else {
-                    val (_, event_tree) = working_indices.removeFirst()
-                    if (event_tree.is_event()) {
-                        working_node.set_event(event_tree.get_event()!!)
-                    }
-                }
-            }
-        }
-
+        place_holder.clear_singles()
         this.set_size(place_holder.size)
+        println("PH: ${place_holder.size} ${place_holder.is_flat()}")
         for ((key, value) in place_holder.divisions) {
             this.divisions[key] = value
         }
+        println("${this.divisions}")
     }
 
     fun copy(copy_func: ((tree: OpusTree<T>) -> T?)? = null): OpusTree<T> {
@@ -336,6 +326,10 @@ class OpusTree<T> {
             return
         }
 
+        for (child in this.divisions.values) {
+            child.clear_singles()
+        }
+
         if (this.size == 1 && this.divisions.size == 1) {
             val child = this.divisions.remove(0)!!
             if (!child.is_event()) {
@@ -352,9 +346,6 @@ class OpusTree<T> {
             }
         }
 
-        for (child in this.divisions.values) {
-            child.clear_singles()
-        }
     }
 
     fun replace_with(new_node: OpusTree<T>) {

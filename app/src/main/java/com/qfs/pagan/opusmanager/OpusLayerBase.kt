@@ -1169,7 +1169,7 @@ open class OpusLayerBase {
             new_tree[offset].set_event(eventset.event!!.first())
         }
         new_tree.flatten()
-        //new_tree.reduce()
+        new_tree.reduce()
 
         this.replace_tree(beat_key_to, position_to, new_tree)
         this.unset(beat_key_from, position_from)

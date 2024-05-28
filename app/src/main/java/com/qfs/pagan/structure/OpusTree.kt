@@ -171,6 +171,8 @@ class OpusTree<T> {
             }
         }
 
+        place_holder.clear_singles()
+
         this.set_size(place_holder.size)
         for ((key, value) in place_holder.divisions) {
             this.divisions[key] = value
@@ -538,21 +540,27 @@ class OpusTree<T> {
 
     fun merge(tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
         if (tree.is_leaf() && ! tree.is_event()) {
+            println("001")
             return this.get_set_tree()
         }
         if (this.is_leaf() && ! this.is_event()) {
+            println("002")
             return tree
         }
 
         return if (!this.is_event()) {
             if (!tree.is_leaf()) {
+                println("003")
                 this.__merge_structural(tree)
             } else {
+                println("004")
                 this.__merge_event_into_structural(tree)
             }
         } else if (!tree.is_leaf()) {
+            println("005")
             this.__merge_structural_into_event(tree)
         } else {
+            println("006")
             this.__merge_event(tree)
         }
     }

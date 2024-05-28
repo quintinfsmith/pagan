@@ -24,10 +24,10 @@ class StructureUnitTest {
         assertEquals(tree_c[0].get_event(), setOf(0, 1))
 
     }
+
+    // Series of bizarre behaviours i've found
     @Test
-    fun test_merge_flatten_reduce() {
-        // weird thing happening when i merge exactly these Trees
-        // currently losing last event
+    fun test_merge_flatten_reduce_0() {
 
         val tree_aa = OpusTree<Int>()
         tree_aa.set_size(2)
@@ -48,6 +48,28 @@ class StructureUnitTest {
         assertEquals(0, tree_ac[0].get_event()!!.first())
         assertEquals(2, tree_ac[1].get_event()!!.first())
         assertEquals(1, tree_ac[3].get_event()!!.first())
+    }
+
+    @Test
+    fun test_merge_1() {
+        val tree_aa = OpusTree<Int>()
+        tree_aa.set_size(4)
+        tree_aa[0].set_event(0)
+        tree_aa[1].set_size(2)
+        tree_aa[1][0].set_event(1)
+        tree_aa[2].set_event(2)
+        tree_aa[3].set_event(3)
+
+
+        val tree_ab = OpusTree<Int>()
+        tree_ab.set_size(1)
+
+        val tree_ac = tree_aa.merge(tree_ab.get_set_tree())
+        assertEquals(2, tree_ac.size)
+        assertEquals(0, tree_ac[0][0].get_event()!!)
+        assertEquals(1, tree_ac[0][1].get_event()!!)
+        assertEquals(2, tree_ac[1][0].get_event()!!)
+        assertEquals(3, tree_ac[1][1].get_event()!!)
     }
 
     @Test

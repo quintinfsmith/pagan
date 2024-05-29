@@ -1149,6 +1149,10 @@ open class OpusLayerBase {
     }
 
     open fun merge_leafs(beat_key_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        if (beat_key_from == beat_key_to && position_from == position_to) {
+            throw InvalidMergeException()
+        }
+
         val from_tree = this.get_tree(beat_key_from, position_from).copy()
         val to_tree = this.get_tree(beat_key_to, position_to).copy()
         val mid_tree = to_tree.merge(from_tree.get_set_tree())

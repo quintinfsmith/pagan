@@ -80,6 +80,7 @@ class OpusTree<T> {
             val new_index = current_index * factor
             new_divisions[new_index.toInt()] = value as OpusTree<T>
         }
+
         this.divisions = new_divisions
         this.size = new_size
     }
@@ -526,41 +527,35 @@ class OpusTree<T> {
 
     fun get_set_tree(): OpusTree<Set<T>> {
         val output = OpusTree<Set<T>>()
-        if (this.is_event()) {
-            output.event = setOf(this.get_event()!!)
-        } else if (!this.is_leaf()) {
+        if (!this.is_event()) {
             output.set_size(this.size)
             for ((index, tree) in this.divisions) {
                 output.set(index, tree.get_set_tree())
             }
+        } else {
+            output.event = setOf(this.get_event()!!)
         }
 
         return output
     }
 
     fun merge(tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
-        if (tree.is_leaf() && ! tree.is_event()) {
-            println("001")
+        if ((tree.is_leaf() && ! tree.is_event()) || tree.is_eventless()) {
             return this.get_set_tree()
         }
-        if (this.is_leaf() && ! this.is_event()) {
-            println("002")
+        if ((this.is_leaf() && ! this.is_event()) || this.is_eventless()) {
             return tree
         }
 
         return if (!this.is_event()) {
             if (!tree.is_leaf()) {
-                println("003")
                 this.__merge_structural(tree)
             } else {
-                println("004")
                 this.__merge_event_into_structural(tree)
             }
         } else if (!tree.is_leaf()) {
-            println("005")
             this.__merge_structural_into_event(tree)
         } else {
-            println("006")
             this.__merge_event(tree)
         }
     }
@@ -620,6 +615,7 @@ class OpusTree<T> {
         val this_multi = this.get_set_tree()
         other.flatten()
         this_multi.flatten()
+
         val new_size = lowest_common_multiple(listOf(max(1, this_multi.size), max(1, other.size)))
 
         val factor = new_size / max(1, other.size)

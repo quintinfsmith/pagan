@@ -70,7 +70,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             channel_recycler.adapter = null
         }
 
-
         super.onStop()
     }
 
@@ -202,6 +201,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
             main.runOnUiThread {
@@ -225,37 +225,43 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
             main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
+
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
                 this@FragmentEditor.clear_context_menu()
             }
+
             thread {
                 val path = bundle?.getString("URI")
                 if (path != null) {
-                    // DEBUG
-                    main.import_midi(path)
-                    //try {
-                    //} catch (e: Exception) {
-                    //    val opus_manager = main.get_opus_manager()
-                    //    if (!opus_manager.first_load_done) {
-                    //        main.get_opus_manager().new()
-                    //    }
-                    //    main.feedback_msg(getString(R.string.feedback_midi_fail))
-                    //}
+                    try {
+                        main.import_midi(path)
+                    } catch (e: Exception) {
+                        val opus_manager = main.get_opus_manager()
+                        if (!opus_manager.first_load_done) {
+                            main.get_opus_manager().new()
+                        }
+                        main.feedback_msg(getString(R.string.feedback_midi_fail))
+                    }
                 }
+
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
                 }
+
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
                 this.project_change_flagged = false
             }
+
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
             main.runOnUiThread {
@@ -285,6 +291,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         setFragmentResultListener(IntentFragmentToken.New.name) { _, _: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
+
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_new))
             main.runOnUiThread {

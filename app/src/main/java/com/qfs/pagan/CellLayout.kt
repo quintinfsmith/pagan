@@ -173,6 +173,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
             for (i in 0 until tree.size) {
                 val new_position = position.toMutableList()
                 new_position.add(i)
+
                 this.buildTreeView(
                     tree[i],
                     new_position,

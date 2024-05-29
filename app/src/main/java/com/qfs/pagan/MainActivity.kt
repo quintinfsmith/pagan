@@ -25,6 +25,7 @@ import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.ContextThemeWrapper
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -366,6 +367,17 @@ class MainActivity : AppCompatActivity() {
         this._midi_interface.close_connected_devices()
         this._binding.appBarMain.toolbar.hideOverflowMenu()
         super.onPause()
+    }
+
+    override fun onKeyDown(key_code: Int, event: KeyEvent?): Boolean {
+        val active_fragment = this.get_active_fragment()
+        if (event != null) {
+            when (active_fragment) {
+                is FragmentEditor -> active_fragment.key_press_handler(key_code, event)
+                else -> {}
+            }
+        }
+        return super.onKeyDown(key_code, event)
     }
 
     override fun onResume() {

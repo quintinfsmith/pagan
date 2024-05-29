@@ -1,6 +1,19 @@
 package com.qfs.pagan
 import android.app.AlertDialog
 import android.os.Bundle
+import android.view.KeyEvent
+import android.view.KeyEvent.KEYCODE_0
+import android.view.KeyEvent.KEYCODE_1
+import android.view.KeyEvent.KEYCODE_2
+import android.view.KeyEvent.KEYCODE_3
+import android.view.KeyEvent.KEYCODE_4
+import android.view.KeyEvent.KEYCODE_5
+import android.view.KeyEvent.KEYCODE_6
+import android.view.KeyEvent.KEYCODE_7
+import android.view.KeyEvent.KEYCODE_8
+import android.view.KeyEvent.KEYCODE_9
+import android.view.KeyEvent.KEYCODE_ESCAPE
+import android.view.KeyEvent.KEYCODE_H
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
@@ -21,11 +34,13 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.File
 import java.io.FileInputStream
 import kotlin.concurrent.thread
+import kotlin.math.max
 
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     var project_change_flagged = false
     var active_context_menu: ContextMenuView? = null
+    var input_buffer_value: Int? = null
 
     override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentMainBinding {
         return FragmentMainBinding.inflate(inflater, container, false)
@@ -49,12 +64,59 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
        if (channel_adapter.itemCount == 0) {
            channel_adapter.setup()
        }
+
     }
 
     override fun onStart() {
         super.onStart()
         this._set_result_listeners()
     }
+
+    fun clear_value_buffer(default: Int = 0): Int {
+        val output = this.input_buffer_value ?: default
+        this.input_buffer_value = null
+        return output
+    }
+
+    fun key_press_handler(key_code: Int, event: KeyEvent) {
+        when (event.keyCode) {
+            KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3, KEYCODE_4,
+            KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9 -> {
+                this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + event.keyCode - KEYCODE_0
+            }
+            KEYCODE_ESCAPE -> {
+                this.input_buffer_value = null
+            }
+            KEYCODE_H -> {
+                val opus_manager = this.get_main().get_opus_manager()
+                val movement_value = this.clear_value_buffer(1)
+                when (opus_manager.cursor.mode) {
+                    OpusManagerCursor.CursorMode.Column -> {
+                        val new_beat = max(0, opus_manager.cursor.beat - movement_value)
+                        opus_manager.cursor_select_column(new_beat)
+                    }
+                    OpusManagerCursor.CursorMode.Single -> {
+                        var working_beat_key = opus_manager.cursor.get_beatkey()
+                        var working_position = opus_manager.cursor.get_position()
+
+                        for (i in 0 until movement_value) {
+                            val next_pair = opus_manager.get_preceding_leaf_position(
+                                working_beat_key,
+                                working_position
+                            ) ?: break
+                            working_beat_key = next_pair.first
+                            working_position = next_pair.second
+                        }
+                        opus_manager.cursor_select(working_beat_key, working_position)
+                    }
+                    OpusManagerCursor.CursorMode.Row -> TODO()
+                    OpusManagerCursor.CursorMode.Range -> TODO()
+                    OpusManagerCursor.CursorMode.Unset -> TODO()
+                }
+            }
+        }
+    }
+
 
     override fun onStop() {
         // Assign to view model on stop, will be destroyed onDestroy, so need to

@@ -565,8 +565,7 @@ class MainActivity : AppCompatActivity() {
                     if (!this._midi_interface.output_devices_connected()) {
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
-                            this.configuration.sample_rate,
-                            this.configuration.sample_rate / 4,
+                            this.configuration.sample_rate
                         )
                     }
                 } catch (e: Riff.InvalidRiff) {
@@ -2002,8 +2001,7 @@ class MainActivity : AppCompatActivity() {
         this.disconnect_feedback_device()
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
-            this.configuration.sample_rate,
-            this.configuration.sample_rate / 4,
+            this.configuration.sample_rate
         )
     }
 

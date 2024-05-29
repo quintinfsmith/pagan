@@ -3,6 +3,7 @@ package com.qfs.pagan
 import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.structure.greatest_common_denominator
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StructureUnitTest {
@@ -72,6 +73,7 @@ class StructureUnitTest {
         assertEquals(2, tree_ac[4].get_event()!!.first())
         assertEquals(3, tree_ac[6].get_event()!!.first())
     }
+
 
     @Test
     fun test_reduce() {

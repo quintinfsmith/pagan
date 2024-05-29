@@ -241,7 +241,7 @@ class OpusTree<T> {
     }
 
     fun flatten() {
-        if (this.is_flat()) {
+        if (this.is_event() || this.is_flat()) {
             return
         }
 

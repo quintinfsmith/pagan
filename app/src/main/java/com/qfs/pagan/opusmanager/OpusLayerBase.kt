@@ -1155,21 +1155,23 @@ open class OpusLayerBase {
         mid_tree.flatten()
 
         val new_tree = OpusTree<OpusEventSTD>()
-        new_tree.set_size(mid_tree.size)
+        if (mid_tree.is_event()) {
+            new_tree.set_event(mid_tree.event!!.first())
+        } else {
+            new_tree.set_size(mid_tree.size)
+            for ((offset, eventset) in mid_tree.divisions) {
+                if (!eventset.is_event()) {
+                    continue
+                }
 
-        for ((offset, eventset) in mid_tree.divisions) {
-            if (!eventset.is_event()) {
-                continue
+                if (eventset.event!!.size > 1) {
+                    throw InvalidMergeException()
+                }
+
+                new_tree[offset].set_event(eventset.event!!.first())
             }
-
-            if (eventset.event!!.size > 1) {
-                throw InvalidMergeException()
-            }
-
-            new_tree[offset].set_event(eventset.event!!.first())
+            new_tree.reduce()
         }
-        new_tree.flatten()
-        new_tree.reduce()
 
         this.replace_tree(beat_key_to, position_to, new_tree)
         this.unset(beat_key_from, position_from)

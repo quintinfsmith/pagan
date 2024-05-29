@@ -42,7 +42,6 @@
     <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
     <string name="url_git">https://burnsomni.net/git/pagan</string>
 
-
     <string name="btn_landing_new">New Project</string>
     <string name="btn_landing_import">Import Project</string>
     <string name="btn_landing_load">Load Project</string>
@@ -55,7 +54,6 @@
     <string name="label_settings_relative">Relative Input Mode:</string>
     <string name="label_settings_sf">Active Soundfont:</string>
     <string name="btn_settings_sfmute">Mute</string>
-
 
     <string name="btn_cfg_change_name">Change Project Name…</string>
     <string name="btn_cfg_transpose">T:</string>
@@ -118,7 +116,7 @@
     <string name="label_copy_range">Tap top left corner of range to copy</string>
     <string name="label_move_beat">Tap a beat to move it. *Tap and hold* to group move.</string>
     <string name="label_move_range">Tap top left corner of range to move</string>
-    <string name="label_merge_beat">Tap a beat to merge it. *Tap and hold* to group merge.</string>
+    <string name="label_merge_beat">Tap a beat to merge it.</string>
     <string name="label_merge_range">Tap top left corner of range to merge</string>
     <string name="label_copy_ctl">Copy</string>
     <string name="label_move_ctl">Move</string>

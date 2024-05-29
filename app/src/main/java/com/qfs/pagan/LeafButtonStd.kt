@@ -52,7 +52,8 @@ class LeafButtonStd(
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val beat_key = this._get_beat_key()
-        if (cursor.ctl_level != null || !cursor.selecting_range) {
+        val current_link_mode = this.get_activity().configuration.link_mode
+        if (cursor.ctl_level != null || !cursor.selecting_range || current_link_mode == PaganConfiguration.LinkMode.MERGE) {
             opus_manager.cursor_select_first_corner(beat_key)
         } else if (!cursor.is_linking_range()) {
             opus_manager.cursor_select_range(
@@ -112,6 +113,10 @@ class LeafButtonStd(
                     is OpusLayerCursor.InvalidCursorState -> {
                         // Shouldn't ever actually be possible
                         throw e
+                    }
+                    is OpusLayerBase.InvalidMergeException -> {
+                        editor_table.notify_cell_changes(listOf(this.get_coord()))
+                        opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
                     }
                     else -> {
                         throw e

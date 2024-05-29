@@ -91,7 +91,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
 
-        if (!this.is_playing) {
+        if (this.in_playable_state()) {
             this.play(0)
         }
     }

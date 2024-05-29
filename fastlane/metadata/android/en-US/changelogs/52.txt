@@ -1,3 +1,2 @@
-- Can now merge in the link/copy/move menu
 - Fixed possible crash on load/import
 - Fixed possible crash caused by some instruments with long fade-out times.

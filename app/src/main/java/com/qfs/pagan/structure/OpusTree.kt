@@ -171,7 +171,6 @@ class OpusTree<T> {
                 }
             }
         }
-
         place_holder.clear_singles()
 
         this.set_size(place_holder.size)
@@ -337,6 +336,10 @@ class OpusTree<T> {
             return
         }
 
+        for (child in this.divisions.values) {
+            child.clear_singles()
+        }
+
         if (this.size == 1 && this.divisions.size == 1) {
             val child = this.divisions.remove(0)!!
             if (!child.is_event()) {
@@ -353,9 +356,6 @@ class OpusTree<T> {
             }
         }
 
-        for (child in this.divisions.values) {
-            child.clear_singles()
-        }
     }
 
     fun replace_with(new_node: OpusTree<T>) {
@@ -616,10 +616,9 @@ class OpusTree<T> {
         other.flatten()
         this_multi.flatten()
 
-        val new_size = lowest_common_multiple(listOf(max(1, this_multi.size), max(1, other.size)))
+        val factor = this_multi.size
+        this_multi.resize(this_multi.size * other.size)
 
-        val factor = new_size / max(1, other.size)
-        this_multi.resize(new_size)
         for ((index, subtree) in other.divisions) {
             val new_index = index * factor
             val subtree_into = this_multi[new_index]
@@ -634,7 +633,6 @@ class OpusTree<T> {
                 for (elm in subtree.get_event()!!) {
                     eventset.add(elm)
                 }
-
                 subtree_into.set_event(eventset)
             }
         }

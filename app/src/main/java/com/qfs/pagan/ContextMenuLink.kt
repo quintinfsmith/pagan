@@ -24,7 +24,7 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
             this.get_opus_manager().unset()
         }
 
-        this.radio_mode?.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
+        this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
             val main = this.get_main()
             val opus_manager = this.get_opus_manager()
 

@@ -3,7 +3,6 @@ package com.qfs.pagan
 import com.qfs.pagan.structure.OpusTree
 import com.qfs.pagan.structure.greatest_common_denominator
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StructureUnitTest {
@@ -22,7 +21,10 @@ class StructureUnitTest {
 
         val tree_c: OpusTree<Set<Int>> = tree_a.merge(tree_b.get_set_tree())
 
-        assertEquals(tree_c[0].get_event(), setOf(0, 1))
+        assertEquals(
+            setOf(0, 1),
+            tree_c[0].get_event()
+        )
 
     }
 
@@ -43,7 +45,7 @@ class StructureUnitTest {
 
         val tree_ac = tree_aa.merge(tree_ab.get_set_tree())
         tree_ac.flatten()
-        tree_ac.reduce()
+        tree_ac.reduce(4)
 
         assertEquals(4, tree_ac.size)
         assertEquals(0, tree_ac[0].get_event()!!.first())

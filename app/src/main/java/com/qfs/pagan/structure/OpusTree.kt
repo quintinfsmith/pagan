@@ -152,9 +152,11 @@ class OpusTree<T> {
                         minimum_divs.add(most_reduced)
                     }
                 }
-                val sorted_minimum_divs = minimum_divs.toMutableList()
-                sorted_minimum_divs.sort()
-                if (sorted_minimum_divs.isNotEmpty()) {
+
+                if (minimum_divs.isNotEmpty()) {
+                    val sorted_minimum_divs = minimum_divs.toMutableList()
+                    sorted_minimum_divs.sort()
+
                     stack.add(
                         ReducerTuple(
                             sorted_minimum_divs[0],
@@ -172,10 +174,13 @@ class OpusTree<T> {
             }
         }
         place_holder.clear_singles()
-
-        this.set_size(place_holder.size)
-        for ((key, value) in place_holder.divisions) {
-            this.divisions[key] = value
+        if (place_holder.is_event()) {
+            this.set_event(place_holder.get_event())
+        } else {
+            this.set_size(place_holder.size)
+            for ((key, value) in place_holder.divisions) {
+                this.divisions[key] = value
+            }
         }
     }
 
@@ -305,7 +310,7 @@ class OpusTree<T> {
         tree.parent = this
     }
 
-    fun set_event(event: T) {
+    fun set_event(event: T?) {
         this.event = event
         this.size = 0
         this.divisions.clear()
@@ -349,10 +354,7 @@ class OpusTree<T> {
                     grandchild.parent = this
                 }
             } else {
-                this.event = child.get_event()
-                this.divisions.clear()
-                this.size = 0
-                return
+                this.set_event(child.get_event())
             }
         }
 
@@ -548,10 +550,10 @@ class OpusTree<T> {
         }
 
         return if (!this.is_event()) {
-            if (!tree.is_leaf()) {
-                this.__merge_structural(tree)
-            } else {
+            if (tree.is_leaf()) {
                 this.__merge_event_into_structural(tree)
+            } else {
+                this.__merge_structural(tree)
             }
         } else if (!tree.is_leaf()) {
             this.__merge_structural_into_event(tree)

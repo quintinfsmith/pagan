@@ -746,7 +746,6 @@ open class OpusLayerLinks : OpusLayerBase() {
         super.move_beat_range(beat_key, first_corner, second_corner)
     }
 
-
     override fun move_leaf(
         beatkey_from: BeatKey,
         position_from: List<Int>,

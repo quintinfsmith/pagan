@@ -585,7 +585,6 @@ class MainActivity : AppCompatActivity() {
                     // Invalid soundfont somehow set
                 }
             }
-            this.update_channel_instruments()
 
             this.populate_active_percussion_names()
 
@@ -1324,6 +1323,7 @@ class MainActivity : AppCompatActivity() {
                         channel.midi_program,
                     )
                 }
+
             }
         } else {
             val opus_channel = this.get_opus_manager().channels[index]

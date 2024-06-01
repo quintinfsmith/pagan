@@ -373,7 +373,7 @@ class MainActivity : AppCompatActivity() {
         val active_fragment = this.get_active_fragment()
         if (event != null) {
             when (active_fragment) {
-                is FragmentEditor -> active_fragment.key_press_handler(key_code, event)
+                is FragmentEditor -> active_fragment.keyboard_input_interface?.input(key_code, event)
                 else -> {}
             }
         }

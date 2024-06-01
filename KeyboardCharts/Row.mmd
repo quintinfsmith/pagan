@@ -1,24 +1,26 @@
 flowchart LR
   subgraph Input
+    h((h))
+    l((l))
+
+    c((c))
+    i((i))
+    j((j))
+    k((k))
+    m((m))
+    r((r))
+    s((s))
+
     a((a))
     b((b))
-    c((c))
     d((d))
     e((e))
     f((f))
     g((g))
-    h((h))
-    i((i))
-    j((j))
-    k((k))
-    l((l))
-    m((m))
     n((n))
     o((o))
     p((p))
     q((q))
-    r((r))
-    s((s))
     t((t))
     u((u))
     v((v))
@@ -28,38 +30,34 @@ flowchart LR
     z((z))
   end
 
-  subgraph CursorMode
+  subgraph CursorMode:Row
     direction LR
-    Single
-    Column
-    Row
-    Null
-    Range
+    move_to_channel
+
+    insert_line
+    goto_next_row
+    goto_previous_row
+
+    mark_line
+    remove_line
+    swap_with_marked_line
+
+
   end
 
-  subgraph Movement
-  cursor_select_last_in_row
-  cursor_select_first_in_row
-  goto_previous_row
-  goto_next_row
+  subgraph CursorMode:Single
+    direction LR
+    cursor_select_first_in_row
+    cursor_select_last_in_row
   end
 
-  subgraph Swapping
-  mark_line
-  swap_with_marked_line
-  end
+  c --> move_to_channel(Select Channel)
+  i --> insert_line(Insert a line)
+  j --> goto_next_row(Next line)
+  k --> goto_previous_row(Previous line)
+  m --> mark_line(Mark line to swap)
+  r --> remove_line(Remove selected line)
+  s --> swap_with_marked_line(Swap current line with marked line)
 
-  subgraph Insert/Remove
-  insert_line
-  remove_line
-  end
-
-  c --> move_to_channel(Select Channel) --> Row
-  h --> cursor_select_first_in_row(Select first leaf in active line) --> Single
-  i --> insert_line(Insert a line) --> Row
-  j --> goto_next_row(Next line) --> Row
-  k --> goto_previous_row(Previous line) --> Row
-  l --> cursor_select_last_in_row(Select last leaf in active line) --> Single
-  m --> mark_line(Mark line to swap) --> Row
-  r --> remove_line(Remove selected line) --> Row
-  s --> swap_with_marked_line(Swap current line with marked line) --> Row
+  h --> cursor_select_first_in_row(Select first leaf in active line)
+  l --> cursor_select_last_in_row(Select last leaf in active line)

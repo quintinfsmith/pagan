@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure
+package com.qfs.pagan
 import android.util.Log
 import android.view.KeyEvent
 import com.qfs.pagan.opusmanager.BeatKey
@@ -115,55 +115,76 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             KeyEvent.KEYCODE_J -> {
-                val repeat = this.clear_value_buffer(1)
-                val current_line = when (this.opus_manager.cursor.ctl_level) {
-                    null -> {
-                        this.opus_manager.get_visible_row_from_ctl_line(
-                            this.opus_manager.get_ctl_line_index(
-                                this.opus_manager.get_abs_offset(
-                                    this.opus_manager.cursor.channel,
-                                    this.opus_manager.cursor.line_offset
-                                )
-                            )
-                        )!!
-                    }
-                    CtlLineLevel.Line -> TODO()
-                    CtlLineLevel.Channel -> TODO()
-                    CtlLineLevel.Global -> {
-                        this.opus_manager.get_visible_row_from_ctl_line_global(this.opus_manager.cursor.ctl_type!!)
-                    }
-                }
-                val line_count = this.opus_manager.get_visible_master_line_count()
-                // TODO not working
-                //val next_line = ((repeat + (current_line + 1)) % (line_count + 1))
-                //if (next_line == current_line) {
-                //    return
-                //} else if (next_line == 0) {
-                //    this.opus_manager.cursor_select_column(this.opus_manager.cursor.beat)
-                //} else {
-                //    val (target, ctl_level, ctl_type) = this.opus_manager.get_ctl_line_info((next_line - 1) % line_count)
-                //    when (ctl_level) {
-                //        CtlLineLevel.Line -> TODO()
-                //        CtlLineLevel.Channel -> TODO()
-                //        CtlLineLevel.Global -> {
-                //            val beat = this.opus_manager.cursor.beat
-                //            val target_position = this.opus_manager.get_first_position_global_ctl(ctl_type!!, beat)
-                //            this.opus_manager.cursor_select_ctl_at_global(ctl_type!!, beat, target_position)
-                //        }
-                //        null -> {
-                //            val (channel, offset) = this.opus_manager.get_std_offset(target)
-                //            val target_beat_key = BeatKey(channel, offset, this.opus_manager.cursor.beat)
-                //            val target_position = this.opus_manager.get_first_position(target_beat_key, listOf())
-                //            this.opus_manager.cursor_select(target_beat_key, target_position)
-                //        }
-                //    }
-                //}
+                this._cursor_select_next_leaf_down()
+            }
+            KeyEvent.KEYCODE_K -> {
+                this._cursor_select_next_leaf_up()
             }
         }
     }
 
     private fun _input_range(key_code: Int, event: KeyEvent) { }
     private fun _input_unset(key_code: Int, event: KeyEvent) { }
+
+    private fun _cursor_select_next_prev_leaf(direction_up: Boolean = false) {
+        val repeat = this.clear_value_buffer(1)
+        val current_line = when (this.opus_manager.cursor.ctl_level) {
+            null -> {
+                this.opus_manager.get_visible_row_from_ctl_line(
+                    this.opus_manager.get_ctl_line_index(
+                        this.opus_manager.get_abs_offset(
+                            this.opus_manager.cursor.channel,
+                            this.opus_manager.cursor.line_offset
+                        )
+                    )
+                )!!
+            }
+            CtlLineLevel.Global -> {
+                this.opus_manager.get_visible_row_from_ctl_line_global(this.opus_manager.cursor.ctl_type!!)
+            }
+            CtlLineLevel.Line -> TODO()
+            CtlLineLevel.Channel -> TODO()
+        } + 1
+        val line_count = this.opus_manager.get_visible_master_line_count()
+        val direction_mod = if (direction_up) {
+            -1
+        } else {
+            1
+        }
+
+        val next_line = ((current_line + (repeat * direction_mod)) % (line_count + 1))
+        if (next_line == current_line) {
+            return
+        } else if (next_line == 0) {
+            this.opus_manager.cursor_select_column(this.opus_manager.cursor.beat)
+        } else {
+            val next_ctl_line = this.opus_manager.get_ctl_line_from_visible_row(next_line - 1)
+            val (target, ctl_level, ctl_type) = this.opus_manager.get_ctl_line_info(next_ctl_line)
+            when (ctl_level) {
+                CtlLineLevel.Global -> {
+                    val beat = this.opus_manager.cursor.beat
+                    val target_position = this.opus_manager.get_first_position_global_ctl(ctl_type!!, beat)
+                    this.opus_manager.cursor_select_ctl_at_global(ctl_type!!, beat, target_position)
+                }
+                null -> {
+                    val (channel, offset) = this.opus_manager.get_std_offset(target)
+                    val target_beat_key = BeatKey(channel, offset, this.opus_manager.cursor.beat)
+                    val target_position = this.opus_manager.get_first_position(target_beat_key, listOf())
+                    this.opus_manager.cursor_select(target_beat_key, target_position)
+                }
+                CtlLineLevel.Line -> TODO()
+                CtlLineLevel.Channel -> TODO()
+            }
+        }
+    }
+
+    private fun _cursor_select_next_leaf_down() {
+        this._cursor_select_next_prev_leaf(false)
+    }
+
+    private fun _cursor_select_next_leaf_up() {
+        this._cursor_select_next_prev_leaf(true)
+    }
 
 
     private fun _cursor_select_line_from_column(visible_line: Int) {

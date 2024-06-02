@@ -18,7 +18,6 @@ import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.structure.KeyboardInputInterface
 import java.io.File
 import java.io.FileInputStream
 import kotlin.concurrent.thread

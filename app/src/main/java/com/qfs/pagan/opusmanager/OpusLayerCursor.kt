@@ -1099,15 +1099,28 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val beat_key = cursor.get_beatkey()
                 val position = cursor.get_position().toMutableList()
 
-                val tree = this.get_tree()
+                var working_tree = this.get_tree(beat_key).copy()
                 val cursor_position = position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
+                var real_count = 0
+                for (i in 0 until count) {
+                    if (cursor_position.isEmpty()) {
+                        break
+                    }
+
+                    val parent = working_tree.get(cursor_position.subList(0, cursor_position.size - 1))
+                    if (parent.size == 2) {
+                        parent.set_event(null)
+                        cursor_position.removeLast()
+                    } else if (cursor_position.last() == parent.size - 1) {
+                        parent[cursor_position.last()].detach()
+                        cursor_position[cursor_position.size - 1] -= 1
+                    } else {
+                        parent[cursor_position.last()].detach()
+                    }
+                    real_count += 1
                 }
 
-                this.remove(beat_key, position, count)
+                this.remove(beat_key, position, real_count)
 
                 this.cursor_select(
                     beat_key,

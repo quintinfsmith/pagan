@@ -494,8 +494,28 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                this.remove(beat_key, position)
+                val tree = this.get_tree(beat_key, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
+                this.remove(beat_key, adj_position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }

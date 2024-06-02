@@ -120,6 +120,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             KeyEvent.KEYCODE_K -> {
                 this._cursor_select_next_leaf_up()
             }
+            KeyEvent.KEYCODE_X -> {
+                val repeat = this.clear_value_buffer(1)
+                if (repeat > 0) {
+                    this.opus_manager.remove(repeat)
+                }
+
+            }
         }
     }
 

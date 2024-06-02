@@ -1092,6 +1092,29 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
+    fun <T> _calculate_new_position_after_remove(working_tree: OpusTree<T>, position: List<Int>, count: Int): Pair<Int, List<Int>> {
+        val cursor_position = position.toMutableList()
+        var real_count = 0
+        for (i in 0 until count) {
+            if (cursor_position.isEmpty()) {
+                break
+            }
+
+            val parent = working_tree.get(cursor_position.subList(0, cursor_position.size - 1))
+            if (parent.size == 2) {
+                parent.set_event(null)
+                cursor_position.removeLast()
+            } else if (cursor_position.last() == parent.size - 1) {
+                parent[cursor_position.last()].detach()
+                cursor_position[cursor_position.size - 1] -= 1
+            } else {
+                parent[cursor_position.last()].detach()
+            }
+            real_count += 1
+        }
+        return Pair(real_count, cursor_position)
+    }
+
     fun remove(count: Int) {
         val cursor = this.cursor
         when (cursor.ctl_level) {
@@ -1100,25 +1123,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val position = cursor.get_position().toMutableList()
 
                 var working_tree = this.get_tree(beat_key).copy()
-                val cursor_position = position.toMutableList()
-                var real_count = 0
-                for (i in 0 until count) {
-                    if (cursor_position.isEmpty()) {
-                        break
-                    }
 
-                    val parent = working_tree.get(cursor_position.subList(0, cursor_position.size - 1))
-                    if (parent.size == 2) {
-                        parent.set_event(null)
-                        cursor_position.removeLast()
-                    } else if (cursor_position.last() == parent.size - 1) {
-                        parent[cursor_position.last()].detach()
-                        cursor_position[cursor_position.size - 1] -= 1
-                    } else {
-                        parent[cursor_position.last()].detach()
-                    }
-                    real_count += 1
-                }
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
                 this.remove(beat_key, position, real_count)
 
@@ -1129,15 +1135,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
 
             CtlLineLevel.Global -> {
-                val tree = this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat, cursor.position)
-                val cursor_position = cursor.position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (cursor.position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
+                val working_tree = this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat).copy()
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                this.remove_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position, count)
+                this.remove_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position, real_count)
 
                 this.cursor_select_ctl_at_global(
                     cursor.ctl_type!!,
@@ -1147,15 +1148,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
 
             CtlLineLevel.Channel -> {
-                val tree = this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-                val cursor_position = cursor.position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (cursor.position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
+                val working_tree = this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                this.remove_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, count)
+                this.remove_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, real_count)
 
                 this.cursor_select_ctl_at_channel(
                     cursor.ctl_type!!,
@@ -1167,17 +1163,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
-                val position = cursor.get_position().toMutableList()
+                val working_tree = this.get_line_ctl_tree(cursor.ctl_type!!, beat_key)
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                val tree = this.get_line_ctl_tree(cursor.ctl_type!!, beat_key, position)
-                val cursor_position = position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
-
-                this.remove_line_ctl(cursor.ctl_type!!, beat_key, position, count)
+                this.remove_line_ctl(cursor.ctl_type!!, beat_key, cursor.position, real_count)
 
                 this.cursor_select_ctl_at_line(
                     cursor.ctl_type!!,

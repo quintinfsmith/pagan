@@ -522,24 +522,84 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
+                val tree = this.get_global_ctl_tree(type, beat, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
                 this.remove_global_ctl(type, beat, position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }
 
     fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                this.remove_channel_ctl(type, channel, beat, position)
+                val tree = this.get_channel_ctl_tree(type, beat, channel, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
+                this.remove_channel_ctl(type, channel, beat, adj_position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }
 
     fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
+                val tree = this.get_line_ctl_tree(type, beat_key, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
                 this.remove_line_ctl(type, beat_key, position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }

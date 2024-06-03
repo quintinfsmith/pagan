@@ -374,11 +374,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_apply(new_cursor)
     }
 
-    override fun apply_undo() {
+    override fun apply_undo(repeat: Int) {
         if (!this.history_cache.isEmpty()) {
             this.cursor_clear()
         }
-        super.apply_undo()
+        super.apply_undo(repeat)
         this.apply_queued_cursor_select()
     }
 
@@ -1040,16 +1040,17 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
-    fun split_tree(splits: Int) {
+    fun split_tree(splits: Int, move_event_to_end: Boolean = false) {
         this.split_tree(
             this.cursor.get_beatkey(),
             this.cursor.get_position(),
-            splits
+            splits,
+            move_event_to_end
         )
     }
 
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        super.split_tree(beat_key, position, splits)
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        super.split_tree(beat_key, position, splits, move_event_to_end)
         val new_position = position.toMutableList()
         new_position.add(0)
         this.cursor_select(beat_key, new_position)
@@ -1086,6 +1087,14 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     fun insert_after(count: Int) {
         this.insert_after(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position(),
+            count
+        )
+    }
+
+    fun insert(count: Int) {
+        this.insert(
             this.cursor.get_beatkey(),
             this.cursor.get_position(),
             count
@@ -1218,6 +1227,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
     fun insert_beat_after_cursor(count: Int) {
         this.insert_beats(this.cursor.beat + 1, count)
     }
+
+    fun insert_beat_at_cursor(count: Int) {
+        this.insert_beats(this.cursor.beat, count)
+    }
+
 
     fun link_beat(beat_key: BeatKey) {
         if (this.cursor.is_linking_range()) {

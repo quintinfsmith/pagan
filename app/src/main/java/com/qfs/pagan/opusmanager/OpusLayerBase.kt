@@ -939,9 +939,9 @@ open class OpusLayerBase {
         tree.set_event(event)
     }
 
-    open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
         val tree: OpusTree<OpusEventSTD> = this.get_tree(beat_key, position)
-        this._split_opus_tree(tree, splits)
+        this._split_opus_tree(tree, splits, move_event_to_end)
     }
 
     open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
@@ -959,7 +959,7 @@ open class OpusLayerBase {
         this._split_opus_tree(tree, splits)
     }
 
-    private fun <T> _split_opus_tree(tree: OpusTree<T>, splits: Int) {
+    private fun <T> _split_opus_tree(tree: OpusTree<T>, splits: Int, move_event_to_end: Boolean = false) {
         if (tree.is_event()) {
             var working_tree = tree
             val event = working_tree.get_event()!!
@@ -968,7 +968,11 @@ open class OpusLayerBase {
             working_tree.set_size(splits)
 
             if (splits > 1) {
-                working_tree = working_tree[0]
+                working_tree = if (move_event_to_end) {
+                    working_tree[working_tree.size - 1]
+                } else {
+                    working_tree[0]
+                }
             }
 
             working_tree.set_event(event)

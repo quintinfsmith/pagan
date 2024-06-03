@@ -269,12 +269,12 @@ open class OpusLayerLinks : OpusLayerBase() {
             super.set_event(beat_key, position, event.copy())
         }
     }
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.split_tree(linked_key, position, splits)
             }
-            super.split_tree(beat_key, position, splits)
+            super.split_tree(beat_key, position, splits, move_event_to_end)
         }
     }
     override fun unset(beat_key: BeatKey, position: List<Int>) {

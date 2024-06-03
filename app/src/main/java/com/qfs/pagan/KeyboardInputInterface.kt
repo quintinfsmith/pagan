@@ -11,22 +11,35 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class KeyboardInputInterface(var opus_manager: OpusManager) {
     var input_buffer_value: Int? = null
 
-    fun clear_value_buffer(default: Int = 0): Int {
-        val output = this.input_buffer_value ?: default
+    fun clear_value_buffer(default: Int = 0, minimum: Int? = null, maximum: Int? = null): Int {
+        var output = this.input_buffer_value ?: default
         this.input_buffer_value = null
+        if (minimum != null) {
+            output = max(minimum, output)
+        }
+        if (maximum != null) {
+            output = min(maximum, output)
+        }
+
         return output
     }
 
-    fun input(key_code: Int, event: KeyEvent) {
+    fun input(key_code: Int, event: KeyEvent): Boolean {
         Log.d("AAA", "$event")
-        when (event.keyCode) {
+        return when (event.keyCode) {
             KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_3, KeyEvent.KEYCODE_4,
             KeyEvent.KEYCODE_5, KeyEvent.KEYCODE_6, KeyEvent.KEYCODE_7, KeyEvent.KEYCODE_8, KeyEvent.KEYCODE_9 -> {
                 this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + event.keyCode - KeyEvent.KEYCODE_0
+                true
             }
 
             KeyEvent.KEYCODE_ESCAPE -> {
-                this.input_buffer_value = null
+                if (this.input_buffer_value == null) {
+                    false
+                } else {
+                    this.input_buffer_value = null
+                    true
+                }
             }
 
             else -> {
@@ -41,47 +54,98 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         }
     }
 
-    private fun _input_row(key_code: Int, event: KeyEvent) {
-
+    private fun _input_row(key_code: Int, event: KeyEvent): Boolean {
+        return false
     }
 
-    private fun _input_column(key_code: Int, event: KeyEvent) {
-        when (event.keyCode) {
+    private fun _input_column(key_code: Int, event: KeyEvent): Boolean {
+        return when (event.keyCode) {
+            KeyEvent.KEYCODE_A -> {
+                val repeat = this.clear_value_buffer(1, maximum=9999)
+                this.opus_manager.insert_beat_after_cursor(repeat)
+                true
+            }
+
             KeyEvent.KEYCODE_H -> {
                 val movement_value = this.clear_value_buffer(1)
                 val new_beat = max(0, this.opus_manager.cursor.beat - movement_value)
                 this.opus_manager.cursor_select_column(new_beat)
+                true
             }
+
+            KeyEvent.KEYCODE_I -> {
+                val repeat = this.clear_value_buffer(1, maximum=9999)
+                this.opus_manager.insert_beat_at_cursor(repeat)
+                true
+            }
+
             KeyEvent.KEYCODE_J -> {
                 val repeat = this.clear_value_buffer(1)
-                if (repeat % (this.opus_manager.get_visible_master_line_count() + 1) == 0) {
-                    return
+                if (repeat % (this.opus_manager.get_visible_master_line_count() + 1) != 0) {
+                    val visible_line = (repeat % (this.opus_manager.get_visible_master_line_count() + 1)) - 1
+                    this._cursor_select_line_from_column(visible_line)
                 }
-
-                val visible_line = (repeat % (this.opus_manager.get_visible_master_line_count() + 1)) - 1
-                this._cursor_select_line_from_column(visible_line)
+                true
             }
+
             KeyEvent.KEYCODE_K -> {
                 val master_line_count = this.opus_manager.get_visible_master_line_count()
                 val repeat = this.clear_value_buffer(1)
-                if (repeat % (master_line_count + 1) == 0) {
-                    return
+                if (repeat % (master_line_count + 1) != 0) {
+                    val visible_line = master_line_count - (repeat % (master_line_count + 1))
+                    this._cursor_select_line_from_column(visible_line)
                 }
-
-                val visible_line = master_line_count - (repeat % (master_line_count + 1))
-                this._cursor_select_line_from_column(visible_line)
-
+                true
             }
+
             KeyEvent.KEYCODE_L -> {
                 val movement_value = this.clear_value_buffer(1)
                 val new_beat = min(this.opus_manager.beat_count - 1, this.opus_manager.cursor.beat + movement_value)
                 this.opus_manager.cursor_select_column(new_beat)
+                true
+            }
+
+            KeyEvent.KEYCODE_U -> {
+                val repeat = this.clear_value_buffer(1)
+                this.opus_manager.apply_undo(repeat)
+                true
+            }
+
+            KeyEvent.KEYCODE_X -> {
+                val repeat = this.clear_value_buffer(1)
+                if (repeat > 0) {
+                    this.opus_manager.remove_beat_at_cursor(repeat)
+                }
+                true
+            }
+            else -> {
+                false
             }
         }
     }
 
-    private fun _input_single(key_code: Int, event: KeyEvent) {
-        when (event.keyCode) {
+    private fun _input_single(key_code: Int, event: KeyEvent): Boolean {
+        return when (event.keyCode) {
+            KeyEvent.KEYCODE_A -> {
+                var repeat = this.clear_value_buffer(1, maximum=64)
+                if (repeat > 0) {
+                    val tree = this.opus_manager.get_tree()
+                    if (tree.parent == null) {
+                        this.opus_manager.split_tree(repeat + 1)
+                    } else {
+                        this.opus_manager.insert_after(repeat)
+                    }
+                }
+                true
+            }
+
+            KeyEvent.KEYCODE_C -> {
+                if (this.clear_value_buffer(1) != 0) {
+                    this.opus_manager.unset()
+                }
+                true
+            }
+
             KeyEvent.KEYCODE_H -> {
                 val movement_value = this.clear_value_buffer(1)
                 var working_beat_key = this.opus_manager.cursor.get_beatkey()
@@ -96,6 +160,20 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     working_position = next_pair.second
                 }
                 this.opus_manager.cursor_select(working_beat_key, working_position)
+                true
+            }
+
+            KeyEvent.KEYCODE_I -> {
+                var repeat = this.clear_value_buffer(1, maximum=64)
+                if (repeat > 0) {
+                    val tree = this.opus_manager.get_tree()
+                    if (tree.parent == null) {
+                        this.opus_manager.split_tree(repeat + 1, true)
+                    } else {
+                        this.opus_manager.insert(repeat)
+                    }
+                }
+                true
             }
 
             KeyEvent.KEYCODE_L -> {
@@ -112,26 +190,50 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     working_position = next_pair.second
                 }
                 this.opus_manager.cursor_select(working_beat_key, working_position)
+
+                true
             }
 
             KeyEvent.KEYCODE_J -> {
                 this._cursor_select_next_leaf_down()
+                true
             }
             KeyEvent.KEYCODE_K -> {
                 this._cursor_select_next_leaf_up()
+                true
             }
+
+            KeyEvent.KEYCODE_U -> {
+                val repeat = this.clear_value_buffer(1)
+                this.opus_manager.apply_undo(repeat)
+                true
+            }
+
             KeyEvent.KEYCODE_X -> {
                 val repeat = this.clear_value_buffer(1)
                 if (repeat > 0) {
                     this.opus_manager.remove(repeat)
                 }
+                true
+            }
 
+            KeyEvent.KEYCODE_SLASH -> {
+                val splits = this.clear_value_buffer(2, minimum=2, maximum=64)
+                this.opus_manager.split_tree(splits)
+                true
+            }
+            else -> {
+                false
             }
         }
     }
 
-    private fun _input_range(key_code: Int, event: KeyEvent) { }
-    private fun _input_unset(key_code: Int, event: KeyEvent) { }
+    private fun _input_range(key_code: Int, event: KeyEvent): Boolean {
+        return false
+    }
+    private fun _input_unset(key_code: Int, event: KeyEvent): Boolean {
+        return false
+    }
 
     private fun _cursor_select_next_prev_leaf(direction_up: Boolean = false) {
         val repeat = this.clear_value_buffer(1)

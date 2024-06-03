@@ -359,8 +359,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        super.split_tree(beat_key, position, splits)
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        super.split_tree(beat_key, position, splits, move_event_to_end)
 
         if (this.get_activity() == null) {
             return
@@ -984,8 +984,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun apply_undo() {
-        super.apply_undo()
+    override fun apply_undo(repeat: Int) {
+        super.apply_undo(repeat)
         this.recache_line_maps()
         this.get_editor_table()?.apply_queued_cell_changes()
     }

@@ -371,13 +371,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onKeyDown(key_code: Int, event: KeyEvent?): Boolean {
         val active_fragment = this.get_active_fragment()
-        if (event != null) {
+        val cancel_super = if (event != null) {
             when (active_fragment) {
-                is FragmentEditor -> active_fragment.keyboard_input_interface?.input(key_code, event)
-                else -> {}
+                is FragmentEditor -> active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
+                else -> false
             }
+        } else {
+            false
         }
-        return super.onKeyDown(key_code, event)
+
+        return if (cancel_super) {
+            true
+        } else {
+            super.onKeyDown(key_code, event)
+        }
     }
 
     override fun onResume() {

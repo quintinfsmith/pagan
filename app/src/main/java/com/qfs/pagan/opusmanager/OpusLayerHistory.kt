@@ -293,25 +293,26 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    open fun apply_undo() {
+    open fun apply_undo(repeat: Int = 1) {
         this.lock_links {
             this.history_cache.lock()
 
+            for (i in 0 until repeat) {
+                val node = this.history_cache.pop()
+                if (node == null) {
+                    this.history_cache.unlock()
+                    return@lock_links
+                }
 
-            val node = this.history_cache.pop()
-            if (node == null) {
-                this.history_cache.unlock()
-                return@lock_links
+                if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
+                    // If the node was an empty 'multi'  node, try the next one
+                    this.history_cache.unlock()
+                    this.apply_undo()
+                    return@lock_links
+                }
+
+                this.apply_history_node(node)
             }
-
-            if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
-                // If the node was an empty 'multi'  node, try the next one
-                this.history_cache.unlock()
-                this.apply_undo()
-                return@lock_links
-            }
-
-            this.apply_history_node(node)
 
             this.history_cache.unlock()
         }
@@ -393,6 +394,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    fun insert(beat_key: BeatKey, position: List<Int>, repeat: Int) {
+        this._remember {
+            for (i in 0 until repeat) {
+                this.insert(beat_key, position)
+            }
+        }
+    }
+
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this._remember {
             val remove_position = position.toMutableList()
@@ -460,10 +469,10 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this._remember {
             this.push_replace_tree(beat_key, position) {
-                super.split_tree(beat_key, position, splits)
+                super.split_tree(beat_key, position, splits, move_event_to_end)
             }
         }
     }

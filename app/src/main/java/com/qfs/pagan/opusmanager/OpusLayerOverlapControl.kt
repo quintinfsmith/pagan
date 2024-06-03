@@ -116,9 +116,9 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     }
 
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.recache_blocked_tree_wrapper(beat_key, position) {
-            super.split_tree(beat_key, position, splits)
+            super.split_tree(beat_key, position, splits, move_event_to_end)
         }
     }
 

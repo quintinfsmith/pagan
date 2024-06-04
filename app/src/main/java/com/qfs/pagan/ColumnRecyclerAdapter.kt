@@ -98,6 +98,7 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
     fun add_columns(index: Int, count: Int) {
         this._column_count += count
         this.notifyItemRangeInserted(index, count)
+        this.notifyItemRangeChanged(index + count, count)
 
     }
 

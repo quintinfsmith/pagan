@@ -499,7 +499,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
 
         var has_cursor_action = true
-        if (this.link_lock < 1) { // Don't move cursor to links
+        if (this.link_lock < 2) { // Don't move cursor to links (0: no lock applied, 1: lock applied but still consideried original, 2: lock applied & working with linked)
             this.history_cache.remember {
                 when (token) {
                     HistoryToken.MOVE_LINE -> {
@@ -684,8 +684,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     }
 
                     HistoryToken.REMOVE_BEATS -> {
-                        val x =
-                            max(0, min(args[0] as Int, this.beat_count - (1 + (args[1] as Int))))
+                        val target_x = args[0] as Int
+                        val repeat = args[1] as Int
+                        val x = max(0, min(target_x, this.beat_count - 1 - repeat))
+
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_COLUMN,
                             listOf(x)

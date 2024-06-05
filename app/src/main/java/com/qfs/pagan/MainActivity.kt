@@ -1115,6 +1115,7 @@ class MainActivity : AppCompatActivity() {
             val default_value = opus_manager.tuning_map.size
 
             etRadix.set_value(default_value)
+            etRadix.set_range(2, 36)
             etRadix.value_set_callback = { new_radix: Int? ->
                 rvTuningMap.reset_tuning_map(new_radix)
                 etTranspose.set_value(0)

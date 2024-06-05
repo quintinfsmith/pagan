@@ -410,6 +410,105 @@ open class OpusLayerBase {
         return Pair(working_beat_key, working_position)
     }
 
+    fun get_global_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat = beat
+        var working_tree = this.get_global_ctl_tree(ctl_type, working_beat, working_position)
+
+        // Move right/up
+        while (true) {
+            if (working_tree.parent != null) {
+                if (working_tree.parent!!.size - 1 > working_position.last()) {
+                    working_position[working_position.size - 1] += 1
+                    working_tree = this.get_global_ctl_tree(ctl_type, working_beat, working_position)
+                    break
+                } else {
+                    working_position.removeLast()
+                    working_tree = working_tree.parent!!
+                }
+            } else if (working_beat < this.beat_count - 1) {
+                working_beat += 1
+                working_position = mutableListOf()
+                working_tree = this.get_global_ctl_tree(ctl_type, working_beat, working_position)
+                break
+            } else {
+                return null
+            }
+        }
+        // Move left/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(0)
+            working_tree = working_tree[0]
+        }
+        return Pair(working_beat, working_position)
+    }
+
+    fun get_channel_ctl_proceding_leaf_position(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat = beat
+        var working_tree = this.get_channel_ctl_tree(ctl_type, channel, working_beat, working_position)
+
+        // Move right/up
+        while (true) {
+            if (working_tree.parent != null) {
+                if (working_tree.parent!!.size - 1 > working_position.last()) {
+                    working_position[working_position.size - 1] += 1
+                    working_tree = this.get_channel_ctl_tree(ctl_type, channel, working_beat, working_position)
+                    break
+                } else {
+                    working_position.removeLast()
+                    working_tree = working_tree.parent!!
+                }
+            } else if (working_beat < this.beat_count - 1) {
+                working_beat += 1
+                working_position = mutableListOf()
+                working_tree = this.get_channel_ctl_tree(ctl_type, channel, working_beat, working_position)
+                break
+            } else {
+                return null
+            }
+        }
+        // Move left/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(0)
+            working_tree = working_tree[0]
+        }
+        return Pair(working_beat, working_position)
+    }
+
+    fun get_line_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat_key = beat_key
+        var working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
+
+        // Move right/up
+        while (true) {
+            if (working_tree.parent != null) {
+                if (working_tree.parent!!.size - 1 > working_position.last()) {
+                    working_position[working_position.size - 1] += 1
+                    working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
+                    break
+                } else {
+                    working_position.removeLast()
+                    working_tree = working_tree.parent!!
+                }
+            } else if (working_beat_key.beat < this.beat_count - 1) {
+                working_beat_key.beat += 1
+                working_position = mutableListOf()
+                working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
+                break
+            } else {
+                return null
+            }
+        }
+        // Move left/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(0)
+            working_tree = working_tree[0]
+        }
+        return Pair(working_beat_key, working_position)
+    }
+
     /**
      * Get the value of the event at location[beat_key]/[position], if any.
      * if the event is relative, it will look back and add up preceding values

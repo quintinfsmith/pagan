@@ -3,21 +3,11 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
-import com.qfs.pagan.opusmanager.ActiveControlSet
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.LoadedJSONData
-import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusEvent
-import com.qfs.pagan.opusmanager.OpusEventSTD
-import com.qfs.pagan.opusmanager.OpusLayerCursor
-import com.qfs.pagan.opusmanager.OpusLine
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.opusmanager.*
+import com.qfs.pagan.structure.*
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.math.pow
 
 class OpusLayerInterface : OpusLayerCursor() {
     class HidingNonEmptyPercussionException: Exception()
@@ -1665,16 +1655,17 @@ class OpusLayerInterface : OpusLayerCursor() {
     /*
         Need to know when setting the FeedBackPlaybackDevice sample rate, since we want it as low as is possible without killing higher notes
     */
-    //fun get_maximum_frequency(): Float {
-    //    val base_frequency = 12.5F
-    //    val transpose = this.transpose
-    //    var maximum_base = 0f
-    //    for ((numerator, denominator) in this.tuning_map) {
-    //        maximum_base = numerator.toFloat() / denominator.toFloat())
-    //    }
-    //    val radix = this.tuning_map.size
-    //    val freq = (transpose.toFloat() / radix) + (max
+    fun get_maximum_frequency(): Float {
+        val base_frequency = 27.5F
+        val transpose = this.transpose
+        var maximum_initial_frequency = 0f
+        for ((numerator, denominator) in this.tuning_map) {
+            maximum_initial_frequency = numerator.toFloat() / denominator.toFloat()
+        }
+        val radix = this.tuning_map.size
+        val max_octave = 7
 
-    //}
+        return base_frequency * 2F.pow((transpose.toFloat() / radix.toFloat()) + (maximum_initial_frequency * max_octave.toFloat()))
+    }
 
 }

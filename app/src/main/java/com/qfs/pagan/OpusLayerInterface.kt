@@ -1662,4 +1662,19 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    /*
+        Need to know when setting the FeedBackPlaybackDevice sample rate, since we want it as low as is possible without killing higher notes
+    */
+    //fun get_maximum_frequency(): Float {
+    //    val base_frequency = 12.5F
+    //    val transpose = this.transpose
+    //    var maximum_base = 0f
+    //    for ((numerator, denominator) in this.tuning_map) {
+    //        maximum_base = numerator.toFloat() / denominator.toFloat())
+    //    }
+    //    val radix = this.tuning_map.size
+    //    val freq = (transpose.toFloat() / radix) + (max
+
+    //}
+
 }

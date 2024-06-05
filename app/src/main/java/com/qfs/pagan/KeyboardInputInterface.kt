@@ -132,6 +132,10 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     val movement_value = this.clear_value_buffer(1)
                     val cursor = this.opus_manager.cursor
                     var beat = (cursor.beat - movement_value) % this.opus_manager.beat_count
+                    if (beat < 0) {
+                        beat += this.opus_manager.beat_count
+                    }
+
                     when (cursor.ctl_level) {
                         null -> {
                             val new_beat_key = BeatKey(cursor.channel, cursor.line_offset, beat)

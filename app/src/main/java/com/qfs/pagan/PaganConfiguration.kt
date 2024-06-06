@@ -28,7 +28,8 @@ data class PaganConfiguration(
     enum class LinkMode {
         MOVE,
         COPY,
-        LINK
+        LINK,
+        MERGE
     }
     companion object {
         fun from_path(path: String): PaganConfiguration {

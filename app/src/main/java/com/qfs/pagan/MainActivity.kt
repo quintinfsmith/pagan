@@ -25,6 +25,7 @@ import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.ContextThemeWrapper
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -368,6 +369,24 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    override fun onKeyDown(key_code: Int, event: KeyEvent?): Boolean {
+        val active_fragment = this.get_active_fragment()
+        val cancel_super = if (event != null) {
+            when (active_fragment) {
+                is FragmentEditor -> active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
+                else -> false
+            }
+        } else {
+            false
+        }
+
+        return if (cancel_super) {
+            true
+        } else {
+            super.onKeyDown(key_code, event)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
@@ -565,8 +584,7 @@ class MainActivity : AppCompatActivity() {
                     if (!this._midi_interface.output_devices_connected()) {
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
-                            this.configuration.sample_rate,
-                            this.configuration.sample_rate / 4,
+                            this.configuration.sample_rate
                         )
                     }
                 } catch (e: Riff.InvalidRiff) {
@@ -574,7 +592,6 @@ class MainActivity : AppCompatActivity() {
                     // Invalid soundfont somehow set
                 }
             }
-            this.update_channel_instruments()
 
             this.populate_active_percussion_names()
 
@@ -1098,6 +1115,7 @@ class MainActivity : AppCompatActivity() {
             val default_value = opus_manager.tuning_map.size
 
             etRadix.set_value(default_value)
+            etRadix.set_range(2, 36)
             etRadix.value_set_callback = { new_radix: Int? ->
                 rvTuningMap.reset_tuning_map(new_radix)
                 etTranspose.set_value(0)
@@ -1313,6 +1331,7 @@ class MainActivity : AppCompatActivity() {
                         channel.midi_program,
                     )
                 }
+
             }
         } else {
             val opus_channel = this.get_opus_manager().channels[index]
@@ -1376,9 +1395,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (this._feedback_sample_manager != null) {
-            if (this._temporary_feedback_devices[this._current_feedback_device] != null) {
-                this._temporary_feedback_devices[this._current_feedback_device]!!.kill()
-            } else {
+            if (this._temporary_feedback_devices[this._current_feedback_device] == null) {
                 this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
             }
 
@@ -2004,8 +2021,7 @@ class MainActivity : AppCompatActivity() {
         this.disconnect_feedback_device()
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
-            this.configuration.sample_rate,
-            this.configuration.sample_rate / 4,
+            this.configuration.sample_rate
         )
     }
 

@@ -1,0 +1,63 @@
+flowchart LR
+  subgraph Input
+    h((h))
+    l((l))
+
+    c((c))
+    i((i))
+    j((j))
+    k((k))
+    m((m))
+    r((r))
+    s((s))
+
+    a((a))
+    b((b))
+    d((d))
+    e((e))
+    f((f))
+    g((g))
+    n((n))
+    o((o))
+    p((p))
+    q((q))
+    t((t))
+    u((u))
+    v((v))
+    w((w))
+    x((x))
+    y((y))
+    z((z))
+  end
+
+  subgraph CursorMode:Row
+    direction LR
+    move_to_channel
+
+    insert_line
+    goto_next_row
+    goto_previous_row
+
+    mark_line
+    remove_line
+    swap_with_marked_line
+
+
+  end
+
+  subgraph CursorMode:Single
+    direction LR
+    cursor_select_first_in_row
+    cursor_select_last_in_row
+  end
+
+  c --> move_to_channel(Select Channel)
+  i --> insert_line(Insert a line)
+  j --> goto_next_row(Next line)
+  k --> goto_previous_row(Previous line)
+  m --> mark_line(Mark line to swap)
+  r --> remove_line(Remove selected line)
+  s --> swap_with_marked_line(Swap current line with marked line)
+
+  h --> cursor_select_first_in_row(Select first leaf in active line)
+  l --> cursor_select_last_in_row(Select last leaf in active line)

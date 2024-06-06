@@ -293,25 +293,26 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    open fun apply_undo() {
+    open fun apply_undo(repeat: Int = 1) {
         this.lock_links {
             this.history_cache.lock()
 
+            for (i in 0 until repeat) {
+                val node = this.history_cache.pop()
+                if (node == null) {
+                    this.history_cache.unlock()
+                    return@lock_links
+                }
 
-            val node = this.history_cache.pop()
-            if (node == null) {
-                this.history_cache.unlock()
-                return@lock_links
+                if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
+                    // If the node was an empty 'multi'  node, try the next one
+                    this.history_cache.unlock()
+                    this.apply_undo()
+                    return@lock_links
+                }
+
+                this.apply_history_node(node)
             }
-
-            if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
-                // If the node was an empty 'multi'  node, try the next one
-                this.history_cache.unlock()
-                this.apply_undo()
-                return@lock_links
-            }
-
-            this.apply_history_node(node)
 
             this.history_cache.unlock()
         }
@@ -393,6 +394,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    fun insert(beat_key: BeatKey, position: List<Int>, repeat: Int) {
+        this._remember {
+            for (i in 0 until repeat) {
+                this.insert(beat_key, position)
+            }
+        }
+    }
+
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this._remember {
             val remove_position = position.toMutableList()
@@ -460,10 +469,10 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this._remember {
             this.push_replace_tree(beat_key, position) {
-                super.split_tree(beat_key, position, splits)
+                super.split_tree(beat_key, position, splits, move_event_to_end)
             }
         }
     }
@@ -494,32 +503,112 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                this.remove(beat_key, position)
+                val tree = this.get_tree(beat_key, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
+                this.remove(beat_key, adj_position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }
 
     fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
+                val tree = this.get_global_ctl_tree(type, beat, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
                 this.remove_global_ctl(type, beat, position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }
 
     fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                this.remove_channel_ctl(type, channel, beat, position)
+                val tree = this.get_channel_ctl_tree(type, beat, channel, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
+                this.remove_channel_ctl(type, channel, beat, adj_position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }
 
     fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
+            val adj_position = position.toMutableList()
             for (i in 0 until count) {
+                val tree = this.get_line_ctl_tree(type, beat_key, adj_position)
+
+                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
+                    2
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    1
+                } else {
+                    0
+                }
+
                 this.remove_line_ctl(type, beat_key, position)
+
+                when (directive) {
+                    2 -> {
+                        adj_position.removeLast()
+                    }
+                    1 -> {
+                        adj_position[adj_position.size - 1] -= 1
+                    }
+                }
             }
         }
     }
@@ -1417,6 +1506,12 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 )
             )
             super.set_line_controller_initial_event(type, channel, line_offset, event)
+        }
+    }
+
+    override fun merge_leafs(beat_key_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        this._remember {
+            super.merge_leafs(beat_key_from, position_from, beat_key_to, position_to)
         }
     }
 

@@ -374,11 +374,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_apply(new_cursor)
     }
 
-    override fun apply_undo() {
+    override fun apply_undo(repeat: Int) {
         if (!this.history_cache.isEmpty()) {
             this.cursor_clear()
         }
-        super.apply_undo()
+        super.apply_undo(repeat)
         this.apply_queued_cursor_select()
     }
 
@@ -499,7 +499,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
 
         var has_cursor_action = true
-        if (this.link_lock < 1) { // Don't move cursor to links
+        if (this.link_lock < 2) { // Don't move cursor to links (0: no lock applied, 1: lock applied but still consideried original, 2: lock applied & working with linked)
             this.history_cache.remember {
                 when (token) {
                     HistoryToken.MOVE_LINE -> {
@@ -684,8 +684,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     }
 
                     HistoryToken.REMOVE_BEATS -> {
-                        val x =
-                            max(0, min(args[0] as Int, this.beat_count - (1 + (args[1] as Int))))
+                        val target_x = args[0] as Int
+                        val repeat = args[1] as Int
+                        val x = max(0, min(target_x, this.beat_count - 1 - repeat))
+
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_COLUMN,
                             listOf(x)
@@ -1040,16 +1042,17 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
-    fun split_tree(splits: Int) {
+    fun split_tree(splits: Int, move_event_to_end: Boolean = false) {
         this.split_tree(
             this.cursor.get_beatkey(),
             this.cursor.get_position(),
-            splits
+            splits,
+            move_event_to_end
         )
     }
 
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        super.split_tree(beat_key, position, splits)
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        super.split_tree(beat_key, position, splits, move_event_to_end)
         val new_position = position.toMutableList()
         new_position.add(0)
         this.cursor_select(beat_key, new_position)
@@ -1092,6 +1095,37 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
+    fun insert(count: Int) {
+        this.insert(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position(),
+            count
+        )
+    }
+
+    fun <T> _calculate_new_position_after_remove(working_tree: OpusTree<T>, position: List<Int>, count: Int): Pair<Int, List<Int>> {
+        val cursor_position = position.toMutableList()
+        var real_count = 0
+        for (i in 0 until count) {
+            if (cursor_position.isEmpty()) {
+                break
+            }
+
+            val parent = working_tree.get(cursor_position.subList(0, cursor_position.size - 1))
+            if (parent.size == 2) {
+                parent.set_event(null)
+                cursor_position.removeLast()
+            } else if (cursor_position.last() == parent.size - 1) {
+                parent[cursor_position.last()].detach()
+                cursor_position[cursor_position.size - 1] -= 1
+            } else {
+                parent[cursor_position.last()].detach()
+            }
+            real_count += 1
+        }
+        return Pair(real_count, cursor_position)
+    }
+
     fun remove(count: Int) {
         val cursor = this.cursor
         when (cursor.ctl_level) {
@@ -1099,15 +1133,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val beat_key = cursor.get_beatkey()
                 val position = cursor.get_position().toMutableList()
 
-                val tree = this.get_tree()
-                val cursor_position = position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
+                var working_tree = this.get_tree(beat_key).copy()
 
-                this.remove(beat_key, position, count)
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
+
+                this.remove(beat_key, position, real_count)
 
                 this.cursor_select(
                     beat_key,
@@ -1116,15 +1146,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
 
             CtlLineLevel.Global -> {
-                val tree = this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat, cursor.position)
-                val cursor_position = cursor.position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (cursor.position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
+                val working_tree = this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat).copy()
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                this.remove_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position, count)
+                this.remove_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position, real_count)
 
                 this.cursor_select_ctl_at_global(
                     cursor.ctl_type!!,
@@ -1134,15 +1159,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
 
             CtlLineLevel.Channel -> {
-                val tree = this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-                val cursor_position = cursor.position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (cursor.position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
+                val working_tree = this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                this.remove_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, count)
+                this.remove_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, real_count)
 
                 this.cursor_select_ctl_at_channel(
                     cursor.ctl_type!!,
@@ -1154,17 +1174,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
-                val position = cursor.get_position().toMutableList()
+                val working_tree = this.get_line_ctl_tree(cursor.ctl_type!!, beat_key)
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                val tree = this.get_line_ctl_tree(cursor.ctl_type!!, beat_key, position)
-                val cursor_position = position.toMutableList()
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    cursor_position.removeLast()
-                } else if (position.last() == tree.parent!!.size - 1) {
-                    cursor_position[cursor_position.size - 1] -= 1
-                }
-
-                this.remove_line_ctl(cursor.ctl_type!!, beat_key, position, count)
+                this.remove_line_ctl(cursor.ctl_type!!, beat_key, cursor.position, real_count)
 
                 this.cursor_select_ctl_at_line(
                     cursor.ctl_type!!,
@@ -1217,12 +1230,30 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.insert_beats(this.cursor.beat + 1, count)
     }
 
+    fun insert_beat_at_cursor(count: Int) {
+        this.insert_beats(this.cursor.beat, count)
+    }
+
+
     fun link_beat(beat_key: BeatKey) {
         if (this.cursor.is_linking_range()) {
             val (first, second) = this.cursor.range!!
             this.link_beat_range(beat_key, first, second)
         } else if (this.cursor.selecting_range) {
             this.link_beats(beat_key, this.cursor.get_beatkey())
+        } else {
+            throw InvalidCursorState()
+        }
+    }
+
+    fun merge_into_beat(beat_key: BeatKey) {
+        if (this.cursor.is_linking_range()) {
+            TODO()
+        } else if (this.cursor.selecting_range) {
+            if (this.is_percussion(this.cursor.get_beatkey().channel) != this.is_percussion(beat_key.channel)) {
+                throw MixedLinkException()
+            }
+            this.merge_leafs(this.cursor.get_beatkey(), listOf(), beat_key, listOf())
         } else {
             throw InvalidCursorState()
         }

@@ -8,15 +8,12 @@ import com.qfs.apres.soundfont.InstrumentDirective
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.SoundFont
+import kotlin.math.max
 
 class SampleHandleManager(
     var soundfont: SoundFont,
     var sample_rate: Int,
-    target_buffer_size: Int = AudioTrack.getMinBufferSize(
-        sample_rate,
-        AudioFormat.ENCODING_PCM_FLOAT,
-        AudioFormat.CHANNEL_OUT_STEREO
-    ),
+    target_buffer_size: Int = 0,
     var sample_limit: Int? = null
     ) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
@@ -26,7 +23,18 @@ class SampleHandleManager(
 
     init {
         val core_count = Runtime.getRuntime().availableProcessors()
-        this.buffer_size = target_buffer_size - (target_buffer_size % core_count)
+
+        val adj_target_buffer_size = max(
+            target_buffer_size,
+            AudioTrack.getMinBufferSize(
+                sample_rate,
+                AudioFormat.ENCODING_PCM_FLOAT,
+                AudioFormat.CHANNEL_OUT_STEREO
+            )
+        )
+
+        this.buffer_size = adj_target_buffer_size - (adj_target_buffer_size % core_count)
+
         this.sample_handle_generator = SampleHandleGenerator(
             this.sample_rate,
             this.buffer_size

@@ -15,10 +15,10 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
-import java.lang.Integer.max
-import java.lang.Integer.min
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -42,6 +42,7 @@ open class OpusLayerBase {
     class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) @ $startkey overflows")
     class EventlessTreeException: Exception("Tree requires event for operation")
     class InvalidOverwriteCall: Exception()
+    class InvalidMergeException: Exception()
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -396,6 +397,105 @@ open class OpusLayerBase {
                 working_beat_key.beat += 1
                 working_position = mutableListOf()
                 working_tree = this.get_tree(working_beat_key, working_position)
+                break
+            } else {
+                return null
+            }
+        }
+        // Move left/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(0)
+            working_tree = working_tree[0]
+        }
+        return Pair(working_beat_key, working_position)
+    }
+
+    fun get_global_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat = beat
+        var working_tree = this.get_global_ctl_tree(ctl_type, working_beat, working_position)
+
+        // Move right/up
+        while (true) {
+            if (working_tree.parent != null) {
+                if (working_tree.parent!!.size - 1 > working_position.last()) {
+                    working_position[working_position.size - 1] += 1
+                    working_tree = this.get_global_ctl_tree(ctl_type, working_beat, working_position)
+                    break
+                } else {
+                    working_position.removeLast()
+                    working_tree = working_tree.parent!!
+                }
+            } else if (working_beat < this.beat_count - 1) {
+                working_beat += 1
+                working_position = mutableListOf()
+                working_tree = this.get_global_ctl_tree(ctl_type, working_beat, working_position)
+                break
+            } else {
+                return null
+            }
+        }
+        // Move left/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(0)
+            working_tree = working_tree[0]
+        }
+        return Pair(working_beat, working_position)
+    }
+
+    fun get_channel_ctl_proceding_leaf_position(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat = beat
+        var working_tree = this.get_channel_ctl_tree(ctl_type, channel, working_beat, working_position)
+
+        // Move right/up
+        while (true) {
+            if (working_tree.parent != null) {
+                if (working_tree.parent!!.size - 1 > working_position.last()) {
+                    working_position[working_position.size - 1] += 1
+                    working_tree = this.get_channel_ctl_tree(ctl_type, channel, working_beat, working_position)
+                    break
+                } else {
+                    working_position.removeLast()
+                    working_tree = working_tree.parent!!
+                }
+            } else if (working_beat < this.beat_count - 1) {
+                working_beat += 1
+                working_position = mutableListOf()
+                working_tree = this.get_channel_ctl_tree(ctl_type, channel, working_beat, working_position)
+                break
+            } else {
+                return null
+            }
+        }
+        // Move left/down to leaf
+        while (!working_tree.is_leaf()) {
+            working_position.add(0)
+            working_tree = working_tree[0]
+        }
+        return Pair(working_beat, working_position)
+    }
+
+    fun get_line_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+        var working_position = position.toMutableList()
+        var working_beat_key = beat_key
+        var working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
+
+        // Move right/up
+        while (true) {
+            if (working_tree.parent != null) {
+                if (working_tree.parent!!.size - 1 > working_position.last()) {
+                    working_position[working_position.size - 1] += 1
+                    working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
+                    break
+                } else {
+                    working_position.removeLast()
+                    working_tree = working_tree.parent!!
+                }
+            } else if (working_beat_key.beat < this.beat_count - 1) {
+                working_beat_key.beat += 1
+                working_position = mutableListOf()
+                working_tree = this.get_line_ctl_tree(ctl_type, working_beat_key, working_position)
                 break
             } else {
                 return null
@@ -938,27 +1038,27 @@ open class OpusLayerBase {
         tree.set_event(event)
     }
 
-    open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        var tree: OpusTree<OpusEventSTD> = this.get_tree(beat_key, position)
-        this._split_opus_tree<OpusEventSTD>(tree, splits)
+    open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        val tree: OpusTree<OpusEventSTD> = this.get_tree(beat_key, position)
+        this._split_opus_tree(tree, splits, move_event_to_end)
     }
 
     open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusControlEvent> = this.get_line_ctl_tree(type, beat_key, position)
-        this._split_opus_tree<OpusControlEvent>(tree, splits)
+        this._split_opus_tree(tree, splits)
     }
 
     open fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusControlEvent> = this.get_channel_ctl_tree(type, channel, beat, position)
-        this._split_opus_tree<OpusControlEvent>(tree, splits)
+        this._split_opus_tree(tree, splits)
     }
 
     open fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
         val tree: OpusTree<OpusControlEvent> = this.get_global_ctl_tree(type, beat, position)
-        this._split_opus_tree<OpusControlEvent>(tree, splits)
+        this._split_opus_tree(tree, splits)
     }
 
-    private fun <T> _split_opus_tree(tree: OpusTree<T>, splits: Int) {
+    private fun <T> _split_opus_tree(tree: OpusTree<T>, splits: Int, move_event_to_end: Boolean = false) {
         if (tree.is_event()) {
             var working_tree = tree
             val event = working_tree.get_event()!!
@@ -967,7 +1067,11 @@ open class OpusLayerBase {
             working_tree.set_size(splits)
 
             if (splits > 1) {
-                working_tree = working_tree[0]
+                working_tree = if (move_event_to_end) {
+                    working_tree[working_tree.size - 1]
+                } else {
+                    working_tree[0]
+                }
             }
 
             working_tree.set_event(event)
@@ -1147,6 +1251,39 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
+    open fun merge_leafs(beat_key_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        if (beat_key_from == beat_key_to && position_from == position_to) {
+            throw InvalidMergeException()
+        }
+
+        val from_tree = this.get_tree(beat_key_from, position_from).copy()
+        val to_tree = this.get_tree(beat_key_to, position_to).copy()
+        val mid_tree = to_tree.merge(from_tree.get_set_tree())
+        mid_tree.flatten()
+
+        val new_tree = OpusTree<OpusEventSTD>()
+        if (mid_tree.is_event()) {
+            new_tree.set_event(mid_tree.event!!.first())
+        } else {
+            new_tree.set_size(mid_tree.size)
+            for ((offset, eventset) in mid_tree.divisions) {
+                if (!eventset.is_event()) {
+                    continue
+                }
+
+                if (eventset.event!!.size > 1) {
+                    throw InvalidMergeException()
+                }
+
+                new_tree[offset].set_event(eventset.event!!.first())
+            }
+            new_tree.reduce()
+        }
+
+        this.replace_tree(beat_key_to, position_to, new_tree)
+        this.unset(beat_key_from, position_from)
+    }
+
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         val from_tree = this.get_tree(beatkey_from, position_from).copy()
         this.unset(beatkey_from, position_from)
@@ -1231,9 +1368,7 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channel.set_beat_count(new_count)
         }
-        for ((_, controller) in this.controllers.get_all()) {
-            controller.set_beat_count(new_count)
-        }
+        this.controllers.set_beat_count(new_count)
     }
 
     open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
@@ -1283,7 +1418,7 @@ open class OpusLayerBase {
                             StackItem(
                                 subtree,
                                 current.tree.size,
-                                current.offset + (working_subdiv_size * i),
+                                current.offset + (working_subdiv_size * j),
                                 working_subdiv_size
                             )
                         )
@@ -1525,8 +1660,7 @@ open class OpusLayerBase {
         this.controllers.clear()
     }
 
-    open fun on_project_changed() {
-    }
+    open fun on_project_changed() { }
 
     open fun load(path: String) {
         this.load_json_file(path)
@@ -1610,7 +1744,7 @@ open class OpusLayerBase {
             }
 
             val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
-            channel.lines.forEachIndexed { i: Int, line: OpusTreeJSON<OpusEventSTD> ->
+            for (i in channel.lines.indices) {
                 val new_controller = ActiveControllerJSON(
                     ControlEventType.Volume,
                     OpusVolumeEvent(channel.line_volumes[i]),
@@ -2044,7 +2178,7 @@ open class OpusLayerBase {
             opus.set(i, quantized_tree)
         }
 
-        tempo_line.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent> ->
+        for (tree in tempo_line) {
             tree.reduce()
             tree.clear_singles()
         }
@@ -2077,55 +2211,118 @@ open class OpusLayerBase {
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
         val channel_sizes = mutableListOf<Int>()
-        var percussion_channel: Int? = null
 
         val percussion_map = HashMap<Int, Int>()
 
         // Calculate the number of lines needed per channel
-        for ((_, event_set) in mapped_events) {
-            val tmp_channel_counts = HashMap<Int, Int>()
+        val blocked_ranges = HashMap<Int, MutableList<MutableList<Pair<Float, Float>>>>()
+        val blocked_percussion_ranges = mutableListOf<MutableList<MutableList<Pair<Float, Float>>>>()
+
+        // Map the events so i don't have to calculate overlaps twice
+        val remapped_events = mutableListOf<Pair<List<Pair<Int, Int>>, MutableList<Pair<OpusEventSTD, Int>>>>()
+
+        for ((position, event_set) in mapped_events) {
+            remapped_events.add(Pair(position, mutableListOf()))
             for (event in event_set) {
                 if (!midi_channel_map.contains(event.channel)) {
                     midi_channel_map[event.channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event.channel]!!
 
+                var working_width = 1F
+                var working_start = position[0].first.toFloat()
+                for ((i, size) in position.subList(1, position.size)) {
+                    working_width /= size
+                    working_start += (working_width * i)
+                }
+                val working_end = (working_width * event.duration) + working_start
+
                 if (event.channel == 9) {
                     if (!percussion_map.contains(event.note)) {
-                        percussion_map[event.note] = percussion_map.size
+                        percussion_map[event.note] = blocked_percussion_ranges.size
+                        blocked_percussion_ranges.add(mutableListOf())
                     }
-                    tmp_channel_counts[channel_index] = percussion_map.size
-                } else {
-                    if (!tmp_channel_counts.contains(channel_index)) {
-                        tmp_channel_counts[channel_index] = 1
-                    } else {
-                        tmp_channel_counts[channel_index] = tmp_channel_counts[channel_index]!! + 1
-                    }
-                }
-            }
+                    val index = percussion_map[event.note]!!
 
-            for ((channel, size) in tmp_channel_counts) {
-                while (channel >= channel_sizes.size) {
-                    channel_sizes.add(0)
+                    var insertion_index = 0
+                    for (i in 0 until blocked_percussion_ranges[index].size) {
+                        for ((start, end) in blocked_percussion_ranges[index][i]) {
+                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                insertion_index += 1
+                                break
+                            }
+                        }
+
+                        if (i == insertion_index) { // passed all the checks, no need to keep looping
+                            break
+                        }
+                    }
+
+
+                    if (insertion_index == blocked_percussion_ranges[index].size) {
+                        blocked_percussion_ranges[index].add(mutableListOf())
+                    }
+                    blocked_percussion_ranges[index][insertion_index].add(Pair(working_start, working_end))
+                    remapped_events.last().second.add(Pair(event, insertion_index))
+                } else {
+                    if (!blocked_ranges.containsKey(channel_index)) {
+                        blocked_ranges[channel_index] = mutableListOf()
+                    }
+
+                    var insertion_index = 0
+                    for (i in 0 until blocked_ranges[channel_index]!!.size) {
+                        for ((start, end) in blocked_ranges[channel_index]!![i]) {
+                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                insertion_index += 1
+                                break
+                            }
+                        }
+
+                        if (i == insertion_index) { // passed all the checks, no need to keep looping
+                            break
+                        }
+                    }
+
+                    if (insertion_index == blocked_ranges[channel_index]!!.size) {
+                        blocked_ranges[channel_index]!!.add(mutableListOf())
+                    }
+
+                    blocked_ranges[channel_index]!![insertion_index].add(Pair(working_start, working_end))
+
+                    remapped_events.last().second.add(Pair(event, insertion_index))
                 }
-                channel_sizes[channel] = max(channel_sizes[channel], size)
             }
         }
 
-        // Move Percussion to Last Opus Manager Channel
+        for ((channel, blocks) in blocked_ranges) {
+            while (channel >= channel_sizes.size) {
+                channel_sizes.add(0)
+            }
+            channel_sizes[channel] = blocks.size
+        }
+
         if (midi_channel_map.containsKey(9)) {
-            val channel = midi_channel_map[9]!!
-            var new_channel = channel
+            // Add Percussion to channel_sizes list
+            val adj_channel = midi_channel_map[9]!!
+            while (adj_channel >= channel_sizes.size) {
+                channel_sizes.add(0)
+            }
+
+            for (blocks in blocked_percussion_ranges) {
+                channel_sizes[adj_channel] += blocks.size
+            }
+
+            // Move Percussion to Last Opus Manager Channel
             for ((mchannel, ochannel) in midi_channel_map) {
                 if (mchannel == 9) continue
-                if (ochannel > channel) {
-                    new_channel = max(new_channel, ochannel)
+                if (ochannel > adj_channel) {
                     midi_channel_map[mchannel] = ochannel - 1
                 }
             }
-            val percussion_line_count = channel_sizes.removeAt(channel)
+
+            val percussion_line_count = channel_sizes.removeAt(adj_channel)
+            midi_channel_map[9] = channel_sizes.size
             channel_sizes.add(percussion_line_count)
-            midi_channel_map[9] = new_channel
         } else {
             // If no percussion is found, add an empty percussion track
             midi_channel_map[9] = channel_sizes.size
@@ -2142,35 +2339,46 @@ open class OpusLayerBase {
             this.new_channel(lines = channel_sizes[channel])
         }
 
-        this.insert_beats(0, settree.size)
+        this.set_beat_count(settree.size)
 
         val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEventSTD>>()
-        for ((position, event_set) in mapped_events) {
-            val tmp_channel_counts = HashMap<Int, Int>()
-            val event_list = event_set.toMutableList()
-            event_list.sortWith(compareBy { 127 - it.note })
-            for (event in event_list) {
-                val channel_index = midi_channel_map[event.channel]!!
-                if (event.channel == 9) {
-                    percussion_channel = midi_channel_map[9]
-                }
 
-                val line_offset = if (event.channel == 9) {
-                    percussion_map[event.note]!!
+        for ((position, event_set) in remapped_events) {
+            val event_list = event_set.toMutableList()
+            event_list.sortWith(compareBy { 127 - it.first.note })
+            for ((event, line_offset) in event_list) {
+                val channel_index = midi_channel_map[event.channel]!!
+
+
+                // line_offset needs to be recalculated HERE for percussion as the percussion block map will change size during init
+                val adj_line_offset = if (event.channel == 9) {
+                    var re_adj_line_offset = 0
+                    val coarse_index = percussion_map[event.note]!!
+                    for (i in 0 until coarse_index) {
+                        re_adj_line_offset += blocked_percussion_ranges[coarse_index].size
+                    }
+
+                    val new_offset = line_offset + re_adj_line_offset
+                    // While we're here, set the percussions' instruments
+                    this.set_percussion_instrument(new_offset, event.note)
+                    new_offset
                 } else {
-                    tmp_channel_counts[channel_index] ?: 0
+                    line_offset
                 }
-                tmp_channel_counts[channel_index] = line_offset + 1
 
                 val working_position = mutableListOf<Int>()
                 var working_beatkey: BeatKey? = null
 
                 position.forEachIndexed { i: Int, (x, size): Pair<Int, Int> ->
                     if (i == 0) {
-                        working_beatkey = BeatKey(channel_index, line_offset, x)
+                        working_beatkey = BeatKey(channel_index, adj_line_offset, x)
                     } else {
-                        if (this.get_tree(working_beatkey!!, working_position).size != size) {
-                            this.split_tree(working_beatkey!!, working_position, size)
+                        try {
+                            if (this.get_tree(working_beatkey!!, working_position).size != size) {
+                                this.split_tree(working_beatkey!!, working_position, size)
+                            }
+                        } catch (e: Exception) {
+                            throw e
                         }
                         working_position.add(x)
                     }
@@ -2221,12 +2429,6 @@ open class OpusLayerBase {
                         }
                     }
                 }
-            }
-        }
-
-        if (percussion_channel != null) {
-            for ((note, index) in percussion_map) {
-                this.set_percussion_instrument(index, note)
             }
         }
 
@@ -2304,8 +2506,6 @@ open class OpusLayerBase {
     fun get_line_volume(channel: Int, line_offset: Int): Int {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
-
-
 
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
@@ -2740,7 +2940,7 @@ open class OpusLayerBase {
                 this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
                 this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
 
-                for ((type, controller) in channel.lines[line_offset].controllers.controllers) {
+                for ((type, _) in channel.lines[line_offset].controllers.controllers) {
                     this._cached_abs_line_map_map.add(
                         Triple(
                             this._cached_std_line_map[keypair]!!,
@@ -3168,5 +3368,4 @@ open class OpusLayerBase {
 
         return output
     }
-
 }

@@ -26,6 +26,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     var project_change_flagged = false
     var active_context_menu: ContextMenuView? = null
+    var keyboard_input_interface: KeyboardInputInterface? = null
 
     override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentMainBinding {
         return FragmentMainBinding.inflate(inflater, container, false)
@@ -37,6 +38,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val main = this.get_main()
         main.setup_project_config_drawer()
         val opus_manager = main.get_opus_manager()
+        this.keyboard_input_interface = KeyboardInputInterface(opus_manager)
         val drawer = main.findViewById<DrawerLayout>(R.id.drawer_layout)
         if (!drawer.isDrawerOpen(GravityCompat.START)) {
             return
@@ -49,6 +51,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
        if (channel_adapter.itemCount == 0) {
            channel_adapter.setup()
        }
+
     }
 
     override fun onStart() {
@@ -69,7 +72,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             (channel_recycler.adapter as ChannelOptionAdapter).clear()
             channel_recycler.adapter = null
         }
-
 
         super.onStop()
     }
@@ -202,6 +204,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
             main.runOnUiThread {
@@ -225,12 +228,15 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
             val main = this.get_main()
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
             main.loading_reticle_show(getString(R.string.reticle_msg_import_midi))
+
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
                 this@FragmentEditor.clear_context_menu()
             }
+
             thread {
                 val path = bundle?.getString("URI")
                 if (path != null) {
@@ -244,17 +250,21 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         main.feedback_msg(getString(R.string.feedback_midi_fail))
                     }
                 }
+
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
                 }
+
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
                 this.project_change_flagged = false
             }
+
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
             main.runOnUiThread {
@@ -284,6 +294,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         setFragmentResultListener(IntentFragmentToken.New.name) { _, _: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
+
             val main = this.get_main()
             main.loading_reticle_show(getString(R.string.reticle_msg_new))
             main.runOnUiThread {

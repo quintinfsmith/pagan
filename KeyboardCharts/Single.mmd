@@ -1,0 +1,124 @@
+flowchart LR
+    subgraph Input:Single
+        c_single((c))
+        h_single((h))
+        i_single((i))
+        j_single((j))
+        k_single((k))
+        l_single((l))
+        o_single((o))
+        p_single((p))
+        r_single((r))
+        s_single((s))
+        u_single((u))
+
+        a_single((a))
+        b_single((b))
+        d_single((d))
+        e_single((e))
+        f_single((f))
+        g_single((g))
+        m_single((m))
+        n_single((n))
+        q_single((q))
+        t_single((t))
+        v_single((v))
+        w_single((w))
+        x_single((x))
+        y_single((y))
+        z_single((z))
+
+    end
+
+    subgraph CursorMode:Single
+        goto_previous_leaf(Select Previous Leaf)
+        insert_leaf(Insert Leaf)
+        goto_leaf_in_next_row(Jump down a line)
+        goto_leaf_in_previous_row(Jump up a line)
+        goto_next_leaf(Select Next Leaf)
+        set_leaf_octave(Set event octave)
+        set_leaf_offset(Set event offset)
+        remove_leaf(Remove leaf)
+        split_leaf(Split leaf)
+        unset_leaf(Unset event)
+    end
+
+    subgraph CursorMode:Row
+        move_to_channel(Select Channel)
+    end
+
+    h_single --> goto_previous_leaf(Select Previous Leaf)
+    i_single --> insert_leaf(Insert Leaf)
+    j_single --> goto_leaf_in_next_row(Jump down a line)
+    k_single --> goto_leaf_in_previous_row(Jump up a line)
+    l_single --> goto_next_leaf(Select Next Leaf)
+    o_single --> set_leaf_octave(Set event octave)
+    p_single --> set_leaf_offset(Set event offset)
+    r_single --> remove_leaf(Remove leaf)
+    s_single --> split_leaf(Split leaf)
+    u_single --> unset_leaf(Unset event)
+
+    c_single --> move_to_channel(Select Channel)
+
+  subgraph Input:Row
+    h_row((h))
+    l_row((l))
+
+    c_row((c))
+    i_row((i))
+    j_row((j))
+    k_row((k))
+    m_row((m))
+    r_row((r))
+    s_row((s))
+
+    a_row((a))
+    b_row((b))
+    d_row((d))
+    e_row((e))
+    f_row((f))
+    g_row((g))
+    n_row((n))
+    o_row((o))
+    p_row((p))
+    q_row((q))
+    t_row((t))
+    u_row((u))
+    v_row((v))
+    w_row((w))
+    x_row((x))
+    y_row((y))
+    z_row((z))
+  end
+
+  subgraph CursorMode:Row
+    direction LR
+    move_to_channel
+
+    insert_line
+    goto_next_row
+    goto_previous_row
+
+    mark_line
+    remove_line
+    swap_with_marked_line
+
+
+  end
+
+  subgraph CursorMode:Single
+    direction LR
+    cursor_select_first_in_row
+    cursor_select_last_in_row
+  end
+
+  c_row --> move_to_channel(Select Channel)
+  i_row --> insert_line(Insert a line)
+  j_row --> goto_next_row(Next line)
+  k_row --> goto_previous_row(Previous line)
+  m_row --> mark_line(Mark line to swap)
+  r_row --> remove_line(Remove selected line)
+  s_row --> swap_with_marked_line(Swap current line with marked line)
+
+  h_row --> cursor_select_first_in_row(Select first leaf in active line)
+  l_row --> cursor_select_last_in_row(Select last leaf in active line)

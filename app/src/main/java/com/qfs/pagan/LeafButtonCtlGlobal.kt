@@ -72,6 +72,7 @@ class LeafButtonCtlGlobal(
                     }
 
                     PaganConfiguration.LinkMode.LINK -> { /* Unreachable */ }
+                    PaganConfiguration.LinkMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {
                 when (e) {

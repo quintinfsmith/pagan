@@ -3,21 +3,11 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
-import com.qfs.pagan.opusmanager.ActiveControlSet
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.LoadedJSONData
-import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusEvent
-import com.qfs.pagan.opusmanager.OpusEventSTD
-import com.qfs.pagan.opusmanager.OpusLayerCursor
-import com.qfs.pagan.opusmanager.OpusLine
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.opusmanager.*
+import com.qfs.pagan.structure.*
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.math.pow
 
 class OpusLayerInterface : OpusLayerCursor() {
     class HidingNonEmptyPercussionException: Exception()
@@ -359,8 +349,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int) {
-        super.split_tree(beat_key, position, splits)
+    override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        super.split_tree(beat_key, position, splits, move_event_to_end)
 
         if (this.get_activity() == null) {
             return
@@ -592,7 +582,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     this.runOnUiThread { _: MainActivity ->
                         val controllers = output.controllers.get_all()
                         var control_line_count = 0
-                        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                        for ((type, _) in controllers) {
                             if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                                 control_line_count += 1
                             }
@@ -604,7 +594,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 UI_LOCK_PARTIAL -> {
                     val controllers = output.controllers.get_all()
                     var control_line_count = 0
-                    controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                    for ((type, _) in controllers) {
                         if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                             control_line_count += 1
                         }
@@ -727,7 +717,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 editor_table.remove_column(beat_index, true)
             }
             else -> {
-                this.runOnUiThread { main ->
+                this.runOnUiThread {
                     editor_table.remove_column(beat_index)
                 }
             }
@@ -863,7 +853,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table()
         editor_table?.clear()
-        this.runOnUiThread { main: MainActivity ->
+        this.runOnUiThread {
             editor_table?.precise_scroll(0, 0, 0, 0)
         }
         super.clear()
@@ -890,14 +880,14 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.make_percussion_visible()
         }
 
-        for ((type, controller) in this.channels[channel].controllers.get_all()) {
+        for ((type, _) in this.channels[channel].controllers.get_all()) {
             if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
                 removed_row_count += 1
             }
         }
 
         for (line in this.channels[channel].lines) {
-            for ((type, controller) in line.controllers.get_all()) {
+            for ((type, _) in line.controllers.get_all()) {
                 if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                     removed_row_count += 1
                 }
@@ -984,8 +974,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun apply_undo() {
-        super.apply_undo()
+    override fun apply_undo(repeat: Int) {
+        super.apply_undo(repeat)
         this.recache_line_maps()
         this.get_editor_table()?.apply_queued_cell_changes()
     }
@@ -1006,6 +996,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         super.set_duration(beat_key, position, duration)
+
 
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
@@ -1660,4 +1651,21 @@ class OpusLayerInterface : OpusLayerCursor() {
             it.refresh_context_menu()
         }
     }
+
+    /*
+        Need to know when setting the FeedBackPlaybackDevice sample rate, since we want it as low as is possible without killing higher notes
+    */
+    fun get_maximum_frequency(): Float {
+        val base_frequency = 27.5F
+        val transpose = this.transpose
+        var maximum_initial_frequency = 0f
+        for ((numerator, denominator) in this.tuning_map) {
+            maximum_initial_frequency = numerator.toFloat() / denominator.toFloat()
+        }
+        val radix = this.tuning_map.size
+        val max_octave = 7
+
+        return base_frequency * 2F.pow((transpose.toFloat() / radix.toFloat()) + (maximum_initial_frequency * max_octave.toFloat()))
+    }
+
 }

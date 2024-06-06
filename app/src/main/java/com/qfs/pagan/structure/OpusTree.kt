@@ -2,7 +2,6 @@ package com.qfs.pagan.structure
 
 import com.qfs.pagan.opusmanager.OpusTreeJSON
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.round
 
 class OpusTree<T> {
@@ -19,7 +18,7 @@ class OpusTree<T> {
                     if (child_json == null) {
                         return@forEachIndexed
                     }
-                    new_tree.set(i, OpusTree.from_json(child_json!!))
+                    new_tree.set(i, OpusTree.from_json(child_json))
                 }
             }
             return new_tree
@@ -81,6 +80,7 @@ class OpusTree<T> {
             val new_index = current_index * factor
             new_divisions[new_index.toInt()] = value as OpusTree<T>
         }
+
         this.divisions = new_divisions
         this.size = new_size
     }
@@ -124,8 +124,7 @@ class OpusTree<T> {
 
             // move the indices into their new lists
             for ((i, subtree) in element.indices) {
-                val split_index = min(i / current_size, current_size)
-                //val split_index = i / current_size
+                val split_index = i / current_size
                 split_indices[split_index].add(Pair(i % current_size, subtree.copy()))
             }
 
@@ -153,9 +152,11 @@ class OpusTree<T> {
                         minimum_divs.add(most_reduced)
                     }
                 }
-                val sorted_minimum_divs = minimum_divs.toMutableList()
-                sorted_minimum_divs.sort()
-                if (sorted_minimum_divs.isNotEmpty()) {
+
+                if (minimum_divs.isNotEmpty()) {
+                    val sorted_minimum_divs = minimum_divs.toMutableList()
+                    sorted_minimum_divs.sort()
+
                     stack.add(
                         ReducerTuple(
                             sorted_minimum_divs[0],
@@ -172,10 +173,14 @@ class OpusTree<T> {
                 }
             }
         }
-
-        this.set_size(place_holder.size)
-        for ((key, value) in place_holder.divisions) {
-            this.divisions[key] = value
+        place_holder.clear_singles()
+        if (place_holder.is_event()) {
+            this.set_event(place_holder.get_event())
+        } else {
+            this.set_size(place_holder.size)
+            for ((key, value) in place_holder.divisions) {
+                this.divisions[key] = value
+            }
         }
     }
 
@@ -240,7 +245,7 @@ class OpusTree<T> {
     }
 
     fun flatten() {
-        if (this.is_flat()) {
+        if (this.is_event() || this.is_flat()) {
             return
         }
 
@@ -305,7 +310,7 @@ class OpusTree<T> {
         tree.parent = this
     }
 
-    fun set_event(event: T) {
+    fun set_event(event: T?) {
         this.event = event
         this.size = 0
         this.divisions.clear()
@@ -336,6 +341,10 @@ class OpusTree<T> {
             return
         }
 
+        for (child in this.divisions.values) {
+            child.clear_singles()
+        }
+
         if (this.size == 1 && this.divisions.size == 1) {
             val child = this.divisions.remove(0)!!
             if (!child.is_event()) {
@@ -345,16 +354,10 @@ class OpusTree<T> {
                     grandchild.parent = this
                 }
             } else {
-                this.event = child.get_event()
-                this.divisions.clear()
-                this.size = 0
-                return
+                this.set_event(child.get_event())
             }
         }
 
-        for (child in this.divisions.values) {
-            child.clear_singles()
-        }
     }
 
     fun replace_with(new_node: OpusTree<T>) {
@@ -526,31 +529,31 @@ class OpusTree<T> {
 
     fun get_set_tree(): OpusTree<Set<T>> {
         val output = OpusTree<Set<T>>()
-        if (this.is_event()) {
-            output.event = setOf(this.get_event()!!)
-        } else if (!this.is_leaf()) {
+        if (!this.is_event()) {
             output.set_size(this.size)
             for ((index, tree) in this.divisions) {
                 output.set(index, tree.get_set_tree())
             }
+        } else {
+            output.event = setOf(this.get_event()!!)
         }
 
         return output
     }
 
     fun merge(tree: OpusTree<Set<T>>): OpusTree<Set<T>> {
-        if (tree.is_leaf() && ! tree.is_event()) {
+        if ((tree.is_leaf() && ! tree.is_event()) || tree.is_eventless()) {
             return this.get_set_tree()
         }
-        if (this.is_leaf() && ! this.is_event()) {
+        if ((this.is_leaf() && ! this.is_event()) || this.is_eventless()) {
             return tree
         }
 
         return if (!this.is_event()) {
-            if (!tree.is_leaf()) {
-                this.__merge_structural(tree)
-            } else {
+            if (tree.is_leaf()) {
                 this.__merge_event_into_structural(tree)
+            } else {
+                this.__merge_structural(tree)
             }
         } else if (!tree.is_leaf()) {
             this.__merge_structural_into_event(tree)
@@ -614,10 +617,10 @@ class OpusTree<T> {
         val this_multi = this.get_set_tree()
         other.flatten()
         this_multi.flatten()
-        val new_size = lowest_common_multiple(listOf(max(1, this_multi.size), max(1, other.size)))
 
-        val factor = new_size / max(1, other.size)
-        this_multi.resize(new_size)
+        val factor = this_multi.size
+        this_multi.resize(this_multi.size * other.size)
+
         for ((index, subtree) in other.divisions) {
             val new_index = index * factor
             val subtree_into = this_multi[new_index]
@@ -632,7 +635,6 @@ class OpusTree<T> {
                 for (elm in subtree.get_event()!!) {
                     eventset.add(elm)
                 }
-
                 subtree_into.set_event(eventset)
             }
         }

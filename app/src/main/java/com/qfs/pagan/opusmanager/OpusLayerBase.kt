@@ -1392,7 +1392,7 @@ open class OpusLayerBase {
 
         val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
 
-        val first_tempo_event = this.get_current_global_controller_event(ControlEventType.Tempo, start_beat)
+        val first_tempo_event = this.get_current_global_controller_event(ControlEventType.Tempo, start_beat, listOf()) as OpusTempoEvent
         midi.insert_event(
             0,
             0,
@@ -1401,7 +1401,7 @@ open class OpusLayerBase {
 
         for (i in start_beat until end_beat) {
             val tempo_tree = tempo_controller.get_tree(i)
-            val stack: MutableList<StackItem<OpusControlEvent>> = mutableListOf(StackItem(tempo_tree, 1, i * midi.ppqn, midi.ppqn))
+            val stack: MutableList<StackItem<OpusControlEvent>> = mutableListOf(StackItem(tempo_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn))
             while (stack.isNotEmpty()) {
                 val current = stack.removeFirst()
                 if (current.tree.is_event()) {

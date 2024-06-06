@@ -2229,19 +2229,27 @@ open class OpusLayerBase {
 
         for ((position, event_set) in mapped_events) {
             remapped_events.add(Pair(position, mutableListOf()))
+
+            var working_denominator = 1
+            var working_numerator = 0
+            val initial_position = position[0].first
+
+            for ((i, size) in position.subList(1, position.size)) {
+                working_denominator *= size
+                working_numerator *= size
+                working_numerator += i
+            }
+
+            val working_start = initial_position.toFloat() + (working_numerator.toFloat() / working_denominator.toFloat())
+
             for (event in event_set) {
                 if (!midi_channel_map.contains(event.channel)) {
                     midi_channel_map[event.channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event.channel]!!
 
-                var working_width = 1F
-                var working_start = position[0].first.toFloat()
-                for ((i, size) in position.subList(1, position.size)) {
-                    working_width /= size
-                    working_start += (working_width * i)
-                }
-                val working_end = (working_width * event.duration) + working_start
+
+                val working_end = initial_position.toFloat() + ((working_numerator + event.duration).toFloat() / working_denominator.toFloat())
 
                 if (event.channel == 9) {
                     if (!percussion_map.contains(event.note)) {

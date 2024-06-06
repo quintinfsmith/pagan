@@ -824,7 +824,6 @@ class OpusLayerBaseUnitTest {
         for ((position, events) in partial_midi.get_all_events_grouped()) {
             event_map_b[position] = events
         }
-        println("${event_map_b}")
         assertEquals(
             2,
             event_map_b.size
@@ -835,7 +834,6 @@ class OpusLayerBaseUnitTest {
             event_map_b[0]!!.size
         )
 
-        println("${event_map_b[120]}")
         assertEquals(
             4, // SongPositionPointer, SetTempo, NoteOff, NoteOff
             event_map[120]!!.size
@@ -2284,7 +2282,5 @@ class OpusLayerBaseUnitTest {
         }
 
     }
-
-
 
 }

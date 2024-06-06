@@ -1,0 +1,2 @@
+Fixed tempo misalignment when playing through midi device
+Fixed broken input for radix in tuning map dialog

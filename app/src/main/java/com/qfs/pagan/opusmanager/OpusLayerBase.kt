@@ -1392,13 +1392,7 @@ open class OpusLayerBase {
 
         val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
 
-        val first_tempo_event = this.get_current_global_controller_event(ControlEventType.Tempo, start_beat, listOf()) as OpusTempoEvent
-        midi.insert_event(
-            0,
-            0,
-            SetTempo.from_bpm((first_tempo_event.value * 1000f).roundToInt() / 1000F)
-        )
-
+        var skip_initial_tempo_set = false
         for (i in start_beat until end_beat) {
             val tempo_tree = tempo_controller.get_tree(i)
             val stack: MutableList<StackItem<OpusControlEvent>> = mutableListOf(StackItem(tempo_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn))
@@ -1406,6 +1400,9 @@ open class OpusLayerBase {
                 val current = stack.removeFirst()
                 if (current.tree.is_event()) {
                     val event = current.tree.get_event()!!
+                    if (current.offset == 0) {
+                        skip_initial_tempo_set = true
+                    }
                     midi.insert_event(
                         0,
                         current.offset,
@@ -1425,6 +1422,15 @@ open class OpusLayerBase {
                     }
                 }
             }
+        }
+
+        if (!skip_initial_tempo_set) {
+            val first_tempo_event = this.get_current_global_controller_event(ControlEventType.Tempo, start_beat, listOf()) as OpusTempoEvent
+            midi.insert_event(
+                0,
+                0,
+                SetTempo.from_bpm((first_tempo_event.value * 1000f).roundToInt() / 1000F)
+            )
         }
 
         this.channels.forEachIndexed outer@{ c: Int, channel: OpusChannel ->

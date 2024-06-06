@@ -2238,6 +2238,41 @@ class OpusLayerBaseUnitTest {
         assertNull(
             manager.get_preceding_event(BeatKey(0,0,0), listOf(0))
         )
+    }
+
+    @Test
+    fun test_overwrite_row() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(24)
+        val event = OpusEventSTD(5, 0)
+        manager.set_event(BeatKey(0,0,12), listOf(), event)
+
+        manager.overwrite_row(0, 0, BeatKey(0,0,12))
+
+        for (i in 0 until 12) {
+            assertNotEquals(
+                manager.get_tree(BeatKey(0,0,12)),
+                manager.get_tree(BeatKey(0,0,i))
+            )
+        }
+        for (i in 13 until 24) {
+            assertEquals(
+                manager.get_tree(BeatKey(0,0,12)),
+                manager.get_tree(BeatKey(0,0,i))
+            )
+        }
+
+        val event_b = OpusEventSTD(6,0)
+        manager.set_event(BeatKey(0,0,0), listOf(), event_b)
+        manager.overwrite_row(0, 0, BeatKey(0,0,0))
+
+        for (i in 1 until 24) {
+            assertEquals(
+                manager.get_tree(BeatKey(0,0,0)),
+                manager.get_tree(BeatKey(0,0,i))
+            )
+        }
 
         manager.new_line(0)
         assertThrows(OpusManager.InvalidOverwriteCall::class.java) {

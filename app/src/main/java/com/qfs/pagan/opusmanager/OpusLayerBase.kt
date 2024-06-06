@@ -1789,7 +1789,7 @@ open class OpusLayerBase {
         this.new_channel()
         this.insert_beats(0, 4)
         this.set_project_name(this.project_name)
-        this.new_global_controller(ControlEventType.Tempo)
+        this._setup_default_controllers()
         this.on_project_changed()
     }
 
@@ -2845,73 +2845,6 @@ open class OpusLayerBase {
         }
     }
 
-    private fun get_press_breakdown(): List<Pair<Double, Int>> {
-        val tick_map = mutableListOf<Pair<Double, Boolean>>()
-        for (channel in this.channels) {
-            for (line in channel.lines) {
-                line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<OpusEventSTD> ->
-                    beat_tree.traverse { tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
-                        if (event == null) {
-                            return@traverse
-                        }
-
-                        var tmp_tree = tree
-                        val position = mutableListOf<Int>()
-                        while (tmp_tree != beat_tree) {
-                            position.add(0, tmp_tree.get_index()!!)
-                            tmp_tree = tmp_tree.get_parent()!!
-                        }
-
-                        var position_scalar: Double = 0.0
-                        tmp_tree = beat_tree
-                        var running_size = 1
-
-                        for (p in position) {
-                            running_size *= tmp_tree.size
-                            position_scalar += p.toDouble() / running_size.toDouble()
-                            tmp_tree = tmp_tree[p]
-                        }
-
-                        tick_map.add(
-                            Pair(
-                                position_scalar + beat_index,
-                                true
-                            )
-                        )
-
-                        tick_map.add(
-                            Pair(
-                                position_scalar + beat_index + (event.duration.toDouble() / running_size.toDouble()),
-                                false
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        tick_map.sortBy { it.first }
-        val breakdown = mutableListOf<Pair<Double, Int>>()
-
-        var currently_on = 0
-        var last_position = 0.0
-        for ((position, state) in tick_map) {
-            if (position != last_position) {
-                breakdown.add(Pair((position - last_position) / (this.beat_count + 1).toDouble(), currently_on))
-            }
-
-            if (state) {
-                currently_on += 1
-            } else {
-                currently_on -= 1
-            }
-
-            last_position = position
-        }
-
-        return breakdown
-    }
-
     fun has_percussion(): Boolean {
         val channel = this.channels[this.channels.size - 1]
         return !channel.is_empty()
@@ -3049,9 +2982,7 @@ open class OpusLayerBase {
         val original_tree = this.get_tree(beat_key)
         for (x in beat_key.beat + 1 until this.beat_count) {
             working_key.beat = x
-            if (working_key != beat_key) {
-                this.replace_tree(working_key, null, original_tree)
-            }
+            this.replace_tree(working_key, null, original_tree)
         }
     }
 
@@ -3270,102 +3201,170 @@ open class OpusLayerBase {
     }
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    /*
-        Reduce the number of beats in a project without losing any information.
-     */
-    fun squish(factor: Int) {
-        for (channel in this.channels) {
-            channel.squish(factor)
-        }
+    // /*
+    //     Reduce the number of beats in a project without losing any information.
+    //  */
+    // fun squish(factor: Int) {
+    //     for (channel in this.channels) {
+    //         channel.squish(factor)
+    //     }
 
-        this.beat_count = ceil(this.beat_count.toDouble() / factor.toDouble()).toInt()
-        this.tempo /= factor
-    }
+    //     this.beat_count = ceil(this.beat_count.toDouble() / factor.toDouble()).toInt()
+    //     this.tempo /= factor
+    // }
 
-    fun get_maximum_simultaneous_notes(): Int {
-        return (this.get_press_breakdown().sortedBy { it.second }).last().second
-    }
+    // fun get_maximum_simultaneous_notes(): Int {
+    //     return (this.get_press_breakdown().sortedBy { it.second }).last().second
+    // }
 
-    /*
-        Get the most usually active number of notes
-     */
-    fun get_mode_simultaneous_notes(): Pair<Int, Double> {
-        val merged_counts = HashMap<Int, Double>()
-        for ((percentage, press_count) in this.get_press_breakdown()) {
-            merged_counts[press_count] = merged_counts.getOrDefault(press_count, 0.0) + percentage
-        }
-        var mode_press_count = 0
-        var mode_percentage = 0.0
-        for ((press_count, percentage) in merged_counts) {
-            if ((percentage == mode_percentage && mode_press_count < press_count) || percentage > mode_percentage) {
-                mode_press_count = press_count
-                mode_percentage = percentage
-            }
-        }
-        return Pair(mode_press_count, mode_percentage)
-    }
+    // /*
+    //     Get the most usually active number of notes
+    //  */
+    // fun get_mode_simultaneous_notes(): Pair<Int, Double> {
+    //     val merged_counts = HashMap<Int, Double>()
+    //     for ((percentage, press_count) in this.get_press_breakdown()) {
+    //         merged_counts[press_count] = merged_counts.getOrDefault(press_count, 0.0) + percentage
+    //     }
+    //     var mode_press_count = 0
+    //     var mode_percentage = 0.0
+    //     for ((press_count, percentage) in merged_counts) {
+    //         if ((percentage == mode_percentage && mode_press_count < press_count) || percentage > mode_percentage) {
+    //             mode_press_count = press_count
+    //             mode_percentage = percentage
+    //         }
+    //     }
+    //     return Pair(mode_press_count, mode_percentage)
+    // }
 
-    fun find_like_range(top_left: BeatKey, bottom_right: BeatKey): List<Pair<BeatKey, BeatKey>> {
-        val match_box = this.get_abs_difference(top_left, bottom_right)
+    // fun find_like_range(top_left: BeatKey, bottom_right: BeatKey): List<Pair<BeatKey, BeatKey>> {
+    //     val match_box = this.get_abs_difference(top_left, bottom_right)
 
-        val matched_keys = this.get_beatkeys_in_range(top_left, bottom_right).toMutableList()
-        val match_values = mutableListOf<OpusTree<OpusEventSTD>>()
-        for (key in matched_keys) {
-            match_values.add(this.get_tree(key))
-        }
+    //     val matched_keys = this.get_beatkeys_in_range(top_left, bottom_right).toMutableList()
+    //     val match_values = mutableListOf<OpusTree<OpusEventSTD>>()
+    //     for (key in matched_keys) {
+    //         match_values.add(this.get_tree(key))
+    //     }
 
-        val possible_corners = mutableListOf<BeatKey>()
-        val top_corner_value = this.get_tree(top_left)
-        // First get keys that *could* be matches of the top corner
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
-                for (k in line.beats.indices) {
-                    val working_key = BeatKey(i, j, k)
-                    if (working_key in matched_keys) {
-                        continue
-                    }
+    //     val possible_corners = mutableListOf<BeatKey>()
+    //     val top_corner_value = this.get_tree(top_left)
+    //     // First get keys that *could* be matches of the top corner
+    //     this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+    //         channel.lines.forEachIndexed { j: Int, line: OpusLine ->
+    //             for (k in line.beats.indices) {
+    //                 val working_key = BeatKey(i, j, k)
+    //                 if (working_key in matched_keys) {
+    //                     continue
+    //                 }
 
-                    if (top_corner_value == this.get_tree(working_key)) {
-                        try {
-                            this.get_std_offset(this.get_abs_offset(i, j) + match_box.first)
-                            if (k + match_box.second < this.beat_count) {
-                                possible_corners.add(working_key)
-                            }
-                        } catch (e: java.lang.IndexOutOfBoundsException) {
-                            continue
-                        }
-                    }
-                }
-            }
-        }
+    //                 if (top_corner_value == this.get_tree(working_key)) {
+    //                     try {
+    //                         this.get_std_offset(this.get_abs_offset(i, j) + match_box.first)
+    //                         if (k + match_box.second < this.beat_count) {
+    //                             possible_corners.add(working_key)
+    //                         }
+    //                     } catch (e: java.lang.IndexOutOfBoundsException) {
+    //                         continue
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        val output = mutableListOf<Pair<BeatKey, BeatKey>>()
+    //     val output = mutableListOf<Pair<BeatKey, BeatKey>>()
 
-        for (working_top_corner in possible_corners) {
-            val bottom_corner_pair = this.get_std_offset(this.get_abs_offset(working_top_corner.channel, working_top_corner.line_offset) + match_box.first)
-            val working_bottom_corner = BeatKey(
-                bottom_corner_pair.first,
-                bottom_corner_pair.second,
-                working_top_corner.beat + match_box.second
-            )
-            val working_keys = this.get_beatkeys_in_range(working_top_corner, working_bottom_corner)
-            var is_match = true
+    //     for (working_top_corner in possible_corners) {
+    //         val bottom_corner_pair = this.get_std_offset(this.get_abs_offset(working_top_corner.channel, working_top_corner.line_offset) + match_box.first)
+    //         val working_bottom_corner = BeatKey(
+    //             bottom_corner_pair.first,
+    //             bottom_corner_pair.second,
+    //             working_top_corner.beat + match_box.second
+    //         )
+    //         val working_keys = this.get_beatkeys_in_range(working_top_corner, working_bottom_corner)
+    //         var is_match = true
 
-            working_keys.forEachIndexed { i: Int, key: BeatKey ->
-                is_match = (key !in matched_keys) && (this.get_tree(key) == match_values[i])
-                if (!is_match) {
-                    return@forEachIndexed
-                }
-            }
+    //         working_keys.forEachIndexed { i: Int, key: BeatKey ->
+    //             is_match = (key !in matched_keys) && (this.get_tree(key) == match_values[i])
+    //             if (!is_match) {
+    //                 return@forEachIndexed
+    //             }
+    //         }
 
-            if (is_match) {
-                for (key in working_keys) {
-                    matched_keys.add(key)
-                }
-                output.add(Pair(working_top_corner, working_bottom_corner))
-            }
-        }
+    //         if (is_match) {
+    //             for (key in working_keys) {
+    //                 matched_keys.add(key)
+    //             }
+    //             output.add(Pair(working_top_corner, working_bottom_corner))
+    //         }
+    //     }
 
-        return output
-    }
+    //     return output
+    // }
+    //
+    // private fun get_press_breakdown(): List<Pair<Double, Int>> {
+    //     val tick_map = mutableListOf<Pair<Double, Boolean>>()
+    //     for (channel in this.channels) {
+    //         for (line in channel.lines) {
+    //             line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<OpusEventSTD> ->
+    //                 beat_tree.traverse { tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+    //                     if (event == null) {
+    //                         return@traverse
+    //                     }
+
+    //                     var tmp_tree = tree
+    //                     val position = mutableListOf<Int>()
+    //                     while (tmp_tree != beat_tree) {
+    //                         position.add(0, tmp_tree.get_index()!!)
+    //                         tmp_tree = tmp_tree.get_parent()!!
+    //                     }
+
+    //                     var position_scalar: Double = 0.0
+    //                     tmp_tree = beat_tree
+    //                     var running_size = 1
+
+    //                     for (p in position) {
+    //                         running_size *= tmp_tree.size
+    //                         position_scalar += p.toDouble() / running_size.toDouble()
+    //                         tmp_tree = tmp_tree[p]
+    //                     }
+
+    //                     tick_map.add(
+    //                         Pair(
+    //                             position_scalar + beat_index,
+    //                             true
+    //                         )
+    //                     )
+
+    //                     tick_map.add(
+    //                         Pair(
+    //                             position_scalar + beat_index + (event.duration.toDouble() / running_size.toDouble()),
+    //                             false
+    //                         )
+    //                     )
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     tick_map.sortBy { it.first }
+    //     val breakdown = mutableListOf<Pair<Double, Int>>()
+
+    //     var currently_on = 0
+    //     var last_position = 0.0
+    //     for ((position, state) in tick_map) {
+    //         if (position != last_position) {
+    //             breakdown.add(Pair((position - last_position) / (this.beat_count + 1).toDouble(), currently_on))
+    //         }
+
+    //         if (state) {
+    //             currently_on += 1
+    //         } else {
+    //             currently_on -= 1
+    //         }
+
+    //         last_position = position
+    //     }
+
+    //     return breakdown
+    // }
+
 }

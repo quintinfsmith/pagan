@@ -352,7 +352,6 @@ class OpusLayerBaseUnitTest {
         val beatkey = BeatKey(0,0,0)
         val position: List<Int> = listOf()
 
-
         manager.set_event(beatkey, position, OpusEventSTD(10, 0, false))
         val tree = manager.get_tree(beatkey, position)
         assertEquals(
@@ -365,6 +364,11 @@ class OpusLayerBaseUnitTest {
             tree.get_event(),
             OpusEventSTD(10, 0, false)
         )
+
+        assertThrows(OpusManager.NonPercussionEventSet::class.java) {
+            manager.set_event(BeatKey(1,0,0), position, OpusEventSTD(10, 0, false))
+        }
+
 
         manager.unset(beatkey, position)
         assertEquals(
@@ -2234,6 +2238,15 @@ class OpusLayerBaseUnitTest {
         assertNull(
             manager.get_preceding_event(BeatKey(0,0,0), listOf(0))
         )
+
+        manager.new_line(0)
+        assertThrows(OpusManager.InvalidOverwriteCall::class.java) {
+            manager.overwrite_row(0, 0, BeatKey(0, 1, 0))
+        }
+        manager.new_channel()
+        assertThrows(OpusManager.InvalidOverwriteCall::class.java) {
+            manager.overwrite_row(0, 0, BeatKey(1, 0, 0))
+        }
 
     }
 

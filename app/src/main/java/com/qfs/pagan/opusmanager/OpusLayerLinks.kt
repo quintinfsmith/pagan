@@ -678,18 +678,6 @@ open class OpusLayerLinks : OpusLayerBase() {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
     }
 
-    /* Not Currently In Use. */
-    open fun link_alike(corner_top: BeatKey, corner_bottom: BeatKey) {
-        val alike_ranges = this.find_like_range(corner_top, corner_bottom)
-        for (range in alike_ranges) {
-            try {
-                this.link_beat_range(range.first, corner_top, corner_bottom)
-            } catch (e: OpusLayerLinks.MixedLinkException) {
-                //pass
-            }
-        }
-    }
-
     override fun equals(other: Any?): Boolean {
         if (other !is OpusLayerLinks)  {
             return false
@@ -766,4 +754,17 @@ open class OpusLayerLinks : OpusLayerBase() {
             super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
         }
     }
+
+    /* Not Currently In Use. */
+    // open fun link_alike(corner_top: BeatKey, corner_bottom: BeatKey) {
+    //     val alike_ranges = this.find_like_range(corner_top, corner_bottom)
+    //     for (range in alike_ranges) {
+    //         try {
+    //             this.link_beat_range(range.first, corner_top, corner_bottom)
+    //         } catch (e: OpusLayerLinks.MixedLinkException) {
+    //             //pass
+    //         }
+    //     }
+    // }
+
 }

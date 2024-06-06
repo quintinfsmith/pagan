@@ -1257,13 +1257,14 @@ open class OpusLayerBase {
 
         val tempo_controller = this.controllers.get_controller(ControlEventType.Tempo)
 
+        val first_tempo_event = this.get_current_global_controller_event(ControlEventType.Tempo, start_beat)
         midi.insert_event(
             0,
             0,
-            SetTempo.from_bpm((tempo_controller.initial_event as OpusTempoEvent).value)
+            SetTempo.from_bpm((first_tempo_event.value * 1000f).roundToInt() / 1000F)
         )
 
-        for (i in 0 until this.beat_count) {
+        for (i in start_beat until end_beat) {
             val tempo_tree = tempo_controller.get_tree(i)
             val stack: MutableList<StackItem<OpusControlEvent>> = mutableListOf(StackItem(tempo_tree, 1, i * midi.ppqn, midi.ppqn))
             while (stack.isNotEmpty()) {
@@ -1277,7 +1278,7 @@ open class OpusLayerBase {
                     )
                 } else if (!current.tree.is_leaf()) {
                     val working_subdiv_size = current.size / current.tree.size
-                    for ((i, subtree) in current.tree.divisions) {
+                    for ((j, subtree) in current.tree.divisions) {
                         stack.add(
                             StackItem(
                                 subtree,

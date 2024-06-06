@@ -17,6 +17,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event.NoteOff
+import com.qfs.apres.event.SetTempo
+
+
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
 /**
@@ -746,7 +752,91 @@ class OpusLayerBaseUnitTest {
 
     @Test
     fun test_get_midi() {
-        //TODO("test_get_midi")
+        // This is not a particularily rigorous test, but its enough for now
+        // Set up some Opus
+        val manager = OpusManager()
+        manager.new()
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        manager.set_event(BeatKey(0,0,0), listOf(0), OpusEventSTD(12, 0))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(24, 0))
+        manager.set_event(BeatKey(0,0,2), listOf(), OpusEventSTD(12, 0))
+        manager.set_event(BeatKey(0,0,3), listOf(), OpusEventSTD(12, 0, relative=true))
+
+        // Test Muted Line
+        manager.new_line(0)
+        manager.set_line_controller_initial_event(ControlEventType.Volume, 0, 1, OpusVolumeEvent(0))
+
+        manager.split_tree(BeatKey(1,0,0), listOf(), 2)
+        manager.set_percussion_event(BeatKey(1,0,0), listOf(0))
+        manager.set_percussion_event(BeatKey(1,0,1), listOf())
+        manager.set_percussion_event(BeatKey(1,0,2), listOf())
+        manager.set_percussion_event(BeatKey(1,0,3), listOf())
+
+
+        manager.controllers.new_controller(ControlEventType.Tempo)
+        manager.split_global_ctl_tree(ControlEventType.Tempo, 0, listOf(), 2)
+        manager.set_global_ctl_event(ControlEventType.Tempo, 0, listOf(1), OpusTempoEvent(240F))
+        manager.set_global_ctl_event(ControlEventType.Tempo, 1, listOf(), OpusTempoEvent(120F))
+        manager.set_global_ctl_event(ControlEventType.Tempo, 2, listOf(), OpusTempoEvent(60F))
+
+        val full_midi = manager.get_midi()
+        val event_map = HashMap<Int, List<MIDIEvent>>()
+        for ((position, events) in full_midi.get_all_events_grouped()) {
+            event_map[position] = events
+        }
+
+        assertEquals(
+            8, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn
+            event_map[0]!!.size
+        )
+
+        assertEquals(
+            3, // NoteOff, NoteOff, SetTempo
+            event_map[60]!!.size
+        )
+
+        assertEquals(
+            4, // SongPositionPointer, SetTempo, NoteOn, NoteOn
+            event_map[120]!!.size
+        )
+
+        assertEquals(
+            6, // SongPositionPointer, SetTempo, NoteOff, NoteOff, NoteOn, NoteOn
+            event_map[240]!!.size
+        )
+
+        assertEquals(
+            5, // SongPositionPointer, NoteOff, NoteOff, NoteOn, NoteOn
+            event_map[360]!!.size
+        )
+
+        assertEquals(
+            3, // SongPositionPoitner, NoteOff, NoteOff
+            event_map[480]!!.size
+        )
+
+        val partial_midi = manager.get_midi(1, 2)
+        val event_map_b = HashMap<Int, List<MIDIEvent>>()
+        for ((position, events) in partial_midi.get_all_events_grouped()) {
+            event_map_b[position] = events
+        }
+        println("${event_map_b}")
+        assertEquals(
+            2,
+            event_map_b.size
+        )
+
+        assertEquals(
+            8, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn
+            event_map_b[0]!!.size
+        )
+
+        println("${event_map_b[120]}")
+        assertEquals(
+            4, // SongPositionPointer, SetTempo, NoteOff, NoteOff
+            event_map[120]!!.size
+        )
+
     }
 
     @Test
@@ -2146,5 +2236,7 @@ class OpusLayerBaseUnitTest {
         )
 
     }
+
+
 
 }

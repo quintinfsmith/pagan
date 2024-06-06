@@ -17,6 +17,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.qfs.apres.Midi
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.NoteOff
@@ -842,6 +843,77 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
+    fun test_import_midi() {
+        val beat_count = 10
+
+        val midi = Midi()
+        midi.insert_event(0,0, SetTempo.from_bpm(80F))
+
+        for (i in 0 until beat_count) {
+            midi.insert_event(
+                0,
+                (i * midi.ppqn),
+                NoteOn(0, 64, 64)
+            )
+            midi.insert_event(
+                0,
+                ((i + 1) * midi.ppqn),
+                NoteOff(0, 64, 64)
+            )
+
+            for (j in 0 until 3) {
+                midi.insert_event(
+                    1,
+                    (i * midi.ppqn) + (midi.ppqn * j / 3),
+                    NoteOn(1, 50, 64)
+                )
+                midi.insert_event(
+                    1,
+                    (i * midi.ppqn) + (midi.ppqn * (j + 1) / 3),
+                    NoteOff(1, 50, 64)
+                )
+            }
+        }
+
+
+        val manager = OpusManager()
+        manager.import_midi(midi)
+
+        assertEquals(
+            OpusTempoEvent(80F),
+            manager.controllers.get_controller(ControlEventType.Tempo).initial_event
+        )
+
+        assertEquals(
+            beat_count,
+            manager.beat_count
+        )
+
+        for (i in 0 until beat_count) {
+            val position = manager.get_first_position(BeatKey(0,0,i), listOf())
+            assertTrue(
+                manager.get_tree(BeatKey(0,0,i), position).is_event()
+            )
+
+            assertEquals(
+                3,
+                manager.get_tree(BeatKey(1, 0, i), listOf()).size
+            )
+
+            assertEquals(
+                1,
+                manager.channels[1].lines.size
+            )
+
+            for (j in 0 until 3) {
+                assertTrue(
+                    manager.get_tree(BeatKey(1,0,i), listOf(j)).is_event()
+                )
+            }
+        }
+    }
+
+    @Test
     fun test_to_json() {
         //TODO("test_to_json")
     }
@@ -852,10 +924,6 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_load() {
         //TODO("test_load")
-    }
-    @Test
-    fun test_import_midi() {
-        //TODO("test_import_midi")
     }
     @Test
     fun test_set_duration() {

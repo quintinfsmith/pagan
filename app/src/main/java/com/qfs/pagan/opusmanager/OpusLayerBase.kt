@@ -167,6 +167,10 @@ open class OpusLayerBase {
      * Finds all the BeatKeys in a range denoted by [top_left_key] & [bottom_right_key].
      */
     fun get_beatkeys_in_range(top_left_key: BeatKey, bottom_right_key: BeatKey): List<BeatKey> {
+        // No point in throwing an error if beats are out of range, so just limit them
+        top_left_key.beat = max(0, min(top_left_key.beat, this.beat_count - 1))
+        bottom_right_key.beat = max(0, min(bottom_right_key.beat, this.beat_count - 1))
+
         val output = mutableListOf<BeatKey>()
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             if (i < top_left_key.channel || i > bottom_right_key.channel) {
@@ -2383,10 +2387,6 @@ open class OpusLayerBase {
 
                         // Not worrying too much about duration accuracy. would inevitably cause overly divided beats
                         val leaf_ratio = 1f / denominator.toFloat()
-                        if (k == 234) {
-                            println("DURATION: ${event.duration}")
-                            println("NEW DURATION: ${ max(1, ((event.duration / original_size) / leaf_ratio).roundToInt())}")
-                        }
                         event.duration = max(1, ((event.duration / original_size) / leaf_ratio).roundToInt())
                     }
                 }

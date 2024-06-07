@@ -2370,4 +2370,72 @@ class OpusLayerBaseUnitTest {
 
     }
 
+    @Test
+    fun test_get_beatkeys_in_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_channel()
+        manager.new_channel()
+        manager.new_line(0)
+        manager.new_line(0)
+        manager.new_line(1)
+        manager.new_line(1)
+        manager.new_line(1)
+        manager.new_line(2)
+        manager.new_line(2)
+        manager.new_line(2)
+        manager.new_line(2)
+        manager.new_line(3)
+        manager.new_line(3)
+        manager.new_line(3)
+        manager.new_line(3)
+        manager.set_beat_count(12)
+
+        val cases: List<Pair<BeatKey, BeatKey>> = listOf(
+            Pair(BeatKey(0, 0, 0), BeatKey(2, 0, 11)),
+            Pair(BeatKey(1, 0, 1), BeatKey(1, 0, 2)),
+            Pair(BeatKey(1, 0, 5), BeatKey(3, 0, 2)),
+        )
+
+        cases.forEachIndexed { c: Int, case: Pair<BeatKey, BeatKey> ->
+            val expectation: MutableList<BeatKey> = mutableListOf()
+            manager.channels.forEachIndexed channel_loop@{ i: Int, channel: OpusChannel ->
+                if (!(case.first.channel .. case.second.channel).contains(i)) {
+                    return@channel_loop
+                }
+
+                channel.lines.forEachIndexed line_offset_loop@{ j: Int, line: OpusLine ->
+                    if (case.first.channel == case.second.channel) {
+                        if (!(case.first.line_offset .. case.second.line_offset).contains(j)) {
+                            return@line_offset_loop
+                        }
+                    } else if (case.first.channel == i) {
+                        if (case.first.line_offset > j) {
+                            return@line_offset_loop
+                        }
+                    } else if (case.second.channel == i) {
+                        if (case.second.line_offset < j) {
+                            return@line_offset_loop
+                        }
+                    } else if (!(case.first.channel + 1 until case.second.channel).contains(i)) {
+                        return@line_offset_loop
+                    }
+
+                    line.beats.forEachIndexed beat_loop@{ k: Int, beat_tree: OpusTree<OpusEventSTD> ->
+                        if ((case.first.beat .. case.second.beat).contains(k)) {
+                            expectation.add(BeatKey(i,j,k))
+                        }
+                    }
+                }
+            }
+
+            val reality = manager.get_beatkeys_in_range(case.first, case.second)
+            assertEquals(expectation, reality)
+
+
+        }
+
+
+    }
+
 }

@@ -22,6 +22,8 @@ import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.SetTempo
+import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.ProgramChange
 
 
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
@@ -850,6 +852,12 @@ class OpusLayerBaseUnitTest {
         val midi = Midi()
         midi.insert_event(0,0, SetTempo.from_bpm(80F))
 
+        midi.insert_event(0,0, BankSelect(0, 0))
+        midi.insert_event(0,0, ProgramChange(0, 1))
+        midi.insert_event(0,0, BankSelect(1, 2))
+        midi.insert_event(0,0, ProgramChange(1, 3))
+
+
         for (i in 0 until beat_count) {
             midi.insert_event(
                 0,
@@ -929,7 +937,10 @@ class OpusLayerBaseUnitTest {
             }
         }
 
-
+        assertEquals(0, manager.channels[0].midi_bank)
+        assertEquals(1, manager.channels[0].midi_program)
+        assertEquals(2, manager.channels[1].midi_bank)
+        assertEquals(3, manager.channels[1].midi_program)
     }
 
     @Test

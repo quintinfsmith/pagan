@@ -2386,8 +2386,8 @@ open class OpusLayerBase {
                         }
 
                         // Not worrying too much about duration accuracy. would inevitably cause overly divided beats
-                        val leaf_ratio = 1f / denominator.toFloat()
-                        event.duration = max(1, ((event.duration / original_size) / leaf_ratio).roundToInt())
+                        // val leaf_ratio = 1f / denominator.toFloat() // (commented for clarity as to why I called the variable 'denominator', but don't use it as one)
+                        event.duration = max(1, (event.duration * denominator.toFloat() / original_size).roundToInt())
                     }
                 }
             }

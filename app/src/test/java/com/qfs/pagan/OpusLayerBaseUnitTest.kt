@@ -1202,6 +1202,45 @@ class OpusLayerBaseUnitTest {
         }
     }
 
+    @Test
+    fun test_overwrite_beat_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+        manager.new_line(0)
+        manager.new_channel()
+        manager.new_line(1)
+        manager.new_line(1)
+        manager.set_beat_count(6)
+
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    manager.set_event(BeatKey(c, l, b), listOf(),  OpusEventSTD((c * 6) + (l * 3) + b, c))
+                }
+            }
+        }
+
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(2, 2, 2))
+        }
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(2, 2, 2))
+        }
+
+        manager.overwrite_beat_range(BeatKey(0, 0, 3), BeatKey(0, 0, 0), BeatKey(2, 2, 2))
+
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    assertEquals(
+                        manager.get_tree(BeatKey(c, l, b)),
+                        manager.get_tree(BeatKey(c, l, b + 3))
+                    )
+                }
+            }
+        }
+    }
    // @Test
    // fun test_overwrite_beat_range_horizontally() {
    //     TODO()

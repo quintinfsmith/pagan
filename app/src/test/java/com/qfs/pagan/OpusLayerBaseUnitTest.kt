@@ -864,14 +864,27 @@ class OpusLayerBaseUnitTest {
 
             for (j in 0 until 3) {
                 midi.insert_event(
-                    1,
+                    0,
                     (i * midi.ppqn) + (midi.ppqn * j / 3),
                     NoteOn(1, 50, 64)
                 )
                 midi.insert_event(
-                    1,
+                    0,
                     (i * midi.ppqn) + (midi.ppqn * (j + 1) / 3),
                     NoteOff(1, 50, 64)
+                )
+            }
+
+            for (j in 0 until 2) {
+                midi.insert_event(
+                    0,
+                    (i * midi.ppqn) + (midi.ppqn * j / 2),
+                    NoteOn(9, 30, 64)
+                )
+                midi.insert_event(
+                    0,
+                    (i * midi.ppqn) + (midi.ppqn * (j + 1) / 2),
+                    NoteOff(9, 30, 64)
                 )
             }
         }
@@ -890,6 +903,11 @@ class OpusLayerBaseUnitTest {
             manager.beat_count
         )
 
+        assertEquals(
+            1,
+            manager.channels[1].lines.size
+        )
+
         for (i in 0 until beat_count) {
             val position = manager.get_first_position(BeatKey(0,0,i), listOf())
             assertTrue(
@@ -900,18 +918,18 @@ class OpusLayerBaseUnitTest {
                 3,
                 manager.get_tree(BeatKey(1, 0, i), listOf()).size
             )
-
             assertEquals(
-                1,
-                manager.channels[1].lines.size
+                2,
+                manager.get_tree(BeatKey(2, 0, i), listOf()).size
             )
-
             for (j in 0 until 3) {
                 assertTrue(
                     manager.get_tree(BeatKey(1,0,i), listOf(j)).is_event()
                 )
             }
         }
+
+
     }
 
     @Test

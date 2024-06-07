@@ -2007,7 +2007,6 @@ open class OpusLayerBase {
         val instrument_map = mutableListOf<Triple<Int, Int?, Int?>>()
 
         val active_event_map = HashMap<Pair<Int,Int>, OpusEventSTD>()
-        val opus_event_duration_map = HashMap<OpusEventSTD, Float>()
 
         var denominator = 4F
         for (pair in midi.get_all_events()) {
@@ -2055,7 +2054,7 @@ open class OpusLayerBase {
                     Pair((event as NoteOff).channel, event.get_note())
                 }
                 val opus_event = active_event_map[Pair(channel, note)] ?: continue
-                opus_event_duration_map[opus_event] = (tick - opus_event.duration).toFloat() / beat_size.toFloat()
+                opus_event.duration = tick - opus_event.duration
             } else if (event is TimeSignature) {
                 total_beat_offset += (tick - last_ts_change) / beat_size
 
@@ -2120,68 +2119,7 @@ open class OpusLayerBase {
 
         var overflow_events = mutableSetOf<OpusEventSTD>()
         beat_values.forEachIndexed { i, beat_tree ->
-            // Quantize the beat ////////////
-            val quantized_tree = OpusTree<Set<OpusEventSTD>>()
-            quantized_tree.set_size(beat_tree.size)
-
-            if (overflow_events.isNotEmpty()) {
-                quantized_tree[0].set_event(overflow_events.toSet())
-                overflow_events = mutableSetOf()
-            }
-
-            // Can easily merge quantized positions since the beats are still flat
-            val qmap = beat_tree.get_quantization_map(listOf(2,2,2,3,5,7))
-            for ((new_position, old_positions) in qmap) {
-                val new_event_set = mutableSetOf<OpusEventSTD>()
-                for (old_position in old_positions) {
-                    val next_tree = beat_tree[old_position]
-                    for (e in next_tree.get_event()!!) {
-                        new_event_set.add(e)
-                    }
-                }
-
-                if (new_position == quantized_tree.size) {
-                    if (i < beat_values.size - 1) {
-                        for (e in new_event_set) {
-                            overflow_events.add(e)
-                        }
-                    }
-                } else {
-                    if (quantized_tree[new_position].is_event()) {
-                        for (e in quantized_tree[new_position].get_event()!!) {
-                            new_event_set.add(e)
-                        }
-                    }
-
-                    quantized_tree[new_position].set_event(new_event_set.toSet())
-                }
-            }
-            /////////////////////////////////////
-
-            quantized_tree.reduce()
-            quantized_tree.clear_singles()
-            quantized_tree.traverse { tree: OpusTree<Set<OpusEventSTD>>, events: Set<OpusEventSTD>? ->
-                if (events == null) {
-                    return@traverse
-                }
-
-                var n = 1F
-                var climb = tree.parent
-                while (climb != null) {
-                    n /= (climb.size).toFloat()
-                    climb = climb.parent
-                }
-
-                for (event in events) {
-                    val beat_ratio = opus_event_duration_map[event]
-                    event.duration = if (beat_ratio == null) {
-                        1
-                    } else {
-                        ceil(beat_ratio / n).toInt()
-                    }
-                }
-            }
-            opus.set(i, quantized_tree)
+            opus.set(i, beat_tree)
         }
 
         for (tree in tempo_line) {
@@ -2363,7 +2301,6 @@ open class OpusLayerBase {
             for ((event, line_offset) in event_list) {
                 val channel_index = midi_channel_map[event.channel]!!
 
-
                 // line_offset needs to be recalculated HERE for percussion as the percussion block map will change size during init
                 val adj_line_offset = if (event.channel == 9) {
                     var re_adj_line_offset = 0
@@ -2414,37 +2351,62 @@ open class OpusLayerBase {
             }
         }
 
-        // Attempt to remove redundant trailing subdivisions
+        // Reduce 
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {
-                    val beat_key = BeatKey(i, j, k)
-                    val beat_tree = this.get_tree(beat_key)
-                    beat_tree.traverse { tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
-                        if (event != null || tree.size <= 1 || !tree[0].is_event() || tree[0].event!!.duration < tree.size) {
+                    val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())
+                    val original_size = beat_tree.size 
+                    beat_tree.reduce()
+                    beat_tree.traverse { working_tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+                        if (event == null) {
                             return@traverse
                         }
-
-                        for ((l, branch) in tree.divisions) {
-                            if (l == 0) {
-                                continue
-                            }
-                            if (!branch.is_eventless()) {
-                                return@traverse
-                            }
+                        var tmp_tree = beat_tree
+                        var denominator = 1
+                        for (p in working_tree.get_path()) {
+                            denominator *= tmp_tree.size
+                            tmp_tree = tmp_tree[p]
                         }
-
-                        tree[0].event!!.duration = max(1, tree[0].event!!.duration / tree.size)
-
-                        if (tree == beat_tree) {
-                            this.replace_tree(beat_key, null, tree[0])
-                        } else {
-                            tree.replace_with(tree[0])
-                        }
+                        // Not worrying too much about duration accuracy. would inevitably cause overly divided beats
+                        val leaf_ratio = 1f / denominator.toFloat()
+                        event.duration = max(1, ((event.duration / original_size) / leaf_ratio).roundToInt())
                     }
                 }
             }
         }
+
+        // Attempt to remove redundant trailing subdivisions
+        //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+        //    for (j in channel.lines.indices) {
+        //        for (k in 0 until this.beat_count) {
+        //            val beat_key = BeatKey(i, j, k)
+        //            val beat_tree = this.get_tree(beat_key)
+        //            beat_tree.traverse { tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+        //                if (event != null || tree.size <= 1 || !tree[0].is_event() || tree[0].event!!.duration < tree.size) {
+        //                    return@traverse
+        //                }
+
+        //                for ((l, branch) in tree.divisions) {
+        //                    if (l == 0) {
+        //                        continue
+        //                    }
+        //                    if (!branch.is_eventless()) {
+        //                        return@traverse
+        //                    }
+        //                }
+
+        //                tree[0].event!!.duration = max(1, tree[0].event!!.duration / tree.size)
+
+        //                if (tree == beat_tree) {
+        //                    this.replace_tree(beat_key, null, tree[0])
+        //                } else {
+        //                    tree.replace_with(tree[0])
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
         for ((midi_channel, bank, program) in instrument_map) {
             // Midi may have contained programchange event for channel, but no music

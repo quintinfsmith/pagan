@@ -2376,38 +2376,6 @@ open class OpusLayerBase {
             }
         }
 
-        // Attempt to remove redundant trailing subdivisions
-        //this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-        //    for (j in channel.lines.indices) {
-        //        for (k in 0 until this.beat_count) {
-        //            val beat_key = BeatKey(i, j, k)
-        //            val beat_tree = this.get_tree(beat_key)
-        //            beat_tree.traverse { tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
-        //                if (event != null || tree.size <= 1 || !tree[0].is_event() || tree[0].event!!.duration < tree.size) {
-        //                    return@traverse
-        //                }
-
-        //                for ((l, branch) in tree.divisions) {
-        //                    if (l == 0) {
-        //                        continue
-        //                    }
-        //                    if (!branch.is_eventless()) {
-        //                        return@traverse
-        //                    }
-        //                }
-
-        //                tree[0].event!!.duration = max(1, tree[0].event!!.duration / tree.size)
-
-        //                if (tree == beat_tree) {
-        //                    this.replace_tree(beat_key, null, tree[0])
-        //                } else {
-        //                    tree.replace_with(tree[0])
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
         for ((midi_channel, bank, program) in instrument_map) {
             // Midi may have contained programchange event for channel, but no music
             val opus_channel = midi_channel_map[midi_channel] ?: continue

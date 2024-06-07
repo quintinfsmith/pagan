@@ -2019,6 +2019,12 @@ open class OpusLayerBase {
             if (event is NoteOn && event.get_velocity() > 0) {
                 val (channel, note) = Pair(event.channel, event.get_note())
 
+                // Turn off note if its playing
+                if (active_event_map.containsKey(Pair(channel, note))) {
+                    var existing_event = active_event_map[Pair(channel, note)]!!
+                    existing_event.duration = tick - existing_event.duration
+                }
+
                 // Add trees to list of trees
                 while (beat_values.size <= beat_index) {
                     val new_tree = OpusTree<Set<OpusEventSTD>>()
@@ -2053,7 +2059,7 @@ open class OpusLayerBase {
                 } else {
                     Pair((event as NoteOff).channel, event.get_note())
                 }
-                val opus_event = active_event_map[Pair(channel, note)] ?: continue
+                val opus_event = active_event_map.remove(Pair(channel, note)) ?: continue
                 opus_event.duration = tick - opus_event.duration
             } else if (event is TimeSignature) {
                 total_beat_offset += (tick - last_ts_change) / beat_size
@@ -2105,6 +2111,11 @@ open class OpusLayerBase {
                 instrument_map.add(Triple(event.channel, event.value, null) )
             }
         }
+
+        for ((_, opus_event) in active_event_map) {
+            opus_event.duration = max_tick - opus_event.duration
+        }
+        active_event_map.clear()
 
         total_beat_offset += (max_tick - last_ts_change) / beat_size
         val opus = OpusTree<Set<OpusEventSTD>>()
@@ -2362,14 +2373,20 @@ open class OpusLayerBase {
                         if (event == null) {
                             return@traverse
                         }
+
                         var tmp_tree = beat_tree
                         var denominator = 1
                         for (p in working_tree.get_path()) {
                             denominator *= tmp_tree.size
                             tmp_tree = tmp_tree[p]
                         }
+
                         // Not worrying too much about duration accuracy. would inevitably cause overly divided beats
                         val leaf_ratio = 1f / denominator.toFloat()
+                        if (k == 234) {
+                            println("DURATION: ${event.duration}")
+                            println("NEW DURATION: ${ max(1, ((event.duration / original_size) / leaf_ratio).roundToInt())}")
+                        }
                         event.duration = max(1, ((event.duration / original_size) / leaf_ratio).roundToInt())
                     }
                 }

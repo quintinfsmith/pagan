@@ -2471,76 +2471,40 @@ open class OpusLayerBase {
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
-        val overwrite_map = HashMap<BeatKey, OpusTree<OpusEventSTD>>()
-
-        // Start OverFlow Check ////
-        var lines_in_range = 0
-        var lines_available = 0
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            if (i < from_key.channel || i > to_key.channel) {
-                return@forEachIndexed
-            }
-            for (j in 0 until channel.size) {
-                if (i == from_key.channel && j < from_key.line_offset) {
-                    continue
-                } else if (i == to_key.channel && j > to_key.line_offset) {
-                    continue
-                }
-                lines_in_range += 1
-            }
-        }
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            if (i < beat_key.channel) {
-                return@forEachIndexed
-            }
-            for (j in 0 until channel.size) {
-                if (i == beat_key.channel && j < beat_key.line_offset) {
-                    continue
-                }
-                lines_available += 1
-            }
+        if (from_key.channel >= this.channels.size || from_key.line_offset >= this.channels[from_key.channel].lines.size) {
+            throw RangeOverflow(from_key, to_key, beat_key)
+        } else if (from_key.channel < 0 || from_key.line_offset < 0 || to_key.channel < 0 || to_key.line_offset < 0) {
+            throw RangeOverflow(from_key, to_key, beat_key)
+        } else if (to_key.channel >= this.channels.size || to_key.line_offset >= this.channels[to_key.channel].lines.size) {
+            throw RangeOverflow(from_key, to_key, beat_key)
+        } else if (!(0 until this.beat_count).contains(from_key.beat) || !(0 until this.beat_count).contains(to_key.beat)) {
+            throw RangeOverflow(from_key, to_key, beat_key)
         }
 
-        val working_beat = beat_key.copy()
-        while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
-            // INCLUSIVE
-            for (b in 0 .. to_key.beat - from_key.beat) {
-                overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
-                    this.get_tree( BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
-            }
-            if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
-                from_key.line_offset += 1
-            } else if (this.channels.size - 1 > from_key.channel) {
-                from_key.channel += 1
-                from_key.line_offset = 0
-            } else {
-                break
-            }
+        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
+        val (y_diff, x_diff) = this.get_abs_difference(from_key, to_key)
 
-            if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
-                working_beat.line_offset += 1
-            } else if (this.channels.size - 1 > working_beat.channel) {
-                working_beat.channel += 1
-                working_beat.line_offset = 0
-            } else {
-                break
-            }
+        if (!(0 until this.beat_count).contains(beat_key.beat)) {
+            throw RangeOverflow(from_key, to_key, beat_key)
+        } else if (!(0 until this.beat_count).contains(x_diff + beat_key.beat)) {
+            throw RangeOverflow(from_key, to_key, beat_key)
         }
 
-        for (b in 0 .. to_key.beat - from_key.beat) {
-            overwrite_map[BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b)] =
-                this.get_tree(BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+        val (target_channel, target_offset) = try {
+            this.get_std_offset(this.get_abs_offset(beat_key.channel, beat_key.line_offset) + y_diff)
+        } catch (e: IndexOutOfBoundsException) {
+            throw RangeOverflow(from_key, to_key, beat_key)
         }
 
-        // Before we start overwriting, check overflow
-        for ((target_key, _) in overwrite_map) {
-            if (target_key.beat >= this.beat_count || target_key.channel >= this.channels.size || target_key.line_offset >= this.channels[target_key.channel].size) {
-                throw RangeOverflow(from_key, to_key, target_key)
-            }
-        }
-
-        for ((target_key, tree) in overwrite_map) {
-            this.replace_tree(target_key, null, tree)
+        val target_second_key = BeatKey(target_channel, target_offset, beat_key.beat + x_diff)
+        val target_keys = this.get_beatkeys_in_range(beat_key, target_second_key)
+ 
+        for (i in target_keys.indices) {
+            this.replace_tree(
+                target_keys[i],
+                null,
+                this.get_tree(original_keys[i])
+            )
         }
     }
 

@@ -3,8 +3,16 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
 import kotlinx.serialization.Serializable
 
+class InvalidBeatKey(channel: Int, line_offset: Int, beat: Int): Exception("Can't have negative values: BeatKey($channel, $line_offset, $beat)")
+
 @Serializable
-data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int)
+data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
+    init {
+        if (channel < 0 || line_offset < 0) {
+            throw InvalidBeatKey(channel, line_offset, beat)
+        }
+    }
+}
 
 class OpusChannel(var uuid: Int) {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")

@@ -1203,6 +1203,39 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
+    fun test_get_beatkeys_from_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+        manager.new_line(0)
+        manager.new_channel()
+        manager.new_line(1)
+        manager.new_line(1)
+        manager.set_beat_count(6)
+
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(3, 0, 0), BeatKey(3, 2, 2))
+        }
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 3, 0), BeatKey(1, 2, 2))
+        }
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        }
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 4, 2))
+        }
+
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        }
+        assertThrows(OpusManager.RangeOverflow::class.java) {
+            manager.overwrite_beat_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        }
+
+    }
+
+    @Test
     fun test_overwrite_beat_range() {
         val manager = OpusManager()
         manager.new()
@@ -1220,16 +1253,8 @@ class OpusLayerBaseUnitTest {
                 }
             }
         }
-
-        assertThrows(OpusManager.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-        }
-        assertThrows(OpusManager.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-        }
-
+        // -------------------------------------------------------
         manager.overwrite_beat_range(BeatKey(0, 0, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-
         for (c in 0 until 2) {
             for (l in 0 until 2) {
                 for (b in 0 until 3) {
@@ -1240,7 +1265,121 @@ class OpusLayerBaseUnitTest {
                 }
             }
         }
+        // -------------------------------------------------------
+        // Undo overwrite
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    manager.unset(BeatKey(c, l, b + 3), listOf())
+                }
+            }
+        }
+        // -------------------------------------------------------
+        // Overwrite with overlapping ranges
+        manager.overwrite_beat_range(BeatKey(0, 0, 1), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    assertEquals(
+                        (c * 6) + (l * 3) + b,
+                        manager.get_tree(BeatKey(c, l, b + 1)).event!!.note
+                    )
+                }
+            }
+        }
+        // -------------------------------------------------------
+        // Undo All sets
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 6) {
+                    manager.unset(BeatKey(c, l, b), listOf())
+                }
+            }
+        }
+        // Set second half
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    manager.set_event(BeatKey(c, l, b + 3), listOf(),  OpusEventSTD((c * 6) + (l * 3) + b, c))
+                }
+            }
+        }
+        // -------------------------------------------------------
+        // Overwrite with overlapping ranges
+        manager.overwrite_beat_range(BeatKey(0, 0, 1), BeatKey(0, 0, 3), BeatKey(1, 2, 5))
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    assertEquals(
+                        (c * 6) + (l * 3) + b,
+                        manager.get_tree(BeatKey(c, l, b + 1)).event!!.note
+                    )
+                }
+            }
+        }
     }
+
+    @Test
+    fun test_move_beat_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+        manager.new_line(0)
+        manager.new_channel()
+        manager.new_line(1)
+        manager.new_line(1)
+        manager.set_beat_count(6)
+
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    manager.set_event(BeatKey(c, l, b), listOf(),  OpusEventSTD((c * 6) + (l * 3) + b, c))
+                }
+            }
+        }
+
+        manager.move_beat_range(BeatKey(0, 0, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    assertFalse(manager.get_tree(BeatKey(c, l, b)).is_event())
+
+                    assertEquals(
+                        (c * 6) + (l * 3) + b,
+                        manager.get_tree(BeatKey(c, l, b + 3)).event!!.note
+                    )
+                }
+            }
+        }
+        // -------------------------------------------------------
+        // Overwrite with overlapping ranges
+        manager.move_beat_range(BeatKey(0, 0, 1), BeatKey(0, 0, 3), BeatKey(1, 2, 5))
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    assertEquals(
+                        (c * 6) + (l * 3) + b,
+                        manager.get_tree(BeatKey(c, l, b + 1)).event!!.note
+                    )
+                }
+            }
+        }
+        // -------------------------------------------------------
+        // Overwrite with overlapping ranges
+        manager.move_beat_range(BeatKey(0, 0, 2), BeatKey(0, 0, 1), BeatKey(1, 2, 3))
+        for (c in 0 until 2) {
+            for (l in 0 until 2) {
+                for (b in 0 until 3) {
+                    assertEquals(
+                        (c * 6) + (l * 3) + b,
+                        manager.get_tree(BeatKey(c, l, b + 2)).event!!.note
+                    )
+                }
+            }
+        }
+    }
+
    // @Test
    // fun test_overwrite_beat_range_horizontally() {
    //     TODO()
@@ -2482,10 +2621,7 @@ class OpusLayerBaseUnitTest {
             val reality = manager.get_beatkeys_in_range(case.first, case.second)
             assertEquals(expectation, reality)
 
-
         }
-
-
     }
 
 }

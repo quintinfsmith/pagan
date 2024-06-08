@@ -1084,7 +1084,6 @@ open class OpusLayerBase {
         }
     }
 
-
     open fun unset(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         this._unset(tree)
@@ -2468,25 +2467,18 @@ open class OpusLayerBase {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
 
-
-    open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+    private fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
         if (from_key.channel >= this.channels.size || from_key.line_offset >= this.channels[from_key.channel].lines.size) {
-            throw RangeOverflow(from_key, to_key, beat_key)
-        } else if (from_key.channel < 0 || from_key.line_offset < 0 || to_key.channel < 0 || to_key.line_offset < 0) {
             throw RangeOverflow(from_key, to_key, beat_key)
         } else if (to_key.channel >= this.channels.size || to_key.line_offset >= this.channels[to_key.channel].lines.size) {
             throw RangeOverflow(from_key, to_key, beat_key)
-        } else if (!(0 until this.beat_count).contains(from_key.beat) || !(0 until this.beat_count).contains(to_key.beat)) {
+        } else if (this.beat_count <= from_key.beat || this.beat_count <= to_key.beat) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }
 
-        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val (y_diff, x_diff) = this.get_abs_difference(from_key, to_key)
 
-        if (!(0 until this.beat_count).contains(beat_key.beat)) {
-            throw RangeOverflow(from_key, to_key, beat_key)
-        } else if (!(0 until this.beat_count).contains(x_diff + beat_key.beat)) {
+        if (this.beat_count <= beat_key.beat + x_diff) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }
 
@@ -2497,55 +2489,51 @@ open class OpusLayerBase {
         }
 
         val target_second_key = BeatKey(target_channel, target_offset, beat_key.beat + x_diff)
-        val target_keys = this.get_beatkeys_in_range(beat_key, target_second_key)
- 
-        for (i in target_keys.indices) {
+        return this.get_beatkeys_in_range(beat_key, target_second_key)
+    }
+
+    open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+
+        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
+        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
+
+        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
+        val trees = mutableListOf<OpusTree<OpusEventSTD>>()
+        for (o_key in original_keys) {
+            trees.add(this.get_tree(o_key).copy())
+        }
+
+        for (i in trees.indices) {
             this.replace_tree(
                 target_keys[i],
                 null,
-                this.get_tree(original_keys[i])
+                trees[i]
             )
         }
     }
 
     open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this.overwrite_beat_range(beat_key, first_corner, second_corner)
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
-        val from_keys = mutableSetOf<BeatKey>()
-        val to_keys = mutableSetOf<BeatKey>()
 
-        val working_beat = beat_key.copy()
-        while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
-            // INCLUSIVE
-            for (b in 0 .. to_key.beat - from_key.beat) {
-                to_keys.add(BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b))
-                from_keys.add(BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
-            }
+        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
+        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
-            if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
-                from_key.line_offset += 1
-            } else if (this.channels.size - 1 > from_key.channel) {
-                from_key.channel += 1
-                from_key.line_offset = 0
-            } else {
-                break
-            }
-
-            if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
-                working_beat.line_offset += 1
-            } else if (this.channels.size - 1 > working_beat.channel) {
-                working_beat.channel += 1
-                working_beat.line_offset = 0
-            } else {
-                break
-            }
+        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
+        val trees = mutableListOf<OpusTree<OpusEventSTD>>()
+        for (o_key in original_keys) {
+            trees.add(this.get_tree(o_key).copy())
         }
 
-        for (b in 0 .. to_key.beat - from_key.beat) {
-            to_keys.add(BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b))
-            from_keys.add(BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b))
+        for (i in target_keys.indices) {
+            this.replace_tree(
+                target_keys[i],
+                null,
+                trees[i]
+            )
         }
-        for (clear_key in (from_keys - to_keys)) {
+
+        for (clear_key in (original_keys - target_keys)) {
             this.unset(clear_key, listOf())
         }
     }
@@ -2599,6 +2587,7 @@ open class OpusLayerBase {
             this.replace_channel_ctl_tree(type, target_channel, beat, null, tree)
         }
     }
+
     open fun overwrite_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
         this._copy_channel_ctl_range(
             type,

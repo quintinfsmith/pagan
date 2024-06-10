@@ -2641,9 +2641,10 @@ class OpusLayerBaseUnitTest {
 
         val test_map = manager.get_shallow_representation(json_string_test)
         println("$test_map")
-        assertTrue(test_map.containsKey("k0"))
-        assertTrue(test_map.containsKey("k1"))
-        assertTrue(test_map.containsKey("k2"))
+        assertEquals(
+            setOf("k0", "k1", "k2", "k3", "k4", "k5"),
+            test_map.keys.toSet()
+        )
     }
 
 }

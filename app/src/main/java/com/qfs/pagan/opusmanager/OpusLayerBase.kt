@@ -43,6 +43,7 @@ open class OpusLayerBase {
     class EventlessTreeException: Exception("Tree requires event for operation")
     class InvalidOverwriteCall: Exception()
     class InvalidMergeException: Exception()
+    class UnknownSaveConfiguration: Exception()
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -1675,11 +1676,153 @@ open class OpusLayerBase {
         this.load_json_file(path)
     }
 
+    fun get_shallow_representation(json_content: String): HashMap<String, String> {
+        val output = HashMap<String, String>()
+
+        var value_index_i = -1
+        var value_index_f = -1
+        var working_key: String? = null
+
+        var working_number: String? = null
+        var working_string: String? = null
+        var string_escape_flagged = false
+
+        var type_stack = mutableListOf<Int>() // 0 = dict, 1 = list
+
+        var index = 0
+        while (index < json_content.length) {
+            val working_char = json_content[index]
+            if (working_number != null) {
+                when (working_char) {
+                    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.' -> {
+                        working_number += working_char
+                    } 
+                    ' ', '\r', '\n', Char(125), Char(93), ',' -> {
+                        try {
+                            working_number.toFloat()
+                            working_number = null
+                            continue
+                        } catch (e: Exception){
+                            // TODO: SPECIFY EXCEPTION
+                            throw Exception()
+                        }
+                    }
+                    else -> {
+                        // TODO: SPECIFY EXCEPTION
+                        throw Exception("" + working_char)
+                    }
+                }
+            } else if (working_string != null) {
+                if (string_escape_flagged) {
+                    working_string += working_char
+                    string_escape_flagged = false
+                } else {
+                    when (working_char) {
+                        '\\' -> {
+                            string_escape_flagged = true
+                        }
+                        '"' -> {
+                            if (working_key == null && type_stack.size == 1) {
+                                working_key = working_string
+                            }
+                            working_string = null
+                        }
+                        else -> {
+                            working_string += working_char
+                        }
+                    }
+                }
+            } else {
+                when (working_char) {
+                    ',' -> {
+                        if (type_stack.size == 1) {
+                            value_index_f = index
+                        }
+                    }
+                    ':' -> {
+                        if (type_stack.size == 1) {
+                            value_index_i = index + 1
+                        }
+                    }
+                    Char(123) -> {
+                        if (type_stack.size == 1) {
+                            working_key == null
+                        }
+                        type_stack.add(0)
+                    }
+                    Char(125) -> {
+                        if (type_stack.last() == 0) {
+                            type_stack.removeLast()
+                        } else {
+                            // TODO: SPECIFY EXCEPTION
+                            throw Exception()
+                        }
+                        if (type_stack.size < 2) {
+                            value_index_f = index
+                        }
+                    }
+                    Char(91) -> {
+                        type_stack.add(1)
+                    }
+                    Char(93) -> {
+                        if (type_stack.last() == 1) {
+                            type_stack.removeLast()
+                        } else {
+                            // TODO: SPECIFY EXCEPTION
+                            throw Exception()
+                        }
+
+                        if (type_stack.size == 1) {
+                            value_index_f = index
+                        }
+                    }
+                    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-' -> {
+                        working_number = "" + working_char
+                    }
+                    '"' -> {
+                        working_string = ""
+                    }
+                    ' ', '\r', '\n', '\t' -> {
+                    } 
+                    else -> {
+                        // TODO: SPECIFY EXCEPTION
+                        throw Exception()
+                    }
+                }
+            }
+
+            if (working_key != null && value_index_f >= 0 && value_index_i >= 0) {
+                output[working_key!!] = json_content.substring(value_index_i, value_index_f).trim()
+                working_key = null
+                value_index_i = -1
+                value_index_f = -1
+            }
+            index += 1
+        }
+        return output
+    }
+
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
         val json = Json {
             ignoreUnknownKeys = true
         }
+
+        val shallow_map = this.get_shallow_representation(json_content)
+        val version = when (shallow_map.keys.toSet()) {
+            setOf("tempo", "radix", "channels", "reflections", "transpose", "name") -> 0
+            setOf("tempo", "radix", "channels", "reflections", "transpose", "name", "tuning_map") -> 1
+            setOf("channels", "reflections", "transpose", "name", "tuning_map", "radix", "controllers") -> 2
+            setOf("version", "data") -> {
+                json.decodeFromString<Int>(shallow_map["version"]!!)
+            }
+            else -> {
+                throw UnknownSaveConfiguration()
+            }
+
+        }
+
+
         val json_data: LoadedJSONData = try {
             json.decodeFromString<LoadedJSONData>(json_content)
         } catch (e: Exception) {

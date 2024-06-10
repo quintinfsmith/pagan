@@ -142,6 +142,7 @@ fun from_string(input_string: String, radix: Int, channel: Int): OpusTree<OpusEv
             register = if (register == null) {
                 char_to_int(character, radix)
             } else {
+
                 val odd_note = (register * radix) + char_to_int(character, radix)
                 if (tree_stack.last().is_leaf()) {
                     tree_stack.last().set_size(1)
@@ -203,3 +204,4 @@ fun tlog(label: String, callback: () -> Unit) {
     callback()
     Log.d("TLOG", "$label: ${System.currentTimeMillis() - a}")
 }
+

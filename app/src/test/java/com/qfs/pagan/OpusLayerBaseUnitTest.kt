@@ -2624,4 +2624,23 @@ class OpusLayerBaseUnitTest {
         }
     }
 
+    @Test 
+    fun test_get_shallow_representation() {
+        val manager = OpusManager()
+        val json_string_test = """{
+            "k0": 101,
+            "k1": "TEST STRING",
+            "k2": {
+                "sub_k0": [ 0, 1, 2 ],
+                "sub_k1": 2.0
+            }
+        }"""
+
+        val test_map = manager.get_shallow_representation(json_string_test)
+        println("$test_map")
+        assertTrue(test_map.containsKey("k0"))
+        assertTrue(test_map.containsKey("k1"))
+        assertTrue(test_map.containsKey("k2"))
+    }
+
 }

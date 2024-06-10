@@ -2633,7 +2633,8 @@ class OpusLayerBaseUnitTest {
             "k2": {
                 "sub_k0": [ 0, 1, 2 ],
                 "sub_k1": 2.0
-            }
+            },
+            "k3": null
         }"""
 
         val test_map = manager.get_shallow_representation(json_string_test)

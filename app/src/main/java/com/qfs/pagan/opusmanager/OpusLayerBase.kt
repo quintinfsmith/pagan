@@ -44,6 +44,8 @@ open class OpusLayerBase {
     class InvalidOverwriteCall: Exception()
     class InvalidMergeException: Exception()
     class UnknownSaveConfiguration: Exception()
+    class FutureSaveVersionException(version: Int): Exception("Attempting to load a project made with a newer version of Pagan (format: $version)")
+    class InvalidJSON(json_string: String, index: Int): Exception("Invalid JSON @ $index In \"$json_string\"")
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -1702,14 +1704,12 @@ open class OpusLayerBase {
                             working_number.toFloat()
                             working_number = null
                             continue
-                        } catch (e: Exception){
-                            // TODO: SPECIFY EXCEPTION
-                            throw Exception()
+                        } catch (e: Exception) {
+                            throw InvalidJSON(json_content, index)
                         }
                     }
                     else -> {
-                        // TODO: SPECIFY EXCEPTION
-                        throw Exception("" + working_char)
+                        throw InvalidJSON(json_content, index)
                     }
                 }
             } else if (working_string != null) {
@@ -1735,7 +1735,7 @@ open class OpusLayerBase {
             } else {
                 when (working_char) {
                     ',' -> {
-                        if (type_stack.size == 1) {
+                        if (type_stack.size == 1 && value_index_i >= 0) {
                             value_index_f = index
                         }
                     }
@@ -1754,10 +1754,9 @@ open class OpusLayerBase {
                         if (type_stack.last() == 0) {
                             type_stack.removeLast()
                         } else {
-                            // TODO: SPECIFY EXCEPTION
-                            throw Exception()
+                            throw InvalidJSON(json_content, index)
                         }
-                        if (type_stack.size < 2) {
+                        if (type_stack.size < 2 && value_index_i >= 0) {
                             value_index_f = index
                         }
                     }
@@ -1768,11 +1767,10 @@ open class OpusLayerBase {
                         if (type_stack.last() == 1) {
                             type_stack.removeLast()
                         } else {
-                            // TODO: SPECIFY EXCEPTION
-                            throw Exception()
+                            throw InvalidJSON(json_content, index)
                         }
 
-                        if (type_stack.size == 1) {
+                        if (type_stack.size == 1 && value_index_i >= 0) {
                             value_index_f = index
                         }
                     }
@@ -1784,9 +1782,15 @@ open class OpusLayerBase {
                     }
                     ' ', '\r', '\n', '\t' -> {
                     } 
+                    'n' -> {
+                        if (json_content.substring(index, index + 4) != "null") {
+                            throw InvalidJSON(json_content, index)
+                        } else {
+                            index += 3
+                        }
+                    }
                     else -> {
-                        // TODO: SPECIFY EXCEPTION
-                        throw Exception()
+                        throw InvalidJSON(json_content, index)
                     }
                 }
             }
@@ -1809,12 +1813,13 @@ open class OpusLayerBase {
         }
 
         val shallow_map = this.get_shallow_representation(json_content)
+
         val version = when (shallow_map.keys.toSet()) {
             setOf("tempo", "radix", "channels", "reflections", "transpose", "name") -> 0
             setOf("tempo", "radix", "channels", "reflections", "transpose", "name", "tuning_map") -> 1
             setOf("channels", "reflections", "transpose", "name", "tuning_map", "radix", "controllers") -> 2
-            setOf("version", "data") -> {
-                json.decodeFromString<Int>(shallow_map["version"]!!)
+            setOf("v", "d") -> {
+                json.decodeFromString<Int>(shallow_map["v"]!!)
             }
             else -> {
                 throw UnknownSaveConfiguration()
@@ -1823,19 +1828,20 @@ open class OpusLayerBase {
         }
 
 
-        val json_data: LoadedJSONData = try {
-            json.decodeFromString<LoadedJSONData>(json_content)
-        } catch (e: Exception) {
-            try {
-                this._convert_old_fmt(
+        // NOTE: chaining the convert_old_fmt calls saves me having to update all the functions
+        // every time I change the save format
+        val json_data: LoadedJSONData = when (version) {
+            0 -> this._convert_old_fmt(
                     this._convert_old_fmt(
                         json.decodeFromString<LoadedJSONData0>(json_content)
                     )
                 )
-            } catch (e: Exception) {
-                this._convert_old_fmt(
+            1 -> this._convert_old_fmt(
                     json.decodeFromString<LoadedJSONData1>(json_content)
                 )
+            2 -> json.decodeFromString<LoadedJSONData>(json_content)
+            else -> {
+                throw FutureSaveVersionException(version)
             }
         }
 
@@ -1970,6 +1976,7 @@ open class OpusLayerBase {
                 )
             }
         }
+
         this.load_json(json_data)
         this.path = path
     }

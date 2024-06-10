@@ -45,7 +45,7 @@ open class OpusLayerBase {
     class InvalidMergeException: Exception()
     class UnknownSaveConfiguration: Exception()
     class FutureSaveVersionException(version: Int): Exception("Attempting to load a project made with a newer version of Pagan (format: $version)")
-    class InvalidJSON(json_string: String, index: Int): Exception("Invalid JSON @ $index In \"$json_string\"")
+    class InvalidJSON(json_string: String, index: Int): Exception("Invalid JSON @ $index In \"${json_string.substring(max(0, index - 20), min(json_string.length, index + 20))}\"")
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -1790,6 +1790,20 @@ open class OpusLayerBase {
                             index += 3
                         }
                     }
+                    'f' -> {
+                        if (json_content.substring(index, index + 5) != "false") {
+                            throw InvalidJSON(json_content, index)
+                        } else {
+                            index += 4
+                        }
+                    }
+                    't' -> {
+                        if (json_content.substring(index, index + 4) != "true") {
+                            throw InvalidJSON(json_content, index)
+                        } else {
+                            index += 3
+                        }
+                    }
                     else -> {
                         throw InvalidJSON(json_content, index)
                     }
@@ -1814,18 +1828,23 @@ open class OpusLayerBase {
         }
 
         val shallow_map = this.get_shallow_representation(json_content)
+        val map_keys = shallow_map.keys.toSet()
 
-        val version = when (shallow_map.keys.toSet()) {
-            setOf("tempo", "radix", "channels", "reflections", "transpose", "name") -> 0
-            setOf("tempo", "radix", "channels", "reflections", "transpose", "name", "tuning_map") -> 1
-            setOf("channels", "reflections", "transpose", "name", "tuning_map", "radix", "controllers") -> 2
+        val version = when (map_keys) {
             setOf("v", "d") -> {
                 json.decodeFromString<Int>(shallow_map["v"]!!)
             }
             else -> {
-                throw UnknownSaveConfiguration()
+                if (!map_keys.contains("controllers")) {
+                    if (!map_keys.contains("tuning_map")) {
+                        1
+                    } else {
+                        0
+                    }
+                } else {
+                    2
+                }
             }
-
         }
 
 

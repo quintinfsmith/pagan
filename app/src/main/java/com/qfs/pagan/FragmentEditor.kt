@@ -214,7 +214,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             thread {
                 val path = bundle?.getString("PATH")
                 if (path != null) {
-                    main.get_opus_manager().load(path)
+                    main.get_opus_manager().load_path(path)
                 }
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE

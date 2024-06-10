@@ -1674,8 +1674,9 @@ open class OpusLayerBase {
 
     open fun on_project_changed() { }
 
-    open fun load(path: String) {
-        this.load_json_file(path)
+    fun load_path(path: String) {
+        val json_content = File(path).readBytes()
+        this.load(json_content, path)
     }
 
     fun get_shallow_representation(json_content: String): HashMap<String, String> {
@@ -1954,31 +1955,6 @@ open class OpusLayerBase {
     open fun new_global_controller(type: ControlEventType) {
         this.controllers.new_controller(type)
         this.recache_line_maps()
-    }
-
-    open fun load_json_file(path: String) {
-        val json_content = File(path).readText(Charsets.UTF_8)
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
-        val json_data: LoadedJSONData = try {
-            json.decodeFromString<LoadedJSONData>(json_content)
-        } catch (e: Exception) {
-            try {
-                this._convert_old_fmt(
-                    this._convert_old_fmt(
-                        json.decodeFromString<LoadedJSONData0>(json_content)
-                    )
-                )
-            } catch (e: Exception) {
-                this._convert_old_fmt(
-                    json.decodeFromString<LoadedJSONData1>(json_content)
-                )
-            }
-        }
-
-        this.load_json(json_data)
-        this.path = path
     }
 
     private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEventSTD>>>> {

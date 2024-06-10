@@ -1820,7 +1820,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val other = OpusLayerLinks()
-        other.load(opus_manager.path!!)
+        other.load_path(opus_manager.path!!)
 
         return opus_manager != other
     }

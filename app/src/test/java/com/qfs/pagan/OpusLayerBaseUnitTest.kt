@@ -951,10 +951,38 @@ class OpusLayerBaseUnitTest {
     fun test_save() {
         //TODO("test_save")
     }
+
     @Test
-    fun test_load() {
-        //TODO("test_load")
+    fun test_load_0() {
+        val manager = OpusManager()
+        manager.load_path("UTP0.json")
+        assertEquals(
+            "UnitTestProject0",
+            manager.project_name
+        )
+        assertEquals(
+            OpusTempoEvent(140F),
+            manager.get_global_controller_initial_event(ControlEventType.Tempo)
+        )
+
+        assertEquals(
+            null,
+            manager.channels[0].lines[0].static_value
+        )
+        assertEquals(
+            27,
+            manager.channels[1].lines[0].static_value
+        )
+        assertEquals(
+            10,
+            manager.channels[1].lines[1].static_value
+        )
+        assertEquals(
+            8,
+            manager.channels[1].lines[2].static_value
+        )
     }
+
     @Test
     fun test_set_duration() {
         val manager = OpusManager()

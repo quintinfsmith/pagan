@@ -1837,9 +1837,9 @@ open class OpusLayerBase {
             else -> {
                 if (!map_keys.contains("controllers")) {
                     if (!map_keys.contains("tuning_map")) {
-                        1
-                    } else {
                         0
+                    } else {
+                        1
                     }
                 } else {
                     2
@@ -1913,12 +1913,13 @@ open class OpusLayerBase {
         val new_channels = mutableListOf<ChannelJSONData>()
         var beat_count = 0
         for (channel in old_data.channels) {
-            for (line in channel.lines) {
+            channel.lines.forEachIndexed { line_index: Int, line: OpusTreeJSON<OpusEventSTD> ->
                 beat_count = if (line.children != null) {
                     max(line.children!!.size, beat_count)
                 }  else {
                     max(1, beat_count)
                 }
+
             }
 
             val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
@@ -1938,7 +1939,7 @@ open class OpusLayerBase {
                     midi_bank = channel.midi_bank,
                     midi_program = channel.midi_program,
                     lines = channel.lines,
-                    line_static_values = List(channel.line_volumes.size) { null },
+                    line_static_values = List(channel.lines.size) { null },
                     line_controllers = line_controllers,
                     channel_controllers = listOf()
                 )

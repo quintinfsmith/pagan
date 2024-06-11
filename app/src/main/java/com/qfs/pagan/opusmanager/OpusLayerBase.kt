@@ -30,12 +30,9 @@ import kotlin.math.roundToInt
  */
 open class OpusLayerBase {
     class BadBeatKey(beat_key: BeatKey) : Exception("BeatKey $beat_key doesn't exist")
-    class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
     class NonEventConversion(beat_key: BeatKey, position: List<Int>) : Exception("Attempting to convert non-event @ $beat_key:$position")
-    class NoteOutOfRange(n: Int) : Exception("Attempting to use unsupported note $n")
     class NonPercussionEventSet : Exception("Attempting to set normal event on percussion channel")
     class PercussionEventSet : Exception("Attempting to set percussion event on non-percussion channel")
-    class EmptyPath : Exception("Path Required but not given")
     class BadInsertPosition : Exception("Can't insert tree at top level")
     class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
@@ -43,10 +40,14 @@ open class OpusLayerBase {
     class EventlessTreeException: Exception("Tree requires event for operation")
     class InvalidOverwriteCall: Exception()
     class InvalidMergeException: Exception()
+    class RemovingRootException: Exception()
+    class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
+    class NoteOutOfRange(n: Int) : Exception("Attempting to use unsupported note $n")
+
     class UnknownSaveConfiguration: Exception()
     class FutureSaveVersionException(version: Int): Exception("Attempting to load a project made with a newer version of Pagan (format: $version)")
     class InvalidJSON(json_string: String, index: Int): Exception("Invalid JSON @ $index In \"${json_string.substring(max(0, index - 20), min(json_string.length, index + 20))}\"")
-    class TrivialOpusTreeException: Exception()
+    class EmptyPath : Exception("Path Required but not given")
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -250,13 +251,7 @@ open class OpusLayerBase {
             throw BadBeatKey(beat_key)
         }
 
-        val line_offset: Int = if (beat_key.line_offset < 0) {
-            this.channels[beat_key.channel].size - beat_key.line_offset
-        } else {
-            beat_key.line_offset
-        }
-
-        if (line_offset > this.channels[beat_key.channel].size) {
+        if (beat_key.line_offset > this.channels[beat_key.channel].size) {
             throw BadBeatKey(beat_key)
         }
 
@@ -287,13 +282,7 @@ open class OpusLayerBase {
             throw BadBeatKey(beat_key)
         }
 
-        val line_offset: Int = if (beat_key.line_offset < 0) {
-            this.channels[beat_key.channel].size - beat_key.line_offset
-        } else {
-            beat_key.line_offset
-        }
-
-        if (line_offset > this.channels[beat_key.channel].size) {
+        if (beat_key.line_offset > this.channels[beat_key.channel].size) {
             throw BadBeatKey(beat_key)
         }
 
@@ -694,67 +683,65 @@ open class OpusLayerBase {
      * Remove tree @ [beat_key]/[position] if it's not a top-level tree
      */
     open fun remove(beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_tree(beat_key, position)
-
         // Can't remove beat
-        if (tree.parent == null || position.isEmpty()) {
-            return
+        if (position.isEmpty()) {
+            throw RemovingRootException()
         }
+
+        val tree = this.get_tree(beat_key, position)
 
         val parent_tree = tree.parent!!
 
         when (parent_tree.size) {
-            1 -> throw TrivialOpusTreeException()
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             2 -> this.remove_one_of_two(beat_key, position)
             else -> this.remove_standard(beat_key, position)
         }
     }
 
     open fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        // Can't remove beat
+        if (position.isEmpty()) {
+            throw RemovingRootException()
+        }
+
         val tree = this.get_line_ctl_tree(type, beat_key, position)
 
-        // Can't remove beat
-        if (tree.parent == null || position.isEmpty()) {
-            return
-        }
 
         val parent_tree = tree.parent!!
 
         when (parent_tree.size) {
-            1 -> throw TrivialOpusTreeException()
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             2 -> this.remove_line_ctl_one_of_two(type, beat_key, position)
             else -> this.remove_line_ctl_standard(type, beat_key, position)
         }
     }
 
     open fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        val tree = this.get_channel_ctl_tree(type, channel, beat, position)
-
-        // Can't remove beat
-        if (tree.parent == null || position.isEmpty()) {
-            return
+        if (position.isEmpty()) {
+            throw RemovingRootException()
         }
+        val tree = this.get_channel_ctl_tree(type, channel, beat, position)
 
         val parent_tree = tree.parent!!
 
         when (parent_tree.size) {
-            1 -> throw TrivialOpusTreeException()
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             2 -> this.remove_channel_ctl_one_of_two(type, channel, beat, position)
             else -> this.remove_channel_ctl_standard(type, channel, beat, position)
         }
     }
 
     open fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        val tree = this.get_global_ctl_tree(type, beat, position)
-
-        // Can't remove beat
-        if (tree.parent == null || position.isEmpty()) {
-            return
+        if (position.isEmpty()) {
+            throw RemovingRootException()
         }
+
+        val tree = this.get_global_ctl_tree(type, beat, position)
 
         val parent_tree = tree.parent!!
         when (parent_tree.size) {
-            1 -> throw TrivialOpusTreeException()
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             2 -> this.remove_global_ctl_one_of_two(type, beat, position)
             else -> this.remove_global_ctl_standard(type, beat, position)
         }
@@ -1186,11 +1173,8 @@ open class OpusLayerBase {
             new_tree.set_event(mid_tree.event!!.first())
         } else {
             new_tree.set_size(mid_tree.size)
+            // Can assume all subtrees are events since we've just flattened
             for ((offset, eventset) in mid_tree.divisions) {
-                if (!eventset.is_event()) {
-                    continue
-                }
-
                 if (eventset.event!!.size > 1) {
                     throw InvalidMergeException()
                 }
@@ -1885,11 +1869,6 @@ open class OpusLayerBase {
         this.on_project_changed()
     }
 
-    open fun new_global_controller(type: ControlEventType) {
-        this.controllers.new_controller(type)
-        this.recache_line_maps()
-    }
-
     private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEventSTD>>>> {
         fun tree_from_json(input_tree: OpusTreeJSON<OpusEventSTD>?): OpusTree<OpusEventSTD> {
             val new_tree = OpusTree<OpusEventSTD>()
@@ -2204,19 +2183,6 @@ open class OpusLayerBase {
             after the last NoteOff event. that gets ignored here
          */
         return Triple(opus, tempo_line.subList(0, min(tempo_line.size, opus.size)), instrument_map)
-    }
-
-    open fun import_from_other(other: OpusLayerBase) {
-        this.clear()
-        this.beat_count = other.beat_count
-        this.channels = other.channels
-        this.path = other.path
-        this.project_name = other.project_name
-        this.tuning_map = other.tuning_map.clone()
-        this.transpose = other.transpose
-        this._cached_abs_line_map = other._cached_abs_line_map
-        this._cached_std_line_map = other._cached_std_line_map
-        this.controllers = other.controllers
     }
 
     open fun import_midi(midi: Midi) {
@@ -2738,11 +2704,6 @@ open class OpusLayerBase {
     }
 
 
-    fun has_percussion(): Boolean {
-        val channel = this.channels[this.channels.size - 1]
-        return !channel.is_empty()
-    }
-
     // Calling this function every time a channel/line is modified should still be more efficient
     // than calculating offsets as needed
     open fun recache_line_maps() {
@@ -2973,26 +2934,6 @@ open class OpusLayerBase {
         }
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (other !is OpusLayerBase
-            || this.beat_count != other.beat_count
-            || this.path != other.path
-            || this.project_name != other.project_name
-            || this.transpose != other.transpose
-            || !this.tuning_map.contentEquals(other.tuning_map)
-            || this.channels.size != other.channels.size) {
-            return false
-        }
-
-        for (i in 0 until this.channels.size) {
-            if (this.channels[i] != other.channels[i]) {
-                return false
-            }
-        }
-
-        return true
-    }
-
     fun has_global_controller(type: ControlEventType): Boolean {
         return this.controllers.has_controller(type)
     }
@@ -3095,6 +3036,51 @@ open class OpusLayerBase {
         val controller = this.controllers.get_controller(type)
         return controller.initial_event
     }
+
+    fun has_percussion(): Boolean {
+        val channel = this.channels[this.channels.size - 1]
+        return !channel.is_empty()
+    }
+
+    open fun import_from_other(other: OpusLayerBase) {
+        this.clear()
+        this.beat_count = other.beat_count
+        this.channels = other.channels
+        this.path = other.path
+        this.project_name = other.project_name
+        this.tuning_map = other.tuning_map.clone()
+        this.transpose = other.transpose
+        this._cached_abs_line_map = other._cached_abs_line_map
+        this._cached_std_line_map = other._cached_std_line_map
+        this.controllers = other.controllers
+    }
+
+    open fun new_global_controller(type: ControlEventType) {
+        this.controllers.new_controller(type)
+        this.recache_line_maps()
+    }
+
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is OpusLayerBase
+            || this.beat_count != other.beat_count
+            || this.path != other.path
+            || this.project_name != other.project_name
+            || this.transpose != other.transpose
+            || !this.tuning_map.contentEquals(other.tuning_map)
+            || this.channels.size != other.channels.size) {
+            return false
+        }
+
+        for (i in 0 until this.channels.size) {
+            if (this.channels[i] != other.channels[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
+
 
     // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     // /*

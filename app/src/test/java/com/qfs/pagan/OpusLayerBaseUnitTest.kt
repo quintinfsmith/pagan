@@ -89,7 +89,13 @@ class OpusLayerBaseUnitTest {
             tree.size
         )
 
-        assertThrows(Exception::class.java) { manager.get_tree(BeatKey(2,0,0)) }
+        assertThrows(OpusManager.BadBeatKey::class.java) {
+            manager.get_tree(BeatKey(0,3,1))
+        }
+        assertThrows(OpusManager.BadBeatKey::class.java) {
+            manager.get_tree(BeatKey(2,0,0))
+        }
+
     }
 
     @Test
@@ -381,7 +387,9 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        assertThrows(Exception::class.java) { manager.convert_event_to_absolute(BeatKey(0,0,0), listOf()) }
+        assertThrows(OpusManager.NonEventConversion::class.java) {
+            manager.convert_event_to_absolute(BeatKey(0,0,0), listOf())
+        }
 
         manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(12, 0, false))
 
@@ -401,6 +409,18 @@ class OpusLayerBaseUnitTest {
             OpusEventSTD(12, 0, false),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
+
+
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(0, 0, false))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(-12, 0, true))
+        assertThrows(OpusManager.NoteOutOfRange::class.java) {
+            manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
+        }
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(94, 0, false))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(2, 0, true))
+        assertThrows(OpusManager.NoteOutOfRange::class.java) {
+            manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
+        }
     }
 
     @Test
@@ -461,6 +481,9 @@ class OpusLayerBaseUnitTest {
         manager.insert_beat(manager.beat_count)
         assertEquals(beats + 2, manager.beat_count)
 
+        assertThrows(OpusManager.RemovingRootException::class.java) {
+            manager.remove(BeatKey(0,0,0), listOf())
+        }
         assertThrows(Exception::class.java) { manager.insert_beat(manager.beat_count + 1) }
         assertThrows(Exception::class.java) { manager.remove_beat(manager.beat_count + 1) }
 
@@ -471,6 +494,8 @@ class OpusLayerBaseUnitTest {
         assertThrows(OpusLayerBase.RemovingLastBeatException::class.java) {
             manager.remove_beat(0)
         }
+
+
     }
 
     @Test
@@ -682,6 +707,10 @@ class OpusLayerBaseUnitTest {
         val type = ControlEventType.Tempo
         manager.split_global_ctl_tree(type, beat, listOf(), 2)
 
+        assertThrows(OpusManager.RemovingRootException::class.java) {
+            manager.remove_global_ctl(type, beat, listOf())
+        }
+
         val beat_tree = manager.get_global_ctl_tree(type, beat)
 
         // Insert empty tree in the first beat
@@ -721,6 +750,10 @@ class OpusLayerBaseUnitTest {
 
         manager.split_channel_ctl_tree(type, channel, beat, listOf(), 2)
 
+        assertThrows(OpusManager.RemovingRootException::class.java) {
+            manager.remove_channel_ctl(type, 0, 0, listOf())
+        }
+
         val beat_tree = manager.get_channel_ctl_tree(type, channel, beat)
 
         // Insert empty tree in the first beat
@@ -755,6 +788,10 @@ class OpusLayerBaseUnitTest {
         manager.new()
         val type = ControlEventType.Volume
         val beat_key = BeatKey(0, 0, 0)
+
+        assertThrows(OpusManager.RemovingRootException::class.java) {
+            manager.remove_line_ctl(type, beat_key, listOf())
+        }
 
         manager.split_line_ctl_tree(type, beat_key, listOf(), 2)
 
@@ -1159,6 +1196,10 @@ class OpusLayerBaseUnitTest {
         val event_b = OpusVolumeEvent(50)
         manager.set_channel_ctl_event(type, 0, 1, listOf(2), event_b)
 
+        assertThrows(OpusManager.InvalidChannel::class.java) {
+            manager.get_channel_ctl_tree(type, 2, 0, listOf())
+        }
+
         assertEquals(
             "Failed get_channel_ctl_tree",
             event_a,
@@ -1170,6 +1211,7 @@ class OpusLayerBaseUnitTest {
             manager.get_channel_ctl_tree(type, 0, 1, listOf(2)).event
         )
     }
+
     @Test
     fun test_get_line_ctl_tree() {
         val manager = OpusManager()
@@ -1184,6 +1226,13 @@ class OpusLayerBaseUnitTest {
         manager.split_line_ctl_tree(type, beat_key_b, listOf(), 3)
         val event_b = OpusVolumeEvent(50)
         manager.set_line_ctl_event(type, beat_key_b, listOf(2), event_b)
+
+        assertThrows(OpusManager.BadBeatKey::class.java) {
+            manager.get_line_ctl_tree(type, BeatKey(2,0,1), listOf())
+        }
+        assertThrows(OpusManager.BadBeatKey::class.java) {
+            manager.get_line_ctl_tree(type, BeatKey(0,3,1), listOf())
+        }
 
         assertEquals(
             "Failed get_line_ctl_tree",
@@ -3312,8 +3361,64 @@ class OpusLayerBaseUnitTest {
             Triple(-1, CtlLineLevel.Global, ControlEventType.Tempo),
             manager.get_ctl_line_info(9)
         )
-
-
-
     }
+
+    @Test
+    fun test_merge_leafs() {
+        val manager = OpusManager()
+        manager.new()
+        var key_a = BeatKey(0,0,0)
+        var key_b = BeatKey(0,0,1)
+        var key_c = BeatKey(0,0,2)
+        var key_d = BeatKey(0,0,3)
+
+        manager.split_tree(key_a, listOf(), 2)
+        manager.split_tree(key_b, listOf(), 3)
+        manager.set_event(key_a, listOf(0), OpusEventSTD(10, 0))
+        manager.set_event(key_a, listOf(1), OpusEventSTD(11, 0))
+        manager.set_event(key_b, listOf(0), OpusEventSTD(12, 0))
+        manager.set_event(key_b, listOf(1), OpusEventSTD(13, 0))
+        manager.set_event(key_b, listOf(2), OpusEventSTD(14, 0))
+
+        assertThrows(OpusManager.InvalidMergeException::class.java) {
+            manager.merge_leafs(key_a, listOf(), key_b, listOf())
+        }
+        assertThrows(OpusManager.InvalidMergeException::class.java) {
+            manager.merge_leafs(key_a, listOf(), key_a, listOf())
+        }
+
+        manager.unset(key_b, listOf(0))
+        manager.merge_leafs(key_a, listOf(), key_b, listOf())
+        assertTrue(manager.get_tree(key_a).is_leaf() && !manager.get_tree(key_a).is_event())
+        assertEquals(2, manager.get_tree(key_b).size)
+        assertEquals(3, manager.get_tree(key_b, listOf(0)).size)
+        assertEquals(3, manager.get_tree(key_b, listOf(1)).size)
+        assertEquals(
+            OpusEventSTD(10, 0),
+            manager.get_tree(key_b, listOf(0, 0)).event
+        )
+        assertEquals(
+            OpusEventSTD(11, 0),
+            manager.get_tree(key_b, listOf(1, 0)).event
+        )
+        assertEquals(
+            OpusEventSTD(13, 0),
+            manager.get_tree(key_b, listOf(0, 2)).event
+        )
+        assertEquals(
+            OpusEventSTD(14, 0),
+            manager.get_tree(key_b, listOf(1, 1)).event
+        )
+
+        manager.set_event(key_c, listOf(), OpusEventSTD(15, 0))
+        manager.merge_leafs(key_c, listOf(), key_d, listOf())
+
+        assertTrue(manager.get_tree(key_d).is_event())
+
+        assertEquals(
+            OpusEventSTD(15, 0),
+            manager.get_tree(key_d).event
+        )
+    }
+
 }

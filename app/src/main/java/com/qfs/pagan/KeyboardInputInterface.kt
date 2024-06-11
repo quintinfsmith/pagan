@@ -340,7 +340,11 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                                     working_beat_key,
                                     working_position
                                 ) ?: break
-                                working_beat_key = next_pair.first
+                                working_beat_key = BeatKey(
+                                    working_beat_key.channel,
+                                    working_beat_key.line_offset,
+                                    next_pair.first
+                                )
                                 working_position = next_pair.second
                             }
                             this.opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, working_beat_key, working_position)

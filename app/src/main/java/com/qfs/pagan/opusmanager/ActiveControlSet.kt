@@ -33,6 +33,40 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             }
         }
 
+        fun get_proceding_leaf_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+            var working_position = position.toMutableList()
+            var working_beat = beat
+
+            var working_tree = this.get_tree(working_beat, working_position)
+
+            // Move right/up
+            while (true) {
+                if (working_tree.parent != null) {
+                    if (working_tree.parent!!.size - 1 > working_position.last()) {
+                        working_position[working_position.size - 1] += 1
+                        working_tree = this.get_tree(working_beat, working_position)
+                        break
+                    } else {
+                        working_position.removeLast()
+                        working_tree = working_tree.parent!!
+                    }
+                } else if (working_beat < this.events.size - 1) {
+                    working_beat += 1
+                    working_position = mutableListOf()
+                    working_tree = this.get_tree(working_beat, working_position)
+                    break
+                } else {
+                    return null
+                }
+            }
+            // Move left/down to leaf
+            while (!working_tree.is_leaf()) {
+                working_position.add(0)
+                working_tree = working_tree[0]
+            }
+            return Pair(working_beat, working_position)
+        }
+
         fun set_initial_event(value: OpusControlEvent) {
             this.initial_event = value
         }
@@ -157,7 +191,6 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
 
         fun set_beat_count(beat_count: Int) {
             val current_beat_count = this.events.size
-
             if (beat_count > current_beat_count) {
                 for (i in current_beat_count until beat_count) {
                     this.insert_beat(current_beat_count)
@@ -192,6 +225,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
     }
 
     fun clear() {
+        this.beat_count = 0
         this.controllers.clear()
     }
 

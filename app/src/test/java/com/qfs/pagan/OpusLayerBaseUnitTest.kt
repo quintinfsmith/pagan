@@ -161,7 +161,7 @@ class OpusLayerBaseUnitTest {
         manager.set_line_ctl_event(type, first_beat_key, listOf(3), OpusVolumeEvent(0))
         manager.set_line_ctl_event(type, first_beat_key, listOf(2), OpusVolumeEvent(1))
         assertEquals(
-            Pair(BeatKey(0, 0, 1), listOf(3)),
+            Pair(1, listOf(3)),
             manager.get_line_ctl_proceding_leaf_position(type, first_beat_key, listOf(2))
         )
         assertEquals(

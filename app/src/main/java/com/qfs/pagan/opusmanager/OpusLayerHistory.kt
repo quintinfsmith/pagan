@@ -671,29 +671,30 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun remove_only(beat_key: BeatKey, position: List<Int>) {
-        this._forget {
-            super.remove_only(beat_key, position)
-        }
-    }
+    // Unused, should be able to delete
+    //override fun remove_only(beat_key: BeatKey, position: List<Int>) {
+    //    this._forget {
+    //        super.remove_only(beat_key, position)
+    //    }
+    //}
 
-    override fun remove_global_ctl_only(type: ControlEventType, beat: Int, position: List<Int>) {
-        this._forget {
-            super.remove_global_ctl_only(type, beat, position)
-        }
-    }
+    //override fun remove_global_ctl_only(type: ControlEventType, beat: Int, position: List<Int>) {
+    //    this._forget {
+    //        super.remove_global_ctl_only(type, beat, position)
+    //    }
+    //}
 
-    override fun remove_channel_ctl_only(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        this._forget {
-            super.remove_channel_ctl_only(type, channel, beat, position)
-        }
-    }
+    //override fun remove_channel_ctl_only(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+    //    this._forget {
+    //        super.remove_channel_ctl_only(type, channel, beat, position)
+    //    }
+    //}
 
-    override fun remove_line_ctl_only(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        this._forget {
-            super.remove_line_ctl_only(type, beat_key, position)
-        }
-    }
+    //override fun remove_line_ctl_only(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+    //    this._forget {
+    //        super.remove_line_ctl_only(type, beat_key, position)
+    //    }
+    //}
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this._forget {

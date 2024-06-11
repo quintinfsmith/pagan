@@ -91,7 +91,6 @@ open class OpusLayerBase {
     var channels: MutableList<OpusChannel> = mutableListOf()
     var path: String? = null
     var project_name: String = DEFAULT_NAME
-    var tempo: Float = 120F
     var transpose: Int = 0
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
 
@@ -1579,7 +1578,6 @@ open class OpusLayerBase {
         this.channels.clear()
         this.path = null
         this.project_name = OpusLayerBase.DEFAULT_NAME
-        this.tempo = 120F
         this.tuning_map = Array(12) {
             i: Int -> Pair(i, 12)
         }
@@ -2211,7 +2209,6 @@ open class OpusLayerBase {
     open fun import_from_other(other: OpusLayerBase) {
         this.clear()
         this.beat_count = other.beat_count
-        this.tempo = other.tempo
         this.channels = other.channels
         this.path = other.path
         this.project_name = other.project_name
@@ -2981,7 +2978,6 @@ open class OpusLayerBase {
             || this.beat_count != other.beat_count
             || this.path != other.path
             || this.project_name != other.project_name
-            || this.tempo != other.tempo
             || this.transpose != other.transpose
             || !this.tuning_map.contentEquals(other.tuning_map)
             || this.channels.size != other.channels.size) {
@@ -3110,7 +3106,6 @@ open class OpusLayerBase {
     //     }
 
     //     this.beat_count = ceil(this.beat_count.toDouble() / factor.toDouble()).toInt()
-    //     this.tempo /= factor
     // }
 
     // fun get_maximum_simultaneous_notes(): Int {

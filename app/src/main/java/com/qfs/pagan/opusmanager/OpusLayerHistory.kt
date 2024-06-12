@@ -356,6 +356,8 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {
+        // TODO:  I don't think size == 0 needs to be checked here, maybe
+        //  AND should LastLineException be caught or allow to propagate here?
         this._remember {
             for (i in 0 until count) {
                 if (this.channels[channel].size == 0) {
@@ -543,7 +545,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     0
                 }
 
-                this.remove_global_ctl(type, beat, position)
+                this.remove_global_ctl(type, beat, adj_position)
 
                 when (directive) {
                     2 -> {
@@ -599,7 +601,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     0
                 }
 
-                this.remove_line_ctl(type, beat_key, position)
+                this.remove_line_ctl(type, beat_key, adj_position)
 
                 when (directive) {
                     2 -> {
@@ -615,32 +617,32 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         val old_tree = this.get_tree(beat_key, position.subList(0, position.size - 1)).copy()
-        this.push_replace_tree(beat_key, position.subList(0, position.size - 1), old_tree) {
-            this._remember {
+        this._remember {
+            this.push_replace_tree(beat_key, position.subList(0, position.size - 1), old_tree) {
                 super.remove(beat_key, position)
             }
         }
     }
 
     override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        this.push_replace_global_ctl(type, beat, position.subList(0, position.size - 1)) {
-            this._remember {
+        this._remember {
+            this.push_replace_global_ctl(type, beat, position.subList(0, position.size - 1)) {
                 super.remove_global_ctl(type, beat, position)
             }
         }
     }
 
     override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        this.push_replace_channel_ctl(type, channel, beat, position.subList(0, position.size - 1)) {
-            this._remember {
+        this._remember {
+            this.push_replace_channel_ctl(type, channel, beat, position.subList(0, position.size - 1)) {
                 super.remove_channel_ctl(type, channel, beat, position)
             }
         }
     }
 
     override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        this.push_replace_line_ctl(type, beat_key, position.subList(0, position.size - 1)) {
-            this._remember {
+        this._remember {
+            this.push_replace_line_ctl(type, beat_key, position.subList(0, position.size - 1)) {
                 super.remove_line_ctl(type, beat_key, position)
             }
         }
@@ -846,9 +848,34 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun overwrite_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
+        this._remember {
+            super.overwrite_global_ctl_range(type, target, start, end)
+        }
+    }
+
     override fun move_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
         this._remember {
             super.move_channel_ctl_range(type, target_channel, target_beat, original_channel, start, end)
+        }
+    }
+
+    override fun overwrite_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
+        this._remember {
+            super.overwrite_channel_ctl_range(type, target_channel, target_beat, original_channel, start, end)
+        }
+    }
+
+
+    override fun move_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this._remember {
+            super.move_line_ctl_range(type, beat_key, first_corner, second_corner)
+        }
+    }
+
+    override fun overwrite_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this._remember {
+            super.overwrite_line_ctl_range(type, beat_key, first_corner, second_corner)
         }
     }
 
@@ -912,13 +939,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this._remember {
             super.set_percussion_event(beat_key, position)
-
-            val tree = this.get_tree(beat_key, position)
-            if (!tree.is_event()) {
-                this.push_set_percussion_event(beat_key, position)
-            } else {
-                this.push_unset(beat_key, position)
-            }
+            this.push_unset(beat_key, position)
         }
     }
 
@@ -1056,7 +1077,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
             this.push_to_history_stack(
                 HistoryToken.REPLACE_LINE_CTL_TREE,
-                listOf(type, beat_key, position.toList(), use_tree)
+                listOf(type, beat_key.copy(), position.toList(), use_tree)
             )
             output
         } else {
@@ -1400,6 +1421,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+
     override fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         this._remember {
             super.overwrite_row(channel, line_offset, beat_key)
@@ -1438,12 +1460,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
     override fun overwrite_global_ctl_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
         this._remember {
             super.overwrite_global_ctl_range_horizontally(type, first_beat, second_beat)
-        }
-    }
-
-    override fun overwrite_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
-        this._remember {
-            super.overwrite_channel_ctl_range(type, target_channel, target_beat, original_channel, start, end)
         }
     }
 

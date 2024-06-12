@@ -19,7 +19,6 @@ data class LoadedJSONData(
     var transpose: Int = 0,
     var name: String = OpusLayerBase.DEFAULT_NAME,
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) },
-    var radix: Int = tuning_map.size,
     var controllers: List<ActiveControllerJSON> = listOf()
 )
 

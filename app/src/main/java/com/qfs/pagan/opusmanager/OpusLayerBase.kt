@@ -586,6 +586,9 @@ open class OpusLayerBase {
         val tree = this.get_tree(beat_key, parent_position)
 
         val index = position.last()
+        if (index > tree.size) {
+            throw BadInsertPosition()
+        }
         tree.insert(index, OpusTree())
     }
 
@@ -1282,8 +1285,6 @@ open class OpusLayerBase {
 
         val end_beat = if (end_beat_rel == null) {
             this.beat_count
-        } else if (end_beat_rel < 0) {
-            this.beat_count + end_beat_rel
         } else {
             end_beat_rel
         }

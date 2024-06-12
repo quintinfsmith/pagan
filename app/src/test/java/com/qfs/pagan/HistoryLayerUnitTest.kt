@@ -3,45 +3,120 @@ package com.qfs.pagan
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Test
 import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
+import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
 
 class HistoryCacheUnitTest {
+    fun undo_and_check(manager: OpusManager, callback: (OpusManager) -> Unit) {
+        manager.clear_history()
+
+        val original = OpusManager()
+        original.import_from_other(manager)
+
+        callback(manager)
+        manager.apply_undo()
+
+        assertEquals(
+            "Undo Didn't Work Correctly",
+            original,
+            manager
+        )
+
+        assertTrue(
+            "Some actions weren't applied",
+            manager.history_cache.isEmpty()
+        )
+    }
+
     @Test
-    fun test_historycache_push_set_cursor() {
-        //TODO("test_historycache_push_set_cursor")
+    fun test_remove() {
+        var key = BeatKey(0,0,0)
+        var test_event = OpusEventSTD(12,0,false)
+
+        var manager = OpusManager()
+        manager.new()
+
+        manager.split_tree(key, listOf(), 2)
+        manager.split_tree(key, listOf(1), 3)
+        manager.set_event(key, listOf(1, 0), test_event)
+
+        this.undo_and_check(manager) {
+            it.remove(key, listOf(1,2), 3)
+        }
+        this.undo_and_check(manager) {
+            it.remove(key, listOf(1,0), 1)
+        }
     }
     @Test
-    fun test_historycache_clear() {
-        //TODO("test_historycache_clear")
+    fun test_remove_global_ctl() {
+        var key = 0
+        var test_event = OpusTempoEvent(25F)
+        val type = ControlEventType.Tempo
+
+        var manager = OpusManager()
+        manager.new()
+
+        manager.split_global_ctl_tree(type, key, listOf(), 2)
+        manager.split_global_ctl_tree(type, key, listOf(1), 3)
+        manager.set_global_ctl_event(type, key, listOf(1, 0), test_event)
+
+        this.undo_and_check(manager) {
+            it.remove_global_ctl(type, key, listOf(1,2), 3)
+        }
+
+        this.undo_and_check(manager) {
+            it.remove_global_ctl(type, key, listOf(1,0), 1)
+        }
     }
 
-    ///------------------------------------------------------
+    @Test
+    fun test_remove_channel_ctl() {
+        var key = 0
+        var test_event = OpusVolumeEvent(25)
+        val type = ControlEventType.Volume
 
-   @Test
-   fun test_remove() {
-       var key = BeatKey(0,0,0)
-       var test_event = OpusEventSTD(12,0,false)
+        var manager = OpusManager()
+        manager.new()
 
-       var manager = OpusManager()
-       manager.new()
-       manager.split_tree(key, listOf(), 2)
-       manager.set_event(key, listOf(1), test_event)
-       manager.remove(key, listOf(1))
-       manager.apply_undo()
-       assertEquals(
-           "Failed to undo remove",
-           2,
-           manager.get_tree(key, listOf()).size,
-       )
+        manager.split_channel_ctl_tree(type, key, 0, listOf(), 2)
+        manager.split_channel_ctl_tree(type, key, 0, listOf(1), 3)
+        manager.set_channel_ctl_event(type, key, 0, listOf(1, 0), test_event)
 
-       assertEquals(
-           "Failed to undo remove with correct tree",
-           test_event,
-           manager.get_tree(key, listOf(1)).get_event()
-       )
-   }
+        this.undo_and_check(manager) {
+            it.remove_channel_ctl(type, key, 0, listOf(1,2), 3)
+        }
+
+        this.undo_and_check(manager) {
+            it.remove_channel_ctl(type, key, 0, listOf(1,0), 1)
+        }
+    }
+
+    @Test
+    fun test_remove_line_ctl() {
+        var key = BeatKey(0,0,0)
+        var test_event = OpusVolumeEvent(25)
+        val type = ControlEventType.Volume
+
+        var manager = OpusManager()
+        manager.new()
+
+        manager.split_line_ctl_tree(type, key, listOf(), 2)
+        manager.split_line_ctl_tree(type, key, listOf(1), 3)
+        manager.set_line_ctl_event(type, key, listOf(1, 0), test_event)
+
+        this.undo_and_check(manager) {
+            it.remove_line_ctl(type, key, listOf(1,2), 3)
+        }
+
+        this.undo_and_check(manager) {
+            it.remove_line_ctl(type, key, listOf(1,0), 1)
+        }
+    }
 
     @Test
     fun test_convert_event_to_relative() {
@@ -63,26 +138,10 @@ class HistoryCacheUnitTest {
     fun test_set_percussion_event() {
         var manager = OpusManager()
         manager.new()
+        this.undo_and_check(manager) {
+            it.set_percussion_event(BeatKey(1,0,0), listOf())
+        }
 
-        try {
-            manager.set_percussion_event(BeatKey(0,0,0), listOf())
-        } catch (e: Exception) {}
-
-        assertEquals(
-            "Appended to history stack on failure.",
-            true,
-            manager.history_cache.isEmpty()
-        )
-
-        manager.set_percussion_event(BeatKey(1,0,0), listOf())
-
-        manager.apply_undo()
-
-        assertEquals(
-            "Failed to undo set_percussion_event().",
-            false,
-            manager.get_tree(BeatKey(0,0,0), listOf()).is_event()
-        )
     }
 
     @Test
@@ -92,25 +151,11 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
 
-        manager.set_event(BeatKey(0,0,0), listOf(), event)
-        manager.apply_undo()
-
-        assertEquals(
-            "Failed to undo set_event()",
-            null,
-            manager.get_tree(BeatKey(0,0,0), listOf()).get_event()
-        )
-
         manager.set_event(BeatKey(0,0,0), listOf(), event_b)
-        manager.set_event(BeatKey(0,0,0), listOf(), event)
 
-        manager.apply_undo()
-
-        assertEquals(
-            "Failed to undo set_event()",
-            event_b,
-            manager.get_tree(BeatKey(0,0,0), listOf()).get_event()
-        )
+        this.undo_and_check(manager) {
+            it.set_event(BeatKey(0,0,0), listOf(), event)
+        }
     }
 
     @Test
@@ -119,28 +164,10 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
         manager.set_event(BeatKey(0,0,0), listOf(), event)
-        manager.clear_history()
 
-        var original = manager.to_json()
-
-        manager.unset(BeatKey(0,0,0), listOf())
-        manager.apply_undo()
-
-        assertEquals(
-            "Failed to undo unset()",
-            manager.to_json(),
-            original
-        )
-
-        try {
-            manager.unset(BeatKey(0, 0, 0), listOf(0, 2))
-        } catch (e: Exception) { }
-
-        assertEquals(
-            "Didn't clean history stack on error",
-            true,
-            manager.history_cache.isEmpty()
-        )
+        this.undo_and_check(manager) {
+            it.unset(BeatKey(0,0,0), listOf())
+        }
     }
 
     @Test
@@ -148,53 +175,19 @@ class HistoryCacheUnitTest {
         var manager = OpusManager()
         manager.new()
 
-        var original = manager.to_json()
-        manager.new_channel()
-        manager.apply_undo()
+        this.undo_and_check(manager) {
+            it.new_channel()
+        }
+   }
 
-        assertEquals(
-            "Failed to undo new_channel",
-            original,
-            manager.to_json()
-        )
-    }
-
-    @Test
-    fun test_change_line_channel() {
-        //TODO("test_change_line_channel")
-    }
-    @Test
-    fun test_insert_beat() {
-        //TODO("test_insert_beat")
-    }
-    @Test
-    fun test_overwrite_beat() {
-        //TODO("test_overwrite_beat")
-    }
     @Test
     fun test_remove_beat() {
         var manager = OpusManager()
         manager.new()
-        var original = manager.to_json()
 
-        manager.remove_beat(0)
-        manager.apply_undo()
-        var new = manager.to_json()
-
-        assertEquals(
-            "undo remove_beat broken",
-            original,
-            new
-        )
-
-        try {
-            manager.remove_beat(200)
-        } catch (e: Exception) {}
-        assertEquals(
-            "history stack not cleared with error",
-            true,
-            manager.history_cache.isEmpty()
-        )
+        this.undo_and_check(manager) {
+            it.remove_beat(0)
+        }
     }
 
     @Test
@@ -203,28 +196,10 @@ class HistoryCacheUnitTest {
         manager.new()
         manager.new_channel()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
-        manager.clear_history()
+        this.undo_and_check(manager) {
+            it.remove_channel(0)
+        }
 
-        var original = manager.to_json()
-
-        manager.remove_channel(0)
-        manager.apply_undo()
-
-        var new = manager.to_json()
-        assertEquals(
-            "undo remove_channel broken",
-            original,
-            new
-        )
-
-        try {
-            manager.remove_channel(4)
-        } catch (e: Exception) {}
-        assertEquals(
-            "history stack not cleared with error",
-            true,
-            manager.history_cache.isEmpty()
-        )
     }
 
     @Test
@@ -233,28 +208,12 @@ class HistoryCacheUnitTest {
         manager.new()
         manager.new_line(0,0)
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
-        manager.clear_history()
 
-        var original = manager.to_json()
+        manager.new_line(0,0,4)
+        this.undo_and_check(manager) {
+            it.remove_line(0,0,4)
+        }
 
-        manager.remove_line(0, 0)
-        manager.apply_undo()
-
-        var new = manager.to_json()
-        assertEquals(
-            "undo remove_line broken",
-            original,
-            new
-        )
-
-        try {
-            manager.remove_line(4, 0)
-        } catch (e: Exception) {}
-        assertEquals(
-            "history stack not cleared with error",
-            true,
-            manager.history_cache.isEmpty()
-        )
     }
 
     @Test
@@ -263,30 +222,25 @@ class HistoryCacheUnitTest {
         manager.new()
         var original = manager.to_json()
 
-        manager.new_line(0, 0)
-        manager.apply_undo()
+        this.undo_and_check(manager) {
+            it.new_line(0, 0, 10)
+        }
 
-        var new = manager.to_json()
-        assertEquals(
-            "undo new_line broken",
-            original,
-            new
-        )
-
-        try {
-            manager.new_line(4, 0)
-        } catch (e: Exception) {}
-        assertEquals(
-            "history stack not cleared with error",
-            true,
-            manager.history_cache.isEmpty()
-        )
     }
 
     @Test
-    fun test_replace_beat() {
-        //TODO("test_replace_beat")
+    fun test_swap_lines() {
+        var manager = OpusManager() 
+        manager.new()
+        manager.new_line(0)
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(0, 0))
+        manager.set_event(BeatKey(0,1,0), listOf(), OpusEventSTD(1, 0))
+
+        this.undo_and_check(manager) {
+            it.swap_lines(0, 0, 0, 1)
+        }
     }
+
     @Test
     fun test_replace_tree() {
         var manager = OpusManager()
@@ -295,108 +249,508 @@ class HistoryCacheUnitTest {
         var new_tree = OpusTree<OpusEventSTD>()
         new_tree.set_size(5)
 
-        manager.replace_tree(BeatKey(0,0,0), listOf(), new_tree)
-        manager.apply_undo()
-        var new = manager.to_json()
-        assertEquals(
-            "undo replace_tree broken",
-            original,
-            new
-        )
-
-        try {
-            manager.replace_tree(BeatKey(5,0,0), listOf(), new_tree)
-        } catch (e: Exception) { }
-
-        assertEquals(
-            "Didn't clean history stack on error",
-            true,
-            manager.history_cache.isEmpty()
-        )
+        this.undo_and_check(manager) {
+            it.replace_tree(BeatKey(0,0,0), listOf(), new_tree)
+        }
     }
 
-    @Test
-    fun test_to_json() {
-        //TODO("test_to_json")
-    }
-    @Test
-    fun test_save() {
-        //TODO("test_save")
-    }
-    @Test
-    fun test_load() {
-        //TODO("test_load")
-    }
-    @Test
-    fun test_import_midi() {
-        //TODO("test_import_midi")
-    }
-    @Test
-    fun test_purge_cache() {
-        //TODO("test_purge_cache")
-    }
-    @Test
-    fun test_reset_cache() {
-        //TODO("test_reset_cache")
-    }
 
     @Test
     fun test_insert_after() {
         var manager = OpusManager()
         manager.new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
-        // Need to clean stack for final check
-        manager.clear_history()
 
-        var original = manager.to_json()
-
-        manager.insert_after(BeatKey(0,0,0), listOf(0), 1)
-
-        manager.apply_undo()
-        var new = manager.to_json()
-        assertEquals(
-            "undo insert_after broken",
-            original,
-            new
-        )
-
-        try {
-            manager.split_tree(BeatKey(0, 0, 0), listOf(0, 2), 1)
-        } catch (e: Exception) { }
-
-        assertEquals(
-            "Didn't clean history stack on error",
-            true,
-            manager.history_cache.isEmpty()
-        )
+        this.undo_and_check(manager) { om: OpusManager ->
+            om.insert_after(BeatKey(0,0,0), listOf(0), 1)
+        }
     }
 
     @Test
     fun test_split_tree() {
         var manager = OpusManager()
         manager.new()
-        var original = manager.to_json()
 
-        manager.split_tree(BeatKey(0,0,0), listOf(), 3)
+        this.undo_and_check(manager) {
+            it.split_tree(BeatKey(0,0,0), listOf(), 3)
+        }
+    }
 
-        manager.apply_undo()
+    @Test
+    fun test_split_channel_ctl_tree() {
+        var manager = OpusManager()
+        manager.new()
 
+        this.undo_and_check(manager) {
+            it.split_channel_ctl_tree(ControlEventType.Volume, 0, 0, listOf(), 3)
+        }
+    }
 
-        var new = manager.to_json()
-        assertEquals(
-            "undo split_tree broken",
-            original,
-            new
-        )
+    @Test
+    fun test_split_global_ctl_tree() {
+        var manager = OpusManager()
+        manager.new()
 
-        try {
-            manager.split_tree(BeatKey(0, 0, 0), listOf(0, 2), 3)
-        } catch (e: Exception) { }
+        this.undo_and_check(manager) {
+            it.split_global_ctl_tree(ControlEventType.Tempo, 0, listOf(), 3)
+        }
+    }
 
-        assertEquals(
-            "Didn't clean history stack on error",
-            true,
-            manager.history_cache.isEmpty()
-        )
+    @Test
+    fun test_split_line_ctl_tree() {
+        var manager = OpusManager()
+        manager.new()
+        this.undo_and_check(manager) {
+            it.split_line_ctl_tree(ControlEventType.Volume, BeatKey(0,0,0), listOf(), 3)
+        }
+    }
+
+    @Test
+    fun test_insert() {
+        var manager = OpusManager()
+        manager.new()
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+
+        this.undo_and_check(manager) {
+            it.insert(BeatKey(0,0,0), listOf(0), 1)
+        }
+
+    }
+
+    @Test
+    fun test_set_tuning_map() {
+        var manager = OpusManager()
+        manager.new()
+
+        this.undo_and_check(manager) {
+            val tuning_map = it.tuning_map.clone()
+            tuning_map[0] = Pair(4, 36)
+            it.set_tuning_map_and_transpose(
+                tuning_map,
+                10
+            )
+        }
+    }
+
+    @Test
+    fun test_merge_leafs() {
+        var manager = OpusManager()
+        manager.new()
+
+        var key_a = BeatKey(0,0,0)
+        var key_b = BeatKey(0,0,1)
+
+        manager.split_tree(key_a, listOf(), 2)
+        manager.split_tree(key_b, listOf(), 3)
+        manager.set_event(key_a, listOf(0), OpusEventSTD(10, 0))
+        manager.set_event(key_a, listOf(1), OpusEventSTD(11, 0))
+        manager.set_event(key_b, listOf(1), OpusEventSTD(13, 0))
+        manager.set_event(key_b, listOf(2), OpusEventSTD(14, 0))
+
+        this.undo_and_check(manager) {
+            manager.merge_leafs(key_a, listOf(), key_b, listOf())
+        }
+    }
+
+    @Test
+    fun test_set_initial_events() {
+        val manager = OpusManager()
+        manager.new()
+        val initial_line_event = manager.get_line_controller_initial_event(ControlEventType.Volume, 0, 0)
+        val initial_channel_event = manager.get_channel_controller_initial_event(ControlEventType.Volume, 0)
+        val initial_global_event = manager.get_global_controller_initial_event(ControlEventType.Tempo)
+
+        this.undo_and_check(manager) {
+            it.set_line_controller_initial_event(ControlEventType.Volume, 0, 0, OpusVolumeEvent(25))
+        }
+
+        this.undo_and_check(manager) {
+            it.set_channel_controller_initial_event(ControlEventType.Volume, 0, OpusVolumeEvent(25))
+        }
+
+        this.undo_and_check(manager) {
+            it.set_global_controller_initial_event(ControlEventType.Tempo, OpusTempoEvent(60F))
+        }
+    }
+
+    @Test
+    fun test_overwrite_channel_ctl_range_horizontally() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val type = ControlEventType.Volume
+        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(24))
+        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(24))
+
+        this.undo_and_check(manager) {
+            it.overwrite_channel_ctl_range_horizontally(type, 0, 0, 1)
+        }
+    }
+
+    @Test
+    fun test_overwrite_global_ctl_range_horizontally() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val type = ControlEventType.Tempo
+        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(24f))
+        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(24f))
+
+        this.undo_and_check(manager) {
+            it.overwrite_global_ctl_range_horizontally(type, 0, 1)
+        }
+    }
+
+    @Test
+    fun test_overwrite_line_ctl_range_horizontally() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val type = ControlEventType.Volume
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(24))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(24))
+
+        this.undo_and_check(manager) {
+            it.overwrite_line_ctl_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_overwrite_beat_range_horizontally() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val event = OpusEventSTD(24, 0)
+        manager.set_event(BeatKey(0, 0, 0), listOf(), event)
+        manager.set_event(BeatKey(0, 0, 1), listOf(), event)
+
+        this.undo_and_check(manager) {
+            it.overwrite_beat_range_horizontally(0, 0, BeatKey(0, 0, 0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_overwrite_row() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val event = OpusEventSTD(24, 0)
+        manager.set_event(BeatKey(0,0,0), listOf(), event)
+        this.undo_and_check(manager) {
+            it.overwrite_row(0, 0, BeatKey(0,0,0))
+        }
+    }
+    @Test
+    fun test_overwrite_channel_ctl_row() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val type = ControlEventType.Volume
+        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(24))
+
+        this.undo_and_check(manager) {
+            it.overwrite_channel_ctl_row(type, 0, 0, 1)
+        }
+    }
+
+    @Test
+    fun test_overwrite_global_ctl_row() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val type = ControlEventType.Tempo
+        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(24f))
+
+        this.undo_and_check(manager) {
+            it.overwrite_global_ctl_row(type, 0)
+        }
+    }
+
+    @Test
+    fun test_overwrite_line_ctl_row() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        val type = ControlEventType.Volume
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(24))
+        this.undo_and_check(manager) {
+            it.overwrite_line_ctl_row(type, 0, 0, BeatKey(0, 0, 0))
+        }
+    }
+
+    @Test
+    fun test_set_duration() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(24, 0))
+        this.undo_and_check(manager) {
+            it.set_duration(BeatKey(0,0,0), listOf(), 3)
+        }
+    }
+
+    @Test
+    fun test_insert_after_global_ctl() {
+        val manager = OpusManager()
+        manager.new()
+        manager.split_global_ctl_tree(ControlEventType.Tempo, 0, listOf(), 2)
+        this.undo_and_check(manager) {
+            it.insert_after_global_ctl(ControlEventType.Tempo, 0, listOf(0), 3)
+        }
+    }
+
+    @Test
+    fun test_insert_after_channel_ctl() {
+        val manager = OpusManager()
+        manager.new()
+        manager.split_channel_ctl_tree(ControlEventType.Volume, 0, 0, listOf(), 2)
+        this.undo_and_check(manager) {
+            it.insert_after_channel_ctl(ControlEventType.Volume, 0, 0, listOf(0), 3)
+        }
+    }
+
+    @Test
+    fun test_insert_after_line_ctl() {
+        val manager = OpusManager()
+        manager.new()
+        manager.split_line_ctl_tree(ControlEventType.Volume, BeatKey(0, 0, 0), listOf(), 2)
+        this.undo_and_check(manager) {
+            it.insert_after_line_ctl(ControlEventType.Volume, BeatKey(0, 0, 0), listOf(0), 3)
+        }
+    }
+
+    @Test
+    fun test_insert_beat() {
+        val manager = OpusManager()
+        manager.new()
+
+        this.undo_and_check(manager) {
+            it.insert_beats(0, 4)
+        }
+        manager.insert_beats(0, 4)
+
+        this.undo_and_check(manager) {
+            it.remove_beat(0, 4)
+        }
+    }
+
+    @Test
+    fun test_move_leaf() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.set_event(BeatKey(0, 0, 0), listOf(), OpusEventSTD(15, 0))
+        manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(16, 0))
+        manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(17, 0))
+
+        this.undo_and_check(manager) {
+            it.move_leaf(BeatKey(0, 0, 0), listOf(), BeatKey(0, 0, 1), listOf())
+        }
+    }
+
+    @Test
+    fun test_move_line_ctl_leaf() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(15))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(16))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(17))
+
+        this.undo_and_check(manager) {
+            it.move_line_ctl_leaf(type, BeatKey(0, 0, 0), listOf(), BeatKey(0, 0, 1), listOf())
+        }
+    }
+
+    @Test
+    fun test_move_channel_ctl_leaf() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+
+        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(15))
+        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(16))
+        manager.set_channel_ctl_event(type, 0, 2, listOf(), OpusVolumeEvent(17))
+
+        this.undo_and_check(manager) {
+            it.move_channel_ctl_leaf(type, 0, 0, listOf(), 0, 1, listOf())
+        }
+    }
+
+    @Test
+    fun test_move_global_ctl_leaf() {
+        val manager = OpusManager()
+        val type = ControlEventType.Tempo
+        manager.new()
+
+        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(15f))
+        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(16f))
+        manager.set_global_ctl_event(type, 2, listOf(), OpusTempoEvent(17f))
+
+        this.undo_and_check(manager) {
+            it.move_global_ctl_leaf(type, 0, listOf(), 1, listOf())
+        }
+    }
+
+    @Test
+    fun test_move_beat_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_event(BeatKey(0, 0, 0), listOf(), OpusEventSTD(10, 0))
+        manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(11, 0))
+        manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(13, 0))
+        manager.set_event(BeatKey(0, 0, 3), listOf(), OpusEventSTD(14, 0))
+        
+        this.undo_and_check(manager) {
+            it.move_beat_range(BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_move_line_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
+        
+        this.undo_and_check(manager) {
+            it.move_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_overwrite_line_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
+        
+        this.undo_and_check(manager) {
+            it.overwrite_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_move_global_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Tempo
+        manager.new()
+        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(10F))
+        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
+        manager.set_global_ctl_event(type, 2, listOf(), OpusTempoEvent(13F))
+        manager.set_global_ctl_event(type, 3, listOf(), OpusTempoEvent(14F))
+        
+        this.undo_and_check(manager) {
+            it.move_global_ctl_range(type, 2, 0, 1)
+        }
+    }
+    @Test
+    fun test_overwrite_global_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Tempo
+        manager.new()
+        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(10F))
+        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
+        manager.set_global_ctl_event(type, 2, listOf(), OpusTempoEvent(13F))
+        manager.set_global_ctl_event(type, 3, listOf(), OpusTempoEvent(14F))
+        
+        this.undo_and_check(manager) {
+            it.overwrite_global_ctl_range(type, 2, 0, 1)
+        }
+    }
+
+    @Test
+    fun test_move_channel_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
+        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
+        manager.set_channel_ctl_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
+        manager.set_channel_ctl_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
+        
+        this.undo_and_check(manager) {
+            it.move_channel_ctl_range(type, 0, 2, 0, 0, 1)
+        }
+    }
+
+    @Test
+    fun test_overwrite_channel_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
+        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
+        manager.set_channel_ctl_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
+        manager.set_channel_ctl_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
+        
+        this.undo_and_check(manager) {
+            it.overwrite_channel_ctl_range(type, 0, 0, 0, 2, 3)
+        }
+    }
+
+    @Test
+    fun test_unset_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_event(BeatKey(0, 0, 0), listOf(), OpusEventSTD(10, 0))
+        manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(11, 0))
+        manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(13, 0))
+        manager.set_event(BeatKey(0, 0, 3), listOf(), OpusEventSTD(14, 0))
+        
+        this.undo_and_check(manager) {
+            it.unset_range(BeatKey(0, 0, 0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_unset_line_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
+        manager.set_line_ctl_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
+        
+        this.undo_and_check(manager) {
+            it.unset_line_ctl_range(type, BeatKey(0, 0, 0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_unset_global_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Tempo
+        manager.new()
+        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(10F))
+        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
+        manager.set_global_ctl_event(type, 2, listOf(), OpusTempoEvent(13F))
+        manager.set_global_ctl_event(type, 3, listOf(), OpusTempoEvent(14F))
+        
+        this.undo_and_check(manager) {
+            it.unset_global_ctl_range(type, 1, 2)
+        }
+    }
+
+    @Test
+    fun test_unset_channel_ctl_range() {
+        val manager = OpusManager()
+        val type = ControlEventType.Volume
+        manager.new()
+        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
+        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
+        manager.set_channel_ctl_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
+        manager.set_channel_ctl_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
+        
+        this.undo_and_check(manager) {
+            it.unset_channel_ctl_range(type, 0, 1, 2)
+        }
     }
 }

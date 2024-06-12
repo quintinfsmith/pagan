@@ -97,6 +97,7 @@ class HistoryCache {
             this._history.removeLast()
         }
     }
+
     private fun _check_size() {
         while (this._history.size > this._max_history_size) {
             this._history.removeFirst()

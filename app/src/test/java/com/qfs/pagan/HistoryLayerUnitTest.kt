@@ -34,6 +34,15 @@ class HistoryCacheUnitTest {
     }
 
     @Test
+    fun test_set_project_name() {
+        var manager = OpusManager()
+        manager.new()
+        this.undo_and_check(manager) {
+            it.set_project_name("Test Project Name")
+        }
+    }
+
+    @Test
     fun test_remove() {
         var key = BeatKey(0,0,0)
         var test_event = OpusEventSTD(12,0,false)
@@ -141,7 +150,10 @@ class HistoryCacheUnitTest {
         this.undo_and_check(manager) {
             it.set_percussion_event(BeatKey(1,0,0), listOf())
         }
-
+        manager.set_percussion_event(BeatKey(1,0,0), listOf())
+        this.undo_and_check(manager) {
+            it.unset(BeatKey(1,0,0), listOf())
+        }
     }
 
     @Test
@@ -600,7 +612,7 @@ class HistoryCacheUnitTest {
         manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(11, 0))
         manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(13, 0))
         manager.set_event(BeatKey(0, 0, 3), listOf(), OpusEventSTD(14, 0))
-        
+
         this.undo_and_check(manager) {
             it.move_beat_range(BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
@@ -615,7 +627,7 @@ class HistoryCacheUnitTest {
         manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
         manager.set_line_ctl_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
         manager.set_line_ctl_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
-        
+
         this.undo_and_check(manager) {
             it.move_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
@@ -630,7 +642,7 @@ class HistoryCacheUnitTest {
         manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
         manager.set_line_ctl_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
         manager.set_line_ctl_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
-        
+
         this.undo_and_check(manager) {
             it.overwrite_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
@@ -645,7 +657,7 @@ class HistoryCacheUnitTest {
         manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
         manager.set_global_ctl_event(type, 2, listOf(), OpusTempoEvent(13F))
         manager.set_global_ctl_event(type, 3, listOf(), OpusTempoEvent(14F))
-        
+
         this.undo_and_check(manager) {
             it.move_global_ctl_range(type, 2, 0, 1)
         }
@@ -659,7 +671,7 @@ class HistoryCacheUnitTest {
         manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
         manager.set_global_ctl_event(type, 2, listOf(), OpusTempoEvent(13F))
         manager.set_global_ctl_event(type, 3, listOf(), OpusTempoEvent(14F))
-        
+
         this.undo_and_check(manager) {
             it.overwrite_global_ctl_range(type, 2, 0, 1)
         }
@@ -674,7 +686,7 @@ class HistoryCacheUnitTest {
         manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
         manager.set_channel_ctl_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
         manager.set_channel_ctl_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
-        
+
         this.undo_and_check(manager) {
             it.move_channel_ctl_range(type, 0, 2, 0, 0, 1)
         }
@@ -689,7 +701,7 @@ class HistoryCacheUnitTest {
         manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
         manager.set_channel_ctl_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
         manager.set_channel_ctl_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
-        
+
         this.undo_and_check(manager) {
             it.overwrite_channel_ctl_range(type, 0, 0, 0, 2, 3)
         }
@@ -703,7 +715,6 @@ class HistoryCacheUnitTest {
         manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(11, 0))
         manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(13, 0))
         manager.set_event(BeatKey(0, 0, 3), listOf(), OpusEventSTD(14, 0))
-        
         this.undo_and_check(manager) {
             it.unset_range(BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
@@ -718,7 +729,6 @@ class HistoryCacheUnitTest {
         manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
         manager.set_line_ctl_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
         manager.set_line_ctl_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
-        
         this.undo_and_check(manager) {
             it.unset_line_ctl_range(type, BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
@@ -733,7 +743,6 @@ class HistoryCacheUnitTest {
         manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
         manager.set_global_ctl_event(type, 2, listOf(), OpusTempoEvent(13F))
         manager.set_global_ctl_event(type, 3, listOf(), OpusTempoEvent(14F))
-        
         this.undo_and_check(manager) {
             it.unset_global_ctl_range(type, 1, 2)
         }
@@ -748,9 +757,98 @@ class HistoryCacheUnitTest {
         manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
         manager.set_channel_ctl_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
         manager.set_channel_ctl_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
-        
         this.undo_and_check(manager) {
             it.unset_channel_ctl_range(type, 0, 1, 2)
         }
     }
+
+    @Test
+    fun test_set_percussion_instrument() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(1)
+        manager.set_percussion_instrument(0, 8)
+        manager.set_percussion_instrument(1, 15)
+        this.undo_and_check(manager) {
+            it.set_percussion_instrument(1, 21)
+        }
+    }
+
+    @Test
+    fun test_link_beat() {
+        val manager = OpusManager()
+        manager.new()
+
+        this.undo_and_check(manager) {
+            it.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
+        }
+
+        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
+
+        this.undo_and_check(manager) {
+            it.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
+        }
+        this.undo_and_check(manager) {
+            it.link_beats(BeatKey(0,0,2), BeatKey(0,0,0))
+        }
+
+        manager.link_beats(BeatKey(0,0,2), BeatKey(0,0,3))
+
+        this.undo_and_check(manager) {
+            it.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
+        }
+    }
+
+    @Test
+    fun test_link_beat_range() {
+        val manager = OpusManager()
+        manager.new()
+        this.undo_and_check(manager) {
+            it.link_beat_range(BeatKey(0,0,2), BeatKey(0,0,0), BeatKey(0,0,1))
+        }
+    }
+
+    @Test
+    fun test_unlink_beat() {
+        val manager = OpusManager()
+        manager.new()
+        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
+        this.undo_and_check(manager) {
+            it.unlink_beat(BeatKey(0,0,0))
+        }
+    }
+
+    @Test
+    fun test_unlink_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.link_beat_range(BeatKey(0,0,2), BeatKey(0,0,0), BeatKey(0,0,1))
+        this.undo_and_check(manager) {
+            it.unlink_range(BeatKey(0,0,2), BeatKey(0,0,3))
+        }
+    }
+
+    @Test
+    fun test_link_row() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(20, 0))
+        this.undo_and_check(manager) {
+            it.link_row(0, 0, BeatKey(0,0,0))
+        }
+    }
+
+    @Test
+    fun test_link_beat_range_horizontally() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+        manager.new_channel()
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(20, 0))
+        manager.set_event(BeatKey(1,0,1), listOf(), OpusEventSTD(21, 0))
+        this.undo_and_check(manager) {
+            it.link_beat_range_horizontally(0, 0, BeatKey(0,0,0), BeatKey(1,0,1))
+        }
+    }
+
 }

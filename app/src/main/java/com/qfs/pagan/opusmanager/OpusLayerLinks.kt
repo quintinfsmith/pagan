@@ -514,20 +514,6 @@ open class OpusLayerLinks : OpusLayerBase() {
         this.batch_link_beats(new_pairs)
     }
 
-    open fun link_column(column: Int, beat_key: BeatKey) {
-        val new_pool = mutableListOf<BeatKey>()
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            for (j in 0 until channel.size) {
-                val working_key = BeatKey(i, j, column)
-                if (working_key != beat_key) {
-                    this.replace_tree(working_key, listOf(), this.get_tree(beat_key, listOf()))
-                }
-                new_pool.add(working_key)
-            }
-        }
-        this.create_link_pool(new_pool)
-    }
-
     open fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
         if (beat_key.channel != channel || beat_key.line_offset != line_offset || beat_key.beat != 0) {
             throw BadRowLink(beat_key, channel, line_offset)

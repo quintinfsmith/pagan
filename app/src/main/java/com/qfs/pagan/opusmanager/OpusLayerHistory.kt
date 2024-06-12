@@ -21,25 +21,8 @@ open class OpusLayerHistory : OpusLayerLinks() {
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
         try {
             when (current_node.token) {
-                HistoryToken.SPLIT_TREE -> {
-                    this.split_tree(
-                        current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1]),
-                        current_node.args[2] as Int
-                    )
-                }
-
                 HistoryToken.SET_PROJECT_NAME -> {
                     this.set_project_name(current_node.args[0] as String)
-                }
-
-                HistoryToken.SET_LINE_VOLUME -> {
-                    this.set_line_controller_initial_event(
-                        ControlEventType.Volume,
-                        current_node.args[0] as Int,
-                        current_node.args[1] as Int,
-                        OpusVolumeEvent(current_node.args[2] as Int)
-                    )
                 }
 
                 HistoryToken.UNLINK_BEAT -> {
@@ -161,14 +144,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         current_node.args[0] as Int,
                         current_node.args[1] as Int
                     )
-                }
-
-                HistoryToken.INSERT_TREE -> {
-                    val beat_key = current_node.args[0] as BeatKey
-                    val position = this.checked_cast<List<Int>>(current_node.args[1])
-                    val insert_tree = this.checked_cast<OpusTree<OpusEventSTD>>(current_node.args[2])
-                    this.insert(beat_key, position)
-                    this.replace_tree(beat_key, position, insert_tree)
                 }
 
                 HistoryToken.INSERT_LINE -> {
@@ -1301,23 +1276,19 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun unlink_beat(beat_key: BeatKey) {
         val pool = this.link_pools[this.link_pool_map[beat_key]!!]
-        for (linked_key in pool) {
-            if (beat_key != linked_key) {
-                this.push_to_history_stack(HistoryToken.LINK_BEATS, listOf(beat_key, linked_key))
-                break
+        this._remember {
+            for (linked_key in pool) {
+                if (beat_key != linked_key) {
+                    this.push_to_history_stack(HistoryToken.LINK_BEATS, listOf(beat_key, linked_key))
+                    break
+                }
             }
+            super.unlink_beat(beat_key)
         }
-        super.unlink_beat(beat_key)
     }
     override fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
         this._remember {
             super.unlink_range(first_key, second_key)
-        }
-    }
-
-    override fun link_column(column: Int, beat_key: BeatKey) {
-        this._remember {
-            super.link_column(column, beat_key)
         }
     }
 

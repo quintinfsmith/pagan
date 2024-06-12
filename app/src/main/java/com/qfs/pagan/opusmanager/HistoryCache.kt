@@ -125,13 +125,14 @@ class HistoryCache {
         }
     }
 
-    fun peek(): HistoryNode? {
-        return if (this._history.isEmpty()) {
-            null
-        } else {
-            this._history.last()
-        }
-    }
+    // Unused
+    //fun peek(): HistoryNode? {
+    //    return if (this._history.isEmpty()) {
+    //        null
+    //    } else {
+    //        this._history.last()
+    //    }
+    //}
 
     fun copy(): HistoryCache {
         val c = HistoryCache()

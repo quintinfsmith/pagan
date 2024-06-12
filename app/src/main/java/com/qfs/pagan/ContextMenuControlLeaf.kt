@@ -12,7 +12,6 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
-import com.qfs.pagan.opusmanager.TrivialActionException
 
 class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container) {
     lateinit var widget_wrapper: LinearLayout
@@ -48,12 +47,7 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
 
     private fun _widget_callback(event: OpusControlEvent) {
         val opus_manager = this.get_opus_manager()
-
-        try {
-            opus_manager.set_event_at_cursor(event)
-        } catch (e: TrivialActionException) {
-            // No Feedback Needed
-        }
+        opus_manager.set_event_at_cursor(event)
     }
 
     fun init_widget() {

@@ -767,48 +767,34 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
-        try {
-            this._remember {
-                this.push_replace_channel_ctl(type, channel,beat, position ?: listOf()) {
-                    super.replace_channel_ctl_tree(type, channel, beat, position, tree)
-                }
+        this._remember {
+            this.push_replace_channel_ctl(type, channel,beat, position ?: listOf()) {
+                super.replace_channel_ctl_tree(type, channel, beat, position, tree)
             }
-        } catch (e: TrivialActionException) {
-            // pass
         }
     }
 
     override fun replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
-        try {
-            this._remember {
-                this.push_replace_global_ctl(type, beat, position ?: listOf()) {
-                    super.replace_global_ctl_tree(type, beat, position, tree)
-                }
+        this._remember {
+            this.push_replace_global_ctl(type, beat, position ?: listOf()) {
+                super.replace_global_ctl_tree(type, beat, position, tree)
             }
-        } catch (e: TrivialActionException) {
         }
     }
 
     override fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
-        try {
-            this._remember {
-                this.push_replace_line_ctl(type, beat_key, position ?: listOf()) {
-                    super.replace_line_ctl_tree(type, beat_key, position, tree)
-                }
+        this._remember {
+            this.push_replace_line_ctl(type, beat_key, position ?: listOf()) {
+                super.replace_line_ctl_tree(type, beat_key, position, tree)
             }
-        } catch (e: TrivialActionException) {
         }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
-        try {
-            this._remember {
-                this.push_replace_tree(beat_key, position) {
-                    super.replace_tree(beat_key, position, tree)
-                }
+        this._remember {
+            this.push_replace_tree(beat_key, position) {
+                super.replace_tree(beat_key, position, tree)
             }
-        } catch (e: TrivialActionException) {
-            // pass
         }
     }
 
@@ -904,6 +890,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
+        // Trivial?
+        if (this.get_tree(beat_key, position).get_event() == event) {
+            return
+        }
+
         this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.set_event(beat_key, position, event)
@@ -913,6 +904,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
 
     override fun set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: OpusControlEvent) {
+        // Trivial?
+        if (this.get_line_ctl_tree(type, beat_key, position).get_event() == event) {
+            return
+        }
+
         this._remember {
             this.push_replace_line_ctl(type, beat_key, position) {
                 super.set_line_ctl_event(type, beat_key, position, event)
@@ -921,6 +917,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: OpusControlEvent) {
+        // Trivial?
+        if (this.get_channel_ctl_tree(type, channel, beat, position).get_event() == event) {
+            return
+        }
+
         this._remember {
             this.push_replace_channel_ctl(type, channel, beat, position) {
                 super.set_channel_ctl_event(type, channel, beat, position, event)
@@ -929,6 +930,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: OpusControlEvent) {
+        // Trivial?
+        if (this.get_global_ctl_tree(type, beat, position).get_event() == event) {
+            return
+        }
+
         this._remember {
             this.push_replace_global_ctl(type, beat, position) {
                 super.set_global_ctl_event(type, beat, position, event)
@@ -1407,11 +1413,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 node = tmp_error.failed_node
                 tmp_error = tmp_error.e
             }
+
             if (node != null) {
                 this.history_cache.forget {
                     this.apply_history_node(node)
                 }
             }
+
             throw real_exception
         }
     }

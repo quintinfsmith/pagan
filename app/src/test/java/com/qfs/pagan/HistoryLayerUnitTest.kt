@@ -851,4 +851,13 @@ class HistoryCacheUnitTest {
         }
     }
 
+    @Test
+    fun test_set_channel_instrument() {
+        val manager = OpusManager()
+        manager.new()
+        this.undo_and_check(manager) {
+            manager.set_channel_instrument(0, Pair(0, 12))
+        }
+    }
+
 }

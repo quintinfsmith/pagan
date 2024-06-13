@@ -3,10 +3,15 @@ package com.qfs.pagan
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerBase
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -300,15 +305,93 @@ class LinkLayerUnitTest {
     }
 
     @Test
-    fun test_to_json() {
-        //TODO("test_to_json")
+    fun test_link_beat_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+        val first_key = BeatKey(0,0,0)
+        val second_key = BeatKey(0,1,1)
+
+
+        assertThrows(OpusManager.LinkRangeOverlap::class.java) {
+            manager.link_beat_range(BeatKey(0,0,1), first_key, second_key)
+        }
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
+            manager.link_beat_range(BeatKey(0,0,3), first_key, second_key)
+        }
+
+        manager.link_beat_range(BeatKey(0,0,2), first_key, second_key)
+
+        val d_keys = manager.get_beatkeys_in_range(first_key, second_key)
+        val i_keys = manager._get_beatkeys_from_range(BeatKey(0,0,2), first_key, second_key)
+        for (i in d_keys.indices) {
+            manager.set_event(d_keys[i], listOf(), OpusEventSTD(i, 0))
+            assertEquals(
+                manager.get_tree(d_keys[i]),
+                manager.get_tree(i_keys[i])
+            )
+        }
+
+        manager.unlink_range(first_key, second_key)
+        for (i in d_keys.indices) {
+            manager.unset(d_keys[i], listOf())
+            assertTrue(manager.get_tree(i_keys[i]).is_event())
+        }
+        
+
     }
+
     @Test
-    fun test_save() {
-        //TODO("test_save")
+    fun test_link_row() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+
+        assertThrows(OpusManager.BadRowLink::class.java) {
+            manager.link_row(0, 0, BeatKey(1,0,0))
+        }
+        assertThrows(OpusManager.BadRowLink::class.java) {
+            manager.link_row(0, 0, BeatKey(0,1,0))
+        }
+        manager.link_row(0, 0, BeatKey(0,0,0))
+
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(24, 0))
+
+        for (i in 1 until manager.beat_count) {
+            assertEquals(
+                manager.get_tree(BeatKey(0,0,0)),
+                manager.get_tree(BeatKey(0,0,i))
+            )
+        }
     }
+
     @Test
-    fun test_load() {
-        //TODO("test_load")
+    fun test_link_beat_range_horizontally() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+        manager.set_beat_count(12)
+        val first_key = BeatKey(0,0,0)
+        val second_key = BeatKey(0,1,1)
+
+        manager.link_beat_range_horizontally(0,0, first_key, second_key)
+
+        val d_keys = manager.get_beatkeys_in_range(first_key, second_key)
+        for (i in d_keys.indices) {
+            manager.set_event(d_keys[i], listOf(), OpusEventSTD(i, 0))
+            for (j in 0 until 5) {
+                assertEquals(
+                    manager.get_tree(d_keys[i]),
+                    manager.get_tree(
+                        BeatKey(
+                            d_keys[i].channel,
+                            d_keys[i].line_offset,
+                            d_keys[i].beat + ((j + 1) * 2)
+                        )
+                    )
+                )
+            }
+
+        }
     }
 }

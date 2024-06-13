@@ -1251,7 +1251,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             TODO()
         } else if (this.cursor.selecting_range) {
             if (this.is_percussion(this.cursor.get_beatkey().channel) != this.is_percussion(beat_key.channel)) {
-                throw MixedLinkException()
+                throw MixedInstrumentException(this.cursor.get_beatkey(), beat_key)
             }
             this.merge_leafs(this.cursor.get_beatkey(), listOf(), beat_key, listOf())
         } else {
@@ -1265,7 +1265,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             this.move_beat_range(beat_key, first, second)
         } else if (this.cursor.selecting_range) {
             if (this.is_percussion(this.cursor.get_beatkey().channel) != this.is_percussion(beat_key.channel)) {
-                throw MixedLinkException()
+                throw MixedInstrumentException(this.cursor.get_beatkey(), beat_key)
             }
             this.move_leaf(this.cursor.get_beatkey(), listOf(), beat_key, listOf())
         } else {
@@ -1279,7 +1279,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             this.overwrite_beat_range(beat_key, first, second)
         } else if (this.cursor.selecting_range) {
             if (this.is_percussion(this.cursor.get_beatkey().channel) != this.is_percussion(beat_key.channel)) {
-                throw MixedLinkException()
+                throw MixedInstrumentException(this.cursor.get_beatkey(), beat_key)
             }
             this.replace_tree(
                 beat_key,

@@ -97,14 +97,13 @@ class LeafButtonStd(
             } catch (e: Exception) {
                 when (e) {
                     is OpusLayerLinks.SelfLinkError -> { }
-                    is OpusLayerLinks.MixedLinkException -> {
+                    is OpusLayerBase.MixedInstrumentException -> {
                         editor_table.notify_cell_changes(listOf(this.get_coord()))
                         opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
                         (this.get_activity()).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
                     is OpusLayerLinks.LinkRangeOverlap,
-                    is OpusLayerBase.RangeOverflow,
-                    is OpusLayerLinks.LinkRangeOverflow -> {
+                    is OpusLayerBase.RangeOverflow -> {
                         editor_table.notify_cell_changes(listOf(this.get_coord()))
                         cursor.selecting_range = false
                         opus_manager.cursor_select(beat_key, this.position)

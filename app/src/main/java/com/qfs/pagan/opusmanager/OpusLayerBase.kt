@@ -48,6 +48,7 @@ open class OpusLayerBase {
     class FutureSaveVersionException(version: Int): Exception("Attempting to load a project made with a newer version of Pagan (format: $version)")
     class InvalidJSON(json_string: String, index: Int): Exception("Invalid JSON @ $index In \"${json_string.substring(max(0, index - 20), min(json_string.length, index + 20))}\"")
     class EmptyPath : Exception("Path Required but not given")
+    class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here")
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
@@ -2483,13 +2484,12 @@ open class OpusLayerBase {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
 
-    private fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
-        if (from_key.channel >= this.channels.size || from_key.line_offset >= this.channels[from_key.channel].lines.size) {
+    internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
+        if (! this.is_valid_beat_range(from_key, to_key)) {
             throw RangeOverflow(from_key, to_key, beat_key)
-        } else if (to_key.channel >= this.channels.size || to_key.line_offset >= this.channels[to_key.channel].lines.size) {
-            throw RangeOverflow(from_key, to_key, beat_key)
-        } else if (this.beat_count <= from_key.beat || this.beat_count <= to_key.beat) {
-            throw RangeOverflow(from_key, to_key, beat_key)
+        }
+        if (this.is_mixed_range(from_key, to_key)) {
+            throw MixedInstrumentException(from_key, to_key)
         }
 
         val (y_diff, x_diff) = this.get_abs_difference(from_key, to_key)
@@ -2505,6 +2505,11 @@ open class OpusLayerBase {
         }
 
         val target_second_key = BeatKey(target_channel, target_offset, beat_key.beat + x_diff)
+
+        if (this.is_mixed_range(beat_key, target_second_key)) {
+            throw MixedInstrumentException(beat_key, target_second_key)
+        }
+
         return this.get_beatkeys_in_range(beat_key, target_second_key)
     }
 
@@ -2552,6 +2557,42 @@ open class OpusLayerBase {
         for (clear_key in (original_keys - target_keys)) {
             this.unset(clear_key, listOf())
         }
+    }
+
+    fun is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
+        return if (this.channels.size <= first_corner.channel) {
+            false
+        } else if (this.channels[first_corner.channel].size <= first_corner.line_offset) {
+            false
+        } else if (this.beat_count <= first_corner.beat) {
+            false
+        } else if (this.channels.size <= second_corner.channel) {
+            false
+        } else if (this.channels[second_corner.channel].size <= second_corner.line_offset) {
+            false
+        } else if (this.beat_count <= second_corner.beat) {
+            false
+        } else {
+            true
+        }
+    }
+
+    fun is_mixed_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
+        if (first_corner.channel == second_corner.channel) {
+            return false
+        }
+
+        val channel_a = min(first_corner.channel, second_corner.channel)
+        val channel_b = max(first_corner.channel, second_corner.channel)
+        var has_percussion = false
+        var has_non_percussion = false
+
+        for (i in channel_a .. channel_b) {
+            has_percussion = has_percussion || this.is_percussion(i)
+            has_non_percussion = has_non_percussion || !this.is_percussion(i)
+        }
+        
+        return has_percussion && has_non_percussion
     }
 
     private fun _copy_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int, unset_original: Boolean = false) {

@@ -6,9 +6,7 @@ import java.lang.Integer.min
 open class OpusLayerLinks : OpusLayerBase() {
     class SelfLinkError(beat_key_a: BeatKey, beat_key_b: BeatKey): Exception("$beat_key_a is $beat_key_b")
     class LinkRangeOverlap(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) Contains $startkey")
-    class LinkRangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) @ $startkey overflows")
     class InvalidBeatKeyRange(a: BeatKey, b: BeatKey): Exception("$a .. $b")
-    class MixedLinkException : Exception("Can't link percussion with non-percussion channels")
     class BadRowLink(from_key: BeatKey, channel: Int, line_offset: Int): Exception("Can only link an entire row (or rows) to the first range of beats of its own row ($from_key != ${BeatKey(channel, line_offset, 0)})")
 
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
@@ -101,8 +99,9 @@ open class OpusLayerLinks : OpusLayerBase() {
         if (beat_key == target) {
             throw SelfLinkError(beat_key, target)
         }
-        if ((beat_key.channel == this.channels.size - 1 || target.channel == this.channels.size - 1) && target.channel != beat_key.channel) {
-            throw MixedLinkException()
+
+        if (this.is_percussion(beat_key.channel) != this.is_percussion(target.channel)) {
+            throw MixedInstrumentException(beat_key, target)
         }
 
         val beat_pool_index = this.link_pool_map[beat_key]
@@ -401,117 +400,21 @@ open class OpusLayerLinks : OpusLayerBase() {
         return data
     }
 
-    open fun link_beat_range(beat: BeatKey, target_a: BeatKey, target_b: BeatKey) {
+    open fun link_beat_range(beat_key: BeatKey, target_a: BeatKey, target_b: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(target_a, target_b)
+        val keys_to_link_independent = this.get_beatkeys_in_range(from_key, to_key)
+        val keys_to_link_dependent = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
-        val overlap = if (beat.beat in (from_key.beat .. to_key.beat)) {
-            if (beat.channel in (from_key.channel..to_key.channel)) {
-                if (to_key.channel == from_key.channel) {
-                    beat.line_offset in (from_key.line_offset..to_key.line_offset)
-                } else if (beat.channel == from_key.channel) {
-                    beat.line_offset in (from_key.line_offset until this.channels[from_key.channel].size)
-                } else if (beat.channel == to_key.channel) {
-                    beat.line_offset in (0 until to_key.line_offset)
-                } else {
-                    beat.channel in (from_key.channel + 1 until to_key.channel)
-                }
-            } else {
-                false
-            }
-        } else {
-            false
+        if (keys_to_link_independent.toSet().intersect(keys_to_link_dependent.toSet()).isNotEmpty()) {
+            throw LinkRangeOverlap(from_key, to_key, beat_key)
         }
 
-        if (overlap) {
-            throw LinkRangeOverlap(from_key, to_key, beat)
-        }
-        if (this.beat_count <= beat.beat + (to_key.beat - from_key.beat)) {
-            throw LinkRangeOverflow(from_key, to_key, beat)
-        }
-
-        // Start OverFlow Check ////
-        var lines_in_range = 0
-        var lines_available = 0
-        val percussion_map = mutableListOf<Boolean>()
-        val percussion_channel = this.channels.size - 1
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            if (i < from_key.channel || i > to_key.channel) {
-                return@forEachIndexed
-            }
-            for (j in 0 until channel.size) {
-                if (i == from_key.channel && j < from_key.line_offset) {
-                    continue
-                } else if (i == to_key.channel && j > to_key.line_offset) {
-                    continue
-                }
-                percussion_map.add(i == percussion_channel)
-                lines_in_range += 1
-            }
-        }
-        val target_percussion_map = mutableListOf<Boolean>()
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            if (i < beat.channel) {
-                return@forEachIndexed
-            }
-            for (j in 0 until channel.size) {
-                if (i == beat.channel && j < beat.line_offset) {
-                    continue
-                }
-                target_percussion_map.add(i == percussion_channel)
-                lines_available += 1
-            }
-        }
-
-        if (lines_available < lines_in_range) {
-            throw LinkRangeOverflow(from_key, to_key, beat)
-        }
-        // End Overflow Check ////
-        if (percussion_map != target_percussion_map.subList(0, percussion_map.size)) {
-            throw MixedLinkException()
-        }
-
-
-        val working_beat = beat.copy()
-        val new_pairs = mutableListOf<Pair<BeatKey, BeatKey>>()
-        while (from_key.channel != to_key.channel || from_key.line_offset != to_key.line_offset) {
-            // INCLUSIVE
-            for (b in 0 .. to_key.beat - from_key.beat) {
-                new_pairs.add(
-                    Pair(
-                        BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
-                        BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
-                    )
-                )
-            }
-            if (this.channels[from_key.channel].size - 1 > from_key.line_offset) {
-                from_key.line_offset += 1
-            } else if (this.channels.size - 1 > from_key.channel) {
-                from_key.channel += 1
-                from_key.line_offset = 0
-            } else {
-                throw InvalidBeatKeyRange(target_a, target_b)
-            }
-
-            if (this.channels[working_beat.channel].size - 1 > working_beat.line_offset) {
-                working_beat.line_offset += 1
-            } else if (this.channels.size - 1 > working_beat.channel) {
-                working_beat.channel += 1
-                working_beat.line_offset = 0
-            } else {
-                throw BadBeatKey(working_beat)
-            }
-        }
-
-        for (b in 0 .. to_key.beat - from_key.beat) {
-            new_pairs.add(
-                Pair(
-                    BeatKey(working_beat.channel, working_beat.line_offset, working_beat.beat + b),
-                    BeatKey(from_key.channel, from_key.line_offset, from_key.beat + b)
-                )
+        this.batch_link_beats(List<Pair<BeatKey, BeatKey>>(keys_to_link_independent.size) { i: Int ->
+            Pair(
+                keys_to_link_dependent[i],
+                keys_to_link_independent[i]
             )
-        }
-
-        this.batch_link_beats(new_pairs)
+        })
     }
 
     open fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
@@ -747,7 +650,7 @@ open class OpusLayerLinks : OpusLayerBase() {
     //     for (range in alike_ranges) {
     //         try {
     //             this.link_beat_range(range.first, corner_top, corner_bottom)
-    //         } catch (e: OpusLayerLinks.MixedLinkException) {
+    //         } catch (e: OpusLayerLinks.MixedInstrumentException) {
     //             //pass
     //         }
     //     }

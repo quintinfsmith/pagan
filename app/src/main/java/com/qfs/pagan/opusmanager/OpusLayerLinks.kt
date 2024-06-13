@@ -78,20 +78,8 @@ open class OpusLayerLinks : OpusLayerBase() {
 
     open fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            if (i < from_key.channel || i > to_key.channel) {
-                return@forEachIndexed
-            }
-            for (j in 0 until channel.size) {
-                if (i == from_key.channel && j < from_key.line_offset) {
-                    continue
-                } else if (i == to_key.channel && j > to_key.line_offset) {
-                    continue
-                }
-                for (k in from_key.beat .. to_key.beat) {
-                    this.clear_link_pool(BeatKey(i, j, k))
-                }
-            }
+        for (beat_key in this.get_beatkeys_in_range(from_key, to_key)) {
+            this.clear_link_pool(beat_key)
         }
     }
 

@@ -55,16 +55,41 @@ class LinkLayerUnitTest {
         val first_key = BeatKey(0, 0, 0)
         val second_key = BeatKey(0, 0, 1)
         val third_key = BeatKey(0, 1, 0)
+        val fourth_key = BeatKey(0, 1, 1)
+        //-----------
+        assertThrows(OpusManager.SelfLinkError::class.java) {
+            manager.link_beats(first_key, first_key)
+        }
+        assertThrows(OpusLayerBase.MixedInstrumentException::class.java) {
+            manager.link_beats(first_key, BeatKey(1,0,0))
+        }
+        //-----------
         manager.link_beats(first_key, second_key)
         assertTrue(
             "Failed to link 2 beats",
             manager.get_all_linked(first_key).contains(second_key)
         )
+        //-----------
         manager.link_beats(first_key, third_key)
         assertTrue(
             "Failed to link 3rd beat into pool",
             manager.get_all_linked(first_key).contains(third_key)
         )
+
+        //............
+        manager.unlink_beat(third_key)
+        manager.link_beats(third_key, fourth_key)
+        //-----------
+        manager.link_beats(first_key, third_key)
+        assertTrue(
+            "Failed to merge pools",
+            manager.get_all_linked(first_key).contains(fourth_key)
+        )
+        //.............
+        manager.unlink_beat(third_key)
+        manager.link_beats(third_key, first_key)
+        assertTrue(manager.get_all_linked(first_key).contains(third_key))
+
     }
 
     //@Test
@@ -81,8 +106,21 @@ class LinkLayerUnitTest {
     //    )
     //}
 
+    //@Test
+    //fun test_insert_beat() {
+    //    val manager = OpusManager()
+    //    manager.new()
+    //    manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
+    //    manager.insert_beat(1)
+    //    assertEquals(
+    //        "Failed to move links when inserting beat",
+    //        2,
+    //        manager.get_all_linked(BeatKey(0,0,3)).size
+    //    )
+    //}
+
     @Test
-    fun test_insert_beat() {
+    fun test_insert_beats() {
         val manager = OpusManager()
         manager.new()
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
@@ -91,6 +129,12 @@ class LinkLayerUnitTest {
             "Failed to move links when inserting beat",
             2,
             manager.get_all_linked(BeatKey(0,0,3)).size
+        )
+        manager.insert_beats(1, 5)
+        assertEquals(
+            "Failed to move links when inserting beat",
+            2,
+            manager.get_all_linked(BeatKey(0,0,8)).size
         )
     }
 
@@ -105,17 +149,51 @@ class LinkLayerUnitTest {
             2,
             manager.get_all_linked(BeatKey(0,0,1)).size
         )
+
+        manager.remove_beat(0)
+        assertEquals(
+            1,
+            manager.get_all_linked(BeatKey(0,0,0)).size
+        )
+
     }
     @Test
     fun test_new_line() {
         val manager = OpusManager()
         manager.new()
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
-        manager.new_line(0, 0)
+        manager.new_line(0,0)
         assertEquals(
             "Failed to adjust links on new line",
             2,
             manager.get_all_linked(BeatKey(0,1,0)).size
+        )
+
+        manager.remove_line(0,0)
+        manager.new_line(0,1)
+
+        assertEquals(
+            "Failed to adjust links on new line",
+            2,
+            manager.get_all_linked(BeatKey(0,0,0)).size
+        )
+
+
+        val test_line = manager.remove_line(0,1)
+
+        manager.insert_line(0,0,test_line)
+        assertEquals(
+            "Failed to adjust links on insert line",
+            2,
+            manager.get_all_linked(BeatKey(0,1,0)).size
+        )
+        val test_line_2 = manager.remove_line(0,0)
+        manager.insert_line(0,1,test_line_2)
+
+        assertEquals(
+            "Failed to adjust links on insert line",
+            2,
+            manager.get_all_linked(BeatKey(0,0,0)).size
         )
     }
 
@@ -202,11 +280,18 @@ class LinkLayerUnitTest {
         manager.insert_after(main_key, listOf(1))
 
         this.batch_link_test(manager, main_key) {
-            assertEquals(
-                "Failed to remove subtree on linked tree",
-                3,
-                it.size
-            )
+            assertEquals(3, it.size)
+        }
+    }
+    @Test
+    fun test_insert() {
+        val (manager, main_key) = this.setup_linked_manager()
+
+        manager.split_tree(main_key, listOf(), 2)
+        manager.insert(main_key, listOf(1))
+
+        this.batch_link_test(manager, main_key) {
+            assertEquals(3, it.size)
         }
     }
 
@@ -394,4 +479,126 @@ class LinkLayerUnitTest {
 
         }
     }
+
+
+    @Test
+    fun test_swap_lines() {
+        val manager = OpusManager()
+        manager.new()
+        manager.new_line(0)
+        manager.new_line(0)
+        manager.link_beats(BeatKey(0,0,0), BeatKey(0,1,1))
+
+        manager.swap_lines(0, 0, 0, 1)
+
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(24, 0))
+        assertEquals(
+            manager.get_tree(BeatKey(0,0,1)),
+            manager.get_tree(BeatKey(0,1,0))
+        )
+
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(22, 0))
+        assertFalse(manager.get_tree(BeatKey(0,1,1)).is_event())
+
+
+        manager.swap_lines(0, 1, 0, 2)
+        assertEquals(
+            manager.get_tree(BeatKey(0,0,1)),
+            manager.get_tree(BeatKey(0,2,0))
+        )
+    }
+
+    @Test
+    fun test_move_leaf() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(12, 0))
+
+        // --------------
+        manager.move_leaf(BeatKey(0,0,0), listOf(), BeatKey(0,0,2), listOf())
+        manager.set_event(BeatKey(0,0, 2), listOf(), OpusEventSTD(13, 0))
+
+        assertEquals(
+            manager.get_tree(BeatKey(0,0,2)),
+            manager.get_tree(BeatKey(0,0,1))
+        )
+        // --------------
+        manager.move_leaf(BeatKey(0,0,2), listOf(), BeatKey(0,0,1), listOf())
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(13, 0))
+        for (i in 0 until 4) {
+            if (i == 1) {
+                continue
+            }
+            assertFalse(manager.get_tree(BeatKey(0,0,i)).is_event())
+        }
+    }
+
+    @Test
+    fun test_move_beat_range() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+
+        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
+        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(12, 0))
+
+        // --------------
+        manager.move_beat_range(BeatKey(0,0,2), BeatKey(0,0,0), BeatKey(0,0,1))
+        manager.set_event(BeatKey(0,0, 2), listOf(), OpusEventSTD(13, 0))
+
+        assertEquals(
+            manager.get_tree(BeatKey(0,0,2)),
+            manager.get_tree(BeatKey(0,0,3))
+        )
+        // --------------
+        manager.move_beat_range(BeatKey(0,0,0), BeatKey(0,0,1), BeatKey(0,0,2))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(14, 0))
+        assertEquals(
+            manager.get_tree(BeatKey(0,0,1)),
+            manager.get_tree(BeatKey(0,0,3))
+        )
+        // --------------
+        manager.move_beat_range(BeatKey(0,0,0), BeatKey(0,0,1), BeatKey(0,0,2))
+        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(15, 0))
+        assertNotEquals(
+            manager.get_tree(BeatKey(0,0,1)),
+            manager.get_tree(BeatKey(0,0,3))
+        )
+    }
+
+    @Test
+    fun test_clear_links() {
+        val manager = OpusManager()
+        manager.new()
+        manager.set_beat_count(12)
+
+        for (i in 1 until 4) {
+            manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,i))
+        }
+
+        manager.clear_link_pool(BeatKey(0,0,0))
+        for (i in 0 until 4) {
+            assertEquals(
+                1,
+                manager.get_all_linked(BeatKey(0,0,i)).size
+            )
+        }
+
+        //-------------------------------
+        for (i in 0 until 4) {
+            manager.link_beats(BeatKey(0,0,i), BeatKey(0,0,i + 4))
+        }
+
+        manager.clear_link_pools_by_range(BeatKey(0,0,0), BeatKey(0,0,3))
+        for (i in 0 until 4) {
+            assertEquals(
+                1,
+                manager.get_all_linked(BeatKey(0,0,i + 4)).size
+            )
+        }
+
+    }
+
 }

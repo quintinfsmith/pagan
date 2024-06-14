@@ -27,7 +27,7 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 
 
-import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
 class OpusLayerBaseUnitTest {
     @Test

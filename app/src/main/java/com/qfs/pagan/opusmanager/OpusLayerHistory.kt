@@ -19,6 +19,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        println("$depth -> APPLYING ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -172,6 +173,18 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.remove(
                         current_node.args[0] as BeatKey,
                         this.checked_cast<List<Int>>(current_node.args[1])
+                    )
+                }
+
+                HistoryToken.INSERT -> {
+                    this.insert(
+                        current_node.args[0] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[1])
+                    )
+                    this.replace_tree(
+                        current_node.args[0] as BeatKey,
+                        this.checked_cast<List<Int>>(current_node.args[1]),
+                        this.checked_cast<OpusTree<OpusEventSTD>>(current_node.args[2])
                     )
                 }
 
@@ -547,19 +560,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this._remember {
-            super.remove(beat_key, position)
-
-            val parent_position = position.subList(0, position.size - 1)
-            val use_tree = this.get_tree(beat_key, parent_position).copy()
-            this.push_to_history_stack(
-                HistoryToken.REPLACE_TREE,
-                listOf(beat_key.copy(), parent_position, use_tree)
-            )
-        }
-    }
-
     override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         this._remember {
             this.push_replace_global_ctl(type, beat, position.subList(0, position.size - 1)) {
@@ -586,9 +586,15 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
 
     override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        this._forget {
-            super.remove_one_of_two(beat_key, position)
-        }
+        val parent_position = position.subList(0, position.size - 1)
+        val use_tree = this.get_tree(beat_key, parent_position).copy()
+
+        super.remove_one_of_two(beat_key, position)
+
+        this.push_to_history_stack(
+            HistoryToken.REPLACE_TREE,
+            listOf(beat_key.copy(), parent_position, use_tree)
+        )
     }
 
     override fun remove_global_ctl_one_of_two(type: ControlEventType, beat: Int, position: List<Int>) {
@@ -635,9 +641,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
     //}
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        this._forget {
-            super.remove_standard(beat_key, position)
-        }
+        this.push_to_history_stack(
+            HistoryToken.INSERT,
+            listOf(beat_key, position, this.get_tree(beat_key, position).copy())
+        )
+        super.remove_standard(beat_key, position)
     }
 
     override fun remove_global_ctl_standard(type: ControlEventType, beat: Int, position: List<Int>) {
@@ -723,6 +731,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
+        println("REPLACING: $beat_key, $position")
         this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.replace_tree(beat_key, position, tree)

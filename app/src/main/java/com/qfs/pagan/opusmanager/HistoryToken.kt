@@ -5,6 +5,7 @@ enum class HistoryToken {
     MULTI,
     SAVE_POINT,
     // Base
+    INSERT,
     INSERT_BEAT,
     INSERT_LINE,
     INSERT_TREE,

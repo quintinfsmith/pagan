@@ -1086,6 +1086,9 @@ open class OpusLayerBase {
     }
 
     open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>? = null) {
+        if (beat_index > this.beat_count) {
+            throw IndexOutOfBoundsException()
+        }
         this.beat_count += 1
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
@@ -1104,7 +1107,6 @@ open class OpusLayerBase {
                 y += 1
             }
         }
-
     }
 
     open fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
@@ -1122,7 +1124,12 @@ open class OpusLayerBase {
         if (this.beat_count == 1) {
             throw RemovingLastBeatException()
         }
-        for (channel in this.channels) {
+
+        if (!(0 until this.beat_count).contains(beat_index)) {
+            throw IndexOutOfBoundsException()
+        }
+
+        this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             channel.remove_beat(beat_index)
         }
 

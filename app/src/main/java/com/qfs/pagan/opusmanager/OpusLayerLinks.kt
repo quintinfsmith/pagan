@@ -209,10 +209,10 @@ open class OpusLayerLinks : OpusLayerBase() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
         this.lock_links {
+            super.replace_tree(beat_key, position, tree)
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.replace_tree(linked_key, position, tree)
             }
-            super.replace_tree(beat_key, position, tree)
         }
     }
 

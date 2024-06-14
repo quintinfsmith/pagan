@@ -30,6 +30,10 @@ class OpusChannel(var uuid: Int) {
         this.controllers.new_controller(ControlEventType.Volume)
     }
 
+    fun get_beat_count(): Int {
+        return this._beat_count
+    }
+
     fun map_line(line: Int, offset: Int) {
         this.lines[line].static_value = offset
     }
@@ -142,7 +146,6 @@ class OpusChannel(var uuid: Int) {
             }
         }
         this.controllers.set_beat_count(new_beat_count)
-
         this._beat_count = new_beat_count
     }
 
@@ -163,9 +166,11 @@ class OpusChannel(var uuid: Int) {
         for (line in this.lines) {
             line.remove_beat(index)
         }
+
         for ((type, controller) in this.controllers.get_all()) {
             controller.remove_beat(index)
         }
+
         this._beat_count -= 1
     }
 

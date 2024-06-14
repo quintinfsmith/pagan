@@ -381,9 +381,10 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this._remember {
+            super.insert_after(beat_key, position)
+
             val remove_position = position.toMutableList()
             remove_position[remove_position.size - 1] += 1
-            super.insert_after(beat_key, position)
             this.push_remove(beat_key, remove_position)
         }
     }
@@ -405,9 +406,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         this._remember {
+            super.insert_after_global_ctl(type, beat, position)
             val remove_position = position.toMutableList()
             remove_position[remove_position.size - 1] += 1
-            super.insert_after_global_ctl(type, beat, position)
             this.push_remove_global_ctl(type, beat, remove_position)
         }
     }
@@ -422,9 +423,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this._remember {
+            super.insert_after_channel_ctl(type, channel, beat, position)
             val remove_position = position.toMutableList()
             remove_position[remove_position.size - 1] += 1
-            super.insert_after_channel_ctl(type, channel, beat, position)
             this.push_remove_channel_ctl(type, channel, beat, remove_position)
         }
     }
@@ -439,9 +440,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this._remember {
+            super.insert_after_line_ctl(type, beat_key, position)
             val remove_position = position.toMutableList()
             remove_position[remove_position.size - 1] += 1
-            super.insert_after_line_ctl(type, beat_key, position)
             this.push_remove_line_ctl(type, beat_key, remove_position)
         }
     }
@@ -483,24 +484,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
             val adj_position = position.toMutableList()
             for (i in 0 until count) {
                 val tree = this.get_tree(beat_key, adj_position)
-
-                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
-                    2
-                } else if (adj_position.last() == tree.parent!!.size - 1) {
-                    1
-                } else {
-                    0
-                }
-
+                val parent_size = tree.parent?.size ?: 0
                 this.remove(beat_key, adj_position)
 
-                when (directive) {
-                    2 -> {
-                        adj_position.removeLast()
-                    }
-                    1 -> {
-                        adj_position[adj_position.size - 1] -= 1
-                    }
+                if (parent_size <= 2) { // Will be pruned
+                    adj_position.removeLast()
+                } else if (adj_position.last() == parent_size - 1) {
+                    adj_position[adj_position.size - 1] -= 1
                 }
             }
         }
@@ -510,25 +500,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this._remember {
             val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                val tree = this.get_global_ctl_tree(type, beat, adj_position)
-
-                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
-                    2
-                } else if (adj_position.last() == tree.parent!!.size - 1) {
-                    1
-                } else {
-                    0
-                }
+                val tree = this.get_global_ctl_tree(type, beat, adj_position).copy()
 
                 this.remove_global_ctl(type, beat, adj_position)
 
-                when (directive) {
-                    2 -> {
-                        adj_position.removeLast()
-                    }
-                    1 -> {
-                        adj_position[adj_position.size - 1] -= 1
-                    }
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    adj_position.removeLast()
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    adj_position[adj_position.size - 1] -= 1
                 }
             }
         }
@@ -538,26 +517,16 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this._remember {
             val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                val tree = this.get_channel_ctl_tree(type, beat, channel, adj_position)
-
-                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
-                    2
-                } else if (adj_position.last() == tree.parent!!.size - 1) {
-                    1
-                } else {
-                    0
-                }
+                val tree = this.get_channel_ctl_tree(type, beat, channel, adj_position).copy()
 
                 this.remove_channel_ctl(type, channel, beat, adj_position)
 
-                when (directive) {
-                    2 -> {
-                        adj_position.removeLast()
-                    }
-                    1 -> {
-                        adj_position[adj_position.size - 1] -= 1
-                    }
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    adj_position.removeLast()
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    adj_position[adj_position.size - 1] -= 1
                 }
+
             }
         }
     }
@@ -566,36 +535,28 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this._remember {
             val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                val tree = this.get_line_ctl_tree(type, beat_key, adj_position)
-
-                val directive = if (tree.parent!!.size <= 2) { // Will be pruned
-                    2
-                } else if (adj_position.last() == tree.parent!!.size - 1) {
-                    1
-                } else {
-                    0
-                }
+                val tree = this.get_line_ctl_tree(type, beat_key, adj_position).copy()
 
                 this.remove_line_ctl(type, beat_key, adj_position)
-
-                when (directive) {
-                    2 -> {
-                        adj_position.removeLast()
-                    }
-                    1 -> {
-                        adj_position[adj_position.size - 1] -= 1
-                    }
+                if (tree.parent!!.size <= 2) { // Will be pruned
+                    adj_position.removeLast()
+                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                    adj_position[adj_position.size - 1] -= 1
                 }
             }
         }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        val old_tree = this.get_tree(beat_key, position.subList(0, position.size - 1)).copy()
         this._remember {
-            this.push_replace_tree(beat_key, position.subList(0, position.size - 1), old_tree) {
-                super.remove(beat_key, position)
-            }
+            super.remove(beat_key, position)
+
+            val parent_position = position.subList(0, position.size - 1)
+            val use_tree = this.get_tree(beat_key, parent_position).copy()
+            this.push_to_history_stack(
+                HistoryToken.REPLACE_TREE,
+                listOf(beat_key.copy(), parent_position, use_tree)
+            )
         }
     }
 
@@ -709,13 +670,10 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     fun remove_beat(beat_index: Int, count: Int) {
+        val adj_count = min(this.beat_count, count)
         this._remember {
-            for (i in 0 until count) {
-                if (this.beat_count > 1) {
-                    this.remove_beat(min(beat_index, this.beat_count - 1))
-                } else {
-                    break
-                }
+            for (i in 0 until adj_count) {
+                this.remove_beat(min(beat_index, this.beat_count - 1))
             }
         }
     }
@@ -731,7 +689,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     )
                 }
             }
-
             super.remove_beat(beat_index)
 
             this.push_to_history_stack(

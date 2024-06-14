@@ -27,13 +27,8 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 
 
-import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 class OpusLayerBaseUnitTest {
     @Test
     fun test_new() {
@@ -60,17 +55,17 @@ class OpusLayerBaseUnitTest {
         manager.new()
         assertEquals(
             "Percussion instrument wasn't correctly defaulted",
-            OpusManager.DEFAULT_PERCUSSION,
+            OpusLayerBase.DEFAULT_PERCUSSION,
             manager.get_percussion_instrument(0)
         )
 
         manager.set_percussion_channel(0)
-        manager.set_percussion_instrument(0, OpusManager.DEFAULT_PERCUSSION + 1)
+        manager.set_percussion_instrument(0, OpusLayerBase.DEFAULT_PERCUSSION + 1)
 
 
         assertEquals(
             "Percussion instrument wasn't set",
-            OpusManager.DEFAULT_PERCUSSION + 1,
+            OpusLayerBase.DEFAULT_PERCUSSION + 1,
             manager.get_percussion_instrument(0)
         )
     }
@@ -89,10 +84,10 @@ class OpusLayerBaseUnitTest {
             tree.size
         )
 
-        assertThrows(OpusManager.BadBeatKey::class.java) {
+        assertThrows(OpusLayerBase.BadBeatKey::class.java) {
             manager.get_tree(BeatKey(0,3,1))
         }
-        assertThrows(OpusManager.BadBeatKey::class.java) {
+        assertThrows(OpusLayerBase.BadBeatKey::class.java) {
             manager.get_tree(BeatKey(2,0,0))
         }
 
@@ -387,7 +382,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        assertThrows(OpusManager.NonEventConversion::class.java) {
+        assertThrows(OpusLayerBase.NonEventConversion::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,0), listOf())
         }
 
@@ -413,12 +408,12 @@ class OpusLayerBaseUnitTest {
 
         manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(0, 0, false))
         manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(-12, 0, true))
-        assertThrows(OpusManager.NoteOutOfRange::class.java) {
+        assertThrows(OpusLayerBase.NoteOutOfRange::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }
         manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(94, 0, false))
         manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(2, 0, true))
-        assertThrows(OpusManager.NoteOutOfRange::class.java) {
+        assertThrows(OpusLayerBase.NoteOutOfRange::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }
     }
@@ -445,7 +440,7 @@ class OpusLayerBaseUnitTest {
             OpusEventSTD(10, 0, false)
         )
 
-        assertThrows(OpusManager.NonPercussionEventSet::class.java) {
+        assertThrows(OpusLayerBase.NonPercussionEventSet::class.java) {
             manager.set_event(BeatKey(1,0,0), position, OpusEventSTD(10, 0, false))
         }
 
@@ -481,11 +476,17 @@ class OpusLayerBaseUnitTest {
         manager.insert_beat(manager.beat_count)
         assertEquals(beats + 2, manager.beat_count)
 
-        assertThrows(OpusManager.RemovingRootException::class.java) {
+        assertThrows(OpusLayerBase.RemovingRootException::class.java) {
             manager.remove(BeatKey(0,0,0), listOf())
         }
-        assertThrows(Exception::class.java) { manager.insert_beat(manager.beat_count + 1) }
-        assertThrows(Exception::class.java) { manager.remove_beat(manager.beat_count + 1) }
+
+        assertThrows(IndexOutOfBoundsException::class.java) {
+            manager.insert_beat(manager.beat_count + 1)
+        }
+
+        assertThrows(IndexOutOfBoundsException::class.java) {
+            manager.remove_beat(manager.beat_count + 1)
+        }
 
         while (manager.beat_count > 1) {
             manager.remove_beat(0)
@@ -707,7 +708,7 @@ class OpusLayerBaseUnitTest {
         val type = ControlEventType.Tempo
         manager.split_global_ctl_tree(type, beat, listOf(), 2)
 
-        assertThrows(OpusManager.RemovingRootException::class.java) {
+        assertThrows(OpusLayerBase.RemovingRootException::class.java) {
             manager.remove_global_ctl(type, beat, listOf())
         }
 
@@ -750,7 +751,7 @@ class OpusLayerBaseUnitTest {
 
         manager.split_channel_ctl_tree(type, channel, beat, listOf(), 2)
 
-        assertThrows(OpusManager.RemovingRootException::class.java) {
+        assertThrows(OpusLayerBase.RemovingRootException::class.java) {
             manager.remove_channel_ctl(type, 0, 0, listOf())
         }
 
@@ -789,7 +790,7 @@ class OpusLayerBaseUnitTest {
         val type = ControlEventType.Volume
         val beat_key = BeatKey(0, 0, 0)
 
-        assertThrows(OpusManager.RemovingRootException::class.java) {
+        assertThrows(OpusLayerBase.RemovingRootException::class.java) {
             manager.remove_line_ctl(type, beat_key, listOf())
         }
 
@@ -1196,7 +1197,7 @@ class OpusLayerBaseUnitTest {
         val event_b = OpusVolumeEvent(50)
         manager.set_channel_ctl_event(type, 0, 1, listOf(2), event_b)
 
-        assertThrows(OpusManager.InvalidChannel::class.java) {
+        assertThrows(OpusLayerBase.InvalidChannel::class.java) {
             manager.get_channel_ctl_tree(type, 2, 0, listOf())
         }
 
@@ -1227,10 +1228,10 @@ class OpusLayerBaseUnitTest {
         val event_b = OpusVolumeEvent(50)
         manager.set_line_ctl_event(type, beat_key_b, listOf(2), event_b)
 
-        assertThrows(OpusManager.BadBeatKey::class.java) {
+        assertThrows(OpusLayerBase.BadBeatKey::class.java) {
             manager.get_line_ctl_tree(type, BeatKey(2,0,1), listOf())
         }
-        assertThrows(OpusManager.BadBeatKey::class.java) {
+        assertThrows(OpusLayerBase.BadBeatKey::class.java) {
             manager.get_line_ctl_tree(type, BeatKey(0,3,1), listOf())
         }
 
@@ -1307,7 +1308,7 @@ class OpusLayerBaseUnitTest {
         // Set Up first tree
         manager.set_channel_ctl_event(type, working_channel, 0, listOf(), event)
 
-        assertThrows(OpusManager.InvalidOverwriteCall::class.java) {
+        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
             manager.overwrite_channel_ctl_row(type, working_channel + 1, working_channel, 0)
         }
 
@@ -1381,10 +1382,10 @@ class OpusLayerBaseUnitTest {
         // add explicitly different tree
         manager.split_line_ctl_tree(type, working_key, listOf(), 5)
 
-        assertThrows(OpusManager.InvalidOverwriteCall::class.java) {
+        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
             manager.overwrite_line_ctl_row(type, working_key_b.channel + 1, working_key_b.line_offset, working_key_b)
         }
-        assertThrows(OpusManager.InvalidOverwriteCall::class.java) {
+        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
             manager.overwrite_line_ctl_row(type, working_key_b.channel, working_key_b.line_offset + 1, working_key_b)
         }
 
@@ -1419,23 +1420,23 @@ class OpusLayerBaseUnitTest {
         manager.new_line(1)
         manager.set_beat_count(6)
 
-        assertThrows(OpusManager.RangeOverflow::class.java) {
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
             manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(3, 0, 0), BeatKey(3, 2, 2))
         }
-        assertThrows(OpusManager.RangeOverflow::class.java) {
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
             manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 3, 0), BeatKey(1, 2, 2))
         }
-        assertThrows(OpusManager.RangeOverflow::class.java) {
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
             manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
         }
-        assertThrows(OpusManager.RangeOverflow::class.java) {
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
             manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 4, 2))
         }
 
-        assertThrows(OpusManager.RangeOverflow::class.java) {
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
             manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
         }
-        assertThrows(OpusManager.RangeOverflow::class.java) {
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
             manager.overwrite_beat_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
         }
 
@@ -2985,11 +2986,11 @@ class OpusLayerBaseUnitTest {
         }
 
         manager.new_line(0)
-        assertThrows(OpusManager.InvalidOverwriteCall::class.java) {
+        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
             manager.overwrite_row(0, 0, BeatKey(0, 1, 0))
         }
         manager.new_channel()
-        assertThrows(OpusManager.InvalidOverwriteCall::class.java) {
+        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
             manager.overwrite_row(0, 0, BeatKey(1, 0, 0))
         }
 
@@ -3380,10 +3381,10 @@ class OpusLayerBaseUnitTest {
         manager.set_event(key_b, listOf(1), OpusEventSTD(13, 0))
         manager.set_event(key_b, listOf(2), OpusEventSTD(14, 0))
 
-        assertThrows(OpusManager.InvalidMergeException::class.java) {
+        assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
             manager.merge_leafs(key_a, listOf(), key_b, listOf())
         }
-        assertThrows(OpusManager.InvalidMergeException::class.java) {
+        assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
             manager.merge_leafs(key_a, listOf(), key_a, listOf())
         }
 

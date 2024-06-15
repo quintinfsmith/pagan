@@ -1,5 +1,10 @@
 #!/usr/bin/python
+"""
+    Generates UnitTests based on the existing OpusLayer<layer>UnitTest.kt files using higher-level layers
+    to make sure the functionality isn't broken by any layer
+"""
 import os
+
 file_name = __file__[__file__.rfind("/") + 1:]
 disclaimer_text = f"""/*
 * DO NOT MODIFY THE CONTENTS OF THIS FILE. IT WAS GENERATED IN /scripts/{file_name}

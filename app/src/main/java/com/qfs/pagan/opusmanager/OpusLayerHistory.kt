@@ -19,7 +19,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
-        println("$depth -> APPLYING ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -85,7 +84,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
                 HistoryToken.REPLACE_TREE -> {
                     val beatkey = current_node.args[0] as BeatKey
-                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    val position = this.checked_cast<List<Int>>(current_node.args[1]).toList()
                     val tree = this.checked_cast<OpusTree<OpusEventSTD>>(current_node.args[2])
                     this.replace_tree(beatkey, position, tree)
                 }
@@ -94,16 +93,17 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.replace_global_ctl_tree(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
-                        this.checked_cast<List<Int>>(current_node.args[2]),
+                        this.checked_cast<List<Int>>(current_node.args[2]).toList(),
                         this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
                     )
                 }
+
                 HistoryToken.REPLACE_CHANNEL_CTL_TREE -> {
                     this.replace_channel_ctl_tree(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
                         current_node.args[2] as Int,
-                        this.checked_cast<List<Int>>(current_node.args[3]),
+                        this.checked_cast<List<Int>>(current_node.args[3]).toList(),
                         this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4])
                     )
                 }
@@ -112,7 +112,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.replace_line_ctl_tree(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[2]),
+                        this.checked_cast<List<Int>>(current_node.args[2]).toList(),
                         this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
                     )
                 }
@@ -177,14 +177,56 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 }
 
                 HistoryToken.INSERT -> {
-                    this.insert(
-                        current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1])
-                    )
+                    val beat_key = current_node.args[0] as BeatKey
+                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    this.insert(beat_key, position)
                     this.replace_tree(
-                        current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1]),
+                        beat_key,
+                        position,
                         this.checked_cast<OpusTree<OpusEventSTD>>(current_node.args[2])
+                    )
+                }
+
+                HistoryToken.INSERT_CTL_GLOBAL -> {
+                    val type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    val beat = current_node.args[1] as Int
+                    val position = this.checked_cast<List<Int>>(current_node.args[2])
+                    this.insert_global_ctl(type, beat, position)
+                    this.replace_global_ctl_tree(
+                        type,
+                        beat,
+                        position,
+                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
+                    )
+                }
+
+                HistoryToken.INSERT_CTL_CHANNEL -> {
+                    val type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    val channel = current_node.args[1] as Int
+                    val beat = current_node.args[2] as Int
+                    val position = this.checked_cast<List<Int>>(current_node.args[3])
+
+                    this.insert_channel_ctl(type, channel, beat, position)
+                    this.replace_channel_ctl_tree(
+                        type,
+                        channel,
+                        beat,
+                        position,
+                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4])
+                    )
+                }
+
+                HistoryToken.INSERT_CTL_LINE -> {
+                    val type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    val beat_key = this.checked_cast<BeatKey>(current_node.args[1])
+                    val position = this.checked_cast<List<Int>>(current_node.args[2])
+
+                    this.insert_line_ctl(type, beat_key, position)
+                    this.replace_line_ctl_tree(
+                        type,
+                        beat_key,
+                        position,
+                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
                     )
                 }
 
@@ -509,161 +551,161 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
-        this._remember {
-            val adj_position = position.toMutableList()
-            for (i in 0 until count) {
-                val tree = this.get_global_ctl_tree(type, beat, adj_position).copy()
-
-                this.remove_global_ctl(type, beat, adj_position)
-
-                if (tree.parent!!.size <= 2) { // Will be pruned
-                    adj_position.removeLast()
-                } else if (adj_position.last() == tree.parent!!.size - 1) {
-                    adj_position[adj_position.size - 1] -= 1
-                }
-            }
-        }
-    }
-
     fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, count: Int) {
         this._remember {
             val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                val tree = this.get_channel_ctl_tree(type, beat, channel, adj_position).copy()
+                val tree = this.get_channel_ctl_tree(type, beat, channel, adj_position)
+                val parent_size = tree.parent?.size ?: 0
 
                 this.remove_channel_ctl(type, channel, beat, adj_position)
 
-                if (tree.parent!!.size <= 2) { // Will be pruned
+                if (parent_size <= 2) { // Will be pruned
                     adj_position.removeLast()
-                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                } else if (adj_position.last() == parent_size - 1) {
                     adj_position[adj_position.size - 1] -= 1
                 }
-
             }
         }
     }
+
+
+    fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
+        this._remember {
+            val adj_position = position.toMutableList()
+            for (i in 0 until count) {
+                val tree = this.get_global_ctl_tree(type, beat, adj_position)
+                val parent_size = tree.parent?.size ?: 0
+
+                this.remove_global_ctl(type, beat, adj_position)
+
+                if (parent_size <= 2) { // Will be pruned
+                    adj_position.removeLast()
+                } else if (adj_position.last() == parent_size - 1) {
+                    adj_position[adj_position.size - 1] -= 1
+                }
+            }
+        }
+    }
+
 
     fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
             val adj_position = position.toMutableList()
             for (i in 0 until count) {
-                val tree = this.get_line_ctl_tree(type, beat_key, adj_position).copy()
+                val tree = this.get_line_ctl_tree(type, beat_key, adj_position)
+                val parent_size = tree.parent?.size ?: 0
 
                 this.remove_line_ctl(type, beat_key, adj_position)
-                if (tree.parent!!.size <= 2) { // Will be pruned
+                if (parent_size <= 2) { // Will be pruned
                     adj_position.removeLast()
-                } else if (adj_position.last() == tree.parent!!.size - 1) {
+                } else if (adj_position.last() == parent_size - 1) {
                     adj_position[adj_position.size - 1] -= 1
                 }
             }
         }
     }
 
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
+        super.remove(beat_key, position)
+    }
+
     override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        this._remember {
-            this.push_replace_global_ctl(type, beat, position.subList(0, position.size - 1)) {
-                super.remove_global_ctl(type, beat, position)
-            }
-        }
+        super.remove_global_ctl(type, beat, position)
     }
 
     override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        this._remember {
-            this.push_replace_channel_ctl(type, channel, beat, position.subList(0, position.size - 1)) {
-                super.remove_channel_ctl(type, channel, beat, position)
-            }
-        }
+        super.remove_channel_ctl(type, channel, beat, position)
     }
 
     override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        this._remember {
-            this.push_replace_line_ctl(type, beat_key, position.subList(0, position.size - 1)) {
-                super.remove_line_ctl(type, beat_key, position)
-            }
-        }
+        super.remove_line_ctl(type, beat_key, position)
     }
-
 
     override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
         val parent_position = position.subList(0, position.size - 1)
         val use_tree = this.get_tree(beat_key, parent_position).copy()
 
-        super.remove_one_of_two(beat_key, position)
+        this._forget {
+            super.remove_one_of_two(beat_key, position)
+        }
 
         this.push_to_history_stack(
             HistoryToken.REPLACE_TREE,
-            listOf(beat_key.copy(), parent_position, use_tree)
+            listOf(beat_key.copy(), parent_position.toList(), use_tree)
         )
     }
 
     override fun remove_global_ctl_one_of_two(type: ControlEventType, beat: Int, position: List<Int>) {
+        val parent_position = position.subList(0, position.size - 1)
+        val use_tree = this.get_global_ctl_tree(type, beat, parent_position).copy()
+
         this._forget {
             super.remove_global_ctl_one_of_two(type, beat, position)
         }
+
+        this.push_to_history_stack(
+            HistoryToken.REPLACE_GLOBAL_CTL_TREE,
+            listOf(type, beat, parent_position.toList(), use_tree)
+        )
     }
 
     override fun remove_channel_ctl_one_of_two(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        val parent_position = position.subList(0, position.size - 1)
+        val use_tree = this.get_channel_ctl_tree(type, channel, beat, parent_position).copy()
+
         this._forget {
             super.remove_channel_ctl_one_of_two(type, channel, beat, position)
         }
+        this.push_to_history_stack(
+            HistoryToken.REPLACE_CHANNEL_CTL_TREE,
+            listOf(type, channel, beat, parent_position.toList(), use_tree)
+        )
     }
 
     override fun remove_line_ctl_one_of_two(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        val parent_position = position.subList(0, position.size - 1)
+        val use_tree = this.get_line_ctl_tree(type, beat_key, parent_position).copy()
+
         this._forget {
             super.remove_line_ctl_one_of_two(type, beat_key, position)
         }
+
+        this.push_to_history_stack(
+            HistoryToken.REPLACE_LINE_CTL_TREE,
+            listOf(type, beat_key, parent_position.toList(), use_tree)
+        )
     }
-
-    // Unused, should be able to delete
-    //override fun remove_only(beat_key: BeatKey, position: List<Int>) {
-    //    this._forget {
-    //        super.remove_only(beat_key, position)
-    //    }
-    //}
-
-    //override fun remove_global_ctl_only(type: ControlEventType, beat: Int, position: List<Int>) {
-    //    this._forget {
-    //        super.remove_global_ctl_only(type, beat, position)
-    //    }
-    //}
-
-    //override fun remove_channel_ctl_only(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-    //    this._forget {
-    //        super.remove_channel_ctl_only(type, channel, beat, position)
-    //    }
-    //}
-
-    //override fun remove_line_ctl_only(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-    //    this._forget {
-    //        super.remove_line_ctl_only(type, beat_key, position)
-    //    }
-    //}
-
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this.push_to_history_stack(
             HistoryToken.INSERT,
-            listOf(beat_key, position, this.get_tree(beat_key, position).copy())
+            listOf(beat_key, position.toList(), this.get_tree(beat_key, position).copy())
         )
         super.remove_standard(beat_key, position)
     }
 
     override fun remove_global_ctl_standard(type: ControlEventType, beat: Int, position: List<Int>) {
-        this._forget {
-            super.remove_global_ctl_standard(type, beat, position)
-        }
+        this.push_to_history_stack(
+            HistoryToken.INSERT_CTL_GLOBAL,
+            listOf(type, beat, position.toList(), this.get_global_ctl_tree(type, beat, position).copy())
+        )
+        super.remove_global_ctl_standard(type, beat, position)
     }
 
     override fun remove_channel_ctl_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        this._forget {
-            super.remove_channel_ctl_standard(type, channel, beat, position)
-        }
+        this.push_to_history_stack(
+            HistoryToken.INSERT_CTL_CHANNEL,
+            listOf(type, channel, beat, position.toList(), this.get_channel_ctl_tree(type, channel, beat, position).copy())
+        )
+        super.remove_channel_ctl_standard(type, channel, beat, position)
     }
 
     override fun remove_line_ctl_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        this._forget {
-            super.remove_line_ctl_standard(type, beat_key, position)
-        }
+        this.push_to_history_stack(
+            HistoryToken.INSERT_CTL_LINE,
+            listOf(type, beat_key, position.toList(), this.get_line_ctl_tree(type, beat_key, position).copy())
+        )
+        super.remove_line_ctl_standard(type, beat_key, position)
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
@@ -731,7 +773,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
-        println("REPLACING: $beat_key, $position")
         this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.replace_tree(beat_key, position, tree)
@@ -972,7 +1013,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
     private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>? = null, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
             val use_tree = tree ?: this.get_tree(beat_key, position).copy()
-
             val output = callback()
 
             this.push_to_history_stack(
@@ -1016,6 +1056,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
             callback()
         }
     }
+
     private fun <T> push_replace_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
             val use_tree = this.get_line_ctl_tree(type, beat_key, position).copy()
@@ -1026,6 +1067,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 HistoryToken.REPLACE_LINE_CTL_TREE,
                 listOf(type, beat_key.copy(), position.toList(), use_tree)
             )
+
             output
         } else {
             callback()
@@ -1252,6 +1294,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
             super.unlink_beat(beat_key)
         }
     }
+
     override fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
         this._remember {
             super.unlink_range(first_key, second_key)

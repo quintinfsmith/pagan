@@ -18,8 +18,11 @@ class HistoryCacheUnitTest {
         val original = OpusManager()
         original.import_from_other(manager)
         callback(manager)
-        println("Applying UNDO")
-        manager.apply_undo()
+        try {
+            manager.apply_undo()
+        } catch (e: Exception) {
+            throw e
+        }
 
         assertEquals(
             "Undo Didn't Work Correctly",
@@ -54,16 +57,15 @@ class HistoryCacheUnitTest {
         manager.split_tree(key, listOf(1), 3)
         manager.set_event(key, listOf(1, 0), test_event)
 
-        println("CHECKING")
         this.undo_and_check(manager) {
             it.remove(key, listOf(1,2), 3)
-            println("------------>")
         }
-        println("<------------")
+
         this.undo_and_check(manager) {
             it.remove(key, listOf(1,0), 1)
         }
     }
+
     @Test
     fun test_remove_global_ctl() {
         var key = 0

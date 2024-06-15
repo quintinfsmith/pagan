@@ -134,16 +134,8 @@ class OpusChannel(var uuid: Int) {
     }
 
     fun set_beat_count(new_beat_count: Int) {
-        if (new_beat_count > this._beat_count) {
-            for (line in this.lines) {
-                line.set_beat_count(new_beat_count)
-            }
-        } else {
-            for (line in this.lines) {
-                while (line.beats.size > new_beat_count) {
-                    line.beats.removeLast()
-                }
-            }
+        for (line in this.lines) {
+            line.set_beat_count(new_beat_count)
         }
         this.controllers.set_beat_count(new_beat_count)
         this._beat_count = new_beat_count

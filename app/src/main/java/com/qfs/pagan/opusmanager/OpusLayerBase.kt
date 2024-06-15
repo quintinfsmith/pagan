@@ -691,7 +691,6 @@ open class OpusLayerBase {
         if (position.isEmpty()) {
             throw RemovingRootException()
         }
-
         val tree = this.get_tree(beat_key, position)
 
         val parent_tree = tree.parent!!
@@ -700,6 +699,21 @@ open class OpusLayerBase {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             2 -> this.remove_one_of_two(beat_key, position)
             else -> this.remove_standard(beat_key, position)
+        }
+    }
+
+    open fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw RemovingRootException()
+        }
+        val tree = this.get_channel_ctl_tree(type, channel, beat, position)
+
+        val parent_tree = tree.parent!!
+
+        when (parent_tree.size) {
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
+            2 -> this.remove_channel_ctl_one_of_two(type, channel, beat, position)
+            else -> this.remove_channel_ctl_standard(type, channel, beat, position)
         }
     }
 
@@ -721,21 +735,6 @@ open class OpusLayerBase {
         }
     }
 
-    open fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw RemovingRootException()
-        }
-        val tree = this.get_channel_ctl_tree(type, channel, beat, position)
-
-        val parent_tree = tree.parent!!
-
-        when (parent_tree.size) {
-            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
-            2 -> this.remove_channel_ctl_one_of_two(type, channel, beat, position)
-            else -> this.remove_channel_ctl_standard(type, channel, beat, position)
-        }
-    }
-
     open fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         if (position.isEmpty()) {
             throw RemovingRootException()
@@ -750,49 +749,6 @@ open class OpusLayerBase {
             else -> this.remove_global_ctl_standard(type, beat, position)
         }
     }
-
-    // Singles should never exist, so the remove_*_only functions don't need to either
-    // remove_only, remove_one_of_two and remove_standard all exist so I could separate
-    // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
-    //open fun remove_only(beat_key: BeatKey, position: List<Int>) {
-    //    val tree = this.get_tree(beat_key, position)
-    //    val next_position = position.toMutableList()
-    //    next_position.removeLast()
-    //    if (next_position.isNotEmpty()) {
-    //        this.remove(beat_key, next_position)
-    //    }
-    //    tree.detach()
-    //}
-
-    //open fun remove_line_ctl_only(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-    //    val tree = this.get_line_ctl_tree(type, beat_key, position)
-    //    val next_position = position.toMutableList()
-    //    next_position.removeLast()
-    //    if (next_position.isNotEmpty()) {
-    //        this.remove_line_ctl(type, beat_key, next_position)
-    //    }
-    //    tree.detach()
-    //}
-
-    //open fun remove_channel_ctl_only(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-    //    val tree = this.get_channel_ctl_tree(type, channel, beat, position)
-    //    val next_position = position.toMutableList()
-    //    next_position.removeLast()
-    //    if (next_position.isNotEmpty()) {
-    //        this.remove_channel_ctl(type, channel, beat, next_position)
-    //    }
-    //    tree.detach()
-    //}
-
-    //open fun remove_global_ctl_only(type: ControlEventType, beat: Int, position: List<Int>) {
-    //    val tree = this.get_global_ctl_tree(type, beat, position)
-    //    val next_position = position.toMutableList()
-    //    next_position.removeLast()
-    //    if (next_position.isNotEmpty()) {
-    //        this.remove_global_ctl(type, beat, next_position)
-    //    }
-    //    tree.detach()
-    //}
 
     // remove_only, remove_one_of_two and remove_standard all exist so I could separate
     // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer

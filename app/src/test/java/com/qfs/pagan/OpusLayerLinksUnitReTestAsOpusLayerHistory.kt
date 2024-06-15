@@ -1,3 +1,6 @@
+/*
+* DO NOT MODIFY THE CONTENTS OF THIS FILE. IT WAS GENERATED IN /scripts/build_other_layer_tests.py
+*/
 package com.qfs.pagan
 
 import com.qfs.pagan.opusmanager.BeatKey
@@ -10,7 +13,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 
@@ -19,7 +22,7 @@ import com.qfs.pagan.opusmanager.OpusLayerLinks
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class OpusLayerLinksUnitTest {
+class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     private fun batch_link_test(manager: OpusManager, main_key: BeatKey, callback: (OpusTree<OpusEventSTD>) -> Unit) {
         for (linked_key in manager.get_all_linked(main_key)) {
             if (linked_key == main_key) {

@@ -52,7 +52,6 @@ open class OpusLayerBase {
 
     companion object {
         const val DEFAULT_PERCUSSION: Int = 0
-        const val DEFAULT_NAME = "New Opus"
 
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
             val (from_key, to_key) = if (first.channel < second.channel) {
@@ -1510,9 +1509,14 @@ open class OpusLayerBase {
         val json = Json {
             ignoreUnknownKeys = true
         }
-        val json_string = json.encodeToString(this.to_json())
-        val version = 3
-        file_obj.writeText("{ \"v\": $version, \"d\": $json_string }")
+        val json_string = json.encodeToString(
+            JSONWrapper(
+                v = 3,
+                d = this.to_json()
+            )
+        )
+
+        file_obj.writeText(json_string)
     }
 
     // Clear function is used for new projects
@@ -1520,7 +1524,7 @@ open class OpusLayerBase {
         this.beat_count = 0
         this.channels.clear()
         this.path = null
-        this.project_name = OpusLayerBase.DEFAULT_NAME
+        this.project_name = null
         this.tuning_map = Array(12) {
             i: Int -> Pair(i, 12)
         }
@@ -1555,7 +1559,7 @@ open class OpusLayerBase {
                 when (working_char) {
                     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.' -> {
                         working_number += working_char
-                    } 
+                    }
                     ' ', '\r', '\n', Char(125), Char(93), ',' -> {
                         try {
                             working_number.toFloat()
@@ -1614,7 +1618,7 @@ open class OpusLayerBase {
                             throw InvalidJSON(json_content, index)
                         }
                         if (type_stack.size < 2 && value_index_i >= 0) {
-                            value_index_f = index
+                            value_index_f = index + 1
                         }
                     }
                     Char(91) -> {
@@ -1628,7 +1632,7 @@ open class OpusLayerBase {
                         }
 
                         if (type_stack.size == 1 && value_index_i >= 0) {
-                            value_index_f = index
+                            value_index_f = index + 1
                         }
                     }
                     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-' -> {
@@ -1638,7 +1642,7 @@ open class OpusLayerBase {
                         working_string = ""
                     }
                     ' ', '\r', '\n', '\t' -> {
-                    } 
+                    }
                     'n' -> {
                         if (json_content.substring(index, index + 4) != "null") {
                             throw InvalidJSON(json_content, index)
@@ -1688,6 +1692,7 @@ open class OpusLayerBase {
 
         val version = when (map_keys) {
             setOf("v", "d") -> {
+                println(shallow_map["d"]!!)
                 json.decodeFromString<Int>(shallow_map["v"]!!)
             }
             else -> {
@@ -1706,7 +1711,7 @@ open class OpusLayerBase {
 
         // NOTE: chaining the convert_old_fmt calls saves me having to update all the functions
         // every time I change the save format
-        val json_data: LoadedJSONData2 = when (version) {
+        val json_data: LoadedJSONData = when (version) {
             0 -> this._convert_old_fmt(
                 this._convert_old_fmt(
                     this._convert_old_fmt(
@@ -1722,7 +1727,7 @@ open class OpusLayerBase {
             2 -> this._convert_old_fmt(
                 json.decodeFromString<LoadedJSONData2>(json_content)
             )
-            3 -> json.decodeFromString<LoadedJSONData>(shallow_map["d"])
+            3 -> json.decodeFromString<LoadedJSONData>(shallow_map["d"]!!)
             else -> {
                 throw FutureSaveVersionException(version)
             }
@@ -1797,7 +1802,7 @@ open class OpusLayerBase {
             }
 
             new_channels.add(
-                ChannelJSONData(
+                ChannelJSONData2(
                     midi_channel = channel.midi_channel,
                     midi_bank = channel.midi_bank,
                     midi_program = channel.midi_program,
@@ -1827,23 +1832,19 @@ open class OpusLayerBase {
 
     private fun _convert_old_fmt(old_data: LoadedJSONData2): LoadedJSONData {
         val new_channel_data = List<ChannelJSONData>(old_data.channels.size) { i: Int ->
-            val channel = old_data.channels[i]
+            val channel: ChannelJSONData2 = old_data.channels[i]
             ChannelJSONData(
                 midi_channel = channel.midi_channel,
                 midi_bank = channel.midi_bank,
                 midi_program = channel.midi_program,
                 controllers = channel.channel_controllers,
                 lines = List<LineJSONData>(channel.lines.size) { j: Int ->
-                    val line = channel.lines[j]
+                    val line: OpusTreeJSON<OpusEventSTD> = channel.lines[j]
                     LineJSONData(
-                        beats = List<OpusTreeJSON<OpusEventSTD>?>(line.size) { k: Int ->
-                            if (line[k].is_leaf() && !line[k].is_event()) {
-                                null
-                            } else {
-                                line[k]
-                            }
+                        beats = List<OpusTreeJSON<OpusEventSTD>?>(line.children!!.size) { k: Int ->
+                            line.children!![k]
                         },
-                        static_value = channel.static_values[j],
+                        static_value = channel.line_static_values[j],
                         controllers = channel.line_controllers[j]
                     )
                 }
@@ -1896,9 +1897,8 @@ open class OpusLayerBase {
             val line_list = mutableListOf<MutableList<OpusTree<OpusEventSTD>>>()
             for (input_line in channel_data.lines) {
                 val beat_list = mutableListOf<OpusTree<OpusEventSTD>>()
-                val line_tree = tree_from_json(input_line)
-                for (i in 0 until line_tree.size) {
-                    beat_list.add(line_tree[i])
+                for (json_beat in input_line.beats) {
+                    beat_list.add(tree_from_json(json_beat))
                 }
                 line_list.add(beat_list)
             }
@@ -1912,7 +1912,6 @@ open class OpusLayerBase {
         // active project is unaffected
         val parsed = this.parse_line_data(json_data)
         this.clear()
-
 
         this.tuning_map = json_data.tuning_map.clone()
         this.transpose = json_data.transpose
@@ -1959,19 +1958,14 @@ open class OpusLayerBase {
                         this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
                     }
                 }
-            }
-
-            this.channels[y].controllers = ActiveControlSet.from_json(channel_data.channel_controllers, beat_count)
-            for (line_index in this.channels[y].lines.indices) {
-                this.channels[y].lines[line_index].controllers = ActiveControlSet.from_json(
-                    channel_data.line_controllers[line_index],
+                val line = channel_data.lines[j]
+                this.channels[y].lines[j].controllers = ActiveControlSet.from_json(
+                    line.controllers,
                     beat_count
                 )
             }
 
-            channel_data.line_static_values.forEachIndexed { j: Int, value: Int? ->
-                this.channels[y].lines[j].static_value = value
-            }
+            this.channels[y].controllers = ActiveControlSet.from_json(channel_data.controllers, beat_count)
             y += 1
         }
 
@@ -1981,16 +1975,18 @@ open class OpusLayerBase {
             this.channels[y].midi_channel = channel_data.midi_channel
             this.channels[y].midi_bank = channel_data.midi_bank
             this.channels[y].midi_program = channel_data.midi_program
-            this.channels[y].controllers = ActiveControlSet.from_json(channel_data.channel_controllers, beat_count)
+            this.channels[y].controllers = ActiveControlSet.from_json(
+                channel_data.controllers,
+                beat_count
+            )
+
             for (line_index in this.channels[y].lines.indices) {
+                val line = channel_data.lines[line_index]
                 this.channels[y].lines[line_index].controllers = ActiveControlSet.from_json(
-                    channel_data.line_controllers[line_index],
+                    line.controllers,
                     beat_count
                 )
-            }
-
-            channel_data.line_static_values.forEachIndexed { j: Int, value: Int? ->
-                this.channels[y].lines[j].static_value = value
+                this.channels[y].lines[line_index].static_value = line.static_value
             }
 
             for (j in 0 until channel_data.lines.size) {
@@ -2479,7 +2475,7 @@ open class OpusLayerBase {
         this.on_project_changed()
     }
 
-    open fun set_project_name(new_name: String) {
+    open fun set_project_name(new_name: String?) {
         this.project_name = new_name
     }
 

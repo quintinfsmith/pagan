@@ -27,6 +27,13 @@ data class LoadedJSONData(
     var controllers: List<ActiveControllerJSON> = listOf()
 )
 
+
+@Serializable
+data class JSONWrapper(
+    val v: Int,
+    val d: LoadedJSONData
+)
+
 @Serializable
 data class ActiveControllerJSON(
     var type: ControlEventType,
@@ -56,7 +63,7 @@ data class LoadedJSONData0(
     var channels: List<ChannelJSONData0>,
     var reflections: List<List<BeatKey>>? = null,
     var transpose: Int = 0,
-    var name: String = OpusLayerBase.DEFAULT_NAME
+    var name: String
 )
 
 @Serializable
@@ -75,7 +82,7 @@ data class LoadedJSONData1(
     var channels: List<ChannelJSONData1>,
     var reflections: List<List<BeatKey>>? = null,
     var transpose: Int = 0,
-    var name: String = OpusLayerBase.DEFAULT_NAME,
+    var name: String,
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) },
     var radix: Int = tuning_map.size,
 )
@@ -94,10 +101,10 @@ data class ChannelJSONData2(
 
 @Serializable
 data class LoadedJSONData2(
-    var channels: List<ChannelJSONData>,
+    var channels: List<ChannelJSONData2>,
     var reflections: List<List<BeatKey>>? = null,
     var transpose: Int = 0,
-    var name: String = OpusLayerBase.DEFAULT_NAME,
+    var name: String,
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) },
     var controllers: List<ActiveControllerJSON> = listOf()
 )

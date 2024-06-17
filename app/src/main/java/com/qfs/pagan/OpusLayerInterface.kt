@@ -83,7 +83,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_project_name(new_name: String) {
+    override fun set_project_name(new_name: String?) {
         super.set_project_name(new_name)
         this.runOnUiThread { main: MainActivity ->
             main.update_title_text()

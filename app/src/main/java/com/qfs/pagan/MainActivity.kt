@@ -93,6 +93,8 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -996,7 +998,7 @@ class MainActivity : AppCompatActivity() {
                         "${getString(R.string.app_name)} ${getString(R.string.app_version)}"
                     }
                     else -> {
-                        this.get_opus_manager().project_name
+                        this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
                     }
                 }
             }
@@ -1880,9 +1882,15 @@ class MainActivity : AppCompatActivity() {
         this._import_project_intent_launcher.launch(intent)
     }
 
+    fun get_default_export_name(): String {
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        return "Pagan Op. ${now.format(formatter)}"
+    }
+
     fun get_export_name(): String {
         val reserved_chars = "|\\?*<\":>+[]/'"
-        var base_name = this.get_opus_manager().project_name
+        var base_name: String = this.get_opus_manager().project_name ?: this.get_default_export_name()
         for (c in reserved_chars) {
             base_name = base_name.replace("$c", "_")
         }

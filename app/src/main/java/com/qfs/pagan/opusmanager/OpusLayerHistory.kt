@@ -25,6 +25,10 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.set_project_name(current_node.args[0] as String)
                 }
 
+                HistoryToken.UNSET_PROJECT_NAME -> {
+                    this.set_project_name(null)
+                }
+
                 HistoryToken.UNLINK_BEAT -> {
                     this.unlink_beat(current_node.args[0] as BeatKey)
                 }
@@ -1253,8 +1257,12 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun set_project_name(new_name: String) {
-        this.push_to_history_stack(HistoryToken.SET_PROJECT_NAME, listOf(this.project_name))
+    override fun set_project_name(new_name: String?) {
+        if (this.project_name == null) {
+            this.push_to_history_stack(HistoryToken.UNSET_PROJECT_NAME, listOf())
+        } else {
+            this.push_to_history_stack(HistoryToken.SET_PROJECT_NAME, listOf(this.project_name!!))
+        }
         super.set_project_name(new_name)
     }
 

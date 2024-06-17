@@ -2,22 +2,27 @@ package com.qfs.pagan.opusmanager
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class LineJSONData(
+    var static_value: Int? = null,
+    var beats: List<OpusTreeJSON<OpusEventSTD>?>,
+    var controllers: List<ActiveControllerJSON>
+)
+
+@Serializable
 data class ChannelJSONData(
     var midi_channel: Int,
     var midi_bank: Int,
     var midi_program: Int,
-    var lines: List<OpusTreeJSON<OpusEventSTD>>,
-    var line_static_values: List<Int?> = listOf(),
-    var line_controllers: List<List<ActiveControllerJSON>>,
-    var channel_controllers: List<ActiveControllerJSON>,
+    var lines: List<LineJSONData>,
+    var controllers: List<ActiveControllerJSON>,
 )
 
 @Serializable
 data class LoadedJSONData(
+    var name: String? = null,
     var channels: List<ChannelJSONData>,
     var reflections: List<List<BeatKey>>? = null,
     var transpose: Int = 0,
-    var name: String = OpusLayerBase.DEFAULT_NAME,
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) },
     var controllers: List<ActiveControllerJSON> = listOf()
 )
@@ -75,3 +80,24 @@ data class LoadedJSONData1(
     var radix: Int = tuning_map.size,
 )
 
+
+@Serializable
+data class ChannelJSONData2(
+    var midi_channel: Int,
+    var midi_bank: Int,
+    var midi_program: Int,
+    var lines: List<OpusTreeJSON<OpusEventSTD>>,
+    var line_static_values: List<Int?> = listOf(),
+    var line_controllers: List<List<ActiveControllerJSON>>,
+    var channel_controllers: List<ActiveControllerJSON>,
+)
+
+@Serializable
+data class LoadedJSONData2(
+    var channels: List<ChannelJSONData>,
+    var reflections: List<List<BeatKey>>? = null,
+    var transpose: Int = 0,
+    var name: String = OpusLayerBase.DEFAULT_NAME,
+    var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) },
+    var controllers: List<ActiveControllerJSON> = listOf()
+)

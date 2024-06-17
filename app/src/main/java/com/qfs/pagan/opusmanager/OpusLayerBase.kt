@@ -1692,7 +1692,6 @@ open class OpusLayerBase {
 
         val version = when (map_keys) {
             setOf("v", "d") -> {
-                println(shallow_map["d"]!!)
                 json.decodeFromString<Int>(shallow_map["v"]!!)
             }
             else -> {

@@ -756,6 +756,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun project_delete() {
+        val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
         this._project_manager.delete(this.get_opus_manager())
 
         val fragment = this.get_active_fragment()
@@ -764,7 +765,7 @@ class MainActivity : AppCompatActivity() {
             this.navigate(R.id.EditorFragment)
         }
 
-        this.feedback_msg(resources.getString(R.string.feedback_delete, this.title))
+        this.feedback_msg(resources.getString(R.string.feedback_delete, title))
     }
 
     private fun project_move_to_copy() {
@@ -1852,7 +1853,7 @@ class MainActivity : AppCompatActivity() {
     private fun dialog_delete_project() {
         val main_fragment = this.get_active_fragment()
 
-        val title = this.get_opus_manager().project_name
+        val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
         this._adjust_dialog_colors(
             AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
                 .setCustomTitle(this._build_dialog_title_view(resources.getString(R.string.dlg_delete_title, title)))

@@ -6,6 +6,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class ProjectManager(data_dir: String) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
@@ -66,6 +68,13 @@ class ProjectManager(data_dir: String) {
         return directory.listFiles()?.isNotEmpty() ?: false
     }
 
+    private fun generate_file_project_name(file: File): String {
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        // TODO: use resource string
+        return "Untitled Op. - ${now.format(formatter)}"
+    }
+
     private fun _cache_project_list() {
         if (!has_projects_saved()) {
             return
@@ -78,7 +87,12 @@ class ProjectManager(data_dir: String) {
 
         val project_list = mutableListOf<Pair<String, String>>()
         for (json_file in directory.listFiles()!!) {
-            val project_name = this.get_file_project_name(json_file) ?: continue
+            var project_name = try {
+                this.get_file_project_name(json_file) ?: this.generate_file_project_name(json_file)
+            } catch (e: Exception) {
+                // TODO: use resource string
+                "Corrupted Project"
+            }
             project_list.add(Pair(json_file.path, project_name))
         }
 
@@ -90,22 +104,11 @@ class ProjectManager(data_dir: String) {
     }
 
     private fun get_file_project_name(file: File): String? {
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
+        val json = Json { ignoreUnknownKeys = true }
 
         val content = file.readText(Charsets.UTF_8)
-        return try {
-            val json_obj: LoadedJSONData = json.decodeFromString(content)
-            json_obj.name
-        } catch (e: Exception) {
-            try {
-                val json_obj: LoadedJSONData0 = json.decodeFromString<LoadedJSONData0>(content)
-                json_obj.name
-            } catch (e: Exception) {
-                null
-            }
-        }
+        val json_obj = LoadedJSONData.from_string(content)
+        return json_obj.name
     }
 
     fun get_project_list(): List<Pair<String, String>> {
@@ -148,7 +151,7 @@ class ProjectManager(data_dir: String) {
             return
         }
 
-        val project_name = this.get_file_project_name(project_file) ?: return
+        val project_name = this.get_file_project_name(project_file) ?: this.generate_file_project_name(project_file)
         project_list.add(Pair(path, project_name))
         project_list.sortBy { it.second }
 

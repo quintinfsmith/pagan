@@ -13,6 +13,7 @@ import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.get_shallow_representation
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -3079,7 +3080,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerLinks {
             "k5": false
         }"""
 
-        val test_map = manager.get_shallow_representation(json_string_test)
+        val test_map = get_shallow_representation(json_string_test)
         assertEquals(
             setOf("k0", "k1", "k2", "k3", "k4", "k5"),
             test_map.keys.toSet()

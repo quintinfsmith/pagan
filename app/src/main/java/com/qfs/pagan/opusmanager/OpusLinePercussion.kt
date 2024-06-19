@@ -3,8 +3,8 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
 import com.qfs.json.*
 
-class OpusLine(beats: MutableList<OpusTree<OpusEventSTD>>): OpusLineAbstract(beats) {
-    constructor(beat_count: Int) : this(Array<OpusTree<OpusEventSTD>>(beat_count) { OpusTree() }.toMutableList())
+class OpusLinePercussion(beats: MutableList<OpusTree<OpusEventPercussion>>): OpusLineAbstract(beats) {
+    constructor(beat_count: Int) : this(Array<OpusTree<OpusEventPercussion>>(beat_count) { OpusTree() }.toMutableList())
 
     override fun to_json(): ParsedHashMap {
         val line_map = HashMap<String, ParsedObject?>()
@@ -16,15 +16,8 @@ class OpusLine(beats: MutableList<OpusTree<OpusEventSTD>>): OpusLineAbstract(bea
             ParsedInt(static_value)
         }
 
-        val line_beats = mutableListOf<OpusTreeJSON<OpusEventSTD>?>()
+        val line_beats = mutableListOf<OpusTreeJSON<OpusEventPercussion>?>()
         for (beat in line.beats) {
-            if (channel.midi_channel == 9) {
-                beat.traverse { _: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
-                    if (event != null) {
-                        event.note = channel.static_value ?: OpusLayerBase.DEFAULT_PERCUSSION
-                    }
-                }
-            }
             line_beats.add(beat.to_json())
         }
 

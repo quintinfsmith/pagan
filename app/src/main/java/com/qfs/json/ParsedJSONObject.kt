@@ -21,12 +21,12 @@ data class ParsedFloat(var value: Float): ParsedObject
 data class ParsedInt(var value: Int): ParsedObject
 data class ParsedBoolean(var value: Boolean): ParsedObject
 
-class ParsedHashMap(): ParsedObject {
-    val hash_map = HashMap<String, ParsedObject>()
+class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedObject {
+    val hash_map = input_map ?: HashMap<String, ParsedObject?>()
 }
 
-class ParsedList(): ParsedObject {
-    val list = mutableListOf<ParsedObject>()
+class ParsedList(input_list: List<ParsedObject?>? = null): ParsedObject {
+    val list = input_list ?: mutableListOf<ParsedObject?>()
 }
 
 class Parser {

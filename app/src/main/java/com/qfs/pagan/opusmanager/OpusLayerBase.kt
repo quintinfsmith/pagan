@@ -10,8 +10,10 @@ import com.qfs.apres.event.TimeSignature
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.pagan.structure.OpusTree
+import com.qfs.json.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+
 import java.io.File
 import kotlin.math.floor
 import kotlin.math.max
@@ -1441,8 +1443,10 @@ open class OpusLayerBase {
         return midi
     }
 
-    open fun to_json(): LoadedJSONData {
-        val channels: MutableList<ChannelJSONData> = mutableListOf()
+    open fun to_json(): ParsedHashMap {
+        val working_map = HashMap<String, ParsedObject?>()
+
+        val channels: MutableList<ParsedHashMap> = mutableListOf()
         for (channel in this.channels) {
             val lines: MutableList<LineJSONData> = mutableListOf()
             val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
@@ -1482,11 +1486,25 @@ open class OpusLayerBase {
             )
         }
 
-        return LoadedJSONData(
-            name = this.project_name,
-            tuning_map = this.tuning_map,
+        working_map["name"] = if (this.project_name == null) {
+            null
+        } else {
+            ParsedString(this.project_name)
+        }
+
+        working_map["tuning_map"] = ParsedList(List(this.tuning_map.size) { i: Int ->
+            ParsedList(
+                listOf(
+                    ParsedInt(this.tuning_map[i].first),
+                    ParsedInt(this.tuning_map[i].second)
+                )
+            )
+        })
+
+        working_map["transpose"] = ParsedInt(this.transpose)
+
+        return ParsedHashMap(
             channels = channels,
-            transpose = this.transpose,
             controllers = this.controllers.to_json()
         )
     }

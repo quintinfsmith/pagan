@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 
+import com.qfs.json.*
 import com.qfs.pagan.structure.OpusTree
 import kotlinx.serialization.Serializable
 
@@ -228,5 +229,46 @@ class OpusChannel(var uuid: Int) {
         }
 
         return true
+    }
+
+    fun to_json(): ParsedHashMap {
+        val channel_map = HashMap<String, ParsedObject?>()
+        channel_map["midi_channel"] = ParsedInt(this.midi_channel)
+        channel_map["midi_bank"] = ParsedInt(this.midi_bank)
+        program_map["midi_program"] = ParsedInt(this.midi_program)
+
+        val lines: MutableList<LineJSONData> = mutableListOf()
+        val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
+        val line_static_values: MutableList<Int?> = mutableListOf()
+
+        for (i in 0 until channel.size) {
+            val line = channel.get_line(i)
+            val line_beats = mutableListOf<OpusTreeJSON<OpusEventSTD>?>()
+            for (beat in line.beats) {
+                if (channel.midi_channel == 9) {
+                    beat.traverse { _: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+                        if (event != null) {
+                            event.note = channel.get_mapped_line_offset(i) ?: OpusLayerBase.DEFAULT_PERCUSSION
+                        }
+                    }
+                }
+                line_beats.add(beat.to_json())
+            }
+
+            lines.add(
+                LineJSONData(
+                    static_value = line.static_value,
+                    beats = line_beats,
+                    controllers = line.controllers.to_json()
+                )
+            )
+        }
+
+        channels.add(
+            ChannelJSONData(
+                lines = lines,
+                controllers = channel.controllers.to_json()
+            )
+        )
     }
 }

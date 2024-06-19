@@ -1,9 +1,13 @@
 package com.qfs.pagan.opusmanager.serializable
+import com.qfs.json.Parser
+import com.qfs.json.ParsedHashMap
+import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.ChannelJSONData
+import com.qfs.pagan.opusmanager.OpusEventSTD
+import com.qfs.pagan.opusmanager.serializable.exceptions.FutureSaveVersionException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlin.math.max
-import kotlin.math.min
 
 @Serializable
 data class LoadedJSONData(
@@ -20,8 +24,8 @@ data class LoadedJSONData(
                 ignoreUnknownKeys = true
             }
 
-            val shallow_map = get_shallow_representation(json_string)
-            val map_keys = shallow_map.keys.toSet()
+            val shallow_map = Parser.parse(json_string)
+            val map_keys: Set<String> = (shallow_map as ParsedHashMap).hash_map.keys.toSet()
 
             val version = when (map_keys) {
                 setOf("v", "d") -> {
@@ -55,7 +59,7 @@ data class LoadedJSONData(
                 )
                 3 -> json.decodeFromString<LoadedJSONData>(shallow_map["d"]!!)
                 else -> {
-                    throw exceptions.FutureSaveVersionException(version)
+                    throw FutureSaveVersionException(version)
                 }
             }
         }

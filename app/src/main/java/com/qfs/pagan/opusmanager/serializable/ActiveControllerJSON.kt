@@ -1,4 +1,6 @@
 package com.qfs.pagan.opusmanager.serializable
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -21,8 +21,8 @@ data class ChannelJSONData(
     var midi_channel: Int,
     var midi_bank: Int,
     var midi_program: Int,
-    var lines: List<LineJSONData>,
-    var controllers: List<ActiveControllerJSON>,
+    var lines: List<com.qfs.pagan.opusmanager.serializable.LineJSONData>,
+    var controllers: List<com.qfs.pagan.opusmanager.serializable.ActiveControllerJSON>,
 )
 
 @Serializable

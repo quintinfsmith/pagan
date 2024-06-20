@@ -27,10 +27,60 @@ data class ParsedBoolean(var value: Boolean): ParsedObject
 
 class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedObject {
     val hash_map = input_map ?: HashMap<String, ParsedObject?>()
+    fun get_int(key: String): Int? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedInt).value
+    }
+    fun get_string(key: String): String? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedString).value
+    }
+    fun get_float(key: String): Float? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedFloat).value
+    }
+    fun get_boolean(key: String): Boolean? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedBoolean).value
+    }
 }
+
 
 class ParsedList(input_list: List<ParsedObject?>? = null): ParsedObject {
     val list = input_list ?: mutableListOf<ParsedObject?>()
+
+    fun get_int(index: Int): Int? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedInt).value
+    }
+    fun get_string(index: Int): Int? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedString).value
+    }
+    fun get_float(index: Int): Float? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedFloat).value
+    }
+    fun get_boolean(index: Int): Boolean? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedBoolean).value
+    }
 }
 
 class Parser {

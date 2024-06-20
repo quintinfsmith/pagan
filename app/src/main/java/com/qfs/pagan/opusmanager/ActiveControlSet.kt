@@ -55,8 +55,6 @@ abstract class ActiveController(beat_count: Int) {
     companion object {
         fun default_event(type: ControlEventType): OpusControlEvent {
             return when (type) {
-                ControlEventType.Tempo -> OpusTempoEvent(120F)
-                ControlEventType.Volume -> OpusVolumeEvent(64)
                 ControlEventType.Reverb -> OpusReverbEvent(0F)
             }
         }
@@ -226,22 +224,32 @@ abstract class ActiveController(beat_count: Int) {
     }
 }
 
-class VolumeController(beat_count: Int): ActiveController(beat_count) { }
-class TempoController(beat_count: Int): AciveController(beat_count) {}
+class VolumeController(beat_count: Int): ActiveController(beat_count) {
+    override val default_event = OpusVolumeEvent(64)
+}
+class TempoController(beat_count: Int): ActiveController(beat_count) {
+    override val default_event = OpusTempoEvent(120F)
+}
 
-class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
+
+class ActiveControlSetParser() {
     companion object {
-        fun from_json(json_obj: List<ActiveControllerJSON>, size: Int): ActiveControlSet {
+        fun from_json(json_obj: ParsedHashMap): ActiveControlSet {
+            val size = json_obj.get_int("size")
             val control_set = ActiveControlSet(size)
             for (json_controller in json_obj) {
                 control_set.new_controller(
                     json_controller.type,
-                    ActiveController.from_json(json_controller, size)
+                    ControllerParser.from_json(json_controller)
                 )
             }
             return control_set
         }
     }
+}
+
+
+class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
 
     val controllers = HashMap<ControlEventType, ActiveController>()
 

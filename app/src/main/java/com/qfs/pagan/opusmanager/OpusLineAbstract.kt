@@ -1,17 +1,19 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.json.*
 
-abstract class OpusLineAbstract(var beats: MutableList<OpusTree<OpusEventSTD>>) {
-    constructor(beat_count: Int) : this(Array<OpusTree<OpusEventSTD>>(beat_count) { OpusTree() }.toMutableList())
+abstract class OpusLineAbstract(var beats: MutableList<OpusTree<InstrumentEvent>>) {
+    constructor(beat_count: Int) : this(Array<OpusTree<InstrumentEvent>>(beat_count) { OpusTree() }.toMutableList())
+
     var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
 
     fun squish(factor: Int) {
-        val new_beats = mutableListOf<OpusTree<OpusEventSTD>>()
+        val new_beats = mutableListOf<OpusTree<InstrumentEvent>>()
         for (b in 0 until this.beats.size) {
             if (b % factor == 0) {
-                new_beats.add(OpusTree<OpusEventSTD>())
+                new_beats.add(OpusTree<InstrumentEvent>())
             }
             val working_beat = new_beats.last()
             working_beat.insert(b % factor, this.beats[b])
@@ -48,14 +50,6 @@ abstract class OpusLineAbstract(var beats: MutableList<OpusTree<OpusEventSTD>>) 
             return false
         }
 
-        if (this.volume != other.volume) {
-            return false
-        }
-
-        if (this.static_value != other.static_value) {
-            return false
-        }
-
         for (i in 0 until this.beats.size) {
             if (this.beats[i] != other.beats[i]) {
                 return false
@@ -85,7 +79,6 @@ abstract class OpusLineAbstract(var beats: MutableList<OpusTree<OpusEventSTD>>) 
         }
         this.controllers.set_beat_count(new_beat_count)
     }
-
     fun get_controller(type: ControlEventType): ActiveControlSet.ActiveController {
         return this.controllers.get_controller(type)
     }
@@ -97,6 +90,22 @@ abstract class OpusLineAbstract(var beats: MutableList<OpusTree<OpusEventSTD>>) 
         }
     }
 
-    abstract fun to_json(): ParsedHashMap
+    fun to_json(): ParsedHashMap {
+        val line_map = HashMap<String, ParsedObject?>()
+
+        line_map["beats"] = ParsedList(
+            List(this.beats.size) { i: Int ->
+                OpusTreeJsonParser.parse(this.beats[i])
+            }
+        )
+
+        line_map["controllers"] = this.controllers.to_json()
+
+        var output = ParsedHashMap(line_map)
+        this.populate_json(output)
+        return output
+    }
+
+    abstract fun populate_json(map: ParsedHashMap)
 }
 

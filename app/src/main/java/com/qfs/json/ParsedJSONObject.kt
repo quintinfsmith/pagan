@@ -14,6 +14,10 @@ enum class ItemType {
 }
 data class ItemToken(val item_type: ItemType, val index: Int)
 
+interface Parsable {
+    abstract fun to_json(): ParsedObject?
+}
+
 interface ParsedObject { }
 
 data class ParsedString(var value: String): ParsedObject

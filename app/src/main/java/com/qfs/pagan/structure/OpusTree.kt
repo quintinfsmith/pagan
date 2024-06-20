@@ -777,26 +777,4 @@ class OpusTree<T> {
             super.equals(other)
         }
     }
-
-    fun to_json(): OpusTreeJSON<T>? {
-        if (this.is_leaf() && !this.is_event()) {
-            return null
-        }
-
-        val children = mutableListOf<OpusTreeJSON<T>?>()
-        if (!this.is_leaf()) {
-            for (i in 0 until this.size) {
-                children.add(this[i].to_json())
-            }
-        }
-
-        return OpusTreeJSON<T>(
-            this.event,
-            if (children.isEmpty()) {
-                null
-            } else {
-                children
-            }
-        )
-    }
 }

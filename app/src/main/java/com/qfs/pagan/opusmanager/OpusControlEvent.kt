@@ -2,10 +2,10 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.json.*
 
-abstract class OpusControlEvent() {
+abstract class OpusControlEvent(): OpusEvent() {
     abstract val control_name: String
     abstract fun populate_json(map: ParsedHashMap)
-    fun to_json(): ParsedHashMap {
+    override fun to_json(): ParsedHashMap {
         val output = ParsedHashMap(
             hashMapOf<String, ParsedObject?>(
                 "c" to ParsedString(this.control_name)

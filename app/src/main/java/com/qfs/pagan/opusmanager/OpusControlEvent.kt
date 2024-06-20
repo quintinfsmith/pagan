@@ -2,19 +2,46 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.json.*
 
-abstract class OpusControlEvent(): OpusEvent() {
-    abstract val control_name: String
-    abstract fun populate_json(map: ParsedHashMap)
-    override fun to_json(): ParsedHashMap {
-        val output = ParsedHashMap(
-            hashMapOf<String, ParsedObject?>(
-                "c" to ParsedString(this.control_name)
+class OpusControlEventParser() {
+    companion object {
+        fun to_json(input: OpusControlEvent): ParsedHashMap {
+            val output = ParsedHashMap()
+            when (input) {
+                is OpusTempoEvent -> {
+                    output.hash_map["tempo"] = ParsedFloat(input.value)
+                }
+                is OpusVolumeEvent -> {
+                    output.hash_map["volume"] = ParsedInt(input.value)
+                    output.hash_map["transition"] = ParsedInt(input.transition)
+                }
+                is OpusReverbEvent -> {
+                    output.hash_map["wetness"] = ParsedFloat(input.value)
+                }
+            }
+            return output
+        }
+
+        // from_jsons-----------------
+
+        fun tempo_event(map: ParsedHashMap): OpusTempoEvent {
+            return OpusTempoEvent(map.get_int("tempo")))
+        }
+        fun volume_event(map: ParsedHashMap): OpusVolumeEvent {
+            return OpusVolumeEvent(
+                map.get_int("volume"),
+                map.get_int("transition", 0)
             )
-        )
-        this.populate_json(output)
-        return output
+        }
+        fun reverb_event(map: ParsedHashMap): OpusReverbEvent {
+            return OpusReverbEvent(
+                map.get_float("wetness")
+            )
+        }
+        // ------------------------
     }
 }
+
+abstract class OpusControlEvent()
 
 enum class ControlEventType {
     Tempo,
@@ -22,25 +49,7 @@ enum class ControlEventType {
     Reverb,
 }
 
-class OpusTempoEvent(var value: Float): OpusControlEvent() {
-    override val control_name = "Tempo"
-    override fun populate_json(map: ParsedHashMap) {
-        map.hash_map["tempo"] = ParsedFloat(this.value)
-    }
-}
-
-class OpusVolumeEvent(var value: Int, var transition: Int = 0): OpusControlEvent() {
-    override val control_name = "Volume"
-    override fun populate_json(map: ParsedHashMap) {
-        map.hash_map["volume"] = ParsedInt(this.value)
-        map.hash_map["transition"] = ParsedInt(this.transition)
-    }
-}
-
-class OpusReverbEvent(var value: Float): OpusControlEvent() {
-    override val control_name = "Reverb"
-    override fun populate_json(map: ParsedHashMap) {
-        map.hash_map["wetness"] = ParsedFloat(this.value)
-    }
-}
+class OpusTempoEvent(var value: Float): OpusControlEvent()
+class OpusVolumeEvent(var value: Int, var transition: Int = 0): OpusControlEvent()
+class OpusReverbEvent(var value: Float): OpusControlEvent()
 

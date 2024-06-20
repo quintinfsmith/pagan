@@ -3,81 +3,246 @@ import kotlin.math.max
 import kotlin.math.min
 
 class InvalidJSON(json_string: String, index: Int): Exception("Invalid JSON @ $index In \"${json_string.substring(max(0, index - 20), min(json_string.length, index + 20))}\"")
-enum class ItemType {
-    String,
-    Boolean,
-    List,
-    HashMap,
-    Int,
-    Float,
-    Null
-}
-data class ItemToken(val item_type: ItemType, val index: Int)
+class NonNullableException(): Exception("Attempting to access non-nullable value which is null")
 
-interface Parsable {
-    abstract fun to_json(): ParsedObject?
+interface ParsedObject {
+    fun to_string(): String
 }
 
-interface ParsedObject { }
+data class ParsedString(var value: String): ParsedObject {
+    override fun to_string(): String {
+        val escaped_string = this.value.replace("\"", "\\\"")
+        return "\"$escaped_string\""
+    }
+}
+data class ParsedFloat(var value: Float): ParsedObject {
+    override fun to_string(): String {
+        return "${this.value}"
+    }
+}
 
-data class ParsedString(var value: String): ParsedObject
-data class ParsedFloat(var value: Float): ParsedObject
-data class ParsedInt(var value: Int): ParsedObject
-data class ParsedBoolean(var value: Boolean): ParsedObject
+data class ParsedInt(var value: Int): ParsedObject {
+    override fun to_string(): String {
+        return "${this.value}"
+    }
+}
+data class ParsedBoolean(var value: Boolean): ParsedObject {
+    override fun to_string(): String {
+        return this.value.toString()
+    }
+}
 
 class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedObject {
     val hash_map = input_map ?: HashMap<String, ParsedObject?>()
-    fun get_int(key: String): Int? {
+    fun set(key: String, value: Int?) {
+        if (value == null) {
+            return this.set_null(key)
+        }
+        this.hash_map[key] = ParsedInt(value)
+    }
+    fun set(key: String, value: String?) {
+        if (value == null) {
+            return this.set_null(key)
+        }
+        this.hash_map[key] = ParsedString(value)
+    }
+    fun set(key: String, value: Float?) {
+        if (value == null) {
+            return this.set_null(key)
+        }
+        this.hash_map[key] = ParsedFloat(value)
+    }
+    fun set(key: String, value: Boolean?) {
+        if (value == null) {
+            return this.set_null(key)
+        }
+        this.hash_map[key] = ParsedBoolean(value)
+    }
+    fun set_null(key: String) {
+        this.hash_map[key] = null
+    }
+    fun get_int(key: String, default: Int?): Int? {
         if (this.hash_map[key] == null) {
-            return null
+            return default
         }
         return (this.hash_map[key] as ParsedInt).value
     }
-    fun get_string(key: String): String? {
+    fun get_string(key: String, default: String?): String? {
         if (this.hash_map[key] == null) {
-            return null
+            return default
         }
         return (this.hash_map[key] as ParsedString).value
     }
-    fun get_float(key: String): Float? {
+    fun get_float(key: String, default: Float?): Float? {
         if (this.hash_map[key] == null) {
-            return null
+            return default
         }
         return (this.hash_map[key] as ParsedFloat).value
     }
-    fun get_boolean(key: String): Boolean? {
+    fun get_boolean(key: String, default: Boolean?): Boolean? {
         if (this.hash_map[key] == null) {
             return null
         }
         return (this.hash_map[key] as ParsedBoolean).value
     }
+    fun get_int(key: String): Int? {
+        if (this.hash_map[key] == null) {
+            throw NonNullableException()
+        }
+        return (this.hash_map[key] as ParsedInt).value
+    }
+    fun get_string(key: String): String? {
+        if (this.hash_map[key] == null) {
+            throw NonNullableException()
+        }
+        return (this.hash_map[key] as ParsedString).value
+    }
+    fun get_float(key: String): Float? {
+        if (this.hash_map[key] == null) {
+            throw NonNullableException()
+        }
+        return (this.hash_map[key] as ParsedFloat).value
+    }
+    fun get_boolean(key: String): Boolean? {
+        if (this.hash_map[key] == null) {
+            throw NonNullableException()
+        }
+        return (this.hash_map[key] as ParsedBoolean).value
+    }
+
+    override fun to_string(): String {
+        var output = "{"
+        for ((key, value) in this.hash_map) {
+            val escaped_key = key.replace("\"", "\\\"")
+            output = "$output\"$escaped_key\": ${value?.to_string() ?: "null"},"
+        }
+
+        // remove trailing comma
+        if (this.hash_map.isNotEmpty()) {
+            output = output.substring(0, output.length - 1)
+        }
+        output = "$output}"
+        return output
+    }
 }
 
-
-class ParsedList(input_list: List<ParsedObject?>? = null): ParsedObject {
+class ParsedList(input_list: MutableList<ParsedObject?>? = null): ParsedObject {
     val list = input_list ?: mutableListOf<ParsedObject?>()
 
-    fun get_int(index: Int): Int? {
+    override fun to_string(): String {
+        var output = "["
+        for (value in this.list) {
+            output = "$output${value?.to_string() ?: "null"},"
+        }
+
+        // remove trailing comma
+        if (this.list.isNotEmpty()) {
+            output = output.substring(0, output.length - 1)
+        }
+        output = "$output]"
+        return output
+    }
+    fun add(value: Int?) {
+        if (value == null) {
+            return this.add_null()
+        }
+        this.list.add(ParsedInt(value))
+    }
+    fun add(value: String?) {
+        if (value == null) {
+            return this.add_null()
+        }
+        this.list.add(ParsedString(value))
+    }
+    fun add(value: Float?) {
+        if (value == null) {
+            return this.add_null()
+        }
+        this.list.add(ParsedFloat(value))
+    }
+    fun add(value: Boolean?) {
+        if (value == null) {
+            return this.add_null()
+        }
+        this.list.add(ParsedBoolean(value))
+    }
+    fun add_null() {
+        this.list.add(null)
+    }
+    fun set(index: Int, value: Int?) {
+        if (value == null) {
+            return this.set_null(index)
+        }
+        this.list[index] = ParsedInt(value)
+    }
+    fun set(index: Int, value: String?) {
+        if (value == null) {
+            return this.set_null(index)
+        }
+        this.list[index] = ParsedString(value)
+    }
+    fun set(index: Int, value: Float?) {
+        if (value == null) {
+            return this.set_null(index)
+        }
+        this.list[index] = ParsedFloat(value)
+    }
+    fun set(index: Int, value: Boolean?) {
+        if (value == null) {
+            return this.set_null(index)
+        }
+        this.list[index] = ParsedBoolean(value)
+    }
+    fun set_null(index: Int) {
+        this.list[index] = null
+    }
+
+    fun get_int(index: Int, default: Int?): Int? {
         if (this.list[index] == null) {
-            return null
+            return default
         }
         return (this.list[index] as ParsedInt).value
     }
-    fun get_string(index: Int): Int? {
+    fun get_string(index: Int, default: String?): String? {
+        if (this.list[index] == null) {
+            return default
+        }
+        return (this.list[index] as ParsedString).value
+    }
+    fun get_float(index: Int, default: Float?): Float? {
+        if (this.list[index] == null) {
+            return default
+        }
+        return (this.list[index] as ParsedFloat).value
+    }
+    fun get_boolean(index: Int, default: Boolean?): Boolean? {
         if (this.list[index] == null) {
             return null
+        }
+        return (this.list[index] as ParsedBoolean).value
+    }
+
+    fun get_int(index: Int): Int? {
+        if (this.list[index] == null) {
+            throw NonNullableException()
+        }
+        return (this.list[index] as ParsedInt).value
+    }
+    fun get_string(index: Int): String? {
+        if (this.list[index] == null) {
+            throw NonNullableException()
         }
         return (this.list[index] as ParsedString).value
     }
     fun get_float(index: Int): Float? {
         if (this.list[index] == null) {
-            return null
+            throw NonNullableException()
         }
         return (this.list[index] as ParsedFloat).value
     }
     fun get_boolean(index: Int): Boolean? {
         if (this.list[index] == null) {
-            return null
+            throw NonNullableException()
         }
         return (this.list[index] as ParsedBoolean).value
     }
@@ -103,21 +268,22 @@ class Parser {
                         }
                         ' ', '\r', '\n', Char(125), Char(93), ',' -> {
                             try {
-                                val working_number: ParsedObject = if (working_number.contains(".")) {
+                                val new_number: ParsedObject = if (working_number.contains(".")) {
                                     ParsedFloat(working_number.toFloat())
                                 } else {
                                     ParsedInt(working_number.toInt())
                                 }
 
                                 if (object_stack.isEmpty()) {
-                                    object_stack.add(working_number)
+                                    object_stack.add(new_number)
                                 } else {
-                                    when (object_stack.last()) {
+                                    val item = object_stack.last()
+                                    when (item) {
                                         is ParsedList -> {
-                                            (object_stack.last() as ParsedList).list.add(working_number)
+                                            item.list.add(new_number)
                                         }
                                         is ParsedHashMap -> {
-                                            (object_stack.last() as ParsedHashMap).hash_map[hashmap_key_stack.removeLast()] = working_number
+                                            item.hash_map[hashmap_key_stack.removeLast().second] = new_number
                                         }
                                         else -> {
                                             throw InvalidJSON(json_content, index)
@@ -148,14 +314,15 @@ class Parser {
                                 if (object_stack.isEmpty()) {
                                     object_stack.add(ParsedString(working_string))
                                 } else {
-                                    when (object_stack.last()) {
+                                    val item = object_stack.last()
+                                    when (item) {
                                         is ParsedList -> {
-                                            (object_stack.last() as ParsedList).list.add(ParsedString(working_string))
+                                            item.list.add(ParsedString(working_string))
                                         }
                                         is ParsedHashMap -> {
                                             val (key_depth, hashmap_key) = hashmap_key_stack.last()
                                             if (key_depth == object_stack.size) {
-                                                (object_stack.last() as ParsedHashMap).hash_map[hashmap_key] = ParsedString(working_string)
+                                                item.hash_map[hashmap_key] = ParsedString(working_string)
                                                 hashmap_key_stack.removeLast()
                                             } else {
                                                 hashmap_key_stack.add(Pair(object_stack.size, working_string))
@@ -187,13 +354,14 @@ class Parser {
                             if (object_stack.isEmpty()) {
                                 object_stack.add(ParsedHashMap())
                             } else {
-                                when (object_stack.last()) {
+                                val item = object_stack.last()
+                                when (item) {
                                     is ParsedList -> {
-                                        (object_stack.last() as ParsedList).list.add(ParsedHashMap())
+                                        item.list.add(ParsedHashMap())
                                     }
                                     is ParsedHashMap -> {
                                         val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                        (object_stack.last() as ParsedHashMap).hash_map[hashmap_key] = ParsedHashMap()
+                                        item.hash_map[hashmap_key] = ParsedHashMap()
                                     }
                                     else -> {
                                         throw InvalidJSON(json_content, index)
@@ -213,13 +381,14 @@ class Parser {
                             if (object_stack.isEmpty()) {
                                 object_stack.add(ParsedList())
                             } else {
-                                when (object_stack.last()) {
+                                val item = object_stack.last()
+                                when (item) {
                                     is ParsedList -> {
-                                        (object_stack.last() as ParsedList).list.add(ParsedList())
+                                        item.list.add(ParsedList())
                                     }
                                     is ParsedHashMap -> {
                                         val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                        (object_stack.last() as ParsedHashMap).hash_map[hashmap_key] = ParsedList()
+                                        item.hash_map[hashmap_key] = ParsedList()
                                     }
                                     else -> {
                                         throw InvalidJSON(json_content, index)
@@ -249,13 +418,14 @@ class Parser {
                                 if (object_stack.isEmpty()) {
                                     object_stack.add(null)
                                 } else {
-                                    when (object_stack.last()) {
+                                    val item = object_stack.last()
+                                    when (item) {
                                         is ParsedList -> {
-                                            (object_stack.last() as ParsedList).list.add(null)
+                                            item.list.add(null)
                                         }
                                         is ParsedHashMap -> {
                                             val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                            (object_stack.last() as ParsedHashMap).hash_map[hashmap_key] = null
+                                            item.hash_map[hashmap_key] = null
                                         }
                                         else -> {
                                             throw InvalidJSON(json_content, index)
@@ -272,13 +442,14 @@ class Parser {
                                 if (object_stack.isEmpty()) {
                                     object_stack.add(ParsedBoolean(false))
                                 } else {
-                                    when (object_stack.last()) {
+                                    val item = object_stack.last()
+                                    when (item) {
                                         is ParsedList -> {
-                                            (object_stack.last() as ParsedList).list.add(ParsedBoolean(false))
+                                            item.list.add(ParsedBoolean(false))
                                         }
                                         is ParsedHashMap -> {
                                             val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                            (object_stack.last() as ParsedHashMap).hash_map[hashmap_key] = ParsedBoolean(false)
+                                            item.hash_map[hashmap_key] = ParsedBoolean(false)
                                         }
                                         else -> {
                                             throw InvalidJSON(json_content, index)
@@ -295,13 +466,14 @@ class Parser {
                                 if (object_stack.isEmpty()) {
                                     object_stack.add(ParsedBoolean(true))
                                 } else {
-                                    when (object_stack.last()) {
+                                    val item = object_stack.last()
+                                    when (item) {
                                         is ParsedList -> {
-                                            (object_stack.last() as ParsedList).list.add(ParsedBoolean(true))
+                                            item.list.add(ParsedBoolean(true))
                                         }
                                         is ParsedHashMap -> {
                                             val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                            (object_stack.last() as ParsedHashMap).hash_map[hashmap_key] = ParsedBoolean(true)
+                                            item.hash_map[hashmap_key] = ParsedBoolean(true)
                                         }
                                         else -> {
                                             throw InvalidJSON(json_content, index)

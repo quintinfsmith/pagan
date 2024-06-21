@@ -1,6 +1,5 @@
 package com.qfs.pagan.opusmanager
 
-import com.qfs.json.*
 import com.qfs.pagan.structure.OpusTree
 import kotlinx.serialization.Serializable
 
@@ -15,12 +14,11 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     }
 }
 
-class OpusChannel(var uuid: Int) {
-    class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
+abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>() {
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
 
-    var lines: MutableList<OpusLineAbstract> = mutableListOf()
+    var lines: MutableList<T> = mutableListOf()
     var controllers = ActiveControlSet(0)
     var midi_bank = 0
     var midi_program = 0
@@ -31,20 +29,14 @@ class OpusChannel(var uuid: Int) {
         this.controllers.new_controller(ControlEventType.Volume)
     }
 
+    abstract fun gen_line(): T
+
     fun get_beat_count(): Int {
         return this._beat_count
     }
 
-    fun map_line(line: Int, offset: Int) {
-        this.lines[line].static_value = offset
-    }
-
-    fun get_mapped_line_offset(line: Int): Int? {
-        return this.lines[line].static_value
-    }
-
-    fun new_line(index: Int? = null): OpusLine {
-        val new_line = OpusLine(this._beat_count)
+    fun new_line(index: Int? = null): T {
+        val new_line = this.gen_line()
         if (index == null) {
             this.lines.add(new_line)
         } else if (index <= this.lines.size) {
@@ -58,7 +50,7 @@ class OpusChannel(var uuid: Int) {
         return new_line
     }
 
-    fun insert_line(index: Int, line: OpusLine) {
+    fun insert_line(index: Int, line: T) {
         if (line.beats.size != this._beat_count) {
             throw LineSizeMismatch(line.beats.size, this._beat_count)
         }
@@ -67,10 +59,11 @@ class OpusChannel(var uuid: Int) {
         this.size += 1
     }
 
-    fun remove_line(index: Int? = null): OpusLine {
+    fun remove_line(index: Int? = null): T {
         if (this.lines.size == 1) {
             throw LastLineException()
         }
+
         return if (index == null) {
             this.size -= 1
             this.lines.removeLast()
@@ -82,7 +75,7 @@ class OpusChannel(var uuid: Int) {
         }
     }
 
-    fun replace_tree(line: Int, beat: Int, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
+    fun replace_tree(line: Int, beat: Int, position: List<Int>?, tree: OpusTree<U>) {
         val old_tree = this.get_tree(line, beat, position)
         if (old_tree == tree) {
             return // Don't waste the cycles
@@ -99,7 +92,7 @@ class OpusChannel(var uuid: Int) {
         }
     }
 
-    fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<InstrumentEvent> {
+    fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<U> {
         var tree = this.lines[line].beats[beat]
         if (position != null) {
             for (i in position) {
@@ -151,7 +144,7 @@ class OpusChannel(var uuid: Int) {
         return Pair(this.midi_bank, this.midi_program)
     }
 
-    fun get_line(index: Int): OpusLine {
+    fun get_line(index: Int): T {
         return this.lines[index]
     }
 
@@ -225,6 +218,30 @@ class OpusChannel(var uuid: Int) {
         }
 
         return true
+    }
+}
+
+class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {
+    class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
+    override fun gen_line(): OpusLine {
+        return OpusLine(this.get_beat_count())
+    }
+}
+
+class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePercussion>() {
+    companion object {
+        val default_instrument = 0
+    }
+    override fun gen_line(): OpusLinePercussion {
+        return OpusLinePercussion(OpusPercussionChannel.default_instrument, this.get_beat_count())
+    }
+
+    fun set_instrument(line: Int, offset: Int) {
+        this.lines[line].instrument = offset
+    }
+
+    fun get_instrument(line: Int): Int {
+        return this.lines[line].instrument
     }
 
 }

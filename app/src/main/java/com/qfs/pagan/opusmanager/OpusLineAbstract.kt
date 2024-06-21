@@ -1,19 +1,15 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.structure.OpusTree
-import com.qfs.pagan.opusmanager.InstrumentEvent
-import com.qfs.json.*
 
-abstract class OpusLineAbstract(var beats: MutableList<OpusTree<InstrumentEvent>>) {
-    constructor(beat_count: Int) : this(Array<OpusTree<InstrumentEvent>>(beat_count) { OpusTree() }.toMutableList())
-
+abstract class OpusLineAbstract<T: InstrumentEvent>(var beats: MutableList<OpusTree<T>>) {
     var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
 
     fun squish(factor: Int) {
-        val new_beats = mutableListOf<OpusTree<InstrumentEvent>>()
+        val new_beats = mutableListOf<OpusTree<T>>()
         for (b in 0 until this.beats.size) {
             if (b % factor == 0) {
-                new_beats.add(OpusTree<InstrumentEvent>())
+                new_beats.add(OpusTree<T>())
             }
             val working_beat = new_beats.last()
             working_beat.insert(b % factor, this.beats[b])
@@ -80,7 +76,7 @@ abstract class OpusLineAbstract(var beats: MutableList<OpusTree<InstrumentEvent>
         this.controllers.set_beat_count(new_beat_count)
     }
 
-    fun get_controller(type: ControlEventType): ActiveControlSet.ActiveController {
+    fun get_controller(type: ControlEventType): ActiveController {
         return this.controllers.get_controller(type)
     }
 

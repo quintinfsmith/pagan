@@ -49,8 +49,6 @@ open class OpusLayerBase {
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here")
 
     companion object {
-        const val DEFAULT_PERCUSSION: Int = 0
-
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
             val (from_key, to_key) = if (first.channel < second.channel) {
                 Pair(
@@ -88,6 +86,7 @@ open class OpusLayerBase {
     var beat_count: Int = 1
     var controllers = ActiveControlSet(beat_count, setOf(ControlEventType.Tempo))
     var channels: MutableList<OpusChannel> = mutableListOf()
+    val percussion_channel = OpusPercussionChannel()
     var path: String? = null
     var project_name: String? = null
     var transpose: Int = 0
@@ -236,15 +235,14 @@ open class OpusLayerBase {
      * Get the percussion instrument used on the [line_offset]th line of the percussion channel
      */
     open fun get_percussion_instrument(line_offset: Int): Int {
-        val channel = this.channels.last()
-        return channel.get_mapped_line_offset(line_offset) ?: OpusLayerBase.DEFAULT_PERCUSSION
+        return this.percussion_channel.get_instrument(line_offset)
     }
 
     /**
      * Get the tree structure found within the BeatKey [beat_key] at [position]
      * [position] defaults to null, indicating the root tree of the beat
      */
-    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<InstrumentEvent> {
+    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<out InstrumentEvent> {
         if (beat_key.channel >= this.channels.size) {
             throw BadBeatKey(beat_key)
         }
@@ -252,15 +250,14 @@ open class OpusLayerBase {
         if (beat_key.line_offset > this.channels[beat_key.channel].size) {
             throw BadBeatKey(beat_key)
         }
-
-        try {
-            return this.channels[beat_key.channel].get_tree(
+        return if (beat_key.channel == this.channels.size) {
+            this.percussion_channel.get_tree(beat_key.line_offset, beat_key.beat, position ?: listOf())
+        } else {
+            this.channels[beat_key.channel].get_tree(
                 beat_key.line_offset,
                 beat_key.beat,
                 position ?: listOf()
             )
-        } catch (e: OpusTree.InvalidGetCall) {
-            throw e
         }
     }
 

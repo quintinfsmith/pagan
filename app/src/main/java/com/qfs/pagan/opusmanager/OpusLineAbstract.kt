@@ -79,6 +79,7 @@ abstract class OpusLineAbstract(var beats: MutableList<OpusTree<InstrumentEvent>
         }
         this.controllers.set_beat_count(new_beat_count)
     }
+
     fun get_controller(type: ControlEventType): ActiveControlSet.ActiveController {
         return this.controllers.get_controller(type)
     }
@@ -89,23 +90,5 @@ abstract class OpusLineAbstract(var beats: MutableList<OpusTree<InstrumentEvent>
             controller.remove_beat(index)
         }
     }
-
-    fun to_json(): ParsedHashMap {
-        val line_map = HashMap<String, ParsedObject?>()
-
-        line_map["beats"] = ParsedList(
-            List(this.beats.size) { i: Int ->
-                OpusTreeJsonParser.parse(this.beats[i])
-            }
-        )
-
-        line_map["controllers"] = this.controllers.to_json()
-
-        var output = ParsedHashMap(line_map)
-        this.populate_json(output)
-        return output
-    }
-
-    abstract fun populate_json(map: ParsedHashMap)
 }
 

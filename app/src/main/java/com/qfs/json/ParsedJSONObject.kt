@@ -34,25 +34,29 @@ data class ParsedBoolean(var value: Boolean): ParsedObject {
 
 class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedObject {
     val hash_map = input_map ?: HashMap<String, ParsedObject?>()
-    fun set(key: String, value: Int?) {
+
+    operator fun set(key: String, value: ParsedObject?) {
+        this.hash_map[key] = value
+    }
+    operator fun set(key: String, value: Int?) {
         if (value == null) {
             return this.set_null(key)
         }
-        this.hash_map[key] = ParsedInt(value)
+        this[key] = ParsedInt(value)
     }
-    fun set(key: String, value: String?) {
+    operator fun set(key: String, value: String?) {
         if (value == null) {
             return this.set_null(key)
         }
         this.hash_map[key] = ParsedString(value)
     }
-    fun set(key: String, value: Float?) {
+    operator fun set(key: String, value: Float?) {
         if (value == null) {
             return this.set_null(key)
         }
         this.hash_map[key] = ParsedFloat(value)
     }
-    fun set(key: String, value: Boolean?) {
+    operator fun set(key: String, value: Boolean?) {
         if (value == null) {
             return this.set_null(key)
         }
@@ -61,53 +65,105 @@ class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedOb
     fun set_null(key: String) {
         this.hash_map[key] = null
     }
-    fun get_int(key: String, default: Int?): Int? {
+    fun get_int(key: String, default: Int): Int {
         if (this.hash_map[key] == null) {
             return default
         }
         return (this.hash_map[key] as ParsedInt).value
     }
-    fun get_string(key: String, default: String?): String? {
+    fun get_string(key: String, default: String): String {
         if (this.hash_map[key] == null) {
             return default
         }
         return (this.hash_map[key] as ParsedString).value
     }
-    fun get_float(key: String, default: Float?): Float? {
+    fun get_float(key: String, default: Float): Float {
         if (this.hash_map[key] == null) {
             return default
         }
         return (this.hash_map[key] as ParsedFloat).value
     }
-    fun get_boolean(key: String, default: Boolean?): Boolean? {
+    fun get_boolean(key: String, default: Boolean): Boolean {
+        if (this.hash_map[key] == null) {
+            return default
+        }
+        return (this.hash_map[key] as ParsedBoolean).value
+    }
+    fun get_intn(key: String): Int? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedInt).value
+    }
+    fun get_stringn(key: String): String? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedString).value
+    }
+    fun get_floatn(key: String): Float? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedFloat).value
+    }
+    fun get_booleann(key: String): Boolean? {
         if (this.hash_map[key] == null) {
             return null
         }
         return (this.hash_map[key] as ParsedBoolean).value
     }
-    fun get_int(key: String): Int? {
+
+    fun get_hashmapn(key: String): ParsedHashMap? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedHashMap)
+    }
+
+    fun get_listn(key: String): ParsedList? {
+        if (this.hash_map[key] == null) {
+            return null
+        }
+        return (this.hash_map[key] as ParsedList)
+    }
+
+    fun get_int(key: String): Int {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
         return (this.hash_map[key] as ParsedInt).value
     }
-    fun get_string(key: String): String? {
+    fun get_string(key: String): String {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
         return (this.hash_map[key] as ParsedString).value
     }
-    fun get_float(key: String): Float? {
+    fun get_float(key: String): Float {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
         return (this.hash_map[key] as ParsedFloat).value
     }
-    fun get_boolean(key: String): Boolean? {
+    fun get_boolean(key: String): Boolean {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
         return (this.hash_map[key] as ParsedBoolean).value
+    }
+    fun get_hashmap(key: String): ParsedHashMap {
+        if (this.hash_map[key] == null) {
+            throw NonNullableException()
+        }
+        return (this.hash_map[key] as ParsedHashMap)
+    }
+
+    fun get_list(key: String): ParsedList {
+        if (this.hash_map[key] == null) {
+            throw NonNullableException()
+        }
+        return (this.hash_map[key] as ParsedList)
     }
 
     override fun to_string(): String {
@@ -142,6 +198,10 @@ class ParsedList(input_list: MutableList<ParsedObject?>? = null): ParsedObject {
         output = "$output]"
         return output
     }
+
+    fun add(value: ParsedObject?) {
+        this.list.add(value)
+    }
     fun add(value: Int?) {
         if (value == null) {
             return this.add_null()
@@ -169,25 +229,28 @@ class ParsedList(input_list: MutableList<ParsedObject?>? = null): ParsedObject {
     fun add_null() {
         this.list.add(null)
     }
-    fun set(index: Int, value: Int?) {
+    operator fun set(index: Int, value: ParsedObject?) {
+        this.list[index] = value
+    }
+    operator fun set(index: Int, value: Int?) {
         if (value == null) {
             return this.set_null(index)
         }
         this.list[index] = ParsedInt(value)
     }
-    fun set(index: Int, value: String?) {
+    operator fun set(index: Int, value: String?) {
         if (value == null) {
             return this.set_null(index)
         }
         this.list[index] = ParsedString(value)
     }
-    fun set(index: Int, value: Float?) {
+    operator fun set(index: Int, value: Float?) {
         if (value == null) {
             return this.set_null(index)
         }
         this.list[index] = ParsedFloat(value)
     }
-    fun set(index: Int, value: Boolean?) {
+    operator fun set(index: Int, value: Boolean?) {
         if (value == null) {
             return this.set_null(index)
         }
@@ -222,30 +285,82 @@ class ParsedList(input_list: MutableList<ParsedObject?>? = null): ParsedObject {
         return (this.list[index] as ParsedBoolean).value
     }
 
-    fun get_int(index: Int): Int? {
+    fun get_intn(index: Int): Int? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedInt).value
+    }
+    fun get_stringn(index: Int): String? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedString).value
+    }
+    fun get_floatn(index: Int): Float? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedFloat).value
+    }
+    fun get_booleann(index: Int): Boolean? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedBoolean).value
+    }
+    fun get_listn(index: Int): ParsedList? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedList)
+    }
+    fun get_hashmapn(index: Int): ParsedHashMap? {
+        if (this.list[index] == null) {
+            return null
+        }
+        return (this.list[index] as ParsedHashMap)
+    }
+
+    fun get_int(index: Int): Int {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
         return (this.list[index] as ParsedInt).value
     }
-    fun get_string(index: Int): String? {
+    fun get_string(index: Int): String {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
         return (this.list[index] as ParsedString).value
     }
-    fun get_float(index: Int): Float? {
+    fun get_float(index: Int): Float {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
         return (this.list[index] as ParsedFloat).value
     }
-    fun get_boolean(index: Int): Boolean? {
+    fun get_boolean(index: Int): Boolean {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
         return (this.list[index] as ParsedBoolean).value
     }
+
+    fun get_hashmap(index: Int): ParsedHashMap {
+        if (this.list[index] == null) {
+            throw NonNullableException()
+        }
+        return (this.list[index] as ParsedHashMap)
+    }
+
+    fun get_list(index: Int): ParsedList {
+        if (this.list[index] == null) {
+            throw NonNullableException()
+        }
+        return (this.list[index] as ParsedList)
+    }
+
 }
 
 class Parser {

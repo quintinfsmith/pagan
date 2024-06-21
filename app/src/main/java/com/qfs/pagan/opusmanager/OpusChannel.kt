@@ -6,6 +6,43 @@ import kotlinx.serialization.Serializable
 
 class InvalidBeatKey(channel: Int, line_offset: Int, beat: Int): Exception("Can't have negative values: BeatKey($channel, $line_offset, $beat)")
 
+class OpusChannelGeneralizer {
+    companion object {
+        fun generalize(channel: OpusChannel): ParsedHashMap {
+            val channel_map = ParsedHashMap()
+            val lines = ParsedList(
+                MutableList(channel.size) { i: Int ->
+                    OpusLineGeneralizer.to_json(channel.lines[i])
+                }
+            )
+            channel_map["lines"] = lines
+            channel_map["midi_channel"] = channel.midi_channel
+            channel_map["midi_bank"] = channel.midi_bank
+            channel_map["midi_program"] = channel.midi_program
+
+            return channel_map
+        }
+
+        fun interpret(input_map: ParsedHashMap): OpusChannel {
+            val channel = OpusChannel(-1)
+            channel.midi_channel = input_map.get_int("midi_channel")
+            channel.midi_bank = input_map.get_int("midi_bank")
+            channel.midi_program = input_map.get_int("midi_program")
+
+            val input_lines = input_map.get_list("lines")
+            for (line in input_lines.list) {
+                if (channel.midi_channel == 9) {
+                    channel.lines.add(OpusLineGeneralizer.percussion_line(line as ParsedHashMap))
+                } else {
+                    channel.lines.add(OpusLineGeneralizer.opus_line(line as ParsedHashMap))
+                }
+            }
+
+            return channel
+        }
+    }
+}
+
 @Serializable
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     init {
@@ -20,7 +57,7 @@ class OpusChannel(var uuid: Int) {
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
 
-    var lines: MutableList<OpusLine> = mutableListOf()
+    var lines: MutableList<OpusLineAbstract> = mutableListOf()
     var controllers = ActiveControlSet(0)
     var midi_bank = 0
     var midi_program = 0
@@ -82,7 +119,7 @@ class OpusChannel(var uuid: Int) {
         }
     }
 
-    fun replace_tree(line: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
+    fun replace_tree(line: Int, beat: Int, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
         val old_tree = this.get_tree(line, beat, position)
         if (old_tree == tree) {
             return // Don't waste the cycles
@@ -99,7 +136,7 @@ class OpusChannel(var uuid: Int) {
         }
     }
 
-    fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<OpusEventSTD> {
+    fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<InstrumentEvent> {
         var tree = this.lines[line].beats[beat]
         if (position != null) {
             for (i in position) {
@@ -203,10 +240,6 @@ class OpusChannel(var uuid: Int) {
         this.lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event = OpusVolumeEvent(volume)
     }
 
-    fun get_line_volume(line_offset: Int): Int {
-        return this.lines[line_offset].volume
-    }
-
     fun squish(factor: Int) {
         for (line in this.lines) {
             line.squish(factor)
@@ -231,44 +264,4 @@ class OpusChannel(var uuid: Int) {
         return true
     }
 
-    fun to_json(): ParsedHashMap {
-        val channel_map = HashMap<String, ParsedObject?>()
-        channel_map["midi_channel"] = ParsedInt(this.midi_channel)
-        channel_map["midi_bank"] = ParsedInt(this.midi_bank)
-        program_map["midi_program"] = ParsedInt(this.midi_program)
-
-        val lines: MutableList<LineJSONData> = mutableListOf()
-        val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
-        val line_static_values: MutableList<Int?> = mutableListOf()
-
-        for (i in 0 until channel.size) {
-            val line = channel.get_line(i)
-            val line_beats = mutableListOf<OpusTreeJSON<OpusEventSTD>?>()
-            for (beat in line.beats) {
-                if (channel.midi_channel == 9) {
-                    beat.traverse { _: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
-                        if (event != null) {
-                            event.note = channel.get_mapped_line_offset(i) ?: OpusLayerBase.DEFAULT_PERCUSSION
-                        }
-                    }
-                }
-                line_beats.add(beat.to_json())
-            }
-
-            lines.add(
-                LineJSONData(
-                    static_value = line.static_value,
-                    beats = line_beats,
-                    controllers = line.controllers.to_json()
-                )
-            )
-        }
-
-        channels.add(
-            ChannelJSONData(
-                lines = lines,
-                controllers = channel.controllers.to_json()
-            )
-        )
-    }
 }

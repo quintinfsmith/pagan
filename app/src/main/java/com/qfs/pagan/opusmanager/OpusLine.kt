@@ -7,9 +7,5 @@ import com.qfs.json.*
 
 class OpusLine(beats: MutableList<OpusTree<TunedInstrumentEvent>>): OpusLineAbstract(beats) {
     // constructor(beat_count: Int) : this(Array<OpusTree<TunedInstrumentEvent>>(beat_count) { OpusTree() }.toMutableList())
-
-    override fun populate_json(map: ParsedHashMap) {
-        // Nothing to be done
-    }
 }
 

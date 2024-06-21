@@ -1,29 +1,11 @@
 package com.qfs.pagan.structure
 
-import com.qfs.pagan.opusmanager.OpusTreeJSON
 import kotlin.math.max
 import kotlin.math.round
 
 class OpusTree<T> {
     class InvalidGetCall : Exception("Can't call get() on leaf")
     class UntrackedInParentException: Exception("Parent assigned to tree has no record of the child")
-    companion object {
-        fun <T> from_json(json_tree: OpusTreeJSON<T>): OpusTree<T>  {
-            var new_tree = OpusTree<T>()
-            if (json_tree.event !=null ) {
-                new_tree.set_event(json_tree.event!!)
-            } else if (json_tree.children != null) {
-                new_tree.set_size(json_tree.children!!.size)
-                json_tree.children!!.forEachIndexed { i: Int, child_json: OpusTreeJSON<T>? ->
-                    if (child_json == null) {
-                        return@forEachIndexed
-                    }
-                    new_tree.set(i, OpusTree.from_json(child_json))
-                }
-            }
-            return new_tree
-        }
-    }
     data class ReducerTuple<T>(
         var denominator: Int,
         var indices: MutableList<Pair<Int, OpusTree<T>>>,

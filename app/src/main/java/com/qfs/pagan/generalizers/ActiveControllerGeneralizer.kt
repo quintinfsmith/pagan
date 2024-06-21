@@ -1,8 +1,11 @@
 package com.qfs.pagan.opusmanager
 
+import com.qfs.json.ParsedHashMap
+import com.qfs.json.ParsedInt
+import com.qfs.json.ParsedList
+import com.qfs.json.ParsedObject
+import com.qfs.pagan.generalizers.OpusTreeGeneralizer
 import com.qfs.pagan.structure.OpusTree
-import com.qfs.json.*
-import com.qfs.pagan.opusmanager.generalizers.OpusTreeGeneralizer
 
 class ActiveControllerGeneralizer {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
@@ -39,7 +42,6 @@ class ActiveControllerGeneralizer {
                 }
             }
             return new_controller
-
         }
 
         fun to_json(controller: ActiveController): ParsedHashMap {
@@ -71,7 +73,5 @@ class ActiveControllerGeneralizer {
 
             return map
         }
-    }
-
     }
 }

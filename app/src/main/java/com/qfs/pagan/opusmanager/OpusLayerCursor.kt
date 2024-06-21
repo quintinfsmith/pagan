@@ -547,7 +547,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
                     HistoryToken.REPLACE_TREE -> {
                         val new_position = this.checked_cast<List<Int>>(args[1]).toMutableList()
-                        var tree = this.checked_cast<OpusTree<OpusEventSTD>>(args[2])
+                        var tree = this.checked_cast<OpusTree<InstrumentEvent>>(args[2])
                         while (!tree.is_leaf()) {
                             new_position.add(0)
                             tree = tree[0]
@@ -865,7 +865,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
 
-    fun get_tree(): OpusTree<OpusEventSTD> {
+    fun get_tree(): OpusTree<InstrumentEvent> {
         return this.get_tree(
             this.cursor.get_beatkey(),
             this.cursor.get_position()
@@ -953,21 +953,18 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
-    open fun set_event_at_cursor(event: OpusEvent) {
+    open fun set_event_at_cursor(event: OpusControlEvent) {
         when (this.cursor.ctl_level) {
             null -> {
-                this.set_event(
-                    this.cursor.get_beatkey(),
-                    this.cursor.get_position(),
-                    event as OpusEventSTD
-                )
+                // TODO: SPECIFY Exception
+                throw Exception()
             }
             CtlLineLevel.Global -> {
                 this.set_global_ctl_event(
                     this.cursor.ctl_type!!,
                     this.cursor.beat,
                     this.cursor.position,
-                    event as OpusControlEvent
+                    event
                 )
             }
             CtlLineLevel.Channel -> {
@@ -976,7 +973,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     this.cursor.channel,
                     this.cursor.beat,
                     this.cursor.position,
-                    event as OpusControlEvent
+                    event
                 )
             }
             CtlLineLevel.Line -> {
@@ -984,8 +981,23 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     this.cursor.ctl_type!!,
                     this.cursor.get_beatkey(),
                     this.cursor.position,
-                    event as OpusControlEvent
+                    event
                 )
+            }
+        }
+    }
+    open fun set_event_at_cursor(event: InstrumentEvent) {
+        when (this.cursor.ctl_level) {
+            null -> {
+                this.set_event(
+                    this.cursor.get_beatkey(),
+                    this.cursor.get_position(),
+                    event as InstrumentEvent
+                )
+            }
+            else -> {
+                // TODO: Specifiy Exception
+                throw Exception()
             }
         }
     }

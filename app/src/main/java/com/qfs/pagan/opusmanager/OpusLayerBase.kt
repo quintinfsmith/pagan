@@ -11,6 +11,7 @@ import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.pagan.structure.OpusTree
 import com.qfs.json.*
+import com.qfs.pagan.generalizers.OpusManagerGeneralizer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -243,7 +244,7 @@ open class OpusLayerBase {
      * Get the tree structure found within the BeatKey [beat_key] at [position]
      * [position] defaults to null, indicating the root tree of the beat
      */
-    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<OpusEventSTD> {
+    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<InstrumentEvent> {
         if (beat_key.channel >= this.channels.size) {
             throw BadBeatKey(beat_key)
         }
@@ -299,7 +300,7 @@ open class OpusLayerBase {
      * Get the leaf immediately after the tree found at [beat_key]/[position], if any
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
      */
-    fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEventSTD>? {
+    fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<InstrumentEvent>? {
         val pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
@@ -308,7 +309,7 @@ open class OpusLayerBase {
      * Get the last event before the tree at [beat_key]/[position], if any exist.
      * This may or may not be in the preceding leaf, but will look for the first leaf with an associated event.
      */
-    fun get_preceding_event(beat_key: BeatKey, position: List<Int>): OpusEventSTD? {
+    fun get_preceding_event(beat_key: BeatKey, position: List<Int>): InstrumentEvent? {
         // Gets first preceding event. may skip empty leafs
         var working_position = position.toList()
         var working_beat_key = beat_key
@@ -324,7 +325,7 @@ open class OpusLayerBase {
      * Get the leaf immediately before the tree found at [beat_key]/[position], if any
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
      */
-    fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<OpusEventSTD>? {
+    fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<InstrumentEvent>? {
         // Gets first preceding leaf, event or not
         val pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
@@ -422,16 +423,12 @@ open class OpusLayerBase {
     open fun get_absolute_value(beat_key: BeatKey, position: List<Int>): Int? {
         val tree = this.get_tree(beat_key, position)
 
-        var abs_value: Int
-        if (tree.is_event()) {
-            val event = tree.get_event()!!
-            if (!event.relative) {
-                return event.note
-            } else {
-                abs_value = event.note
-            }
-        } else {
-            return null
+        val event = tree.get_event()
+
+        var abs_value = when (event) {
+            is RelativeNoteEvent -> event.offset
+            is AbsoluteNoteEvent -> return event.note
+            else -> return null
         }
 
         var working_beat_key = beat_key
@@ -444,11 +441,17 @@ open class OpusLayerBase {
 
             val working_tree = this.get_tree(working_beat_key, working_position)
 
-            if (working_tree.is_event()) {
-                val working_event = working_tree.get_event()!!
-                abs_value += working_event.note
-                if (!working_event.relative) {
+            val working_event = working_tree.get_event()
+            when (working_event) {
+                is RelativeNoteEvent -> {
+                    abs_value += working_event.offset
+                }
+                is AbsoluteNoteEvent -> {
+                    abs_value += working_event.note
                     break
+                }
+                else -> {
+                    continue
                 }
             }
         }
@@ -473,7 +476,7 @@ open class OpusLayerBase {
 
             if (working_tree.is_event()) {
                 val working_event = working_tree.get_event()!!
-                if (!working_event.relative) {
+                if (working_event is AbsoluteNoteEvent) {
                     output = true
                     break
                 }
@@ -505,7 +508,7 @@ open class OpusLayerBase {
         }
 
         val event = tree.get_event()!!
-        if (event.relative) {
+        if (event !is AbsoluteNoteEvent) {
             return
         }
 
@@ -519,25 +522,14 @@ open class OpusLayerBase {
             working_position = pair.second
         }
 
-        if (preceding_value == null) {
-            this.set_event(
-                beat_key, position, OpusEventSTD(
-                    event.note,
-                    event.channel,
-                    true,
-                    event.duration
-                )
+        this.set_event(
+            beat_key,
+            position,
+            RelativeNoteEvent(
+                event.note - (preceding_value ?: 0),
+                event.duration
             )
-        } else {
-            this.set_event(
-                beat_key, position, OpusEventSTD(
-                    event.note - preceding_value,
-                    event.channel,
-                    true,
-                    event.duration
-                )
-            )
-        }
+        )
     }
 
     /**
@@ -553,21 +545,23 @@ open class OpusLayerBase {
         }
 
         val event = tree.get_event()!!
-        if (!event.relative) {
+        if (event !is RelativeNoteEvent) {
             return
         }
 
         // The implied first value can be 0
-        val value = this.get_absolute_value(beat_key, position) ?: event.note
+        val value = this.get_absolute_value(beat_key, position) ?: event.offset
         if (value < 0 || value > 95) {
             throw NoteOutOfRange(value)
         }
-        this.set_event(beat_key, position, OpusEventSTD(
-            value,
-            event.channel,
-            false,
-            event.duration
-        ))
+        this.set_event(
+            beat_key,
+            position,
+            AbsoluteNoteEvent(
+                value,
+                event.duration
+            )
+        )
     }
 
     /**
@@ -840,12 +834,7 @@ open class OpusLayerBase {
             tree.unset_event()
         }
 
-        val instrument = this.get_percussion_instrument(beat_key.line_offset)
-        tree.set_event(OpusEventSTD(
-            instrument,
-            9,
-            false
-        ))
+        tree.set_event(PercussionEvent())
     }
 
     open fun set_percussion_instrument(line_offset: Int, instrument: Int) {
@@ -869,7 +858,7 @@ open class OpusLayerBase {
         this.channels[channel].midi_channel = 9
     }
 
-    open fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
+    open fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
@@ -893,7 +882,7 @@ open class OpusLayerBase {
     }
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        val tree: OpusTree<OpusEventSTD> = this.get_tree(beat_key, position)
+        val tree: OpusTree<InstrumentEvent> = this.get_tree(beat_key, position)
         this._split_opus_tree(tree, splits, move_event_to_end)
     }
 
@@ -1037,7 +1026,7 @@ open class OpusLayerBase {
         }
     }
 
-    open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>? = null) {
+    open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>? = null) {
         if (beat_index > this.beat_count) {
             throw IndexOutOfBoundsException()
         }
@@ -1122,7 +1111,7 @@ open class OpusLayerBase {
         val mid_tree = to_tree.merge(from_tree.get_set_tree())
         mid_tree.flatten()
 
-        val new_tree = OpusTree<OpusEventSTD>()
+        val new_tree = OpusTree<InstrumentEvent>()
         if (mid_tree.is_event()) {
             new_tree.set_event(mid_tree.event!!.first())
         } else {
@@ -1170,7 +1159,7 @@ open class OpusLayerBase {
         return output
     }
 
-    private fun copy_func(tree: OpusTree<OpusEventSTD>): OpusEventSTD? {
+    private fun copy_func(tree: OpusTree<InstrumentEvent>): InstrumentEvent? {
         return if (tree.event == null) {
             null
         } else {
@@ -1186,7 +1175,7 @@ open class OpusLayerBase {
         }
     }
 
-    open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
+    open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
         val tree_copy = tree.copy(this::copy_func)
         this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
     }
@@ -1307,8 +1296,8 @@ open class OpusLayerBase {
                 }
                 var current_tick = 0
                 var prev_note = 0
-                line.beats.forEachIndexed { b: Int, beat: OpusTree<OpusEventSTD> ->
-                    val stack: MutableList<StackItem<OpusEventSTD>> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
+                line.beats.forEachIndexed { b: Int, beat: OpusTree<InstrumentEvent> ->
+                    val stack: MutableList<StackItem<InstrumentEvent>> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeFirst()
                         if (current.tree.is_event()) {
@@ -1443,71 +1432,6 @@ open class OpusLayerBase {
         return midi
     }
 
-    open fun to_json(): ParsedHashMap {
-        val working_map = HashMap<String, ParsedObject?>()
-
-        val channels: MutableList<ParsedHashMap> = mutableListOf()
-        for (channel in this.channels) {
-            val lines: MutableList<LineJSONData> = mutableListOf()
-            val line_controllers = mutableListOf<List<ActiveControllerJSON>>()
-            val line_static_values: MutableList<Int?> = mutableListOf()
-
-            for (i in 0 until channel.size) {
-                val line = channel.get_line(i)
-                val line_beats = mutableListOf<OpusTreeJSON<OpusEventSTD>?>()
-                for (beat in line.beats) {
-                    if (channel.midi_channel == 9) {
-                        beat.traverse { _: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
-                            if (event != null) {
-                                event.note = channel.get_mapped_line_offset(i) ?: OpusLayerBase.DEFAULT_PERCUSSION
-                            }
-                        }
-                    }
-                    line_beats.add(beat.to_json())
-                }
-
-                lines.add(
-                    LineJSONData(
-                        static_value = line.static_value,
-                        beats = line_beats,
-                        controllers = line.controllers.to_json()
-                    )
-                )
-            }
-
-            channels.add(
-                ChannelJSONData(
-                    midi_channel = channel.midi_channel,
-                    midi_bank = channel.midi_bank,
-                    midi_program = channel.midi_program,
-                    lines = lines,
-                    controllers = channel.controllers.to_json()
-                )
-            )
-        }
-
-        working_map["name"] = if (this.project_name == null) {
-            null
-        } else {
-            ParsedString(this.project_name)
-        }
-
-        working_map["tuning_map"] = ParsedList(List(this.tuning_map.size) { i: Int ->
-            ParsedList(
-                listOf(
-                    ParsedInt(this.tuning_map[i].first),
-                    ParsedInt(this.tuning_map[i].second)
-                )
-            )
-        })
-
-        working_map["transpose"] = ParsedInt(this.transpose)
-
-        return ParsedHashMap(
-            channels = channels,
-            controllers = this.controllers.to_json()
-        )
-    }
 
     open fun save(path: String? = null) {
         if (path == null && this.path == null) {
@@ -1519,17 +1443,15 @@ open class OpusLayerBase {
         }
 
         val file_obj = File(this.path!!)
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
-        val json_string = json.encodeToString(
-            JSONWrapper(
-                v = 3,
-                d = this.to_json()
+
+        val generalized_object = ParsedHashMap(
+            hashMapOf(
+                "d" to OpusManagerGeneralizer.generalize(this),
+                "v" to ParsedInt(3)
             )
         )
 
-        file_obj.writeText(json_string)
+        file_obj.writeText(generalized_object.to_string())
     }
 
     // Clear function is used for new projects
@@ -1569,9 +1491,9 @@ open class OpusLayerBase {
         this.on_project_changed()
     }
 
-    private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<OpusEventSTD>>>> {
-        fun tree_from_json(input_tree: OpusTreeJSON<OpusEventSTD>?): OpusTree<OpusEventSTD> {
-            val new_tree = OpusTree<OpusEventSTD>()
+    private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<InstrumentEvent>>>> {
+        fun tree_from_json(input_tree: OpusTreeJSON<InstrumentEvent>?): OpusTree<InstrumentEvent> {
+            val new_tree = OpusTree<InstrumentEvent>()
             if (input_tree == null) {
                 return new_tree
             }
@@ -1583,7 +1505,7 @@ open class OpusLayerBase {
 
             if (input_tree.children != null) {
                 new_tree.set_size(input_tree.children!!.size)
-                input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON<OpusEventSTD>? ->
+                input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON<InstrumentEvent>? ->
                     new_tree.set(i, tree_from_json(child))
                 }
             }
@@ -1591,11 +1513,11 @@ open class OpusLayerBase {
             return new_tree
         }
 
-        val output = mutableListOf<MutableList<MutableList<OpusTree<OpusEventSTD>>>>()
+        val output = mutableListOf<MutableList<MutableList<OpusTree<InstrumentEvent>>>>()
         for (channel_data in json_data.channels) {
-            val line_list = mutableListOf<MutableList<OpusTree<OpusEventSTD>>>()
+            val line_list = mutableListOf<MutableList<OpusTree<InstrumentEvent>>>()
             for (input_line in channel_data.lines) {
-                val beat_list = mutableListOf<OpusTree<OpusEventSTD>>()
+                val beat_list = mutableListOf<OpusTree<InstrumentEvent>>()
                 for (json_beat in input_line.beats) {
                     beat_list.add(tree_from_json(json_beat))
                 }
@@ -1652,7 +1574,7 @@ open class OpusLayerBase {
             this.channels[y].midi_program = channel_data.midi_program
 
             for (j in 0 until channel_data.lines.size) {
-                parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEventSTD> ->
+                parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<InstrumentEvent> ->
                     if (!beat_tree.is_leaf() || beat_tree.is_event()) {
                         this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
                     }
@@ -1689,7 +1611,7 @@ open class OpusLayerBase {
             }
 
             for (j in 0 until channel_data.lines.size) {
-                parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<OpusEventSTD> ->
+                parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<InstrumentEvent> ->
                     if (!beat_tree.is_leaf() || beat_tree.is_event()) {
                         this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
                     }
@@ -1732,17 +1654,17 @@ open class OpusLayerBase {
         this.import_midi(midi)
     }
 
-    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<OpusEventSTD>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
+    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<InstrumentEvent>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
         var beat_size = midi.get_ppqn()
         var total_beat_offset = 0
         var last_ts_change = 0
-        val beat_values: MutableList<OpusTree<Set<OpusEventSTD>>> = mutableListOf()
+        val beat_values: MutableList<OpusTree<Set<InstrumentEvent>>> = mutableListOf()
         val tempo_line = mutableListOf<OpusTree<OpusControlEvent>>()
         var max_tick = 0
         var working_tempo = 120F
         val instrument_map = mutableListOf<Triple<Int, Int?, Int?>>()
 
-        val active_event_map = HashMap<Pair<Int,Int>, OpusEventSTD>()
+        val active_event_map = HashMap<Pair<Int,Int>, InstrumentEvent>()
 
         var denominator = 4F
         for (pair in midi.get_all_events()) {
@@ -1763,7 +1685,7 @@ open class OpusLayerBase {
 
                 // Add trees to list of trees
                 while (beat_values.size <= beat_index) {
-                    val new_tree = OpusTree<Set<OpusEventSTD>>()
+                    val new_tree = OpusTree<Set<InstrumentEvent>>()
                     new_tree.set_size(beat_size)
                     beat_values.add(new_tree)
                 }
@@ -1775,7 +1697,7 @@ open class OpusLayerBase {
                     mutableSetOf()
                 }
 
-                val opus_event = OpusEventSTD(
+                val opus_event = InstrumentEvent(
                     if (channel == 9) {
                         note - 27
                     } else {
@@ -1855,7 +1777,7 @@ open class OpusLayerBase {
         active_event_map.clear()
 
         total_beat_offset += (max_tick - last_ts_change) / beat_size
-        val opus = OpusTree<Set<OpusEventSTD>>()
+        val opus = OpusTree<Set<InstrumentEvent>>()
 
         if (beat_values.isEmpty()) {
             for (i in 0 until 4) {
@@ -1865,7 +1787,7 @@ open class OpusLayerBase {
 
         opus.set_size(beat_values.size)
 
-        var overflow_events = mutableSetOf<OpusEventSTD>()
+        var overflow_events = mutableSetOf<InstrumentEvent>()
         beat_values.forEachIndexed { i, beat_tree ->
             opus.set(i, beat_tree)
         }
@@ -1897,7 +1819,7 @@ open class OpusLayerBase {
         val blocked_percussion_ranges = mutableListOf<MutableList<MutableList<Pair<Float, Float>>>>()
 
         // Map the events so i don't have to calculate overlaps twice
-        val remapped_events = mutableListOf<Pair<List<Pair<Int, Int>>, MutableList<Pair<OpusEventSTD, Int>>>>()
+        val remapped_events = mutableListOf<Pair<List<Pair<Int, Int>>, MutableList<Pair<InstrumentEvent, Int>>>>()
 
         for ((position, event_set) in mapped_events) {
             remapped_events.add(Pair(position, mutableListOf()))
@@ -2027,7 +1949,7 @@ open class OpusLayerBase {
 
         this.set_beat_count(settree.size)
 
-        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, OpusEventSTD>>()
+        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, InstrumentEvent>>()
 
         for ((position, event_set) in remapped_events) {
             val event_list = event_set.toMutableList()
@@ -2092,7 +2014,7 @@ open class OpusLayerBase {
                     val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())
                     val original_size = beat_tree.size 
                     beat_tree.reduce()
-                    beat_tree.traverse { working_tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+                    beat_tree.traverse { working_tree: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
                         if (event == null) {
                             return@traverse
                         }
@@ -2222,7 +2144,7 @@ open class OpusLayerBase {
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<OpusEventSTD>>()
+        val trees = mutableListOf<OpusTree<InstrumentEvent>>()
         for (o_key in original_keys) {
             trees.add(this.get_tree(o_key).copy())
         }
@@ -2243,7 +2165,7 @@ open class OpusLayerBase {
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<OpusEventSTD>>()
+        val trees = mutableListOf<OpusTree<InstrumentEvent>>()
         for (o_key in original_keys) {
             trees.add(this.get_tree(o_key).copy())
         }
@@ -2646,8 +2568,8 @@ open class OpusLayerBase {
             }
 
             channel.lines.forEachIndexed { j: Int, line: OpusLine ->
-                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<OpusEventSTD> ->
-                    beat_tree.traverse { tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<InstrumentEvent> ->
+                    beat_tree.traverse { tree: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
                         if (event == null) {
                             return@traverse
                         }
@@ -2856,7 +2778,7 @@ open class OpusLayerBase {
     //     val match_box = this.get_abs_difference(top_left, bottom_right)
 
     //     val matched_keys = this.get_beatkeys_in_range(top_left, bottom_right).toMutableList()
-    //     val match_values = mutableListOf<OpusTree<OpusEventSTD>>()
+    //     val match_values = mutableListOf<OpusTree<InstrumentEvent>>()
     //     for (key in matched_keys) {
     //         match_values.add(this.get_tree(key))
     //     }
@@ -2920,8 +2842,8 @@ open class OpusLayerBase {
     //     val tick_map = mutableListOf<Pair<Double, Boolean>>()
     //     for (channel in this.channels) {
     //         for (line in channel.lines) {
-    //             line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<OpusEventSTD> ->
-    //                 beat_tree.traverse { tree: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+    //             line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<InstrumentEvent> ->
+    //                 beat_tree.traverse { tree: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
     //                     if (event == null) {
     //                         return@traverse
     //                     }
@@ -2988,7 +2910,7 @@ open class OpusLayerBase {
     //         for (line in channel.lines) {
     //             for (beat_tree in line.beats) {
     //                 var previous_value = 0
-    //                 beat_tree.traverse { _: OpusTree<OpusEventSTD>, event: OpusEventSTD? ->
+    //                 beat_tree.traverse { _: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
     //                     if (event == null) {
     //                         return@traverse
     //                     }

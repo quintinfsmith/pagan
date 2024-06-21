@@ -1,4 +1,4 @@
-package com.qfs.pagan.opusmanager.generalizers
+package com.qfs.pagan.generalizers
 
 import com.qfs.json.ParsedHashMap
 import com.qfs.json.ParsedInt
@@ -25,7 +25,7 @@ class OpusTreeGeneralizer {
                         ParsedList(
                             mutableListOf(
                                 ParsedInt(position),
-                                OpusTreeGeneralizer.to_json(input.divisions[position]!!, event_generalizer_callback)
+                                to_json(input.divisions[position]!!, event_generalizer_callback)
                             )
                         )
                     }
@@ -48,7 +48,7 @@ class OpusTreeGeneralizer {
                         if (child_json == null) {
                             return@forEachIndexed
                         }
-                        new_tree.set(i, OpusTreeGeneralizer.from_json(child_json as ParsedHashMap, event_generalizer_callback))
+                        new_tree.set(i, from_json(child_json as ParsedHashMap, event_generalizer_callback))
                     }
                 }
             }

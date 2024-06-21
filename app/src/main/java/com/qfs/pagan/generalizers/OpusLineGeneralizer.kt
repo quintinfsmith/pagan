@@ -2,7 +2,7 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.json.ParsedHashMap
 import com.qfs.json.ParsedList
-import com.qfs.pagan.opusmanager.generalizers.OpusTreeGeneralizer
+import com.qfs.pagan.generalizers.OpusTreeGeneralizer
 
 class OpusLineGeneralizer {
     companion object {

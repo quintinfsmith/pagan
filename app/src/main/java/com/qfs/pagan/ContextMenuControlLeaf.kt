@@ -4,7 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
-import com.qfs.pagan.opusmanager.ActiveControlSet
+import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -32,7 +32,7 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
         this.button_unset = this.primary!!.findViewById(R.id.btnUnset)
     }
 
-    private fun get_controller(): ActiveControlSet.ActiveController {
+    private fun get_controller(): ActiveController {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 

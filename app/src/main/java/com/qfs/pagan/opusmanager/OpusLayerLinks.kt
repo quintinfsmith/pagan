@@ -207,7 +207,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         }
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
         this.lock_links {
             super.replace_tree(beat_key, position, tree)
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
@@ -248,7 +248,7 @@ open class OpusLayerLinks : OpusLayerBase() {
             super.set_percussion_event(beat_key, position)
         }
     }
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.set_event(linked_key, position, event.copy())
@@ -325,7 +325,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         return this.link_pool_map.contains(beat_key)
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
         this.remap_links { beat_key: BeatKey ->
              if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)
@@ -376,16 +376,6 @@ open class OpusLayerLinks : OpusLayerBase() {
                 this.link_pool_map[beatkey] = i
             }
         }
-    }
-
-    override fun to_json(): LoadedJSONData {
-        val data = super.to_json()
-        val reflections: MutableList<List<BeatKey>> = mutableListOf()
-        for (pool in this.link_pools) {
-            reflections.add(pool.toList())
-        }
-        data.reflections = reflections
-        return data
     }
 
     open fun link_beat_range(beat_key: BeatKey, target_a: BeatKey, target_b: BeatKey) {

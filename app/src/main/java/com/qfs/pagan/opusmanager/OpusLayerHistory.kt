@@ -68,7 +68,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.set_event(
                         current_node.args[0] as BeatKey,
                         this.checked_cast<List<Int>>(current_node.args[1]),
-                        current_node.args[2] as OpusEventSTD
+                        current_node.args[2] as InstrumentEvent
                     )
                 }
 
@@ -89,7 +89,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 HistoryToken.REPLACE_TREE -> {
                     val beatkey = current_node.args[0] as BeatKey
                     val position = this.checked_cast<List<Int>>(current_node.args[1]).toList()
-                    val tree = this.checked_cast<OpusTree<OpusEventSTD>>(current_node.args[2])
+                    val tree = this.checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2])
                     this.replace_tree(beatkey, position, tree)
                 }
 
@@ -187,7 +187,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.replace_tree(
                         beat_key,
                         position,
-                        this.checked_cast<OpusTree<OpusEventSTD>>(current_node.args[2])
+                        this.checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2])
                     )
                 }
 
@@ -268,7 +268,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 HistoryToken.INSERT_BEAT -> {
                     this.insert_beat(
                         current_node.args[0] as Int,
-                        this.checked_cast<List<OpusTree<OpusEventSTD>>>(current_node.args[1])
+                        this.checked_cast<List<OpusTree<InstrumentEvent>>>(current_node.args[1])
                     )
                 }
 
@@ -718,7 +718,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
         super.insert_beat(beat_index, beats_in_column)
         this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )
     }
@@ -734,7 +734,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun remove_beat(beat_index: Int) {
         this._remember {
-            val beat_cells = mutableListOf<OpusTree<OpusEventSTD>>()
+            val beat_cells = mutableListOf<OpusTree<InstrumentEvent>>()
             for (channel in 0 until this.channels.size) {
                 val line_count = this.channels[channel].size
                 for (j in 0 until line_count) {
@@ -776,7 +776,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
         this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.replace_tree(beat_key, position, tree)
@@ -875,7 +875,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         // Trivial?
         if (this.get_tree(beat_key, position).get_event() == event) {
             return
@@ -1014,7 +1014,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this.history_cache.clear()
     }
 
-    private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>? = null, callback: () -> T): T {
+    private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>? = null, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
             val use_tree = tree ?: this.get_tree(beat_key, position).copy()
             val output = callback()
@@ -1163,7 +1163,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
 
-    private fun push_set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
+    private fun push_set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         this.push_to_history_stack( HistoryToken.SET_EVENT, listOf(beat_key.copy(), position, event.copy()) )
     }
 

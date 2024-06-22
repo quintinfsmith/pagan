@@ -357,8 +357,9 @@ class OpusTree<T> {
         }
     }
 
-    fun insert(index: Int?, new_tree: OpusTree<T>) {
+    fun insert(index: Int?, new_tree: OpusTree<T>? = null) {
         val adj_index = index ?: this.size
+        val adj_new_tree = new_tree ?: OpusTree()
 
         this.size += 1
         val new_indices = HashMap<Int, OpusTree<T>>()
@@ -370,9 +371,9 @@ class OpusTree<T> {
                 new_indices[old_index + 1] = node
             }
         }
-        new_indices[adj_index] = new_tree
+        new_indices[adj_index] = adj_new_tree
         this.divisions = new_indices
-        new_tree.set_parent(this)
+        adj_new_tree.set_parent(this)
     }
 
     private fun set_parent(new_parent: OpusTree<T>) {

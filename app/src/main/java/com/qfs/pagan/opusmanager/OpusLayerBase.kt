@@ -297,7 +297,7 @@ open class OpusLayerBase {
      * Get the leaf immediately after the tree found at [beat_key]/[position], if any
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
      */
-    fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<InstrumentEvent>? {
+    fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<out InstrumentEvent>? {
         val pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
@@ -322,7 +322,7 @@ open class OpusLayerBase {
      * Get the leaf immediately before the tree found at [beat_key]/[position], if any
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
      */
-    fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<InstrumentEvent>? {
+    fun get_preceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<out InstrumentEvent>? {
         // Gets first preceding leaf, event or not
         val pair = this.get_preceding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
@@ -577,7 +577,7 @@ open class OpusLayerBase {
         if (index > tree.size) {
             throw BadInsertPosition()
         }
-        tree.insert(index, OpusTree())
+        tree.insert(index)
     }
 
     open fun insert_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -589,7 +589,7 @@ open class OpusLayerBase {
         val tree = this.get_line_ctl_tree(type, beat_key, parent_position)
 
         val index = position.last()
-        tree.insert(index, OpusTree())
+        tree.insert(index)
     }
 
     open fun insert_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
@@ -601,7 +601,7 @@ open class OpusLayerBase {
         val tree = this.get_channel_ctl_tree(type, channel, beat, parent_position)
 
         val index = position.last()
-        tree.insert(index, OpusTree())
+        tree.insert(index)
     }
 
     open fun insert_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
@@ -613,7 +613,7 @@ open class OpusLayerBase {
         val tree = this.get_global_ctl_tree(type, beat, parent_position)
 
         val index = position.last()
-        tree.insert(index, OpusTree())
+        tree.insert(index)
     }
 
 
@@ -631,7 +631,7 @@ open class OpusLayerBase {
         val parent = tree.get_parent()!!
 
         val index = position.last()
-        parent.insert(index + 1, OpusTree())
+        parent.insert(index + 1)
     }
 
     open fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -643,7 +643,7 @@ open class OpusLayerBase {
         val tree = this.get_line_ctl_tree(type, beat_key, parent_position)
 
         val index = position.last()
-        tree.insert(index + 1, OpusTree())
+        tree.insert(index + 1)
     }
 
     open fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
@@ -655,7 +655,7 @@ open class OpusLayerBase {
         val tree = this.get_channel_ctl_tree(type, channel, beat, parent_position)
 
         val index = position.last()
-        tree.insert(index + 1, OpusTree())
+        tree.insert(index + 1)
     }
 
     open fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
@@ -667,7 +667,7 @@ open class OpusLayerBase {
         val tree = this.get_global_ctl_tree(type, beat, parent_position)
 
         val index = position.last()
-        tree.insert(index + 1, OpusTree())
+        tree.insert(index + 1)
     }
 
     /**
@@ -835,8 +835,7 @@ open class OpusLayerBase {
     }
 
     open fun set_percussion_instrument(line_offset: Int, instrument: Int) {
-        val channel = this.channels.last()
-        channel.map_line(line_offset, instrument)
+        this.percussion_channel.set_instrument(line_offset, instrument)
     }
 
     open fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
@@ -1041,9 +1040,12 @@ open class OpusLayerBase {
         var y = 0
         for (channel in this.channels) {
             for (line in channel.lines) {
-                line.beats[beat_index] = beats_in_column[y]
+                line.beats[beat_index] = beats_in_column[y] as OpusTree<TunedInstrumentEvent>
                 y += 1
             }
+        }
+        for (line in this.percussion_channel.lines) {
+            line.beats[beat_index] = beats_in_column.last() as OpusTree<PercussionEvent>
         }
     }
 
@@ -1174,7 +1176,11 @@ open class OpusLayerBase {
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
         val tree_copy = tree.copy(this::copy_func)
-        this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
+        if (this.is_percussion(beat_key.channel)) {
+            this.percussion_channel.replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
+        } else {
+            this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
+        }
     }
 
     open fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
@@ -1302,10 +1308,14 @@ open class OpusLayerBase {
                             val (note, bend) = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
                                 Pair(this.get_percussion_instrument(l) + 27, 0)
                             } else {
-                                val current_note = if (event.relative) {
-                                    event.note + prev_note
-                                } else {
-                                    event.note
+                                val current_note = when (event) {
+                                    is RelativeNoteEvent -> {
+                                        event.offset + prev_note
+                                    }
+                                    is AbsoluteNoteEvent -> {
+                                        event.note
+                                    }
+                                    else -> break
                                 }
 
                                 val octave = current_note / radix
@@ -1473,7 +1483,7 @@ open class OpusLayerBase {
 
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        this.load_json(LoadedJSONData.from_string(json_content))
+        this.load_json(Parser.parse(json_content) as ParsedHashMap)
 
         this.path = new_path
     }
@@ -1488,144 +1498,47 @@ open class OpusLayerBase {
         this.on_project_changed()
     }
 
-    private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<InstrumentEvent>>>> {
-        fun tree_from_json(input_tree: OpusTreeJSON<InstrumentEvent>?): OpusTree<InstrumentEvent> {
-            val new_tree = OpusTree<InstrumentEvent>()
-            if (input_tree == null) {
-                return new_tree
-            }
+    //private fun parse_line_data(json_data: LoadedJSONData): List<List<List<OpusTree<InstrumentEvent>>>> {
+    //    fun tree_from_json(input_tree: OpusTreeJSON<InstrumentEvent>?): OpusTree<InstrumentEvent> {
+    //        val new_tree = OpusTree<InstrumentEvent>()
+    //        if (input_tree == null) {
+    //            return new_tree
+    //        }
 
-            if (input_tree.event != null) {
-                new_tree.set_event(input_tree.event!!)
-                return new_tree
-            }
+    //        if (input_tree.event != null) {
+    //            new_tree.set_event(input_tree.event!!)
+    //            return new_tree
+    //        }
 
-            if (input_tree.children != null) {
-                new_tree.set_size(input_tree.children!!.size)
-                input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON<InstrumentEvent>? ->
-                    new_tree.set(i, tree_from_json(child))
-                }
-            }
+    //        if (input_tree.children != null) {
+    //            new_tree.set_size(input_tree.children!!.size)
+    //            input_tree.children!!.forEachIndexed { i: Int, child: OpusTreeJSON<InstrumentEvent>? ->
+    //                new_tree.set(i, tree_from_json(child))
+    //            }
+    //        }
 
-            return new_tree
-        }
+    //        return new_tree
+    //    }
 
-        val output = mutableListOf<MutableList<MutableList<OpusTree<InstrumentEvent>>>>()
-        for (channel_data in json_data.channels) {
-            val line_list = mutableListOf<MutableList<OpusTree<InstrumentEvent>>>()
-            for (input_line in channel_data.lines) {
-                val beat_list = mutableListOf<OpusTree<InstrumentEvent>>()
-                for (json_beat in input_line.beats) {
-                    beat_list.add(tree_from_json(json_beat))
-                }
-                line_list.add(beat_list)
-            }
-            output.add(line_list)
-        }
-        return output
-    }
+    //    val output = mutableListOf<MutableList<MutableList<OpusTree<InstrumentEvent>>>>()
+    //    for (channel_data in json_data.channels) {
+    //        val line_list = mutableListOf<MutableList<OpusTree<InstrumentEvent>>>()
+    //        for (input_line in channel_data.lines) {
+    //            val beat_list = mutableListOf<OpusTree<InstrumentEvent>>()
+    //            for (json_beat in input_line.beats) {
+    //                beat_list.add(tree_from_json(json_beat))
+    //            }
+    //            line_list.add(beat_list)
+    //        }
+    //        output.add(line_list)
+    //    }
+    //    return output
+    //}
 
-    open fun load_json(json_data: LoadedJSONData) {
-        // Parse line_data first, if there's an error, it can be caught and ignored so the
-        // active project is unaffected
-        val parsed = this.parse_line_data(json_data)
-        this.clear()
-
-        this.tuning_map = json_data.tuning_map.clone()
-        this.transpose = json_data.transpose
-        this.set_project_name(json_data.name)
-
-        var percussion_channel: Int? = null
-        var beat_count = 0
-        var y = 0
-
-        // Insert Drum Channel
-        this.new_channel()
-
-        json_data.channels.forEachIndexed { i: Int, channel_data ->
-            if (channel_data.midi_channel == 9) {
-                percussion_channel = i
-                for (j in 0 until channel_data.lines.size - 1) {
-                    this.new_line(this.channels.size - 1)
-                }
-            } else {
-                this.new_channel(lines = channel_data.lines.size)
-                y += 1
-            }
-
-            for (j in 0 until channel_data.lines.size) {
-                beat_count = max(beat_count, parsed[i][j].size)
-            }
-        }
-
-        this.insert_beats(0, beat_count)
-        y = 0
-        json_data.channels.forEachIndexed { i, channel_data ->
-            // Separate out percussion channel, just in case it isn't at the end of the channels
-            if (channel_data.midi_channel == 9) {
-                return@forEachIndexed
-            }
-
-            this.channels[y].midi_channel = channel_data.midi_channel
-            this.channels[y].midi_bank = channel_data.midi_bank
-            this.channels[y].midi_program = channel_data.midi_program
-
-            for (j in 0 until channel_data.lines.size) {
-                parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<InstrumentEvent> ->
-                    if (!beat_tree.is_leaf() || beat_tree.is_event()) {
-                        this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
-                    }
-                }
-                val line = channel_data.lines[j]
-                this.channels[y].lines[j].controllers = ActiveControlSet.from_json(
-                    line.controllers,
-                    beat_count
-                )
-            }
-
-            this.channels[y].controllers = ActiveControlSet.from_json(channel_data.controllers, beat_count)
-            y += 1
-        }
-
-        if (percussion_channel != null) {
-            val i = percussion_channel!!
-            val channel_data = json_data.channels[i]
-            this.channels[y].midi_channel = channel_data.midi_channel
-            this.channels[y].midi_bank = channel_data.midi_bank
-            this.channels[y].midi_program = channel_data.midi_program
-            this.channels[y].controllers = ActiveControlSet.from_json(
-                channel_data.controllers,
-                beat_count
-            )
-
-            for (line_index in this.channels[y].lines.indices) {
-                val line = channel_data.lines[line_index]
-                this.channels[y].lines[line_index].controllers = ActiveControlSet.from_json(
-                    line.controllers,
-                    beat_count
-                )
-                this.channels[y].lines[line_index].static_value = line.static_value
-            }
-
-            for (j in 0 until channel_data.lines.size) {
-                parsed[i][j].forEachIndexed { b: Int, beat_tree: OpusTree<InstrumentEvent> ->
-                    if (!beat_tree.is_leaf() || beat_tree.is_event()) {
-                        this.replace_tree(BeatKey(y, j, b), listOf(), beat_tree)
-                    }
-                    // If static value isn't set, figure it out (an artifact from static_values weren't saved)
-                    if (this.channels[i].lines[j].static_value == null) {
-                        for ((_, event) in beat_tree.get_events_mapped()) {
-                            this.set_percussion_instrument(j, event.note)
-                            break
-                        }
-                    }
-                }
-            }
-        }
-
-        this.controllers = ActiveControlSet.from_json(json_data.controllers, beat_count)
+    open fun load_json(json_data: ParsedHashMap) {
+        val input_manager = OpusManagerGeneralizer.interpret(json_data)
+        this.import_from_other(input_manager)
         this._setup_default_controllers()
-
         this.on_project_changed()
     }
 
@@ -1694,16 +1607,15 @@ open class OpusLayerBase {
                     mutableSetOf()
                 }
 
-                val opus_event = InstrumentEvent(
-                    if (channel == 9) {
-                        note - 27
-                    } else {
-                        note - 21
-                    },
-                    channel,
-                    false,
-                    tick // Not actually duration, storing the tick here until i can use the tick to set the duration further down
-                )
+                val opus_event = if (channel == 9) {
+                    PercussionEvent(tick)
+                } else {
+                    AbsoluteNoteEvent(
+                        note - 21,
+                        tick // Not actually duration, storing the tick here until i can use the tick to set the duration further down
+                    )
+                }
+
                 eventset.add(opus_event)
 
                 tree[inner_beat_offset].set_event(eventset)
@@ -1946,7 +1858,7 @@ open class OpusLayerBase {
 
         this.set_beat_count(settree.size)
 
-        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, InstrumentEvent>>()
+        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, AbsoluteNoteEvent>>()
 
         for ((position, event_set) in remapped_events) {
             val event_list = event_set.toMutableList()
@@ -2084,10 +1996,6 @@ open class OpusLayerBase {
         if (first_tempo_leaf.is_event()) {
             tempo_controller.set_initial_event(first_tempo_leaf.event!!)
             first_tempo_leaf.unset_event()
-        } else {
-            tempo_controller.set_initial_event(
-                ActiveControlSet.ActiveController.default_event(ControlEventType.Tempo)
-            )
         }
 
         this.on_project_changed()

@@ -257,19 +257,31 @@ open class OpusLayerBase {
      * Get the tree structure found within the BeatKey [beat_key] at [position]
      * [position] defaults to null, indicating the root tree of the beat
      */
-    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<TunedInstrumentEvent> {
-        if (beat_key.channel >= this.channels.size) {
+    fun <T: InstrumentEvent> get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<T> {
+        return if (beat_key.channel == this.channels.size) {
+            if (beat_key.line_offset > this.percussion_channel.size) {
+                throw BadBeatKey(beat_key)
+            }
+
+            this.percussion_channel.get_tree(
+                beat_key.line_offset,
+                beat_key.beat,
+                position ?: listOf()
+            )
+        } else if (beat_key.channel < this.channels.size) {
+            if (beat_key.line_offset > this.channels[beat_key.channel].size) {
+                throw BadBeatKey(beat_key)
+            }
+
+            this.channels[beat_key.channel].get_tree(
+                beat_key.line_offset,
+                beat_key.beat,
+                position ?: listOf()
+            )
+        } else {
             throw BadBeatKey(beat_key)
         }
 
-        if (beat_key.line_offset > this.channels[beat_key.channel].size) {
-            throw BadBeatKey(beat_key)
-        }
-        return this.channels[beat_key.channel].get_tree(
-            beat_key.line_offset,
-            beat_key.beat,
-            position ?: listOf()
-        )
     }
 
     fun get_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
@@ -499,7 +511,7 @@ open class OpusLayerBase {
      * The last channel is now always used as percussion.
      */
     fun is_percussion(channel: Int): Boolean {
-        return channel == this.channels.size - 1
+        return channel == this.channels.size
     }
     //// END RO Functions ////
 
@@ -865,7 +877,7 @@ open class OpusLayerBase {
         this.channels[channel].midi_channel = 9
     }
 
-    open fun set_event(beat_key: BeatKey, position: List<Int>, event: TunedInstrumentEvent) {
+    open fun set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
@@ -1165,7 +1177,7 @@ open class OpusLayerBase {
         return output
     }
 
-    private fun copy_func(tree: OpusTree<InstrumentEvent>): InstrumentEvent? {
+    private fun <T: InstrumentEvent> copy_func(tree: OpusTree<T>): T? {
         return if (tree.event == null) {
             null
         } else {
@@ -1181,12 +1193,21 @@ open class OpusLayerBase {
         }
     }
 
-    open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
-        val tree_copy = tree.copy(this::copy_func)
+    open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         if (this.is_percussion(beat_key.channel)) {
-            this.percussion_channel.replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
+            this.percussion_channel.replace_tree(
+                beat_key.line_offset,
+                beat_key.beat,
+                position,
+                (tree as OpusTree<PercussionEvent>).copy(this::copy_func)
+            )
         } else {
-            this.channels[beat_key.channel].replace_tree(beat_key.line_offset, beat_key.beat, position, tree_copy)
+            this.channels[beat_key.channel].replace_tree(
+                beat_key.line_offset,
+                beat_key.beat,
+                position,
+                (tree as OpusTree<TunedInstrumentEvent>).copy(this::copy_func)
+            )
         }
     }
 
@@ -1306,8 +1327,8 @@ open class OpusLayerBase {
                 }
                 var current_tick = 0
                 var prev_note = 0
-                line.beats.forEachIndexed { b: Int, beat: OpusTree<InstrumentEvent> ->
-                    val stack: MutableList<StackItem<InstrumentEvent>> = mutableListOf(StackItem(beat, 1, current_tick, midi.ppqn))
+                line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
+                    val stack: MutableList<StackItem<TunedInstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeFirst()
                         if (current.tree.is_event()) {
@@ -1379,6 +1400,64 @@ open class OpusLayerBase {
                     if (!(b < start_beat || b >= end_beat)) {
                         current_tick += midi.ppqn
                     }
+                }
+            }
+        }
+
+        // Handle Percussion Channel
+        val channel = this.percussion_channel
+        midi.insert_event(0, 0, BankSelect(9, channel.midi_bank))
+        midi.insert_event(0, 0, ProgramChange(9, channel.midi_program))
+        channel.lines.forEachIndexed inner@{ l: Int, line: OpusLinePercussion ->
+            // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
+            if ((line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value == 0) {
+                return@inner
+            }
+
+            var current_tick = 0
+            line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<PercussionEvent> ->
+                val stack: MutableList<StackItem<PercussionEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
+                while (stack.isNotEmpty()) {
+                    val current = stack.removeFirst()
+                    if (current.tree.is_event()) {
+                        val event = current.tree.get_event()!!
+
+                        if (!(b < start_beat || b >= end_beat)) {
+                            val pseudo_event = PseudoMidiEvent(
+                                9,
+                                line.instrument + 27,
+                                0,
+                                (line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value,
+                                event_uuid_gen++
+                            )
+                            pseudo_midi_map.add(Triple(
+                                current.offset,
+                                pseudo_event,
+                                true
+                            ))
+                            pseudo_midi_map.add(Triple(
+                                min(current.offset + (current.size * event.duration), max_tick),
+                                pseudo_event,
+                                false
+                            ))
+                        }
+                    } else if (!current.tree.is_leaf()) {
+                        val working_subdiv_size = current.size / current.tree.size
+                        for ((i, subtree) in current.tree.divisions) {
+                            stack.add(
+                                StackItem(
+                                    subtree,
+                                    current.tree.size,
+                                    current.offset + (working_subdiv_size * i),
+                                    working_subdiv_size
+                                )
+                            )
+                        }
+                    }
+                }
+
+                if (!(b < start_beat || b >= end_beat)) {
+                    current_tick += midi.ppqn
                 }
             }
         }
@@ -1571,11 +1650,11 @@ open class OpusLayerBase {
         this.import_midi(midi)
     }
 
-    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<InstrumentEvent>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
+    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<Pair<Int, InstrumentEvent>>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
         var beat_size = midi.get_ppqn()
         var total_beat_offset = 0
         var last_ts_change = 0
-        val beat_values: MutableList<OpusTree<Set<InstrumentEvent>>> = mutableListOf()
+        val beat_values: MutableList<OpusTree<Set<Pair<Int, InstrumentEvent>>>> = mutableListOf()
         val tempo_line = mutableListOf<OpusTree<OpusControlEvent>>()
         var max_tick = 0
         var working_tempo = 120F
@@ -1602,7 +1681,7 @@ open class OpusLayerBase {
 
                 // Add trees to list of trees
                 while (beat_values.size <= beat_index) {
-                    val new_tree = OpusTree<Set<InstrumentEvent>>()
+                    val new_tree = OpusTree<Set<Pair<Int, InstrumentEvent>>>()
                     new_tree.set_size(beat_size)
                     beat_values.add(new_tree)
                 }
@@ -1623,10 +1702,10 @@ open class OpusLayerBase {
                     )
                 }
 
-                eventset.add(opus_event)
+                eventset.add(Pair(channel, opus_event))
 
                 tree[inner_beat_offset].set_event(eventset)
-                active_event_map[Pair(event.channel, event.get_note())] = opus_event
+                active_event_map[Pair(channel, event.get_note())] = opus_event
             } else if ((event is NoteOn && event.get_velocity() == 0) || event is NoteOff) {
                 val (channel, note) = if (event is NoteOn) {
                     Pair(event.channel, event.get_note())
@@ -1693,7 +1772,7 @@ open class OpusLayerBase {
         active_event_map.clear()
 
         total_beat_offset += (max_tick - last_ts_change) / beat_size
-        val opus = OpusTree<Set<InstrumentEvent>>()
+        val opus = OpusTree<Set<Pair<Int, InstrumentEvent>>>()
 
         if (beat_values.isEmpty()) {
             for (i in 0 until 4) {
@@ -1704,7 +1783,7 @@ open class OpusLayerBase {
         opus.set_size(beat_values.size)
 
         var overflow_events = mutableSetOf<InstrumentEvent>()
-        beat_values.forEachIndexed { i, beat_tree ->
+        beat_values.forEachIndexed { i: Int, beat_tree: OpusTree<Set<Pair<Int, InstrumentEvent>>> ->
             opus.set(i, beat_tree)
         }
 
@@ -1752,68 +1831,73 @@ open class OpusLayerBase {
 
             val working_start = initial_position.toFloat() + (working_numerator.toFloat() / working_denominator.toFloat())
 
-            for (event in event_set) {
-                if (!midi_channel_map.contains(event.channel)) {
-                    midi_channel_map[event.channel] = midi_channel_map.size
+            for ((event_channel, event) in event_set) {
+                if (!midi_channel_map.contains(event_channel)) {
+                    midi_channel_map[event_channel] = midi_channel_map.size
                 }
-                val channel_index = midi_channel_map[event.channel]!!
+                val channel_index = midi_channel_map[event_channel]!!
 
 
                 val working_end = initial_position.toFloat() + ((working_numerator + event.duration).toFloat() / working_denominator.toFloat())
 
-                if (event.channel == 9) {
-                    if (!percussion_map.contains(event.note)) {
-                        percussion_map[event.note] = blocked_percussion_ranges.size
-                        blocked_percussion_ranges.add(mutableListOf())
-                    }
-                    val index = percussion_map[event.note]!!
+                when (event) {
+                    is PercussionEvent -> {
+                        if (!percussion_map.contains(event.note)) {
+                            percussion_map[event.note] = blocked_percussion_ranges.size
+                            blocked_percussion_ranges.add(mutableListOf())
+                        }
+                        val index = percussion_map[event.note]!!
 
-                    var insertion_index = 0
-                    for (i in 0 until blocked_percussion_ranges[index].size) {
-                        for ((start, end) in blocked_percussion_ranges[index][i]) {
-                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
-                                insertion_index += 1
+                        var insertion_index = 0
+                        for (i in 0 until blocked_percussion_ranges[index].size) {
+                            for ((start, end) in blocked_percussion_ranges[index][i]) {
+                                if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                    insertion_index += 1
+                                    break
+                                }
+                            }
+
+                            if (i == insertion_index) { // passed all the checks, no need to keep looping
                                 break
                             }
                         }
 
-                        if (i == insertion_index) { // passed all the checks, no need to keep looping
-                            break
+
+                        if (insertion_index == blocked_percussion_ranges[index].size) {
+                            blocked_percussion_ranges[index].add(mutableListOf())
                         }
+                        blocked_percussion_ranges[index][insertion_index].add(Pair(working_start, working_end))
+                        remapped_events.last().second.add(Pair(event, insertion_index))
                     }
 
+                    is TunedInstrumentEvent -> {
+                        if (!blocked_ranges.containsKey(channel_index)) {
+                            blocked_ranges[channel_index] = mutableListOf()
+                        }
 
-                    if (insertion_index == blocked_percussion_ranges[index].size) {
-                        blocked_percussion_ranges[index].add(mutableListOf())
-                    }
-                    blocked_percussion_ranges[index][insertion_index].add(Pair(working_start, working_end))
-                    remapped_events.last().second.add(Pair(event, insertion_index))
-                } else {
-                    if (!blocked_ranges.containsKey(channel_index)) {
-                        blocked_ranges[channel_index] = mutableListOf()
-                    }
+                        var insertion_index = 0
+                        for (i in 0 until blocked_ranges[channel_index]!!.size) {
+                            for ((start, end) in blocked_ranges[channel_index]!![i]) {
+                                if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                    insertion_index += 1
+                                    break
+                                }
+                            }
 
-                    var insertion_index = 0
-                    for (i in 0 until blocked_ranges[channel_index]!!.size) {
-                        for ((start, end) in blocked_ranges[channel_index]!![i]) {
-                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
-                                insertion_index += 1
+                            if (i == insertion_index) { // passed all the checks, no need to keep looping
                                 break
                             }
                         }
 
-                        if (i == insertion_index) { // passed all the checks, no need to keep looping
-                            break
+                        if (insertion_index == blocked_ranges[channel_index]!!.size) {
+                            blocked_ranges[channel_index]!!.add(mutableListOf())
                         }
+
+                        blocked_ranges[channel_index]!![insertion_index].add(Pair(working_start, working_end))
+
+                        remapped_events.last().second.add(Pair(event, insertion_index))
                     }
-
-                    if (insertion_index == blocked_ranges[channel_index]!!.size) {
-                        blocked_ranges[channel_index]!!.add(mutableListOf())
-                    }
-
-                    blocked_ranges[channel_index]!![insertion_index].add(Pair(working_start, working_end))
-
-                    remapped_events.last().second.add(Pair(event, insertion_index))
+                    else -> {}
                 }
             }
         }

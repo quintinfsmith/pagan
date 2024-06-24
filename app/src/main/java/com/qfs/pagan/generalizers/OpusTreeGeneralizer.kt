@@ -41,6 +41,25 @@ class OpusTreeGeneralizer {
             if (event_hashmap != null ) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
             } else {
+                new_tree.set_size(input.get_int("size"))
+                val divisions = input.get_listn("divisions")
+                if (divisions != null) {
+                    for (i in divisions.list.indices) {
+                        val pair = divisions.get_list(i)
+                        new_tree[pair.get_int(0)] = from_json(pair.get_hashmap(1), event_generalizer_callback)
+                    }
+                }
+            }
+            return new_tree
+        }
+
+
+        fun <T> from_v1_json(input: ParsedHashMap, event_generalizer_callback: (ParsedHashMap?) -> T?): OpusTree<T> {
+            val new_tree = OpusTree<T>()
+            val event_hashmap = input.get_hashmapn("event")
+            if (event_hashmap != null ) {
+                new_tree.set_event(event_generalizer_callback(event_hashmap))
+            } else {
                 val children = input.get_listn("children")
                 if (children != null) {
                     new_tree.set_size(children.list.size)
@@ -48,11 +67,32 @@ class OpusTreeGeneralizer {
                         if (child_json == null) {
                             return@forEachIndexed
                         }
-                        new_tree.set(i, from_json(child_json as ParsedHashMap, event_generalizer_callback))
+                        new_tree[i] = from_v1_json(child_json as ParsedHashMap, event_generalizer_callback)
                     }
                 }
             }
             return new_tree
+        }
+
+        fun <T> to_v1_json(input: OpusTree<T>, event_generalizer_callback: (T) -> ParsedObject?): ParsedObject? {
+            if (input.is_leaf() && !input.is_event()) {
+                return null
+            }
+
+            val map = HashMap<String, ParsedObject?>()
+            if (input.is_event()) {
+                map["event"] = event_generalizer_callback(input.get_event()!!)
+                map["children"] = null
+            } else {
+                map["event"] = null
+                map["children"] = ParsedList(
+                    MutableList(input.size) { i: Int ->
+                        to_v1_json(input[i], event_generalizer_callback)
+                    }
+                )
+            }
+
+            return ParsedHashMap(map)
         }
     }
 

@@ -1,12 +1,13 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.json.ParsedHashMap
+import com.qfs.json.ParsedInt
 import com.qfs.json.ParsedList
 import com.qfs.pagan.generalizers.OpusTreeGeneralizer
 
 class OpusLineGeneralizer {
     companion object {
-        fun to_json(line: OpusLineAbstract): ParsedHashMap {
+        fun to_json(line: OpusLineAbstract<*>): ParsedHashMap {
             var output = ParsedHashMap()
 
             val beats = ParsedList()
@@ -23,7 +24,7 @@ class OpusLineGeneralizer {
 
             when (line) {
                 is OpusLinePercussion -> {
-                    output["instrument"] = line.instrument
+                    output["instrument"] = ParsedInt(line.instrument)
                 }
             }
 

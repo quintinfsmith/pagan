@@ -22,7 +22,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     var controllers = ActiveControlSet(0)
     var midi_bank = 0
     var midi_program = 0
-    var midi_channel: Int = 0
     private var _beat_count: Int = 0
     var size: Int = 0
     init {
@@ -219,21 +218,27 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
 
         return true
     }
+    abstract fun get_midi_channel(): Int
 }
 
 class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
+    var midi_channel: Int = 0
     override fun gen_line(): OpusLine {
         return OpusLine(this.get_beat_count())
     }
+    override fun get_midi_channel(): Int {
+        return this.midi_channel
+    }
+
 }
 
 class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePercussion>() {
     companion object {
-        val default_instrument = 0
+        const val DEFAULT_INSTRUMENT = 0
     }
     override fun gen_line(): OpusLinePercussion {
-        return OpusLinePercussion(OpusPercussionChannel.default_instrument, this.get_beat_count())
+        return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 
     fun set_instrument(line: Int, offset: Int) {
@@ -244,4 +249,7 @@ class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePerc
         return this.lines[line].instrument
     }
 
+    override fun get_midi_channel(): Int {
+        return 9
+    }
 }

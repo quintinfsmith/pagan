@@ -23,7 +23,6 @@ data class LoadedJSONData2(
                     }  else {
                         max(1, beat_count)
                     }
-
                 }
 
                 val line_controllers = mutableListOf<List<ActiveControllerJSON>>()

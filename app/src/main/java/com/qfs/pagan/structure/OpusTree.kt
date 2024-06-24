@@ -282,7 +282,7 @@ class OpusTree<T> {
         return this.event != null
     }
 
-    fun set(rel_index: Int, tree: OpusTree<T>) {
+    operator fun set(rel_index: Int, tree: OpusTree<T>) {
         val index = if (rel_index < 0) {
             this.size + rel_index
         } else {
@@ -515,7 +515,7 @@ class OpusTree<T> {
         if (!this.is_event()) {
             output.set_size(this.size)
             for ((index, tree) in this.divisions) {
-                output.set(index, tree.get_set_tree())
+                output[index] = tree.get_set_tree()
             }
         } else {
             output.event = setOf(this.get_event()!!)

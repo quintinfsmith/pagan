@@ -49,6 +49,11 @@ open class OpusLayerBase {
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here")
 
     companion object {
+        var _channel_uuid_generator: Int = 0x00
+        fun gen_channel_uuid(): Int {
+            return OpusLayerBase._channel_uuid_generator++
+        }
+
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
             val (from_key, to_key) = if (first.channel < second.channel) {
                 Pair(
@@ -80,13 +85,12 @@ open class OpusLayerBase {
         }
     }
 
-    private var _channel_uuid_generator: Int = 0x00
     private var _channel_uuid_map = HashMap<Int, OpusChannel>()
 
     var beat_count: Int = 1
     var controllers = ActiveControlSet(beat_count, setOf(ControlEventType.Tempo))
     var channels: MutableList<OpusChannel> = mutableListOf()
-    val percussion_channel = OpusPercussionChannel()
+    var percussion_channel = OpusPercussionChannel()
     var path: String? = null
     var project_name: String? = null
     var transpose: Int = 0
@@ -242,7 +246,18 @@ open class OpusLayerBase {
      * Get the tree structure found within the BeatKey [beat_key] at [position]
      * [position] defaults to null, indicating the root tree of the beat
      */
-    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<out InstrumentEvent> {
+    fun get_percussion_tree(line_offset: Int, beat: Int, position: List<Int>? = null): OpusTree<PercussionEvent> {
+        if (line_offset > this.percussion_channel.size) {
+            throw BadBeatKey(BeatKey(this.channels.size, line_offset, beat))
+        }
+        return this.percussion_channel.get_tree(line_offset, beat, position ?: listOf())
+    }
+
+    /**
+     * Get the tree structure found within the BeatKey [beat_key] at [position]
+     * [position] defaults to null, indicating the root tree of the beat
+     */
+    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<TunedInstrumentEvent> {
         if (beat_key.channel >= this.channels.size) {
             throw BadBeatKey(beat_key)
         }
@@ -250,15 +265,11 @@ open class OpusLayerBase {
         if (beat_key.line_offset > this.channels[beat_key.channel].size) {
             throw BadBeatKey(beat_key)
         }
-        return if (beat_key.channel == this.channels.size) {
-            this.percussion_channel.get_tree(beat_key.line_offset, beat_key.beat, position ?: listOf())
-        } else {
-            this.channels[beat_key.channel].get_tree(
-                beat_key.line_offset,
-                beat_key.beat,
-                position ?: listOf()
-            )
-        }
+        return this.channels[beat_key.channel].get_tree(
+            beat_key.line_offset,
+            beat_key.beat,
+            position ?: listOf()
+        )
     }
 
     fun get_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
@@ -826,7 +837,7 @@ open class OpusLayerBase {
             throw PercussionEventSet()
         }
 
-        val tree = this.get_tree(beat_key, position)
+        val tree = this.get_percussion_tree(beat_key.line_offset, beat_key.beat, position)
         if (tree.is_event()) {
             tree.unset_event()
         }
@@ -854,7 +865,7 @@ open class OpusLayerBase {
         this.channels[channel].midi_channel = 9
     }
 
-    open fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
+    open fun set_event(beat_key: BeatKey, position: List<Int>, event: TunedInstrumentEvent) {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
@@ -878,7 +889,7 @@ open class OpusLayerBase {
     }
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        val tree: OpusTree<InstrumentEvent> = this.get_tree(beat_key, position)
+        val tree: OpusTree<out InstrumentEvent> = this.get_tree(beat_key, position)
         this._split_opus_tree(tree, splits, move_event_to_end)
     }
 
@@ -964,20 +975,16 @@ open class OpusLayerBase {
         return new_channel
     }
 
-    private fun gen_channel_uuid(): Int {
-        val output = this._channel_uuid_generator
-        this._channel_uuid_generator += 1
-        return output
-    }
-
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null) {
-        val new_channel = OpusChannel(uuid ?: this.gen_channel_uuid())
+        val new_channel = OpusChannel(uuid ?: OpusLayerBase.gen_channel_uuid())
         new_channel.set_beat_count(this.beat_count)
+
         new_channel.midi_channel = if (this.channels.isNotEmpty()) {
             this.get_next_available_midi_channel()
         } else {
             9
         }
+
         this._channel_uuid_map[new_channel.uuid] = new_channel
         for (i in 0 until lines) {
             new_channel.new_line(i)
@@ -1010,9 +1017,9 @@ open class OpusLayerBase {
         this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]
         this.channels[channel_b].lines[line_b] = tmp_line
         if (this.is_percussion(channel_a)) {
-            val tmp_value = this.channels[channel_a].lines[line_a].static_value
-            this.channels[channel_a].lines[line_a].static_value = this.channels[channel_b].lines[line_b].static_value
-            this.channels[channel_b].lines[line_b].static_value = tmp_value
+            val tmp_value = this.percussion_channel.lines[line_a].instrument
+            this.percussion_channel.lines[line_a].instrument = this.channels[channel_b].lines[line_b].instrument
+            this.percussion_channel.lines[line_b].instrument = tmp_value
         }
     }
 
@@ -2641,6 +2648,12 @@ open class OpusLayerBase {
         }
 
         return true
+    }
+
+    fun add_channel(channel: OpusChannel) {
+        channel.uuid = OpusLayerBase.gen_channel_uuid()
+        this.channels.add(channel)
+        this._channel_uuid_map[channel.uuid] = channel
     }
 
 

@@ -35,6 +35,9 @@ data class ParsedBoolean(var value: Boolean): ParsedObject {
 class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedObject {
     val hash_map = input_map ?: HashMap<String, ParsedObject?>()
 
+    operator fun get(key: String): ParsedObject? {
+        return this.hash_map[key]
+    }
     operator fun set(key: String, value: ParsedObject?) {
         this.hash_map[key] = value
     }

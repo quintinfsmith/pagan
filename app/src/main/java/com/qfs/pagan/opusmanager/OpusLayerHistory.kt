@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.apres.Midi
+import com.qfs.json.ParsedHashMap
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
@@ -402,7 +403,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         channel,
                         min(line_offset, this.channels[channel].size - 1)
                     )
-                } catch (e: OpusChannel.LastLineException) {
+                } catch (e: OpusChannelAbstract.LastLineException) {
                     break
                 }
             }
@@ -734,7 +735,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun remove_beat(beat_index: Int) {
         this._remember {
-            val beat_cells = mutableListOf<OpusTree<InstrumentEvent>>()
+            val beat_cells = mutableListOf<OpusTree<out InstrumentEvent>>()
             for (channel in 0 until this.channels.size) {
                 val line_count = this.channels[channel].size
                 for (j in 0 until line_count) {
@@ -776,7 +777,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.replace_tree(beat_key, position, tree)
@@ -985,7 +986,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun load_json(json_data: LoadedJSONData) {
+    override fun load_json(json_data: ParsedHashMap) {
         this.history_cache.forget {
             super.load_json(json_data)
         }
@@ -1014,7 +1015,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this.history_cache.clear()
     }
 
-    private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>? = null, callback: () -> T): T {
+    private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>? = null, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
             val use_tree = tree ?: this.get_tree(beat_key, position).copy()
             val output = callback()

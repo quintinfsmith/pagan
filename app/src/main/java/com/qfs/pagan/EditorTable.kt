@@ -10,11 +10,10 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.qfs.pagan.opusmanager.ActiveControlSet
+import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
@@ -200,7 +199,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._initializing_column_width_map = false
     }
 
-    fun new_row(y: Int, controller: ActiveControlSet.ActiveController, ignore_ui: Boolean = false) {
+    fun new_row(y: Int, controller: ActiveController, ignore_ui: Boolean = false) {
         for (i in 0 until this.get_opus_manager().beat_count) {
             val tree = controller.events[i] ?: OpusTree()
             this._column_width_map[i].add(
@@ -519,7 +518,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
                 opus_manager.get_ctl_line_from_visible_row(coord.y)
             )
-            val new_tree: OpusTree<out OpusEvent> = when (ctl_level) {
+            val new_tree: OpusTree<*> = when (ctl_level) {
                 null -> {
                     val (channel, line_offset) = opus_manager.get_std_offset(pointer)
                     opus_manager.get_tree(

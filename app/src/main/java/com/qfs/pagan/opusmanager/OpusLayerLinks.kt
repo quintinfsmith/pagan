@@ -207,7 +207,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         }
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<InstrumentEvent>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         this.lock_links {
             super.replace_tree(beat_key, position, tree)
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
@@ -364,14 +364,11 @@ open class OpusLayerLinks : OpusLayerBase() {
         super.remove_beat(beat_index)
     }
 
-    override fun load_json(json_data: LoadedJSONData) {
-        super.load_json(json_data)
-        if (json_data.reflections == null) {
-            return
-        }
-
-        json_data.reflections!!.forEachIndexed { i: Int, pool: List<BeatKey> ->
-            this.link_pools.add(pool.toMutableSet())
+    override fun import_from_other(other: OpusLayerBase) {
+        super.import_from_other(other)
+        for (i in (other as OpusLayerLinks).link_pools.indices) {
+            val pool = other.link_pools[i]
+            this.link_pools.add(pool)
             for (beatkey in pool) {
                 this.link_pool_map[beatkey] = i
             }

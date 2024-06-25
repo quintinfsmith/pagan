@@ -9,9 +9,9 @@ import android.widget.LinearLayout
 import androidx.core.view.children
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
-import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -119,7 +119,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                     LeafButtonStd(
                         this.context,
                         opus_manager.tuning_map.size,
-                        tree.get_event() as OpusEventSTD?,
+                        tree.get_event() as InstrumentEvent?,
                         position,
                         this.is_percussion()
                     )
@@ -208,7 +208,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
     }
 
 
-    private fun get_beat_tree(beat_key: BeatKey): OpusTree<OpusEventSTD> {
+    private fun get_beat_tree(beat_key: BeatKey): OpusTree<out InstrumentEvent> {
         val opus_manager = this.get_opus_manager()
         return opus_manager.get_tree(beat_key)
     }

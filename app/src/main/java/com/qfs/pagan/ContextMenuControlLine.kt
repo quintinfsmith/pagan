@@ -3,7 +3,7 @@ package com.qfs.pagan
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isEmpty
-import com.qfs.pagan.opusmanager.ActiveControlSet
+import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
@@ -69,7 +69,7 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         (this.widget as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
     }
 
-    private fun get_controller(): ActiveControlSet.ActiveController {
+    private fun get_controller(): ActiveController {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 

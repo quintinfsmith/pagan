@@ -2,8 +2,10 @@ package com.qfs.pagan
 
 import android.view.View
 import android.view.ViewGroup
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEventSTD
+import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import kotlin.math.abs
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
@@ -116,29 +118,38 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         val current_tree = opus_manager.get_tree()
-        if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
+        val event = current_tree.get_event()
+        when (event) {
+            is TunedInstrumentEvent -> {
+                val value = if (event is RelativeNoteEvent) {
+                    if (main.configuration.relative_mode) {
+                        abs(event.offset)
+                    } else {
+                        opus_manager.get_absolute_value(
+                            opus_manager.cursor.get_beatkey(),
+                            opus_manager.cursor.get_position()
+                        )!!
+                    }
+                } else if (event is AbsoluteNoteEvent) {
+                    event.note
+                } else {
+                    // Should Be Unreachable
+                    throw Exception()
+                }
 
-            val value = if (event.relative && ! main.configuration.relative_mode) {
-                opus_manager.get_absolute_value(
-                    opus_manager.cursor.get_beatkey(),
-                    opus_manager.cursor.get_position()
-                )!!
-            } else {
-                abs(event.note)
+                if (value >= 0) {
+                    this.ns_offset.setState(value % radix, manual = true, surpress_callback = true)
+                    this.ns_octave.setState(value / radix, manual = true, surpress_callback = true)
+                }
+
+                this.button_unset.setImageResource(R.drawable.unset)
+                this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
             }
-
-            if (value >= 0) {
-                this.ns_offset.setState(value % radix, manual = true, surpress_callback = true)
-                this.ns_octave.setState(value / radix, manual = true, surpress_callback = true)
+            null -> {
+                this.ns_octave.unset_active_button()
+                this.ns_offset.unset_active_button()
+                this.button_duration.text = ""
             }
-
-            this.button_unset.setImageResource(R.drawable.unset)
-            this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
-        } else {
-            this.ns_octave.unset_active_button()
-            this.ns_offset.unset_active_button()
-            this.button_duration.text = ""
         }
 
         this.button_duration.isEnabled = current_tree.is_event()
@@ -264,60 +275,62 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         val radix = opus_manager.tuning_map.size
 
-        val value = if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-            var prev_note = if (opus_manager.relative_mode != 0) {
+        val value = when (val current_event = current_tree.get_event()) {
+            is AbsoluteNoteEvent,
+            is RelativeNoteEvent -> {
                 val nsOctave = this.get_main().findViewById<NumberSelector>(R.id.nsOctave)
-                if (nsOctave.getState() == null) {
+                var prev_note = if (opus_manager.relative_mode != 0 && nsOctave.getState() == null) {
                     nsOctave.setState(0, manual = true, surpress_callback = true)
                     0
                 } else {
-                    event.note
-                }
-            } else {
-                event.note
-            }
-
-            when (opus_manager.relative_mode) {
-                2 -> {
-                    if (prev_note > 0) {
-                        prev_note *= -1
+                    when (current_event) {
+                        is AbsoluteNoteEvent -> current_event.note
+                        is RelativeNoteEvent -> current_event.offset
+                        else -> {
+                            // TODO: Specify (Shouldn't be reachable)
+                            throw Exception()
+                        }
                     }
-                    ((prev_note / radix) * radix) - progress
                 }
-                else -> {
-                    ((prev_note / radix) * radix) + progress
+
+                when (opus_manager.relative_mode) {
+                    2 -> {
+                        if (prev_note > 0) {
+                            prev_note *= -1
+                        }
+                        ((prev_note / radix) * radix) - progress
+                    }
+                    else -> {
+                        ((prev_note / radix) * radix) + progress
+                    }
                 }
             }
-        } else {
-            when (opus_manager.relative_mode) {
-                2 -> {
-                    0 - progress
-                }
-                1 -> {
-                    progress
-                }
-                else -> {
-                    val beat_key = opus_manager.cursor.get_beatkey()
-                    val position = opus_manager.cursor.get_position()
-                    val preceding_event = opus_manager.get_preceding_event(beat_key, position)
-                    if (preceding_event != null && !preceding_event.relative) {
-                        ((preceding_event.note / radix) * radix) + progress
-                    } else {
-                        progress
+            else -> {
+                when (opus_manager.relative_mode) {
+                    2 -> 0 - progress
+                    1 -> progress
+                    else -> {
+                        val beat_key = opus_manager.cursor.get_beatkey()
+                        val position = opus_manager.cursor.get_position()
+                        val preceding_event = opus_manager.get_preceding_event(beat_key, position)
+                        when (preceding_event) {
+                            is AbsoluteNoteEvent -> {
+                                ((preceding_event.note / radix) * radix) + progress
+                            }
+                            else -> progress
+                        }
                     }
                 }
             }
         }
 
-        val event = OpusEventSTD(
-            value,
-            opus_manager.cursor.channel,
-            opus_manager.relative_mode != 0,
-            duration
+        opus_manager.set_event_at_cursor(
+            if (opus_manager.relative_mode != 0) {
+                AbsoluteNoteEvent(value, duration)
+            } else {
+                RelativeNoteEvent(value, duration)
+            }
         )
-
-        opus_manager.set_event_at_cursor(event)
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
     }
 
@@ -336,56 +349,49 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         val value = if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-            val prev_note = if (opus_manager.relative_mode != 0) {
-                val nsOffset  = this.get_main().findViewById<NumberSelector>(R.id.nsOffset)
-                if (nsOffset.getState() == null) {
-                    nsOffset.setState(0, manual = true, surpress_callback = true)
-                    0
-                } else {
-                    event.note
-                }
+            val current_event = current_tree.get_event()!!
+            val nsOffset  = this.get_main().findViewById<NumberSelector>(R.id.nsOffset)
+            val prev_note = if (opus_manager.relative_mode != 0 && nsOffset.getState() == null) {
+                nsOffset.setState(0, manual = true, surpress_callback = true)
+                0
             } else {
-                event.note
+                when (current_event) {
+                    is AbsoluteNoteEvent -> current_event.note
+                    is RelativeNoteEvent -> current_event.offset
+                    else -> {
+                        // TODO: Specify (Shouldn't be reachable)
+                        throw Exception()
+                    }
+                }
             }
 
             when (opus_manager.relative_mode) {
-                2 -> {
-                    0 - (((0 - prev_note) % radix) + (progress * radix))
-                }
-                else -> {
-                    ((prev_note % radix) + (progress * radix))
-                }
+                2 -> 0 - (((0 - prev_note) % radix) + (progress * radix))
+                else -> ((prev_note % radix) + (progress * radix))
             }
         } else {
             when (opus_manager.relative_mode) {
-                2 -> {
-                    (0 - progress) * radix
-                }
-                1 -> {
-                    progress * radix
-                }
+                2 -> (0 - progress) * radix
+                1 -> progress * radix
                 else -> {
                     val beat_key = opus_manager.cursor.get_beatkey()
                     val position = opus_manager.cursor.get_position()
-                    val preceding_event = opus_manager.get_preceding_event(beat_key, position)
-                    if (preceding_event != null && !preceding_event.relative) {
-                        (progress * radix) + (preceding_event.note % radix)
-                    } else {
-                        (progress * radix)
+                    when (val preceding_event = opus_manager.get_preceding_event(beat_key, position)) {
+                        is AbsoluteNoteEvent -> (progress * radix) + (preceding_event.note % radix)
+                        else -> (progress * radix)
                     }
                 }
             }
         }
 
-        val event = OpusEventSTD(
-            value,
-            opus_manager.cursor.channel,
-            opus_manager.relative_mode != 0,
-            duration
+        opus_manager.set_event_at_cursor(
+            if (opus_manager.relative_mode != 0) {
+                AbsoluteNoteEvent(value, duration)
+            } else {
+                RelativeNoteEvent(value, duration)
+            }
         )
 
-        opus_manager.set_event_at_cursor(event)
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
     }
 
@@ -404,45 +410,60 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         when (opus_manager.relative_mode) {
             0 -> {
-                if (event.relative) {
-                    try {
-                        opus_manager.convert_event_to_absolute()
-                        event = current_tree.get_event()!!
-                    } catch (e: Exception) {
-                        event.note = 0
-                        event.relative = false
-                        opus_manager.set_event_at_cursor(event.copy())
+                val value = when (event) {
+                    is RelativeNoteEvent -> {
+                        try {
+                            opus_manager.convert_event_to_absolute()
+                            val absolute_event = current_tree.get_event() as AbsoluteNoteEvent
+                            absolute_event.note
+                        } catch (e: Exception) {
+                            opus_manager.set_event_at_cursor(AbsoluteNoteEvent(0))
+                            0
+                        }
                     }
-                }
-                nsOctave.setState(event.note / radix, manual = true, surpress_callback = true)
-                nsOffset.setState(event.note % radix, manual = true, surpress_callback = true)
-            }
-            1 -> {
-                if (!event.relative) {
-                    opus_manager.convert_event_to_relative()
-                    event = current_tree.get_event()!!
+                    is AbsoluteNoteEvent -> event.note
+                    else -> 0 /* Unreachable */
                 }
 
-                if (event.note < 0) {
+                nsOctave.setState(value / radix, manual = true, surpress_callback = true)
+                nsOffset.setState(value % radix, manual = true, surpress_callback = true)
+            }
+            1 -> {
+                val offset = when (event) {
+                    is AbsoluteNoteEvent -> {
+                        opus_manager.convert_event_to_relative()
+                        val rel_event = current_tree.get_event()!!
+                        (rel_event as RelativeNoteEvent).offset
+                    }
+                    is RelativeNoteEvent -> event.offset
+                    else -> 0 // Unreachable
+                }
+
+                if (offset < 0) {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(event.note / radix, manual = true, surpress_callback = true)
-                    nsOffset.setState(event.note % radix, manual = true, surpress_callback = true)
+                    nsOctave.setState(offset / radix, manual = true, surpress_callback = true)
+                    nsOffset.setState(offset % radix, manual = true, surpress_callback = true)
                 }
             }
             2 -> {
-                if (!event.relative) {
-                    opus_manager.convert_event_to_relative()
-                    event = current_tree.get_event()!!
+                val offset = when (event) {
+                    is AbsoluteNoteEvent -> {
+                        opus_manager.convert_event_to_relative()
+                        val rel_event = current_tree.get_event()!!
+                        (rel_event as RelativeNoteEvent).offset
+                    }
+                    is RelativeNoteEvent -> event.offset
+                    else -> 0 // Unreachable
                 }
 
-                if (event.note > 0) {
+                if (offset > 0) {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(abs(event.note) / radix, manual = true, surpress_callback = true)
-                    nsOffset.setState(abs(event.note) % radix, manual = true, surpress_callback = true)
+                    nsOctave.setState(offset / radix, manual = true, surpress_callback = true)
+                    nsOffset.setState(offset % radix, manual = true, surpress_callback = true)
                 }
             }
         }

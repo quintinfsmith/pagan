@@ -3,8 +3,22 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
-import com.qfs.pagan.opusmanager.*
-import com.qfs.pagan.structure.*
+import com.qfs.json.ParsedHashMap
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.opusmanager.ActiveController
+import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.InstrumentEvent
+import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusLayerCursor
+import com.qfs.pagan.opusmanager.OpusLine
+import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.opusmanager.TunedInstrumentEvent
+import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 import kotlin.math.pow
@@ -238,7 +252,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_line_ctl_cell_change(type, beat_key)
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusEventSTD>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         val activity = this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
@@ -285,7 +299,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: OpusEventSTD) {
+    override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
             this.make_percussion_visible()
@@ -294,7 +308,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.set_event(beat_key, position, event)
 
         // If the OM is applying history, change the relative mode, otherwise leave it.
-        if (this.history_cache.isLocked()) {
+        if (this.history_cache.isLocked() && event is TunedInstrumentEvent) {
             this.set_relative_mode(event)
         }
 
@@ -485,7 +499,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     this.runOnUiThread { _: MainActivity ->
                         this.get_editor_table()?.new_row(visible_row, output)
                         val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
-                        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
                             if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                                 this.get_editor_table()?.new_row(visible_row + i, controller)
                             }
@@ -497,7 +511,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 UI_LOCK_PARTIAL -> {
                     this.get_editor_table()?.new_row(visible_row, output, true)
                     val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
-                    controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                    controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
                         if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                             this.get_editor_table()?.new_row(visible_row + i, controller, true)
                         }
@@ -533,7 +547,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 this.runOnUiThread { _: MainActivity ->
                     this.get_editor_table()?.new_row(row_index, line)
                     val controllers = line.controllers.get_all()
-                    controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                    controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
                         if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                             this.get_editor_table()?.new_row(row_index + i, controller)
                         }
@@ -543,7 +557,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             UI_LOCK_PARTIAL -> {
                 this.get_editor_table()?.new_row(row_index, line, true)
                 val controllers = line.controllers.get_all()
-                controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveControlSet.ActiveController> ->
+                controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
                     if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                         this.get_editor_table()?.new_row(row_index + i, controller)
                     }
@@ -726,7 +740,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.remove_beat(beat_index)
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEventSTD>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
         val bkp_cursor = this.cursor.copy()
         super.insert_beat(beat_index, beats_in_column)
         val editor_table = this.get_editor_table() ?: return
@@ -802,7 +816,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.recache_line_maps()
     }
 
-    override fun load_json(json_data: LoadedJSONData) {
+    override fun load_json(json_data: ParsedHashMap) {
         val activity = this.get_activity() ?: return super.load_json(json_data)
 
         this._ui_clear()
@@ -980,14 +994,19 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.get_editor_table()?.apply_queued_cell_changes()
     }
 
-    fun set_relative_mode(event: OpusEventSTD) {
+    fun set_relative_mode(event: TunedInstrumentEvent) {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
-            this.relative_mode = if (!event.relative) {
+            this.relative_mode = if (event is AbsoluteNoteEvent) {
                 0
-            } else if (event.note >= 0) {
-                1
+            } else if (event is RelativeNoteEvent) {
+                if (event.offset >= 0) {
+                    1
+                } else {
+                    2
+                }
             } else {
-                2
+                // TODO: Specify Exception
+                throw Exception()
             }
         } else {
             this.relative_mode = 0
@@ -1174,7 +1193,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val current_tree = this.get_tree()
         if (current_tree.is_event()) {
-            this.set_relative_mode(current_tree.get_event()!!)
+            this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
         }
 
         if (this.get_ui_lock_level() != null) {

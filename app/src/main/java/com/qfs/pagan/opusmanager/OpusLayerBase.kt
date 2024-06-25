@@ -1,4 +1,5 @@
 package com.qfs.pagan.opusmanager
+
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -9,12 +10,9 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event.TimeSignature
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.pagan.structure.OpusTree
 import com.qfs.json.*
 import com.qfs.pagan.generalizers.OpusManagerGeneralizer
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-
+import com.qfs.pagan.structure.OpusTree
 import java.io.File
 import kotlin.math.floor
 import kotlin.math.max
@@ -257,7 +255,7 @@ open class OpusLayerBase {
      * Get the tree structure found within the BeatKey [beat_key] at [position]
      * [position] defaults to null, indicating the root tree of the beat
      */
-    fun <T: InstrumentEvent> get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<T> {
+    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<out InstrumentEvent> {
         return if (beat_key.channel == this.channels.size) {
             if (beat_key.line_offset > this.percussion_channel.size) {
                 throw BadBeatKey(beat_key)
@@ -877,11 +875,11 @@ open class OpusLayerBase {
         this.channels[channel].midi_channel = 9
     }
 
-    open fun set_event(beat_key: BeatKey, position: List<Int>, event: T) {
+    open fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
-        val tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree(beat_key, position) as OpusTree<InstrumentEvent>
         tree.set_event(event)
     }
 
@@ -1025,13 +1023,14 @@ open class OpusLayerBase {
             throw IncompatibleChannelException(channel_a, channel_b)
         }
 
-        val tmp_line = this.channels[channel_a].lines[line_a]
-        this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]
-        this.channels[channel_b].lines[line_b] = tmp_line
         if (this.is_percussion(channel_a)) {
             val tmp_value = this.percussion_channel.lines[line_a].instrument
-            this.percussion_channel.lines[line_a].instrument = this.channels[channel_b].lines[line_b].instrument
+            this.percussion_channel.lines[line_a].instrument = this.percussion_channel.lines[line_b].instrument
             this.percussion_channel.lines[line_b].instrument = tmp_value
+        } else {
+            val tmp_line = this.channels[channel_a].lines[line_a]
+            this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]
+            this.channels[channel_b].lines[line_b] = tmp_line
         }
     }
 
@@ -1124,8 +1123,8 @@ open class OpusLayerBase {
             throw InvalidMergeException()
         }
 
-        val from_tree = this.get_tree(beat_key_from, position_from).copy()
-        val to_tree = this.get_tree(beat_key_to, position_to).copy()
+        val from_tree = this.get_tree(beat_key_from, position_from).copy() as OpusTree<InstrumentEvent>
+        val to_tree = this.get_tree(beat_key_to, position_to).copy() as OpusTree<InstrumentEvent>
         val mid_tree = to_tree.merge(from_tree.get_set_tree())
         mid_tree.flatten()
 
@@ -1177,14 +1176,6 @@ open class OpusLayerBase {
         return output
     }
 
-    private fun <T: InstrumentEvent> copy_func(tree: OpusTree<T>): T? {
-        return if (tree.event == null) {
-            null
-        } else {
-            tree.event!!.copy()
-        }
-    }
-
     private fun copy_ctl_func(tree: OpusTree<OpusControlEvent>): OpusControlEvent? {
         return if (tree.event == null) {
             null
@@ -1199,14 +1190,18 @@ open class OpusLayerBase {
                 beat_key.line_offset,
                 beat_key.beat,
                 position,
-                (tree as OpusTree<PercussionEvent>).copy(this::copy_func)
+                (tree as OpusTree<PercussionEvent>).copy {
+                    it.event?.copy()
+                }
             )
         } else {
             this.channels[beat_key.channel].replace_tree(
                 beat_key.line_offset,
                 beat_key.beat,
                 position,
-                (tree as OpusTree<TunedInstrumentEvent>).copy(this::copy_func)
+                (tree as OpusTree<TunedInstrumentEvent>).copy {
+                    it.event?.copy() as TunedInstrumentEvent?
+                }
             )
         }
     }
@@ -1650,24 +1645,24 @@ open class OpusLayerBase {
         this.import_midi(midi)
     }
 
-    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<Pair<Int, InstrumentEvent>>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
+    private fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<Array<Int>>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
         var beat_size = midi.get_ppqn()
         var total_beat_offset = 0
         var last_ts_change = 0
-        val beat_values: MutableList<OpusTree<Set<Pair<Int, InstrumentEvent>>>> = mutableListOf()
+        val beat_values: MutableList<OpusTree<Set<Array<Int>>>> = mutableListOf()
         val tempo_line = mutableListOf<OpusTree<OpusControlEvent>>()
         var max_tick = 0
         var working_tempo = 120F
         val instrument_map = mutableListOf<Triple<Int, Int?, Int?>>()
 
-        val active_event_map = HashMap<Pair<Int,Int>, InstrumentEvent>()
+        val active_event_map = HashMap<Pair<Int,Int>, Array<Int>>()
 
         var denominator = 4F
         for (pair in midi.get_all_events()) {
             val tick = pair.first
             val event = pair.second
 
-            max_tick = kotlin.math.max(tick, max_tick)
+            max_tick = max(tick, max_tick)
             val beat_index = ((tick - last_ts_change) / beat_size) + total_beat_offset
             val inner_beat_offset = (tick - last_ts_change) % beat_size
             if (event is NoteOn && event.get_velocity() > 0) {
@@ -1676,12 +1671,12 @@ open class OpusLayerBase {
                 // Turn off note if its playing
                 if (active_event_map.containsKey(Pair(channel, note))) {
                     var existing_event = active_event_map[Pair(channel, note)]!!
-                    existing_event.duration = tick - existing_event.duration
+                    existing_event[2] = tick - existing_event[2]
                 }
 
                 // Add trees to list of trees
                 while (beat_values.size <= beat_index) {
-                    val new_tree = OpusTree<Set<Pair<Int, InstrumentEvent>>>()
+                    val new_tree = OpusTree<Set<Array<Int>>>()
                     new_tree.set_size(beat_size)
                     beat_values.add(new_tree)
                 }
@@ -1693,16 +1688,12 @@ open class OpusLayerBase {
                     mutableSetOf()
                 }
 
-                val opus_event = if (channel == 9) {
-                    PercussionEvent(tick)
-                } else {
-                    AbsoluteNoteEvent(
-                        note - 21,
-                        tick // Not actually duration, storing the tick here until i can use the tick to set the duration further down
-                    )
-                }
-
-                eventset.add(Pair(channel, opus_event))
+                val opus_event = arrayOf(
+                    channel,
+                    note,
+                    tick
+                )
+                eventset.add(opus_event)
 
                 tree[inner_beat_offset].set_event(eventset)
                 active_event_map[Pair(channel, event.get_note())] = opus_event
@@ -1712,8 +1703,9 @@ open class OpusLayerBase {
                 } else {
                     Pair((event as NoteOff).channel, event.get_note())
                 }
+
                 val opus_event = active_event_map.remove(Pair(channel, note)) ?: continue
-                opus_event.duration = tick - opus_event.duration
+                opus_event[2] = tick - opus_event[2]
             } else if (event is TimeSignature) {
                 total_beat_offset += (tick - last_ts_change) / beat_size
 
@@ -1766,13 +1758,13 @@ open class OpusLayerBase {
         }
 
         for ((_, opus_event) in active_event_map) {
-            opus_event.duration = max_tick - opus_event.duration
+            opus_event[2] = max_tick - opus_event[2]
         }
 
         active_event_map.clear()
 
         total_beat_offset += (max_tick - last_ts_change) / beat_size
-        val opus = OpusTree<Set<Pair<Int, InstrumentEvent>>>()
+        val opus = OpusTree<Set<Array<Int>>>()
 
         if (beat_values.isEmpty()) {
             for (i in 0 until 4) {
@@ -1783,19 +1775,24 @@ open class OpusLayerBase {
         opus.set_size(beat_values.size)
 
         var overflow_events = mutableSetOf<InstrumentEvent>()
-        beat_values.forEachIndexed { i: Int, beat_tree: OpusTree<Set<Pair<Int, InstrumentEvent>>> ->
-            opus.set(i, beat_tree)
+        beat_values.forEachIndexed { i: Int, beat_tree: OpusTree<Set<Array<Int>>> ->
+            opus[i] = beat_tree
         }
 
         for (tree in tempo_line) {
             tree.reduce()
             tree.clear_singles()
         }
+
         /*
             NOTE: tempo_line *could* have more beats than the opus if there is a tempo change
             after the last NoteOff event. that gets ignored here
          */
-        return Triple(opus, tempo_line.subList(0, min(tempo_line.size, opus.size)), instrument_map)
+        return Triple(
+            opus,
+            tempo_line.subList(0, min(tempo_line.size, opus.size)),
+            instrument_map
+        )
     }
 
     open fun import_midi(midi: Midi) {
@@ -1814,7 +1811,7 @@ open class OpusLayerBase {
         val blocked_percussion_ranges = mutableListOf<MutableList<MutableList<Pair<Float, Float>>>>()
 
         // Map the events so i don't have to calculate overlaps twice
-        val remapped_events = mutableListOf<Pair<List<Pair<Int, Int>>, MutableList<Pair<InstrumentEvent, Int>>>>()
+        val remapped_events = mutableListOf<Pair<List<Pair<Int, Int>>, MutableList<Pair<Array<Int>, Int>>>>()
 
         for ((position, event_set) in mapped_events) {
             remapped_events.add(Pair(position, mutableListOf()))
@@ -1831,73 +1828,67 @@ open class OpusLayerBase {
 
             val working_start = initial_position.toFloat() + (working_numerator.toFloat() / working_denominator.toFloat())
 
-            for ((event_channel, event) in event_set) {
+            for (event in event_set) {
+                val event_channel = event[0]
                 if (!midi_channel_map.contains(event_channel)) {
                     midi_channel_map[event_channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event_channel]!!
 
+                val working_end = initial_position.toFloat() + ((working_numerator + event[2]).toFloat() / working_denominator.toFloat())
+                if (event[0] == 9) {
+                    val event_note = event[1] + 27
+                    if (!percussion_map.contains(event_note)) {
+                        percussion_map[event_note] = blocked_percussion_ranges.size
+                        blocked_percussion_ranges.add(mutableListOf())
+                    }
+                    val index = percussion_map[event_note]!!
 
-                val working_end = initial_position.toFloat() + ((working_numerator + event.duration).toFloat() / working_denominator.toFloat())
-
-                when (event) {
-                    is PercussionEvent -> {
-                        if (!percussion_map.contains(event.note)) {
-                            percussion_map[event.note] = blocked_percussion_ranges.size
-                            blocked_percussion_ranges.add(mutableListOf())
-                        }
-                        val index = percussion_map[event.note]!!
-
-                        var insertion_index = 0
-                        for (i in 0 until blocked_percussion_ranges[index].size) {
-                            for ((start, end) in blocked_percussion_ranges[index][i]) {
-                                if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
-                                    insertion_index += 1
-                                    break
-                                }
-                            }
-
-                            if (i == insertion_index) { // passed all the checks, no need to keep looping
+                    var insertion_index = 0
+                    for (i in 0 until blocked_percussion_ranges[index].size) {
+                        for ((start, end) in blocked_percussion_ranges[index][i]) {
+                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                insertion_index += 1
                                 break
                             }
                         }
 
-
-                        if (insertion_index == blocked_percussion_ranges[index].size) {
-                            blocked_percussion_ranges[index].add(mutableListOf())
+                        if (i == insertion_index) { // passed all the checks, no need to keep looping
+                            break
                         }
-                        blocked_percussion_ranges[index][insertion_index].add(Pair(working_start, working_end))
-                        remapped_events.last().second.add(Pair(event, insertion_index))
                     }
 
-                    is TunedInstrumentEvent -> {
-                        if (!blocked_ranges.containsKey(channel_index)) {
-                            blocked_ranges[channel_index] = mutableListOf()
-                        }
 
-                        var insertion_index = 0
-                        for (i in 0 until blocked_ranges[channel_index]!!.size) {
-                            for ((start, end) in blocked_ranges[channel_index]!![i]) {
-                                if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
-                                    insertion_index += 1
-                                    break
-                                }
-                            }
+                    if (insertion_index == blocked_percussion_ranges[index].size) {
+                        blocked_percussion_ranges[index].add(mutableListOf())
+                    }
+                    blocked_percussion_ranges[index][insertion_index].add(Pair(working_start, working_end))
+                    remapped_events.last().second.add(Pair(event, insertion_index))
+                } else {
+                    if (!blocked_ranges.containsKey(channel_index)) {
+                        blocked_ranges[channel_index] = mutableListOf()
+                    }
 
-                            if (i == insertion_index) { // passed all the checks, no need to keep looping
+                    var insertion_index = 0
+                    for (i in 0 until blocked_ranges[channel_index]!!.size) {
+                        for ((start, end) in blocked_ranges[channel_index]!![i]) {
+                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                                insertion_index += 1
                                 break
                             }
                         }
 
-                        if (insertion_index == blocked_ranges[channel_index]!!.size) {
-                            blocked_ranges[channel_index]!!.add(mutableListOf())
+                        if (i == insertion_index) { // passed all the checks, no need to keep looping
+                            break
                         }
-
-                        blocked_ranges[channel_index]!![insertion_index].add(Pair(working_start, working_end))
-
-                        remapped_events.last().second.add(Pair(event, insertion_index))
                     }
-                    else -> {}
+
+                    if (insertion_index == blocked_ranges[channel_index]!!.size) {
+                        blocked_ranges[channel_index]!!.add(mutableListOf())
+                    }
+
+                    blocked_ranges[channel_index]!![insertion_index].add(Pair(working_start, working_end))
+                    remapped_events.last().second.add(Pair(event, insertion_index))
                 }
             }
         }
@@ -1949,25 +1940,27 @@ open class OpusLayerBase {
 
         this.set_beat_count(settree.size)
 
-        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, AbsoluteNoteEvent>>()
+        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, Array<Int>>>()
 
         for ((position, event_set) in remapped_events) {
             val event_list = event_set.toMutableList()
-            event_list.sortWith(compareBy { 127 - it.first.note })
+            event_list.sortWith(compareBy { 127 - it.first[1] })
             for ((event, line_offset) in event_list) {
-                val channel_index = midi_channel_map[event.channel]!!
+                val event_channel = event[0]
+                val channel_index = midi_channel_map[event_channel]!!
 
                 // line_offset needs to be recalculated HERE for percussion as the percussion block map will change size during init
-                val adj_line_offset = if (event.channel == 9) {
+                val adj_line_offset = if (event_channel == 9) {
+                    val event_note = event[1] + 27
                     var re_adj_line_offset = 0
-                    val coarse_index = percussion_map[event.note]!!
+                    val coarse_index = percussion_map[event_note]!!
                     for (i in 0 until coarse_index) {
                         re_adj_line_offset += blocked_percussion_ranges[coarse_index].size
                     }
 
                     val new_offset = line_offset + re_adj_line_offset
                     // While we're here, set the percussions' instruments
-                    this.set_percussion_instrument(new_offset, event.note)
+                    this.set_percussion_instrument(new_offset, event_note)
                     new_offset
                 } else {
                     line_offset
@@ -1998,11 +1991,19 @@ open class OpusLayerBase {
         }
 
         for ((beatkey, position, event) in events_to_set) {
-            if (event.channel == 9) {
+            if (event[0] == 9) {
                 this.set_percussion_event(beatkey, position)
             } else {
-                if (event.note in 0..127) {
-                    this.set_event(beatkey, position, event)
+                val event_note = event[1] + 21
+                if (event[1] + 21 in 0..127) {
+                    this.set_event(
+                        beatkey,
+                        position,
+                        AbsoluteNoteEvent(
+                            event_note,
+                            event[2]
+                        )
+                    )
                 }
             }
         }
@@ -2014,7 +2015,7 @@ open class OpusLayerBase {
                     val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())
                     val original_size = beat_tree.size 
                     beat_tree.reduce()
-                    beat_tree.traverse { working_tree: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
+                    beat_tree.traverse { working_tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
                         if (event == null) {
                             return@traverse
                         }
@@ -2140,7 +2141,7 @@ open class OpusLayerBase {
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<InstrumentEvent>>()
+        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
         for (o_key in original_keys) {
             trees.add(this.get_tree(o_key).copy())
         }
@@ -2161,7 +2162,7 @@ open class OpusLayerBase {
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<InstrumentEvent>>()
+        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
         for (o_key in original_keys) {
             trees.add(this.get_tree(o_key).copy())
         }
@@ -2559,22 +2560,34 @@ open class OpusLayerBase {
         val radix = new_map.size
 
         this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            if (this.is_percussion(i)) {
-                return@forEachIndexed
-            }
-
             channel.lines.forEachIndexed { j: Int, line: OpusLine ->
-                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<InstrumentEvent> ->
-                    beat_tree.traverse { tree: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
+                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
+                    beat_tree.traverse { tree: OpusTree<TunedInstrumentEvent>, event: TunedInstrumentEvent? ->
                         if (event == null) {
                             return@traverse
                         }
 
                         val position = tree.get_path()
-                        val new_event = event.copy()
-                        val octave = (event.note / previous_radix)
+                        val new_event = when (event) {
+                            is AbsoluteNoteEvent -> {
+                                val new_event = event.copy()
+                                val octave = (event.note / previous_radix)
+                                new_event.note = (octave * radix) + ((event.note % previous_radix) * radix / previous_radix)
+                                new_event
 
-                        new_event.note = (octave * radix) + ((event.note % previous_radix) * radix / previous_radix)
+                            }
+                            is RelativeNoteEvent -> {
+                                val new_event = event.copy()
+                                val octave = (event.offset / previous_radix)
+                                new_event.offset = (octave * radix) + ((event.offset % previous_radix) * radix / previous_radix)
+                                new_event
+                            }
+
+                            else -> {
+                                return@traverse
+                            }
+                        }
+
 
                         this.set_event(
                             BeatKey(i, j, k),

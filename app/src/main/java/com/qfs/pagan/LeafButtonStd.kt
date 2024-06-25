@@ -6,10 +6,13 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
-import com.qfs.pagan.opusmanager.OpusEventSTD
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLayerLinks
+import com.qfs.pagan.opusmanager.PercussionEvent
+import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
 import kotlin.math.abs
@@ -18,7 +21,7 @@ import kotlin.math.roundToInt
 class LeafButtonStd(
     context: Context,
     initial_radix: Int,
-    private var _event: OpusEventSTD?,
+    private var _event: InstrumentEvent?,
     var position: List<Int>,
     is_percussion: Boolean
 ) : LeafButton(ContextThemeWrapper(context, R.style.leaf)) {
@@ -151,70 +154,74 @@ class LeafButtonStd(
         val radix = _radix ?: this.get_opus_manager().tuning_map.size
         this.removeAllViews()
 
-        if (event == null) {
-            return
-        }
-
-        if (is_percussion) {
-            val label_percussion = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value))
-            this.addView(label_percussion)
-            label_percussion.gravity = Gravity.CENTER
-            label_percussion.text = resources.getString(R.string.percussion_label)
-        } else if (event.relative) {
-            val sub_wrapper = LinearLayout(base_context)
-            val right_wrapper = LinearLayout(base_context)
-            right_wrapper.orientation = VERTICAL
-            val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
-            val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
-            val label_prefix = LeafText(ContextThemeWrapper(base_context, R.style.leaf_prefix))
-
-            this.addView(sub_wrapper)
-            sub_wrapper.layoutParams.width = WRAP_CONTENT
-            sub_wrapper.layoutParams.height = MATCH_PARENT
-            (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
-
-            sub_wrapper.addView(right_wrapper)
-            right_wrapper.layoutParams.height = MATCH_PARENT
-
-            right_wrapper.addView(label_prefix)
-            label_prefix.layoutParams.height = 0
-            (label_prefix.layoutParams as LinearLayout.LayoutParams).weight = 1F
-            label_prefix.gravity = Gravity.START
-
-            right_wrapper.addView(label_octave)
-            label_octave.gravity = Gravity.START
-            label_octave.layoutParams.height = 0
-            (label_octave.layoutParams as LinearLayout.LayoutParams).weight = 1F
-
-            sub_wrapper.addView(label_offset)
-            label_offset.layoutParams.height = MATCH_PARENT
-
-            label_prefix.text = if (event.note < 0) {
-                context.getString(R.string.pfx_subtract)
-            } else {
-                context.getString(R.string.pfx_add)
+        when (event) {
+            is PercussionEvent -> {
+                val label_percussion = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value))
+                this.addView(label_percussion)
+                label_percussion.gravity = Gravity.CENTER
+                label_percussion.text = resources.getString(R.string.percussion_label)
             }
-            label_octave.text = "${abs(event.note) / radix}"
-            label_offset.text = "${abs(event.note) % radix}"
-        } else {
-            val sub_wrapper = LinearLayout(base_context)
-            val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
-            val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
+            is RelativeNoteEvent -> {
+                val sub_wrapper = LinearLayout(base_context)
+                val right_wrapper = LinearLayout(base_context)
+                right_wrapper.orientation = VERTICAL
+                val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
+                val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
+                val label_prefix = LeafText(ContextThemeWrapper(base_context, R.style.leaf_prefix))
 
-            this.addView(sub_wrapper)
-            sub_wrapper.layoutParams.width = WRAP_CONTENT
-            sub_wrapper.layoutParams.height = MATCH_PARENT
-            (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
+                this.addView(sub_wrapper)
+                sub_wrapper.layoutParams.width = WRAP_CONTENT
+                sub_wrapper.layoutParams.height = MATCH_PARENT
+                (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
 
-            sub_wrapper.addView(label_octave)
-            label_octave.gravity = Gravity.BOTTOM
-            label_octave.layoutParams.height = MATCH_PARENT
+                sub_wrapper.addView(right_wrapper)
+                right_wrapper.layoutParams.height = MATCH_PARENT
 
-            sub_wrapper.addView(label_offset)
-            label_offset.layoutParams.height = MATCH_PARENT
+                right_wrapper.addView(label_prefix)
+                label_prefix.layoutParams.height = 0
+                (label_prefix.layoutParams as LinearLayout.LayoutParams).weight = 1F
+                label_prefix.gravity = Gravity.START
 
-            label_octave.text = "${event.note / radix}"
-            label_offset.text = "${event.note % radix}"
+                right_wrapper.addView(label_octave)
+                label_octave.gravity = Gravity.START
+                label_octave.layoutParams.height = 0
+                (label_octave.layoutParams as LinearLayout.LayoutParams).weight = 1F
+
+                sub_wrapper.addView(label_offset)
+                label_offset.layoutParams.height = MATCH_PARENT
+
+                label_prefix.text = if (event.offset < 0) {
+                    context.getString(R.string.pfx_subtract)
+                } else {
+                    context.getString(R.string.pfx_add)
+                }
+                label_octave.text = "${abs(event.offset) / radix}"
+                label_offset.text = "${abs(event.offset) % radix}"
+            }
+
+            is AbsoluteNoteEvent -> {
+                val sub_wrapper = LinearLayout(base_context)
+                val label_octave = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_octave))
+                val label_offset = LeafText(ContextThemeWrapper(base_context, R.style.leaf_value_offset))
+
+                this.addView(sub_wrapper)
+                sub_wrapper.layoutParams.width = WRAP_CONTENT
+                sub_wrapper.layoutParams.height = MATCH_PARENT
+                (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
+
+                sub_wrapper.addView(label_octave)
+                label_octave.gravity = Gravity.BOTTOM
+                label_octave.layoutParams.height = MATCH_PARENT
+
+                sub_wrapper.addView(label_offset)
+                label_offset.layoutParams.height = MATCH_PARENT
+
+                label_octave.text = "${event.note / radix}"
+                label_offset.text = "${event.note % radix}"
+            }
+            else -> {
+                // Do nothing
+            }
         }
     }
 

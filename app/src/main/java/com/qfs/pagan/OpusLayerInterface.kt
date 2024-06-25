@@ -292,7 +292,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_line_ctl_cell_change(type, beat_key)
     }
 
-    override fun set_event_at_cursor(event: OpusEvent) {
+    override fun set_event_at_cursor(event: InstrumentEvent) {
         super.set_event_at_cursor(event)
         this.withFragment {
             it.refresh_context_menu()

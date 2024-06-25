@@ -986,7 +986,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
         }
     }
-    open fun set_event_at_cursor(event: OpusEvent) {
+    open fun set_event_at_cursor(event: InstrumentEvent) {
         when (this.cursor.ctl_level) {
             null -> {
                 this.set_event(

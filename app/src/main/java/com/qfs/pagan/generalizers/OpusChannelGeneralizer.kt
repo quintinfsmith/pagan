@@ -49,6 +49,7 @@ class OpusChannelGeneralizer {
             val channel = OpusChannel(-1)
             val midi_channel = input_map.get_int("midi_channel")
             channel.midi_channel = midi_channel
+            channel.midi_bank = input_map.get_int("midi_bank")
 
             val input_lines = input_map.get_list("lines")
             for (line in input_lines.list) {
@@ -67,7 +68,6 @@ class OpusChannelGeneralizer {
                 _interpret_std(input_map)
             }
 
-            channel.midi_bank = input_map.get_int("midi_bank")
             channel.midi_program = input_map.get_int("midi_program")
 
             return channel

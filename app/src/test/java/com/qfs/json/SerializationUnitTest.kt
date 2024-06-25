@@ -6,10 +6,12 @@ class SerializationUnitTest {
     @Test
     fun test_json() {
         val test_string = """{
-            "key0" = 0
+            "key0": 0
         }"""
         val ob = Parser.parse(test_string)
-
+        if (ob != null) {
+            println("${ob.to_string()}")
+        }
     }
 }
 

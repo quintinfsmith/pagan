@@ -860,25 +860,34 @@ open class OpusLayerBase {
     }
 
     open fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        this.channels[channel].set_instrument(instrument)
-    }
-    open fun set_channel_program(channel: Int, program: Int) {
-        this.channels[channel].midi_program = program
-    }
-    open fun set_channel_bank(channel: Int, bank: Int) {
-        this.channels[channel].midi_bank = bank
+        this.set_channel_program(channel, instrument.first)
+        if (!this.is_percussion(channel)) {
+            this.set_channel_bank(channel, instrument.second)
+        }
     }
 
-    open fun set_percussion_channel(channel: Int, program: Int = 0) {
-        this.channels[channel].midi_program = program
-        this.channels[channel].midi_bank = 128
-        this.channels[channel].midi_channel = 9
+    private fun set_channel_program(channel: Int, program: Int) {
+        if (this.is_percussion(channel)) {
+            this.percussion_channel.set_midi_program(program)
+        } else {
+            this.channels[channel].set_midi_program(program)
+        }
+    }
+
+    private fun set_channel_bank(channel: Int, bank: Int) {
+        if (this.is_percussion(channel)) {
+            // TODO: Specify Exception
+            throw Exception()
+        } else {
+            this.channels[channel].set_midi_bank(bank)
+        }
     }
 
     open fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
+
         val tree = this.get_tree(beat_key, position) as OpusTree<InstrumentEvent>
         tree.set_event(event)
     }
@@ -989,31 +998,15 @@ open class OpusLayerBase {
         val new_channel = OpusChannel(uuid ?: OpusLayerBase.gen_channel_uuid())
         new_channel.set_beat_count(this.beat_count)
 
-        new_channel.midi_channel = if (this.channels.isNotEmpty()) {
-            this.get_next_available_midi_channel()
-        } else {
-            9
-        }
+        new_channel.midi_channel = this.get_next_available_midi_channel()
 
         this._channel_uuid_map[new_channel.uuid] = new_channel
         for (i in 0 until lines) {
             new_channel.new_line(i)
         }
 
-        if (this.channels.isNotEmpty()) {
-            // Always insert new channels BEFORE the percussion channel
-            if (channel != null) {
-                val new_channel_index = min(channel, this.channels.size - 1)
-                this.channels.add(new_channel_index, new_channel)
-            } else {
-                this.channels.add(this.channels.size - 1, new_channel)
-            }
-        } else {
-            new_channel.midi_bank = 128
-            new_channel.midi_program = 0
-            this.channels.add(new_channel) // Will be the percussion channel
-        }
-
+        val new_channel_index = channel ?: this.channels.size
+        this.channels.add(new_channel_index, new_channel)
 
         this.recache_line_maps()
     }
@@ -1074,6 +1067,12 @@ open class OpusLayerBase {
 
     open fun new_line(channel: Int, line_offset: Int? = null): OpusLine {
         val output = this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
+        this.recache_line_maps()
+        return output
+    }
+
+    open fun new_percussion_line(line_offset: Int? = null): OpusLinePercussion {
+        val output = this.percussion_channel.new_line(line_offset ?: this.percussion_channel.lines.size)
         this.recache_line_maps()
         return output
     }
@@ -1401,8 +1400,8 @@ open class OpusLayerBase {
 
         // Handle Percussion Channel
         val channel = this.percussion_channel
-        midi.insert_event(0, 0, BankSelect(9, channel.midi_bank))
-        midi.insert_event(0, 0, ProgramChange(9, channel.midi_program))
+        midi.insert_event(0, 0, BankSelect(9, channel.get_midi_bank()))
+        midi.insert_event(0, 0, ProgramChange(9, channel.get_midi_program()))
         channel.lines.forEachIndexed inner@{ l: Int, line: OpusLinePercussion ->
             // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
             if ((line.get_controller(ControlEventType.Volume).initial_event as OpusVolumeEvent).value == 0) {
@@ -1551,6 +1550,7 @@ open class OpusLayerBase {
         this.tuning_map = Array(12) {
             i: Int -> Pair(i, 12)
         }
+        this.percussion_channel.clear()
         this.transpose = 0
         this.controllers.clear()
     }
@@ -1571,7 +1571,6 @@ open class OpusLayerBase {
 
     open fun new() {
         this.clear()
-        this.new_channel()
         this.new_channel()
         this.set_beat_count(4)
         this.set_project_name(this.project_name)

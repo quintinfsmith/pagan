@@ -12,9 +12,9 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLine
+import com.qfs.pagan.opusmanager.OpusLinePercussion
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
@@ -485,19 +485,45 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_line_ctl_cell_change(type, beat_key)
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
-        val output = super.new_line(channel, line_offset)
-
+    private fun _update_after_new_line(channel: Int, line_offset: Int?) {
         if (this.get_activity() != null) {
             val adj_line_offset = line_offset ?: (this.channels[channel].lines.size - 1)
             val abs_offset = this.get_abs_offset(channel, adj_line_offset)
             val row_index = this.get_ctl_line_index(abs_offset)
-            val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return output
+            val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
+
+            val new_line = if (channel == this.channels.size) {
+                if (line_offset == null) {
+                    this.percussion_channel.lines.last()
+                } else {
+                    this.percussion_channel.lines[line_offset]
+                }
+            } else {
+                if (line_offset == null) {
+                    this.channels[channel].lines.last()
+                } else {
+                    this.channels[channel].lines[line_offset]
+                }
+            }
 
             when (this.get_ui_lock_level()) {
                 null -> {
                     this.runOnUiThread { _: MainActivity ->
-                        this.get_editor_table()?.new_row(visible_row, output)
+                        val new_line = if (channel == this.channels.size) {
+                            if (line_offset == null) {
+                                this.percussion_channel.lines.last()
+                            } else {
+                                this.percussion_channel.lines[line_offset]
+                            }
+                        } else {
+                            if (line_offset == null) {
+                                this.channels[channel].lines.last()
+                            } else {
+                                this.channels[channel].lines[line_offset]
+                            }
+                        }
+
+                        this.get_editor_table()?.new_row(visible_row, new_line)
                         val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
                         controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
                             if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
@@ -509,7 +535,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
 
                 UI_LOCK_PARTIAL -> {
-                    this.get_editor_table()?.new_row(visible_row, output, true)
+                    this.get_editor_table()?.new_row(visible_row, new_line, true)
                     val controllers = this.channels[channel].lines[adj_line_offset].controllers.get_all()
                     controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
                         if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
@@ -521,7 +547,15 @@ class OpusLayerInterface : OpusLayerCursor() {
                 UI_LOCK_FULL -> {}
             }
         }
-
+    }
+    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
+        val output = super.new_line(channel, line_offset)
+        this._update_after_new_line(channel, line_offset)
+        return output
+    }
+    override fun new_percussion_line(line_offset: Int?): OpusLinePercussion {
+        val output = super.new_percussion_line(line_offset)
+        this._update_after_new_line(this.channels.size, line_offset)
         return output
     }
 
@@ -619,7 +653,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 UI_LOCK_FULL -> {}
             }
 
-            // TODO: SHould be behind ui lock?
+            // TODO: Should be behind ui lock?
             activity.update_channel_instruments()
         }
 

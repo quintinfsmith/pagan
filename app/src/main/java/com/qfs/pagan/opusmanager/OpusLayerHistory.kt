@@ -152,6 +152,12 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     )
                 }
 
+                HistoryToken.REMOVE_PERCUSSION_LINE -> {
+                    this.remove_percussion_line(
+                        current_node.args[0] as Int,
+                    )
+                }
+
                 HistoryToken.INSERT_LINE -> {
                     this.insert_line(
                         current_node.args[0] as Int,
@@ -368,6 +374,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
         return this._remember {
             val output = super.new_line(channel, line_offset)
             this.push_remove_line(channel, line_offset ?: (this.channels[channel].size))
+            output
+        }
+    }
+
+    override fun new_percussion_line(line_offset: Int?): OpusLinePercussion {
+        return this._remember {
+            val output = super.new_percussion_line(line_offset)
+            this.push_remove_percussion_line(line_offset ?: this.percussion_channel.size)
             output
         }
     }
@@ -1181,6 +1195,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     private fun push_remove_line(channel: Int, index: Int) {
         this.push_to_history_stack( HistoryToken.REMOVE_LINE, listOf(channel, index) )
+    }
+    private fun push_remove_percussion_line(index: Int) {
+        this.push_to_history_stack( HistoryToken.REMOVE_PERCUSSION_LINE, listOf(index) )
     }
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {

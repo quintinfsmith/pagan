@@ -372,13 +372,14 @@ class Parser {
             var working_number: String? = null
             var working_string: String? = null
             var string_escape_flagged = false
+            var top_item: ParsedObject? = null
 
             val hashmap_key_stack = mutableListOf<Pair<Int, String>>()
             val object_stack = mutableListOf<ParsedObject?>()
-
             var index = 0
             while (index < json_content.length) {
                 val working_char = json_content[index]
+                println("CHAR: \"$working_char\" @ $index")
                 if (working_number != null) {
                     when (working_char) {
                         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.' -> {
@@ -393,16 +394,17 @@ class Parser {
                                 }
 
                                 if (object_stack.isEmpty()) {
-                                    object_stack.add(new_number)
+                                    top_item = new_number
                                 } else {
-                                    val item = object_stack.last()
-                                    when (item) {
+                                    when (val parent_item = object_stack.last()) {
                                         is ParsedList -> {
-                                            item.list.add(new_number)
+                                            parent_item.list.add(new_number)
                                         }
+
                                         is ParsedHashMap -> {
-                                            item.hash_map[hashmap_key_stack.removeLast().second] = new_number
+                                            parent_item.hash_map[hashmap_key_stack.removeLast().second] = new_number
                                         }
+
                                         else -> {
                                             throw InvalidJSON(json_content, index)
                                         }
@@ -429,23 +431,29 @@ class Parser {
                                 string_escape_flagged = true
                             }
                             '"' -> {
+                                val new_string_item = ParsedString(working_string)
                                 if (object_stack.isEmpty()) {
-                                    object_stack.add(ParsedString(working_string))
+                                    top_item = new_string_item
                                 } else {
-                                    val item = object_stack.last()
-                                    when (item) {
+                                    when (val parent_item = object_stack.last()) {
                                         is ParsedList -> {
-                                            item.list.add(ParsedString(working_string))
+                                            parent_item.list.add(new_string_item)
                                         }
+
                                         is ParsedHashMap -> {
-                                            val (key_depth, hashmap_key) = hashmap_key_stack.last()
-                                            if (key_depth == object_stack.size) {
-                                                item.hash_map[hashmap_key] = ParsedString(working_string)
-                                                hashmap_key_stack.removeLast()
+                                            if (hashmap_key_stack.isNotEmpty()) {
+                                                val (key_depth, hashmap_key) = hashmap_key_stack.last()
+                                                if (key_depth == object_stack.size) {
+                                                    parent_item.hash_map[hashmap_key] = new_string_item
+                                                    hashmap_key_stack.removeLast()
+                                                } else {
+                                                    hashmap_key_stack.add(Pair(object_stack.size, working_string))
+                                                }
                                             } else {
                                                 hashmap_key_stack.add(Pair(object_stack.size, working_string))
                                             }
                                         }
+
                                         else -> {
                                             throw InvalidJSON(json_content, index)
                                         }
@@ -468,55 +476,57 @@ class Parser {
                             // TODO: Check Expected char
                         }
 
-                        Char(123) -> {
-                            if (object_stack.isEmpty()) {
-                                object_stack.add(ParsedHashMap())
-                            } else {
-                                val item = object_stack.last()
-                                when (item) {
+                        Char(123) -> { // "{"
+                            val new_hashmap = ParsedHashMap()
+                            if (object_stack.isNotEmpty()) {
+                                when (val parent_item = object_stack.last()) {
                                     is ParsedList -> {
-                                        item.list.add(ParsedHashMap())
+                                        parent_item.list.add(new_hashmap)
                                     }
+
                                     is ParsedHashMap -> {
                                         val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                        item.hash_map[hashmap_key] = ParsedHashMap()
+                                        parent_item.hash_map[hashmap_key] = new_hashmap
                                     }
+
                                     else -> {
                                         throw InvalidJSON(json_content, index)
                                     }
                                 }
                             }
+                            object_stack.add(new_hashmap)
                         }
 
-                        Char(125) -> {
+                        Char(125) -> { // "}"
                             if (object_stack.isNotEmpty() && object_stack.last() is ParsedHashMap) {
-                                object_stack.removeLast()
+                                top_item = object_stack.removeLast()
                             } else {
                                 throw InvalidJSON(json_content, index)
                             }
                         }
-                        Char(91) -> {
-                            if (object_stack.isEmpty()) {
-                                object_stack.add(ParsedList())
-                            } else {
-                                val item = object_stack.last()
-                                when (item) {
+                        Char(91) -> { // "["
+                            val new_list = ParsedList()
+                            if (object_stack.isNotEmpty()) {
+                                when (val parent_item = object_stack.last()) {
                                     is ParsedList -> {
-                                        item.list.add(ParsedList())
+                                        parent_item.list.add(new_list)
                                     }
+
                                     is ParsedHashMap -> {
                                         val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                        item.hash_map[hashmap_key] = ParsedList()
+                                        parent_item.hash_map[hashmap_key] = new_list
                                     }
+
                                     else -> {
                                         throw InvalidJSON(json_content, index)
                                     }
                                 }
                             }
+                            object_stack.add(new_list)
                         }
-                        Char(93) -> {
+                        Char(93) -> { // "]"
                             if (object_stack.isNotEmpty() && object_stack.last() is ParsedList) {
-                                object_stack.removeLast()
+                                top_item = object_stack.removeLast()
                             } else {
                                 throw InvalidJSON(json_content, index)
                             }
@@ -533,22 +543,23 @@ class Parser {
                             if (json_content.substring(index, index + 4) != "null") {
                                 throw InvalidJSON(json_content, index)
                             } else {
-                                if (object_stack.isEmpty()) {
-                                    object_stack.add(null)
-                                } else {
-                                    val item = object_stack.last()
-                                    when (item) {
+                                if (object_stack.isNotEmpty()) {
+                                    when (val parent_item = object_stack.last()) {
                                         is ParsedList -> {
-                                            item.list.add(null)
+                                            parent_item.list.add(null)
                                         }
+
                                         is ParsedHashMap -> {
                                             val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                            item.hash_map[hashmap_key] = null
+                                            parent_item.hash_map[hashmap_key] = null
                                         }
+
                                         else -> {
                                             throw InvalidJSON(json_content, index)
                                         }
                                     }
+                                } else {
+                                    top_item = null
                                 }
                                 index += 3
                             }
@@ -557,22 +568,21 @@ class Parser {
                             if (json_content.substring(index, index + 5) != "false") {
                                 throw InvalidJSON(json_content, index)
                             } else {
-                                if (object_stack.isEmpty()) {
-                                    object_stack.add(ParsedBoolean(false))
-                                } else {
-                                    val item = object_stack.last()
-                                    when (item) {
+                                if (object_stack.isNotEmpty()) {
+                                    when (val parent_item = object_stack.last()) {
                                         is ParsedList -> {
-                                            item.list.add(ParsedBoolean(false))
+                                            parent_item.list.add(ParsedBoolean(false))
                                         }
                                         is ParsedHashMap -> {
                                             val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                            item.hash_map[hashmap_key] = ParsedBoolean(false)
+                                            parent_item.hash_map[hashmap_key] = ParsedBoolean(false)
                                         }
                                         else -> {
                                             throw InvalidJSON(json_content, index)
                                         }
                                     }
+                                } else {
+                                    top_item = ParsedBoolean(false)
                                 }
                                 index += 4
                             }
@@ -581,22 +591,21 @@ class Parser {
                             if (json_content.substring(index, index + 4) != "true") {
                                 throw InvalidJSON(json_content, index)
                             } else {
-                                if (object_stack.isEmpty()) {
-                                    object_stack.add(ParsedBoolean(true))
-                                } else {
-                                    val item = object_stack.last()
-                                    when (item) {
+                                if (object_stack.isNotEmpty()) {
+                                    when (val parent_item = object_stack.last()) {
                                         is ParsedList -> {
-                                            item.list.add(ParsedBoolean(true))
+                                            parent_item.list.add(ParsedBoolean(true))
                                         }
                                         is ParsedHashMap -> {
                                             val (_, hashmap_key) = hashmap_key_stack.removeLast()
-                                            item.hash_map[hashmap_key] = ParsedBoolean(true)
+                                            parent_item.hash_map[hashmap_key] = ParsedBoolean(true)
                                         }
                                         else -> {
                                             throw InvalidJSON(json_content, index)
                                         }
                                     }
+                                } else {
+                                    top_item = ParsedBoolean(true)
                                 }
                                 index += 3
                             }
@@ -610,11 +619,7 @@ class Parser {
                 index += 1
             }
 
-            if (object_stack.size != 1) {
-                throw InvalidJSON(json_content, json_content.length - 1)
-            }
-
-            return object_stack.removeFirst()
+            return top_item
         }
     }
 }

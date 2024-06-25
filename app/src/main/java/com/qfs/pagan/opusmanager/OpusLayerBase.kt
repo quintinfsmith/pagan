@@ -1065,17 +1065,16 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
-    open fun new_line(channel: Int, line_offset: Int? = null): OpusLine {
-        val output = this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
+    open fun new_line(channel: Int, line_offset: Int? = null): OpusLineAbstract<*> {
+        val output = if (this.is_percussion(channel)) {
+            this.percussion_channel.new_line(line_offset ?: this.channels[channel].lines.size)
+        } else {
+            this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
+        }
         this.recache_line_maps()
         return output
     }
 
-    open fun new_percussion_line(line_offset: Int? = null): OpusLinePercussion {
-        val output = this.percussion_channel.new_line(line_offset ?: this.percussion_channel.lines.size)
-        this.recache_line_maps()
-        return output
-    }
 
     open fun remove_beat(beat_index: Int) {
         if (this.beat_count == 1) {

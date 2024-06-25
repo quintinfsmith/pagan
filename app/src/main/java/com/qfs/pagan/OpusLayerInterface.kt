@@ -14,7 +14,7 @@ import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLine
-import com.qfs.pagan.opusmanager.OpusLinePercussion
+import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
@@ -529,7 +529,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                             if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                                 this.get_editor_table()?.new_row(visible_row + i, controller)
                             }
-
                         }
                     }
                 }
@@ -548,14 +547,9 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
         }
     }
-    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
+    override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
         val output = super.new_line(channel, line_offset)
         this._update_after_new_line(channel, line_offset)
-        return output
-    }
-    override fun new_percussion_line(line_offset: Int?): OpusLinePercussion {
-        val output = super.new_percussion_line(line_offset)
-        this._update_after_new_line(this.channels.size, line_offset)
         return output
     }
 

@@ -21,24 +21,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
+    override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
         val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
 
         val output = super.new_line(channel, line_offset)
-
-        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
-            this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
-        }
-
-        return output
-    }
-
-    override fun new_percussion_line(line_offset: Int?): OpusLinePercussion {
-        val bkp_cursor = this.cursor.copy()
-        this.cursor_clear()
-
-        val output = super.new_percussion_line(line_offset)
 
         if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
             this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)

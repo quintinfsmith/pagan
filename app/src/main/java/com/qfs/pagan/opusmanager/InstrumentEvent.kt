@@ -4,8 +4,8 @@ abstract class InstrumentEvent(var duration: Int = 1) {
     abstract fun copy(): InstrumentEvent
 }
 
-abstract class TunedInstrumentEvent(duration: Int): InstrumentEvent(duration) {
-}
+abstract class TunedInstrumentEvent(duration: Int): InstrumentEvent(duration)
+
 class AbsoluteNoteEvent(var note: Int, duration: Int = 1): TunedInstrumentEvent(duration) {
     override fun copy(): AbsoluteNoteEvent {
         val output = AbsoluteNoteEvent(this.note)

@@ -15,6 +15,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusLine
+import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
@@ -221,7 +222,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun new_row(y: Int, opus_line: OpusLine, ignore_ui: Boolean = false) {
+    fun new_row(y: Int, opus_line: OpusLineAbstract<*>, ignore_ui: Boolean = false) {
         for (i in 0 until this.get_opus_manager().beat_count) {
             val tree = opus_line.beats[i]
             this._column_width_map[i].add(

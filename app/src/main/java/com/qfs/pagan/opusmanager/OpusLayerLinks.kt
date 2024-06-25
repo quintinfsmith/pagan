@@ -465,7 +465,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         super.insert_line(channel, line_offset, line)
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): OpusLine {
+    override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
         if (line_offset != null) {
             this.remap_links { beat_key: BeatKey ->
                 if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
@@ -480,24 +480,6 @@ open class OpusLayerLinks : OpusLayerBase() {
             }
         }
         return super.new_line(channel, line_offset)
-    }
-
-    override fun new_percussion_line(line_offset: Int?): OpusLinePercussion {
-        if (line_offset != null) {
-            this.remap_links { beat_key: BeatKey ->
-                if (beat_key.channel == this.channels.size && beat_key.line_offset >= line_offset) {
-                    BeatKey(
-                        beat_key.channel,
-                        beat_key.line_offset + 1,
-                        beat_key.beat
-                    )
-                } else {
-                    beat_key
-                }
-            }
-        }
-
-        return super.new_percussion_line(line_offset)
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLine {

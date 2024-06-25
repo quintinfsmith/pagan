@@ -1,18 +1,19 @@
 package com.qfs.pagan
 
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEventSTD
+import com.qfs.pagan.opusmanager.InstrumentEvent
+import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLayerLinks
+import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerLinks
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -20,7 +21,7 @@ import com.qfs.pagan.opusmanager.OpusLayerLinks
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class OpusLayerLinksUnitTest {
-    private fun batch_link_test(manager: OpusManager, main_key: BeatKey, callback: (OpusTree<OpusEventSTD>) -> Unit) {
+    private fun batch_link_test(manager: OpusManager, main_key: BeatKey, callback: (OpusTree<out InstrumentEvent>) -> Unit) {
         for (linked_key in manager.get_all_linked(main_key)) {
             if (linked_key == main_key) {
                 continue
@@ -244,7 +245,7 @@ class OpusLayerLinksUnitTest {
     @Test
     fun test_replace_beat() {
         val (manager, main_key) = this.setup_linked_manager()
-        val test_tree = OpusTree<OpusEventSTD>()
+        val test_tree = OpusTree<TunedInstrumentEvent>()
         test_tree.set_size(12)
         manager.replace_tree(main_key, null, test_tree)
 
@@ -260,7 +261,7 @@ class OpusLayerLinksUnitTest {
     @Test
     fun test_replace_tree() {
         val (manager, main_key) = this.setup_linked_manager()
-        val test_tree = OpusTree<OpusEventSTD>()
+        val test_tree = OpusTree<TunedInstrumentEvent>()
         test_tree.set_size(12)
         manager.replace_tree(main_key, listOf(), test_tree)
 
@@ -334,7 +335,7 @@ class OpusLayerLinksUnitTest {
         val (manager, main_key) = this.setup_linked_manager()
 
         val new_duration = 12
-        manager.set_event(main_key, listOf(), OpusEventSTD(20,  0, false, 1))
+        manager.set_event(main_key, listOf(), AbsoluteNoteEvent(20))
         manager.set_duration(main_key, listOf(), new_duration)
 
         this.batch_link_test(manager, main_key) {
@@ -363,7 +364,7 @@ class OpusLayerLinksUnitTest {
     @Test
     fun test_set_event() {
         val (manager, main_key) = this.setup_linked_manager()
-        val event = OpusEventSTD(20, 0, false, 1)
+        val event = AbsoluteNoteEvent(20)
         manager.set_event(main_key, listOf(), event)
 
         this.batch_link_test(manager, main_key) {
@@ -377,7 +378,7 @@ class OpusLayerLinksUnitTest {
     @Test
     fun test_unset() {
         val (manager, main_key) = this.setup_linked_manager()
-        val event = OpusEventSTD(20, 0, false, 1)
+        val event = AbsoluteNoteEvent(20)
         manager.set_event(main_key, listOf(), event)
         manager.unset(main_key, listOf())
 
@@ -411,7 +412,7 @@ class OpusLayerLinksUnitTest {
         val d_keys = manager.get_beatkeys_in_range(first_key, second_key)
         val i_keys = manager._get_beatkeys_from_range(BeatKey(0,0,2), first_key, second_key)
         for (i in d_keys.indices) {
-            manager.set_event(d_keys[i], listOf(), OpusEventSTD(i, 0))
+            manager.set_event(d_keys[i], listOf(), AbsoluteNoteEvent(i))
             assertEquals(
                 manager.get_tree(d_keys[i]),
                 manager.get_tree(i_keys[i])
@@ -441,7 +442,7 @@ class OpusLayerLinksUnitTest {
         }
         manager.link_row(0, 0, BeatKey(0,0,0))
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(24, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(24))
 
         for (i in 1 until manager.beat_count) {
             assertEquals(
@@ -464,7 +465,7 @@ class OpusLayerLinksUnitTest {
 
         val d_keys = manager.get_beatkeys_in_range(first_key, second_key)
         for (i in d_keys.indices) {
-            manager.set_event(d_keys[i], listOf(), OpusEventSTD(i, 0))
+            manager.set_event(d_keys[i], listOf(), AbsoluteNoteEvent(i))
             for (j in 0 until 5) {
                 assertEquals(
                     manager.get_tree(d_keys[i]),
@@ -492,13 +493,13 @@ class OpusLayerLinksUnitTest {
 
         manager.swap_lines(0, 0, 0, 1)
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(24, 0))
+        manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(24))
         assertEquals(
             manager.get_tree(BeatKey(0,0,1)),
             manager.get_tree(BeatKey(0,1,0))
         )
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(22, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(22))
         assertFalse(manager.get_tree(BeatKey(0,1,1)).is_event())
 
 
@@ -515,11 +516,11 @@ class OpusLayerLinksUnitTest {
         manager.new()
 
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(12, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(12))
 
         // --------------
         manager.move_leaf(BeatKey(0,0,0), listOf(), BeatKey(0,0,2), listOf())
-        manager.set_event(BeatKey(0,0, 2), listOf(), OpusEventSTD(13, 0))
+        manager.set_event(BeatKey(0,0, 2), listOf(), AbsoluteNoteEvent(13))
 
         assertEquals(
             manager.get_tree(BeatKey(0,0,2)),
@@ -527,7 +528,7 @@ class OpusLayerLinksUnitTest {
         )
         // --------------
         manager.move_leaf(BeatKey(0,0,2), listOf(), BeatKey(0,0,1), listOf())
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(13, 0))
+        manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(13))
         for (i in 0 until 4) {
             if (i == 1) {
                 continue
@@ -543,11 +544,11 @@ class OpusLayerLinksUnitTest {
         manager.set_beat_count(12)
 
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(12, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(12))
 
         // --------------
         manager.move_beat_range(BeatKey(0,0,2), BeatKey(0,0,0), BeatKey(0,0,1))
-        manager.set_event(BeatKey(0,0, 2), listOf(), OpusEventSTD(13, 0))
+        manager.set_event(BeatKey(0,0, 2), listOf(), AbsoluteNoteEvent(13))
 
         assertEquals(
             manager.get_tree(BeatKey(0,0,2)),
@@ -555,14 +556,14 @@ class OpusLayerLinksUnitTest {
         )
         // --------------
         manager.move_beat_range(BeatKey(0,0,0), BeatKey(0,0,1), BeatKey(0,0,2))
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(14, 0))
+        manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(14))
         assertEquals(
             manager.get_tree(BeatKey(0,0,1)),
             manager.get_tree(BeatKey(0,0,3))
         )
         // --------------
         manager.move_beat_range(BeatKey(0,0,0), BeatKey(0,0,1), BeatKey(0,0,2))
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(15, 0))
+        manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(15))
         assertNotEquals(
             manager.get_tree(BeatKey(0,0,1)),
             manager.get_tree(BeatKey(0,0,3))

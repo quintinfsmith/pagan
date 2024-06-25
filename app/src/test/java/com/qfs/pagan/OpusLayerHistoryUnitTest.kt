@@ -1,15 +1,16 @@
 package com.qfs.pagan
 
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusEventSTD
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
-import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
-import com.qfs.pagan.opusmanager.OpusTempoEvent
 
 class HistoryCacheUnitTest {
     fun undo_and_check(manager: OpusManager, callback: (OpusManager) -> Unit) {
@@ -48,7 +49,7 @@ class HistoryCacheUnitTest {
     @Test
     fun test_remove() {
         var key = BeatKey(0,0,0)
-        var test_event = OpusEventSTD(12,0,false)
+        var test_event = AbsoluteNoteEvent(12)
 
         var manager = OpusManager()
         manager.new()
@@ -163,8 +164,8 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_set_event() {
-        var event = OpusEventSTD(12,  0, false)
-        var event_b = OpusEventSTD(5, 0, false)
+        var event = AbsoluteNoteEvent(12)
+        var event_b = AbsoluteNoteEvent(5)
         var manager = OpusManager()
         manager.new()
 
@@ -177,7 +178,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_unset() {
-        var event = OpusEventSTD(12, 0, false)
+        var event = AbsoluteNoteEvent(12)
         var manager = OpusManager()
         manager.new()
         manager.set_event(BeatKey(0,0,0), listOf(), event)
@@ -237,7 +238,6 @@ class HistoryCacheUnitTest {
     fun test_new_line() {
         var manager = OpusManager()
         manager.new()
-        var original = manager.to_json()
 
         this.undo_and_check(manager) {
             it.new_line(0, 0, 10)
@@ -250,8 +250,8 @@ class HistoryCacheUnitTest {
         var manager = OpusManager() 
         manager.new()
         manager.new_line(0)
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(0, 0))
-        manager.set_event(BeatKey(0,1,0), listOf(), OpusEventSTD(1, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(0))
+        manager.set_event(BeatKey(0,1,0), listOf(), AbsoluteNoteEvent(1))
 
         this.undo_and_check(manager) {
             it.swap_lines(0, 0, 0, 1)
@@ -262,8 +262,7 @@ class HistoryCacheUnitTest {
     fun test_replace_tree() {
         var manager = OpusManager()
         manager.new()
-        var original = manager.to_json()
-        var new_tree = OpusTree<OpusEventSTD>()
+        var new_tree = OpusTree<TunedInstrumentEvent>()
         new_tree.set_size(5)
 
         this.undo_and_check(manager) {
@@ -359,10 +358,10 @@ class HistoryCacheUnitTest {
 
         manager.split_tree(key_a, listOf(), 2)
         manager.split_tree(key_b, listOf(), 3)
-        manager.set_event(key_a, listOf(0), OpusEventSTD(10, 0))
-        manager.set_event(key_a, listOf(1), OpusEventSTD(11, 0))
-        manager.set_event(key_b, listOf(1), OpusEventSTD(13, 0))
-        manager.set_event(key_b, listOf(2), OpusEventSTD(14, 0))
+        manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
+        manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
+        manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
+        manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
 
         this.undo_and_check(manager) {
             manager.merge_leafs(key_a, listOf(), key_b, listOf())
@@ -437,7 +436,7 @@ class HistoryCacheUnitTest {
         val manager = OpusManager()
         manager.new()
         manager.set_beat_count(12)
-        val event = OpusEventSTD(24, 0)
+        val event = AbsoluteNoteEvent(24)
         manager.set_event(BeatKey(0, 0, 0), listOf(), event)
         manager.set_event(BeatKey(0, 0, 1), listOf(), event)
 
@@ -451,7 +450,7 @@ class HistoryCacheUnitTest {
         val manager = OpusManager()
         manager.new()
         manager.set_beat_count(12)
-        val event = OpusEventSTD(24, 0)
+        val event = AbsoluteNoteEvent(24)
         manager.set_event(BeatKey(0,0,0), listOf(), event)
         this.undo_and_check(manager) {
             it.overwrite_row(0, 0, BeatKey(0,0,0))
@@ -499,7 +498,7 @@ class HistoryCacheUnitTest {
     fun test_set_duration() {
         val manager = OpusManager()
         manager.new()
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(24, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(24))
         this.undo_and_check(manager) {
             it.set_duration(BeatKey(0,0,0), listOf(), 3)
         }
@@ -555,9 +554,9 @@ class HistoryCacheUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        manager.set_event(BeatKey(0, 0, 0), listOf(), OpusEventSTD(15, 0))
-        manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(16, 0))
-        manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(17, 0))
+        manager.set_event(BeatKey(0, 0, 0), listOf(), AbsoluteNoteEvent(15))
+        manager.set_event(BeatKey(0, 0, 1), listOf(), AbsoluteNoteEvent(16))
+        manager.set_event(BeatKey(0, 0, 2), listOf(), AbsoluteNoteEvent(17))
 
         this.undo_and_check(manager) {
             it.move_leaf(BeatKey(0, 0, 0), listOf(), BeatKey(0, 0, 1), listOf())
@@ -613,10 +612,10 @@ class HistoryCacheUnitTest {
     fun test_move_beat_range() {
         val manager = OpusManager()
         manager.new()
-        manager.set_event(BeatKey(0, 0, 0), listOf(), OpusEventSTD(10, 0))
-        manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(11, 0))
-        manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(13, 0))
-        manager.set_event(BeatKey(0, 0, 3), listOf(), OpusEventSTD(14, 0))
+        manager.set_event(BeatKey(0, 0, 0), listOf(), AbsoluteNoteEvent(10))
+        manager.set_event(BeatKey(0, 0, 1), listOf(), AbsoluteNoteEvent(11))
+        manager.set_event(BeatKey(0, 0, 2), listOf(), AbsoluteNoteEvent(13))
+        manager.set_event(BeatKey(0, 0, 3), listOf(), AbsoluteNoteEvent(14))
 
         this.undo_and_check(manager) {
             it.move_beat_range(BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
@@ -716,10 +715,10 @@ class HistoryCacheUnitTest {
     fun test_unset_range() {
         val manager = OpusManager()
         manager.new()
-        manager.set_event(BeatKey(0, 0, 0), listOf(), OpusEventSTD(10, 0))
-        manager.set_event(BeatKey(0, 0, 1), listOf(), OpusEventSTD(11, 0))
-        manager.set_event(BeatKey(0, 0, 2), listOf(), OpusEventSTD(13, 0))
-        manager.set_event(BeatKey(0, 0, 3), listOf(), OpusEventSTD(14, 0))
+        manager.set_event(BeatKey(0, 0, 0), listOf(), AbsoluteNoteEvent(10))
+        manager.set_event(BeatKey(0, 0, 1), listOf(), AbsoluteNoteEvent(11))
+        manager.set_event(BeatKey(0, 0, 2), listOf(), AbsoluteNoteEvent(13))
+        manager.set_event(BeatKey(0, 0, 3), listOf(), AbsoluteNoteEvent(14))
         this.undo_and_check(manager) {
             it.unset_range(BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
@@ -837,7 +836,7 @@ class HistoryCacheUnitTest {
     fun test_link_row() {
         val manager = OpusManager()
         manager.new()
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(20, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(20))
         this.undo_and_check(manager) {
             it.link_row(0, 0, BeatKey(0,0,0))
         }
@@ -849,8 +848,8 @@ class HistoryCacheUnitTest {
         manager.new()
         manager.set_beat_count(12)
         manager.new_channel()
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(20, 0))
-        manager.set_event(BeatKey(1,0,1), listOf(), OpusEventSTD(21, 0))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(20))
+        manager.set_event(BeatKey(1,0,1), listOf(), AbsoluteNoteEvent(21))
         this.undo_and_check(manager) {
             it.link_beat_range_horizontally(0, 0, BeatKey(0,0,0), BeatKey(1,0,1))
         }

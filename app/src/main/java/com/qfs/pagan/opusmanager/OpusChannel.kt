@@ -99,6 +99,8 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<U> {
+        println("L LEN: ${this.lines.size}")
+        println("B LEN: ${this.lines[line].beats.size}")
         var tree = this.lines[line].beats[beat]
         if (position != null) {
             for (i in position) {
@@ -261,6 +263,7 @@ class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePerc
         const val DEFAULT_INSTRUMENT = 0
     }
     override fun gen_line(): OpusLinePercussion {
+        println("NEW LINE: ${this.get_beat_count()}")
         return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 

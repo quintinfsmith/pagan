@@ -219,7 +219,7 @@ class OpusChannelGeneralizer {
             val controllers = ActiveControlSet(beat_count)
             controllers.new_controller(ControlEventType.Tempo, TempoController(beat_count))
             val controller = controllers.get_controller(ControlEventType.Tempo)
-            controller.set_initial_event(OpusTempoEvent(input_map.get_float("tempo")))
+            controller.set_initial_event(OpusTempoEvent(input_map.get_float("tempo", 120F)))
 
             val line_volumes = input_map.get_list("line_volumes")
 
@@ -238,7 +238,7 @@ class OpusChannelGeneralizer {
                         }
                     ),
                     "channel_controllers" to ActiveControlSetGeneralizer.to_json(controllers),
-                    "lines" to input_map["lines"]
+                    "lines" to input_map.get_list("lines")
                 )
             )
         }
@@ -254,10 +254,15 @@ class OpusChannelGeneralizer {
                     "controllers" to input_map["controllers"],
                     "lines" to ParsedList(
                         MutableList(lines.list.size) { i: Int ->
+                            val child_list = lines.get_hashmap(i).get_list("children")
                             val output_line = ParsedHashMap(
                                 hashMapOf(
                                     "controllers" to input_map.get_list("line_controllers").get_hashmap(i),
-                                    "beats" to lines.get_list(i)
+                                    "beats" to ParsedList(
+                                        MutableList(child_list.list.size) { j: Int ->
+                                            OpusTreeGeneralizer.convert_v1_to_v3(child_list.get_hashmapn(j))
+                                        }
+                                    )
                                 )
                             )
 

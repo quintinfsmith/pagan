@@ -153,6 +153,8 @@ class HistoryCacheUnitTest {
     fun test_set_percussion_event() {
         var manager = OpusManager()
         manager.new()
+
+        println("CHANNELs: ${manager.get_channel_count()}")
         this.undo_and_check(manager) {
             it.set_percussion_event(BeatKey(1,0,0), listOf())
         }

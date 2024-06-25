@@ -74,7 +74,7 @@ class OpusManagerGeneralizer {
         fun interpret(input: ParsedHashMap): OpusManager {
             val inner_map = input["d"] as ParsedHashMap
             val opus_manager = OpusManager()
-            opus_manager.set_project_name(inner_map.get_string("project_name"))
+            opus_manager.set_project_name(inner_map.get_stringn("project_name"))
             opus_manager.transpose = inner_map.get_int("transpose")
 
             opus_manager.channels.clear()
@@ -123,7 +123,7 @@ class OpusManagerGeneralizer {
             return ParsedHashMap(
                 hashMapOf(
                     "name" to ParsedString(input.get_string("name")),
-                    "transpose" to ParsedInt(input.get_int("transpose")),
+                    "transpose" to ParsedInt(input.get_int("transpose", 0)),
                     "tempo" to ParsedFloat(input.get_float("tempo")),
                     "tuning_map" to ParsedList(
                         MutableList(radix) { i: Int ->
@@ -201,7 +201,6 @@ class OpusManagerGeneralizer {
                     )
                 )
             }
-
 
             return ParsedHashMap(
                 hashMapOf(

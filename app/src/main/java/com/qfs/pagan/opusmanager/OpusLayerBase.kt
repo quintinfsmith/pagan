@@ -107,7 +107,7 @@ open class OpusLayerBase {
      * Calculates the number of channels in use.
      */
     fun get_channel_count(): Int {
-        return this.channels.size
+        return this.channels.size + 1
     }
 
     /**
@@ -1067,7 +1067,7 @@ open class OpusLayerBase {
 
     open fun new_line(channel: Int, line_offset: Int? = null): OpusLineAbstract<*> {
         val output = if (this.is_percussion(channel)) {
-            this.percussion_channel.new_line(line_offset ?: this.channels[channel].lines.size)
+            this.percussion_channel.new_line(line_offset ?: this.percussion_channel.lines.size)
         } else {
             this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
         }
@@ -1239,6 +1239,7 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channel.set_beat_count(new_count)
         }
+        this.percussion_channel.set_beat_count(new_count)
         this.controllers.set_beat_count(new_count)
     }
 
@@ -1563,7 +1564,38 @@ open class OpusLayerBase {
 
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        this.load_json(Parser.parse(json_content) as ParsedHashMap)
+        val generalized_object = Parser.parse(json_content) as ParsedHashMap
+        val version = OpusManagerGeneralizer.detect_version(generalized_object)
+        this.load_json(
+            when (version) {
+                OpusManagerGeneralizer.LATEST_VERSION -> generalized_object
+                2 -> {
+                    OpusManagerGeneralizer.convert_v2_to_v3(
+                        generalized_object
+                    )
+                }
+                1 -> {
+                    OpusManagerGeneralizer.convert_v2_to_v3(
+                        OpusManagerGeneralizer.convert_v1_to_v2(
+                            generalized_object
+                        )
+                    )
+                }
+                0 ->  {
+                    OpusManagerGeneralizer.convert_v2_to_v3(
+                        OpusManagerGeneralizer.convert_v1_to_v2(
+                            OpusManagerGeneralizer.convert_v0_to_v1(
+                                generalized_object
+                            )
+                        )
+                    )
+                }
+                else -> {
+                    // *Unreachable
+                    throw Exception()
+                }
+            }
+        )
 
         this.path = new_path
     }

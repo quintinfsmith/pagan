@@ -64,6 +64,8 @@ class ActiveControllerGeneralizer {
             }
 
             map["events"] = event_list
+            println("!! $controller")
+            println("!!2 ${controller.initial_event}")
             map["initial"] = OpusControlEventParser.to_json(controller.initial_event)
             map["type"] = when (controller) {
                 is TempoController -> "tempo"

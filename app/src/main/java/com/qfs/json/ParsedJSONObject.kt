@@ -379,7 +379,6 @@ class Parser {
             var index = 0
             while (index < json_content.length) {
                 val working_char = json_content[index]
-                println("CHAR: \"$working_char\" @ $index")
                 if (working_number != null) {
                     when (working_char) {
                         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.' -> {

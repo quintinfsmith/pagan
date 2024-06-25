@@ -3,10 +3,8 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
 
 abstract class ActiveController(beat_count: Int) {
-    abstract val default_event: OpusControlEvent
-
     var events = mutableListOf<OpusTree<OpusControlEvent>?>()
-    var initial_event = this.default_event
+    abstract var initial_event: OpusControlEvent
 
     init {
         for (i in 0 until beat_count) {
@@ -168,11 +166,11 @@ abstract class ActiveController(beat_count: Int) {
 }
 
 class VolumeController(beat_count: Int): ActiveController(beat_count) {
-    override val default_event = OpusVolumeEvent(64)
+    override var initial_event: OpusControlEvent = OpusVolumeEvent(64)
 }
 class TempoController(beat_count: Int): ActiveController(beat_count) {
-    override val default_event = OpusTempoEvent(120F)
+    override var initial_event: OpusControlEvent = OpusTempoEvent(120F)
 }
 class ReverbController(beat_count: Int): ActiveController(beat_count) {
-    override val default_event = OpusReverbEvent(1F)
+    override var initial_event: OpusControlEvent = OpusReverbEvent(1F)
 }

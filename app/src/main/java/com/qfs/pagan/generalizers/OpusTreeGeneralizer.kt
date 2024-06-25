@@ -38,7 +38,7 @@ class OpusTreeGeneralizer {
         fun <T> from_json(input: ParsedHashMap, event_generalizer_callback: (ParsedHashMap?) -> T?): OpusTree<T> {
             val new_tree = OpusTree<T>()
             val event_hashmap = input.get_hashmapn("event")
-            if (event_hashmap != null ) {
+            if (event_hashmap != null) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
             } else {
                 new_tree.set_size(input.get_int("size"))
@@ -57,7 +57,7 @@ class OpusTreeGeneralizer {
         fun <T> from_v1_json(input: ParsedHashMap, event_generalizer_callback: (ParsedHashMap?) -> T?): OpusTree<T> {
             val new_tree = OpusTree<T>()
             val event_hashmap = input.get_hashmapn("event")
-            if (event_hashmap != null ) {
+            if (event_hashmap != null) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
             } else {
                 val children = input.get_listn("children")
@@ -93,6 +93,38 @@ class OpusTreeGeneralizer {
             }
 
             return ParsedHashMap(map)
+        }
+
+        fun convert_v1_to_v3(input: ParsedHashMap?): ParsedHashMap? {
+            if (input == null) {
+                return null
+            }
+
+            val output = ParsedHashMap()
+
+            val event_hashmap = input.get_hashmapn("event")
+            if (event_hashmap != null) {
+                output["event"] = event_hashmap
+                output["size"] = 0
+                output.set_null("divisions")
+            } else {
+                output.set_null("event")
+                val tmp_children = input.get_list("children")
+                output["size"] = tmp_children.list.size
+                output["divisions"] = ParsedList(
+                    MutableList(tmp_children.list.size) { i: Int ->
+                        val position = i
+                        ParsedList(
+                            mutableListOf(
+                                ParsedInt(position),
+                                convert_v1_to_v3(tmp_children.get_hashmapn(i))
+                            )
+                        )
+                    }
+                )
+            }
+
+            return output
         }
     }
 

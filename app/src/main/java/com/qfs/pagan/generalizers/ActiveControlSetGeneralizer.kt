@@ -25,11 +25,14 @@ class ActiveControlSetGeneralizer() {
         fun to_json(control_set: ActiveControlSet): ParsedHashMap {
             val output = ParsedHashMap()
             output["beat_count"] = control_set.beat_count
-            output["controllers"] = ParsedList()
+
+            val controllers = control_set.controllers.values.toList()
+            output["controllers"] = ParsedList(
+                MutableList(controllers.size) {
+                    ActiveControllerGeneralizer.to_json(controllers[it])
+                }
+            )
             
-            for (controller in control_set.controllers.values) {
-                output.get_list("controllers").add(ActiveControllerGeneralizer.to_json(controller))
-            }
 
             return output
         }

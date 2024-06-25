@@ -1,13 +1,14 @@
 package com.qfs.pagan
-import com.qfs.pagan.opusmanager.LoadedJSONData
-import com.qfs.pagan.opusmanager.LoadedJSONData0
+import com.qfs.json.ParsedHashMap
+import com.qfs.json.Parser
+import com.qfs.pagan.generalizers.OpusManagerGeneralizer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
-import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
 class ProjectManager(data_dir: String) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
@@ -104,11 +105,19 @@ class ProjectManager(data_dir: String) {
     }
 
     private fun get_file_project_name(file: File): String? {
-        val json = Json { ignoreUnknownKeys = true }
-
         val content = file.readText(Charsets.UTF_8)
-        val json_obj = LoadedJSONData.from_string(content)
-        return json_obj.name
+        val json_obj = Parser.parse(content)
+        if (json_obj !is ParsedHashMap) {
+            return null
+        }
+
+        val version = OpusManagerGeneralizer.detect_version(json_obj)
+        return when (version) {
+            0, 1, 2 -> json_obj.get_string("name")
+            else -> {
+                json_obj.get_hashmap("d").get_string("title")
+            }
+        }
     }
 
     fun get_project_list(): List<Pair<String, String>> {

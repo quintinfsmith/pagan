@@ -27,7 +27,11 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
 
     fun new_controller(type: ControlEventType, controller: ActiveController? = null) {
         if (controller == null) {
-            this.controllers[type] = ActiveController(type, this.beat_count)
+            this.controllers[type] = when (type) {
+                ControlEventType.Tempo -> TempoController(this.beat_count)
+                ControlEventType.Volume -> VolumeController(this.beat_count)
+                ControlEventType.Reverb -> ReverbController(this.beat_count)
+            }
         } else {
             this.controllers[type] = controller
             controller.set_beat_count(this.beat_count)

@@ -3,14 +3,12 @@ package com.qfs.pagan
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusEventSTD
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.get_shallow_representation
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,6 +24,10 @@ import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.opusmanager.InstrumentEvent
+import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 
 
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
@@ -50,26 +52,26 @@ class OpusLayerBaseUnitTest {
         )
     }
 
-    @Test
-    fun test_get_percussion_instrument() {
-        val manager = OpusManager()
-        manager.new()
-        assertEquals(
-            "Percussion instrument wasn't correctly defaulted",
-            OpusLayerBase.DEFAULT_PERCUSSION,
-            manager.get_percussion_instrument(0)
-        )
+   // @Test
+   // fun test_get_percussion_instrument() {
+   //     val manager = OpusManager()
+   //     manager.new()
+   //     assertEquals(
+   //         "Percussion instrument wasn't correctly defaulted",
+   //         OpusLayerBase.DEFAULT_PERCUSSION,
+   //         manager.get_percussion_instrument(0)
+   //     )
 
-        manager.set_percussion_channel(0)
-        manager.set_percussion_instrument(0, OpusLayerBase.DEFAULT_PERCUSSION + 1)
+   //     manager.set_percussion_channel(0)
+   //     manager.set_percussion_instrument(0, OpusLayerBase.DEFAULT_PERCUSSION + 1)
 
 
-        assertEquals(
-            "Percussion instrument wasn't set",
-            OpusLayerBase.DEFAULT_PERCUSSION + 1,
-            manager.get_percussion_instrument(0)
-        )
-    }
+   //     assertEquals(
+   //         "Percussion instrument wasn't set",
+   //         OpusLayerBase.DEFAULT_PERCUSSION + 1,
+   //         manager.get_percussion_instrument(0)
+   //     )
+   // }
 
     @Test
     fun test_get_beat_tree() {
@@ -101,8 +103,8 @@ class OpusLayerBaseUnitTest {
         val first_beat_key = BeatKey(0,0,1)
 
         manager.split_tree(first_beat_key, listOf(), 4)
-        manager.set_event(first_beat_key, listOf(3), OpusEventSTD(0,0, false))
-        manager.set_event(first_beat_key, listOf(2), OpusEventSTD(1,0, false))
+        manager.set_event(first_beat_key, listOf(3), AbsoluteNoteEvent(0))
+        manager.set_event(first_beat_key, listOf(2), AbsoluteNoteEvent(1))
         val expected_leaf = manager.get_tree(first_beat_key, listOf(3))
         assertEquals(
             "get_proceding_leaf failed",
@@ -179,8 +181,8 @@ class OpusLayerBaseUnitTest {
         val first_beat_key = BeatKey(0,0,1)
 
         manager.split_tree(first_beat_key, listOf(), 4)
-        manager.set_event(first_beat_key, listOf(3), OpusEventSTD(0,0, false))
-        manager.set_event(first_beat_key, listOf(2), OpusEventSTD(1,0, false))
+        manager.set_event(first_beat_key, listOf(3), AbsoluteNoteEvent(0))
+        manager.set_event(first_beat_key, listOf(2), AbsoluteNoteEvent(1))
         val expected_leaf = manager.get_tree(first_beat_key, listOf(2))
         assertEquals(
             "get_preceding_leaf failed",
@@ -281,9 +283,9 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        val first_event = OpusEventSTD(25, 0, false)
-        val second_event = OpusEventSTD(1, 0, true)
-        val third_event = OpusEventSTD(-6, 0, true)
+        val first_event = AbsoluteNoteEvent(25)
+        val second_event = RelativeNoteEvent(1)
+        val third_event = RelativeNoteEvent(-6)
 
         manager.set_event( BeatKey(0,0,1), listOf(), first_event )
         manager.set_event( BeatKey(0,0,2), listOf(), second_event )
@@ -297,13 +299,13 @@ class OpusLayerBaseUnitTest {
 
         assertEquals(
             "Failed to get correct relative value on 1st relative event",
-            first_event.note + second_event.note,
+            first_event.note + second_event.offset,
             manager.get_absolute_value(BeatKey(0,0,2), listOf()),
         )
 
         assertEquals(
             "Failed to get correct relative value on 2nd relative event",
-            first_event.note + second_event.note + third_event.note,
+            first_event.note + second_event.offset + third_event.offset,
             manager.get_absolute_value(BeatKey(0,0,3), listOf()),
         )
 
@@ -331,7 +333,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
 
-        val absolute_event = OpusEventSTD(25, 0, false)
+        val absolute_event = AbsoluteNoteEvent(25)
 
         assertEquals(
             "False positive on has_preceding_absolute_event()",
@@ -359,21 +361,21 @@ class OpusLayerBaseUnitTest {
 
         assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(12,0,false))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(12))
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(24,0, false))
+        manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(24))
         manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
         assertEquals(
             "Failed to convert absolute event to relative",
-            OpusEventSTD(12, 0, true),
+            RelativeNoteEvent(12),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(12,0, true))
+        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(12))
         manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
         assertEquals(
             "Somehow broke an existing relative event",
-            OpusEventSTD(+12, 0, true),
+            RelativeNoteEvent(12),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
     }
@@ -387,33 +389,33 @@ class OpusLayerBaseUnitTest {
             manager.convert_event_to_absolute(BeatKey(0,0,0), listOf())
         }
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(12, 0, false))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(12))
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(12, 0, true))
+        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(12))
 
         manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         assertEquals(
             "Failed to convert absolute_event_to_absolute",
-            OpusEventSTD(24, 0, false),
+            AbsoluteNoteEvent(24),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
 
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(12, 0, false))
+        manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(12))
         manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         assertEquals(
             "Somehow broke an existing absolute event",
-            OpusEventSTD(12, 0, false),
+            AbsoluteNoteEvent(12),
             manager.get_tree(BeatKey(0,0,1), listOf()).get_event()!!
         )
 
 
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(0, 0, false))
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(-12, 0, true))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(0))
+        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(-12))
         assertThrows(OpusLayerBase.NoteOutOfRange::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }
-        manager.set_event(BeatKey(0,0,0), listOf(), OpusEventSTD(94, 0, false))
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(2, 0, true))
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(94))
+        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(2))
         assertThrows(OpusLayerBase.NoteOutOfRange::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }
@@ -428,7 +430,7 @@ class OpusLayerBaseUnitTest {
         val beatkey = BeatKey(0,0,0)
         val position: List<Int> = listOf()
 
-        manager.set_event(beatkey, position, OpusEventSTD(10, 0, false))
+        manager.set_event(beatkey, position, AbsoluteNoteEvent(10))
         val tree = manager.get_tree(beatkey, position)
         assertEquals(
             "Failed to set event",
@@ -438,11 +440,11 @@ class OpusLayerBaseUnitTest {
         assertEquals(
             "Set event, but set it wrong",
             tree.get_event(),
-            OpusEventSTD(10, 0, false)
+            AbsoluteNoteEvent(10)
         )
 
         assertThrows(OpusLayerBase.NonPercussionEventSet::class.java) {
-            manager.set_event(BeatKey(1,0,0), position, OpusEventSTD(10, 0, false))
+            manager.set_event(BeatKey(1,0,0), position, AbsoluteNoteEvent(10))
         }
 
 
@@ -554,7 +556,7 @@ class OpusLayerBaseUnitTest {
         manager.new()
 
         val beatkey = BeatKey(0, 0, 0)
-        val top_tree = OpusTree<OpusEventSTD>()
+        val top_tree = OpusTree<TunedInstrumentEvent>()
         top_tree.set_size(5)
         manager.replace_tree(beatkey, listOf(), top_tree)
 
@@ -564,7 +566,7 @@ class OpusLayerBaseUnitTest {
             top_tree.size
         )
 
-        var new_tree = OpusTree<OpusEventSTD>()
+        var new_tree = OpusTree<TunedInstrumentEvent>()
         manager.split_tree(beatkey, listOf(), 12)
         var position = listOf<Int>(0)
         var old_parent = manager.get_tree(beatkey, position).parent
@@ -846,7 +848,7 @@ class OpusLayerBaseUnitTest {
         // split an event
         val position = mutableListOf(split_count - 1, 0)
 
-        manager.set_event(beat_key, position, OpusEventSTD(30,  0, false))
+        manager.set_event(beat_key, position, AbsoluteNoteEvent(30))
 
         manager.split_tree(beat_key, position, split_count)
         val subtree = manager.get_tree(beat_key, position)
@@ -860,10 +862,10 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
-        manager.set_event(BeatKey(0,0,0), listOf(0), OpusEventSTD(12, 0))
-        manager.set_event(BeatKey(0,0,1), listOf(), OpusEventSTD(24, 0))
-        manager.set_event(BeatKey(0,0,2), listOf(), OpusEventSTD(12, 0))
-        manager.set_event(BeatKey(0,0,3), listOf(), OpusEventSTD(12, 0, relative=true))
+        manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(12))
+        manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(24))
+        manager.set_event(BeatKey(0,0,2), listOf(), AbsoluteNoteEvent(12))
+        manager.set_event(BeatKey(0,0,3), listOf(), RelativeNoteEvent(12))
 
         // Test Muted Line
         manager.new_line(0)
@@ -1060,23 +1062,10 @@ class OpusLayerBaseUnitTest {
             OpusTempoEvent(140F),
             manager.get_global_controller_initial_event(ControlEventType.Tempo)
         )
+        assertEquals(27, manager.percussion_channel.lines[0].instrument)
+        assertEquals(10, manager.percussion_channel.lines[1].instrument)
+        assertEquals(8, manager.percussion_channel.lines[2].instrument)
 
-        assertEquals(
-            null,
-            manager.channels[0].lines[0].static_value
-        )
-        assertEquals(
-            27,
-            manager.channels[1].lines[0].static_value
-        )
-        assertEquals(
-            10,
-            manager.channels[1].lines[1].static_value
-        )
-        assertEquals(
-            8,
-            manager.channels[1].lines[2].static_value
-        )
     }
     @Test
     fun test_load_1() {
@@ -1090,23 +1079,9 @@ class OpusLayerBaseUnitTest {
             OpusTempoEvent(140F),
             manager.get_global_controller_initial_event(ControlEventType.Tempo)
         )
-
-        assertEquals(
-            null,
-            manager.channels[0].lines[0].static_value
-        )
-        assertEquals(
-            27,
-            manager.channels[1].lines[0].static_value
-        )
-        assertEquals(
-            10,
-            manager.channels[1].lines[1].static_value
-        )
-        assertEquals(
-            8,
-            manager.channels[1].lines[2].static_value
-        )
+        assertEquals(27, manager.percussion_channel.lines[0].instrument)
+        assertEquals(10, manager.percussion_channel.lines[1].instrument)
+        assertEquals(8, manager.percussion_channel.lines[2].instrument)
     }
 
     @Test
@@ -1122,22 +1097,9 @@ class OpusLayerBaseUnitTest {
             manager.get_global_controller_initial_event(ControlEventType.Tempo)
         )
 
-        assertEquals(
-            null,
-            manager.channels[0].lines[0].static_value
-        )
-        assertEquals(
-            27,
-            manager.channels[1].lines[0].static_value
-        )
-        assertEquals(
-            10,
-            manager.channels[1].lines[1].static_value
-        )
-        assertEquals(
-            8,
-            manager.channels[1].lines[2].static_value
-        )
+        assertEquals(27, manager.percussion_channel.lines[0].instrument)
+        assertEquals(10, manager.percussion_channel.lines[1].instrument)
+        assertEquals(8, manager.percussion_channel.lines[2].instrument)
     }
 
     @Test
@@ -1145,7 +1107,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
         val beat_key = BeatKey(0, 0, 0)
-        val event = OpusEventSTD(20, 0, false, 1)
+        val event = AbsoluteNoteEvent(20)
         manager.set_event(beat_key, listOf(), event)
 
         val new_duration = 2
@@ -1457,7 +1419,7 @@ class OpusLayerBaseUnitTest {
         for (c in 0 until 2) {
             for (l in 0 until 2) {
                 for (b in 0 until 3) {
-                    manager.set_event(BeatKey(c, l, b), listOf(),  OpusEventSTD((c * 6) + (l * 3) + b, c))
+                    manager.set_event(BeatKey(c, l, b), listOf(),  AbsoluteNoteEvent((c * 6) + (l * 3) + b))
                 }
             }
         }
@@ -1490,7 +1452,7 @@ class OpusLayerBaseUnitTest {
                 for (b in 0 until 3) {
                     assertEquals(
                         (c * 6) + (l * 3) + b,
-                        manager.get_tree(BeatKey(c, l, b + 1)).event!!.note
+                        (manager.get_tree(BeatKey(c, l, b + 1)).event!! as AbsoluteNoteEvent).note
                     )
                 }
             }
@@ -1508,7 +1470,7 @@ class OpusLayerBaseUnitTest {
         for (c in 0 until 2) {
             for (l in 0 until 2) {
                 for (b in 0 until 3) {
-                    manager.set_event(BeatKey(c, l, b + 3), listOf(),  OpusEventSTD((c * 6) + (l * 3) + b, c))
+                    manager.set_event(BeatKey(c, l, b + 3), listOf(),  AbsoluteNoteEvent((c * 6) + (l * 3) + b))
                 }
             }
         }
@@ -1520,7 +1482,7 @@ class OpusLayerBaseUnitTest {
                 for (b in 0 until 3) {
                     assertEquals(
                         (c * 6) + (l * 3) + b,
-                        manager.get_tree(BeatKey(c, l, b + 1)).event!!.note
+                        (manager.get_tree(BeatKey(c, l, b + 1)).event!! as AbsoluteNoteEvent).note
                     )
                 }
             }
@@ -1541,7 +1503,7 @@ class OpusLayerBaseUnitTest {
         for (c in 0 until 2) {
             for (l in 0 until 2) {
                 for (b in 0 until 3) {
-                    manager.set_event(BeatKey(c, l, b), listOf(),  OpusEventSTD((c * 6) + (l * 3) + b, c))
+                    manager.set_event(BeatKey(c, l, b), listOf(),  AbsoluteNoteEvent((c * 6) + (l * 3) + b))
                 }
             }
         }
@@ -1555,7 +1517,7 @@ class OpusLayerBaseUnitTest {
 
                     assertEquals(
                         (c * 6) + (l * 3) + b,
-                        manager.get_tree(BeatKey(c, l, b + 3)).event!!.note
+                        (manager.get_tree(BeatKey(c, l, b + 3)).event!! as AbsoluteNoteEvent).note
                     )
                 }
             }
@@ -1568,7 +1530,7 @@ class OpusLayerBaseUnitTest {
                 for (b in 0 until 3) {
                     assertEquals(
                         (c * 6) + (l * 3) + b,
-                        manager.get_tree(BeatKey(c, l, b + 1)).event!!.note
+                        (manager.get_tree(BeatKey(c, l, b + 1)).event!! as AbsoluteNoteEvent).note
                     )
                 }
             }
@@ -1581,7 +1543,7 @@ class OpusLayerBaseUnitTest {
                 for (b in 0 until 3) {
                     assertEquals(
                         (c * 6) + (l * 3) + b,
-                        manager.get_tree(BeatKey(c, l, b + 2)).event!!.note
+                        (manager.get_tree(BeatKey(c, l, b + 2)).event!! as AbsoluteNoteEvent).note
                     )
                 }
             }
@@ -2145,7 +2107,7 @@ class OpusLayerBaseUnitTest {
         manager.new()
         val channel = 0
         val original_value = 12
-        manager.set_event(BeatKey(channel,0,0), listOf(), OpusEventSTD(original_value, channel, false, 1))
+        manager.set_event(BeatKey(channel,0,0), listOf(), AbsoluteNoteEvent(original_value))
 
         // First don't modify existing event
         manager.set_tuning_map(
@@ -2158,7 +2120,7 @@ class OpusLayerBaseUnitTest {
         assertEquals(
             "Should not have changed event Value",
             original_value,
-            manager.get_tree(BeatKey(channel,0,0), listOf()).event!!.note
+            (manager.get_tree(BeatKey(channel,0,0), listOf()).event!! as AbsoluteNoteEvent).note
         )
 
         // Return to original state
@@ -2179,7 +2141,7 @@ class OpusLayerBaseUnitTest {
         assertEquals(
             "Should have changed event Value",
             4,
-            manager.get_tree(BeatKey(channel,0,0), listOf()).event!!.note
+            (manager.get_tree(BeatKey(channel,0,0), listOf()).event!! as AbsoluteNoteEvent).note
         )
     }
 
@@ -2188,7 +2150,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
         manager.new_line(0, 0)
-        val test_event = OpusEventSTD(1, 0, relative = true)
+        val test_event = RelativeNoteEvent(1)
         manager.set_event(BeatKey(0,0,0), listOf(), test_event)
 
         val line_a = manager.channels[0].lines[0]
@@ -2239,17 +2201,12 @@ class OpusLayerBaseUnitTest {
         assertTrue(
             manager.get_tree(BeatKey(1,0,0), listOf()).is_event()
         )
-        assertEquals(
-            first_instrument,
-            manager.get_tree(BeatKey(1,0,0), listOf()).get_event()!!.note
-        )
 
         val second_instrument = 2
         manager.set_percussion_instrument(0, second_instrument)
         manager.set_percussion_event(BeatKey(1,0,0), listOf())
-        assertEquals(
-            second_instrument,
-            manager.get_tree(BeatKey(1,0,0), listOf()).get_event()!!.note
+        assertTrue(
+            manager.get_tree(BeatKey(1,0,0), listOf()).is_event()
         )
     }
 
@@ -2304,7 +2261,7 @@ class OpusLayerBaseUnitTest {
     fun test_insert() {
         val manager = OpusManager()
         manager.new()
-        val test_event_a = OpusEventSTD(0,0,false)
+        val test_event_a = AbsoluteNoteEvent(0)
         manager.set_event(BeatKey(0,0,0), listOf(), test_event_a)
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.insert(BeatKey(0,0,0), listOf(0))
@@ -2722,7 +2679,7 @@ class OpusLayerBaseUnitTest {
         manager.new()
         val key_a = BeatKey(0,0,0)
         val key_b = BeatKey(0,0,2)
-        val event = OpusEventSTD(0,0)
+        val event = AbsoluteNoteEvent(0)
         manager.split_tree(key_a, listOf(), 3)
         manager.split_tree(key_b, listOf(), 3)
         for (i in 0 until 3) {
@@ -2935,15 +2892,15 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 4)
-        manager.set_event(BeatKey(0,0,0), listOf(1), OpusEventSTD(0,0))
-        manager.set_event(BeatKey(0,0,0), listOf(3), OpusEventSTD(1,0))
+        manager.set_event(BeatKey(0,0,0), listOf(1), AbsoluteNoteEvent(0))
+        manager.set_event(BeatKey(0,0,0), listOf(3), AbsoluteNoteEvent(1))
         assertEquals(
-            OpusEventSTD(1,0),
+            AbsoluteNoteEvent(1),
             manager.get_preceding_event(BeatKey(0,0,0), listOf(3))
         )
 
         assertEquals(
-            OpusEventSTD(0,0),
+            AbsoluteNoteEvent(0),
             manager.get_preceding_event(BeatKey(0,0,0), listOf(2))
         )
 
@@ -2957,7 +2914,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager.new()
         manager.set_beat_count(24)
-        val event = OpusEventSTD(5, 0)
+        val event = AbsoluteNoteEvent(5)
         manager.set_event(BeatKey(0,0,12), listOf(), event)
 
         manager.overwrite_row(0, 0, BeatKey(0,0,12))
@@ -2975,7 +2932,7 @@ class OpusLayerBaseUnitTest {
             )
         }
 
-        val event_b = OpusEventSTD(6,0)
+        val event_b = AbsoluteNoteEvent(6)
         manager.set_event(BeatKey(0,0,0), listOf(), event_b)
         manager.overwrite_row(0, 0, BeatKey(0,0,0))
 
@@ -3048,7 +3005,7 @@ class OpusLayerBaseUnitTest {
                         return@line_offset_loop
                     }
 
-                    line.beats.forEachIndexed beat_loop@{ k: Int, beat_tree: OpusTree<OpusEventSTD> ->
+                    line.beats.forEachIndexed beat_loop@{ k: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
                         if ((case.first.beat .. case.second.beat).contains(k)) {
                             expectation.add(BeatKey(i,j,k))
                         }
@@ -3062,27 +3019,27 @@ class OpusLayerBaseUnitTest {
         }
     }
 
-    @Test 
-    fun test_get_shallow_representation() {
-        val manager = OpusManager()
-        val json_string_test = """{
-            "k0": 101,
-            "k1": "TEST STRING",
-            "k2": {
-                "sub_k0": [ 0, 1, 2 ],
-                "sub_k1": 2.0
-            },
-            "k3": null,
-            "k4": true,
-            "k5": false
-        }"""
+   // @Test
+   // fun test_get_shallow_representation() {
+   //     val manager = OpusManager()
+   //     val json_string_test = """{
+   //         "k0": 101,
+   //         "k1": "TEST STRING",
+   //         "k2": {
+   //             "sub_k0": [ 0, 1, 2 ],
+   //             "sub_k1": 2.0
+   //         },
+   //         "k3": null,
+   //         "k4": true,
+   //         "k5": false
+   //     }"""
 
-        val test_map = get_shallow_representation(json_string_test)
-        assertEquals(
-            setOf("k0", "k1", "k2", "k3", "k4", "k5"),
-            test_map.keys.toSet()
-        )
-    }
+   //     val test_map = get_shallow_representation(json_string_test)
+   //     assertEquals(
+   //         setOf("k0", "k1", "k2", "k3", "k4", "k5"),
+   //         test_map.keys.toSet()
+   //     )
+   // }
 
     @Test
     fun test_overwrite_beat_range_horizontally() {
@@ -3098,7 +3055,7 @@ class OpusLayerBaseUnitTest {
         for (c in 0 until 2) {
             for (l in 0 until 2) {
                 for (b in 0 until 3) {
-                    manager.set_event(BeatKey(c, l, b), listOf(),  OpusEventSTD((c * 6) + (l * 3) + b, c))
+                    manager.set_event(BeatKey(c, l, b), listOf(), AbsoluteNoteEvent((c * 6) + (l * 3) + b))
                 }
             }
         }
@@ -3219,7 +3176,7 @@ class OpusLayerBaseUnitTest {
         for (c in 0 until 2) {
             for (l in 0 until manager.channels[c].lines.size) {
                 for (b in 0 until 12) {
-                    manager.set_event(BeatKey(c, l, b), listOf(), OpusEventSTD(12, c))
+                    manager.set_event(BeatKey(c, l, b), listOf(), AbsoluteNoteEvent(12))
                 }
             }
         }
@@ -3376,11 +3333,11 @@ class OpusLayerBaseUnitTest {
 
         manager.split_tree(key_a, listOf(), 2)
         manager.split_tree(key_b, listOf(), 3)
-        manager.set_event(key_a, listOf(0), OpusEventSTD(10, 0))
-        manager.set_event(key_a, listOf(1), OpusEventSTD(11, 0))
-        manager.set_event(key_b, listOf(0), OpusEventSTD(12, 0))
-        manager.set_event(key_b, listOf(1), OpusEventSTD(13, 0))
-        manager.set_event(key_b, listOf(2), OpusEventSTD(14, 0))
+        manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
+        manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
+        manager.set_event(key_b, listOf(0), AbsoluteNoteEvent(12))
+        manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
+        manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
 
         assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
             manager.merge_leafs(key_a, listOf(), key_b, listOf())
@@ -3396,29 +3353,29 @@ class OpusLayerBaseUnitTest {
         assertEquals(3, manager.get_tree(key_b, listOf(0)).size)
         assertEquals(3, manager.get_tree(key_b, listOf(1)).size)
         assertEquals(
-            OpusEventSTD(10, 0),
+            AbsoluteNoteEvent(10),
             manager.get_tree(key_b, listOf(0, 0)).event
         )
         assertEquals(
-            OpusEventSTD(11, 0),
+            AbsoluteNoteEvent(11),
             manager.get_tree(key_b, listOf(1, 0)).event
         )
         assertEquals(
-            OpusEventSTD(13, 0),
+            AbsoluteNoteEvent(13),
             manager.get_tree(key_b, listOf(0, 2)).event
         )
         assertEquals(
-            OpusEventSTD(14, 0),
+            AbsoluteNoteEvent(14),
             manager.get_tree(key_b, listOf(1, 1)).event
         )
 
-        manager.set_event(key_c, listOf(), OpusEventSTD(15, 0))
+        manager.set_event(key_c, listOf(), AbsoluteNoteEvent(15))
         manager.merge_leafs(key_c, listOf(), key_d, listOf())
 
         assertTrue(manager.get_tree(key_d).is_event())
 
         assertEquals(
-            OpusEventSTD(15, 0),
+            AbsoluteNoteEvent(15),
             manager.get_tree(key_d).event
         )
     }

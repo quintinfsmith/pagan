@@ -173,3 +173,6 @@ class VolumeController(beat_count: Int): ActiveController(beat_count) {
 class TempoController(beat_count: Int): ActiveController(beat_count) {
     override val default_event = OpusTempoEvent(120F)
 }
+class ReverbController(beat_count: Int): ActiveController(beat_count) {
+    override val default_event = OpusReverbEvent(1F)
+}

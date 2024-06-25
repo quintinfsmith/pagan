@@ -47,7 +47,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         val output = try {
             super.remove_line(channel, line_offset)
-        } catch (e: OpusChannel.LastLineException) {
+        } catch (e: OpusChannelAbstract.LastLineException) {
             throw e
         }
 
@@ -865,7 +865,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
 
-    fun get_tree(): OpusTree<InstrumentEvent> {
+    fun get_tree(): OpusTree<out InstrumentEvent> {
         return this.get_tree(
             this.cursor.get_beatkey(),
             this.cursor.get_position()

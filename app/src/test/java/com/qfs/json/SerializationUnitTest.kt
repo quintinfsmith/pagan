@@ -1,7 +1,6 @@
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+
+import com.qfs.json.Parser
 import org.junit.Test
-import com.qfs.json.ParsedJSONObject
 
 class SerializationUnitTest {
     @Test
@@ -9,7 +8,7 @@ class SerializationUnitTest {
         val test_string = """{
             "key0" = 0
         }"""
-        val ob = ParsedJSONObject(test_string)
+        val ob = Parser.parse(test_string)
 
     }
 }

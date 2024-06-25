@@ -1,9 +1,6 @@
 package com.qfs.pagan
 
 import android.util.Log
-import com.qfs.pagan.opusmanager.OpusEventSTD
-import com.qfs.pagan.structure.OpusTree
-import kotlin.math.abs
 
 const val CH_OPEN = '['
 const val CH_CLOSE = ']'
@@ -17,50 +14,50 @@ const val CH_HOLD = '~'
 val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
 
-fun to_string(radix: Int, node: OpusTree<OpusEventSTD>, depth: Int = 0): String {
-    var output: String
-    if (node.is_event()) {
-        val opus_event = node.get_event()!!
-        output = if (opus_event.relative) {
-            var new_string: String
-            if (opus_event.note == 0 || opus_event.note % radix != 0) {
-                new_string = if (opus_event.note < 0) {
-                    CH_SUBTRACT.toString()
-                } else {
-                    CH_ADD.toString()
-                }
-                new_string += get_number_string(abs(opus_event.note), radix, 1)
-            } else {
-                new_string = if (opus_event.note < 0) {
-                    CH_DOWN.toString()
-                } else {
-                    CH_UP.toString()
-                }
-                new_string += get_number_string(abs(opus_event.note) / radix, radix, 1)
-            }
-            new_string
-        } else {
-            get_number_string(opus_event.note, radix, 2)
-        }
-    } else if (node.is_leaf()) {
-        output = "__"
-    } else {
-        output = ""
-        for (i in 0 until node.size) {
-            val child = node[i]
-            output += to_string(radix, child, depth+1)
-            if (i < node.size - 1) {
-                output += CH_NEXT
-            }
-        }
-
-        if (node.size > 1 && depth > 0) {
-            output = "$CH_OPEN$output$CH_CLOSE"
-        }
-    }
-
-    return output
-}
+// fun to_string(radix: Int, node: OpusTree<InstrumentEvent>, depth: Int = 0): String {
+//     var output: String
+//     if (node.is_event()) {
+//         val opus_event = node.get_event()!!
+//         output = if (opus_event.relative) {
+//             var new_string: String
+//             if (opus_event.note == 0 || opus_event.note % radix != 0) {
+//                 new_string = if (opus_event.note < 0) {
+//                     CH_SUBTRACT.toString()
+//                 } else {
+//                     CH_ADD.toString()
+//                 }
+//                 new_string += get_number_string(abs(opus_event.note), radix, 1)
+//             } else {
+//                 new_string = if (opus_event.note < 0) {
+//                     CH_DOWN.toString()
+//                 } else {
+//                     CH_UP.toString()
+//                 }
+//                 new_string += get_number_string(abs(opus_event.note) / radix, radix, 1)
+//             }
+//             new_string
+//         } else {
+//             get_number_string(opus_event.note, radix, 2)
+//         }
+//     } else if (node.is_leaf()) {
+//         output = "__"
+//     } else {
+//         output = ""
+//         for (i in 0 until node.size) {
+//             val child = node[i]
+//             output += to_string(radix, child, depth+1)
+//             if (i < node.size - 1) {
+//                 output += CH_NEXT
+//             }
+//         }
+//
+//         if (node.size > 1 && depth > 0) {
+//             output = "$CH_OPEN$output$CH_CLOSE"
+//         }
+//     }
+//
+//     return output
+// }
 
 fun get_number_string(number: Int, radix: Int, digits: Int): String {
     var output = ""

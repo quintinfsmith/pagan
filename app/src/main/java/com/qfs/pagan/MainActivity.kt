@@ -84,10 +84,9 @@ import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.generalizers.OpusManagerGeneralizer
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -303,7 +302,7 @@ class MainActivity : AppCompatActivity() {
             val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                    val json_string = Json.encodeToString(opus_manager.to_json())
+                    val json_string = OpusManagerGeneralizer.generalize(opus_manager).to_string()
                     FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
                     this.feedback_msg(getString(R.string.feedback_exported))
                 }

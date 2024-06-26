@@ -4,15 +4,12 @@ import com.qfs.json.ParsedHashMap
 import com.qfs.json.ParsedInt
 import com.qfs.json.ParsedList
 import com.qfs.json.ParsedString
-import com.qfs.pagan.opusmanager.ActiveControlSet
 import com.qfs.pagan.opusmanager.ActiveControlSetGeneralizer
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelGeneralizer
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusPercussionChannel
-import com.qfs.pagan.opusmanager.TempoController
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
 class OpusManagerGeneralizer {
@@ -75,7 +72,7 @@ class OpusManagerGeneralizer {
             val inner_map = input["d"] as ParsedHashMap
             val opus_manager = OpusManager()
             opus_manager.set_project_name(inner_map.get_stringn("project_name"))
-            opus_manager.transpose = inner_map.get_int("transpose")
+            opus_manager.transpose = inner_map.get_int("transpose", 0)
 
             opus_manager.channels.clear()
             for (generalized_channel in inner_map.get_list("channels").list) {
@@ -90,7 +87,7 @@ class OpusManagerGeneralizer {
             }
 
             val generalized_tuning_map = inner_map.get_list("tuning_map")
-            opus_manager.tuning_map = Array<Pair<Int, Int>>(generalized_tuning_map.list.size) { i: Int ->
+            opus_manager.tuning_map = Array(generalized_tuning_map.list.size) { i: Int ->
                 val g_pair = generalized_tuning_map.get_list(i)
                 Pair(
                     g_pair.get_int(0),
@@ -127,10 +124,10 @@ class OpusManagerGeneralizer {
                     "tempo" to ParsedFloat(input.get_float("tempo")),
                     "tuning_map" to ParsedList(
                         MutableList(radix) { i: Int ->
-                            ParsedList(
-                                mutableListOf(
-                                    ParsedInt(i),
-                                    ParsedInt(radix)
+                            ParsedHashMap(
+                                hashMapOf(
+                                    "first" to ParsedInt(i),
+                                    "second" to ParsedInt(radix)
                                 )
                             )
                         }
@@ -150,10 +147,6 @@ class OpusManagerGeneralizer {
             val line_tree = OpusTreeGeneralizer.from_v1_json(input.get_list("channels").get_hashmap(0).get_list("lines").get_hashmap(0)) { null }
             val beat_count = line_tree.size
 
-            // Set up ControlSet with Tempo Controller
-            val controllers = ActiveControlSet(beat_count)
-            controllers.new_controller(ControlEventType.Tempo, TempoController(beat_count))
-
             val channels = input.get_list("channels")
 
             return ParsedHashMap(
@@ -162,7 +155,22 @@ class OpusManagerGeneralizer {
                     "reflections" to input["reflections"],
                     "transpose" to input["transpose"],
                     "name" to input["name"],
-                    "controllers" to ActiveControlSetGeneralizer.to_json(controllers),
+                    "controllers" to ParsedList(
+                        mutableListOf(
+                            ParsedHashMap(
+                                hashMapOf(
+                                    "type" to ParsedString("Tempo"),
+                                    "initial_value" to ParsedHashMap(
+                                        hashMapOf(
+                                            "type" to ParsedString("com.qfs.pagan.opusmanager.OpusTempoEvent"),
+                                            "value" to ParsedFloat(input.get_float("tempo", 120F))
+                                        )
+                                    ),
+                                    "children" to ParsedList()
+                                )
+                            )
+                        )
+                    ),
                     "channels" to ParsedList(
                         MutableList(channels.list.size) { i: Int ->
                             OpusChannelGeneralizer.convert_v1_to_v2(channels.get_hashmap(i))
@@ -201,6 +209,8 @@ class OpusManagerGeneralizer {
                     )
                 )
             }
+            val input_tuning_map = input_map.get_list("tuning_map")
+            val beat_count = channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("beats").list.size
 
             return ParsedHashMap(
                 hashMapOf(
@@ -208,10 +218,20 @@ class OpusManagerGeneralizer {
                     "d" to ParsedHashMap(
                         hashMapOf(
                             "title" to input_map["name"],
-                            "tuning_map" to input_map["tuning_map"],
+                            "tuning_map" to ParsedList(
+                                MutableList(input_tuning_map.list.size) { i: Int ->
+                                    val pair = input_tuning_map.get_hashmap(i)
+                                    ParsedList(
+                                        mutableListOf(
+                                            ParsedInt(pair.get_int("first")),
+                                            ParsedInt(pair.get_int("second"))
+                                        )
+                                    )
+                                }
+                            ),
                             "reflections" to input_map["reflections"],
                             "transpose" to input_map["transpose"],
-                            "controllers" to input_map["controllers"],
+                            "controllers" to ActiveControlSetGeneralizer.convert_v2_to_v3(input_map["controllers"] as ParsedList, beat_count),
                             "channels" to channels,
                             "percussion_channel" to OpusChannelGeneralizer.convert_v2_to_v3(
                                 input_channels.get_hashmap(input_channels.list.size - 1)

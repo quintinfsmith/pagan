@@ -1,9 +1,11 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.json.ParsedBoolean
+import com.qfs.json.ParsedFloat
 import com.qfs.json.ParsedHashMap
 import com.qfs.json.ParsedInt
 import com.qfs.json.ParsedList
+import com.qfs.json.ParsedString
 import com.qfs.pagan.CH_ADD
 import com.qfs.pagan.CH_CLOSE
 import com.qfs.pagan.CH_DOWN
@@ -215,12 +217,6 @@ class OpusChannelGeneralizer {
             val line_tree = OpusTreeGeneralizer.from_v1_json(input_map.get_list("lines").get_hashmap(0)) { null }
             val beat_count = line_tree.size
 
-            // Set up ControlSet with Tempo Controller
-            val controllers = ActiveControlSet(beat_count)
-            controllers.new_controller(ControlEventType.Tempo, TempoController(beat_count))
-            val controller = controllers.get_controller(ControlEventType.Tempo)
-            controller.set_initial_event(OpusTempoEvent(input_map.get_float("tempo", 120F)))
-
             val line_volumes = input_map.get_list("line_volumes")
 
             return ParsedHashMap(
@@ -231,36 +227,77 @@ class OpusChannelGeneralizer {
                     "line_static_values" to input_map["line_static_values"],
                     "line_controllers" to ParsedList(
                         MutableList(line_volumes.list.size) { i: Int ->
-                            val active_control_set = ActiveControlSet(beat_count)
-                            active_control_set.new_controller(ControlEventType.Volume, VolumeController(beat_count))
-                            active_control_set.get_controller(ControlEventType.Volume).set_initial_event(OpusVolumeEvent(line_volumes.get_int(i)))
-                            ActiveControlSetGeneralizer.to_json(active_control_set)
+                            ParsedList(
+                                MutableList(1) {
+                                    ParsedHashMap(
+                                        hashMapOf(
+                                            "type" to ParsedString("Volume"),
+                                            "initial_value" to ParsedHashMap(
+                                                hashMapOf(
+                                                    "type" to ParsedString("com.qfs.pagan.opusmanager.OpusVolumeEvent"),
+                                                    "value" to ParsedInt(line_volumes.get_int(i))
+                                                )
+                                            ),
+                                            "children" to ParsedList()
+                                        )
+                                    )
+                                }
+                            )
                         }
                     ),
-                    "channel_controllers" to ActiveControlSetGeneralizer.to_json(controllers),
-                    "lines" to input_map.get_list("lines")
+                    "channel_controllers" to ParsedList(
+                        mutableListOf(
+                            ParsedHashMap(
+                                hashMapOf(
+                                    "type" to ParsedString("Tempo"),
+                                    "initial_value" to ParsedHashMap(
+                                        hashMapOf(
+                                            "type" to ParsedString("com.qfs.pagan.opusmanager.OpusTempoEvent"),
+                                            "value" to ParsedFloat(input_map.get_float("tempo", 120F))
+                                        )
+                                    ),
+                                    "children" to ParsedList()
+                                )
+                            )
+                        )
+                    ),
+                    "lines" to input_map.get_list("lines"),
                 )
             )
         }
 
         fun convert_v2_to_v3(input_map: ParsedHashMap): ParsedHashMap {
+            println(input_map.to_string())
             val lines = input_map.get_list("lines")
+            val beat_count = lines.get_hashmap(0).get_list("children").list.size
             val midi_channel = input_map.get_int("midi_channel")
+            val new_controllers = if (input_map["channel_controllers"] != null) {
+                ActiveControlSetGeneralizer.convert_v2_to_v3(input_map["channel_controllers"] as ParsedList, beat_count)
+            } else {
+                null
+            }
             return ParsedHashMap(
                 hashMapOf(
                     "midi_channel" to input_map["midi_channel"],
                     "midi_bank" to input_map["midi_bank"],
                     "midi_program" to input_map["midi_program"],
-                    "controllers" to input_map["controllers"],
+                    "controllers" to null,
                     "lines" to ParsedList(
                         MutableList(lines.list.size) { i: Int ->
                             val child_list = lines.get_hashmap(i).get_list("children")
+                            val line_controllers = input_map.get_list("line_controllers").get_list(i)
                             val output_line = ParsedHashMap(
                                 hashMapOf(
-                                    "controllers" to input_map.get_list("line_controllers").get_hashmap(i),
+                                    "controllers" to ActiveControlSetGeneralizer.convert_v2_to_v3(line_controllers, beat_count),
                                     "beats" to ParsedList(
                                         MutableList(child_list.list.size) { j: Int ->
-                                            OpusTreeGeneralizer.convert_v1_to_v3(child_list.get_hashmapn(j))
+                                            OpusTreeGeneralizer.convert_v1_to_v3(child_list.get_hashmapn(j)) { event_map: ParsedHashMap ->
+                                                if (midi_channel == 9) {
+                                                    InstrumentEventParser.convert_v1_to_v3_percussion(event_map)
+                                                } else {
+                                                    InstrumentEventParser.convert_v1_to_v3_tuned(event_map)
+                                                }
+                                            }
                                         }
                                     )
                                 )

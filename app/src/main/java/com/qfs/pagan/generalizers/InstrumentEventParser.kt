@@ -1,6 +1,6 @@
 package com.qfs.pagan.opusmanager
-
 import com.qfs.json.ParsedHashMap
+import com.qfs.json.ParsedString
 
 class InstrumentEventParser {
     companion object {
@@ -22,6 +22,35 @@ when (event) {
             }
 
             return output
+        }
+
+        fun convert_v1_to_v3_tuned(input: ParsedHashMap): ParsedHashMap {
+            return if (input.get_boolean("relative", false)) {
+                ParsedHashMap(
+                    hashMapOf(
+                        "duration" to input["duration"],
+                        "type" to ParsedString("rel"),
+                        "offset" to input["note"]
+                    )
+                )
+            } else {
+                ParsedHashMap(
+                    hashMapOf(
+                        "duration" to input["duration"],
+                        "type" to ParsedString("abs"),
+                        "note" to input["note"]
+                    )
+                )
+            }
+        }
+
+        fun convert_v1_to_v3_percussion(input: ParsedHashMap): ParsedHashMap {
+            return ParsedHashMap(
+                hashMapOf(
+                    "duration" to input["duration"],
+                    "type" to ParsedString("perc"),
+                )
+            )
         }
 
         fun from_json(input: ParsedHashMap): InstrumentEvent {

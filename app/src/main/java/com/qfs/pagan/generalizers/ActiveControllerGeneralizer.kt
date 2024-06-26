@@ -4,14 +4,15 @@ import com.qfs.json.ParsedHashMap
 import com.qfs.json.ParsedInt
 import com.qfs.json.ParsedList
 import com.qfs.json.ParsedObject
+import com.qfs.json.ParsedString
 import com.qfs.pagan.generalizers.OpusTreeGeneralizer
 import com.qfs.pagan.structure.OpusTree
 
 class ActiveControllerGeneralizer {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
     companion object {
-        fun from_json(obj: ParsedHashMap): ActiveController {
-            val size = (obj.hash_map["size"] as ParsedInt).value
+        fun from_json(obj: ParsedHashMap, size: Int): ActiveController {
+            println(obj.to_string())
             val label = obj.get_string("type")
             val new_controller: ActiveController = when (label) {
                 "tempo" -> TempoController(size)
@@ -44,6 +45,36 @@ class ActiveControllerGeneralizer {
             return new_controller
         }
 
+        fun convert_v2_to_v3(input: ParsedHashMap): ParsedHashMap {
+            println("${input.to_string()}")
+            val input_children = input.get_list("children")
+            return ParsedHashMap(
+                hashMapOf(
+                    "events" to ParsedList(
+                        MutableList(input_children.list.size) { i: Int ->
+                            val pair = input_children.get_hashmap(i)
+                            ParsedList(
+                                mutableListOf(
+                                    pair["first"],
+                                    OpusTreeGeneralizer.convert_v1_to_v3(pair["second"] as ParsedHashMap) { input_event: ParsedHashMap ->
+                                        OpusControlEventParser.convert_v2_to_v3(input_event)
+                                    }
+                                )
+                            )
+                        }
+                    ),
+                    "type" to ParsedString(
+                        when (input.get_string("type")) {
+                            "Tempo" -> "tempo"
+                            "Volume" -> "volume"
+                            else -> throw Exception() // Nothing else was implemented
+                        }
+                    ),
+                    "initial" to OpusControlEventParser.convert_v2_to_v3(input.get_hashmap("initial_value")),
+                )
+            )
+        }
+
         fun to_json(controller: ActiveController): ParsedHashMap {
             val map = ParsedHashMap()
             val event_list = ParsedList()
@@ -64,8 +95,6 @@ class ActiveControllerGeneralizer {
             }
 
             map["events"] = event_list
-            println("!! $controller")
-            println("!!2 ${controller.initial_event}")
             map["initial"] = OpusControlEventParser.to_json(controller.initial_event)
             map["type"] = when (controller) {
                 is TempoController -> "tempo"

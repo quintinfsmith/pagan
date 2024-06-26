@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.json.ParsedHashMap
+import com.qfs.json.ParsedInt
 
 class OpusControlEventParser {
     companion object {
@@ -17,6 +18,22 @@ class OpusControlEventParser {
                     output["wetness"] = input.value
                 }
             }
+            return output
+        }
+
+        fun convert_v2_to_v3(input: ParsedHashMap): ParsedHashMap {
+            val output = ParsedHashMap()
+            when (input.get_string("type")) {
+                "com.qfs.pagan.opusmanager.OpusTempoEvent" -> {
+                    output["tempo"] = input["value"]
+                }
+                "com.qfs.pagan.opusmanager.OpusVolumeEvent" -> {
+                    output["volume"] = input["value"]
+                    output["transition"] = ParsedInt(0)
+                }
+                else -> throw Exception() // Unreachable, nothing else was implemented
+            }
+
             return output
         }
 

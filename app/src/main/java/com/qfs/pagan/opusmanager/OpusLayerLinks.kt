@@ -366,7 +366,11 @@ open class OpusLayerLinks : OpusLayerBase() {
 
     override fun import_from_other(other: OpusLayerBase) {
         super.import_from_other(other)
-        for (i in (other as OpusLayerLinks).link_pools.indices) {
+        if (other !is OpusLayerLinks) {
+            return
+        }
+
+        for (i in other.link_pools.indices) {
             val pool = other.link_pools[i]
             this.link_pools.add(pool)
             for (beatkey in pool) {

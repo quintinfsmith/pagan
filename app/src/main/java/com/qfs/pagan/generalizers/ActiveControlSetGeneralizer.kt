@@ -1,6 +1,7 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.json.ParsedHashMap
+import com.qfs.json.ParsedInt
 import com.qfs.json.ParsedList
 
 class ActiveControlSetGeneralizer() {
@@ -9,8 +10,8 @@ class ActiveControlSetGeneralizer() {
         fun from_json(json_obj: ParsedHashMap): ActiveControlSet {
             val size = json_obj.get_int("beat_count")
             val control_set = ActiveControlSet(size)
-            for (json_controller in json_obj.get_list("controllers").list) {
-                val controller = ActiveControllerGeneralizer.from_json(json_controller as ParsedHashMap)
+            for (json_controller in json_obj.get_listn("controllers")?.list ?: listOf()) {
+                val controller = ActiveControllerGeneralizer.from_json(json_controller as ParsedHashMap, size)
                 val key = when (controller) {
                     is TempoController -> ControlEventType.Tempo
                     is VolumeController -> ControlEventType.Volume
@@ -32,9 +33,21 @@ class ActiveControlSetGeneralizer() {
                     ActiveControllerGeneralizer.to_json(controllers[it])
                 }
             )
-            
 
             return output
+        }
+
+        fun convert_v2_to_v3(input: ParsedList, beat_count: Int): ParsedHashMap {
+            return ParsedHashMap(
+                hashMapOf(
+                    "beat_count" to ParsedInt(beat_count),
+                    "controllers" to ParsedList(
+                        MutableList(input.list.size) { i: Int ->
+                            ActiveControllerGeneralizer.convert_v2_to_v3(input.get_hashmap(i))
+                        }
+                    )
+                )
+            )
         }
     }
 }

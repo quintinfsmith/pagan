@@ -46,13 +46,18 @@ class OpusTreeGeneralizer {
                 if (divisions != null) {
                     for (i in divisions.list.indices) {
                         val pair = divisions.get_list(i)
-                        new_tree[pair.get_int(0)] = from_json(pair.get_hashmap(1), event_generalizer_callback)
+                        println(pair.to_string())
+                        if (pair.get_hashmapn(1) != null) {
+                            new_tree[pair.get_int(0)] = from_json(
+                                pair.get_hashmap(1),
+                                event_generalizer_callback
+                            )
+                        }
                     }
                 }
             }
             return new_tree
         }
-
 
         fun <T> from_v1_json(input: ParsedHashMap, event_generalizer_callback: (ParsedHashMap?) -> T?): OpusTree<T> {
             val new_tree = OpusTree<T>()
@@ -95,7 +100,7 @@ class OpusTreeGeneralizer {
             return ParsedHashMap(map)
         }
 
-        fun convert_v1_to_v3(input: ParsedHashMap?): ParsedHashMap? {
+        fun convert_v1_to_v3(input: ParsedHashMap?, event_converter: (ParsedHashMap) -> ParsedHashMap?): ParsedHashMap? {
             if (input == null) {
                 return null
             }
@@ -104,7 +109,7 @@ class OpusTreeGeneralizer {
 
             val event_hashmap = input.get_hashmapn("event")
             if (event_hashmap != null) {
-                output["event"] = event_hashmap
+                output["event"] = event_converter(event_hashmap)
                 output["size"] = 0
                 output.set_null("divisions")
             } else {
@@ -117,7 +122,7 @@ class OpusTreeGeneralizer {
                         ParsedList(
                             mutableListOf(
                                 ParsedInt(position),
-                                convert_v1_to_v3(tmp_children.get_hashmapn(i))
+                                convert_v1_to_v3(tmp_children.get_hashmapn(i), event_converter)
                             )
                         )
                     }

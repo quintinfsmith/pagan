@@ -3,15 +3,26 @@
 */
 package com.qfs.pagan
 
+
+import com.qfs.apres.Midi
+import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.NoteOff
+import com.qfs.apres.event.NoteOn
+import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event.SetTempo
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
-import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,19 +31,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.qfs.apres.Midi
-import com.qfs.apres.event.MIDIEvent
-import com.qfs.apres.event.NoteOn
-import com.qfs.apres.event.NoteOff
-import com.qfs.apres.event.SetTempo
-import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.ProgramChange
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.InstrumentEvent
-import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.opusmanager.TunedInstrumentEvent
-
-
 import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
 class OpusLayerBaseUnitReTestAsOpusLayerLinks {
@@ -2177,20 +2175,20 @@ class OpusLayerBaseUnitReTestAsOpusLayerLinks {
             manager.swap_lines(0, 0, 1, 0)
         }
 
-        val p_line_a = manager.channels[1].lines[0]
-        val p_line_b = manager.channels[1].lines[1]
+        val p_line_a = manager.percussion_channel.lines[0]
+        val p_line_b = manager.percussion_channel.lines[1]
 
         manager.swap_lines(1, 0, 1, 1)
         assertEquals(
             "Failed to swap percussion lines",
             p_line_b,
-            manager.channels[1].lines[0]
+            manager.percussion_channel.lines[0]
         )
 
         assertEquals(
             "Failed to swap percussion lines",
             p_line_a,
-            manager.channels[1].lines[1]
+            manager.percussion_channel.lines[1]
         )
     }
 

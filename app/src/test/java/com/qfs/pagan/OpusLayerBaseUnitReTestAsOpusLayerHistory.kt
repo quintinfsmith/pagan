@@ -2865,13 +2865,13 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
     fun test_get_channel_count() {
         val manager = OpusManager()
         manager.new()
-        val original_channel_count = manager.channels.size
+        val original_channel_count = manager.channels.size + 1
         var line_count = original_channel_count // Start with 1 line each
 
-        for (i in 0 until 10) {
+        for (i in 1 until 10) {
             manager.new_channel()
             assertEquals(
-                i + original_channel_count + 1,
+                i + original_channel_count,
                 manager.get_channel_count()
             )
 

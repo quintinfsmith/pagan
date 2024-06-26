@@ -509,6 +509,7 @@ open class OpusLayerBase {
      * The last channel is now always used as percussion.
      */
     fun is_percussion(channel: Int): Boolean {
+        println("$channel || ${this.channels.size}")
         return channel == this.channels.size
     }
     //// END RO Functions ////
@@ -1664,6 +1665,16 @@ open class OpusLayerBase {
                 channel.controllers.new_controller(ControlEventType.Volume)
             }
         }
+
+        for (line in this.percussion_channel.lines) {
+            if (line.controllers.size() == 0) {
+                line.controllers.new_controller(ControlEventType.Volume)
+            }
+        }
+        if (this.percussion_channel.controllers.size() == 0) {
+            this.percussion_channel.controllers.new_controller(ControlEventType.Volume)
+        }
+
         if (this.controllers.size() == 0) {
             this.controllers.new_controller(ControlEventType.Tempo)
         }
@@ -1958,7 +1969,9 @@ open class OpusLayerBase {
             channel_sizes.add(1)
         }
 
-        this.new_channel(lines = channel_sizes[midi_channel_map[9]!!])
+        // TODO: REmove this line. ocmmented out since percussion_channel always exists now
+        //this.new_channel(lines = channel_sizes[midi_channel_map[9]!!])
+
 
         val sorted_channels = midi_channel_map.values.sortedBy { it }
         sorted_channels.forEachIndexed { i: Int, channel: Int ->
@@ -2403,15 +2416,26 @@ open class OpusLayerBase {
             }
         }
 
+        for (line_offset in this.percussion_channel.lines.indices) {
+            val keypair = Pair(this.channels.size, line_offset)
+            this._cached_abs_line_map.add(keypair)
+            this._cached_std_line_map[keypair] = y
+            y += 1
+        }
+
         this._cached_abs_line_map_map.clear()
         this._cached_inv_abs_line_map_map.clear()
+        // STD Channels ---------------------
+        var tmpx = 0
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
                 this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
                 this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
+                println("${tmpx++} STD ($channel_index, $line_offset)")
 
                 for ((type, _) in channel.lines[line_offset].controllers.controllers) {
+                    println("${tmpx++} LCTL $type ($channel_index, $line_offset)")
                     this._cached_abs_line_map_map.add(
                         Triple(
                             this._cached_std_line_map[keypair]!!,
@@ -2422,6 +2446,7 @@ open class OpusLayerBase {
                 }
             }
             for (type in channel.controllers.controllers.keys) {
+                println("${tmpx++} CCTL $type ($channel_index)")
                 this._cached_abs_line_map_map.add(
                     Triple(
                         channel_index,
@@ -2432,7 +2457,37 @@ open class OpusLayerBase {
             }
         }
 
+        // PERCUSSION Channel ---------------------------
+        for (line_offset in this.percussion_channel.lines.indices) {
+            val keypair = Pair(this.channels.size, line_offset)
+            this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
+            this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
+            println("${tmpx++} STD (P, $line_offset)")
+
+            for ((type, _) in this.percussion_channel.lines[line_offset].controllers.controllers) {
+                println("${tmpx++} LCTL $type (P, $line_offset)")
+                this._cached_abs_line_map_map.add(
+                    Triple(
+                        this._cached_std_line_map[keypair]!!,
+                        CtlLineLevel.Line,
+                        type
+                    )
+                )
+            }
+        }
+        for (type in this.percussion_channel.controllers.controllers.keys) {
+            println("${tmpx++} CCTL $type (P)")
+            this._cached_abs_line_map_map.add(
+                Triple(
+                    this.channels.size,
+                    CtlLineLevel.Channel,
+                    type
+                )
+            )
+        }
+        // ------------------------------------------------------
         for (type in this.controllers.controllers.keys) {
+            println("${tmpx++} GCTL $type")
             this._cached_abs_line_map_map.add(
                 Triple(
                     -1,

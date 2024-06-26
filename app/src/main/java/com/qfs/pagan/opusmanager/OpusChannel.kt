@@ -99,8 +99,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<U> {
-        println("L LEN: ${this.lines.size}")
-        println("B LEN: ${this.lines[line].beats.size}")
         var tree = this.lines[line].beats[beat]
         if (position != null) {
             for (i in position) {

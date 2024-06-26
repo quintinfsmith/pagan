@@ -42,7 +42,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(var beats: MutableList<OpusT
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is OpusLine) {
+        if (other !is OpusLineAbstract<*>) {
             return false
         }
 

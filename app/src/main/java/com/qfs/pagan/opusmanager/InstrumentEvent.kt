@@ -2,6 +2,9 @@ package com.qfs.pagan.opusmanager
 
 abstract class InstrumentEvent(var duration: Int = 1) {
     abstract fun copy(): InstrumentEvent
+    override fun equals(other: Any?): Boolean {
+        return other is InstrumentEvent && other.duration == this.duration
+    }
 }
 
 abstract class TunedInstrumentEvent(duration: Int): InstrumentEvent(duration)
@@ -12,6 +15,10 @@ class AbsoluteNoteEvent(var note: Int, duration: Int = 1): TunedInstrumentEvent(
         output.duration = this.duration
         return output
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is AbsoluteNoteEvent && this.note == other.note && super.equals(other)
+    }
 }
 
 class RelativeNoteEvent(var offset: Int, duration: Int = 1): TunedInstrumentEvent(duration) {
@@ -20,6 +27,9 @@ class RelativeNoteEvent(var offset: Int, duration: Int = 1): TunedInstrumentEven
         output.duration = this.duration
         return output
     }
+    override fun equals(other: Any?): Boolean {
+        return other is RelativeNoteEvent && this.offset == other.offset && super.equals(other)
+    }
 }
 
 class PercussionEvent(duration: Int = 1): InstrumentEvent(duration) {
@@ -27,5 +37,9 @@ class PercussionEvent(duration: Int = 1): InstrumentEvent(duration) {
         val output = PercussionEvent()
         output.duration = this.duration
         return output
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is PercussionEvent && super.equals(other)
     }
 }

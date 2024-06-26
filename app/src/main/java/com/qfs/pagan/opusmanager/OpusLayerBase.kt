@@ -2051,8 +2051,16 @@ open class OpusLayerBase {
             }
         }
 
-        // Reduce 
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+        // Reduce
+        val all_channels = List(this.channels.size + 1) { i: Int ->
+            if (i < this.channels.size) {
+                this.channels[i]
+            } else {
+                this.percussion_channel
+            }
+        }
+
+        all_channels.forEachIndexed { i: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {
                     val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())

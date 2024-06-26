@@ -230,7 +230,12 @@ open class OpusLayerBase {
      * Get the midi instrument current used by Channel [channel]
      */
     fun get_channel_instrument(channel: Int): Pair<Int, Int> {
-        return this.channels[channel].get_instrument()
+        return if (this.is_percussion(channel)) {
+            this.percussion_channel.get_instrument()
+        } else {
+            this.channels[channel].get_instrument()
+        }
+
     }
 
     /**

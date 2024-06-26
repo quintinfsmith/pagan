@@ -87,10 +87,14 @@ class ChannelOptionAdapter(
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
 
-        val curChannel = opus_manager.channels[position]
+        val curChannel = if (opus_manager.is_percussion(position)) {
+            opus_manager.percussion_channel
+        } else {
+            opus_manager.channels[position]
+        }
 
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
-        val key = Pair(curChannel.midi_bank, curChannel.midi_program)
+        val key = Pair(curChannel.get_midi_bank(), curChannel.midi_program)
         val label = this._supported_instruments[key] ?: if (this._opus_manager.is_percussion(position)) {
             activity.resources.getString(R.string.unknown_percussion)
         } else {
@@ -160,17 +164,11 @@ class ChannelOptionAdapter(
 
         val remove_button = (view as ViewGroup).getChildAt(1) as TextView
         remove_button.text = this.get_percussion_visibility_button_text()
-
     }
 
     private fun interact_btnRemoveChannel(view: BackLinkView) {
-        if (this._opus_manager.channels.size > 1) {
-            val activity = this.get_activity()
-
-            val x = view.view_holder?.bindingAdapterPosition ?: return
-            this._opus_manager.remove_channel(x)
-
-        }
+        val x = view.view_holder?.bindingAdapterPosition ?: return
+        this._opus_manager.remove_channel(x)
     }
 
     private fun interact_btnChooseInstrument(view: BackLinkView) {
@@ -198,7 +196,7 @@ class ChannelOptionAdapter(
     }
 
     private fun set_channel_instrument(channel: Int, bank: Int, program: Int) {
-        this._opus_manager.set_channel_instrument(channel, Pair(bank, program))
+        this._opus_manager.set_channel_instrument(channel, Pair(program, bank))
     }
 
     override fun getItemCount(): Int {
@@ -228,7 +226,7 @@ class ChannelOptionAdapter(
         this.notifyDataSetChanged()
     }
     fun setup() {
-        this._channel_count = this._opus_manager.channels.size
+        this._channel_count = this._opus_manager.channels.size + 1
         this.notifyDataSetChanged()
     }
 }

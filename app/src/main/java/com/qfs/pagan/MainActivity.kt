@@ -1336,27 +1336,34 @@ class MainActivity : AppCompatActivity() {
 
             }
         } else {
-            val opus_channel = this.get_opus_manager().channels[index]
-            this._midi_interface.broadcast_event(BankSelect(opus_channel.midi_channel, opus_channel.midi_bank))
-            this._midi_interface.broadcast_event(ProgramChange(opus_channel.midi_channel, opus_channel.midi_program))
+            val opus_manager = this.get_opus_manager()
+            val opus_channel = if (opus_manager.is_percussion(index)) {
+                opus_manager.percussion_channel
+            } else {
+                opus_manager.channels[index]
+            }
+            val midi_channel = opus_channel.get_midi_channel()
+            val (midi_program, midi_bank) = opus_channel.get_instrument()
+            this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
+            this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
             if (this._feedback_sample_manager != null) {
                 this._feedback_sample_manager!!.select_bank(
-                    opus_channel.midi_channel,
-                    opus_channel.midi_bank,
+                    midi_channel,
+                    midi_bank,
                 )
                 this._feedback_sample_manager!!.change_program(
-                    opus_channel.midi_channel,
-                    opus_channel.midi_program,
+                    midi_channel,
+                    midi_program,
                 )
             }
             if (this.sample_handle_manager != null) {
                 this.sample_handle_manager!!.select_bank(
-                    opus_channel.midi_channel,
-                    opus_channel.midi_bank,
+                    midi_channel,
+                    midi_bank,
                 )
                 this.sample_handle_manager!!.change_program(
-                    opus_channel.midi_channel,
-                    opus_channel.midi_program,
+                    midi_channel,
+                    midi_program,
                 )
             }
         }

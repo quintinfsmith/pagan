@@ -1090,14 +1090,21 @@ open class OpusLayerHistory : OpusLayerLinks() {
     private fun <T> push_rebuild_channel(channel: Int, callback: () -> T): T {
         return this._remember {
             val tmp_history_nodes = mutableListOf<Pair<HistoryToken, List<Any>>>()
-            val line_count = this.channels[channel].lines.size
+            val working_channel = if (this.is_percussion(channel)) {
+                // TODO: Specify Exception
+                throw Exception()
+            } else {
+                this.channels[channel]
+            }
+
+            val line_count = working_channel.lines.size
             // Will be an extra empty line that needs to be removed
             tmp_history_nodes.add(Pair( HistoryToken.REMOVE_LINE, listOf(channel, line_count) ))
             for (i in line_count - 1 downTo 0) {
                 tmp_history_nodes.add(
                     Pair(
                         HistoryToken.INSERT_LINE,
-                        listOf( channel, i, this.channels[channel].lines[i] )
+                        listOf(channel, i, working_channel.lines[i])
                     )
                 )
             }
@@ -1107,9 +1114,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     HistoryToken.NEW_CHANNEL,
                     listOf(
                         channel,
-                        this.channels[channel].uuid,
-                        this.channels[channel].midi_bank,
-                        this.channels[channel].midi_program
+                        working_channel.uuid,
+                        working_channel.get_midi_bank(),
+                        working_channel.get_midi_program()
                     )
                 )
             )
@@ -1285,7 +1292,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_INSTRUMENT,
-                listOf(channel, this.channels[channel].get_instrument())
+                listOf(channel, this.get_channel_instrument(channel))
             )
             super.set_channel_instrument(channel, instrument)
         }

@@ -265,8 +265,8 @@ class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePerc
     companion object {
         const val DEFAULT_INSTRUMENT = 0
     }
+
     override fun gen_line(): OpusLinePercussion {
-        println("NEW LINE: ${this.get_beat_count()}")
         return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 
@@ -283,10 +283,5 @@ class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePerc
     }
     override fun get_midi_bank(): Int {
         return 128
-    }
-
-    override fun equals(other: Any?): Boolean {
-        println("_____")
-        return super.equals(other)
     }
 }

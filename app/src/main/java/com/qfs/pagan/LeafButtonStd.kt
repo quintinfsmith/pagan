@@ -22,13 +22,12 @@ class LeafButtonStd(
     context: Context,
     initial_radix: Int,
     private var _event: InstrumentEvent?,
-    var position: List<Int>,
-    is_percussion: Boolean
+    var position: List<Int>
 ) : LeafButton(ContextThemeWrapper(context, R.style.leaf)) {
 
     init {
         this.minimumHeight = resources.getDimension(R.dimen.line_height).roundToInt()
-        this.set_text(is_percussion, initial_radix)
+        this.set_text(initial_radix)
     }
 
     override fun get_tint_list(): IntArray {
@@ -148,7 +147,7 @@ class LeafButtonStd(
         }
     }
 
-    private fun set_text(is_percussion: Boolean, _radix: Int? = null) {
+    private fun set_text(_radix: Int? = null) {
         val event = this._event
         val base_context = (this.context as ContextThemeWrapper).baseContext
         val radix = _radix ?: this.get_opus_manager().tuning_map.size
@@ -252,9 +251,14 @@ class LeafButtonStd(
         val new_state = mutableListOf<Int>()
         if (tree.is_event()) {
             new_state.add(R.attr.state_active)
-            val abs_value = opus_manager.get_absolute_value(beat_key, position)
-            if (abs_value == null || abs_value < 0) {
-                new_state.add(R.attr.state_invalid)
+            when (tree.get_event()) {
+                is RelativeNoteEvent -> {
+                    val abs_value = opus_manager.get_absolute_value(beat_key, position)
+                    if (abs_value == null || abs_value < 0) {
+                        new_state.add(R.attr.state_invalid)
+                    }
+                }
+                else -> {}
             }
         // Commenting out OpusLayerOverlapControl functionality so I can merge changes to import_midi
         //} else if (opus_manager.is_tree_blocked(beat_key, position)) {

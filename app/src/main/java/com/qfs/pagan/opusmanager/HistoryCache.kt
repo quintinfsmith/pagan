@@ -38,13 +38,13 @@ class HistoryCache {
     // Keep track of all history as one group
     fun <T> remember(callback: () -> T): T {
         this._open_multi()
-        try {
-            val output = callback()
-            this._close_multi()
-            return output
-        } catch (e: Exception) {
-            throw HistoryError(e, this.cancel_multi())
-        }
+        val output = callback()
+        this._close_multi()
+        return output
+        //try {
+        //} catch (e: Exception) {
+        //    throw HistoryError(e, this.cancel_multi())
+        //}
     }
 
     // Run a callback with logging history

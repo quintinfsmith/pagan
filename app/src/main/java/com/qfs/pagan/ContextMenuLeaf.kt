@@ -325,7 +325,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         opus_manager.set_event_at_cursor(
-            if (opus_manager.relative_mode != 0) {
+            if (opus_manager.relative_mode == 0) {
                 AbsoluteNoteEvent(value, duration)
             } else {
                 RelativeNoteEvent(value, duration)
@@ -385,7 +385,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         opus_manager.set_event_at_cursor(
-            if (opus_manager.relative_mode != 0) {
+            if (opus_manager.relative_mode == 0) {
                 AbsoluteNoteEvent(value, duration)
             } else {
                 RelativeNoteEvent(value, duration)

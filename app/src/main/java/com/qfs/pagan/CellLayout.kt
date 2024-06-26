@@ -120,8 +120,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                         this.context,
                         opus_manager.tuning_map.size,
                         tree.get_event() as InstrumentEvent?,
-                        position,
-                        this.is_percussion()
+                        position
                     )
                 }
                 CtlLineLevel.Global -> {

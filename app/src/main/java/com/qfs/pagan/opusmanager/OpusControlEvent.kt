@@ -1,6 +1,6 @@
 package com.qfs.pagan.opusmanager
 
-abstract class OpusControlEvent
+abstract class OpusControlEvent: OpusEvent()
 
 enum class ControlEventType {
     Tempo,

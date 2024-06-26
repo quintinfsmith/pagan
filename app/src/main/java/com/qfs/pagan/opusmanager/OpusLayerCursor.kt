@@ -536,12 +536,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
                             args[1] as Int,
                             this.channels[channel].size - 1
                         )
+
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_ROW,
-                            listOf(
-                                channel,
-                                max(0, line_offset - 1)
-                            )
+                            listOf(channel, max(0, line_offset - 1))
                         )
                     }
 

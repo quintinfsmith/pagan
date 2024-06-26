@@ -996,7 +996,6 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             }
         }
 
-
         val manager = OpusManager()
         manager.import_midi(midi)
 
@@ -2868,10 +2867,10 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         val original_channel_count = manager.channels.size + 1
         var line_count = original_channel_count // Start with 1 line each
 
-        for (i in 1 until 10) {
+        for (i in 0 until 10) {
             manager.new_channel()
             assertEquals(
-                i + original_channel_count,
+                i + original_channel_count + 1,
                 manager.get_channel_count()
             )
 

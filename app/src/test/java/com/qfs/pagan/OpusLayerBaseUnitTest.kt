@@ -458,9 +458,9 @@ class OpusLayerBaseUnitTest {
     fun test_new_channel() {
         val manager = OpusManager()
         manager.new()
-        assertEquals(2, manager.channels.size)
+        assertEquals(2, manager.get_channel_count())
         manager.new_channel(lines=0)
-        assertEquals(3, manager.channels.size)
+        assertEquals(3, manager.get_channel_count())
         assertEquals(0, manager.channels[1].size)
     }
 
@@ -2861,7 +2861,7 @@ class OpusLayerBaseUnitTest {
     fun test_get_channel_count() {
         val manager = OpusManager()
         manager.new()
-        val original_channel_count = manager.channels.size
+        val original_channel_count = manager.channels.size + 1
         var line_count = original_channel_count // Start with 1 line each
 
         for (i in 0 until 10) {

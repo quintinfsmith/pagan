@@ -1021,6 +1021,9 @@ open class OpusLayerBase {
             val tmp_value = this.percussion_channel.lines[line_a].instrument
             this.percussion_channel.lines[line_a].instrument = this.percussion_channel.lines[line_b].instrument
             this.percussion_channel.lines[line_b].instrument = tmp_value
+            val tmp_line = this.percussion_channel.lines[line_a]
+            this.percussion_channel.lines[line_a] = this.percussion_channel.lines[line_b]
+            this.percussion_channel.lines[line_b] = tmp_line
         } else {
             val tmp_line = this.channels[channel_a].lines[line_a]
             this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]

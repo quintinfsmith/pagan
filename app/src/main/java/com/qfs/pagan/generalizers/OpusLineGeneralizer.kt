@@ -4,6 +4,7 @@ import com.qfs.json.ParsedHashMap
 import com.qfs.json.ParsedInt
 import com.qfs.json.ParsedList
 import com.qfs.pagan.generalizers.OpusTreeGeneralizer
+import com.qfs.pagan.structure.OpusTree
 
 class OpusLineGeneralizer {
     companion object {
@@ -33,15 +34,23 @@ class OpusLineGeneralizer {
 
         fun percussion_line(input: ParsedHashMap): OpusLinePercussion {
             val beats = input.get_list("beats")
+            println("VV----------------------")
+            println("${input.to_string()}")
+            println("^^-----------------------")
             return OpusLinePercussion(
                 input.get_int("instrument"),
                 MutableList(beats.list.size) { i: Int ->
-                    OpusTreeGeneralizer.from_json(beats.get_hashmap(i)) { event: ParsedHashMap? ->
-                        if (event != null) {
-                            InstrumentEventParser.from_json(event) as PercussionEvent
-                        } else {
-                            null
+                    val beat_hashmap = beats.get_hashmapn(i)
+                    if (beat_hashmap != null) {
+                        OpusTreeGeneralizer.from_json(beat_hashmap) { event: ParsedHashMap? ->
+                            if (event != null) {
+                                InstrumentEventParser.from_json(event) as PercussionEvent
+                            } else {
+                                null
+                            }
                         }
+                    } else {
+                        OpusTree()
                     }
                 }
             )

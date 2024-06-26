@@ -2812,6 +2812,7 @@ open class OpusLayerBase {
         this._cached_abs_line_map = other._cached_abs_line_map
         this._cached_std_line_map = other._cached_std_line_map
         this.controllers = other.controllers
+        this.percussion_channel = other.percussion_channel
     }
 
     open fun new_global_controller(type: ControlEventType) {

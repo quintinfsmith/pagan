@@ -71,20 +71,17 @@ class OpusManagerGeneralizer {
         fun interpret(input: ParsedHashMap): OpusManager {
             val inner_map = input["d"] as ParsedHashMap
             val opus_manager = OpusManager()
-            opus_manager.set_project_name(inner_map.get_stringn("project_name"))
+            opus_manager.set_project_name(inner_map.get_stringn("title"))
             opus_manager.transpose = inner_map.get_int("transpose", 0)
 
             opus_manager.channels.clear()
             for (generalized_channel in inner_map.get_list("channels").list) {
-                when (val channel = OpusChannelGeneralizer.interpret(generalized_channel as ParsedHashMap)) {
-                    is OpusChannel -> {
-                        opus_manager.add_channel(channel)
-                    }
-                    is OpusPercussionChannel -> {
-                        opus_manager.percussion_channel = channel
-                    }
-                }
+                opus_manager.add_channel(
+                    OpusChannelGeneralizer.interpret(generalized_channel as ParsedHashMap) as OpusChannel
+                )
             }
+            opus_manager.percussion_channel = OpusChannelGeneralizer.interpret(inner_map.get_hashmap("percussion_channel")) as OpusPercussionChannel
+
 
             val generalized_tuning_map = inner_map.get_list("tuning_map")
             opus_manager.tuning_map = Array(generalized_tuning_map.list.size) { i: Int ->

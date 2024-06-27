@@ -87,11 +87,7 @@ class ChannelOptionAdapter(
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
 
-        val curChannel = if (opus_manager.is_percussion(position)) {
-            opus_manager.percussion_channel
-        } else {
-            opus_manager.channels[position]
-        }
+        val curChannel = opus_manager.get_channel(position)
 
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.get_midi_bank(), curChannel.midi_program)

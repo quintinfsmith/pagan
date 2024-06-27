@@ -46,7 +46,6 @@ class OpusTreeGeneralizer {
                 if (divisions != null) {
                     for (i in divisions.list.indices) {
                         val pair = divisions.get_list(i)
-                        println(pair.to_string())
                         if (pair.get_hashmapn(1) != null) {
                             new_tree[pair.get_int(0)] = from_json(
                                 pair.get_hashmap(1),

@@ -230,12 +230,7 @@ open class OpusLayerBase {
      * Get the midi instrument current used by Channel [channel]
      */
     fun get_channel_instrument(channel: Int): Pair<Int, Int> {
-        return if (this.is_percussion(channel)) {
-            this.percussion_channel.get_instrument()
-        } else {
-            this.channels[channel].get_instrument()
-        }
-
+        return this.get_channel(channel).get_instrument()
     }
 
     /**
@@ -261,37 +256,22 @@ open class OpusLayerBase {
      * [position] defaults to null, indicating the root tree of the beat
      */
     fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<out InstrumentEvent> {
-        return if (beat_key.channel == this.channels.size) {
-            if (beat_key.line_offset > this.percussion_channel.size) {
-                throw BadBeatKey(beat_key)
-            }
-
-            this.percussion_channel.get_tree(
-                beat_key.line_offset,
-                beat_key.beat,
-                position ?: listOf()
-            )
-        } else if (beat_key.channel < this.channels.size) {
-            if (beat_key.line_offset > this.channels[beat_key.channel].size) {
-                throw BadBeatKey(beat_key)
-            }
-
-            this.channels[beat_key.channel].get_tree(
-                beat_key.line_offset,
-                beat_key.beat,
-                position ?: listOf()
-            )
-        } else {
+        val working_channel = this.get_channel(beat_key.channel)
+        if (beat_key.line_offset >= working_channel.size) {
             throw BadBeatKey(beat_key)
         }
-
+        return working_channel.get_tree(
+            beat_key.line_offset,
+            beat_key.beat,
+            position ?: listOf()
+        )
     }
 
     fun get_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
         if (channel >= this.channels.size) {
             throw InvalidChannel(channel)
         }
-        return this.channels[channel].get_ctl_tree(
+        return this.get_channel(channel).get_ctl_tree(
             type,
             beat,
             position ?: listOf()
@@ -303,11 +283,12 @@ open class OpusLayerBase {
             throw BadBeatKey(beat_key)
         }
 
-        if (beat_key.line_offset > this.channels[beat_key.channel].size) {
+        val working_channel = this.get_channel(beat_key.channel)
+        if (beat_key.line_offset > working_channel.size) {
             throw BadBeatKey(beat_key)
         }
 
-        return this.channels[beat_key.channel].get_ctl_tree(
+        return working_channel.get_ctl_tree(
             beat_key.line_offset,
             type,
             beat_key.beat,
@@ -432,11 +413,11 @@ open class OpusLayerBase {
     }
 
     fun get_channel_ctl_proceding_leaf_position(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
-        return this.channels[channel].controllers.get_controller(ctl_type).get_proceding_leaf_position(beat, position)
+        return this.get_channel(channel).controllers.get_controller(ctl_type).get_proceding_leaf_position(beat, position)
     }
 
     fun get_line_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
-        return this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller(ctl_type).get_proceding_leaf_position(beat_key.beat, position)
+        return this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller(ctl_type).get_proceding_leaf_position(beat_key.beat, position)
     }
 
     /**
@@ -514,7 +495,6 @@ open class OpusLayerBase {
      * The last channel is now always used as percussion.
      */
     fun is_percussion(channel: Int): Boolean {
-        println("$channel || ${this.channels.size}")
         return channel == this.channels.size
     }
     //// END RO Functions ////
@@ -873,11 +853,7 @@ open class OpusLayerBase {
     }
 
     private fun set_channel_program(channel: Int, program: Int) {
-        if (this.is_percussion(channel)) {
-            this.percussion_channel.set_midi_program(program)
-        } else {
-            this.channels[channel].set_midi_program(program)
-        }
+        this.get_channel(channel).set_midi_program(program)
     }
 
     private fun set_channel_bank(channel: Int, bank: Int) {
@@ -1050,6 +1026,7 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
         }
+        this.percussion_channel.insert_beat(beat_index)
 
         this.controllers.insert_beat(beat_index)
 
@@ -1069,17 +1046,26 @@ open class OpusLayerBase {
         }
     }
 
-    open fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
-        this.channels[channel].insert_line(line_offset, line)
+    open fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
+        if (line is OpusLine) {
+            if (this.is_percussion(channel)) {
+                // TODO: Specify Exception
+                throw Exception()
+            }
+            this.channels[channel].insert_line(line_offset, line)
+        } else if (line is OpusLinePercussion) {
+            if (!this.is_percussion(channel)) {
+                // TODO: SpecifyException
+                throw Exception()
+            }
+            this.percussion_channel.insert_line(line_offset, line)
+        }
         this.recache_line_maps()
     }
 
     open fun new_line(channel: Int, line_offset: Int? = null): OpusLineAbstract<*> {
-        val output = if (this.is_percussion(channel)) {
-            this.percussion_channel.new_line(line_offset ?: this.percussion_channel.lines.size)
-        } else {
-            this.channels[channel].new_line(line_offset ?: this.channels[channel].lines.size)
-        }
+        val working_channel = this.get_channel(channel)
+        val output = working_channel.new_line(line_offset ?: working_channel.lines.size)
         this.recache_line_maps()
         return output
     }
@@ -1097,6 +1083,7 @@ open class OpusLayerBase {
         this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             channel.remove_beat(beat_index)
         }
+        this.percussion_channel.remove_beat(beat_index)
 
         for (controller in this.controllers.controllers.values) {
             controller.remove_beat(beat_index)
@@ -1177,8 +1164,8 @@ open class OpusLayerBase {
         this.replace_line_ctl_tree(type, beatkey_to, position_to, from_tree)
     }
 
-    open fun remove_line(channel: Int, line_offset: Int): OpusLine {
-        val output = this.channels[channel].remove_line(line_offset)
+    open fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
+        val output = this.get_channel(channel).remove_line(line_offset)
         this.recache_line_maps()
         return output
     }
@@ -1540,13 +1527,7 @@ open class OpusLayerBase {
 
         val file_obj = File(this.path!!)
 
-        val generalized_object = ParsedHashMap(
-            hashMapOf(
-                "d" to OpusManagerGeneralizer.generalize(this),
-                "v" to ParsedInt(3)
-            )
-        )
-
+        val generalized_object = OpusManagerGeneralizer.generalize(this)
         file_obj.writeText(generalized_object.to_string())
     }
 
@@ -1886,7 +1867,7 @@ open class OpusLayerBase {
 
                 val working_end = initial_position.toFloat() + ((working_numerator + event[2]).toFloat() / working_denominator.toFloat())
                 if (event[0] == 9) {
-                    val event_note = event[1] + 27
+                    val event_note = event[1]
                     if (!percussion_map.contains(event_note)) {
                         percussion_map[event_note] = blocked_percussion_ranges.size
                         blocked_percussion_ranges.add(mutableListOf())
@@ -1984,6 +1965,9 @@ open class OpusLayerBase {
         val sorted_channels = midi_channel_map.values.sortedBy { it }
         sorted_channels.forEachIndexed { i: Int, channel: Int ->
             if (i == sorted_channels.size - 1) {
+                for (j in 0 until channel_sizes[channel]) {
+                    this.percussion_channel.new_line()
+                }
                 return@forEachIndexed
             }
             this.new_channel(lines = channel_sizes[channel])
@@ -2002,7 +1986,7 @@ open class OpusLayerBase {
 
                 // line_offset needs to be recalculated HERE for percussion as the percussion block map will change size during init
                 val adj_line_offset = if (event_channel == 9) {
-                    val event_note = event[1] + 27
+                    val event_note = event[1]
                     var re_adj_line_offset = 0
                     val coarse_index = percussion_map[event_note]!!
                     for (i in 0 until coarse_index) {
@@ -2011,7 +1995,7 @@ open class OpusLayerBase {
 
                     val new_offset = line_offset + re_adj_line_offset
                     // While we're here, set the percussions' instruments
-                    this.set_percussion_instrument(new_offset, event_note)
+                    this.set_percussion_instrument(new_offset, event_note - 27)
                     new_offset
                 } else {
                     line_offset
@@ -2045,8 +2029,8 @@ open class OpusLayerBase {
             if (event[0] == 9) {
                 this.set_percussion_event(beatkey, position)
             } else {
-                val event_note = event[1] + 21
-                if (event[1] + 21 in 0..127) {
+                val event_note = event[1] - 21
+                if (event_note in 0..127) {
                     this.set_event(
                         beatkey,
                         position,
@@ -2448,10 +2432,8 @@ open class OpusLayerBase {
                 val keypair = Pair(channel_index, line_offset)
                 this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
                 this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
-                println("${tmpx++} STD ($channel_index, $line_offset)")
 
                 for ((type, _) in channel.lines[line_offset].controllers.controllers) {
-                    println("${tmpx++} LCTL $type ($channel_index, $line_offset)")
                     this._cached_abs_line_map_map.add(
                         Triple(
                             this._cached_std_line_map[keypair]!!,
@@ -2462,7 +2444,6 @@ open class OpusLayerBase {
                 }
             }
             for (type in channel.controllers.controllers.keys) {
-                println("${tmpx++} CCTL $type ($channel_index)")
                 this._cached_abs_line_map_map.add(
                     Triple(
                         channel_index,
@@ -2478,10 +2459,8 @@ open class OpusLayerBase {
             val keypair = Pair(this.channels.size, line_offset)
             this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
             this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
-            println("${tmpx++} STD (P, $line_offset)")
 
             for ((type, _) in this.percussion_channel.lines[line_offset].controllers.controllers) {
-                println("${tmpx++} LCTL $type (P, $line_offset)")
                 this._cached_abs_line_map_map.add(
                     Triple(
                         this._cached_std_line_map[keypair]!!,
@@ -2492,7 +2471,6 @@ open class OpusLayerBase {
             }
         }
         for (type in this.percussion_channel.controllers.controllers.keys) {
-            println("${tmpx++} CCTL $type (P)")
             this._cached_abs_line_map_map.add(
                 Triple(
                     this.channels.size,
@@ -2503,7 +2481,6 @@ open class OpusLayerBase {
         }
         // ------------------------------------------------------
         for (type in this.controllers.controllers.keys) {
-            println("${tmpx++} GCTL $type")
             this._cached_abs_line_map_map.add(
                 Triple(
                     -1,
@@ -2734,12 +2711,12 @@ open class OpusLayerBase {
     }
 
     fun add_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
-        this.channels[channel].lines[line_offset].controllers.new_controller(type)
+        this.get_channel(channel).lines[line_offset].controllers.new_controller(type)
         this.recache_line_maps()
     }
 
     fun remove_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
-        this.channels[channel].lines[line_offset].controllers.remove_controller(type)
+        this.get_channel(channel).lines[line_offset].controllers.remove_controller(type)
         this.recache_line_maps()
     }
 
@@ -2760,12 +2737,12 @@ open class OpusLayerBase {
     }
 
     fun get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): OpusControlEvent {
-        val controller = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller(type)
+        val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller(type)
         return controller.get_latest_event(beat_key.beat, position)
     }
 
     fun get_current_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): OpusControlEvent {
-        val controller = this.channels[channel].controllers.get_controller(type)
+        val controller = this.get_channel(channel).controllers.get_controller(type)
         return controller.get_latest_event(beat, position)
     }
 
@@ -2780,22 +2757,28 @@ open class OpusLayerBase {
     }
 
     open fun set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: OpusControlEvent) {
-        val controller = this.channels[channel].controllers.get_controller(type)
+        val controller = this.get_channel(channel).controllers.get_controller(type)
         controller.initial_event = event
     }
 
     open fun set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: OpusControlEvent) {
-        val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
+        val controller = this.get_channel(channel).lines[line_offset].controllers.get_controller(type)
         controller.initial_event = event
     }
-
+    fun get_channel(channel: Int): OpusChannelAbstract<*, *> {
+        return if (this.is_percussion(channel)) {
+            this.percussion_channel
+        } else {
+            this.channels[channel]
+        }
+    }
     fun get_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int): OpusControlEvent {
-        val controller = this.channels[channel].lines[line_offset].controllers.get_controller(type)
+        val controller = this.get_channel(channel).lines[line_offset].controllers.get_controller(type)
         return controller.initial_event
     }
 
     fun get_channel_controller_initial_event(type: ControlEventType, channel: Int): OpusControlEvent {
-        val controller = this.channels[channel].controllers.get_controller(type)
+        val controller = this.get_channel(channel).controllers.get_controller(type)
         return controller.initial_event
     }
 
@@ -2805,8 +2788,7 @@ open class OpusLayerBase {
     }
 
     fun has_percussion(): Boolean {
-        val channel = this.channels[this.channels.size - 1]
-        return !channel.is_empty()
+        return !this.percussion_channel.is_empty()
     }
 
     open fun import_from_other(other: OpusLayerBase) {
@@ -2846,7 +2828,7 @@ open class OpusLayerBase {
             }
         }
 
-        return true
+        return this.percussion_channel == other.percussion_channel
     }
 
     fun add_channel(channel: OpusChannel) {
@@ -3043,4 +3025,13 @@ open class OpusLayerBase {
     //     }
     // }
 
+    fun get_all_channels(): List<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> {
+        return List(this.channels.size + 1) { i: Int ->
+            if (i < this.channels.size) {
+                this.channels[i]
+            } else {
+                this.percussion_channel
+            }
+        }
+    }
 }

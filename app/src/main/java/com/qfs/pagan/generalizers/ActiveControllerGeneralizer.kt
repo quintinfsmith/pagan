@@ -12,7 +12,6 @@ class ActiveControllerGeneralizer {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
     companion object {
         fun from_json(obj: ParsedHashMap, size: Int): ActiveController {
-            println(obj.to_string())
             val label = obj.get_string("type")
             val new_controller: ActiveController = when (label) {
                 "tempo" -> TempoController(size)
@@ -30,7 +29,9 @@ class ActiveControllerGeneralizer {
 
             for (pair in obj.get_list("events").list) {
                 val index = (pair as ParsedList).get_int(0)
-                new_controller.events[index] = OpusTreeGeneralizer.from_json(pair.get_hashmap(1)) { event: ParsedHashMap? ->
+                val value = pair.get_hashmapn(1) ?: continue
+
+                new_controller.events[index] = OpusTreeGeneralizer.from_json(value) { event: ParsedHashMap? ->
                     if (event == null) {
                         null
                     } else {
@@ -46,7 +47,6 @@ class ActiveControllerGeneralizer {
         }
 
         fun convert_v2_to_v3(input: ParsedHashMap): ParsedHashMap {
-            println("${input.to_string()}")
             val input_children = input.get_list("children")
             return ParsedHashMap(
                 hashMapOf(

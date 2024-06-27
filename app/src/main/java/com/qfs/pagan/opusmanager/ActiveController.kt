@@ -157,7 +157,7 @@ abstract class ActiveController(beat_count: Int) {
             for (i in current_beat_count until beat_count) {
                 this.insert_beat(current_beat_count)
             }
-        } else {
+        } else if (beat_count < current_beat_count) {
             for (i in beat_count until current_beat_count) {
                 this.remove_beat(current_beat_count - 1)
             }

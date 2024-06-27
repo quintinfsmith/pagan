@@ -80,7 +80,8 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             }
         }
 
-        this.button_remove.isEnabled = opus_manager.channels[channel].size > 1
+        val working_channel = opus_manager.get_channel(channel)
+        this.button_remove.isEnabled = working_channel.size > 1
 
         // Hiding volume control line for now (VOLCTLTMP)
         this.button_toggle_volume_control.visibility = View.GONE
@@ -93,7 +94,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         } else {
             // Hiding volume control line for now (VOLCTLTMP)
             //this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
-            val controller = opus_manager.channels[channel].lines[line_offset].controllers.get_controller(ControlEventType.Volume)
+            val controller = working_channel.lines[line_offset].controllers.get_controller(ControlEventType.Volume)
             this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
 
         }
@@ -241,9 +242,9 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         main.dialog_popup_menu(this.context.getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
             main.play_event(
-                opus_manager.channels.size - 1,
+                opus_manager.channels.size,
                 value,
-                opus_manager.get_line_volume(opus_manager.channels.size - 1, cursor.line_offset)
+                opus_manager.get_line_volume(opus_manager.channels.size, cursor.line_offset)
             )
         }
     }

@@ -44,20 +44,20 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-
             this.click_button_duration()
         }
+
         this.button_duration.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
             this.long_click_button_duration()
         }
+
         this.button_remove.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-
             this.click_button_remove()
         }
 
@@ -79,7 +79,6 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-
             this.click_button_split()
         }
 
@@ -87,7 +86,6 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
-
             this.long_click_button_split()
         }
 
@@ -95,7 +93,6 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-
             this.click_button_insert()
         }
 
@@ -103,7 +100,6 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
-
             this.long_click_button_insert()
         }
     }
@@ -214,10 +210,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     private fun _play_event(beat_key: BeatKey, position: List<Int>) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        if (event_note < 0) {
-            return
-        }
+        val event_note = opus_manager.get_percussion_instrument(beat_key.line_offset)
 
         main.play_event(
             beat_key.channel,

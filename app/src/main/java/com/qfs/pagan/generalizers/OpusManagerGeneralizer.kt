@@ -23,9 +23,6 @@ class OpusManagerGeneralizer {
                 channels.add(OpusChannelGeneralizer.generalize(channel))
             }
 
-            val project_name = opus_manager.project_name
-            output["project_name"] = project_name
-
             output["tuning_map"] = ParsedList(MutableList(opus_manager.tuning_map.size) { i: Int ->
                 ParsedList(
                     mutableListOf(
@@ -59,6 +56,17 @@ class OpusManagerGeneralizer {
             } else {
                 output["reflection"] = ParsedList()
             }
+            output["channels"] = ParsedList(
+                MutableList(opus_manager.channels.size) { i: Int ->
+                    OpusChannelGeneralizer.generalize(opus_manager.channels[i])
+                }
+            )
+            output["percussion_channel"] = OpusChannelGeneralizer.generalize(opus_manager.percussion_channel)
+            output["title"] = if (opus_manager.project_name == null) {
+                null
+            } else {
+                ParsedString(opus_manager.project_name!!)
+            }
 
             return ParsedHashMap(
                 hashMapOf(
@@ -75,6 +83,7 @@ class OpusManagerGeneralizer {
             opus_manager.transpose = inner_map.get_int("transpose", 0)
 
             opus_manager.channels.clear()
+
             for (generalized_channel in inner_map.get_list("channels").list) {
                 opus_manager.add_channel(
                     OpusChannelGeneralizer.interpret(generalized_channel as ParsedHashMap) as OpusChannel
@@ -92,6 +101,9 @@ class OpusManagerGeneralizer {
                 )
             }
             opus_manager.controllers = ActiveControlSetGeneralizer.from_json(inner_map.get_hashmap("controllers"))
+
+            // use percussion channel to calculate beat count since it's guaranteed to be there
+            opus_manager.set_beat_count(opus_manager.percussion_channel.lines[0].beats.size)
 
             val generalized_reflections = inner_map.get_list("reflections")
             for (i in 0 until generalized_reflections.list.size) {

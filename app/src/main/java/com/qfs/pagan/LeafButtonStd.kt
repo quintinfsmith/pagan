@@ -130,15 +130,15 @@ class LeafButtonStd(
 
             thread {
                 if (tree.is_event()) {
-                    val abs_value = opus_manager.get_absolute_value(beat_key, position)
-                    if ((abs_value != null) && abs_value >= 0) {
+                    val note = if (opus_manager.is_percussion(beat_key.channel)) {
+                        opus_manager.get_percussion_instrument(beat_key.line_offset)
+                    } else {
+                        opus_manager.get_absolute_value(beat_key, position) ?: return@thread
+                    }
+                    if (note >= 0) {
                         (editor_table.context as MainActivity).play_event(
                             beat_key.channel,
-                            if (opus_manager.is_percussion(beat_key.channel)) {
-                                opus_manager.get_percussion_instrument(beat_key.line_offset)
-                            } else {
-                                opus_manager.get_absolute_value(beat_key, position) ?: return@thread
-                            },
+                            note,
                             opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
                         )
                     }

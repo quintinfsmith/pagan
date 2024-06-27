@@ -208,24 +208,19 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     override fun equals(other: Any?): Boolean {
-        println("AAA")
         if (other !is OpusChannel) {
             return false
         }
 
-        println("BBB")
         if (this.lines.size != other.lines.size) {
             return false
         }
 
-        println("CCC")
         for (i in 0 until this.lines.size) {
             if (this.lines[i] != other.lines[i]) {
                 return false
             }
         }
-
-        println("DC")
 
         return true
     }

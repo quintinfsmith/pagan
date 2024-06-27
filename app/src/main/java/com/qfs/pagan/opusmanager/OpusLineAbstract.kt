@@ -68,7 +68,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(var beats: MutableList<OpusT
             for (i in original_size until new_beat_count) {
                 this.beats.add(OpusTree())
             }
-        } else {
+        } else if (new_beat_count < original_size) {
             for (i in new_beat_count until original_size) {
                 this.beats.removeLast()
             }

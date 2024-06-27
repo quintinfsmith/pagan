@@ -1281,6 +1281,7 @@ class MainActivity : AppCompatActivity() {
         } catch (e: SoundFont.InvalidPresetIndex) {
             return listOf()
         }
+
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()
 
         for ((_, preset_instrument) in preset.instruments) {
@@ -1308,40 +1309,37 @@ class MainActivity : AppCompatActivity() {
     fun update_channel_instruments(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (index == null) {
-            for (channel in opus_manager.channels) {
-                this._midi_interface.broadcast_event(BankSelect(channel.midi_channel, channel.midi_bank))
-                this._midi_interface.broadcast_event(ProgramChange(channel.midi_channel, channel.midi_program))
+            for (channel in opus_manager.get_all_channels()) {
+                val midi_channel = channel.get_midi_channel()
+                val (midi_program, midi_bank) = channel.get_instrument()
+                this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
+                this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
 
 
                 if (this._feedback_sample_manager != null) {
                     this._feedback_sample_manager!!.select_bank(
-                        channel.midi_channel,
-                        channel.midi_bank,
+                        midi_channel,
+                        midi_bank,
                     )
                     this._feedback_sample_manager!!.change_program(
-                        channel.midi_channel,
-                        channel.midi_program,
+                        midi_channel,
+                        midi_program,
                     )
                 }
                 if (this.sample_handle_manager != null) {
                     this.sample_handle_manager!!.select_bank(
-                        channel.midi_channel,
-                        channel.midi_bank,
+                        midi_channel,
+                        midi_bank,
                     )
                     this.sample_handle_manager!!.change_program(
-                        channel.midi_channel,
-                        channel.midi_program,
+                        midi_channel,
+                        midi_program,
                     )
                 }
 
             }
         } else {
-            val opus_manager = this.get_opus_manager()
-            val opus_channel = if (opus_manager.is_percussion(index)) {
-                opus_manager.percussion_channel
-            } else {
-                opus_manager.channels[index]
-            }
+            val opus_channel = opus_manager.get_channel(index)
             val midi_channel = opus_channel.get_midi_channel()
             val (midi_program, midi_bank) = opus_channel.get_instrument()
             this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
@@ -1385,7 +1383,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val opus_manager = this.get_opus_manager()
-        val midi_channel = opus_manager.channels[channel].midi_channel
+        val midi_channel = opus_manager.get_channel(channel).get_midi_channel()
 
         val radix = opus_manager.tuning_map.size
         val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
@@ -1497,9 +1495,7 @@ class MainActivity : AppCompatActivity() {
 
         this.update_channel_instruments()
 
-        if (this.get_opus_manager().channels.size > 0) {
-            this.populate_active_percussion_names()
-        }
+        this.populate_active_percussion_names()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()
 

@@ -22,7 +22,7 @@ import com.qfs.pagan.structure.OpusTree
 
 class OpusChannelGeneralizer {
     companion object {
-        fun generalize(channel: OpusChannel): ParsedHashMap {
+        fun generalize(channel: OpusChannelAbstract<*,*>): ParsedHashMap {
             val channel_map = ParsedHashMap()
             val lines = ParsedList(
                 MutableList(channel.size) { i: Int ->
@@ -31,7 +31,7 @@ class OpusChannelGeneralizer {
             )
             channel_map["lines"] = lines
             channel_map["midi_channel"] = channel.get_midi_channel()
-            channel_map["midi_bank"] = channel.midi_bank
+            channel_map["midi_bank"] = channel.get_midi_bank()
             channel_map["midi_program"] = channel.midi_program
 
             return channel_map
@@ -63,13 +63,13 @@ class OpusChannelGeneralizer {
 
         fun interpret(input_map: ParsedHashMap): OpusChannelAbstract<*,*> {
             val midi_channel = input_map.get_int("midi_channel")
-            println("MIC: $midi_channel")
             val channel = if (midi_channel == 9) {
                 _interpret_percussion(input_map)
             } else {
                 _interpret_std(input_map)
             }
 
+            channel.size = channel.lines.size
             channel.midi_program = input_map.get_int("midi_program")
 
             return channel
@@ -284,7 +284,6 @@ class OpusChannelGeneralizer {
         }
 
         fun convert_v2_to_v3(input_map: ParsedHashMap): ParsedHashMap {
-            println(input_map.to_string())
             val lines = input_map.get_list("lines")
             val beat_count = lines.get_hashmap(0).get_list("children").list.size
             val midi_channel = input_map.get_int("midi_channel")

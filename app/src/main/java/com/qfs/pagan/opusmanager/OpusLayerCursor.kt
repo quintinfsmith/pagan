@@ -8,7 +8,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     var cursor = OpusManagerCursor()
     private var _queued_cursor_selection: OpusManagerCursor? = null
 
-    override fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
         val bkp_cursor = this.cursor.copy()
@@ -39,7 +39,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_select_row(channel_b, line_b)
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): OpusLine {
+    override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
         // Need to clear cursor before change since the way the editor_table updates
         // Cursors doesn't take into account changes to row count
         val bkp_cursor = this.cursor.copy()
@@ -52,14 +52,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
 
         if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
-            if (bkp_cursor.channel < this.channels.size) {
-                if (bkp_cursor.line_offset < this.channels[bkp_cursor.channel].size) {
-                    this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
-                } else {
-                    this.cursor_select_row(bkp_cursor.channel, this.channels[bkp_cursor.channel].size - 1)
-                }
+            val working_channel = this.get_channel(bkp_cursor.channel)
+            if (bkp_cursor.line_offset < working_channel.size) {
+                this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
             } else {
-                this.cursor_select_row(this.channels.size - 1, this.channels.last().size - 1)
+                this.cursor_select_row(bkp_cursor.channel, working_channel.size - 1)
             }
         }
 
@@ -72,7 +69,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         super.new_channel(channel, lines, uuid)
 
-        val compare_channel = channel ?: (this.channels.size - 2)
+        val compare_channel = channel ?: (this.get_channel_count() - 1)
         when (bkp_cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor_select_column(bkp_cursor.beat)
@@ -534,7 +531,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         val channel = args[0] as Int
                         val line_offset = min(
                             args[1] as Int,
-                            this.channels[channel].size - 1
+                            this.get_channel(channel).size - 1
                         )
 
                         this.push_to_history_stack(

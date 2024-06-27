@@ -415,7 +415,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                         try {
                             opus_manager.convert_event_to_absolute()
                             val absolute_event = current_tree.get_event() as AbsoluteNoteEvent
-                            absolute_event.note
+                            abs(absolute_event.note)
                         } catch (e: Exception) {
                             opus_manager.set_event_at_cursor(AbsoluteNoteEvent(0))
                             0
@@ -433,9 +433,9 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     is AbsoluteNoteEvent -> {
                         opus_manager.convert_event_to_relative()
                         val rel_event = current_tree.get_event()!!
-                        (rel_event as RelativeNoteEvent).offset
+                        abs((rel_event as RelativeNoteEvent).offset)
                     }
-                    is RelativeNoteEvent -> event.offset
+                    is RelativeNoteEvent -> abs(event.offset)
                     else -> 0 // Unreachable
                 }
 
@@ -452,9 +452,9 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     is AbsoluteNoteEvent -> {
                         opus_manager.convert_event_to_relative()
                         val rel_event = current_tree.get_event()!!
-                        (rel_event as RelativeNoteEvent).offset
+                        abs((rel_event as RelativeNoteEvent).offset)
                     }
-                    is RelativeNoteEvent -> event.offset
+                    is RelativeNoteEvent -> abs(event.offset)
                     else -> 0 // Unreachable
                 }
 

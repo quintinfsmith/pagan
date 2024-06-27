@@ -34,9 +34,6 @@ class OpusLineGeneralizer {
 
         fun percussion_line(input: ParsedHashMap): OpusLinePercussion {
             val beats = input.get_list("beats")
-            println("VV----------------------")
-            println("${input.to_string()}")
-            println("^^-----------------------")
             return OpusLinePercussion(
                 input.get_int("instrument"),
                 MutableList(beats.list.size) { i: Int ->
@@ -60,11 +57,16 @@ class OpusLineGeneralizer {
             val beats = input.get_list("beats")
             return OpusLine(
                 MutableList(beats.list.size) { i: Int ->
-                    OpusTreeGeneralizer.from_json(beats.get_hashmap(i)) { event: ParsedHashMap? ->
-                        if (event != null) {
-                            InstrumentEventParser.from_json(event) as TunedInstrumentEvent
-                        } else {
-                            null
+                    val beat_map = beats.get_hashmapn(i)
+                    if (beat_map == null) {
+                        OpusTree()
+                    } else {
+                        OpusTreeGeneralizer.from_json(beat_map) { event: ParsedHashMap? ->
+                            if (event != null) {
+                                InstrumentEventParser.from_json(event) as TunedInstrumentEvent
+                            } else {
+                                null
+                            }
                         }
                     }
                 }

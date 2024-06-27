@@ -369,18 +369,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
             val output = super.new_line(channel, line_offset)
             this.push_remove_line(
                 channel,
-                line_offset ?: if (channel == this.channels.size) {
-                    this.percussion_channel.size
-                } else {
-                    (this.channels[channel].size)
-                }
+                line_offset ?: this.get_channel(channel).size - 1
             )
 
             output
         }
     }
 
-    override fun insert_line(channel: Int, line_offset: Int, line: OpusLine) {
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         this._remember {
             this.push_remove_line(channel, line_offset)
             super.insert_line(channel, line_offset, line)
@@ -403,13 +399,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
         //  AND should LastLineException be caught or allow to propagate here?
         this._remember {
             for (i in 0 until count) {
-                if (this.channels[channel].size == 0) {
+                if (this.get_channel(channel).size == 0) {
                     break
                 }
                 try {
                     this.remove_line(
                         channel,
-                        min(line_offset, this.channels[channel].size - 1)
+                        min(line_offset, this.get_channel(channel).size - 1)
                     )
                 } catch (e: OpusChannelAbstract.LastLineException) {
                     break
@@ -418,7 +414,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun remove_line(channel: Int, line_offset: Int): OpusLine {
+    override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
         return this._remember {
             val line = super.remove_line(channel, line_offset)
 
@@ -1121,12 +1117,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 )
             )
 
-            val output = callback()
             for ((token, args) in tmp_history_nodes) {
                 this.push_to_history_stack(token, args)
             }
 
-            output
+            callback()
         }
     }
 

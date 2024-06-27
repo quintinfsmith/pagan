@@ -13,8 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusLine
+import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.structure.OpusTree
@@ -137,7 +136,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val opus_manager = this.get_opus_manager()
         for (beat in 0 until opus_manager.beat_count) {
             this._column_width_map.add(mutableListOf<Int>())
-            opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
+            opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
                 for (j in channel.lines.indices) {
                     val tree = opus_manager.get_tree(BeatKey(i, j, beat))
                     if (tree.is_leaf()) {
@@ -261,8 +260,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun new_column(index: Int, ignore_ui: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         val column = mutableListOf<Int>()
-        opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
+        opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+            channel.lines.forEachIndexed { j: Int, line: OpusLineAbstract<*> ->
                 val tree = opus_manager.get_tree(BeatKey(i, j, index))
                 if (tree.is_leaf()) {
                     column.add(1)
@@ -791,7 +790,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         var count = 0
         var working_line_height = line_height
         val opus_manager = this.get_opus_manager()
-        for (channel in opus_manager.channels) {
+        for (channel in opus_manager.get_visible_channels()) {
             for (line in channel.lines) {
                 if (count >= y) {
                     break

@@ -171,20 +171,23 @@ class LeafButtonStd(
                 this.addView(sub_wrapper)
                 sub_wrapper.layoutParams.width = WRAP_CONTENT
                 sub_wrapper.layoutParams.height = MATCH_PARENT
-                (sub_wrapper.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
+                (sub_wrapper.layoutParams as LayoutParams).gravity = Gravity.CENTER
 
                 sub_wrapper.addView(right_wrapper)
                 right_wrapper.layoutParams.height = MATCH_PARENT
+                (right_wrapper.layoutParams as LayoutParams).gravity = Gravity.CENTER_VERTICAL
+                right_wrapper.setPadding(0, -3, 0, -7)
+                (right_wrapper.layoutParams as LayoutParams).weight = 1F
 
                 right_wrapper.addView(label_prefix)
                 label_prefix.layoutParams.height = 0
-                (label_prefix.layoutParams as LinearLayout.LayoutParams).weight = 1F
+                (label_prefix.layoutParams as LayoutParams).weight = 1F
                 label_prefix.gravity = Gravity.START
 
                 right_wrapper.addView(label_octave)
                 label_octave.gravity = Gravity.START
                 label_octave.layoutParams.height = 0
-                (label_octave.layoutParams as LinearLayout.LayoutParams).weight = 1F
+                (label_octave.layoutParams as LayoutParams).weight = 1F
 
                 sub_wrapper.addView(label_offset)
                 label_offset.layoutParams.height = MATCH_PARENT

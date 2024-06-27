@@ -686,11 +686,19 @@ open class OpusLayerBase {
             throw RemovingRootException()
         }
         val tree = this.get_tree(beat_key, position)
-
         val parent_tree = tree.parent!!
+
+        //DEBUG
+        val beat_tree = this.get_tree(beat_key)
+        beat_tree.traverse { subtree, event ->
+            println("${subtree.get_path()} | ${subtree.size} | ${subtree.parent}")
+        }
 
         when (parent_tree.size) {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
+            1 -> {
+                throw Exception("SINGLE")
+            }
             2 -> this.remove_one_of_two(beat_key, position)
             else -> this.remove_standard(beat_key, position)
         }
@@ -750,14 +758,17 @@ open class OpusLayerBase {
         val tree = this.get_tree(beat_key, position)
         val parent_tree = tree.parent!!
         tree.detach()
+
         val prev_position = position.toMutableList()
         prev_position.removeLast()
+
         val to_replace = parent_tree[0]
         this.replace_tree(
             beat_key,
             prev_position,
             to_replace
         )
+        println("${position} -> ${prev_position}")
     }
 
     open fun remove_line_ctl_one_of_two(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -1184,18 +1195,14 @@ open class OpusLayerBase {
                 beat_key.line_offset,
                 beat_key.beat,
                 position,
-                (tree as OpusTree<PercussionEvent>).copy {
-                    it.event?.copy()
-                }
+                (tree as OpusTree<PercussionEvent>)
             )
         } else {
             this.channels[beat_key.channel].replace_tree(
                 beat_key.line_offset,
                 beat_key.beat,
                 position,
-                (tree as OpusTree<TunedInstrumentEvent>).copy {
-                    it.event?.copy() as TunedInstrumentEvent?
-                }
+                (tree as OpusTree<TunedInstrumentEvent>)
             )
         }
     }
@@ -1958,9 +1965,6 @@ open class OpusLayerBase {
             channel_sizes.add(1)
         }
 
-        // TODO: REmove this line. ocmmented out since percussion_channel always exists now
-        //this.new_channel(lines = channel_sizes[midi_channel_map[9]!!])
-
 
         val sorted_channels = midi_channel_map.values.sortedBy { it }
         sorted_channels.forEachIndexed { i: Int, channel: Int ->
@@ -2008,12 +2012,8 @@ open class OpusLayerBase {
                     if (i == 0) {
                         working_beatkey = BeatKey(channel_index, adj_line_offset, x)
                     } else {
-                        try {
-                            if (this.get_tree(working_beatkey!!, working_position).size != size) {
-                                this.split_tree(working_beatkey!!, working_position, size)
-                            }
-                        } catch (e: Exception) {
-                            throw e
+                        if (this.get_tree(working_beatkey!!, working_position).size != size) {
+                            this.split_tree(working_beatkey!!, working_position, size)
                         }
                         working_position.add(x)
                     }

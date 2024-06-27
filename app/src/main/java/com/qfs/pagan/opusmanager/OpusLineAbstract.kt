@@ -86,5 +86,33 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(var beats: MutableList<OpusT
             controller.remove_beat(index)
         }
     }
+
+    fun get_tree(beat: Int, position: List<Int>? = null): OpusTree<T> {
+        var tree = this.beats[beat]
+        if (position != null) {
+            for (i in position) {
+                tree = tree[i]
+            }
+        }
+
+        return tree
+    }
+
+    fun replace_tree(beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+        val old_tree = this.get_tree(beat, position)
+        if (old_tree == tree) {
+            return // Don't waste the cycles
+        }
+
+        if (old_tree.parent != null) {
+            old_tree.replace_with(tree)
+        } else {
+            tree.parent = null
+        }
+
+        if (position?.isEmpty() ?: true) {
+            this.beats[beat] = tree
+        }
+    }
 }
 

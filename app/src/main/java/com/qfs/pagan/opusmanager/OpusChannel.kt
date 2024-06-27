@@ -82,31 +82,11 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     fun replace_tree(line: Int, beat: Int, position: List<Int>?, tree: OpusTree<U>) {
-        val old_tree = this.get_tree(line, beat, position)
-        if (old_tree == tree) {
-            return // Don't waste the cycles
-        }
-
-        if (old_tree.parent != null) {
-            old_tree.replace_with(tree)
-        } else {
-            tree.parent = null
-        }
-
-        if (position?.isEmpty() ?: true) {
-            this.lines[line].beats[beat] = tree
-        }
+        this.lines[line].replace_tree(beat, position, tree)
     }
 
     fun get_tree(line: Int, beat: Int, position: List<Int>? = null): OpusTree<U> {
-        var tree = this.lines[line].beats[beat]
-        if (position != null) {
-            for (i in position) {
-                tree = tree[i]
-            }
-        }
-
-        return tree
+        return this.lines[line].get_tree(beat, position)
     }
 
     fun get_ctl_tree(line: Int, type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {

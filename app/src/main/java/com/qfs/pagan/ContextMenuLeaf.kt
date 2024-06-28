@@ -112,7 +112,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         if (main.configuration.relative_mode) {
             this.ros_relative_option.visibility = View.VISIBLE
-            this.ros_relative_option.setState(opus_manager.relative_mode, true)
+            this.ros_relative_option.setState(opus_manager.relative_mode, true, true)
         } else {
             this.ros_relative_option.visibility = View.GONE
         }
@@ -138,8 +138,16 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 }
 
                 if (value >= 0) {
-                    this.ns_offset.setState(value % radix, manual = true, surpress_callback = true)
-                    this.ns_octave.setState(value / radix, manual = true, surpress_callback = true)
+                    this.ns_offset.setState(
+                        value % radix,
+                        manual = true,
+                        surpress_callback = true
+                    )
+                    this.ns_octave.setState(
+                        value / radix,
+                        manual = true,
+                        surpress_callback = true
+                    )
                 }
 
                 this.button_unset.setImageResource(R.drawable.unset)
@@ -151,6 +159,13 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 this.button_duration.text = ""
             }
         }
+
+        this.ros_relative_option.setState(
+            opus_manager.relative_mode,
+            true,
+            true
+        )
+
 
         this.button_duration.isEnabled = current_tree.is_event()
         this.button_duration.isClickable = this.button_duration.isEnabled
@@ -400,15 +415,13 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val opus_manager = main.get_opus_manager()
         val current_tree = opus_manager.get_tree()
 
-        opus_manager.relative_mode = view.getState()!!
-
         var event = current_tree.get_event() ?: return
         val radix = opus_manager.tuning_map.size
 
         val nsOctave: NumberSelector = main.findViewById(R.id.nsOctave)
         val nsOffset: NumberSelector = main.findViewById(R.id.nsOffset)
 
-        when (opus_manager.relative_mode) {
+        when (view.getState()) {
             0 -> {
                 val value = when (event) {
                     is RelativeNoteEvent -> {
@@ -429,45 +442,47 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 nsOffset.setState(value % radix, manual = true, surpress_callback = true)
             }
             1 -> {
+                var from_absolute = false
                 val offset = when (event) {
                     is AbsoluteNoteEvent -> {
+                        from_absolute = true
                         opus_manager.convert_event_to_relative()
                         val rel_event = current_tree.get_event()!!
-                        abs((rel_event as RelativeNoteEvent).offset)
+                        (rel_event as RelativeNoteEvent).offset
                     }
                     is RelativeNoteEvent -> {
                         if (event.offset < 0) {
                             val new_event = event.copy()
                             new_event.offset = 0 - event.offset
                             opus_manager.set_event_at_cursor(new_event)
-                            return
                         }
                         event.offset
                     }
                     else -> 0 // Unreachable
                 }
 
-                if (offset < 0) {
+                if (offset < 0 && from_absolute) {
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(offset / radix, manual = true, surpress_callback = true)
-                    nsOffset.setState(offset % radix, manual = true, surpress_callback = true)
+                    nsOctave.setState(abs(offset) / radix, manual = true, surpress_callback = true)
+                    nsOffset.setState(abs(offset) % radix, manual = true, surpress_callback = true)
                 }
             }
             2 -> {
+                var from_absolute = false
                 val offset = when (event) {
                     is AbsoluteNoteEvent -> {
+                        from_absolute = true
                         opus_manager.convert_event_to_relative()
                         val rel_event = current_tree.get_event()!!
-                        abs((rel_event as RelativeNoteEvent).offset)
+                        (rel_event as RelativeNoteEvent).offset
                     }
                     is RelativeNoteEvent -> {
                         if (event.offset > 0) {
                             val new_event = event.copy()
                             new_event.offset = 0 - event.offset
                             opus_manager.set_event_at_cursor(new_event)
-                            return
                         }
                         event.offset
                     }
@@ -481,6 +496,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     nsOctave.setState(abs(offset) / radix, manual = true, surpress_callback = true)
                     nsOffset.setState(abs(offset) % radix, manual = true, surpress_callback = true)
                 }
+
             }
         }
     }

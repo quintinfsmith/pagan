@@ -375,6 +375,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         if (!this.history_cache.isEmpty()) {
             this.cursor_clear()
         }
+
         super.apply_undo(repeat)
         this.apply_queued_cursor_select()
     }

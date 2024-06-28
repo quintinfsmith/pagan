@@ -126,14 +126,10 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         return this._button_map[this._active_button!!]!!
     }
 
-    fun setState(new_state: Int, manual: Boolean = false) {
-        if (new_state >= this._item_list.size) {
-            throw InvalidOptionException(new_state)
-        }
-
+    fun setState(new_state: Int, manual: Boolean = false, surpress_callback: Boolean = false) {
         for ((button, value) in this._button_map) {
             if (value == new_state) {
-                this.set_active_button(button)
+                this.set_active_button(button, surpress_callback)
                 if (manual) {
                     button.setActive(true)
                 }
@@ -172,11 +168,15 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         }
     }
 
+    fun unsetOnChange() {
+        this._on_change_hook = null
+    }
+
     fun setOnChange(hook: (RelativeOptionSelector) -> Unit) {
         this._on_change_hook = hook
     }
 
-    fun set_active_button(view: RelativeOptionSelectorButton) {
+    fun set_active_button(view: RelativeOptionSelectorButton, surpress_callback: Boolean = false) {
         if (this._active_button != view && this._active_button != null) {
             this._active_button!!.setActive(false)
         }
@@ -184,7 +184,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
 
         this._active_button = view
 
-        if (this._on_change_hook != null) {
+        if (!surpress_callback && this._on_change_hook != null) {
             this._on_change_hook!!(this)
         }
     }

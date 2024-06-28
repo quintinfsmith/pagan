@@ -908,11 +908,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
-        // Trivial?
-        if (this.get_tree(beat_key, position).get_event() == event) {
-            return
-        }
-
         this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.set_event(beat_key, position, event)

@@ -8,14 +8,15 @@ import com.qfs.pagan.opusmanager.ActiveControlSetGeneralizer
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelGeneralizer
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusPercussionChannel
-import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
 class OpusManagerGeneralizer {
     companion object {
         const val LATEST_VERSION = 3
-        fun generalize(opus_manager: OpusManager): ParsedHashMap {
+        fun <T: OpusLayerBase> generalize(opus_manager: T): ParsedHashMap {
             val output = ParsedHashMap()
 
             val channels: MutableList<ParsedHashMap> = mutableListOf()
@@ -35,7 +36,7 @@ class OpusManagerGeneralizer {
             output["transpose"] = ParsedInt(opus_manager.transpose)
             output["controllers"] = ActiveControlSetGeneralizer.to_json(opus_manager.controllers)
 
-            if (opus_manager is OpusLayerLinks) {
+            if (opus_manager is OpusManager) {
                 output["reflections"] = ParsedList(
                     MutableList(opus_manager.link_pools.size) { i: Int ->
                         val pool = opus_manager.link_pools[i].toList()
@@ -53,8 +54,6 @@ class OpusManagerGeneralizer {
                         )
                     }
                 )
-            } else {
-                output["reflection"] = ParsedList()
             }
             output["channels"] = ParsedList(
                 MutableList(opus_manager.channels.size) { i: Int ->
@@ -76,9 +75,9 @@ class OpusManagerGeneralizer {
             )
         }
 
-        fun interpret(input: ParsedHashMap): OpusManager {
+        fun interpret(input: ParsedHashMap): OpusLayerLinks {
             val inner_map = input["d"] as ParsedHashMap
-            val opus_manager = OpusManager()
+            val opus_manager = OpusLayerLinks()
             opus_manager.set_project_name(inner_map.get_stringn("title"))
             opus_manager.transpose = inner_map.get_int("transpose", 0)
 
@@ -108,7 +107,7 @@ class OpusManagerGeneralizer {
             val generalized_reflections = inner_map.get_list("reflections")
             for (i in 0 until generalized_reflections.list.size) {
                 val pool = generalized_reflections.get_list(i)
-                (opus_manager as OpusLayerLinks).link_pools.add(
+                opus_manager.link_pools.add(
                     MutableList<BeatKey>(pool.list.size) { j: Int ->
                         val generalized_beat_key = pool.get_list(j)
                         BeatKey(
@@ -221,6 +220,8 @@ class OpusManagerGeneralizer {
             val input_tuning_map = input_map.get_list("tuning_map")
             val beat_count = channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("beats").list.size
 
+            val input_reflections = input_map.get_list("reflections")
+
             return ParsedHashMap(
                 hashMapOf(
                     "v" to ParsedInt(LATEST_VERSION),
@@ -238,7 +239,23 @@ class OpusManagerGeneralizer {
                                     )
                                 }
                             ),
-                            "reflections" to input_map["reflections"],
+                            "reflections" to ParsedList(
+                                MutableList(input_reflections.list.size) { i: Int ->
+                                    val pool = input_reflections.get_list(i)
+                                    ParsedList(
+                                        MutableList(pool.list.size) { j: Int ->
+                                            val generalized_beat_key = pool.get_hashmap(j)
+                                            ParsedList(
+                                                mutableListOf(
+                                                    generalized_beat_key["channel"],
+                                                    generalized_beat_key["line_offset"],
+                                                    generalized_beat_key["beat"]
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                            ),
                             "transpose" to input_map["transpose"],
                             "controllers" to ActiveControlSetGeneralizer.convert_v2_to_v3(input_map["controllers"] as ParsedList, beat_count),
                             "channels" to channels,

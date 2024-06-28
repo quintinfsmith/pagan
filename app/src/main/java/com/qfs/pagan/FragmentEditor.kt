@@ -271,19 +271,19 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 editor_table?.visibility = View.INVISIBLE
             }
             thread {
-                try {
-                    bundle!!.getString("URI")?.let { path ->
-                        main.import_project(path)
-                    }
-                } catch (e: Exception) {
-                    val opus_manager = main.get_opus_manager()
-                    // if Not Loaded, just create new and throw a message up
-                    if (!opus_manager.first_load_done) {
-                        opus_manager.new()
-                    }
-
-                    this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
+                bundle!!.getString("URI")?.let { path ->
+                    main.import_project(path)
                 }
+                //try {
+                //} catch (e: Exception) {
+                //    val opus_manager = main.get_opus_manager()
+                //    // if Not Loaded, just create new and throw a message up
+                //    if (!opus_manager.first_load_done) {
+                //        opus_manager.new()
+                //    }
+
+                //    this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
+                //}
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
                 }

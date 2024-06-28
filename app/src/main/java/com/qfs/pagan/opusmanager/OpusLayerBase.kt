@@ -1602,6 +1602,7 @@ open class OpusLayerBase {
 
     open fun new() {
         this.clear()
+        this.new_line(0) // Add percussion line
         this.new_channel()
         this.set_beat_count(4)
         this.set_project_name(this.project_name)

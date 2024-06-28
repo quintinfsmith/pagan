@@ -34,7 +34,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
         this._beat_count = 0
         this.size = 0
         this.controllers.clear()
-        this.new_line()
     }
 
     fun get_beat_count(): Int {

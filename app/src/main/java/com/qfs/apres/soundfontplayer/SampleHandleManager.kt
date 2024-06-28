@@ -227,7 +227,8 @@ class SampleHandleManager(
     }
 
     fun get_preset(channel: Int): Preset? {
-        return this.loaded_presets[this.get_channel_preset(channel)]
+        val key = this.get_channel_preset(channel)
+        return this.loaded_presets[key]
     }
 
     private fun get_channel_preset(channel: Int): Pair<Int, Int> {

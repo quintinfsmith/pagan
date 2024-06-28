@@ -486,12 +486,12 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private fun _update_after_new_line(channel: Int, line_offset: Int?) {
         if (this.get_activity() != null) {
-            val adj_line_offset = line_offset ?: (this.channels[channel].lines.size - 1)
+            val working_channel = this.get_channel(channel)
+            val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
             val abs_offset = this.get_abs_offset(channel, adj_line_offset)
             val row_index = this.get_ctl_line_index(abs_offset)
             val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
 
-            val working_channel = this.get_channel(channel)
             val new_line = if (line_offset == null) {
                 working_channel.lines.last()
             } else {

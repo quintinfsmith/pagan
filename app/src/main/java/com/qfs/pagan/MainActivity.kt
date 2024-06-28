@@ -580,7 +580,12 @@ class MainActivity : AppCompatActivity() {
                         this.configuration.sample_rate, // Use Large buffer
                         sample_limit = this.configuration.playback_sample_limit
                     )
-                    this._midi_playback_device = PlaybackDevice(this, this.sample_handle_manager!!, this.configuration.playback_stereo_mode)
+
+                    this._midi_playback_device = PlaybackDevice(
+                        this,
+                        this.sample_handle_manager!!,
+                        this.configuration.playback_stereo_mode
+                    )
 
                     if (!this._midi_interface.output_devices_connected()) {
                         this._feedback_sample_manager = SampleHandleManager(
@@ -1309,14 +1314,13 @@ class MainActivity : AppCompatActivity() {
     fun update_channel_instruments(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (index == null) {
-            for (channel in opus_manager.get_all_channels()) {
-                val midi_channel = channel.get_midi_channel()
-                val (midi_program, midi_bank) = channel.get_instrument()
-                this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
-                this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
+            if (this._feedback_sample_manager != null) {
+                for (channel in opus_manager.get_all_channels()) {
+                    val midi_channel = channel.get_midi_channel()
+                    val (midi_program, midi_bank) = channel.get_instrument()
+                    this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
+                    this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
 
-
-                if (this._feedback_sample_manager != null) {
                     this._feedback_sample_manager!!.select_bank(
                         midi_channel,
                         midi_bank,
@@ -1326,6 +1330,19 @@ class MainActivity : AppCompatActivity() {
                         midi_program,
                     )
                 }
+            }
+            // Don't need to update anything but percussion here
+            val midi_channel = opus_manager.percussion_channel.get_midi_channel()
+            val (midi_program, midi_bank) = opus_manager.percussion_channel.get_instrument()
+            if (this.sample_handle_manager != null) {
+                this.sample_handle_manager!!.select_bank(
+                    midi_channel,
+                    midi_bank
+                )
+                this.sample_handle_manager!!.change_program(
+                    midi_channel,
+                    midi_program
+                )
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
@@ -1341,6 +1358,18 @@ class MainActivity : AppCompatActivity() {
                 this._feedback_sample_manager!!.change_program(
                     midi_channel,
                     midi_program,
+                )
+            }
+
+            // Don't need to update anything but percussion here
+            if (this.sample_handle_manager != null) {
+                this.sample_handle_manager!!.select_bank(
+                    midi_channel,
+                    midi_bank
+                )
+                this.sample_handle_manager!!.change_program(
+                    midi_channel,
+                    midi_program
                 )
             }
         }

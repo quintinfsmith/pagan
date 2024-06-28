@@ -2067,7 +2067,6 @@ open class OpusLayerBase {
                             return@traverse
                         }
 
-
                         var tmp_tree = beat_tree
                         var denominator = 1
                         for (p in working_tree.get_path()) {

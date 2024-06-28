@@ -8,6 +8,7 @@ enum class HistoryToken {
     INSERT,
     INSERT_BEAT,
     INSERT_LINE,
+    INSERT_LINE_PERCUSSION,
     INSERT_TREE,
     INSERT_CTL_GLOBAL,
     INSERT_CTL_CHANNEL,

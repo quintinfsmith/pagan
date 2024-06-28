@@ -517,6 +517,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         )
                     }
 
+                    HistoryToken.INSERT_LINE_PERCUSSION,
                     HistoryToken.INSERT_LINE -> {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_ROW,

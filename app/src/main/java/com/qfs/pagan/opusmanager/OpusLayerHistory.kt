@@ -159,6 +159,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         this.checked_cast<OpusLine>(current_node.args[2])
                     )
                 }
+                HistoryToken.INSERT_LINE_PERCUSSION -> {
+                    this.insert_line(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        this.checked_cast<OpusLinePercussion>(current_node.args[2])
+                    )
+                }
 
                 HistoryToken.REMOVE_CHANNEL -> {
                     val uuid = current_node.args[0] as Int
@@ -395,7 +402,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun remove_line(channel: Int, line_offset: Int, count: Int) {
-        // TODO:  I don't think size == 0 needs to be checked here, maybe
+        // TODO: I don't think size == 0 needs to be checked here, maybe
         //  AND should LastLineException be caught or allow to propagate here?
         this._remember {
             for (i in 0 until count) {
@@ -418,10 +425,18 @@ open class OpusLayerHistory : OpusLayerLinks() {
         return this._remember {
             val line = super.remove_line(channel, line_offset)
 
-            this.push_to_history_stack(
-                HistoryToken.INSERT_LINE,
-                listOf(channel, line_offset, line)
-            )
+            if (this.is_percussion(channel)) {
+                this.push_to_history_stack(
+                    HistoryToken.INSERT_LINE_PERCUSSION,
+                    listOf(channel, line_offset, line)
+                )
+
+            } else {
+                this.push_to_history_stack(
+                    HistoryToken.INSERT_LINE,
+                    listOf(channel, line_offset, line)
+                )
+            }
 
             line
         }
@@ -1084,6 +1099,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     private fun <T> push_rebuild_channel(channel: Int, callback: () -> T): T {
+        // Should Never be called on percussion channel so no need to do percussion checks
         return this._remember {
             val tmp_history_nodes = mutableListOf<Pair<HistoryToken, List<Any>>>()
             val working_channel = if (this.is_percussion(channel)) {

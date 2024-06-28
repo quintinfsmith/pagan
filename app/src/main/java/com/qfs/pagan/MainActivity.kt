@@ -1326,17 +1326,6 @@ class MainActivity : AppCompatActivity() {
                         midi_program,
                     )
                 }
-                if (this.sample_handle_manager != null) {
-                    this.sample_handle_manager!!.select_bank(
-                        midi_channel,
-                        midi_bank,
-                    )
-                    this.sample_handle_manager!!.change_program(
-                        midi_channel,
-                        midi_program,
-                    )
-                }
-
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
@@ -1350,16 +1339,6 @@ class MainActivity : AppCompatActivity() {
                     midi_bank,
                 )
                 this._feedback_sample_manager!!.change_program(
-                    midi_channel,
-                    midi_program,
-                )
-            }
-            if (this.sample_handle_manager != null) {
-                this.sample_handle_manager!!.select_bank(
-                    midi_channel,
-                    midi_bank,
-                )
-                this.sample_handle_manager!!.change_program(
                     midi_channel,
                     midi_program,
                 )

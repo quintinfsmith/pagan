@@ -270,11 +270,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.clear()
         this._simple_mode = force_simple_mode
 
-        for (channel in this.opus_manager.channels) {
-            val instrument = channel.get_instrument()
-            this._sample_handle_manager.select_bank(channel.midi_channel, instrument.first)
-            this._sample_handle_manager.change_program(channel.midi_channel, instrument.second)
-        }
+       for (channel in this.opus_manager.get_all_channels()) {
+           val instrument = channel.get_instrument()
+           this._sample_handle_manager.select_bank(channel.get_midi_channel(), instrument.second)
+           this._sample_handle_manager.change_program(channel.get_midi_channel(), instrument.first)
+       }
         this.map_tempo_changes()
         this.get_marked_frames()
 
@@ -288,13 +288,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
+
         val c = this.opus_manager.channels.size
         for (l in this.opus_manager.percussion_channel.lines.indices) {
-            var prev_abs_note = 0
             for (b in 0 until this.opus_manager.beat_count) {
                 val beat_key = BeatKey(c,l,b)
                 val working_tree = this.opus_manager.get_tree(beat_key)
-                prev_abs_note = this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, prev_abs_note)
+                this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, 0)
             }
         }
 
@@ -499,50 +499,44 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey): MIDIEvent? {
-        if (this.opus_manager.is_percussion(beat_key.channel)) {
-            return NoteOn(
-                channel = 9,
-                velocity = this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset),
-                note = this.opus_manager.get_percussion_instrument(beat_key.line_offset) + 27
-            )
-        }
+        val velocity = this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
+
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called
-        val value = when (event) {
+        val (note, bend) = when (event) {
+            is PercussionEvent -> {
+                Pair(27 + this.opus_manager.get_percussion_instrument(beat_key.line_offset), 0)
+            }
             is AbsoluteNoteEvent -> {
                 // Can happen since we convert RelativeNotes to Absolute ones before passing them to this function
                 if (event.note < 0) {
                     return null
                 }
-                event.note
+                val radix = this.opus_manager.tuning_map.size
+                val octave = event.note / radix
+                val offset = this.opus_manager.tuning_map[event.note % radix]
+
+                // This offset is calculated so the tuning map always reflects correctly
+                val transpose_offset = 12F * this.opus_manager.transpose.toFloat() / radix.toFloat()
+                val std_offset = (offset.first.toFloat() * 12F / offset.second.toFloat())
+
+                Pair(
+                    21 + (octave * 12) + std_offset.toInt() + transpose_offset.toInt(),
+                    (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512F).toInt()
+                )
             }
-            is PercussionEvent -> {
-                this.opus_manager.get_percussion_instrument(beat_key.line_offset) + 27
-            }
-            else -> 0 // Should be unreachable
+            else -> Pair(0, 0) // Should be unreachable
         }
-
-        val radix = this.opus_manager.tuning_map.size
-        val octave = value / radix
-        val offset = this.opus_manager.tuning_map[value % radix]
-
-        // This offset is calculated so the tuning map always reflects correctly
-        val transpose_offset = 12F * this.opus_manager.transpose.toFloat() / radix.toFloat()
-        val std_offset = (offset.first.toFloat() * 12F / offset.second.toFloat())
-
-        val note = (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21
-        val velocity = this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
 
         return if (this.opus_manager.is_tuning_standard()) {
             NoteOn(
-                channel = this.opus_manager.channels[beat_key.channel].midi_channel,
+                channel = this.opus_manager.get_channel(beat_key.channel).get_midi_channel(),
                 velocity = velocity,
                 note = note
             )
         } else {
-            val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512F).toInt()
             NoteOn79(
                 index = 0, // Set index as note is applied
-                channel = this.opus_manager.channels[beat_key.channel].midi_channel,
+                channel = this.opus_manager.get_channel(beat_key.channel).get_midi_channel(),
                 velocity = velocity shl 8,
                 note = note,
                 bend = bend

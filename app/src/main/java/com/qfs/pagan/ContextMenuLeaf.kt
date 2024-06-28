@@ -435,7 +435,15 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                         val rel_event = current_tree.get_event()!!
                         abs((rel_event as RelativeNoteEvent).offset)
                     }
-                    is RelativeNoteEvent -> abs(event.offset)
+                    is RelativeNoteEvent -> {
+                        if (event.offset < 0) {
+                            val new_event = event.copy()
+                            new_event.offset = 0 - event.offset
+                            opus_manager.set_event_at_cursor(new_event)
+                            return
+                        }
+                        event.offset
+                    }
                     else -> 0 // Unreachable
                 }
 
@@ -454,7 +462,15 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                         val rel_event = current_tree.get_event()!!
                         abs((rel_event as RelativeNoteEvent).offset)
                     }
-                    is RelativeNoteEvent -> abs(event.offset)
+                    is RelativeNoteEvent -> {
+                        if (event.offset > 0) {
+                            val new_event = event.copy()
+                            new_event.offset = 0 - event.offset
+                            opus_manager.set_event_at_cursor(new_event)
+                            return
+                        }
+                        event.offset
+                    }
                     else -> 0 // Unreachable
                 }
 
@@ -462,8 +478,8 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     nsOctave.unset_active_button()
                     nsOffset.unset_active_button()
                 } else {
-                    nsOctave.setState(offset / radix, manual = true, surpress_callback = true)
-                    nsOffset.setState(offset % radix, manual = true, surpress_callback = true)
+                    nsOctave.setState(abs(offset) / radix, manual = true, surpress_callback = true)
+                    nsOffset.setState(abs(offset) % radix, manual = true, surpress_callback = true)
                 }
             }
         }

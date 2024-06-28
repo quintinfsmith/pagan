@@ -505,7 +505,7 @@ open class OpusLayerBase {
      *
      * @throws NonEventConversion If no event is present
      */
-    fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
+    open fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
             throw NonEventConversion(beat_key, position)
@@ -526,6 +526,7 @@ open class OpusLayerBase {
             working_position = pair.second
         }
 
+
         this.set_event(
             beat_key,
             position,
@@ -542,7 +543,7 @@ open class OpusLayerBase {
      *
      * @throws NonEventConversion If no event is present
      */
-    fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
+    open fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
             throw NonEventConversion(beat_key, position)

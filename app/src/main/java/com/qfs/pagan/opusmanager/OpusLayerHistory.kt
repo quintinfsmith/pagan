@@ -360,6 +360,17 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
+        this._remember {
+            super.convert_event_to_absolute(beat_key, position)
+        }
+    }
+
+    override fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
+        this._remember {
+            super.convert_event_to_relative(beat_key, position)
+        }
+    }
 
     fun new_line(channel: Int, line_offset: Int, count: Int): List<OpusLineAbstract<*>> {
         return this._remember {
@@ -406,13 +417,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
         //  AND should LastLineException be caught or allow to propagate here?
         this._remember {
             for (i in 0 until count) {
-                if (this.get_channel(channel).size == 0) {
+                val working_channel = this.get_channel(channel)
+                if (working_channel.size == 0) {
                     break
                 }
                 try {
                     this.remove_line(
                         channel,
-                        min(line_offset, this.get_channel(channel).size - 1)
+                        min(line_offset, working_channel.size - 1)
                     )
                 } catch (e: OpusChannelAbstract.LastLineException) {
                     break

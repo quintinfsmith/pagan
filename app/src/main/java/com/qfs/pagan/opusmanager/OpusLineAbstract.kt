@@ -103,6 +103,9 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(var beats: MutableList<OpusT
         if (old_tree == tree) {
             return // Don't waste the cycles
         }
+        if (tree.parent != null) {
+            tree.detach()
+        }
 
         if (old_tree.parent != null) {
             old_tree.replace_with(tree)

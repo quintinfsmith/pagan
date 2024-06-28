@@ -107,7 +107,7 @@ class OpusTree<T> {
             // move the indices into their new lists
             for ((i, subtree) in element.indices) {
                 val split_index = i / current_size
-                split_indices[split_index].add(Pair(i % current_size, subtree.copy()))
+                split_indices[split_index].add(Pair(i % current_size, subtree))
             }
 
             for (i in 0 until denominator) {
@@ -161,7 +161,7 @@ class OpusTree<T> {
         } else {
             this.set_size(place_holder.size)
             for ((key, value) in place_holder.divisions) {
-                this.divisions[key] = value
+                this.set(key, value)
             }
         }
     }
@@ -718,8 +718,8 @@ class OpusTree<T> {
 
     fun traverse(callback: (OpusTree<T>, T?) -> Unit) {
         if (! this.is_leaf()) {
-            for (i in 0 until this.size) {
-                this[i].traverse(callback)
+            for ((_, tree) in this.divisions) {
+                tree.traverse(callback)
             }
         }
         callback(this, this.event)

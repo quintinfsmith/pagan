@@ -685,14 +685,10 @@ open class OpusLayerBase {
         if (position.isEmpty()) {
             throw RemovingRootException()
         }
+
+
         val tree = this.get_tree(beat_key, position)
         val parent_tree = tree.parent!!
-
-        //DEBUG
-        val beat_tree = this.get_tree(beat_key)
-        beat_tree.traverse { subtree, event ->
-            println("${subtree.get_path()} | ${subtree.size} | ${subtree.parent}")
-        }
 
         when (parent_tree.size) {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
@@ -756,19 +752,26 @@ open class OpusLayerBase {
     // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
     open fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
-        val parent_tree = tree.parent!!
+        val to_replace_position = List(position.size) { i: Int ->
+            if (i < position.size - 1) {
+                position[i]
+            } else if (position.last() == 0) {
+                1
+            } else {
+                0
+            }
+        }
+
+        val parent_tree = tree.get_parent()
+
+        val to_replace_tree = this.get_tree(beat_key, to_replace_position)
         tree.detach()
 
-        val prev_position = position.toMutableList()
-        prev_position.removeLast()
-
-        val to_replace = parent_tree[0]
         this.replace_tree(
             beat_key,
-            prev_position,
-            to_replace
+            position.subList(0, position.size - 1),
+            to_replace_tree
         )
-        println("${position} -> ${prev_position}")
     }
 
     open fun remove_line_ctl_one_of_two(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -2056,12 +2059,14 @@ open class OpusLayerBase {
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {
                     val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())
-                    val original_size = beat_tree.size 
+                    val original_size = beat_tree.size
+
                     beat_tree.reduce()
                     beat_tree.traverse { working_tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
                         if (event == null) {
                             return@traverse
                         }
+
 
                         var tmp_tree = beat_tree
                         var denominator = 1

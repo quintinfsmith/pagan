@@ -71,7 +71,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    private fun <T> surpress_ui(level: Int = UI_LOCK_FULL, callback:(OpusLayerInterface) -> T): T {
+    internal fun <T> surpress_ui(level: Int = UI_LOCK_FULL, callback:(OpusLayerInterface) -> T): T {
         this._ui_lock_stack.add(level)
         try {
             val output = callback(this)
@@ -291,13 +291,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._notify_line_ctl_cell_change(type, beat_key)
     }
 
-    override fun set_event_at_cursor(event: InstrumentEvent) {
-        super.set_event_at_cursor(event)
-        this.withFragment {
-            it.refresh_context_menu()
-        }
-    }
-
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
         if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
@@ -307,7 +300,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.set_event(beat_key, position, event)
 
         // If the OM is applying history, change the relative mode, otherwise leave it.
-        if (this.history_cache.isLocked() && event is TunedInstrumentEvent) {
+        if (event is TunedInstrumentEvent) {
             this.set_relative_mode(event)
         }
 
@@ -1052,6 +1045,14 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 if (this.is_percussion(cursor.channel)) {
                                     it.set_context_menu_leaf_percussion()
                                 } else {
+                                    /*
+                                        Need to set relative mode here since cursor_apply is called after history is applied
+                                        and set_relative_mode isn't called in replace_tree
+                                     */
+                                    val event = this.get_tree().get_event()
+                                    if (event is TunedInstrumentEvent) {
+                                        this.set_relative_mode(event)
+                                    }
                                     it.set_context_menu_leaf()
                                 }
                             } else {

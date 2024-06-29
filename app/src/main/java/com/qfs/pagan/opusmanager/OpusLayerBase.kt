@@ -499,6 +499,28 @@ open class OpusLayerBase {
     }
     //// END RO Functions ////
 
+    fun get_relative_value(beat_key: BeatKey, position: List<Int>): Int? {
+        val tree = this.get_tree(beat_key, position)
+        if (!tree.is_event()) {
+            throw NonEventConversion(beat_key, position)
+        }
+
+        val event = tree.get_event()!!
+        if (event is RelativeNoteEvent) {
+            return event.offset
+        }
+
+        var working_beat_key: BeatKey = beat_key
+        var working_position: List<Int> = position
+        var preceding_value: Int? = null
+        while (preceding_value == null) {
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: break
+            preceding_value = this.get_absolute_value(pair.first, pair.second)
+            working_beat_key = pair.first
+            working_position = pair.second
+        }
+        return (event as AbsoluteNoteEvent).note - (preceding_value ?: 0)
+    }
     /**
      * Recalculate the event of the tree @ [beat_key]/[position]
      * to be relative to the events before it, if it isn't already
@@ -884,7 +906,6 @@ open class OpusLayerBase {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
-
         val tree = this.get_tree(beat_key, position) as OpusTree<InstrumentEvent>
         tree.set_event(event)
     }

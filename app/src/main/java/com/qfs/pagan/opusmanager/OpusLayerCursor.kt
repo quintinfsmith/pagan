@@ -1561,6 +1561,4 @@ open class OpusLayerCursor: OpusLayerHistory() {
     //        this.link_alike(this.cursor.range!!.first, this.cursor.range!!.second)
     //    }
     //}
-
-
 }

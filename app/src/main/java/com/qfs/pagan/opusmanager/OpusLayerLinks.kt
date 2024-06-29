@@ -95,7 +95,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         val beat_pool_index = this.link_pool_map[beat_key]
         val target_pool_index = this.link_pool_map[target]
         if (beat_pool_index != null && target_pool_index != null) {
-            this.replace_tree(beat_key, null, this.get_tree(target))
+            this.replace_tree(beat_key, null, this.get_tree(target).copy())
             if (beat_pool_index != target_pool_index) {
                 this.merge_link_pools(beat_pool_index, target_pool_index)
             }
@@ -104,7 +104,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         } else if (target_pool_index != null) {
             this.link_beat_into_pool(beat_key, target_pool_index, false)
         } else {
-            this.replace_tree(beat_key, null, this.get_tree(target, listOf()))
+            this.replace_tree(beat_key, null, this.get_tree(target, listOf()).copy())
             this.create_link_pool(listOf(beat_key, target))
         }
     }
@@ -155,9 +155,9 @@ open class OpusLayerLinks : OpusLayerBase() {
     open fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean = false) {
         if (overwrite_pool) {
             // Will overwrite all linked
-            this.replace_tree(this.link_pools[index].first(), null, this.get_tree(beat_key))
+            this.replace_tree(this.link_pools[index].first(), null, this.get_tree(beat_key).copy())
         } else {
-            this.replace_tree(beat_key, null, this.get_tree(this.link_pools[index].first()))
+            this.replace_tree(beat_key, null, this.get_tree(this.link_pools[index].first()).copy())
         }
         this.link_pool_map[beat_key] = index
         this.link_pools[index].add(beat_key)
@@ -405,7 +405,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         for (x in 0 until this.beat_count) {
             working_key.beat = x
             if (working_key != beat_key) {
-                this.replace_tree(working_key, listOf(), this.get_tree(beat_key, listOf()))
+                this.replace_tree(working_key, listOf(), this.get_tree(beat_key, listOf()).copy())
             }
             new_pool.add(working_key.copy())
         }

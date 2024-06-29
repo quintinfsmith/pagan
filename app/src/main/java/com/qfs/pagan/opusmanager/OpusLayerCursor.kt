@@ -749,13 +749,21 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     }
                     HistoryToken.SET_LINE_CTL_INITIAL_EVENT -> {
                         this.push_to_history_stack(
-                            HistoryToken.CURSOR_SELECT_LINE_CTL_ROW,
+                            HistoryToken.CURSOR_SELECT_ROW,
                             listOf(
-                                this.checked_cast<ControlEventType>(args[0]),
                                 args[1] as Int,
                                 args[2] as Int
                             )
                         )
+                        // Uncomment when i use line controls
+                        //this.push_to_history_stack(
+                        //    HistoryToken.CURSOR_SELECT_LINE_CTL_ROW,
+                        //    listOf(
+                        //        this.checked_cast<ControlEventType>(args[0]),
+                        //        args[1] as Int,
+                        //        args[2] as Int
+                        //    )
+                        //)
                     }
 
                     else -> {

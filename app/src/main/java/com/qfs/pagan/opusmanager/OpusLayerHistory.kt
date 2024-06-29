@@ -1534,7 +1534,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 listOf(
                     type,
                     channel,
-                    this.channels[channel].controllers.get_controller(type).initial_event
+                    this.get_channel(channel).controllers.get_controller(type).initial_event
                 )
             )
             super.set_channel_controller_initial_event(type, channel, event)
@@ -1549,7 +1549,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     type,
                     channel,
                     line_offset,
-                    this.channels[channel].lines[line_offset].controllers.get_controller(type).initial_event
+                    this.get_channel(channel).lines[line_offset].controllers.get_controller(type).initial_event
                 )
             )
             super.set_line_controller_initial_event(type, channel, line_offset, event)

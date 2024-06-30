@@ -713,22 +713,62 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun set_link_pools(pools: List<Set<BeatKey>>) {
+        super.set_link_pools(pools)
+        val keys_as_single_list = mutableListOf<BeatKey>()
+        for (pool in pools) {
+            keys_as_single_list.addAll(pool)
+        }
+        this._notify_cell_changes(keys_as_single_list)
+    }
+
     override fun remove_beat(beat_index: Int) {
         val editor_table = this.get_editor_table() ?: return super.remove_beat(beat_index)
 
-        when (this.get_ui_lock_level()) {
-            UI_LOCK_FULL -> { }
-            UI_LOCK_PARTIAL -> {
-                editor_table.remove_column(beat_index, true)
-            }
-            else -> {
-                this.runOnUiThread {
-                    editor_table.remove_column(beat_index)
+        val link_keys = mutableListOf<BeatKey>()
+        this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+            for (j in channel.lines.indices) {
+                for (key in this.get_all_linked(BeatKey(i, j, beat_index))) {
+                    link_keys.add(
+                        BeatKey(
+                            key.channel,
+                            key.line_offset,
+                            if (key.beat > beat_index) {
+                                key.beat - 1
+                            } else {
+                                key.beat
+                            }
+                        )
+                    )
                 }
             }
         }
 
+       when (this.get_ui_lock_level()) {
+           UI_LOCK_FULL -> { }
+           UI_LOCK_PARTIAL -> {
+               editor_table.remove_column(beat_index, true)
+           }
+           else -> {
+               this.runOnUiThread {
+                   editor_table.remove_column(beat_index)
+               }
+           }
+       }
+
         super.remove_beat(beat_index)
+
+        when (this.get_ui_lock_level()) {
+            UI_LOCK_FULL -> { }
+            UI_LOCK_PARTIAL -> {
+                this._notify_cell_changes(link_keys)
+            }
+            else -> {
+                this.runOnUiThread {
+                    this._notify_cell_changes(link_keys)
+                }
+            }
+        }
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
@@ -736,6 +776,14 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.insert_beat(beat_index, beats_in_column)
         val editor_table = this.get_editor_table() ?: return
 
+        // val link_keys = mutableListOf<BeatKey>()
+        // this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+        //     for (j in channel.lines.indices) {
+        //         link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
+        //     }
+        // }
+
+        // this._notify_cell_changes(link_keys)
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {

@@ -36,14 +36,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
                 HistoryToken.RESTORE_LINK_POOLS -> {
                     val pools = this.checked_cast<List<Set<BeatKey>>>(current_node.args[0])
-                    this.link_pools.clear()
-                    this.link_pool_map.clear()
-                    pools.forEachIndexed { i: Int, pool: Set<BeatKey> ->
-                        for (beat_key in pool) {
-                            this.link_pool_map[beat_key] = i
-                        }
-                        this.link_pools.add(pool.toMutableSet())
-                    }
+                    this.set_link_pools(pools)
                 }
 
                 HistoryToken.LINK_BEATS -> {

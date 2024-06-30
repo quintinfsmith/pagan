@@ -49,6 +49,17 @@ open class OpusLayerLinks : OpusLayerBase() {
 
     }
 
+    open fun set_link_pools(pools: List<Set<BeatKey>>) {
+        this.link_pools.clear()
+        this.link_pool_map.clear()
+        pools.forEachIndexed { i: Int, pool: Set<BeatKey> ->
+            for (beat_key in pool) {
+                this.link_pool_map[beat_key] = i
+            }
+            this.link_pools.add(pool.toMutableSet())
+        }
+    }
+
     open fun unlink_beat(beat_key: BeatKey) {
         val index = this.link_pool_map[beat_key] ?: return
         if (this.link_pools[index].size > 2) {

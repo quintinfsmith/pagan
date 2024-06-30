@@ -211,7 +211,7 @@ open class OpusLayerLinks : OpusLayerBase() {
         this.lock_links {
             super.replace_tree(beat_key, position, tree)
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
-                this.replace_tree(linked_key, position, tree)
+                this.replace_tree(linked_key, position, tree.copy())
             }
         }
     }

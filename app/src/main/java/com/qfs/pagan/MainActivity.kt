@@ -1457,6 +1457,7 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             throw InvalidMIDIFile(path)
         }
+
         val opus_manager = this.get_opus_manager()
         opus_manager.import_midi(midi)
         val filename = this.parse_file_name(Uri.parse(path))

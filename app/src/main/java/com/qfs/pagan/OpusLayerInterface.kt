@@ -729,6 +729,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
             for (j in channel.lines.indices) {
                 for (key in this.get_all_linked(BeatKey(i, j, beat_index))) {
+                    if (key.beat == beat_index) {
+                        continue
+                    }
                     link_keys.add(
                         BeatKey(
                             key.channel,

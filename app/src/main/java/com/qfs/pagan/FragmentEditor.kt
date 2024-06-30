@@ -125,6 +125,18 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         super.onSaveInstanceState(outState)
     }
 
+    fun reload_from_bkp() {
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
+        if (!File(bkp_json_path).exists()) {
+            return
+        }
+        val bytes = FileInputStream(bkp_json_path).readBytes()
+        val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
+
+        opus_manager.reload(bytes, backup_path)
+    }
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         val main = this.get_main()
@@ -150,14 +162,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
 
         if (savedInstanceState != null) {
-            val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
-            if (!File(bkp_json_path).exists()) {
-               return
-            }
-            val bytes = FileInputStream(bkp_json_path).readBytes()
-            val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
-
-            opus_manager.reload(bytes, backup_path)
+            this.reload_from_bkp()
         } else {
             opus_manager.cursor_clear()
             editor_table.setup()
@@ -246,6 +251,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         val opus_manager = main.get_opus_manager()
                         if (!opus_manager.first_load_done) {
                             main.get_opus_manager().new()
+                        } else {
+                            main.runOnUiThread {
+                                this.reload_from_bkp()
+                                editor_table.visibility = View.VISIBLE
+                                this.restore_view_model_position()
+                            }
                         }
                         main.feedback_msg(getString(R.string.feedback_midi_fail))
                     }
@@ -259,7 +270,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 main.loading_reticle_hide()
                 this.project_change_flagged = false
             }
-
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
@@ -280,6 +290,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     // if Not Loaded, just create new and throw a message up
                     if (!opus_manager.first_load_done) {
                         opus_manager.new()
+                    } else {
+                        main.runOnUiThread {
+                            this.reload_from_bkp()
+                            editor_table.visibility = View.VISIBLE
+                            this.restore_view_model_position()
+                        }
                     }
 
                     this.get_main().feedback_msg(getString(R.string.feedback_import_fail))

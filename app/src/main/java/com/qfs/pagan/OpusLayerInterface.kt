@@ -146,10 +146,11 @@ class OpusLayerInterface : OpusLayerCursor() {
 
 
         val editor_table = this.get_editor_table() ?: return
+        val adj_force_queue = force_queue ||  this@OpusLayerInterface.history_cache.isLocked()
         when (this.get_ui_lock_level()) {
             null -> {
                 this.runOnUiThread { _: MainActivity ->
-                    if (force_queue || this@OpusLayerInterface.history_cache.isLocked()) {
+                    if (adj_force_queue) {
                         editor_table.queue_cell_changes(coord_list)
                     } else {
                         editor_table.notify_cell_changes(coord_list)
@@ -158,7 +159,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             UI_LOCK_PARTIAL -> {
-                if (force_queue || this.history_cache.isLocked()) {
+                if (adj_force_queue) {
                     editor_table.queue_cell_changes(coord_list)
                 } else {
                     editor_table.notify_cell_changes(coord_list, true)
@@ -181,19 +182,27 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val coord_list = this._get_all_linked_as_coords(beat_key)
-        this._notify_cell_change(coord_list)
+        this._notify_cell_change(coord_list, this.history_cache.isLocked())
     }
 
-    private fun _notify_cell_change(coord_list: List<EditorTable.Coordinate>) {
+    private fun _notify_cell_change(coord_list: List<EditorTable.Coordinate>, force_queue: Boolean = false) {
         when (this.get_ui_lock_level()) {
             null -> {
                 this.runOnUiThread { _: MainActivity ->
-                    this.get_editor_table()?.notify_cell_changes(coord_list)
+                    if (force_queue) {
+                        this.get_editor_table()?.queue_cell_changes(coord_list)
+                    } else {
+                        this.get_editor_table()?.notify_cell_changes(coord_list)
+                    }
                 }
             }
 
             UI_LOCK_PARTIAL -> {
-                this.get_editor_table()?.notify_cell_changes(coord_list, true)
+                if (force_queue) {
+                    this.get_editor_table()?.queue_cell_changes(coord_list)
+                } else {
+                    this.get_editor_table()?.notify_cell_changes(coord_list, true)
+                }
             }
 
             UI_LOCK_FULL -> {}

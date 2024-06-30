@@ -767,11 +767,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
     override fun remove_beat(beat_index: Int) {
         this._remember {
             val beat_cells = mutableListOf<OpusTree<out InstrumentEvent>>()
-            for (channel in 0 until this.channels.size) {
-                val line_count = this.channels[channel].size
+            this.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*,*> ->
+                val line_count = channel.size
                 for (j in 0 until line_count) {
                     beat_cells.add(
-                        this.get_tree(BeatKey(channel, j, beat_index))
+                        this.get_tree(BeatKey(c, j, beat_index))
                     )
                 }
             }

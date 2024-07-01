@@ -2453,7 +2453,6 @@ open class OpusLayerBase {
         this._cached_abs_line_map_map.clear()
         this._cached_inv_abs_line_map_map.clear()
         // STD Channels ---------------------
-        var tmpx = 0
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
@@ -2519,19 +2518,39 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(first_key, second_key)
+        for (key_list in beat_keys) {
+            if (key_list.isEmpty()) {
+                continue
+            }
+            val working_key = key_list[0]
+            val working_tree = this.get_tree(working_key)
+            for (i in 1 until key_list.size) {
+                val overwrite_key = key_list[i]
+                this.replace_tree(overwrite_key, null, working_tree.copy())
+            }
+        }
+    }
+
+    open fun _get_beat_keys_for_overwrite_beat_range_horizontally(first_key: BeatKey, second_key: BeatKey): List<List<BeatKey>> {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         val width = (to_key.beat - from_key.beat) + 1
         val count = ((this.beat_count - from_key.beat) / width) - 1
-        val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
-        for (beat_key in beat_keys) {
-            val working_tree = this.get_tree(beat_key)
-            for (i in 0 until count) {
-                val to_overwrite = BeatKey(
-                    beat_key.channel,
-                    beat_key.line_offset,
-                    beat_key.beat + ((i + 1) * width)
-                )
-                this.replace_tree(to_overwrite, null, working_tree)
+        val beat_keys = this.get_beatkeys_in_range(first_key, second_key)
+
+        return List(beat_keys.size) { i: Int ->
+            val beat_key = beat_keys[i]
+
+            List(count + 1) { j: Int ->
+                if (j == 0) {
+                    beat_key
+                } else {
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset,
+                        beat_key.beat + (j * width)
+                    )
+                }
             }
         }
     }
@@ -2568,7 +2587,7 @@ open class OpusLayerBase {
                     beat_key.line_offset,
                     beat_key.beat + ((i + 1) * width)
                 )
-                this.replace_line_ctl_tree(type, to_overwrite, null, working_tree)
+                this.replace_line_ctl_tree(type, to_overwrite, null, working_tree.copy())
             }
         }
     }
@@ -2586,7 +2605,7 @@ open class OpusLayerBase {
                     channel,
                     ((j + 1) * width) + (i + start),
                     null,
-                    this.get_channel_ctl_tree(type, channel, (i + start))
+                    this.get_channel_ctl_tree(type, channel, (i + start)).copy()
                 )
             }
         }
@@ -2601,14 +2620,22 @@ open class OpusLayerBase {
         val original_tree = this.get_tree(beat_key)
         for (x in beat_key.beat + 1 until this.beat_count) {
             working_key.beat = x
-            this.replace_tree(working_key, null, original_tree)
+            this.replace_tree(working_key, null, original_tree.copy())
         }
+    }
+    open fun _get_beat_keys_for_overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
+        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
+        return List<BeatKey>(this.beat_count - beat_key.beat) { i: Int ->
+            working_key.beat = i + beat_key.beat
+            working_key
+        }
+
     }
 
     open fun overwrite_global_ctl_row(type: ControlEventType, beat: Int) {
         val original_tree = this.get_global_ctl_tree(type, beat)
         for (i in beat + 1 until this.beat_count) {
-            this.replace_global_ctl_tree(type, i, null, original_tree)
+            this.replace_global_ctl_tree(type, i, null, original_tree.copy())
         }
     }
 
@@ -2619,7 +2646,7 @@ open class OpusLayerBase {
 
         val original_tree = this.get_channel_ctl_tree(type, original_channel, original_beat)
         for (i in original_beat + 1 until this.beat_count) {
-            this.replace_channel_ctl_tree(type, target_channel, i, null, original_tree)
+            this.replace_channel_ctl_tree(type, target_channel, i, null, original_tree.copy())
         }
     }
 
@@ -2631,7 +2658,7 @@ open class OpusLayerBase {
         val original_tree = this.get_line_ctl_tree(type, beat_key)
         for (x in beat_key.beat + 1 until this.beat_count) {
             working_key.beat = x
-            this.replace_line_ctl_tree(type, working_key, null, original_tree)
+            this.replace_line_ctl_tree(type, working_key, null, original_tree.copy())
         }
     }
 

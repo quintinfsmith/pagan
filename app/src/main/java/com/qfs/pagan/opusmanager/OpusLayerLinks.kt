@@ -423,6 +423,13 @@ open class OpusLayerLinks : OpusLayerBase() {
         this.create_link_pool(new_pool)
     }
 
+    override fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
+    }
+
+    override fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
+        super.overwrite_row(channel, line_offset, beat_key)
+    }
 
     open fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
@@ -435,11 +442,6 @@ open class OpusLayerLinks : OpusLayerBase() {
         val to_beat = max(from_key.beat, to_key.beat)
         val range_width = (to_beat - from_beat) + 1
 
-        this.overwrite_beat_range(
-            BeatKey(channel, line_offset, 0),
-            first_key,
-            second_key
-        )
 
         from_key.beat = 0
         to_key.beat = range_width - 1
@@ -463,6 +465,12 @@ open class OpusLayerLinks : OpusLayerBase() {
                 this.create_link_pool(beat_key_list)
             }
         }
+
+        this.overwrite_beat_range(
+            BeatKey(channel, line_offset, 0),
+            first_key,
+            second_key
+        )
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
@@ -646,4 +654,40 @@ open class OpusLayerLinks : OpusLayerBase() {
     //     }
     // }
 
+    override fun _get_beat_keys_for_overwrite_beat_range_horizontally(first_key: BeatKey, second_key: BeatKey): List<List<BeatKey>> {
+        val beat_keys = super._get_beat_keys_for_overwrite_beat_range_horizontally(first_key, second_key)
+        val linked_key_set = mutableSetOf<BeatKey>()
+        val rebuilt_list = mutableListOf<List<BeatKey>>()
+        for (key_list in beat_keys) {
+            val new_list = mutableListOf<BeatKey>()
+            for (key in key_list) {
+                if (!linked_key_set.contains(key)) {
+                    new_list.add(key)
+                } else {
+                    linked_key_set.add(key)
+                }
+
+                linked_key_set.addAll(
+                    this._get_all_others_linked(key)
+                )
+            }
+            rebuilt_list.add(new_list)
+        }
+        return rebuilt_list
+    }
+
+    override fun _get_beat_keys_for_overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
+        val current_list = super._get_beat_keys_for_overwrite_row(channel, line_offset, beat_key)
+        val linked_key_set = mutableSetOf<BeatKey>()
+        val rebuilt_list = mutableListOf<BeatKey>()
+        for (key in current_list) {
+            if (!linked_key_set.contains(key)) {
+                rebuilt_list.add(key)
+            } else {
+                linked_key_set.add(key)
+            }
+            linked_key_set.addAll(this._get_all_others_linked(key))
+        }
+        return rebuilt_list
+    }
 }

@@ -432,7 +432,7 @@ open class OpusLayerBase {
         var abs_value = when (event) {
             is RelativeNoteEvent -> event.offset
             is AbsoluteNoteEvent -> return event.note
-            else -> return null
+            else -> 0
         }
 
         var working_beat_key = beat_key

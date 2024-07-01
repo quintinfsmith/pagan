@@ -297,7 +297,11 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             0 -> {
                 when (current_event) {
                     is AbsoluteNoteEvent -> ((current_event.note / radix) * radix) + progress
-                    null -> progress
+                    null -> {
+                        val cursor = opus_manager.cursor
+                        val previous_value = opus_manager.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
+                        ((previous_value / radix) * radix) + progress
+                    }
                     else -> {
                         // TODO: Specify (Shouldn't be reachable)
                         throw Exception()
@@ -375,6 +379,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
     }
+
     private fun on_octave_change(view: NumberSelector) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -395,7 +400,11 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             0 -> {
                 when (current_event) {
                     is AbsoluteNoteEvent -> (progress * radix) + (current_event.note % radix)
-                    null -> { progress * radix }
+                    null -> {
+                        val cursor = opus_manager.cursor
+                        val previous_value = opus_manager.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
+                        (progress * radix) + (previous_value % radix)
+                    }
                     else -> {
                         // TODO: Specify (Shouldn't be reachable)
                         throw Exception()

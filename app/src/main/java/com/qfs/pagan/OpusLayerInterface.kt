@@ -314,6 +314,10 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         this._notify_cell_change(beat_key)
+
+        this.withFragment {
+            it.refresh_context_menu()
+        }
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {

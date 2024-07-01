@@ -256,7 +256,11 @@ open class OpusLayerBase {
      * [position] defaults to null, indicating the root tree of the beat
      */
     fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<out InstrumentEvent> {
-        val working_channel = this.get_channel(beat_key.channel)
+        val working_channel = try {
+            this.get_channel(beat_key.channel)
+        } catch (e: IndexOutOfBoundsException) {
+            throw BadBeatKey(beat_key)
+        }
         if (beat_key.line_offset >= working_channel.size) {
             throw BadBeatKey(beat_key)
         }
@@ -428,29 +432,31 @@ open class OpusLayerBase {
         val tree = this.get_tree(beat_key, position)
 
         val event = tree.get_event()
-
-        var abs_value = when (event) {
-            is RelativeNoteEvent -> event.offset
-            is AbsoluteNoteEvent -> return event.note
-            else -> null
+        if (event is AbsoluteNoteEvent) {
+            return event.note
         }
+
 
         var working_beat_key = beat_key
         var working_position = position.toList()
+        var abs_value = 0
+        // Need the value set flag in the case  the value is set to 0
+        var value_set_flag = false
 
         while (true) {
-            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: return abs_value
+            val pair = this.get_preceding_leaf_position(working_beat_key, working_position) ?: break
             working_beat_key = pair.first
             working_position = pair.second
 
             val working_tree = this.get_tree(working_beat_key, working_position)
 
-            val working_event = working_tree.get_event()
-            when (working_event) {
+            when (val working_event = working_tree.get_event()) {
                 is RelativeNoteEvent -> {
+                    value_set_flag = true
                     abs_value += working_event.offset
                 }
                 is AbsoluteNoteEvent -> {
+                    value_set_flag = true
                     abs_value += working_event.note
                     break
                 }
@@ -459,7 +465,17 @@ open class OpusLayerBase {
                 }
             }
         }
-        return abs_value
+        return if (event == null) {
+            if (value_set_flag) {
+                abs_value
+            } else {
+                null
+            }
+        } else if (event is RelativeNoteEvent) {
+            abs_value + event.offset
+        } else { // Unreachable
+            null
+        }
     }
 
     /**

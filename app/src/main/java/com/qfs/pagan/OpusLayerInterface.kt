@@ -1049,6 +1049,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.get_editor_table()?.apply_queued_cell_changes()
     }
 
+    fun set_relative_mode(mode: Int) {
+        this.relative_mode = mode
+    }
     fun set_relative_mode(event: TunedInstrumentEvent) {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = if (event is AbsoluteNoteEvent) {

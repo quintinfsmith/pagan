@@ -24,7 +24,6 @@ class HistoryCacheUnitTest {
         } catch (e: Exception) {
             throw e
         }
-
         assertEquals(
             "Undo Didn't Work Correctly",
             original,

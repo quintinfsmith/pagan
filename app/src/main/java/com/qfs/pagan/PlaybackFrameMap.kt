@@ -488,7 +488,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             },
             beat_key
         )
-        this._add_handles(start_frame, end_frame, start_event!!)
+
+        // Don't add negative notes since they can't be played, BUT keep track
+        // of it so the rest of the song isn't messed up
+        if (start_event != null) {
+            this._add_handles(start_frame, end_frame, start_event)
+        }
 
         return when (event) {
             is RelativeNoteEvent -> event.offset + bkp_note_value

@@ -184,8 +184,6 @@ class OpusChannelGeneralizer {
 
         fun convert_v0_to_v1(input_map: ParsedHashMap, radix: Int): ParsedHashMap {
             val lines = input_map.get_list("lines")
-            val static_values: MutableList<Int?> = MutableList(lines.list.size) { null }
-            val midi_channel = input_map.get_int("midi_channel")
 
             val new_lines = ParsedList(
                 MutableList(lines.list.size) { i: Int ->
@@ -198,15 +196,6 @@ class OpusChannelGeneralizer {
                         beat_tree.clear_singles()
                         working_tree[j] = beat_tree
                     }
-                    if (midi_channel == 9) {
-                        var static_value: Int? = null
-                        working_tree.traverse { working_tree: OpusTree<ParsedHashMap>, event: ParsedHashMap? ->
-                            if (event != null && static_value == null) {
-                                static_value = event.get_int("note")
-                            }
-                        }
-                        static_values[i] = static_value ?: 0
-                    }
 
                     OpusTreeGeneralizer.to_v1_json(working_tree) { it }
                 }
@@ -218,16 +207,7 @@ class OpusChannelGeneralizer {
                     "midi_channel" to input_map["midi_channel"],
                     "midi_bank" to input_map["midi_bank"],
                     "midi_program" to input_map["midi_program"],
-                    "line_volumes" to input_map["line_volumes"],
-                    "line_static_values" to ParsedList(
-                        MutableList(static_values.size) {
-                            if (static_values[it] == null) {
-                                null
-                            } else {
-                                ParsedInt(static_values[it]!!)
-                            }
-                        }
-                    )
+                    "line_volumes" to input_map["line_volumes"]
                 )
             )
         }
@@ -235,13 +215,50 @@ class OpusChannelGeneralizer {
         fun convert_v1_to_v2(input_map: ParsedHashMap): ParsedHashMap {
             // Get Beat Count
             val line_volumes = input_map.get_list("line_volumes")
+            val midi_channel = input_map.get_int("midi_channel")
+            val lines = input_map.get_list("lines")
+
+            val static_values = ParsedList(
+                MutableList(lines.list.size) { i: Int ->
+                    if (midi_channel == 9) {
+                        var static_value: Int? = null
+                        val stack = mutableListOf(lines.get_hashmap(i))
+                        while (stack.isNotEmpty()) {
+                            var working_tree = stack.removeFirst()
+                            val event = working_tree.get_hashmapn("event")
+                            if (event != null) {
+                                val note = event.get_intn("note")
+                                if (note != null) {
+                                    static_value = note
+                                    break
+                                }
+                            }
+
+                            val children = working_tree.get_listn("children") ?: ParsedList()
+                            for (child in children.list) {
+                                if (child != null) {
+                                    stack.add(child as ParsedHashMap)
+                                }
+                            }
+                        }
+
+                        if (static_value != null) {
+                            ParsedInt(static_value)
+                        } else {
+                            null
+                        }
+                    } else {
+                        null
+                    }
+                }
+            )
 
             return ParsedHashMap(
                 hashMapOf(
                     "midi_channel" to input_map["midi_channel"],
                     "midi_bank" to input_map["midi_bank"],
                     "midi_program" to input_map["midi_program"],
-                    "line_static_values" to input_map["line_static_values"],
+                    "line_static_values" to static_values,
                     "line_controllers" to ParsedList(
                         MutableList(line_volumes.list.size) { i: Int ->
                             ParsedList(
@@ -292,6 +309,7 @@ class OpusChannelGeneralizer {
             } else {
                 null
             }
+
             return ParsedHashMap(
                 hashMapOf(
                     "midi_channel" to input_map["midi_channel"],

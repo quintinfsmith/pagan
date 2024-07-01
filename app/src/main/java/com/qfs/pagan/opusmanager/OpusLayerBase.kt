@@ -1837,9 +1837,47 @@ open class OpusLayerBase {
 
         opus.set_size(beat_values.size)
 
-        var overflow_events = mutableSetOf<InstrumentEvent>()
+        var overflow_events = mutableSetOf<Array<Int>>()
         beat_values.forEachIndexed { i: Int, beat_tree: OpusTree<Set<Array<Int>>> ->
-            opus[i] = beat_tree
+            // Quantize the beat ////////////
+            val quantized_tree = OpusTree<Set<Array<Int>>>()
+            quantized_tree.set_size(beat_tree.size)
+
+            if (overflow_events.isNotEmpty()) {
+                quantized_tree[0].set_event(overflow_events.toSet())
+                overflow_events = mutableSetOf()
+            }
+
+            // Can easily merge quantized positions since the beats are still flat
+            val qmap = beat_tree.get_quantization_map(listOf(2,2,2,3,5,7))
+            for ((new_position, old_positions) in qmap) {
+                val new_event_set = mutableSetOf<Array<Int>>()
+                for (old_position in old_positions) {
+                    val next_tree = beat_tree[old_position]
+                    for (e in next_tree.get_event()!!) {
+                        new_event_set.add(e)
+                    }
+                }
+
+                if (new_position == quantized_tree.size) {
+                    if (i < beat_values.size - 1) {
+                        for (e in new_event_set) {
+                            overflow_events.add(e)
+                        }
+                    }
+                } else {
+                    if (quantized_tree[new_position].is_event()) {
+                        for (e in quantized_tree[new_position].get_event()!!) {
+                            new_event_set.add(e)
+                        }
+                    }
+
+                    quantized_tree[new_position].set_event(new_event_set.toSet())
+                }
+            }
+            /////////////////////////////////////
+            //quantized_tree.reduce()
+            opus[i] = quantized_tree
         }
 
         for (tree in tempo_line) {

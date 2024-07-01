@@ -23,7 +23,7 @@ class OpusManagerGeneralizer {
             for (channel in opus_manager.channels) {
                 channels.add(OpusChannelGeneralizer.generalize(channel))
             }
-
+            output["size"] = opus_manager.beat_count
             output["tuning_map"] = ParsedList(MutableList(opus_manager.tuning_map.size) { i: Int ->
                 ParsedList(
                     mutableListOf(
@@ -83,12 +83,20 @@ class OpusManagerGeneralizer {
 
             opus_manager.channels.clear()
 
+            opus_manager.set_beat_count(inner_map.get_int("size"))
+
             for (generalized_channel in inner_map.get_list("channels").list) {
                 opus_manager.add_channel(
-                    OpusChannelGeneralizer.interpret(generalized_channel as ParsedHashMap) as OpusChannel
+                    OpusChannelGeneralizer.interpret(
+                        generalized_channel as ParsedHashMap,
+                        opus_manager.beat_count
+                    ) as OpusChannel
                 )
             }
-            opus_manager.percussion_channel = OpusChannelGeneralizer.interpret(inner_map.get_hashmap("percussion_channel")) as OpusPercussionChannel
+            opus_manager.percussion_channel = OpusChannelGeneralizer.interpret(
+                inner_map.get_hashmap("percussion_channel"),
+                opus_manager.beat_count
+            ) as OpusPercussionChannel
 
 
             val generalized_tuning_map = inner_map.get_list("tuning_map")
@@ -227,6 +235,7 @@ class OpusManagerGeneralizer {
                     "v" to ParsedInt(LATEST_VERSION),
                     "d" to ParsedHashMap(
                         hashMapOf(
+                            "size" to ParsedInt(beat_count),
                             "title" to input_map["name"],
                             "tuning_map" to ParsedList(
                                 MutableList(input_tuning_map.list.size) { i: Int ->

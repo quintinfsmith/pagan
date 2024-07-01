@@ -48,21 +48,29 @@ class ActiveControllerGeneralizer {
 
         fun convert_v2_to_v3(input: ParsedHashMap): ParsedHashMap {
             val input_children = input.get_list("children")
+            val events = ParsedList()
+
+            for (i in 0 until input_children.list.size) {
+                val pair = input_children.get_hashmap(i)
+                val generalized_tree = OpusTreeGeneralizer.convert_v1_to_v3(pair["second"] as ParsedHashMap) { input_event: ParsedHashMap ->
+                    OpusControlEventParser.convert_v2_to_v3(input_event)
+                }
+                if (generalized_tree == null) {
+                    continue
+                }
+                events.add(
+                    ParsedList(
+                        mutableListOf(
+                            pair["first"],
+                            generalized_tree
+                        )
+                    )
+                )
+            }
+
             return ParsedHashMap(
                 hashMapOf(
-                    "events" to ParsedList(
-                        MutableList(input_children.list.size) { i: Int ->
-                            val pair = input_children.get_hashmap(i)
-                            ParsedList(
-                                mutableListOf(
-                                    pair["first"],
-                                    OpusTreeGeneralizer.convert_v1_to_v3(pair["second"] as ParsedHashMap) { input_event: ParsedHashMap ->
-                                        OpusControlEventParser.convert_v2_to_v3(input_event)
-                                    }
-                                )
-                            )
-                        }
-                    ),
+                    "events" to events,
                     "type" to ParsedString(
                         when (input.get_string("type")) {
                             "Tempo" -> "tempo"
@@ -82,13 +90,15 @@ class ActiveControllerGeneralizer {
                 if (event_tree == null) {
                     return@forEachIndexed
                 }
+                val generalized_tree = OpusTreeGeneralizer.to_json(event_tree) { event: OpusControlEvent ->
+                    OpusControlEventParser.to_json(event)
+                } ?: return@forEachIndexed
+
                 event_list.add(
                     ParsedList(
                         mutableListOf<ParsedObject?>(
                             ParsedInt(i),
-                            OpusTreeGeneralizer.to_json(event_tree) { event: OpusControlEvent ->
-                                OpusControlEventParser.to_json(event)
-                            }
+                            generalized_tree
                         )
                     )
                 )

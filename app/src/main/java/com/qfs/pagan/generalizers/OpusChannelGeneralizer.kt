@@ -37,17 +37,17 @@ class OpusChannelGeneralizer {
             return channel_map
         }
 
-        private fun _interpret_percussion(input_map: ParsedHashMap): OpusPercussionChannel {
+        private fun _interpret_percussion(input_map: ParsedHashMap, beat_count: Int): OpusPercussionChannel {
             val channel = OpusPercussionChannel()
             val input_lines = input_map.get_list("lines")
             for (line in input_lines.list) {
-                channel.lines.add(OpusLineGeneralizer.percussion_line(line as ParsedHashMap))
+                channel.lines.add(OpusLineGeneralizer.percussion_line(line as ParsedHashMap, beat_count))
             }
 
             return channel
         }
 
-        private fun _interpret_std(input_map: ParsedHashMap): OpusChannel {
+        private fun _interpret_std(input_map: ParsedHashMap, beat_count: Int): OpusChannel {
             val channel = OpusChannel(-1)
             val midi_channel = input_map.get_int("midi_channel")
             channel.midi_channel = midi_channel
@@ -55,18 +55,18 @@ class OpusChannelGeneralizer {
 
             val input_lines = input_map.get_list("lines")
             for (line in input_lines.list) {
-                channel.lines.add(OpusLineGeneralizer.opus_line(line as ParsedHashMap))
+                channel.lines.add(OpusLineGeneralizer.opus_line(line as ParsedHashMap, beat_count))
             }
 
             return channel
         }
 
-        fun interpret(input_map: ParsedHashMap): OpusChannelAbstract<*,*> {
+        fun interpret(input_map: ParsedHashMap, beat_count: Int): OpusChannelAbstract<*,*> {
             val midi_channel = input_map.get_int("midi_channel")
             val channel = if (midi_channel == 9) {
-                _interpret_percussion(input_map)
+                _interpret_percussion(input_map, beat_count)
             } else {
-                _interpret_std(input_map)
+                _interpret_std(input_map, beat_count)
             }
 
             channel.size = channel.lines.size
@@ -320,20 +320,29 @@ class OpusChannelGeneralizer {
                         MutableList(lines.list.size) { i: Int ->
                             val child_list = lines.get_hashmap(i).get_list("children")
                             val line_controllers = input_map.get_list("line_controllers").get_list(i)
+                            val beats = ParsedList()
+                            for (j in 0 until child_list.list.size) {
+                                val generalized_beat = OpusTreeGeneralizer.convert_v1_to_v3(child_list.get_hashmapn(j)) { event_map: ParsedHashMap ->
+                                    if (midi_channel == 9) {
+                                        InstrumentEventParser.convert_v1_to_v3_percussion(event_map)
+                                    } else {
+                                        InstrumentEventParser.convert_v1_to_v3_tuned(event_map)
+                                    }
+                                } ?: continue
+                                beats.add(
+                                    ParsedList(
+                                        mutableListOf(
+                                            ParsedInt(j),
+                                            generalized_beat
+                                        )
+                                    )
+                                )
+                            }
+
                             val output_line = ParsedHashMap(
                                 hashMapOf(
                                     "controllers" to ActiveControlSetGeneralizer.convert_v2_to_v3(line_controllers, beat_count),
-                                    "beats" to ParsedList(
-                                        MutableList(child_list.list.size) { j: Int ->
-                                            OpusTreeGeneralizer.convert_v1_to_v3(child_list.get_hashmapn(j)) { event_map: ParsedHashMap ->
-                                                if (midi_channel == 9) {
-                                                    InstrumentEventParser.convert_v1_to_v3_percussion(event_map)
-                                                } else {
-                                                    InstrumentEventParser.convert_v1_to_v3_tuned(event_map)
-                                                }
-                                            }
-                                        }
-                                    )
+                                    "beats" to beats
                                 )
                             )
 

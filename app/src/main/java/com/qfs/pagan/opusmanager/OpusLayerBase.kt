@@ -175,7 +175,7 @@ open class OpusLayerBase {
         bottom_right_key.beat = max(0, min(bottom_right_key.beat, this.beat_count - 1))
 
         val output = mutableListOf<BeatKey>()
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+        this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             if (i < top_left_key.channel || i > bottom_right_key.channel) {
                 return@forEachIndexed // Continues
             }
@@ -2305,15 +2305,15 @@ open class OpusLayerBase {
     }
 
     fun is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
-        return if (this.channels.size <= first_corner.channel) {
+        return if (this.channels.size + 1 <= first_corner.channel) {
             false
-        } else if (this.channels[first_corner.channel].size <= first_corner.line_offset) {
+        } else if (this.get_channel(first_corner.channel).size <= first_corner.line_offset) {
             false
         } else if (this.beat_count <= first_corner.beat) {
             false
-        } else if (this.channels.size <= second_corner.channel) {
+        } else if (this.channels.size + 1 <= second_corner.channel) {
             false
-        } else if (this.channels[second_corner.channel].size <= second_corner.line_offset) {
+        } else if (this.get_channel(second_corner.channel).size <= second_corner.line_offset) {
             false
         } else if (this.beat_count <= second_corner.beat) {
             false

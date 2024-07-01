@@ -1269,11 +1269,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         this._remember {
-            val channel_to_remove = channel ?: if (this.channels.isNotEmpty()) {
-                this.channels.size - 1
-            } else {
-                0
-            }
+            val channel_to_remove = channel ?: this.channels.size
 
             super.new_channel(channel, lines, uuid)
 

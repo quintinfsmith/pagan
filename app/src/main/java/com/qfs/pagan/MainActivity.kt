@@ -1317,7 +1317,7 @@ class MainActivity : AppCompatActivity() {
             if (this._feedback_sample_manager != null) {
                 for (channel in opus_manager.get_all_channels()) {
                     val midi_channel = channel.get_midi_channel()
-                    val (midi_program, midi_bank) = channel.get_instrument()
+                    val (midi_bank, midi_program) = channel.get_instrument()
                     this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
                     this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
 
@@ -1347,7 +1347,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             val opus_channel = opus_manager.get_channel(index)
             val midi_channel = opus_channel.get_midi_channel()
-            val (midi_program, midi_bank) = opus_channel.get_instrument()
+            val (midi_bank, midi_program) = opus_channel.get_instrument()
             this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
             this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
             if (this._feedback_sample_manager != null) {

@@ -899,10 +899,10 @@ open class OpusLayerBase {
     }
 
     open fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        this.set_channel_program(channel, instrument.first)
         if (!this.is_percussion(channel)) {
-            this.set_channel_bank(channel, instrument.second)
+            this.set_channel_bank(channel, instrument.first)
         }
+        this.set_channel_program(channel, instrument.second)
     }
 
     private fun set_channel_program(channel: Int, program: Int) {

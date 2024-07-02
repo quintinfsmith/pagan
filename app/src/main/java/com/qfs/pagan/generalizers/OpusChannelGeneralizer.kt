@@ -71,8 +71,8 @@ class OpusChannelGeneralizer {
             } else {
                 _interpret_std(input_map, beat_count)
             }
-
             channel.size = channel.lines.size
+            channel.set_beat_count(beat_count)
             channel.midi_program = input_map.get_int("midi_program")
             channel.controllers = ActiveControlSetGeneralizer.from_json(input_map.get_hashmap("controllers"), beat_count)
 

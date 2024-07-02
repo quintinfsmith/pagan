@@ -1258,12 +1258,10 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun remove_channel(channel: Int) {
-        this._remember {
-            this.push_rebuild_channel(channel) {
-                this.history_cache.lock()
-                super.remove_channel(channel)
-                this.history_cache.unlock()
-            }
+        this.push_rebuild_channel(channel) {
+            //this.history_cache.lock()
+            super.remove_channel(channel)
+           // this.history_cache.unlock()
         }
     }
 

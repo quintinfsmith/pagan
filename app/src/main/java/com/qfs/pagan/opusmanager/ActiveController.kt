@@ -159,7 +159,7 @@ abstract class ActiveController(beat_count: Int) {
             }
         } else if (beat_count < current_beat_count) {
             for (i in beat_count until current_beat_count) {
-                this.remove_beat(current_beat_count - 1)
+                this.remove_beat(this.beat_count() - 1)
             }
         }
     }

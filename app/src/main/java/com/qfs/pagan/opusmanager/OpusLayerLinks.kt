@@ -528,7 +528,6 @@ open class OpusLayerLinks : OpusLayerBase() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         val working_channel = channel ?: this.channels.size
-        super.new_channel(channel, lines, uuid)
         this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel < working_channel) {
                 beat_key
@@ -540,6 +539,7 @@ open class OpusLayerLinks : OpusLayerBase() {
                 )
             }
         }
+        super.new_channel(channel, lines, uuid)
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {

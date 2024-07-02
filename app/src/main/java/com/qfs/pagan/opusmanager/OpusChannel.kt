@@ -187,7 +187,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is OpusChannel) {
+        if (other !is OpusChannelAbstract<*, *>) {
             return false
         }
 

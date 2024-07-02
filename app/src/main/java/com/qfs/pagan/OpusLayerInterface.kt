@@ -132,14 +132,18 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val coord_list = List(beat_keys.size) { i: Int ->
             EditorTable.Coordinate(
-                this.get_visible_row_from_ctl_line(
-                    this.get_ctl_line_index(
-                        this.get_abs_offset(
-                            beat_keys[i].channel,
-                            beat_keys[i].line_offset
+                try {
+                    this.get_visible_row_from_ctl_line(
+                        this.get_ctl_line_index(
+                            this.get_abs_offset(
+                                beat_keys[i].channel,
+                                beat_keys[i].line_offset
+                            )
                         )
-                    )
-                )!!,
+                    )!!
+                } catch (e: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+                  this.get_visible_line_count()
+                },
                 beat_keys[i].beat
             )
         }

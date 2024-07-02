@@ -2740,7 +2740,7 @@ open class OpusLayerBase {
         val original = this.tuning_map
         this.tuning_map = new_map.clone()
 
-        if (! mod_events || new_map.size != original.size) {
+        if (! mod_events || new_map.size == original.size) {
             return
         }
 
@@ -2758,15 +2758,13 @@ open class OpusLayerBase {
                         val new_event = when (event) {
                             is AbsoluteNoteEvent -> {
                                 val new_event = event.copy()
-                                val octave = (event.note / previous_radix)
-                                new_event.note = (octave * radix) + ((event.note % previous_radix) * radix / previous_radix)
+                                new_event.note = event.note * radix / previous_radix
                                 new_event
 
                             }
                             is RelativeNoteEvent -> {
                                 val new_event = event.copy()
-                                val octave = (event.offset / previous_radix)
-                                new_event.offset = (octave * radix) + ((event.offset % previous_radix) * radix / previous_radix)
+                                new_event.offset = event.offset * radix / previous_radix
                                 new_event
                             }
 

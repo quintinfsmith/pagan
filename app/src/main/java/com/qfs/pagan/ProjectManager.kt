@@ -69,7 +69,7 @@ class ProjectManager(data_dir: String) {
         return directory.listFiles()?.isNotEmpty() ?: false
     }
 
-    private fun generate_file_project_name(file: File): String {
+    private fun generate_file_project_name(): String {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         // TODO: use resource string
@@ -89,7 +89,7 @@ class ProjectManager(data_dir: String) {
         val project_list = mutableListOf<Pair<String, String>>()
         for (json_file in directory.listFiles()!!) {
             var project_name = try {
-                this.get_file_project_name(json_file) ?: this.generate_file_project_name(json_file)
+                this.get_file_project_name(json_file) ?: this.generate_file_project_name()
             } catch (e: Exception) {
                 // TODO: use resource string
                 "Corrupted Project"
@@ -115,7 +115,7 @@ class ProjectManager(data_dir: String) {
         return when (version) {
             0, 1, 2 -> json_obj.get_string("name")
             else -> {
-                json_obj.get_hashmap("d").get_string("title")
+                json_obj.get_hashmap("d").get_string("title", this.generate_file_project_name())
             }
         }
     }
@@ -160,7 +160,7 @@ class ProjectManager(data_dir: String) {
             return
         }
 
-        val project_name = this.get_file_project_name(project_file) ?: this.generate_file_project_name(project_file)
+        val project_name = this.get_file_project_name(project_file) ?: this.generate_file_project_name()
         project_list.add(Pair(path, project_name))
         project_list.sortBy { it.second }
 

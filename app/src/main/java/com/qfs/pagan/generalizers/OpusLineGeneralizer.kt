@@ -55,14 +55,18 @@ class OpusLineGeneralizer {
 
                 beat_list[beat_index] = tree
             }
-            return OpusLinePercussion(
+            val output = OpusLinePercussion(
                 input.get_int("instrument"),
                 beat_list
             )
+            output.controllers = ActiveControlSetGeneralizer.from_json(input.get_hashmap("controllers"), size)
+
+            return output
         }
 
         fun opus_line(input: ParsedHashMap, size: Int): OpusLine {
             val beats = input.get_list("beats")
+
             val beat_list = MutableList<OpusTree<TunedInstrumentEvent>>(size) { OpusTree() }
             for (i in 0 until beats.list.size) {
                 val pair = beats.get_list(i)
@@ -78,7 +82,9 @@ class OpusLineGeneralizer {
                 beat_list[beat_index] = tree
             }
 
-            return OpusLine(beat_list)
+            val output = OpusLine(beat_list)
+            output.controllers = ActiveControlSetGeneralizer.from_json(input.get_hashmap("controllers"), size)
+            return output
         }
     }
 }

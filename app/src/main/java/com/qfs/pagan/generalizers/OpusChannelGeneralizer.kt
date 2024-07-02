@@ -33,6 +33,7 @@ class OpusChannelGeneralizer {
             channel_map["midi_channel"] = channel.get_midi_channel()
             channel_map["midi_bank"] = channel.get_midi_bank()
             channel_map["midi_program"] = channel.midi_program
+            channel_map["controllers"] = ActiveControlSetGeneralizer.to_json(channel.controllers)
 
             return channel_map
         }
@@ -55,7 +56,9 @@ class OpusChannelGeneralizer {
 
             val input_lines = input_map.get_list("lines")
             for (line in input_lines.list) {
-                channel.lines.add(OpusLineGeneralizer.opus_line(line as ParsedHashMap, beat_count))
+                channel.lines.add(
+                    OpusLineGeneralizer.opus_line(line as ParsedHashMap, beat_count)
+                )
             }
 
             return channel
@@ -71,6 +74,7 @@ class OpusChannelGeneralizer {
 
             channel.size = channel.lines.size
             channel.midi_program = input_map.get_int("midi_program")
+            channel.controllers = ActiveControlSetGeneralizer.from_json(input_map.get_hashmap("controllers"), beat_count)
 
             return channel
         }

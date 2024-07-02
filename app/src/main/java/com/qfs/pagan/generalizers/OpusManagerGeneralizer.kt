@@ -84,7 +84,6 @@ class OpusManagerGeneralizer {
             opus_manager.channels.clear()
 
             opus_manager.set_beat_count(inner_map.get_int("size"))
-
             for (generalized_channel in inner_map.get_list("channels").list) {
                 opus_manager.add_channel(
                     OpusChannelGeneralizer.interpret(
@@ -107,10 +106,7 @@ class OpusManagerGeneralizer {
                     g_pair.get_int(1)
                 )
             }
-            opus_manager.controllers = ActiveControlSetGeneralizer.from_json(inner_map.get_hashmap("controllers"))
-
-            // use percussion channel to calculate beat count since it's guaranteed to be there
-            opus_manager.set_beat_count(opus_manager.percussion_channel.lines[0].beats.size)
+            opus_manager.controllers = ActiveControlSetGeneralizer.from_json(inner_map.get_hashmap("controllers"), opus_manager.beat_count)
 
             val generalized_reflections = inner_map.get_list("reflections")
             for (i in 0 until generalized_reflections.list.size) {
@@ -161,13 +157,27 @@ class OpusManagerGeneralizer {
         fun convert_v1_to_v2(input: ParsedHashMap): ParsedHashMap {
             // Get Beat Count
             val line_tree = OpusTreeGeneralizer.from_v1_json(input.get_list("channels").get_hashmap(0).get_list("lines").get_hashmap(0)) { null }
-            val beat_count = line_tree.size
+            // radix may have existed in v1 AND v0, so check if its used instead of tuning_map
+            var tuning_map = input.get_listn("tuning_map")
+            if (tuning_map == null) {
+                val radix = input.get_intn("radix") ?: 12
+                tuning_map = ParsedList(
+                    MutableList(radix) {
+                        ParsedHashMap(
+                            hashMapOf(
+                                "first" to ParsedInt(it),
+                                "second" to ParsedInt(radix)
+                            )
+                        )
+                    }
+                )
+            }
 
             val channels = input.get_list("channels")
 
             return ParsedHashMap(
                 hashMapOf(
-                    "tuning_map" to input["tuning_map"],
+                    "tuning_map" to tuning_map,
                     "reflections" to input["reflections"],
                     "transpose" to input["transpose"],
                     "name" to input["name"],
@@ -202,9 +212,17 @@ class OpusManagerGeneralizer {
                     input.get_int("v")
                 }
                 else -> {
+                    // There was some time between v0 and 1 where the 'tuning_map' didn't exist, so
+                    // need to check by lines
                     if (!map_keys.contains("controllers")) {
-                        if (!map_keys.contains("tuning_map")) {
-                            0
+                        if (map_keys.contains("radix")) {
+                            val channel = input.get_list("channels").get_hashmap(0)
+                            val lines = channel.get_list("lines")
+                            if (lines.list[0] is ParsedString) {
+                                0
+                            } else {
+                                1
+                            }
                         } else {
                             1
                         }
@@ -226,7 +244,7 @@ class OpusManagerGeneralizer {
                 )
             }
             val input_tuning_map = input_map.get_list("tuning_map")
-            val beat_count = channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("beats").list.size
+            val beat_count = input_channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("children").list.size
 
             val input_reflections = input_map.get_list("reflections")
 

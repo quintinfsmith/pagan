@@ -7,8 +7,7 @@ import com.qfs.json.ParsedList
 class ActiveControlSetGeneralizer() {
     class UnknownControllerException(): Exception()
     companion object {
-        fun from_json(json_obj: ParsedHashMap): ActiveControlSet {
-            val size = json_obj.get_int("beat_count")
+        fun from_json(json_obj: ParsedHashMap, size: Int): ActiveControlSet {
             val control_set = ActiveControlSet(size)
             for (json_controller in json_obj.get_listn("controllers")?.list ?: listOf()) {
                 val controller = ActiveControllerGeneralizer.from_json(json_controller as ParsedHashMap, size)

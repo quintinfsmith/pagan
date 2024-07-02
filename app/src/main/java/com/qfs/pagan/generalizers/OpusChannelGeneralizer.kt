@@ -57,7 +57,10 @@ class OpusChannelGeneralizer {
             val input_lines = input_map.get_list("lines")
             for (line in input_lines.list) {
                 channel.lines.add(
-                    OpusLineGeneralizer.opus_line(line as ParsedHashMap, beat_count)
+                    OpusLineGeneralizer.opus_line(
+                        line as ParsedHashMap,
+                        beat_count
+                    )
                 )
             }
 

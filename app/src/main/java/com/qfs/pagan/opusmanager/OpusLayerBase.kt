@@ -2737,7 +2737,7 @@ open class OpusLayerBase {
     open fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean = true) {
         val previous_radix = this.tuning_map.size
 
-        this.tuning_map = new_map
+        this.tuning_map = new_map.clone()
 
         if (! mod_events) {
             return

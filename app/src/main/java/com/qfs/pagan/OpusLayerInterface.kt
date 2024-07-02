@@ -177,16 +177,17 @@ class OpusLayerInterface : OpusLayerCursor() {
     /*
         Notify the editor table to update a cell and all linked cells
      */
-    private fun _notify_cell_change(beat_key: BeatKey) {
+    private fun _notify_cell_change(beat_key: BeatKey, force_queue: Boolean = false) {
         if (this.get_activity() == null) {
             return
         }
-        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
+        val ui_lock_level = this.get_ui_lock_level()
+        if (ui_lock_level == UI_LOCK_FULL) {
             return
         }
 
         val coord_list = this._get_all_linked_as_coords(beat_key)
-        this._notify_cell_change(coord_list, this.history_cache.isLocked())
+        this._notify_cell_change(coord_list, this.history_cache.isLocked() || force_queue)
     }
 
     private fun _notify_cell_change(coord_list: List<EditorTable.Coordinate>, force_queue: Boolean = false) {
@@ -311,10 +312,13 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         super.set_event(beat_key, position, event)
-
         // If the OM is applying history, change the relative mode, otherwise leave it.
         if (event is TunedInstrumentEvent) {
             this.set_relative_mode(event)
+        }
+
+        if (this.get_ui_lock_level() != null) {
+            return
         }
 
         this._notify_cell_change(beat_key)
@@ -1673,10 +1677,21 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
         val was_tuning_standard = this.is_tuning_standard()
-        super.set_tuning_map(new_map, mod_events)
+        this.surpress_ui {
+            super.set_tuning_map(new_map, mod_events)
+        }
         val is_tuning_standard = this.is_tuning_standard()
 
         val activity = this.get_activity() ?: return
+        for (i in 0 until this.channels.size) {
+            for (j in 0 until this.channels[i].lines.size) {
+                for (k in 0 until this.beat_count) {
+                    this._notify_cell_change(BeatKey(i,j,k), true)
+                }
+            }
+
+        }
+        this.get_editor_table()?.apply_queued_cell_changes()
 
         if (is_tuning_standard && !was_tuning_standard) {
             activity.enable_physical_midi_output()

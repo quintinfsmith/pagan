@@ -320,7 +320,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (this.get_ui_lock_level() != null) {
             return
         }
-
         this._notify_cell_change(beat_key)
 
         this.withFragment {
@@ -1677,21 +1676,13 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
         val was_tuning_standard = this.is_tuning_standard()
+        val original_map = this.tuning_map
         this.surpress_ui {
             super.set_tuning_map(new_map, mod_events)
         }
         val is_tuning_standard = this.is_tuning_standard()
 
         val activity = this.get_activity() ?: return
-        for (i in 0 until this.channels.size) {
-            for (j in 0 until this.channels[i].lines.size) {
-                for (k in 0 until this.beat_count) {
-                    this._notify_cell_change(BeatKey(i,j,k), true)
-                }
-            }
-
-        }
-        this.get_editor_table()?.apply_queued_cell_changes()
 
         if (is_tuning_standard && !was_tuning_standard) {
             activity.enable_physical_midi_output()
@@ -1707,8 +1698,25 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         activity.setup_project_config_drawer_export_button()
 
-        if (this.get_ui_lock_level() != null || !mod_events) {
+        if (new_map.size == original_map.size || this.get_ui_lock_level() != null || !mod_events) {
             return
+        }
+
+        for (i in 0 until this.channels.size) {
+            for (j in 0 until this.channels[i].lines.size) {
+                for (k in 0 until this.beat_count) {
+                    val beat_key = BeatKey(i, j, k)
+                    val tree = this.get_tree(beat_key)
+                    if (tree.is_eventless()) {
+                        continue
+                    }
+                    this._notify_cell_change(beat_key, true)
+                }
+            }
+
+        }
+        this.runOnUiThread {
+            this.get_editor_table()?.apply_queued_cell_changes()
         }
 
         this.withFragment { fragment ->

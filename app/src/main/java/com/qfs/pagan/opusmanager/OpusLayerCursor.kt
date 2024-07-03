@@ -497,7 +497,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
 
         var has_cursor_action = true
-        if (this.link_lock < 2) { // Don't move cursor to links (0: no lock applied, 1: lock applied but still consideried original, 2: lock applied & working with linked)
+        if (this.link_lock == 0) { // Don't move cursor to links
             this.history_cache.remember {
                 when (token) {
                     HistoryToken.MOVE_LINE -> {

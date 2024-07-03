@@ -188,7 +188,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     this.replace_tree(
                         beat_key,
                         position,
-                        this.checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2])
+                        this.checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2]).copy()
                     )
                 }
 
@@ -201,7 +201,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         type,
                         beat,
                         position,
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
+                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3]).copy()
                     )
                 }
 
@@ -217,7 +217,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         channel,
                         beat,
                         position,
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4])
+                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4]).copy()
                     )
                 }
 
@@ -231,7 +231,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         type,
                         beat_key,
                         position,
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
+                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3]).copy()
                     )
                 }
 

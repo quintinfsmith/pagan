@@ -801,15 +801,13 @@ open class OpusLayerBase {
             }
         }
 
-        val parent_tree = tree.get_parent()
-
-        val to_replace_tree = this.get_tree(beat_key, to_replace_position)
+        val replacer_tree = this.get_tree(beat_key, to_replace_position)
         tree.detach()
 
         this.replace_tree(
             beat_key,
             position.subList(0, position.size - 1),
-            to_replace_tree
+            replacer_tree
         )
     }
 
@@ -1292,11 +1290,7 @@ open class OpusLayerBase {
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
-        val end_beat = if (end_beat_rel == null) {
-            this.beat_count
-        } else {
-            end_beat_rel
-        }
+        val end_beat = end_beat_rel ?: this.beat_count
 
         val midi = Midi()
 

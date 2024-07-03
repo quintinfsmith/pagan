@@ -30,7 +30,7 @@ class SampleHandleManager(
                 sample_rate,
                 AudioFormat.ENCODING_PCM_FLOAT,
                 AudioFormat.CHANNEL_OUT_STEREO
-            )
+            ) * 2 // too small causes clipping
         )
 
         this.buffer_size = adj_target_buffer_size - (adj_target_buffer_size % core_count)

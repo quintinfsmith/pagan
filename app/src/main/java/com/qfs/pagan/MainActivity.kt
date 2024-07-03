@@ -2082,7 +2082,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_notification_channel(): NotificationChannel? {
-        return if (this.has_notification_permission()) {
+        return if (!this.has_notification_permission()) {
             null
         } else if (this._notification_channel == null) {
             val notification_manager = NotificationManagerCompat.from(this)

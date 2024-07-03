@@ -2584,7 +2584,7 @@ open class OpusLayerBase {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         val width = (to_key.beat - from_key.beat) + 1
         val count = ((this.beat_count - from_key.beat) / width) - 1
-        val beat_keys = this.get_beatkeys_in_range(first_key, second_key)
+        val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
 
         return List(beat_keys.size) { i: Int ->
             val beat_key = beat_keys[i]

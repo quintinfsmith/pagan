@@ -138,6 +138,7 @@ class SampleHandle(
                 modulators = original.modulators
             )
             output.release_frame = original.release_frame
+            output.kill_frame = original.kill_frame
 
             return output
         }
@@ -147,6 +148,7 @@ class SampleHandle(
 
     var working_frame: Int = 0
     var release_frame: Int? = null
+    var kill_frame: Int? = null
     var is_dead = false
 
     fun max_frame_value(): Int {
@@ -159,6 +161,10 @@ class SampleHandle(
 
     fun set_working_frame(frame: Int) {
         this.working_frame = frame
+        if (this.kill_frame != null && this.working_frame >= this.kill_frame!!) {
+            this.is_dead = true
+            return
+        }
         if (this.release_frame != null && this.working_frame >= this.release_frame!! + this.volume_envelope.frames_release) {
             this.is_dead = true
             return
@@ -272,6 +278,10 @@ class SampleHandle(
 
     fun release_note() {
         this.set_release_frame(this.working_frame)
+    }
+
+    fun set_kill_frame(f: Int) {
+        this.kill_frame = f
     }
 
     fun is_pressed(): Boolean {

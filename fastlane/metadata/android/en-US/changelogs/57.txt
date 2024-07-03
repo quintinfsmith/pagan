@@ -1,3 +1,4 @@
 - Fixed relative note misalignment
+- Fixed crash on high notes when radix > 12
 - Fixed Notifications
 - Updated Save Format

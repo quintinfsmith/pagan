@@ -1299,10 +1299,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             this.replace_tree(
                 beat_key,
                 listOf(),
-                this.get_tree(
+                this.get_tree_copy(
                     this.cursor.get_beatkey(),
                     listOf()
-                ).copy()
+                )
             )
         } else {
             throw InvalidCursorState()

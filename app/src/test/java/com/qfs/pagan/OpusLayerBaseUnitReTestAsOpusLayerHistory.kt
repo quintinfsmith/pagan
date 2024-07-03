@@ -3338,7 +3338,6 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         manager.set_event(key_b, listOf(0), AbsoluteNoteEvent(12))
         manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
         manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
-
         assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
             manager.merge_leafs(key_a, listOf(), key_b, listOf())
         }

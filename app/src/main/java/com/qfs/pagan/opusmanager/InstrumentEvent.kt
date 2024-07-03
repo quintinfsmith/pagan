@@ -1,10 +1,10 @@
 package com.qfs.pagan.opusmanager
 
 abstract class InstrumentEvent(var duration: Int = 1): OpusEvent() {
-    abstract fun copy(): InstrumentEvent
     override fun equals(other: Any?): Boolean {
         return other is InstrumentEvent && other.duration == this.duration
     }
+    abstract fun copy(): InstrumentEvent
 }
 
 abstract class TunedInstrumentEvent(duration: Int): InstrumentEvent(duration)

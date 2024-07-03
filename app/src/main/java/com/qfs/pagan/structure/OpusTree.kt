@@ -166,7 +166,7 @@ class OpusTree<T> {
         }
     }
 
-    fun copy(copy_func: ((tree: OpusTree<T>) -> T?)? = null): OpusTree<T> {
+    fun copy(copy_func: ((event: T?) -> T?)? = null): OpusTree<T> {
         val copied = OpusTree<T>()
         copied.size = this.size
         for (key in this.divisions.keys) {
@@ -179,17 +179,15 @@ class OpusTree<T> {
         return copied
     }
 
-    fun get_event_copy(copy_func: ((tree: OpusTree<T>) -> T?)? = null): T? {
+    fun get_event_copy(copy_func: ((event: T?) -> T?)? = null): T? {
+        val event = this.get_event()
         return if (copy_func == null) {
-            this.copy_event(this)
+            event
         } else {
-            copy_func(this)
+            copy_func(event)
         }
     }
 
-    private fun copy_event(tree: OpusTree<T>): T? {
-        return tree.event
-    }
 
     operator fun get(rel_index: Int): OpusTree<T> {
         if (this.is_leaf()) {

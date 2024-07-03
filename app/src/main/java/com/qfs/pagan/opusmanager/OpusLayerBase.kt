@@ -609,7 +609,8 @@ open class OpusLayerBase {
 
         // The implied first value can be 0
         val value = this.get_absolute_value(beat_key, position) ?: event.offset
-        if (value < 0 || value > 95) {
+        val radix = this.tuning_map.size
+        if (value < 0 || value > radix * 8) {
             throw NoteOutOfRange(value)
         }
         this.set_event(

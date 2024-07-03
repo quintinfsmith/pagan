@@ -257,7 +257,7 @@ class LeafButtonStd(
             when (tree.get_event()) {
                 is RelativeNoteEvent -> {
                     val abs_value = opus_manager.get_absolute_value(beat_key, position)
-                    if (abs_value == null || abs_value < 0) {
+                    if (abs_value == null || abs_value < 0 || abs_value >= opus_manager.tuning_map.size * 8) {
                         new_state.add(R.attr.state_invalid)
                     }
                 }

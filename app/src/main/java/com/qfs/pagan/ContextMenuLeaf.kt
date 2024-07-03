@@ -595,7 +595,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        if (event_note < 0) {
+        if (event_note < 0 || event_note > 8 * opus_manager.tuning_map.size) {
             return
         }
 

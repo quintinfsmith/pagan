@@ -1409,6 +1409,10 @@ class MainActivity : AppCompatActivity() {
             Pair(new_note, bend)
         }
 
+        if (note > 127) {
+            return
+        }
+
         if (this._feedback_sample_manager != null) {
             if (this._temporary_feedback_devices[this._current_feedback_device] == null) {
                 this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)

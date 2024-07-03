@@ -1333,7 +1333,8 @@ class MainActivity : AppCompatActivity() {
             }
             // Don't need to update anything but percussion here
             val midi_channel = opus_manager.percussion_channel.get_midi_channel()
-            val (midi_program, midi_bank) = opus_manager.percussion_channel.get_instrument()
+            val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
+
             if (this.sample_handle_manager != null) {
                 this.sample_handle_manager!!.select_bank(
                     midi_channel,
@@ -1507,7 +1508,6 @@ class MainActivity : AppCompatActivity() {
         this.connect_feedback_device()
 
         this.update_channel_instruments()
-
         this.populate_active_percussion_names()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()

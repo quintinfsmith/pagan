@@ -63,7 +63,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return this._cached_beat_frames!!
         }
 
-        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
+        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate / 2 // (sample rate includes 2 channels, not applicable to SampleHandle)
 
         val beats = mutableListOf(0)
 

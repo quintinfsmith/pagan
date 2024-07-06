@@ -58,7 +58,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val channel = opus_manager.cursor.channel
         val line_offset = opus_manager.cursor.line_offset
 
-        if (!opus_manager.is_percussion(channel) || main.get_soundfont() == null) {
+        if (!opus_manager.is_percussion(channel)) {
             this.spacer.visibility = View.VISIBLE
             this.button_choose_percussion.visibility = View.GONE
         } else {

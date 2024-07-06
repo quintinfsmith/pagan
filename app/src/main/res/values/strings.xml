@@ -106,6 +106,7 @@
     <string name="no_soundfont">No Soundfont</string>
     <string name="option_import_soundfont">Import...</string>
     <string name="unknown_percussion">Unknown Percussion</string>
+    <string name="percussion">Percussion</string>
     <string name="unknown_instrument">Unknown %1s</string>
     <string name="desc_column_label">Column %1d</string>
     <string name="dropdown_choose_percussion">Choose Percussion</string>

@@ -54,7 +54,14 @@ class ChannelOptionAdapter(
             for ((name, program, bank) in soundfont.get_available_presets()) {
                 this._supported_instruments[Pair(bank, program)] = name
             }
+        } else {
+            var program = 0
+            for (name in this.get_activity().resources.getStringArray(R.array.midi_instruments)) {
+                this._supported_instruments[Pair(0, program++)] = name
+            }
+            this._supported_instruments[Pair(128, 0)] = this.get_activity().getString(R.string.percussion)
         }
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
@@ -99,6 +106,8 @@ class ChannelOptionAdapter(
 
         (view.getChildAt(0) as TextView).text = if (!this._opus_manager.is_percussion(position)) {
             activity.getString(R.string.label_choose_instrument, position, label)
+        } else if (activity.get_soundfont() == null) {
+            label
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
         }.trim()
@@ -186,9 +195,11 @@ class ChannelOptionAdapter(
         }
 
         val default_position = this._opus_manager.get_channel_instrument(channel)
-        this.get_activity().dialog_popup_menu<Pair<Int, Int>>(this.get_activity().getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
+        if (options.size > 1) {
+            this.get_activity().dialog_popup_menu<Pair<Int, Int>>(this.get_activity().getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
 
-            this.set_channel_instrument(channel, bank, program)
+                this.set_channel_instrument(channel, bank, program)
+            }
         }
     }
 

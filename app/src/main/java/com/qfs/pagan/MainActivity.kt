@@ -1278,7 +1278,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun get_drum_options(): List<Pair<String, Int>> {
         if (this.sample_handle_manager == null) {
-            return listOf()
+            val midi_drums = this.resources.getStringArray(R.array.midi_drums)
+            return List(midi_drums.size) { i: Int ->
+                Pair(midi_drums[i]!!, i + 27)
+            }
         }
 
         val preset = try {

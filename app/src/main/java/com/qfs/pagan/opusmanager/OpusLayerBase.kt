@@ -2238,9 +2238,6 @@ open class OpusLayerBase {
         if (! this.is_valid_beat_range(from_key, to_key)) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }
-        if (this.is_mixed_range(from_key, to_key)) {
-            throw MixedInstrumentException(from_key, to_key)
-        }
 
         val (y_diff, x_diff) = this.get_abs_difference(from_key, to_key)
 
@@ -2256,9 +2253,6 @@ open class OpusLayerBase {
 
         val target_second_key = BeatKey(target_channel, target_offset, beat_key.beat + x_diff)
 
-        if (this.is_mixed_range(beat_key, target_second_key)) {
-            throw MixedInstrumentException(beat_key, target_second_key)
-        }
 
         return this.get_beatkeys_in_range(beat_key, target_second_key)
     }
@@ -2272,6 +2266,12 @@ open class OpusLayerBase {
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
+
+        for (i in original_keys.indices) {
+            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
+                throw MixedInstrumentException(original_keys[i], target_keys[i])
+            }
+        }
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
         val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
@@ -2293,6 +2293,12 @@ open class OpusLayerBase {
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
+
+        for (i in original_keys.indices) {
+            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
+                throw MixedInstrumentException(original_keys[i], target_keys[i])
+            }
+        }
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
         val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
@@ -2329,24 +2335,6 @@ open class OpusLayerBase {
         } else {
             true
         }
-    }
-
-    fun is_mixed_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
-        if (first_corner.channel == second_corner.channel) {
-            return false
-        }
-
-        val channel_a = min(first_corner.channel, second_corner.channel)
-        val channel_b = max(first_corner.channel, second_corner.channel)
-        var has_percussion = false
-        var has_non_percussion = false
-
-        for (i in channel_a .. channel_b) {
-            has_percussion = has_percussion || this.is_percussion(i)
-            has_non_percussion = has_non_percussion || !this.is_percussion(i)
-        }
-        
-        return has_percussion && has_non_percussion
     }
 
     private fun _copy_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int, unset_original: Boolean = false) {
@@ -2426,6 +2414,12 @@ open class OpusLayerBase {
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
+
+        for (i in original_keys.indices) {
+            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
+                throw MixedInstrumentException(original_keys[i], target_keys[i])
+            }
+        }
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
         val trees = mutableListOf<OpusTree<OpusControlEvent>>()

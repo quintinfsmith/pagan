@@ -395,6 +395,14 @@ open class OpusLayerLinks : OpusLayerBase() {
         val keys_to_link_independent = this.get_beatkeys_in_range(from_key, to_key)
         val keys_to_link_dependent = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
+        for (i in keys_to_link_independent.indices) {
+            val i_key = keys_to_link_independent[i]
+            val d_key = keys_to_link_dependent[i]
+            if (this.is_percussion(i_key.channel) != this.is_percussion(d_key.channel)) {
+                throw MixedInstrumentException(i_key, d_key)
+            }
+        }
+
         if (keys_to_link_independent.toSet().intersect(keys_to_link_dependent.toSet()).isNotEmpty()) {
             throw LinkRangeOverlap(from_key, to_key, beat_key)
         }

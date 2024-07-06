@@ -59,7 +59,7 @@ class ChannelOptionAdapter(
             for (name in this.get_activity().resources.getStringArray(R.array.midi_instruments)) {
                 this._supported_instruments[Pair(0, program++)] = name
             }
-            this._supported_instruments[Pair(128, 0)] = this.get_activity().getString(R.string.percussion)
+            this._supported_instruments[Pair(128, 0)] = "0"
         }
 
     }
@@ -99,15 +99,13 @@ class ChannelOptionAdapter(
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.get_midi_bank(), curChannel.midi_program)
         val label = this._supported_instruments[key] ?: if (this._opus_manager.is_percussion(position)) {
-            activity.resources.getString(R.string.unknown_percussion)
+            "${curChannel.midi_program}"
         } else {
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
 
         (view.getChildAt(0) as TextView).text = if (!this._opus_manager.is_percussion(position)) {
             activity.getString(R.string.label_choose_instrument, position, label)
-        } else if (activity.get_soundfont() == null) {
-            label
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
         }.trim()
@@ -183,7 +181,11 @@ class ChannelOptionAdapter(
             it.first + (it.second * 128)
         }
 
+        val default_position = this._opus_manager.get_channel_instrument(channel)
+
         val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
+        var current_instrument_supported = sorted_keys.contains(default_position)
+
         for (key in sorted_keys) {
             val name = this._supported_instruments[key]
             if ((this._opus_manager.is_percussion(channel) && key.first == 128)) {
@@ -194,11 +196,15 @@ class ChannelOptionAdapter(
             }
         }
 
-        val default_position = this._opus_manager.get_channel_instrument(channel)
-        if (options.size > 1) {
-            this.get_activity().dialog_popup_menu<Pair<Int, Int>>(this.get_activity().getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
+        val activity = this.get_activity()
+        if (options.size > 1 || !current_instrument_supported) {
+            activity.dialog_popup_menu<Pair<Int, Int>>(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
 
                 this.set_channel_instrument(channel, bank, program)
+            }
+        } else if (activity.get_soundfont() == null && this._opus_manager.is_percussion(channel)) {
+            activity.dialog_number_input(activity.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second) { program: Int ->
+                this.set_channel_instrument(channel, 1, program)
             }
         }
     }

@@ -197,12 +197,12 @@ class ChannelOptionAdapter(
         }
 
         val activity = this.get_activity()
-        if (options.size > 1 || !current_instrument_supported) {
+        if (options.size > 1 || (!current_instrument_supported && options.isNotEmpty())) {
             activity.dialog_popup_menu<Pair<Int, Int>>(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
 
                 this.set_channel_instrument(channel, bank, program)
             }
-        } else if (activity.get_soundfont() == null && this._opus_manager.is_percussion(channel)) {
+        } else if (options.isEmpty() && this._opus_manager.is_percussion(channel)) {
             activity.dialog_number_input(activity.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second) { program: Int ->
                 this.set_channel_instrument(channel, 1, program)
             }

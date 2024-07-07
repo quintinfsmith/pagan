@@ -261,7 +261,6 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             soundfonts.add(Pair(Pair(1, file.name), file.name))
         }
 
-
         this.get_main().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { _: Int, pair: Pair<Int, String?> ->
             val (mode, path) = pair
             when (mode) {

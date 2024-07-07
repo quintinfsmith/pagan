@@ -455,12 +455,20 @@ class MainActivity : AppCompatActivity() {
                         this@MainActivity.playback_stop()
                     }
 
-                    else -> { /* pass */
-                    }
+                    else -> { /* pass */ }
                 }
 
                 this@MainActivity.runOnUiThread {
                     this@MainActivity.update_menu_options()
+                    this@MainActivity.setup_project_config_drawer_export_button()
+
+                    val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                    // Should always be null since this can only be changed from a different menu
+                    if (channel_recycler.adapter != null) {
+                        val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
+                        channel_adapter.set_soundfont(null)
+                    }
+                    this@MainActivity.populate_active_percussion_names(true)
                 }
 
                 if (this@MainActivity.get_opus_manager().is_tuning_standard()) {
@@ -475,8 +483,7 @@ class MainActivity : AppCompatActivity() {
                         this@MainActivity.playback_stop_midi_output()
                     }
 
-                    else -> { /* pass */
-                    }
+                    else -> { /* pass */ }
                 }
 
                 // Kludge. need a sleep to give output devices a chance to disconnect
@@ -484,6 +491,18 @@ class MainActivity : AppCompatActivity() {
 
                 this@MainActivity.runOnUiThread {
                     this@MainActivity.update_menu_options()
+                    if (!this@MainActivity.is_connected_to_physical_device()) {
+                        this@MainActivity.setup_project_config_drawer_export_button()
+
+                        val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                        // Should always be null since this can only be changed from a different menu
+                        if (channel_recycler.adapter != null) {
+                            val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
+                            channel_adapter.set_soundfont(this@MainActivity._soundfont)
+                        }
+
+                        this@MainActivity.populate_active_percussion_names(true)
+                    }
                 }
             }
         }
@@ -598,15 +617,9 @@ class MainActivity : AppCompatActivity() {
                     // Invalid soundfont somehow set
                 }
             }
-
-            this.populate_active_percussion_names()
-
-            val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-            val soundfont = this@MainActivity.get_soundfont()
-            if (channel_recycler != null && channel_recycler.adapter != null && soundfont != null) {
-                (channel_recycler.adapter as ChannelOptionAdapter).set_soundfont(soundfont)
-            }
         }
+
+        this.populate_active_percussion_names()
         ///////////////////////////////////////////
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -1282,8 +1295,9 @@ class MainActivity : AppCompatActivity() {
             Pair(midi_drums[i]!!, i + 27)
         }
     }
+
     private fun get_drum_options(): List<Pair<String, Int>> {
-        if (this.sample_handle_manager == null) {
+        if (this.sample_handle_manager == null || this.is_connected_to_physical_device()) {
             return this._get_default_drum_options()
         }
 

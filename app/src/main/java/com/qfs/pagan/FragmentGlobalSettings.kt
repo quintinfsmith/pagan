@@ -13,7 +13,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
@@ -169,7 +168,9 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                main.set_sample_rate(main.configuration.sample_rate)
+                if (seekbar != null) {
+                    main.set_sample_rate(options[seekbar.progress])
+                }
             }
         })
 

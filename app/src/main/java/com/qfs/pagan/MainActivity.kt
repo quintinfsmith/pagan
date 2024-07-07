@@ -1276,18 +1276,21 @@ class MainActivity : AppCompatActivity() {
 
     // Ui Wrappers End ////////////////////////////////////////
 
+    private fun _get_default_drum_options(): List<Pair<String, Int>> {
+        val midi_drums = this.resources.getStringArray(R.array.midi_drums)
+        return List(midi_drums.size) { i: Int ->
+            Pair(midi_drums[i]!!, i + 27)
+        }
+    }
     private fun get_drum_options(): List<Pair<String, Int>> {
         if (this.sample_handle_manager == null) {
-            val midi_drums = this.resources.getStringArray(R.array.midi_drums)
-            return List(midi_drums.size) { i: Int ->
-                Pair(midi_drums[i]!!, i + 27)
-            }
+            return this._get_default_drum_options()
         }
 
         val preset = try {
-            this.sample_handle_manager!!.get_preset(9) ?: return listOf()
+            this.sample_handle_manager!!.get_preset(9) ?: return this._get_default_drum_options()
         } catch (e: SoundFont.InvalidPresetIndex) {
-            return listOf()
+            return this._get_default_drum_options()
         }
 
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()

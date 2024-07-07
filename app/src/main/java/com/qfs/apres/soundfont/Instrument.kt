@@ -20,15 +20,17 @@ class Instrument(var name: String) {
             val key_range = if (sample_directive.key_range == null) {
                 0..127
             } else {
-                sample_directive.key_range!!.first ..sample_directive.key_range!!.second
+                sample_directive.key_range!!.first..sample_directive.key_range!!.second
             }
+
             for (i in key_range) {
                 this.quick_ref_key[i].add(hash_code)
             }
+
             val vel_range = if (sample_directive.velocity_range == null) {
                 0..127
             } else {
-                sample_directive.velocity_range!!.first ..sample_directive.velocity_range!!.second
+                sample_directive.velocity_range!!.first..sample_directive.velocity_range!!.second
             }
 
             for (i in vel_range) {
@@ -38,10 +40,28 @@ class Instrument(var name: String) {
     }
 
     fun get_samples(key: Int, velocity: Int): Set<SampleDirective> {
-        val ids = this.quick_ref_vel[velocity].intersect(this.quick_ref_key[key])
         val output = mutableSetOf<SampleDirective>()
-        for (id in ids) {
-            output.add(this.samples[id]!!)
+        if (this.samples.isNotEmpty()) {
+            val ids = this.quick_ref_vel[velocity].intersect(this.quick_ref_key[key])
+            for (id in ids) {
+                output.add(this.samples[id]!!)
+            }
+        } else if (this.global_zone_set) {
+            val key_range = if (this.global_zone.key_range == null) {
+                0..127
+            } else {
+                this.global_zone.key_range!!.first..this.global_zone.key_range!!.second
+            }
+
+            val vel_range = if (this.global_zone.velocity_range == null) {
+                0..127
+            } else {
+                this.global_zone.velocity_range!!.first..this.global_zone.velocity_range!!.second
+            }
+
+            if (key_range.contains(key) && vel_range.contains(velocity)) {
+                output.add(this.global_zone)
+            }
         }
         return output
     }

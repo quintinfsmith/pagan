@@ -489,7 +489,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             },
             beat_key
         )
-
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up
         if (start_event != null) {

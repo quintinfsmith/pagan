@@ -102,7 +102,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 sample_handle.set_working_frame(start_frame)
                 item.sample_handles[real_index] = Pair(sample_handle, 0)
             }
-
             if (!sample_handle.is_dead) {
                 // Ignore Samples in Right for mono mode
                 if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
@@ -131,7 +130,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         } else {
             offset until working_int_array.size / 2
         }
-
         for (f in range) {
             var frame_value = sample_handle.get_next_frame() ?: break
 

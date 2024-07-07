@@ -271,8 +271,13 @@ class SoundFont(file_path: String) {
             for ((_, preset_instrument) in output.instruments) {
                 val instrument = preset_instrument.instrument ?: continue
 
-                for (instrument_sample in instrument.samples.values) {
-                    val sample = instrument_sample.sample ?: continue
+                if (instrument.samples.isNotEmpty()) {
+                    for (instrument_sample in instrument.samples.values) {
+                        val sample = instrument_sample.sample ?: continue
+                        ordered_samples.add(sample)
+                    }
+                } else if (instrument.global_zone_set) {
+                    val sample = instrument.global_zone.sample ?: continue
                     ordered_samples.add(sample)
                 }
             }

@@ -1,0 +1,4 @@
+- Allow instrument changes when plugged in to a midi device OR no soundfont is set
+- Improved soundfont (.sf2) support
+- Fixed bug preventing linking/copying selections that contained both standard and percussion sections
+- Fixed bug preventing sample rate from being changed

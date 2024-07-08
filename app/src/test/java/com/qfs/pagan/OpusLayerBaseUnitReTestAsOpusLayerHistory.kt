@@ -416,7 +416,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }
         manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(94))
-        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(2))
+        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(3))
+
         assertThrows(OpusLayerBase.NoteOutOfRange::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }
@@ -3338,6 +3339,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         manager.set_event(key_b, listOf(0), AbsoluteNoteEvent(12))
         manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
         manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
+
         assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
             manager.merge_leafs(key_a, listOf(), key_b, listOf())
         }

@@ -601,7 +601,6 @@ open class OpusLayerBase {
         if (!tree.is_event()) {
             throw NonEventConversion(beat_key, position)
         }
-
         val event = tree.get_event()!!
         if (event !is RelativeNoteEvent) {
             return
@@ -1185,9 +1184,6 @@ open class OpusLayerBase {
 
         val from_tree = this.get_tree(beat_key_from, position_from) as OpusTree<InstrumentEvent>
         val to_tree = this.get_tree(beat_key_to, position_to) as OpusTree<InstrumentEvent>
-        to_tree.traverse { tree, event ->
-            println("$tree, $event")
-        }
         val mid_tree = to_tree.merge(from_tree.get_set_tree())
         mid_tree.flatten()
 

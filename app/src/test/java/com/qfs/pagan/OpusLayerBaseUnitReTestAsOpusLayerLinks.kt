@@ -416,7 +416,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerLinks {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }
         manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(94))
-        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(2))
+        manager.set_event(BeatKey(0,0,1), listOf(), RelativeNoteEvent(3))
+
         assertThrows(OpusLayerBase.NoteOutOfRange::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,1), listOf())
         }

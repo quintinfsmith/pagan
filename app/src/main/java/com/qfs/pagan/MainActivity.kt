@@ -786,8 +786,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun project_move_to_copy() {
-        this._project_manager.move_to_copy(this.get_opus_manager())
-        this.feedback_msg(getString(R.string.feedback_on_copy))
+        this.dialog_save_project {
+            this._project_manager.move_to_copy(this.get_opus_manager())
+            this.update_title_text()
+            this.feedback_msg(getString(R.string.feedback_on_copy))
+
+            val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
+            val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
+            btnDeleteProject.isEnabled = false
+            btnCopyProject.isEnabled = false
+        }
     }
 
     private fun _enable_blocker_view() {

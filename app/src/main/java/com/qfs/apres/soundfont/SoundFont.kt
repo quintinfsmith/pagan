@@ -698,26 +698,25 @@ class SoundFont(file_path: String) {
             null
         }
 
-        val output: ShortArray
-        if (sm24 != null) {
-            throw Exception("SM24 Unsupported")
-            //output = ShortArray((smpl.size + sm24.size) / 2)
-            //var inbuffer = ByteBuffer.wrap(smpl)
-            //inbuffer.order(ByteOrder.LITTLE_ENDIAN)
-            //for (i in 0 until (smpl.size / 2)) {
-            //    output[i + (i * 2)] = smpl[(i * 2) + 1]
-            //    output[i + ((i * 2) + 1)] = smpl[i * 2]
-            //}
-            //for (i in sm24.indices) {
-            //    output[(i * 3) + 2] = sm24[i]
-            //}
-        } else {
-            val inbuffer = ByteBuffer.wrap(smpl)
-            inbuffer.order(ByteOrder.LITTLE_ENDIAN)
-            output = ShortArray(smpl.size / 2) {
-                inbuffer.getShort()
-            }
+        val inbuffer = ByteBuffer.wrap(smpl)
+        inbuffer.order(ByteOrder.LITTLE_ENDIAN)
+        val output = ShortArray(smpl.size / 2) {
+            inbuffer.getShort()
         }
+
+        // TODO: support. Can be ignored and it'll just have a lower resolution
+        //if (sm24 != null) {
+        //    //output = ShortArray((smpl.size + sm24.size) / 2)
+        //    //var inbuffer = ByteBuffer.wrap(smpl)
+        //    //inbuffer.order(ByteOrder.LITTLE_ENDIAN)
+        //    //for (i in 0 until (smpl.size / 2)) {
+        //    //    output[i + (i * 2)] = smpl[(i * 2) + 1]
+        //    //    output[i + ((i * 2) + 1)] = smpl[i * 2]
+        //    //}
+        //    //for (i in sm24.indices) {
+        //    //    output[(i * 3) + 2] = sm24[i]
+        //    //}
+        //}
 
         if (!this.sample_data_cache.containsKey(cache_key)) {
             this.sample_data_cache[cache_key] = CachedSampleData(

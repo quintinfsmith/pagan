@@ -103,6 +103,7 @@
     <string name="feedback_bad_range">Bad Range</string>
     <string name="feedback_exported">Exported</string>
     <string name="feedback_invalid_sf2_file">Invalid sf2 File</string>
+    <string name="feedback_unsupported_sf2_file">Unsupported sf2 File</string>
     <string name="no_soundfont">No Soundfont</string>
     <string name="option_import_soundfont">Import...</string>
     <string name="unknown_percussion">Unknown Percussion</string>

@@ -20,7 +20,6 @@ import android.graphics.drawable.StateListDrawable
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
-import android.os.storage.StorageManager
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
@@ -238,26 +237,26 @@ class MainActivity : AppCompatActivity() {
                             parcel_file_descriptor.close()
                             val builder = this@MainActivity.get_notification()
                             if (builder != null) {
-                                val sm = this@MainActivity.getSystemService(Context.STORAGE_SERVICE) as StorageManager
-                                var go_to_file_intent = Intent()
-                                go_to_file_intent.action = Intent.ACTION_VIEW
-                                go_to_file_intent.data = uri
-                                go_to_file_intent.type = "audio/*"
+                                // NON functional ATM, Open file from notification
+                                //var go_to_file_intent = Intent()
+                                //go_to_file_intent.action = Intent.ACTION_VIEW
+                                //go_to_file_intent.data = uri
+                                //go_to_file_intent.type = "audio/*"
 
-                                val pending_go_to_intent = PendingIntent.getActivity(
-                                    this@MainActivity,
-                                    1,
-                                    go_to_file_intent,
-                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
-                                )
+                                //val pending_go_to_intent = PendingIntent.getActivity(
+                                //    this@MainActivity,
+                                //    1,
+                                //    go_to_file_intent,
+                                //    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+                                //)
 
                                 builder.setContentText(this@MainActivity.getString(R.string.export_wav_notification_complete))
                                     .setProgress(0, 0, false)
                                     .clearActions()
-                                    //.setAutoCancel(true)
-                                    //.setTimeoutAfter(5000)
+                                    .setAutoCancel(true)
+                                    .setTimeoutAfter(5000)
                                     .setSilent(false)
-                                    .setContentIntent(pending_go_to_intent)
+                                    //.setContentIntent(pending_go_to_intent)
 
                                 this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
                             }

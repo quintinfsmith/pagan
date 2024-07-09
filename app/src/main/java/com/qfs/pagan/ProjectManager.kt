@@ -48,7 +48,6 @@ class ProjectManager(data_dir: String) {
 
         opus_manager.path = new_path
         opus_manager.project_name = new_title
-       // this.save(opus_manager)
     }
 
     fun save(opus_manager: OpusManager) {

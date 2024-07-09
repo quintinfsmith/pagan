@@ -1,0 +1,3 @@
+Bugfixes:
+    - Fixed potential wonkiness when moving to copy
+

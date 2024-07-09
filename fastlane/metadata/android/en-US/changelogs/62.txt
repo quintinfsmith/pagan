@@ -1,3 +1,4 @@
 Bugfixes:
     - Fixed potential wonkiness when moving to copy
+    - Fixed some samples (that use 24 bit instead of 16) causing crash
 

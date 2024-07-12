@@ -1,16 +1,16 @@
 package com.qfs.pagan.opusmanager
 
-import com.qfs.json.ParsedHashMap
-import com.qfs.json.ParsedInt
-import com.qfs.json.ParsedList
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
 
 class ActiveControlSetGeneralizer() {
     class UnknownControllerException(): Exception()
     companion object {
-        fun from_json(json_obj: ParsedHashMap, size: Int): ActiveControlSet {
+        fun from_json(json_obj: JSONHashMap, size: Int): ActiveControlSet {
             val control_set = ActiveControlSet(size)
             for (json_controller in json_obj.get_listn("controllers")?.list ?: listOf()) {
-                val controller = ActiveControllerGeneralizer.from_json(json_controller as ParsedHashMap, size)
+                val controller = ActiveControllerGeneralizer.from_json(json_controller as JSONHashMap, size)
                 val key = when (controller) {
                     is TempoController -> ControlEventType.Tempo
                     is VolumeController -> ControlEventType.Volume
@@ -22,12 +22,12 @@ class ActiveControlSetGeneralizer() {
             return control_set
         }
 
-        fun to_json(control_set: ActiveControlSet): ParsedHashMap {
-            val output = ParsedHashMap()
+        fun to_json(control_set: ActiveControlSet): JSONHashMap {
+            val output = JSONHashMap()
             output["beat_count"] = control_set.beat_count
 
             val controllers = control_set.controllers.values.toList()
-            output["controllers"] = ParsedList(
+            output["controllers"] = JSONList(
                 MutableList(controllers.size) {
                     ActiveControllerGeneralizer.to_json(controllers[it])
                 }
@@ -36,11 +36,11 @@ class ActiveControlSetGeneralizer() {
             return output
         }
 
-        fun convert_v2_to_v3(input: ParsedList, beat_count: Int): ParsedHashMap {
-            return ParsedHashMap(
+        fun convert_v2_to_v3(input: JSONList, beat_count: Int): JSONHashMap {
+            return JSONHashMap(
                 hashMapOf(
-                    "beat_count" to ParsedInt(beat_count),
-                    "controllers" to ParsedList(
+                    "beat_count" to JSONInteger(beat_count),
+                    "controllers" to JSONList(
                         MutableList(input.list.size) { i: Int ->
                             ActiveControllerGeneralizer.convert_v2_to_v3(input.get_hashmap(i))
                         }

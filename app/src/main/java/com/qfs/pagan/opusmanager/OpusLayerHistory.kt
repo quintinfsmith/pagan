@@ -1,6 +1,6 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.apres.Midi
-import com.qfs.json.ParsedHashMap
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
@@ -1005,7 +1005,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun load_json(json_data: ParsedHashMap) {
+    override fun load_json(json_data: JSONHashMap) {
         this.history_cache.forget {
             super.load_json(json_data)
         }

@@ -1,11 +1,11 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.json.ParsedHashMap
-import com.qfs.json.ParsedInt
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
 
 class OpusControlEventParser {
     companion object {
-        fun to_json(input: OpusControlEvent): ParsedHashMap {
-            val output = ParsedHashMap()
+        fun to_json(input: OpusControlEvent): JSONHashMap {
+            val output = JSONHashMap()
             when (input) {
                 is OpusTempoEvent -> {
                     output["tempo"] = input.value
@@ -21,15 +21,15 @@ class OpusControlEventParser {
             return output
         }
 
-        fun convert_v2_to_v3(input: ParsedHashMap): ParsedHashMap {
-            val output = ParsedHashMap()
+        fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {
+            val output = JSONHashMap()
             when (input.get_string("type")) {
                 "com.qfs.pagan.opusmanager.OpusTempoEvent" -> {
                     output["tempo"] = input["value"]
                 }
                 "com.qfs.pagan.opusmanager.OpusVolumeEvent" -> {
                     output["volume"] = input["value"]
-                    output["transition"] = ParsedInt(0)
+                    output["transition"] = JSONInteger(0)
                 }
                 else -> throw Exception() // Unreachable, nothing else was implemented
             }
@@ -38,16 +38,16 @@ class OpusControlEventParser {
         }
 
         // from_jsons-----------------
-        fun tempo_event(map: ParsedHashMap): OpusTempoEvent {
+        fun tempo_event(map: JSONHashMap): OpusTempoEvent {
             return OpusTempoEvent(map.get_float("tempo"))
         }
-        fun volume_event(map: ParsedHashMap): OpusVolumeEvent {
+        fun volume_event(map: JSONHashMap): OpusVolumeEvent {
             return OpusVolumeEvent(
                 map.get_int("volume"),
                 map.get_int("transition", 0)
             )
         }
-        fun reverb_event(map: ParsedHashMap): OpusReverbEvent {
+        fun reverb_event(map: JSONHashMap): OpusReverbEvent {
             return OpusReverbEvent(
                 map.get_float("wetness")
             )

@@ -1603,7 +1603,7 @@ open class OpusLayerBase {
 
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        val generalized_object = Parser.parse(json_content) as ParsedHashMap
+        val generalized_object = JSONParser.parse(json_content) as JSONHashMap
         val version = OpusManagerGeneralizer.detect_version(generalized_object)
         this.load_json(
             when (version) {
@@ -1686,7 +1686,7 @@ open class OpusLayerBase {
     //    return output
     //}
 
-    open fun load_json(json_data: ParsedHashMap) {
+    open fun load_json(json_data: JSONHashMap) {
         val input_manager = OpusManagerGeneralizer.interpret(json_data)
         this.import_from_other(input_manager)
         this._setup_default_controllers()

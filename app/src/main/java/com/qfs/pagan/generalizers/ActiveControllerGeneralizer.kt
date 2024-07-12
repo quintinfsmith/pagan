@@ -1,17 +1,17 @@
 package com.qfs.pagan.opusmanager
 
-import com.qfs.json.ParsedHashMap
-import com.qfs.json.ParsedInt
-import com.qfs.json.ParsedList
-import com.qfs.json.ParsedObject
-import com.qfs.json.ParsedString
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONObject
+import com.qfs.json.JSONString
 import com.qfs.pagan.generalizers.OpusTreeGeneralizer
 import com.qfs.pagan.structure.OpusTree
 
 class ActiveControllerGeneralizer {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
     companion object {
-        fun from_json(obj: ParsedHashMap, size: Int): ActiveController {
+        fun from_json(obj: JSONHashMap, size: Int): ActiveController {
             val label = obj.get_string("type")
             val new_controller: ActiveController = when (label) {
                 "tempo" -> TempoController(size)
@@ -28,10 +28,10 @@ class ActiveControllerGeneralizer {
             )
 
             for (pair in obj.get_list("events").list) {
-                val index = (pair as ParsedList).get_int(0)
+                val index = (pair as JSONList).get_int(0)
                 val value = pair.get_hashmapn(1) ?: continue
 
-                new_controller.events[index] = OpusTreeGeneralizer.from_json(value) { event: ParsedHashMap? ->
+                new_controller.events[index] = OpusTreeGeneralizer.from_json(value) { event: JSONHashMap? ->
                     if (event == null) {
                         null
                     } else {
@@ -46,20 +46,20 @@ class ActiveControllerGeneralizer {
             return new_controller
         }
 
-        fun convert_v2_to_v3(input: ParsedHashMap): ParsedHashMap {
+        fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {
             val input_children = input.get_list("children")
-            val events = ParsedList()
+            val events = JSONList()
 
             for (i in 0 until input_children.list.size) {
                 val pair = input_children.get_hashmap(i)
-                val generalized_tree = OpusTreeGeneralizer.convert_v1_to_v3(pair["second"] as ParsedHashMap) { input_event: ParsedHashMap ->
+                val generalized_tree = OpusTreeGeneralizer.convert_v1_to_v3(pair["second"] as JSONHashMap) { input_event: JSONHashMap ->
                     OpusControlEventParser.convert_v2_to_v3(input_event)
                 }
                 if (generalized_tree == null) {
                     continue
                 }
                 events.add(
-                    ParsedList(
+                    JSONList(
                         mutableListOf(
                             pair["first"],
                             generalized_tree
@@ -68,10 +68,10 @@ class ActiveControllerGeneralizer {
                 )
             }
 
-            return ParsedHashMap(
+            return JSONHashMap(
                 hashMapOf(
                     "events" to events,
-                    "type" to ParsedString(
+                    "type" to JSONString(
                         when (input.get_string("type")) {
                             "Tempo" -> "tempo"
                             "Volume" -> "volume"
@@ -83,9 +83,9 @@ class ActiveControllerGeneralizer {
             )
         }
 
-        fun to_json(controller: ActiveController): ParsedHashMap {
-            val map = ParsedHashMap()
-            val event_list = ParsedList()
+        fun to_json(controller: ActiveController): JSONHashMap {
+            val map = JSONHashMap()
+            val event_list = JSONList()
             controller.events.forEachIndexed { i: Int, event_tree: OpusTree<OpusControlEvent>? ->
                 if (event_tree == null) {
                     return@forEachIndexed
@@ -95,9 +95,9 @@ class ActiveControllerGeneralizer {
                 } ?: return@forEachIndexed
 
                 event_list.add(
-                    ParsedList(
-                        mutableListOf<ParsedObject?>(
-                            ParsedInt(i),
+                    JSONList(
+                        mutableListOf<JSONObject?>(
+                            JSONInteger(i),
                             generalized_tree
                         )
                     )

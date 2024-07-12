@@ -16,65 +16,65 @@ class InvalidJSON(msg: String): Exception(msg) {
 }
 class NonNullableException(): Exception("Attempting to access non-nullable value which is null")
 
-interface ParsedObject {
+interface JSONObject {
     fun to_string(): String
 }
 
-data class ParsedString(var value: String): ParsedObject {
+data class JSONString(var value: String): JSONObject {
     override fun to_string(): String {
         val escaped_string = this.value.replace("\"", "\\\"")
         return "\"$escaped_string\""
     }
 }
-data class ParsedFloat(var value: Float): ParsedObject {
+data class JSONFloat(var value: Float): JSONObject {
     override fun to_string(): String {
         return "${this.value}"
     }
 }
 
-data class ParsedInt(var value: Int): ParsedObject {
+data class JSONInteger(var value: Int): JSONObject {
     override fun to_string(): String {
         return "${this.value}"
     }
 }
-data class ParsedBoolean(var value: Boolean): ParsedObject {
+data class JSONBoolean(var value: Boolean): JSONObject {
     override fun to_string(): String {
         return this.value.toString()
     }
 }
 
-class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedObject {
-    val hash_map = input_map ?: HashMap<String, ParsedObject?>()
+class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
+    val hash_map = input_map ?: HashMap<String, JSONObject?>()
 
-    operator fun get(key: String): ParsedObject? {
+    operator fun get(key: String): JSONObject? {
         return this.hash_map[key]
     }
-    operator fun set(key: String, value: ParsedObject?) {
+    operator fun set(key: String, value: JSONObject?) {
         this.hash_map[key] = value
     }
     operator fun set(key: String, value: Int?) {
         if (value == null) {
             return this.set_null(key)
         }
-        this[key] = ParsedInt(value)
+        this[key] = JSONInteger(value)
     }
     operator fun set(key: String, value: String?) {
         if (value == null) {
             return this.set_null(key)
         }
-        this.hash_map[key] = ParsedString(value)
+        this.hash_map[key] = JSONString(value)
     }
     operator fun set(key: String, value: Float?) {
         if (value == null) {
             return this.set_null(key)
         }
-        this.hash_map[key] = ParsedFloat(value)
+        this.hash_map[key] = JSONFloat(value)
     }
     operator fun set(key: String, value: Boolean?) {
         if (value == null) {
             return this.set_null(key)
         }
-        this.hash_map[key] = ParsedBoolean(value)
+        this.hash_map[key] = JSONBoolean(value)
     }
     fun set_null(key: String) {
         this.hash_map[key] = null
@@ -83,101 +83,101 @@ class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedOb
         if (this.hash_map[key] == null) {
             return default
         }
-        return (this.hash_map[key] as ParsedInt).value
+        return (this.hash_map[key] as JSONInteger).value
     }
     fun get_string(key: String, default: String): String {
         if (this.hash_map[key] == null) {
             return default
         }
-        return (this.hash_map[key] as ParsedString).value
+        return (this.hash_map[key] as JSONString).value
     }
     fun get_float(key: String, default: Float): Float {
         if (this.hash_map[key] == null) {
             return default
         }
-        return (this.hash_map[key] as ParsedFloat).value
+        return (this.hash_map[key] as JSONFloat).value
     }
     fun get_boolean(key: String, default: Boolean): Boolean {
         if (this.hash_map[key] == null) {
             return default
         }
-        return (this.hash_map[key] as ParsedBoolean).value
+        return (this.hash_map[key] as JSONBoolean).value
     }
     fun get_intn(key: String): Int? {
         if (this.hash_map[key] == null) {
             return null
         }
-        return (this.hash_map[key] as ParsedInt).value
+        return (this.hash_map[key] as JSONInteger).value
     }
     fun get_stringn(key: String): String? {
         if (this.hash_map[key] == null) {
             return null
         }
-        return (this.hash_map[key] as ParsedString).value
+        return (this.hash_map[key] as JSONString).value
     }
     fun get_floatn(key: String): Float? {
         if (this.hash_map[key] == null) {
             return null
         }
-        return (this.hash_map[key] as ParsedFloat).value
+        return (this.hash_map[key] as JSONFloat).value
     }
     fun get_booleann(key: String): Boolean? {
         if (this.hash_map[key] == null) {
             return null
         }
-        return (this.hash_map[key] as ParsedBoolean).value
+        return (this.hash_map[key] as JSONBoolean).value
     }
 
-    fun get_hashmapn(key: String): ParsedHashMap? {
+    fun get_hashmapn(key: String): JSONHashMap? {
         if (this.hash_map[key] == null) {
             return null
         }
-        return (this.hash_map[key] as ParsedHashMap)
+        return (this.hash_map[key] as JSONHashMap)
     }
 
-    fun get_listn(key: String): ParsedList? {
+    fun get_listn(key: String): JSONList? {
         if (this.hash_map[key] == null) {
             return null
         }
-        return (this.hash_map[key] as ParsedList)
+        return (this.hash_map[key] as JSONList)
     }
 
     fun get_int(key: String): Int {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
-        return (this.hash_map[key] as ParsedInt).value
+        return (this.hash_map[key] as JSONInteger).value
     }
     fun get_string(key: String): String {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
-        return (this.hash_map[key] as ParsedString).value
+        return (this.hash_map[key] as JSONString).value
     }
     fun get_float(key: String): Float {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
-        return (this.hash_map[key] as ParsedFloat).value
+        return (this.hash_map[key] as JSONFloat).value
     }
     fun get_boolean(key: String): Boolean {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
-        return (this.hash_map[key] as ParsedBoolean).value
+        return (this.hash_map[key] as JSONBoolean).value
     }
-    fun get_hashmap(key: String): ParsedHashMap {
+    fun get_hashmap(key: String): JSONHashMap {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
-        return (this.hash_map[key] as ParsedHashMap)
+        return (this.hash_map[key] as JSONHashMap)
     }
 
-    fun get_list(key: String): ParsedList {
+    fun get_list(key: String): JSONList {
         if (this.hash_map[key] == null) {
             throw NonNullableException()
         }
-        return (this.hash_map[key] as ParsedList)
+        return (this.hash_map[key] as JSONList)
     }
 
     override fun to_string(): String {
@@ -196,8 +196,8 @@ class ParsedHashMap(input_map: HashMap<String, ParsedObject?>? = null): ParsedOb
     }
 }
 
-class ParsedList(input_list: MutableList<ParsedObject?>? = null): ParsedObject {
-    val list = input_list ?: mutableListOf<ParsedObject?>()
+class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
+    val list = input_list ?: mutableListOf<JSONObject?>()
 
     override fun to_string(): String {
         var output = "["
@@ -213,62 +213,62 @@ class ParsedList(input_list: MutableList<ParsedObject?>? = null): ParsedObject {
         return output
     }
 
-    fun add(value: ParsedObject?) {
+    fun add(value: JSONObject?) {
         this.list.add(value)
     }
     fun add(value: Int?) {
         if (value == null) {
             return this.add_null()
         }
-        this.list.add(ParsedInt(value))
+        this.list.add(JSONInteger(value))
     }
     fun add(value: String?) {
         if (value == null) {
             return this.add_null()
         }
-        this.list.add(ParsedString(value))
+        this.list.add(JSONString(value))
     }
     fun add(value: Float?) {
         if (value == null) {
             return this.add_null()
         }
-        this.list.add(ParsedFloat(value))
+        this.list.add(JSONFloat(value))
     }
     fun add(value: Boolean?) {
         if (value == null) {
             return this.add_null()
         }
-        this.list.add(ParsedBoolean(value))
+        this.list.add(JSONBoolean(value))
     }
     fun add_null() {
         this.list.add(null)
     }
-    operator fun set(index: Int, value: ParsedObject?) {
+    operator fun set(index: Int, value: JSONObject?) {
         this.list[index] = value
     }
     operator fun set(index: Int, value: Int?) {
         if (value == null) {
             return this.set_null(index)
         }
-        this.list[index] = ParsedInt(value)
+        this.list[index] = JSONInteger(value)
     }
     operator fun set(index: Int, value: String?) {
         if (value == null) {
             return this.set_null(index)
         }
-        this.list[index] = ParsedString(value)
+        this.list[index] = JSONString(value)
     }
     operator fun set(index: Int, value: Float?) {
         if (value == null) {
             return this.set_null(index)
         }
-        this.list[index] = ParsedFloat(value)
+        this.list[index] = JSONFloat(value)
     }
     operator fun set(index: Int, value: Boolean?) {
         if (value == null) {
             return this.set_null(index)
         }
-        this.list[index] = ParsedBoolean(value)
+        this.list[index] = JSONBoolean(value)
     }
     fun set_null(index: Int) {
         this.list[index] = null
@@ -278,113 +278,113 @@ class ParsedList(input_list: MutableList<ParsedObject?>? = null): ParsedObject {
         if (this.list[index] == null) {
             return default
         }
-        return (this.list[index] as ParsedInt).value
+        return (this.list[index] as JSONInteger).value
     }
     fun get_string(index: Int, default: String?): String? {
         if (this.list[index] == null) {
             return default
         }
-        return (this.list[index] as ParsedString).value
+        return (this.list[index] as JSONString).value
     }
     fun get_float(index: Int, default: Float?): Float? {
         if (this.list[index] == null) {
             return default
         }
-        return (this.list[index] as ParsedFloat).value
+        return (this.list[index] as JSONFloat).value
     }
     fun get_boolean(index: Int, default: Boolean?): Boolean? {
         if (this.list[index] == null) {
             return null
         }
-        return (this.list[index] as ParsedBoolean).value
+        return (this.list[index] as JSONBoolean).value
     }
 
     fun get_intn(index: Int): Int? {
         if (this.list[index] == null) {
             return null
         }
-        return (this.list[index] as ParsedInt).value
+        return (this.list[index] as JSONInteger).value
     }
     fun get_stringn(index: Int): String? {
         if (this.list[index] == null) {
             return null
         }
-        return (this.list[index] as ParsedString).value
+        return (this.list[index] as JSONString).value
     }
     fun get_floatn(index: Int): Float? {
         if (this.list[index] == null) {
             return null
         }
-        return (this.list[index] as ParsedFloat).value
+        return (this.list[index] as JSONFloat).value
     }
     fun get_booleann(index: Int): Boolean? {
         if (this.list[index] == null) {
             return null
         }
-        return (this.list[index] as ParsedBoolean).value
+        return (this.list[index] as JSONBoolean).value
     }
-    fun get_listn(index: Int): ParsedList? {
+    fun get_listn(index: Int): JSONList? {
         if (this.list[index] == null) {
             return null
         }
-        return (this.list[index] as ParsedList)
+        return (this.list[index] as JSONList)
     }
-    fun get_hashmapn(index: Int): ParsedHashMap? {
+    fun get_hashmapn(index: Int): JSONHashMap? {
         if (this.list[index] == null) {
             return null
         }
-        return (this.list[index] as ParsedHashMap)
+        return (this.list[index] as JSONHashMap)
     }
 
     fun get_int(index: Int): Int {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
-        return (this.list[index] as ParsedInt).value
+        return (this.list[index] as JSONInteger).value
     }
     fun get_string(index: Int): String {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
-        return (this.list[index] as ParsedString).value
+        return (this.list[index] as JSONString).value
     }
     fun get_float(index: Int): Float {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
-        return (this.list[index] as ParsedFloat).value
+        return (this.list[index] as JSONFloat).value
     }
     fun get_boolean(index: Int): Boolean {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
-        return (this.list[index] as ParsedBoolean).value
+        return (this.list[index] as JSONBoolean).value
     }
 
-    fun get_hashmap(index: Int): ParsedHashMap {
+    fun get_hashmap(index: Int): JSONHashMap {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
-        return (this.list[index] as ParsedHashMap)
+        return (this.list[index] as JSONHashMap)
     }
 
-    fun get_list(index: Int): ParsedList {
+    fun get_list(index: Int): JSONList {
         if (this.list[index] == null) {
             throw NonNullableException()
         }
-        return (this.list[index] as ParsedList)
+        return (this.list[index] as JSONList)
     }
 
 }
 
-class Parser {
+class JSONParser {
     companion object {
-        fun parse(json_content: String): ParsedObject? {
+        fun parse(json_content: String): JSONObject? {
             var working_number: String? = null
             var working_string: String? = null
             var string_escape_flagged = false
 
-            val object_stack = mutableListOf<ParsedObject?>()
+            val object_stack = mutableListOf<JSONObject?>()
             val position_stack = mutableListOf<Int>()
             var index = 0
             var close_expected = false
@@ -400,10 +400,10 @@ class Parser {
 
                             ' ', '\r', '\n', Char(125), Char(93), ',' -> {
                                 try {
-                                    val new_number: ParsedObject = if (working_number.contains(".")) {
-                                        ParsedFloat(working_number.toFloat())
+                                    val new_number: JSONObject = if (working_number.contains(".")) {
+                                        JSONFloat(working_number.toFloat())
                                     } else {
-                                        ParsedInt(working_number.toInt())
+                                        JSONInteger(working_number.toInt())
                                     }
 
                                     object_stack.add(new_number)
@@ -431,7 +431,7 @@ class Parser {
                                 }
 
                                 '"' -> {
-                                    val new_string_item = ParsedString(working_string)
+                                    val new_string_item = JSONString(working_string)
                                     object_stack.add(new_string_item)
                                     close_expected = true
 
@@ -452,14 +452,14 @@ class Parser {
 
                                 val to_add_object = object_stack.removeLast()
                                 when (object_stack.last()) {
-                                    is ParsedList -> {
-                                        (object_stack.last() as ParsedList).add(to_add_object)
+                                    is JSONList -> {
+                                        (object_stack.last() as JSONList).add(to_add_object)
                                     }
 
-                                    is ParsedString -> {
-                                        val key_object = object_stack.removeLast() as ParsedString
-                                        if (object_stack.last() is ParsedHashMap) {
-                                            (object_stack.last() as ParsedHashMap)[key_object.value] = to_add_object
+                                    is JSONString -> {
+                                        val key_object = object_stack.removeLast() as JSONString
+                                        if (object_stack.last() is JSONHashMap) {
+                                            (object_stack.last() as JSONHashMap)[key_object.value] = to_add_object
                                         }
                                     }
 
@@ -477,7 +477,7 @@ class Parser {
                                     val to_add_object = object_stack.removeLast()
                                     val to_add_key = object_stack.removeLast()
 
-                                    if (map_object is ParsedHashMap && to_add_key is ParsedString) {
+                                    if (map_object is JSONHashMap && to_add_key is JSONString) {
                                         map_object[to_add_key.value] = to_add_object
                                     } else {
                                         throw InvalidJSON(json_content, index)
@@ -494,7 +494,7 @@ class Parser {
                                     val list_object = object_stack[object_index]
                                     val to_add_object = object_stack.removeLast()
 
-                                    if (list_object is ParsedList) {
+                                    if (list_object is JSONList) {
                                         list_object.add(to_add_object)
                                     } else {
                                         throw InvalidJSON(json_content, index)
@@ -504,7 +504,7 @@ class Parser {
 
                             Char(123) -> { // "{"
                                 position_stack.add(object_stack.size)
-                                object_stack.add(ParsedHashMap())
+                                object_stack.add(JSONHashMap())
                             }
 
 
@@ -514,7 +514,7 @@ class Parser {
                                 }
 
                                 position_stack.add(object_stack.size)
-                                object_stack.add(ParsedList())
+                                object_stack.add(JSONList())
                             }
 
                             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-' -> {
@@ -565,7 +565,7 @@ class Parser {
                                 if (json_content.substring(index, index + 5) != "false") {
                                     throw InvalidJSON(json_content, index)
                                 } else {
-                                    object_stack.add(ParsedBoolean(false))
+                                    object_stack.add(JSONBoolean(false))
                                     index += 4
                                 }
                             }
@@ -578,7 +578,7 @@ class Parser {
                                 if (json_content.substring(index, index + 4) != "true") {
                                     throw InvalidJSON(json_content, index)
                                 } else {
-                                    object_stack.add(ParsedBoolean(true))
+                                    object_stack.add(JSONBoolean(true))
                                     index += 3
                                 }
                             }

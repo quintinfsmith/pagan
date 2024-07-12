@@ -8,7 +8,7 @@ class InvalidJSON(msg: String): Exception(msg) {
         val end = min(json_string.length, index + 20)
         val part_a = "Invalid JSON @ $index In \""
         val part_b = json_string.substring(start, end).replace("\n", " ")
-        var output = "\n$part_a$part_b\"\n" 
+        var output = "\n$part_a$part_b\"\n"
         output += Array(part_a.length + (index - start)) { " " }.joinToString("")
         output += "^".padEnd(end - index)
         output
@@ -385,203 +385,218 @@ class Parser {
             var string_escape_flagged = false
 
             val object_stack = mutableListOf<ParsedObject?>()
+            val position_stack = mutableListOf<Int>()
             var index = 0
             var close_expected = false
 
-            while (index < json_content.length) {
-                val working_char = json_content[index]
-                if (working_number != null) {
-                    when (working_char) {
-                        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.' -> {
-                            working_number += working_char
-                        }
-                        ' ', '\r', '\n', Char(125), Char(93), ',' -> {
-                            try {
-                                val new_number: ParsedObject = if (working_number.contains(".")) {
-                                    ParsedFloat(working_number.toFloat())
-                                } else {
-                                    ParsedInt(working_number.toInt())
-                                }
-                                object_stack.add(new_number)
-                                close_expected = true
+            // try {
+                while (index < json_content.length) {
+                    val working_char = json_content[index]
+                    if (working_number != null) {
+                        when (working_char) {
+                            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.' -> {
+                                working_number += working_char
+                            }
 
-                                working_number = null
-                                continue
-                            } catch (e: Exception) {
+                            ' ', '\r', '\n', Char(125), Char(93), ',' -> {
+                                try {
+                                    val new_number: ParsedObject = if (working_number.contains(".")) {
+                                        ParsedFloat(working_number.toFloat())
+                                    } else {
+                                        ParsedInt(working_number.toInt())
+                                    }
+
+                                    object_stack.add(new_number)
+                                    close_expected = true
+
+                                    working_number = null
+                                    continue
+                                } catch (e: Exception) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+                            }
+
+                            else -> {
                                 throw InvalidJSON(json_content, index)
                             }
                         }
-                        else -> {
-                            throw InvalidJSON(json_content, index)
+                    } else if (working_string != null) {
+                        if (string_escape_flagged) {
+                            working_string += working_char
+                            string_escape_flagged = false
+                        } else {
+                            when (working_char) {
+                                '\\' -> {
+                                    string_escape_flagged = true
+                                }
+
+                                '"' -> {
+                                    val new_string_item = ParsedString(working_string)
+                                    object_stack.add(new_string_item)
+                                    close_expected = true
+
+                                    working_string = null
+                                }
+
+                                else -> {
+                                    working_string += working_char
+                                }
+                            }
                         }
-                    }
-                } else if (working_string != null) {
-                    if (string_escape_flagged) {
-                        working_string += working_char
-                        string_escape_flagged = false
                     } else {
                         when (working_char) {
-                            '\\' -> {
-                                string_escape_flagged = true
-                            }
-                            '"' -> {
-                                val new_string_item = ParsedString(working_string)
-                                object_stack.add(new_string_item)
-                                close_expected = true
+                            ',' -> {
+                                //if (!close_expected) {
+                                //    throw InvalidJSON(json_content, index)
+                                //}
 
-                                working_string = null
-                            }
-                            else -> {
-                                working_string += working_char
-                            }
-                        }
-                    }
-                } else {
-                    when (working_char) {
-                        ',' -> {
-                            if (!close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
+                                val to_add_object = object_stack.removeLast()
+                                when (object_stack.last()) {
+                                    is ParsedList -> {
+                                        (object_stack.last() as ParsedList).add(to_add_object)
+                                    }
 
-                            val to_add_object = object_stack.removeLast()
-                            when (object_stack.last()) {
-                                is ParsedList -> {
-                                    (object_stack.last() as ParsedList).add(to_add_object)
+                                    is ParsedString -> {
+                                        val key_object = object_stack.removeLast() as ParsedString
+                                        if (object_stack.last() is ParsedHashMap) {
+                                            (object_stack.last() as ParsedHashMap)[key_object.value] = to_add_object
+                                        }
+                                    }
+
+                                    else -> {}
                                 }
-                                is ParsedString -> {
-                                    val key_object = object_stack.removeLast() as ParsedString
-                                    if (object_stack.last() is ParsedHashMap) {
-                                        (object_stack.last() as ParsedHashMap)[key_object.value] = to_add_object
+                                close_expected = false
+                            }
+
+                            Char(125) -> { // "}"
+                                val object_index = position_stack.removeLast()
+                                if (object_index == object_stack.size - 1) {
+                                    // Nothing to be done
+                                } else {
+                                    val map_object = object_stack[object_index]
+                                    val to_add_object = object_stack.removeLast()
+                                    val to_add_key = object_stack.removeLast()
+
+                                    if (map_object is ParsedHashMap && to_add_key is ParsedString) {
+                                        map_object[to_add_key.value] = to_add_object
+                                    } else {
+                                        throw InvalidJSON(json_content, index)
                                     }
                                 }
-                                else -> {}
-                            }
-                        }
 
-                        Char(125) -> { // "}"
-                            if (!close_expected) {
+                            }
+
+                            Char(93) -> { // "]"
+                                val object_index = position_stack.removeLast()
+                                if (object_index == object_stack.size - 1) {
+                                    // Nothing to be Done
+                                } else {
+                                    val list_object = object_stack[object_index]
+                                    val to_add_object = object_stack.removeLast()
+
+                                    if (list_object is ParsedList) {
+                                        list_object.add(to_add_object)
+                                    } else {
+                                        throw InvalidJSON(json_content, index)
+                                    }
+                                }
+                            }
+
+                            Char(123) -> { // "{"
+                                position_stack.add(object_stack.size)
+                                object_stack.add(ParsedHashMap())
+                            }
+
+
+                            Char(91) -> { // "["
+                                if (close_expected) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+
+                                position_stack.add(object_stack.size)
+                                object_stack.add(ParsedList())
+                            }
+
+                            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-' -> {
+                                if (close_expected) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+
+                                working_number = "" + working_char
+                            }
+
+                            '"' -> {
+                                if (close_expected) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+
+                                working_string = ""
+                            }
+
+                            ':' -> {
+                                if (!close_expected) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+                                close_expected = false
+                                // TODO: Check Expected char
+                            }
+
+
+                            ' ', '\r', '\n', '\t' -> {}
+
+                            'n' -> {
+                                if (close_expected) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+
+                                if (json_content.substring(index, index + 4) != "null") {
+                                    throw InvalidJSON(json_content, index)
+                                } else {
+                                    object_stack.add(null)
+                                    index += 3
+                                }
+                            }
+
+                            'f' -> {
+                                if (close_expected) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+
+                                if (json_content.substring(index, index + 5) != "false") {
+                                    throw InvalidJSON(json_content, index)
+                                } else {
+                                    object_stack.add(ParsedBoolean(false))
+                                    index += 4
+                                }
+                            }
+
+                            't' -> {
+                                if (close_expected) {
+                                    throw InvalidJSON(json_content, index)
+                                }
+
+                                if (json_content.substring(index, index + 4) != "true") {
+                                    throw InvalidJSON(json_content, index)
+                                } else {
+                                    object_stack.add(ParsedBoolean(true))
+                                    index += 3
+                                }
+                            }
+
+                            else -> {
                                 throw InvalidJSON(json_content, index)
                             }
-
-                            val to_add_object = object_stack.removeLast()
-                            val to_add_key = object_stack.removeLast()
-                            val map_object = object_stack.last()
-
-                            if (map_object is ParsedHashMap && to_add_key is ParsedString) {
-                                map_object[to_add_key.value] = to_add_object
-                            } else {
-                                throw InvalidJSON(json_content, index)
-                            }
-                        }
-
-                        Char(93) -> { // "]"
-                            if (!close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            val to_add_object = object_stack.removeLast()
-                            val list_object = object_stack.last()
-
-                            if (list_object is ParsedList) {
-                                list_object.add(to_add_object)
-                            } else {
-                                throw InvalidJSON(json_content, index)
-                            }
-                        }
-
-                        Char(123) -> { // "{"
-                            if (close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            object_stack.add(ParsedHashMap())
-                        }
-
-
-                        Char(91) -> { // "["
-                            if (close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            object_stack.add(ParsedList())
-                        }
-
-                        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-' -> {
-                            if (close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            working_number = "" + working_char
-                        }
-
-                        '"' -> {
-                            if (close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            working_string = ""
-                        }
-
-                        ':' -> {
-                            if (!close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-                            close_expected = false
-                            // TODO: Check Expected char
-                        }
-
-
-                        ' ', '\r', '\n', '\t' -> { }
-
-                        'n' -> {
-                            if (close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            if (json_content.substring(index, index + 4) != "null") {
-                                throw InvalidJSON(json_content, index)
-                            } else {
-                                object_stack.add(null)
-                                index += 3
-                            }
-                        }
-
-                        'f' -> {
-                            if (close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            if (json_content.substring(index, index + 5) != "false") {
-                                throw InvalidJSON(json_content, index)
-                            } else {
-                                object_stack.add(ParsedBoolean(false))
-                                index += 4
-                            }
-                        }
-
-                        't' -> {
-                            if (close_expected) {
-                                throw InvalidJSON(json_content, index)
-                            }
-
-                            if (json_content.substring(index, index + 4) != "true") {
-                                throw InvalidJSON(json_content, index)
-                            } else {
-                                object_stack.add(ParsedBoolean(true))
-                                index += 3
-                            }
-                        }
-
-                        else -> {
-                            throw InvalidJSON(json_content, index)
                         }
                     }
+
+                    index += 1
                 }
+            //} catch (e: NoSuchElementException) {
+            //    throw InvalidJSON(json_content, index)
+            //}
 
-                index += 1
-            }
 
-            if (close_expected) {
+            if (position_stack.isNotEmpty() || object_stack.isEmpty()) {
                 throw InvalidJSON(json_content, index)
             }
 

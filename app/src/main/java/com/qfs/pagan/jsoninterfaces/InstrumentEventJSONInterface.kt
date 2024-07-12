@@ -1,11 +1,11 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.json.ParsedHashMap
-import com.qfs.json.ParsedString
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONString
 
-class InstrumentEventParser {
+class InstrumentEventJSONInterface {
     companion object {
-        fun to_json(event: InstrumentEvent): ParsedHashMap {
-            val output = ParsedHashMap()
+        fun to_json(event: InstrumentEvent): JSONHashMap {
+            val output = JSONHashMap()
             output["duration"] = event.duration
 when (event) {
                 is AbsoluteNoteEvent -> {
@@ -24,36 +24,36 @@ when (event) {
             return output
         }
 
-        fun convert_v1_to_v3_tuned(input: ParsedHashMap): ParsedHashMap {
+        fun convert_v1_to_v3_tuned(input: JSONHashMap): JSONHashMap {
             return if (input.get_boolean("relative", false)) {
-                ParsedHashMap(
+                JSONHashMap(
                     hashMapOf(
                         "duration" to input["duration"],
-                        "type" to ParsedString("rel"),
+                        "type" to JSONString("rel"),
                         "offset" to input["note"]
                     )
                 )
             } else {
-                ParsedHashMap(
+                JSONHashMap(
                     hashMapOf(
                         "duration" to input["duration"],
-                        "type" to ParsedString("abs"),
+                        "type" to JSONString("abs"),
                         "note" to input["note"]
                     )
                 )
             }
         }
 
-        fun convert_v1_to_v3_percussion(input: ParsedHashMap): ParsedHashMap {
-            return ParsedHashMap(
+        fun convert_v1_to_v3_percussion(input: JSONHashMap): JSONHashMap {
+            return JSONHashMap(
                 hashMapOf(
                     "duration" to input["duration"],
-                    "type" to ParsedString("perc"),
+                    "type" to JSONString("perc"),
                 )
             )
         }
 
-        fun from_json(input: ParsedHashMap): InstrumentEvent {
+        fun from_json(input: JSONHashMap): InstrumentEvent {
             val output = when (input.get_string("type")) {
                 "rel" -> RelativeNoteEvent(input.get_int("offset"))
                 "abs" -> AbsoluteNoteEvent(input.get_int("note"))

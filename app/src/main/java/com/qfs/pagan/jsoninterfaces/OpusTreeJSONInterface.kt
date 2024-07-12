@@ -1,30 +1,30 @@
-package com.qfs.pagan.generalizers
+package com.qfs.pagan.jsoninterfaces
 
-import com.qfs.json.ParsedHashMap
-import com.qfs.json.ParsedInt
-import com.qfs.json.ParsedList
-import com.qfs.json.ParsedObject
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONObject
 import com.qfs.pagan.structure.OpusTree
 
-class OpusTreeGeneralizer {
+class OpusTreeJSONInterface {
     companion object {
-        fun <T> to_json(input: OpusTree<T>, event_generalizer_callback: (T) -> ParsedObject?): ParsedObject? {
+        fun <T> to_json(input: OpusTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
             if (input.is_leaf() && !input.is_event()) {
                 return null
             }
 
-            val map = HashMap<String, ParsedObject?>()
+            val map = HashMap<String, JSONObject?>()
             if (input.is_event()) {
                 map["event"] = event_generalizer_callback(input.get_event()!!)
             } else {
-                map["size"] = ParsedInt(input.size)
+                map["size"] = JSONInteger(input.size)
                 val division_keys = input.divisions.keys.toList()
-                map["divisions"] = ParsedList(
+                map["divisions"] = JSONList(
                     MutableList(division_keys.size) { i: Int ->
                         val position = division_keys[i]
-                        ParsedList(
+                        JSONList(
                             mutableListOf(
-                                ParsedInt(position),
+                                JSONInteger(position),
                                 to_json(input.divisions[position]!!, event_generalizer_callback)
                             )
                         )
@@ -32,10 +32,10 @@ class OpusTreeGeneralizer {
                 )
             }
 
-            return ParsedHashMap(map)
+            return JSONHashMap(map)
         }
 
-        fun <T> from_json(input: ParsedHashMap, event_generalizer_callback: (ParsedHashMap?) -> T?): OpusTree<T> {
+        fun <T> from_json(input: JSONHashMap, event_generalizer_callback: (JSONHashMap?) -> T?): OpusTree<T> {
             val new_tree = OpusTree<T>()
             val event_hashmap = input.get_hashmapn("event")
             if (event_hashmap != null) {
@@ -58,7 +58,7 @@ class OpusTreeGeneralizer {
             return new_tree
         }
 
-        fun <T> from_v1_json(input: ParsedHashMap, event_generalizer_callback: (ParsedHashMap?) -> T?): OpusTree<T> {
+        fun <T> from_v1_json(input: JSONHashMap, event_generalizer_callback: (JSONHashMap?) -> T?): OpusTree<T> {
             val new_tree = OpusTree<T>()
             val event_hashmap = input.get_hashmapn("event")
             if (event_hashmap != null) {
@@ -67,44 +67,44 @@ class OpusTreeGeneralizer {
                 val children = input.get_listn("children")
                 if (children != null) {
                     new_tree.set_size(children.list.size)
-                    children.list.forEachIndexed { i: Int, child_json: ParsedObject? ->
+                    children.list.forEachIndexed { i: Int, child_json: JSONObject? ->
                         if (child_json == null) {
                             return@forEachIndexed
                         }
-                        new_tree[i] = from_v1_json(child_json as ParsedHashMap, event_generalizer_callback)
+                        new_tree[i] = from_v1_json(child_json as JSONHashMap, event_generalizer_callback)
                     }
                 }
             }
             return new_tree
         }
 
-        fun <T> to_v1_json(input: OpusTree<T>, event_generalizer_callback: (T) -> ParsedObject?): ParsedObject? {
+        fun <T> to_v1_json(input: OpusTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
             if (input.is_leaf() && !input.is_event()) {
                 return null
             }
 
-            val map = HashMap<String, ParsedObject?>()
+            val map = HashMap<String, JSONObject?>()
             if (input.is_event()) {
                 map["event"] = event_generalizer_callback(input.get_event()!!)
                 map["children"] = null
             } else {
                 map["event"] = null
-                map["children"] = ParsedList(
+                map["children"] = JSONList(
                     MutableList(input.size) { i: Int ->
                         to_v1_json(input[i], event_generalizer_callback)
                     }
                 )
             }
 
-            return ParsedHashMap(map)
+            return JSONHashMap(map)
         }
 
-        fun convert_v1_to_v3(input: ParsedHashMap?, event_converter: (ParsedHashMap) -> ParsedHashMap?): ParsedHashMap? {
+        fun convert_v1_to_v3(input: JSONHashMap?, event_converter: (JSONHashMap) -> JSONHashMap?): JSONHashMap? {
             if (input == null) {
                 return null
             }
 
-            val output = ParsedHashMap()
+            val output = JSONHashMap()
 
             val event_hashmap = input.get_hashmapn("event")
             if (event_hashmap != null) {
@@ -115,12 +115,12 @@ class OpusTreeGeneralizer {
                 output.set_null("event")
                 val tmp_children = input.get_list("children")
                 output["size"] = tmp_children.list.size
-                output["divisions"] = ParsedList(
+                output["divisions"] = JSONList(
                     MutableList(tmp_children.list.size) { i: Int ->
                         val position = i
-                        ParsedList(
+                        JSONList(
                             mutableListOf(
-                                ParsedInt(position),
+                                JSONInteger(position),
                                 convert_v1_to_v3(tmp_children.get_hashmapn(i), event_converter)
                             )
                         )

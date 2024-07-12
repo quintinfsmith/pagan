@@ -3,7 +3,7 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
-import com.qfs.json.ParsedHashMap
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
@@ -878,7 +878,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.recache_line_maps()
     }
 
-    override fun load_json(json_data: ParsedHashMap) {
+    override fun load_json(json_data: JSONHashMap) {
         val activity = this.get_activity() ?: return super.load_json(json_data)
 
         this._ui_clear()

@@ -5,10 +5,10 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
-import com.qfs.pagan.generalizers.OpusTreeGeneralizer
+import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.structure.OpusTree
 
-class ActiveControllerGeneralizer {
+class ActiveControllerJSONInterface {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
     companion object {
         fun from_json(obj: JSONHashMap, size: Int): ActiveController {
@@ -21,8 +21,8 @@ class ActiveControllerGeneralizer {
 
             new_controller.set_initial_event(
                 when (new_controller) {
-                    is TempoController -> OpusControlEventParser.tempo_event(obj.get_hashmap("initial"))
-                    is VolumeController -> OpusControlEventParser.volume_event(obj.get_hashmap("initial"))
+                    is TempoController -> OpusControlEventJSONInterface.tempo_event(obj.get_hashmap("initial"))
+                    is VolumeController -> OpusControlEventJSONInterface.volume_event(obj.get_hashmap("initial"))
                     else -> throw UnknownControllerException(label)
                 }
             )
@@ -31,13 +31,13 @@ class ActiveControllerGeneralizer {
                 val index = (pair as JSONList).get_int(0)
                 val value = pair.get_hashmapn(1) ?: continue
 
-                new_controller.events[index] = OpusTreeGeneralizer.from_json(value) { event: JSONHashMap? ->
+                new_controller.events[index] = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
                     if (event == null) {
                         null
                     } else {
                         when (new_controller) {
-                            is TempoController -> OpusControlEventParser.tempo_event(event)
-                            is VolumeController -> OpusControlEventParser.volume_event(event)
+                            is TempoController -> OpusControlEventJSONInterface.tempo_event(event)
+                            is VolumeController -> OpusControlEventJSONInterface.volume_event(event)
                             else -> throw UnknownControllerException(label)
                         }
                     }
@@ -52,8 +52,8 @@ class ActiveControllerGeneralizer {
 
             for (i in 0 until input_children.list.size) {
                 val pair = input_children.get_hashmap(i)
-                val generalized_tree = OpusTreeGeneralizer.convert_v1_to_v3(pair["second"] as JSONHashMap) { input_event: JSONHashMap ->
-                    OpusControlEventParser.convert_v2_to_v3(input_event)
+                val generalized_tree = OpusTreeJSONInterface.convert_v1_to_v3(pair["second"] as JSONHashMap) { input_event: JSONHashMap ->
+                    OpusControlEventJSONInterface.convert_v2_to_v3(input_event)
                 }
                 if (generalized_tree == null) {
                     continue
@@ -78,7 +78,7 @@ class ActiveControllerGeneralizer {
                             else -> throw Exception() // Nothing else was implemented
                         }
                     ),
-                    "initial" to OpusControlEventParser.convert_v2_to_v3(input.get_hashmap("initial_value")),
+                    "initial" to OpusControlEventJSONInterface.convert_v2_to_v3(input.get_hashmap("initial_value")),
                 )
             )
         }
@@ -90,8 +90,8 @@ class ActiveControllerGeneralizer {
                 if (event_tree == null) {
                     return@forEachIndexed
                 }
-                val generalized_tree = OpusTreeGeneralizer.to_json(event_tree) { event: OpusControlEvent ->
-                    OpusControlEventParser.to_json(event)
+                val generalized_tree = OpusTreeJSONInterface.to_json(event_tree) { event: OpusControlEvent ->
+                    OpusControlEventJSONInterface.to_json(event)
                 } ?: return@forEachIndexed
 
                 event_list.add(
@@ -105,7 +105,7 @@ class ActiveControllerGeneralizer {
             }
 
             map["events"] = event_list
-            map["initial"] = OpusControlEventParser.to_json(controller.initial_event)
+            map["initial"] = OpusControlEventJSONInterface.to_json(controller.initial_event)
             map["type"] = when (controller) {
                 is TempoController -> "tempo"
                 is VolumeController -> "volume"

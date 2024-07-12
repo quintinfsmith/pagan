@@ -2,7 +2,7 @@ package com.qfs.pagan.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 
-class OpusControlEventParser {
+class OpusControlEventJSONInterface {
     companion object {
         fun to_json(input: OpusControlEvent): JSONHashMap {
             val output = JSONHashMap()

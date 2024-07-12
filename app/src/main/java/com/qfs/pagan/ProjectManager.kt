@@ -1,7 +1,7 @@
 package com.qfs.pagan
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
-import com.qfs.pagan.generalizers.OpusManagerGeneralizer
+import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -116,7 +116,7 @@ class ProjectManager(data_dir: String) {
             return null
         }
 
-        val version = OpusManagerGeneralizer.detect_version(json_obj)
+        val version = OpusManagerJSONInterface.detect_version(json_obj)
         return when (version) {
             0, 1, 2 -> json_obj.get_string("name")
             else -> {

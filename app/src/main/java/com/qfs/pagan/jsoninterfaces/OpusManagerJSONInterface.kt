@@ -1,19 +1,19 @@
-package com.qfs.pagan.generalizers
+package com.qfs.pagan.jsoninterfaces
 import com.qfs.json.JSONFloat
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
-import com.qfs.pagan.opusmanager.ActiveControlSetGeneralizer
+import com.qfs.pagan.opusmanager.ActiveControlSetJSONInterface
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
-import com.qfs.pagan.opusmanager.OpusChannelGeneralizer
+import com.qfs.pagan.opusmanager.OpusChannelJSONInterface
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusPercussionChannel
 import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
-class OpusManagerGeneralizer {
+class OpusManagerJSONInterface {
     companion object {
         const val LATEST_VERSION = 3
         fun <T: OpusLayerBase> generalize(opus_manager: T): JSONHashMap {
@@ -21,7 +21,7 @@ class OpusManagerGeneralizer {
 
             val channels: MutableList<JSONHashMap> = mutableListOf()
             for (channel in opus_manager.channels) {
-                channels.add(OpusChannelGeneralizer.generalize(channel))
+                channels.add(OpusChannelJSONInterface.generalize(channel))
             }
             output["size"] = opus_manager.beat_count
             output["tuning_map"] = JSONList(MutableList(opus_manager.tuning_map.size) { i: Int ->
@@ -34,7 +34,7 @@ class OpusManagerGeneralizer {
             })
 
             output["transpose"] = JSONInteger(opus_manager.transpose)
-            output["controllers"] = ActiveControlSetGeneralizer.to_json(opus_manager.controllers)
+            output["controllers"] = ActiveControlSetJSONInterface.to_json(opus_manager.controllers)
 
             if (opus_manager is OpusManager) {
                 output["reflections"] = JSONList(
@@ -57,10 +57,10 @@ class OpusManagerGeneralizer {
             }
             output["channels"] = JSONList(
                 MutableList(opus_manager.channels.size) { i: Int ->
-                    OpusChannelGeneralizer.generalize(opus_manager.channels[i])
+                    OpusChannelJSONInterface.generalize(opus_manager.channels[i])
                 }
             )
-            output["percussion_channel"] = OpusChannelGeneralizer.generalize(opus_manager.percussion_channel)
+            output["percussion_channel"] = OpusChannelJSONInterface.generalize(opus_manager.percussion_channel)
             output["title"] = if (opus_manager.project_name == null) {
                 null
             } else {
@@ -86,13 +86,13 @@ class OpusManagerGeneralizer {
             opus_manager.set_beat_count(inner_map.get_int("size"))
             for (generalized_channel in inner_map.get_list("channels").list) {
                 opus_manager.add_channel(
-                    OpusChannelGeneralizer.interpret(
+                    OpusChannelJSONInterface.interpret(
                         generalized_channel as JSONHashMap,
                         opus_manager.beat_count
                     ) as OpusChannel
                 )
             }
-            opus_manager.percussion_channel = OpusChannelGeneralizer.interpret(
+            opus_manager.percussion_channel = OpusChannelJSONInterface.interpret(
                 inner_map.get_hashmap("percussion_channel"),
                 opus_manager.beat_count
             ) as OpusPercussionChannel
@@ -106,7 +106,7 @@ class OpusManagerGeneralizer {
                     g_pair.get_int(1)
                 )
             }
-            opus_manager.controllers = ActiveControlSetGeneralizer.from_json(inner_map.get_hashmap("controllers"), opus_manager.beat_count)
+            opus_manager.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), opus_manager.beat_count)
 
             val generalized_reflections = inner_map.get_list("reflections")
             for (i in 0 until generalized_reflections.list.size) {
@@ -146,7 +146,7 @@ class OpusManagerGeneralizer {
                     ),
                     "channels" to JSONList(
                         MutableList(old_channels.list.size) { i: Int ->
-                            OpusChannelGeneralizer.convert_v0_to_v1(old_channels.get_hashmap(i), radix)
+                            OpusChannelJSONInterface.convert_v0_to_v1(old_channels.get_hashmap(i), radix)
                         }
                     ),
                     "reflections" to input.hash_map["reflections"]
@@ -156,7 +156,7 @@ class OpusManagerGeneralizer {
 
         fun convert_v1_to_v2(input: JSONHashMap): JSONHashMap {
             // Get Beat Count
-            val line_tree = OpusTreeGeneralizer.from_v1_json(input.get_list("channels").get_hashmap(0).get_list("lines").get_hashmap(0)) { null }
+            val line_tree = OpusTreeJSONInterface.from_v1_json(input.get_list("channels").get_hashmap(0).get_list("lines").get_hashmap(0)) { null }
             // radix may have existed in v1 AND v0, so check if its used instead of tuning_map
             var tuning_map = input.get_listn("tuning_map")
             if (tuning_map == null) {
@@ -199,7 +199,7 @@ class OpusManagerGeneralizer {
                     ),
                     "channels" to JSONList(
                         MutableList(channels.list.size) { i: Int ->
-                            OpusChannelGeneralizer.convert_v1_to_v2(channels.get_hashmap(i))
+                            OpusChannelJSONInterface.convert_v1_to_v2(channels.get_hashmap(i))
                         }
                     )
                 )
@@ -238,7 +238,7 @@ class OpusManagerGeneralizer {
             val channels = JSONList()
             for (i in 0 until input_channels.list.size - 1) {
                 channels.add(
-                    OpusChannelGeneralizer.convert_v2_to_v3(
+                    OpusChannelJSONInterface.convert_v2_to_v3(
                         input_channels.get_hashmap(i)
                     )
                 )
@@ -284,9 +284,9 @@ class OpusManagerGeneralizer {
                                 }
                             ),
                             "transpose" to input_map["transpose"],
-                            "controllers" to ActiveControlSetGeneralizer.convert_v2_to_v3(input_map["controllers"] as JSONList, beat_count),
+                            "controllers" to ActiveControlSetJSONInterface.convert_v2_to_v3(input_map["controllers"] as JSONList, beat_count),
                             "channels" to channels,
-                            "percussion_channel" to OpusChannelGeneralizer.convert_v2_to_v3(
+                            "percussion_channel" to OpusChannelJSONInterface.convert_v2_to_v3(
                                 input_channels.get_hashmap(input_channels.list.size - 1)
                             )
                         )

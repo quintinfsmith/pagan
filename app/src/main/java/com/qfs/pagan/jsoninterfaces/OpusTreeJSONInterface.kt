@@ -1,4 +1,4 @@
-package com.qfs.pagan.generalizers
+package com.qfs.pagan.jsoninterfaces
 
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
@@ -6,7 +6,7 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.pagan.structure.OpusTree
 
-class OpusTreeGeneralizer {
+class OpusTreeJSONInterface {
     companion object {
         fun <T> to_json(input: OpusTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
             if (input.is_leaf() && !input.is_event()) {

@@ -17,23 +17,23 @@ import com.qfs.pagan.CH_UP
 import com.qfs.pagan.REL_CHARS
 import com.qfs.pagan.SPECIAL_CHARS
 import com.qfs.pagan.char_to_int
-import com.qfs.pagan.generalizers.OpusTreeGeneralizer
+import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.structure.OpusTree
 
-class OpusChannelGeneralizer {
+class OpusChannelJSONInterface {
     companion object {
         fun generalize(channel: OpusChannelAbstract<*,*>): JSONHashMap {
             val channel_map = JSONHashMap()
             val lines = JSONList(
                 MutableList(channel.size) { i: Int ->
-                    OpusLineGeneralizer.to_json(channel.lines[i])
+                    OpusLineJSONInterface.to_json(channel.lines[i])
                 }
             )
             channel_map["lines"] = lines
             channel_map["midi_channel"] = channel.get_midi_channel()
             channel_map["midi_bank"] = channel.get_midi_bank()
             channel_map["midi_program"] = channel.midi_program
-            channel_map["controllers"] = ActiveControlSetGeneralizer.to_json(channel.controllers)
+            channel_map["controllers"] = ActiveControlSetJSONInterface.to_json(channel.controllers)
 
             return channel_map
         }
@@ -42,7 +42,7 @@ class OpusChannelGeneralizer {
             val channel = OpusPercussionChannel()
             val input_lines = input_map.get_list("lines")
             for (line in input_lines.list) {
-                channel.lines.add(OpusLineGeneralizer.percussion_line(line as JSONHashMap, beat_count))
+                channel.lines.add(OpusLineJSONInterface.percussion_line(line as JSONHashMap, beat_count))
             }
 
             return channel
@@ -57,7 +57,7 @@ class OpusChannelGeneralizer {
             val input_lines = input_map.get_list("lines")
             for (line in input_lines.list) {
                 channel.lines.add(
-                    OpusLineGeneralizer.opus_line(
+                    OpusLineJSONInterface.opus_line(
                         line as JSONHashMap,
                         beat_count
                     )
@@ -77,7 +77,7 @@ class OpusChannelGeneralizer {
             channel.size = channel.lines.size
             channel.set_beat_count(beat_count)
             channel.midi_program = input_map.get_int("midi_program")
-            channel.controllers = ActiveControlSetGeneralizer.from_json(input_map.get_hashmap("controllers"), beat_count)
+            channel.controllers = ActiveControlSetJSONInterface.from_json(input_map.get_hashmap("controllers"), beat_count)
 
             return channel
         }
@@ -204,7 +204,7 @@ class OpusChannelGeneralizer {
                         working_tree[j] = beat_tree
                     }
 
-                    OpusTreeGeneralizer.to_v1_json(working_tree) { it }
+                    OpusTreeJSONInterface.to_v1_json(working_tree) { it }
                 }
             )
 
@@ -312,7 +312,7 @@ class OpusChannelGeneralizer {
             val beat_count = lines.get_hashmap(0).get_list("children").list.size
             val midi_channel = input_map.get_int("midi_channel")
             val new_controllers = if (input_map["channel_controllers"] != null) {
-                ActiveControlSetGeneralizer.convert_v2_to_v3(input_map["channel_controllers"] as JSONList, beat_count)
+                ActiveControlSetJSONInterface.convert_v2_to_v3(input_map["channel_controllers"] as JSONList, beat_count)
             } else {
                 null
             }
@@ -329,11 +329,11 @@ class OpusChannelGeneralizer {
                             val line_controllers = input_map.get_list("line_controllers").get_list(i)
                             val beats = JSONList()
                             for (j in 0 until child_list.list.size) {
-                                val generalized_beat = OpusTreeGeneralizer.convert_v1_to_v3(child_list.get_hashmapn(j)) { event_map: JSONHashMap ->
+                                val generalized_beat = OpusTreeJSONInterface.convert_v1_to_v3(child_list.get_hashmapn(j)) { event_map: JSONHashMap ->
                                     if (midi_channel == 9) {
-                                        InstrumentEventParser.convert_v1_to_v3_percussion(event_map)
+                                        InstrumentEventJSONInterface.convert_v1_to_v3_percussion(event_map)
                                     } else {
-                                        InstrumentEventParser.convert_v1_to_v3_tuned(event_map)
+                                        InstrumentEventJSONInterface.convert_v1_to_v3_tuned(event_map)
                                     }
                                 } ?: continue
                                 beats.add(
@@ -348,7 +348,7 @@ class OpusChannelGeneralizer {
 
                             val output_line = JSONHashMap(
                                 hashMapOf(
-                                    "controllers" to ActiveControlSetGeneralizer.convert_v2_to_v3(line_controllers, beat_count),
+                                    "controllers" to ActiveControlSetJSONInterface.convert_v2_to_v3(line_controllers, beat_count),
                                     "beats" to beats
                                 )
                             )

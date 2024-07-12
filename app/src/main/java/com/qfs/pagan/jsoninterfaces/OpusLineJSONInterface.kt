@@ -3,18 +3,18 @@ package com.qfs.pagan.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
-import com.qfs.pagan.generalizers.OpusTreeGeneralizer
+import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.structure.OpusTree
 
-class OpusLineGeneralizer {
+class OpusLineJSONInterface {
     companion object {
         fun to_json(line: OpusLineAbstract<*>): JSONHashMap {
             var output = JSONHashMap()
 
             val beats = JSONList()
             for (i in line.beats.indices) {
-                val generalized_tree = OpusTreeGeneralizer.to_json(line.beats[i]) { opus_event: InstrumentEvent ->
-                    InstrumentEventParser.to_json(opus_event)
+                val generalized_tree = OpusTreeJSONInterface.to_json(line.beats[i]) { opus_event: InstrumentEvent ->
+                    InstrumentEventJSONInterface.to_json(opus_event)
                 } ?: continue
 
                 beats.add(
@@ -28,7 +28,7 @@ class OpusLineGeneralizer {
             }
 
             output["beats"] = beats
-            output["controllers"] = ActiveControlSetGeneralizer.to_json(line.controllers)
+            output["controllers"] = ActiveControlSetJSONInterface.to_json(line.controllers)
 
             when (line) {
                 is OpusLinePercussion -> {
@@ -45,9 +45,9 @@ class OpusLineGeneralizer {
             for (i in 0 until beats.list.size) {
                 val pair = beats.get_list(i)
                 val beat_index = pair.get_int(0)
-                val tree = OpusTreeGeneralizer.from_json(pair.get_hashmap(1)) { event: JSONHashMap? ->
+                val tree = OpusTreeJSONInterface.from_json(pair.get_hashmap(1)) { event: JSONHashMap? ->
                     if (event != null) {
-                        InstrumentEventParser.from_json(event) as PercussionEvent
+                        InstrumentEventJSONInterface.from_json(event) as PercussionEvent
                     } else {
                         null
                     }
@@ -59,7 +59,7 @@ class OpusLineGeneralizer {
                 input.get_int("instrument"),
                 beat_list
             )
-            output.controllers = ActiveControlSetGeneralizer.from_json(input.get_hashmap("controllers"), size)
+            output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), size)
 
             return output
         }
@@ -71,9 +71,9 @@ class OpusLineGeneralizer {
             for (i in 0 until beats.list.size) {
                 val pair = beats.get_list(i)
                 val beat_index = pair.get_int(0)
-                val tree = OpusTreeGeneralizer.from_json(pair.get_hashmap(1)) { event: JSONHashMap? ->
+                val tree = OpusTreeJSONInterface.from_json(pair.get_hashmap(1)) { event: JSONHashMap? ->
                     if (event != null) {
-                        InstrumentEventParser.from_json(event) as TunedInstrumentEvent
+                        InstrumentEventJSONInterface.from_json(event) as TunedInstrumentEvent
                     } else {
                         null
                     }
@@ -83,7 +83,7 @@ class OpusLineGeneralizer {
             }
 
             val output = OpusLine(beat_list)
-            output.controllers = ActiveControlSetGeneralizer.from_json(input.get_hashmap("controllers"), size)
+            output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), size)
             return output
         }
     }

@@ -4,13 +4,13 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 
-class ActiveControlSetGeneralizer() {
+class ActiveControlSetJSONInterface() {
     class UnknownControllerException(): Exception()
     companion object {
         fun from_json(json_obj: JSONHashMap, size: Int): ActiveControlSet {
             val control_set = ActiveControlSet(size)
             for (json_controller in json_obj.get_listn("controllers")?.list ?: listOf()) {
-                val controller = ActiveControllerGeneralizer.from_json(json_controller as JSONHashMap, size)
+                val controller = ActiveControllerJSONInterface.from_json(json_controller as JSONHashMap, size)
                 val key = when (controller) {
                     is TempoController -> ControlEventType.Tempo
                     is VolumeController -> ControlEventType.Volume
@@ -29,7 +29,7 @@ class ActiveControlSetGeneralizer() {
             val controllers = control_set.controllers.values.toList()
             output["controllers"] = JSONList(
                 MutableList(controllers.size) {
-                    ActiveControllerGeneralizer.to_json(controllers[it])
+                    ActiveControllerJSONInterface.to_json(controllers[it])
                 }
             )
 
@@ -42,7 +42,7 @@ class ActiveControlSetGeneralizer() {
                     "beat_count" to JSONInteger(beat_count),
                     "controllers" to JSONList(
                         MutableList(input.list.size) { i: Int ->
-                            ActiveControllerGeneralizer.convert_v2_to_v3(input.get_hashmap(i))
+                            ActiveControllerJSONInterface.convert_v2_to_v3(input.get_hashmap(i))
                         }
                     )
                 )

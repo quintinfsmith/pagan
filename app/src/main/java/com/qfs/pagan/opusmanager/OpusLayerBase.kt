@@ -11,7 +11,7 @@ import com.qfs.apres.event.TimeSignature
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.json.*
-import com.qfs.pagan.generalizers.OpusManagerGeneralizer
+import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.OpusTree
 import java.io.File
 import kotlin.math.floor
@@ -1576,7 +1576,7 @@ open class OpusLayerBase {
 
         val file_obj = File(this.path!!)
 
-        val generalized_object = OpusManagerGeneralizer.generalize(this)
+        val generalized_object = OpusManagerJSONInterface.generalize(this)
         file_obj.writeText(generalized_object.to_string())
     }
 
@@ -1604,26 +1604,26 @@ open class OpusLayerBase {
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
         val generalized_object = JSONParser.parse(json_content) as JSONHashMap
-        val version = OpusManagerGeneralizer.detect_version(generalized_object)
+        val version = OpusManagerJSONInterface.detect_version(generalized_object)
         this.load_json(
             when (version) {
-                OpusManagerGeneralizer.LATEST_VERSION -> generalized_object
+                OpusManagerJSONInterface.LATEST_VERSION -> generalized_object
                 2 -> {
-                    OpusManagerGeneralizer.convert_v2_to_v3(
+                    OpusManagerJSONInterface.convert_v2_to_v3(
                         generalized_object
                     )
                 }
                 1 -> {
-                    OpusManagerGeneralizer.convert_v2_to_v3(
-                        OpusManagerGeneralizer.convert_v1_to_v2(
+                    OpusManagerJSONInterface.convert_v2_to_v3(
+                        OpusManagerJSONInterface.convert_v1_to_v2(
                             generalized_object
                         )
                     )
                 }
                 0 ->  {
-                    OpusManagerGeneralizer.convert_v2_to_v3(
-                        OpusManagerGeneralizer.convert_v1_to_v2(
-                            OpusManagerGeneralizer.convert_v0_to_v1(
+                    OpusManagerJSONInterface.convert_v2_to_v3(
+                        OpusManagerJSONInterface.convert_v1_to_v2(
+                            OpusManagerJSONInterface.convert_v0_to_v1(
                                 generalized_object
                             )
                         )
@@ -1687,7 +1687,7 @@ open class OpusLayerBase {
     //}
 
     open fun load_json(json_data: JSONHashMap) {
-        val input_manager = OpusManagerGeneralizer.interpret(json_data)
+        val input_manager = OpusManagerJSONInterface.interpret(json_data)
         this.import_from_other(input_manager)
         this._setup_default_controllers()
         this.on_project_changed()

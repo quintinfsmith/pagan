@@ -1,6 +1,8 @@
 package com.qfs.apres.event2
 
-import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.GeneralMIDIEvent
+
+abstract interface UMPEvent: GeneralMIDIEvent
 
 class NoteOn79(
     var index: Int = 0,
@@ -9,7 +11,7 @@ class NoteOn79(
     var velocity: Int,
     var bend: Int = 0, // 512ths of a semitone
     var group: Int = 0
-): MIDIEvent {
+): UMPEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),
@@ -30,7 +32,7 @@ class NoteOff79(
     var velocity: Int,
     var bend: Int = 0, // 512ths of a semitone
     var group: Int = 0
-): MIDIEvent {
+): UMPEvent {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),

@@ -1,5 +1,10 @@
 package com.qfs.apres.event
 
-interface MIDIEvent {
+import com.qfs.apres.event2.UMPEvent
+interface GeneralMIDIEvent {
     fun as_bytes(): ByteArray
+}
+
+interface MIDIEvent: GeneralMIDIEvent {
+    fun to_ump_event(): UMPEvent
 }

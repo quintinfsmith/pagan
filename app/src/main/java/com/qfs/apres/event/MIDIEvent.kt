@@ -5,6 +5,4 @@ interface GeneralMIDIEvent {
     fun as_bytes(): ByteArray
 }
 
-interface MIDIEvent: GeneralMIDIEvent {
-    fun to_ump_event(): UMPEvent
-}
+interface MIDIEvent: GeneralMIDIEvent

@@ -1,7 +1,7 @@
 package com.qfs.apres
 
 import com.qfs.apres.event2.UMPEvent
-import com.qfs.apres.event.EndOfTrack
+import com.qfs.apres.event.EndOfClip
 import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
@@ -14,6 +14,7 @@ import kotlin.experimental.or
 
 class StandardMidiFileInterface {
     class InvalidChunkType(string: String): Exception("Invalid Chunk Type: $string")
+    class MissingMThd : Exception("Missing MThd")
     companion object {
         fun is_compatible(bytes: ByteArray): Boolean {
             val first_four = ByteArray(4) { i -> bytes[i] }
@@ -30,13 +31,13 @@ class StandardMidiFileInterface {
             val mlo = Midi()
             var sub_bytes: MutableList<Byte>
             val chunkcount = HashMap<String, Int>()
-            var current_track = 0
+            var current_clip = 0
             var current_deltatime: Int
             var chunk_type: String
 
             var divword: Int
             var midi_format: Int
-            var track_length: Int
+            var clip_length: Int
             var found_header = false
             var ppqn = 120
 
@@ -57,7 +58,7 @@ class StandardMidiFileInterface {
                     "MThd" -> {
                         dequeue_n(working_bytes, 4) // Get Size
                         midi_format = dequeue_n(working_bytes, 2)
-                        dequeue_n(working_bytes, 2) // Get Number of tracks
+                        dequeue_n(working_bytes, 2) // Get Number of clips
                         divword = dequeue_n(working_bytes, 2)
 
                         if (divword and 0x8000 > 0) {
@@ -75,19 +76,19 @@ class StandardMidiFileInterface {
                             throw MissingMThd()
                         }
                         current_deltatime = 0
-                        track_length = dequeue_n(working_bytes, 4)
+                        clip_length = dequeue_n(working_bytes, 4)
                         sub_bytes = mutableListOf()
 
-                        for (i in 0 until track_length) {
+                        for (i in 0 until clip_length) {
                             sub_bytes.add(working_bytes.removeFirst())
                         }
 
                         while (sub_bytes.isNotEmpty()) {
                             current_deltatime += get_variable_length_number(sub_bytes)
-                            active_byte = this.process_mtrk_event(mlo, sub_bytes, current_deltatime, current_track, active_byte)
+                            active_byte = this.process_mtrk_event(mlo, sub_bytes, current_deltatime, current_clip, active_byte)
                         }
 
-                        current_track += 1
+                        current_clip += 1
                     }
                     else -> {
                         throw InvalidChunkType(chunk_type)
@@ -113,56 +114,56 @@ class StandardMidiFileInterface {
             output.add((format / 256).toByte())
             output.add((format % 256).toByte())
 
-            val track_count = midi.count_tracks()
-            output.add((track_count / 256).toByte())
-            output.add((track_count % 256).toByte())
+            val clip_count = midi.count_clips()
+            output.add((clip_count / 256).toByte())
+            output.add((clip_count % 256).toByte())
 
             val ppqn = midi.get_ppqn()
             output.add((ppqn / 256).toByte())
             output.add((ppqn % 256).toByte())
 
-            var track_event_bytes: MutableList<Byte>
-            var track_byte_length: Int
-            val tracks = midi.get_tracks()
+            var clip_event_bytes: MutableList<Byte>
+            var clip_byte_length: Int
+            val clips = midi.get_clips()
 
-            for (ticks in tracks) {
+            for (ticks in clips) {
                 output.add('M'.code.toByte())
                 output.add('T'.code.toByte())
                 output.add('r'.code.toByte())
                 output.add('k'.code.toByte())
 
-                track_event_bytes = mutableListOf()
+                clip_event_bytes = mutableListOf()
                 var has_eot = false
                 for (pair in ticks) {
                     val tick_delay = pair.first
                     val eid = pair.second
                     val working_event = midi.get_event(eid)
                     if (working_event != null) {
-                        has_eot = has_eot || (working_event is EndOfTrack)
-                        track_event_bytes += to_variable_length_bytes(tick_delay)
-                        track_event_bytes += working_event.as_bytes().toMutableList()
+                        has_eot = has_eot || (working_event is EndOfClip)
+                        clip_event_bytes += to_variable_length_bytes(tick_delay)
+                        clip_event_bytes += working_event.as_bytes().toMutableList()
                     }
                 }
 
-                // Automatically handle EndOfTrackEvent Here instead of requiring it to be in the MIDITrack object
+                // Automatically handle EndOfClipEvent Here instead of requiring it to be in the MIDIClip object
                 if (!has_eot) {
-                    track_event_bytes.add(0x00)
-                    track_event_bytes += EndOfTrack().as_bytes().toMutableList()
+                    clip_event_bytes.add(0x00)
+                    clip_event_bytes += EndOfClip().as_bytes().toMutableList()
                 }
 
-                // track length in bytes
-                track_byte_length = track_event_bytes.size
-                output.add((track_byte_length shr 24).toByte())
-                output.add(((track_byte_length shr 16) and 0xFF).toByte())
-                output.add(((track_byte_length shr 8) and 0xFF).toByte())
-                output.add((track_byte_length and 0xFF).toByte())
-                output += track_event_bytes.toList()
+                // clip length in bytes
+                clip_byte_length = clip_event_bytes.size
+                output.add((clip_byte_length shr 24).toByte())
+                output.add(((clip_byte_length shr 16) and 0xFF).toByte())
+                output.add(((clip_byte_length shr 8) and 0xFF).toByte())
+                output.add((clip_byte_length and 0xFF).toByte())
+                output += clip_event_bytes.toList()
             }
 
             return output.toByteArray()
         }
 
-        fun process_mtrk_event(midi: Midi, bytes: MutableList<Byte>, current_deltatime: Int, track: Int, active_byte: Byte): Byte {
+        fun process_mtrk_event(midi: Midi, bytes: MutableList<Byte>, current_deltatime: Int, clip: Int, active_byte: Byte): Byte {
             var adj_active_byte = if (bytes.first() in 0x80..0xEF) {
                 bytes.first()
             } else {
@@ -178,7 +179,7 @@ class StandardMidiFileInterface {
                     adj_active_byte = 0x10.toByte() or event.as_bytes().first()
                 }
             }
-            midi.insert_event(track, current_deltatime, event!!)
+            midi.insert_event(clip, current_deltatime, event!!)
 
             return adj_active_byte
         }
@@ -205,8 +206,7 @@ class MidiClipFileInterface {
 
 
 class Midi {
-    class MissingMThd : Exception("Missing MThd")
-    class TrackOOB(index: Int): Exception("Track $index Out of Bounds")
+    class ClipOOB(index: Int): Exception("Clip $index Out of Bounds")
     class InvalidEventId(id: Int): Exception("No event mapped to id:$id")
     class UnknownMidiFileType: Exception()
     var ppqn: Int = 120
@@ -216,7 +216,11 @@ class Midi {
     private var event_id_gen: Int = 1
     private var event_positions = HashMap<Int, Pair<Int, Int>>()
 
+
     companion object {
+        private const VERSION_1 = 0
+        private const VERSION_2_CONTAINER = 1
+        private const VERSION_2_CLIP = 2
         fun from_path(file_path: String): Midi {
             val midibytes = File(file_path).readBytes()
             return Midi.from_bytes(midibytes)
@@ -235,12 +239,6 @@ class Midi {
 
             throw UnknownMidiFileType()
         }
-
-    }
-
-
-
-    private fun _as_bytes_v2(): ByteArray {
     }
 
     fun as_bytes(version: Int? = null): ByteArray {
@@ -250,8 +248,9 @@ class Midi {
             version
         }
         return when (adj_version) {
-            1 -> this._as_bytes_v1()
-            2 -> this._as_bytes_v2()
+            Midi.VERSION_1 -> StandardMidiFileInterface.to_bytes(this)
+            Midi.VERSION_2_CONTAINER -> MidiContainerFileInterface.to_bytes(this)
+            Midi.VERSION_2_CLIP -> MidiClipFileInterface.to_bytes(this)
             else -> throw Exception()
         }
     }
@@ -274,28 +273,28 @@ class Midi {
         File(path).writeBytes(bytes)
     }
 
-    // Get the track and tick of and event, given its id
+    // Get the clip and tick of and event, given its id
     fun get_event_position(event_id: Int): Pair<Int, Int>? {
         return this.event_positions[event_id]
     }
 
-    fun get_tracks(): List<List<Pair<Int, Int>>> {
-        val tracks: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
+    fun get_clips(): List<List<Pair<Int, Int>>> {
+        val clips: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
         for (eid in this.event_positions.keys) {
-            val track = this.event_positions[eid]?.first!!
+            val clip = this.event_positions[eid]?.first!!
             val tick = this.event_positions[eid]?.second!!
-            while (tracks.size <= track) {
-                tracks.add(mutableListOf())
+            while (clips.size <= clip) {
+                clips.add(mutableListOf())
             }
-            tracks[track].add(Pair(tick, eid))
+            clips[clip].add(Pair(tick, eid))
         }
 
         val output: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
-        for (unsorted_track in tracks) {
-            val track = unsorted_track.sortedBy { it.first }
+        for (unsorted_clip in clips) {
+            val clip = unsorted_clip.sortedBy { it.first }
             val current: MutableList<Pair<Int, Int>> = mutableListOf()
             var previous_tick: Int = 0
-            for (pair in track) {
+            for (pair in clip) {
                 val current_tick = pair.first
                 val eid = pair.second
                 current.add(Pair(current_tick - previous_tick, eid))
@@ -306,22 +305,22 @@ class Midi {
         return output
     }
 
-    fun count_tracks(): Int {
-        val used_tracks = HashSet<Int>()
+    fun count_clips(): Int {
+        val used_clips = HashSet<Int>()
         for (pair in this.event_positions.values) {
-            used_tracks.add(pair.first)
+            used_clips.add(pair.first)
         }
-        return used_tracks.size
+        return used_clips.size
     }
 
     fun count_events(): Int {
         return this.event_positions.size
     }
 
-    fun get_track_length(track: Int): Int {
+    fun get_clip_length(clip: Int): Int {
         var max_tick: Int = 0
         for (pair in this.event_positions.values) {
-            if (pair.first == track) {
+            if (pair.first == clip) {
                 max_tick = kotlin.math.max(max_tick, pair.second)
             }
         }
@@ -345,34 +344,34 @@ class Midi {
         return this.midi_format
     }
 
-    fun insert_event(track: Int, tick: Int, event: GeneralMIDIEvent): Int {
-        if (track > 15) {
-            throw TrackOOB(track)
+    fun insert_event(clip: Int, tick: Int, event: GeneralMIDIEvent): Int {
+        if (clip > 15) {
+            throw ClipOOB(clip)
         }
         val new_event_id = this.event_id_gen
         this.event_id_gen += 1
 
         this.events[new_event_id] = event
-        this.move_event(track, tick, new_event_id)
+        this.move_event(clip, tick, new_event_id)
 
         return new_event_id
     }
 
-    fun move_event(new_track: Int, new_tick: Int, event_id: Int) {
-        this.event_positions[event_id] = Pair(new_track, new_tick)
+    fun move_event(new_clip: Int, new_tick: Int, event_id: Int) {
+        this.event_positions[event_id] = Pair(new_clip, new_tick)
     }
 
-    fun push_event(track: Int, wait: Int, event: GeneralMIDIEvent): Int {
-        if (track > 15) {
-            throw TrackOOB(track)
+    fun push_event(clip: Int, wait: Int, event: GeneralMIDIEvent): Int {
+        if (clip > 15) {
+            throw ClipOOB(clip)
         }
 
         val new_event_id = this.event_id_gen
         this.event_id_gen += 1
         this.events[new_event_id] = event
 
-        val last_tick_in_track = this.get_track_length(track) - 1
-        this.move_event(track, last_tick_in_track + wait, new_event_id)
+        val last_tick_in_clip = this.get_clip_length(clip) - 1
+        this.move_event(clip, last_tick_in_clip + wait, new_event_id)
 
         return new_event_id
     }
@@ -384,6 +383,7 @@ class Midi {
     fun move_event(new_tick: Int, event_id: Int) {
         this.event_positions[event_id] = Pair(0, new_tick)
     }
+
     fun push_event(wait: Int, event: GeneralMIDIEvent) {
         return this.push_event(0, wait, event)
     }

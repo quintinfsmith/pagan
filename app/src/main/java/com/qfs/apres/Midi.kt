@@ -17,8 +17,12 @@ class StandardMidiFileInterface {
     class MissingMThd : Exception("Missing MThd")
     companion object {
         fun is_compatible(bytes: ByteArray): Boolean {
-            val first_four = ByteArray(4) { i -> bytes[i] }
-            return first_four.contentEquals("MThd".toByteArray())
+            return try {
+                val first_four = ByteArray(4) { i -> bytes[i] }
+                first_four.contentEquals("MThd".toByteArray())
+            } catch (e: Exception) {
+                false
+            }
         }
         fun from_bytes(file_bytes: ByteArray): Midi {
             var active_byte: Byte = 0x90.toByte()
@@ -189,6 +193,12 @@ class StandardMidiFileInterface {
 class MidiContainerFileInterface {
     companion object {
         fun is_compatible(bytes: ByteArray): Boolean {
+            return try {
+                val signature = ByteArray(8) { i -> bytes[i] }
+                signature.contentEquals("SMF2CON1".toByteArray())
+            } catch (e: Exception) {
+                false
+            }
         }
         fun from_bytes(bytes: ByteArray): Midi {
         }
@@ -198,6 +208,12 @@ class MidiContainerFileInterface {
 class MidiClipFileInterface {
     companion object {
         fun is_compatible(bytes: ByteArray): Boolean {
+            return try {
+                val signature = ByteArray(8) { i -> bytes[i] }
+                signature.contentEquals("SMF2CLIP".toByteArray())
+            } catch (e: Exception) {
+                false
+            }
         }
         fun from_bytes(bytes: ByteArray): Midi {
         }
@@ -361,6 +377,10 @@ class Midi {
         this.event_positions[event_id] = Pair(new_clip, new_tick)
     }
 
+    fun push_event(wait: Int, event: GeneralMIDIEvent) {
+        return this.push_event(0, wait, event)
+    }
+
     fun push_event(clip: Int, wait: Int, event: GeneralMIDIEvent): Int {
         if (clip > 15) {
             throw ClipOOB(clip)
@@ -384,9 +404,6 @@ class Midi {
         this.event_positions[event_id] = Pair(0, new_tick)
     }
 
-    fun push_event(wait: Int, event: GeneralMIDIEvent) {
-        return this.push_event(0, wait, event)
-    }
 
 
     fun get_event(event_id: Int): GeneralMIDIEvent? {

@@ -4,6 +4,47 @@ import com.qfs.apres.event.GeneralMIDIEvent
 
 abstract interface UMPEvent: GeneralMIDIEvent
 
+abstract class SystemExclusive(
+    var group: Int,
+    var status: Int,
+    var stream: Int
+): UMPEvent {
+    override fun as_bytes(): ByteArray {
+        val data = this.get_data_bytes()
+        // TODO: Validate data size and status
+        return byteArrayOf(
+            (0x40 or (this.group and 0x0F)).toByte(),
+            ((this.status shl 4) and (data.size)).toByte(),
+            *data
+        )
+    }
+    abstract fun get_data_bytes(): ByteArray
+}
+
+// abstract class MidiCI(group: Int, stream: Int): SystemExclusive(group, 0xD, stream) {
+//     
+// }
+
+class StartOfClip(): UMPEvent {
+    override fun as_bytes(): ByteArray {
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x20.toByte(),
+            *(ByteArray(14) { 0.toByte() })
+        )
+    }
+}
+
+class EndOfClip(): UMPEvent {
+    override fun as_bytes(): ByteArray {
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x21.toByte(),
+            *(ByteArray(14) { 0.toByte() })
+        )
+    }
+}
+
 class PolyPressure(
     var channel: Int,
     var index: Int,
@@ -176,5 +217,4 @@ class ControlChange(
         )
     }
 }
-
 

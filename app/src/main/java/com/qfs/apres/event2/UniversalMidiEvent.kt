@@ -21,9 +21,21 @@ abstract class SystemExclusive(
     abstract fun get_data_bytes(): ByteArray
 }
 
-// abstract class MidiCI(group: Int, stream: Int): SystemExclusive(group, 0xD, stream) {
-//     
-// }
+abstract class CapabilityInquiry(group: Int, stream: Int): SystemExclusive(group, 0xD, stream)
+
+class ProfileOn(
+    group: Int,
+    stream: Int,
+    var source: Int, // MUID
+    var destination: Int, // MUID
+    var profile: Int,
+    var requests: Int
+): CapabilityInquiry(group, stream) {
+    override fun get_data_bytes(): ByteArray {
+        TODO()
+    }
+
+}
 
 class StartOfClip(): UMPEvent {
     override fun as_bytes(): ByteArray {

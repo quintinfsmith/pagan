@@ -2583,7 +2583,7 @@ open class OpusLayerBase {
                 this.replace_tree(
                     overwrite_key,
                     null,
-                    working_tree
+                    working_tree.copy()
                 )
             }
         }
@@ -2624,7 +2624,7 @@ open class OpusLayerBase {
                     type,
                     ((j + 1) * width) + (i + start),
                     null,
-                    this.get_global_ctl_tree(type, (i + start))
+                    this.get_global_ctl_tree(type, (i + start)).copy(this::copy_control_event)
                 )
             }
         }

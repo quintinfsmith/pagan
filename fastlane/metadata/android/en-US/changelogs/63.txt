@@ -1,1 +1,0 @@
-Bugfix: copying range over row/rows was accidentally linking some of the beats.

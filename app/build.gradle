@@ -13,8 +13,8 @@ android {
         applicationId "com.qfs.pagan"
         minSdk 30
         targetSdk 33
-        versionCode 63
-        versionName "1.4.16"
+        versionCode 66
+        versionName "1.4.19"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

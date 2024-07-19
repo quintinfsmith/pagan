@@ -400,7 +400,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
                     CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     null -> {
-                        println("${cursor.channel} | ${cursor.line_offset}")
                         opus_manager.get_visible_row_from_ctl_line(
                             opus_manager.get_ctl_line_index(
                                 opus_manager.get_abs_offset(

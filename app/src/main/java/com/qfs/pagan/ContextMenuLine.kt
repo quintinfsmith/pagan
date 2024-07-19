@@ -86,7 +86,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         // Hiding volume control line for now (VOLCTLTMP)
         this.button_toggle_volume_control.visibility = View.GONE
 
-        if (opus_manager.is_ctl_line_visible(CtlLineLevel.Line, ControlEventType.Volume)) {
+        if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Line, ControlEventType.Volume)) {
             // Hiding volume control line for now (VOLCTLTMP)
             //this.button_toggle_volume_control.setImageResource(R.drawable.volume_minus)
 

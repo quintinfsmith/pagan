@@ -1,0 +1,3 @@
+bugfixes:
+    - Columns sometimes losing ratios
+    - crash when undoing a percussion instrument change

@@ -1,3 +1,3 @@
 fixed copying range over row/rows was accidentally linking some of the beats.
 fixed crash when moving a selection that was selected from right/bottom to left/top
-
+fixed some bad logic that could potentially miss loading some samples from a soundfont

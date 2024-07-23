@@ -21,8 +21,48 @@ abstract class SystemExclusive(
     abstract fun get_data_bytes(): ByteArray
 }
 
+class InitiateProtocolNegotiation(var muid_source: Int, var muid_destination: Int, var authority: Int, var preferred_protocol_types: Array<Pair<Int, Int>>): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        var muid_source = ByteArray(4) { i: Int ->
+            ((this.muid_source shr (i * 8)) and 0xFF).toByte()
+        }
+        var muid_destination = ByteArray(4) { i: Int ->
+            ((this.muid_destination shr (i * 8)) and 0xFF).toByte()
+        }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            0x7F.toByte(),
+            0x0D.toByte(),
+            0x10.toByte(),
+            0x01.toByte(),
+            *muid_source, //LSB FIRST
+            *muid_destination, // LSB FIRST
+            this.authority.toByte(),
+            this.preferred_protocol_types.size.toByte(),
+            *this.get_preferred_protocol_bytes(),
+            0xF7.toByte()
+        )
+    }
+
+    fun get_preferred_protocol_bytes(): ByteArray {
+        val output = ByteArray(5 * this.preferred_protocol_types.size) { 0.toByte() }
+
+        for (i in this.preferred_protocol_types.indices) {
+            var (version, subversion) = this.preferred_protocol_types[i]
+            val offset = i * 5
+            output[offset] = version.toByte()
+            output[offset + 1] = subversion.toByte()
+            // TODO: Figure out what extensions are (m2 101 6.4)
+        }
+        return output
+    }
+
+
+}
+
 // abstract class MidiCI(group: Int, stream: Int): SystemExclusive(group, 0xD, stream) {
-//     
 // }
 
 class StartOfClip(): UMPEvent {

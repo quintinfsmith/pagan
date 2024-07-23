@@ -58,9 +58,39 @@ class InitiateProtocolNegotiation(var muid_source: Int, var muid_destination: In
         }
         return output
     }
-
-
 }
+
+class SetNewProtocol(var source: Int, var destination: Int, var authority: Int, var version: Int, var subversion: Int): GeneralMIDIEvent {
+    // NOTE: WAIT 100ms when setting protocol to wait for receiver to set protocol
+    // This is in the spec.
+    override fun as_bytes(): ByteArray {
+        var muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        var muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            0x7F.toByte(),
+            0x0D.toByte(),
+            0x12.toByte(),
+            0x01.toByte(),
+            *muid_source, //LSB FIRST
+            *muid_destination, // LSB FIRST
+            this.authority.toByte(),
+            this.version.toByte(),
+            this.subversion.toByte(),
+            0x00.toByte(),
+            0x00.toByte(),
+            0x00.toByte(),
+            0xF7.toByte()
+        )
+    }
+}
+
 
 // abstract class MidiCI(group: Int, stream: Int): SystemExclusive(group, 0xD, stream) {
 // }
@@ -107,6 +137,7 @@ class PolyPressure(
         )
     }
 }
+
 class ChannelPressure(
     var channel: Int,
     var pressure: Float,

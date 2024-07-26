@@ -2575,15 +2575,12 @@ open class OpusLayerBase {
             if (key_list.isEmpty()) {
                 continue
             }
-            val working_key = key_list[0]
-            val working_tree = this.get_tree_copy(working_key)
-
             for (i in 1 until key_list.size) {
                 val overwrite_key = key_list[i]
                 this.replace_tree(
                     overwrite_key,
                     null,
-                    working_tree
+                    this.get_tree_copy(key_list[0])
                 )
             }
         }
@@ -2624,7 +2621,7 @@ open class OpusLayerBase {
                     type,
                     ((j + 1) * width) + (i + start),
                     null,
-                    this.get_global_ctl_tree(type, (i + start))
+                    this.get_global_ctl_tree(type, (i + start)).copy(this::copy_control_event)
                 )
             }
         }

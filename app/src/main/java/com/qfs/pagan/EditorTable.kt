@@ -269,6 +269,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     column.add(tree.get_max_child_weight() * tree.size)
                 }
                 for ((type, controller) in channel.lines[j].controllers.get_all()) {
+                    if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                        continue
+                    }
                     val ctl_tree = controller.get_beat(index)
                     if (ctl_tree.is_leaf()) {
                         column.add(1)
@@ -279,6 +282,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
             }
             for ((type, controller) in channel.controllers.get_all()) {
+                if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
+                    continue
+                }
                 val ctl_tree = controller.get_beat(index)
                 if (ctl_tree.is_leaf()) {
                     column.add(1)
@@ -289,6 +295,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
         for ((type, controller) in opus_manager.controllers.get_all()) {
+            if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Global, type)) {
+                continue
+            }
             val ctl_tree = controller.get_beat(index)
             if (ctl_tree.is_leaf()) {
                 column.add(1)
@@ -312,7 +321,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun remove_column(index: Int, ignore_ui: Boolean = false) {
-        this._column_width_map.removeAt(index)
         this._column_width_maxes.removeAt(index)
         if (! ignore_ui) {
             (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
@@ -515,8 +523,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 continue
             }
 
+            val ctl_line_index = opus_manager.get_ctl_line_from_visible_row(coord.y)
             val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
-                opus_manager.get_ctl_line_from_visible_row(coord.y)
+                ctl_line_index
             )
             val new_tree: OpusTree<*> = when (ctl_level) {
                 null -> {
@@ -546,7 +555,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             } else {
                 new_tree.get_max_child_weight() * new_tree.size
             }
-
             this._column_width_map[coord.x][coord.y] = new_cell_width
             this._column_width_maxes[coord.x] = this._column_width_map[coord.x].max()
 

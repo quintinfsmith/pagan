@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace 'com.qfs.pagan'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.qfs.pagan"
         minSdk 30
-        targetSdk 33
+        targetSdk 34
         versionCode 66
         versionName "1.4.19"
 

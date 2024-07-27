@@ -276,7 +276,7 @@ class SoundFont(file_path: String) {
                         val sample = instrument_sample.sample ?: continue
                         ordered_samples.add(sample)
                     }
-                } else if (instrument.global_zone_set) {
+                } else {
                     val sample = instrument.global_zone.sample ?: continue
                     ordered_samples.add(sample)
                 }
@@ -584,6 +584,8 @@ class SoundFont(file_path: String) {
     }
 
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>) {
+        val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x35
+
         val working_sample = SampleDirective()
         generators.forEachIndexed { i, generator ->
             when (generator.sfGenOper) {
@@ -657,18 +659,22 @@ class SoundFont(file_path: String) {
                 }
             }
         }
-        instrument.add_sample(working_sample)
+
+        if (is_global) {
+            instrument.set_global_zone(working_sample)
+        } else {
+            instrument.add_sample(working_sample)
+        }
     }
 
     private fun generate_preset(preset: Preset, generators: List<Generator>, default_instrument: Int = 0) {
+        val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x29 // && preset.instruments.isEmpty()
         val working_instrument = InstrumentDirective()
-        var instrument_set = false
 
         for (generator in generators) {
             when (generator.sfGenOper) {
                 0x29 -> {
                     working_instrument.instrument = this.get_instrument(generator.asInt())
-                    instrument_set = true
                 }
                 else -> {
                     this.generate(working_instrument, generator)
@@ -676,11 +682,13 @@ class SoundFont(file_path: String) {
             }
         }
 
-        if (! instrument_set && preset.global_zone_set) {
-            working_instrument.instrument = this.get_instrument(default_instrument)
+        if (!is_global) {
+           // working_instrument.instrument = this.get_instrument(default_instrument)
+            preset.add_instrument(working_instrument)
+        } else {
+            preset.set_global_zone(working_instrument)
         }
 
-        preset.add_instrument(working_instrument)
     }
 
     fun get_sample_data(start_index: Int, end_index: Int): ShortArray {

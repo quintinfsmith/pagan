@@ -12,7 +12,7 @@
         android:roundIcon="@mipmap/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.Pagan"
-        tools:targetApi="33" >
+        tools:targetApi="34" >
         <activity
             android:name=".MainActivity"
             android:exported="true"

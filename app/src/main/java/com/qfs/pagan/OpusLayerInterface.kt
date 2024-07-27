@@ -1592,10 +1592,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         editor_table.clear()
 
         if (!activity.view_model.show_percussion) {
-            val cursor = this.cursor
-            if (cursor.ctl_level != null) {
-                this.cursor_clear()
-            }
+            this.cursor_clear()
         }
 
         this.recache_line_maps()

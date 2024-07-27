@@ -36,7 +36,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _setter_overlaps = HashMap<Int, Array<Int>>()
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
-
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -270,11 +269,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.clear()
         this._simple_mode = force_simple_mode
 
-       for (channel in this.opus_manager.get_all_channels()) {
-           val instrument = channel.get_instrument()
-           this._sample_handle_manager.select_bank(channel.get_midi_channel(), instrument.first)
-           this._sample_handle_manager.change_program(channel.get_midi_channel(), instrument.second)
-       }
+        for (channel in this.opus_manager.get_all_channels()) {
+            val instrument = channel.get_instrument()
+            this._sample_handle_manager.select_bank(channel.get_midi_channel(), instrument.first)
+            this._sample_handle_manager.change_program(channel.get_midi_channel(), instrument.second)
+        }
+
         this.map_tempo_changes()
         this.get_marked_frames()
 

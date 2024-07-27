@@ -21,7 +21,12 @@ abstract class SystemExclusive(
     abstract fun get_data_bytes(): ByteArray
 }
 
+
 class InitiateProtocolNegotiation(var muid_source: Int, var muid_destination: Int, var authority: Int, var preferred_protocol_types: Array<Pair<Int, Int>>): GeneralMIDIEvent {
+    /*
+        See M2 101 section 6.3 for negotiation process.
+        Reply is the same as initiate message
+    */
     override fun as_bytes(): ByteArray {
         var muid_source = ByteArray(4) { i: Int ->
             ((this.muid_source shr (i * 8)) and 0xFF).toByte()
@@ -86,6 +91,278 @@ class SetNewProtocol(var source: Int, var destination: Int, var authority: Int, 
             0x00.toByte(),
             0x00.toByte(),
             0x00.toByte(),
+            0xF7.toByte()
+        )
+    }
+}
+
+class TestNewProtocolInitiatorToResponder(var source: Int, var destination: Int, var authority: Int): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        var muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        var muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            0x7F.toByte(),
+            0x0D.toByte(),
+            0x13.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            this.authority.toByte(),
+            *(ByteArray(48) { it.toByte() }), // Test Date
+            0xF7.toByte()
+        )
+    }
+}
+
+class TestNewProtocolResponderToInitiator(var source: Int, var destination: Int, var authority: Int): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        var muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        var muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            0x7F.toByte(),
+            0x0D.toByte(),
+            0x14.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            this.authority.toByte(),
+            *(ByteArray(48) { it.toByte() }), // Test Date
+            0xF7.toByte()
+        )
+    }
+}
+
+class ConfirmNewProtocolEstablished(var source: Int, var destination: Int, var authority: Int): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        var muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        var muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            0x7F.toByte(),
+            0x0D.toByte(),
+            0x15.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            this.authority.toByte(),
+            0xF7.toByte()
+        )
+    }
+}
+
+class ProfileInquiry(var source: Int, var destination: Int, var channel: Int = 0x7F): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        var muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        var muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(),
+            0x20.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            0xF7.toByte()
+        )
+    }
+}
+
+abstract class ProfileID(var bank: Int, var number: Int, var version: Int, var level: Int, var id: Int = 0x7E) {
+    fun as_bytes(): ByteArray {
+        return byteArrayOf(
+            this.id.toByte(),
+            this.bank.toByte(),
+            this.number.toByte(),
+            this.version.toByte(),
+            this.level.toByte()
+        )
+    }
+}
+
+class ProfileInquiryResponse(var source: Int, var destination: Int, var channel: Int = 0x7F, var enabled: Array<ProfileID>, var disabled: Array<ProfileID>): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        val muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        val muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+
+        val enabled_profiles = ByteArray(this.enabled.size * 5) { 0x00.toByte() }
+        for (i in 0 until this.enabled.size) {
+            this.enabled[i].as_bytes().forEachIndexed { j: Int, byte: Byte ->
+                enabled_profiles[(i * 5) + j] = byte
+            }
+        }
+
+        val disabled_profiles = ByteArray(this.disabled.size * 5) { 0x00.toByte() }
+        for (i in 0 until this.disabled.size) {
+            this.disabled[i].as_bytes().forEachIndexed { j: Int, byte: Byte ->
+                disabled_profiles[(i * 5) + j] = byte
+            }
+        }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(),
+            0x21.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            this.enabled.size.toByte(),
+            *enabled_profiles,
+            this.disabled.size.toByte(),
+            *disabled_profiles,
+            0xF7.toByte()
+        )
+    }
+}
+
+class ProfileOn(var source: Int, var destination: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        val muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        val muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(),
+            0x22.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            *this.profile.as_bytes()
+            0xF7.toByte()
+        )
+    }
+}
+
+class ProfileOff(var source: Int, var destination: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        val muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        val muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(),
+            0x23.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            *this.profile.as_bytes()
+            0xF7.toByte()
+        )
+    }
+}
+
+class ProfileEnabledReport(var source: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        val muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+
+        // use broadcast ID
+        val muid_destination = ByteArray(4) { 0x7F.toByte() }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(),
+            0x24.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            *this.profile.as_bytes(),
+            0xF7.toByte()
+        )
+    }
+}
+
+class ProfileDisabledReport(var source: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        val muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+
+        // use broadcast ID
+        val muid_destination = ByteArray(4) { 0x7F.toByte() }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(),
+            0x25.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            *this.profile.as_bytes(),
+            0xF7.toByte()
+        )
+    }
+}
+
+class ProfileSpecificData(var source: Int, var destination: Int, var channel: Int = 0x7F, var profile: ProfileID, var data: ByteArray): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        val muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        val muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+
+        val data_len_bytes = ByteArray(4) { i: Int ->
+            (this.data.size shr (i * 8) and 0xFF).toByte()
+        }
+
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(),
+            0x2F.toByte(),
+            0x01.toByte(),
+            *muid_source,
+            *muid_destination,
+            *this.profile.as_bytes(),
+            *data_len_bytes,
+            *this.data,
             0xF7.toByte()
         )
     }

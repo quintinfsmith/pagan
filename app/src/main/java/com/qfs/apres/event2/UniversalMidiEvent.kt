@@ -21,33 +21,52 @@ abstract class SystemExclusive(
     abstract fun get_data_bytes(): ByteArray
 }
 
+abstract class CapabilitiesInquiry(var muid_source: Int, var muid_destination: Int, var sub_id: Int, var channel: Int = 0x7F): GeneralMIDIEvent {
+    private fun _get_source_as_bytes(): ByteArray {
+        return ByteArray(4) { i: Int ->
+            ((this.muid_source shr (i * 8)) and 0xFF).toByte()
+        }
+    }
+    private fun _get_destination_as_bytes(): ByteArray {
+        return ByteArray(4) { i: Int ->
+            ((this.muid_destination shr (i * 8)) and 0xFF).toByte()
+        }
+    }
+    abstract fun get_payload_bytes(): ByteArray
 
-class InitiateProtocolNegotiation(var muid_source: Int, var muid_destination: Int, var authority: Int, var preferred_protocol_types: Array<Pair<Int, Int>>): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            this.channel.toByte(),
+            0x0D.toByte(), // MIDI CI
+            this.sub_id.toByte(),
+            0x01.toByte(), // MIDI CI  Version
+            *this._get_source_as_bytes(),
+            *this._get_destination_as_bytes(),
+            *this.get_payload_bytes(),
+            0xF7.toByte()
+        )
+    }
+
+}
+
+class InitiateProtocolNegotiation(
+    muid_source: Int,
+    muid_destination: Int,
+    var authority: Int,
+    var preferred_protocol_types: Array<Pair<Int, Int>>
+): CapabilitiesInquiry(muid_source, muid_destination, 0x10) {
     /*
         See M2 101 section 6.3 for negotiation process.
         Reply is the same as initiate message
     */
-    override fun as_bytes(): ByteArray {
-        var muid_source = ByteArray(4) { i: Int ->
-            ((this.muid_source shr (i * 8)) and 0xFF).toByte()
-        }
-        var muid_destination = ByteArray(4) { i: Int ->
-            ((this.muid_destination shr (i * 8)) and 0xFF).toByte()
-        }
 
+    override fun get_payload_bytes(): ByteArray {
         return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            0x7F.toByte(),
-            0x0D.toByte(),
-            0x10.toByte(),
-            0x01.toByte(),
-            *muid_source, //LSB FIRST
-            *muid_destination, // LSB FIRST
             this.authority.toByte(),
             this.preferred_protocol_types.size.toByte(),
             *this.get_preferred_protocol_bytes(),
-            0xF7.toByte()
         )
     }
 
@@ -65,127 +84,49 @@ class InitiateProtocolNegotiation(var muid_source: Int, var muid_destination: In
     }
 }
 
-class SetNewProtocol(var source: Int, var destination: Int, var authority: Int, var version: Int, var subversion: Int): GeneralMIDIEvent {
+class SetNewProtocol(source: Int, destination: Int, var authority: Int, var version: Int, var subversion: Int): CapabilitiesInquiry(source, destination, 0x12) {
     // NOTE: WAIT 100ms when setting protocol to wait for receiver to set protocol
     // This is in the spec.
-    override fun as_bytes(): ByteArray {
-        var muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        var muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
 
+    override fun get_payload_bytes(): ByteArray {
         return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            0x7F.toByte(),
-            0x0D.toByte(),
-            0x12.toByte(),
-            0x01.toByte(),
-            *muid_source, //LSB FIRST
-            *muid_destination, // LSB FIRST
             this.authority.toByte(),
             this.version.toByte(),
             this.subversion.toByte(),
             0x00.toByte(),
             0x00.toByte(),
-            0x00.toByte(),
-            0xF7.toByte()
+            0x00.toByte()
         )
     }
 }
 
-class TestNewProtocolInitiatorToResponder(var source: Int, var destination: Int, var authority: Int): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        var muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        var muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
+class TestNewProtocolInitiatorToResponder(source: Int, destination: Int, var authority: Int): CapabilitiesInquiry(source, destination, 0x13) {
+    override fun get_payload_bytes(): ByteArray {
         return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            0x7F.toByte(),
-            0x0D.toByte(),
-            0x13.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
             this.authority.toByte(),
-            *(ByteArray(48) { it.toByte() }), // Test Date
-            0xF7.toByte()
+            *(ByteArray(48) { it.toByte() }) // Test Pattern
         )
     }
 }
 
-class TestNewProtocolResponderToInitiator(var source: Int, var destination: Int, var authority: Int): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        var muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        var muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
+class TestNewProtocolResponderToInitiator(source: Int, destination: Int, var authority: Int): CapabilitiesInquiry(source, destination, 0x14) {
+    override fun get_payload_bytes(): ByteArray {
         return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            0x7F.toByte(),
-            0x0D.toByte(),
-            0x14.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
             this.authority.toByte(),
-            *(ByteArray(48) { it.toByte() }), // Test Date
-            0xF7.toByte()
+            *(ByteArray(48) { it.toByte() }) // Test Pattern
         )
     }
 }
 
-class ConfirmNewProtocolEstablished(var source: Int, var destination: Int, var authority: Int): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        var muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        var muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
-        return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            0x7F.toByte(),
-            0x0D.toByte(),
-            0x15.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
-            this.authority.toByte(),
-            0xF7.toByte()
-        )
+class ConfirmNewProtocolEstablished(source: Int, destination: Int, var authority: Int): CapabilitiesInquiry(source, destination, 0x15) {
+    override fun get_payload_bytes(): ByteArray {
+        return byteArrayOf(this.authority.toByte())
     }
 }
 
-class ProfileInquiry(var source: Int, var destination: Int, var channel: Int = 0x7F): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        var muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        var muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
-        return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            this.channel.toByte(),
-            0x0D.toByte(),
-            0x20.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
-            0xF7.toByte()
-        )
+class ProfileInquiry(source: Int, destination: Int, channel: Int = 0x7F): CapabilitiesInquiry(source, destination, 0x20, channel) {
+    override fun get_payload_bytes(): ByteArray {
+        return byteArrayOf()
     }
 }
 
@@ -201,15 +142,14 @@ abstract class ProfileID(var bank: Int, var number: Int, var version: Int, var l
     }
 }
 
-class ProfileInquiryResponse(var source: Int, var destination: Int, var channel: Int = 0x7F, var enabled: Array<ProfileID>, var disabled: Array<ProfileID>): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        val muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
-
+class ProfileInquiryResponse(
+    source: Int,
+    destination: Int,
+    channel: Int = 0x7F,
+    var enabled: Array<ProfileID>,
+    var disabled: Array<ProfileID>
+): CapabilitiesInquiry(source, destination, 0x21, channel) {
+    override fun get_payload_bytes(): ByteArray {
         val enabled_profiles = ByteArray(this.enabled.size * 5) { 0x00.toByte() }
         for (i in 0 until this.enabled.size) {
             this.enabled[i].as_bytes().forEachIndexed { j: Int, byte: Byte ->
@@ -225,178 +165,64 @@ class ProfileInquiryResponse(var source: Int, var destination: Int, var channel:
         }
 
         return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            this.channel.toByte(),
-            0x0D.toByte(),
-            0x21.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
             this.enabled.size.toByte(),
             *enabled_profiles,
             this.disabled.size.toByte(),
-            *disabled_profiles,
-            0xF7.toByte()
+            *disabled_profiles
         )
     }
 }
 
-class ProfileOn(var source: Int, var destination: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        val muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
-
-        return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            this.channel.toByte(),
-            0x0D.toByte(),
-            0x22.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
-            *this.profile.as_bytes()
-            0xF7.toByte()
-        )
+class ProfileOn(source: Int, destination: Int, channel: Int = 0x7F, var profile: ProfileID): CapabilitiesInquiry(source, destination, 0x22, channel) {
+    override fun get_payload_bytes(): ByteArray {
+        return this.profile.as_bytes()
     }
 }
 
-class ProfileOff(var source: Int, var destination: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        val muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
-
-        return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            this.channel.toByte(),
-            0x0D.toByte(),
-            0x23.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
-            *this.profile.as_bytes()
-            0xF7.toByte()
-        )
+class ProfileOff(source: Int, destination: Int, channel: Int = 0x7F, var profile: ProfileID): CapabilitiesInquiry(source, destination, 0x23, channel) {
+    override fun get_payload_bytes(): ByteArray {
+        return this.profile.as_bytes()
     }
 }
 
-class ProfileEnabledReport(var source: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-
-        // use broadcast ID
-        val muid_destination = ByteArray(4) { 0x7F.toByte() }
-
-        return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            this.channel.toByte(),
-            0x0D.toByte(),
-            0x24.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
-            *this.profile.as_bytes(),
-            0xF7.toByte()
-        )
+class ProfileEnabledReport(source: Int, channel: Int = 0x7F, var profile: ProfileID): CapabilitiesInquiry(source, 0x7F7F7F7F, 0x24, channel) {
+    override fun get_payload_bytes(): ByteArray {
+        return this.profile.as_bytes()
+    }
+}
+class ProfileDisabledReport(source: Int, channel: Int = 0x7F, var profile: ProfileID): CapabilitiesInquiry(source, 0x7F7F7F7F, 0x25, channel) {
+    override fun get_payload_bytes(): ByteArray {
+        return this.profile.as_bytes()
     }
 }
 
-class ProfileDisabledReport(var source: Int, var channel: Int = 0x7F, var profile: ProfileID): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-
-        // use broadcast ID
-        val muid_destination = ByteArray(4) { 0x7F.toByte() }
-
-        return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            this.channel.toByte(),
-            0x0D.toByte(),
-            0x25.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
-            *this.profile.as_bytes(),
-            0xF7.toByte()
-        )
-    }
-}
-
-class ProfileSpecificData(var source: Int, var destination: Int, var channel: Int = 0x7F, var profile: ProfileID, var data: ByteArray): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        val muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
-
+class ProfileSpecificData(source: Int, destination: Int, channel: Int = 0x7F, var profile: ProfileID, var data: ByteArray): CapabilitiesInquiry(source, destination, 0x2F, channel) {
+    override fun get_payload_bytes(): ByteArray {
         val data_len_bytes = ByteArray(4) { i: Int ->
             (this.data.size shr (i * 8) and 0xFF).toByte()
         }
 
         return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            this.channel.toByte(),
-            0x0D.toByte(),
-            0x2F.toByte(),
-            0x01.toByte(),
-            *muid_source,
-            *muid_destination,
             *this.profile.as_bytes(),
             *data_len_bytes,
-            *this.data,
-            0xF7.toByte()
+            *this.data
         )
     }
 }
 
 
-class PropertyExchangeCapabilitiesInquiry(
-    var source: Int,
-    var destination: Int,
-    var ci_version: Int,
+class PropertyExchange(
+    source: Int,
+    destination: Int,
     var simulataneous_requests_supported: Int,
     var major_version: Int,
     var minor_version: Int
-): GeneralMIDIEvent {
-    override fun as_bytes(): ByteArray {
-        val muid_source = ByteArray(4) { i: Int ->
-            ((this.source shr (i * 8)) and 0xFF).toByte()
-        }
-        val muid_destination = ByteArray(4) { i: Int ->
-            ((this.destination shr (i * 8)) and 0xFF).toByte()
-        }
+): CapabilitiesInquiry(source, destination, 0x30) {
+    override fun get_payload_bytes(): ByteArray {
         return byteArrayOf(
-            0xF0.toByte(),
-            0x7E.toByte(),
-            0x7F.toByte(),
-            0x0D.toByte(),
-            0x30.toByte(),
-            this.ci_version.toByte(),
-            *muid_source,
-            *muid_destination,
             this.simulataneous_requests_supported.toByte(),
             this.major_version.toByte(),
-            this.minor_version.toByte(),
-            0xF7.toByte()
+            this.minor_version.toByte()
         )
     }
 }

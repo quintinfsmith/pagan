@@ -369,6 +369,38 @@ class ProfileSpecificData(var source: Int, var destination: Int, var channel: In
 }
 
 
+class PropertyExchangeCapabilitiesInquiry(
+    var source: Int,
+    var destination: Int,
+    var ci_version: Int,
+    var simulataneous_requests_supported: Int,
+    var major_version: Int,
+    var minor_version: Int
+): GeneralMIDIEvent {
+    override fun as_bytes(): ByteArray {
+        val muid_source = ByteArray(4) { i: Int ->
+            ((this.source shr (i * 8)) and 0xFF).toByte()
+        }
+        val muid_destination = ByteArray(4) { i: Int ->
+            ((this.destination shr (i * 8)) and 0xFF).toByte()
+        }
+        return byteArrayOf(
+            0xF0.toByte(),
+            0x7E.toByte(),
+            0x7F.toByte(),
+            0x0D.toByte(),
+            0x30.toByte(),
+            this.ci_version.toByte(),
+            *muid_source,
+            *muid_destination,
+            this.simulataneous_requests_supported.toByte(),
+            this.major_version.toByte(),
+            this.minor_version.toByte(),
+            0xF7.toByte()
+        )
+    }
+}
+
 // abstract class MidiCI(group: Int, stream: Int): SystemExclusive(group, 0xD, stream) {
 // }
 

@@ -24,6 +24,7 @@ class StandardMidiFileInterface {
                 false
             }
         }
+
         fun from_bytes(file_bytes: ByteArray): Midi {
             var active_byte: Byte = 0x90.toByte()
             if (!StandardMidiFileInterface.is_compatible(file_bytes)) {
@@ -202,6 +203,8 @@ class MidiContainerFileInterface {
         }
         fun from_bytes(bytes: ByteArray): Midi {
         }
+        fun to_bytes(midi: Midi): ByteArray {
+        }
     }
 }
 
@@ -216,6 +219,8 @@ class MidiClipFileInterface {
             }
         }
         fun from_bytes(bytes: ByteArray): Midi {
+        }
+        fun to_bytes(midi: Midi): ByteArray {
         }
     }
 }
@@ -234,9 +239,9 @@ class Midi {
 
 
     companion object {
-        private const VERSION_1 = 0
-        private const VERSION_2_CONTAINER = 1
-        private const VERSION_2_CLIP = 2
+        const val VERSION_1 = 0
+        const val VERSION_2_CONTAINER = 1
+        const val VERSION_2_CLIP = 2
         fun from_path(file_path: String): Midi {
             val midibytes = File(file_path).readBytes()
             return Midi.from_bytes(midibytes)

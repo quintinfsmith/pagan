@@ -84,6 +84,39 @@ class InitiateProtocolNegotiation(
     }
 }
 
+class InitiateProtocolNegotiationResponse(
+    muid_source: Int
+    muid_destination: Int,
+    var authority: Int,
+    var preferred_protocol_types: Array<Pair<Int, Int>>
+): CapabilitiesInquiry(muid_source, muid_destination, 0x11) {
+    /*
+        See M2 101 section 6.3 for negotiation process.
+        Reply is the same as initiate message
+    */
+
+    override fun get_payload_bytes(): ByteArray {
+        return byteArrayOf(
+            this.authority.toByte(),
+            this.preferred_protocol_types.size.toByte(),
+            *this.get_preferred_protocol_bytes(),
+        )
+    }
+
+    fun get_preferred_protocol_bytes(): ByteArray {
+        val output = ByteArray(5 * this.preferred_protocol_types.size) { 0.toByte() }
+
+        for (i in this.preferred_protocol_types.indices) {
+            var (version, subversion) = this.preferred_protocol_types[i]
+            val offset = i * 5
+            output[offset] = version.toByte()
+            output[offset + 1] = subversion.toByte()
+            // TODO: Figure out what extensions are (m2 101 6.4)
+        }
+        return output
+    }
+}
+
 class SetNewProtocol(source: Int, destination: Int, var authority: Int, var version: Int, var subversion: Int): CapabilitiesInquiry(source, destination, 0x12) {
     // NOTE: WAIT 100ms when setting protocol to wait for receiver to set protocol
     // This is in the spec.
@@ -141,6 +174,8 @@ abstract class ProfileID(var bank: Int, var number: Int, var version: Int, var l
         )
     }
 }
+
+class GMProfileID(): ProfileID(0, 0, 1, 1)
 
 class ProfileInquiryResponse(
     source: Int,
@@ -226,6 +261,36 @@ class PropertyExchange(
         )
     }
 }
+
+class PropertyExchangeResponse(
+    source: Int,
+    destination: Int,
+    var simulataneous_requests_supported: Int,
+    var major_version: Int,
+    var minor_version: Int
+): CapabilitiesInquiry(source, destination, 0x31) {
+    override fun get_payload_bytes(): ByteArray {
+        return byteArrayOf(
+            this.simulataneous_requests_supported.toByte(),
+            this.major_version.toByte(),
+            this.minor_version.toByte()
+        )
+    }
+}
+
+/*
+    TODO: HasPropertyData (m2-101 8.6)
+    TODO: HasPropertyDataResponse (m2-101 8.7)
+    TODO: GetPropertyData (m2-101 8.8)
+    TODO: GetPropertyDataResponse (m2-101 8.9)
+    TODO: SetPropertyData (m2-101 8.10)
+    TODO: SetPropertyDataResponse (m2-101 8.11)
+    TODO: Subscription (m2-101 8.12)
+    TODO: SubscriptionResponse (m2-101 8.13)
+    TODO: Notify (m2-101 8.14)
+*/
+
+
 
 // abstract class MidiCI(group: Int, stream: Int): SystemExclusive(group, 0xD, stream) {
 // }

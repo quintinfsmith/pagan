@@ -1,9 +1,12 @@
 package com.qfs.apres.soundfontplayer
 
-import com.google.common.primitives.Ints.min
 import com.qfs.apres.soundfont.Modulator
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.sin
+import kotlin.math.pow
+import kotlin.math.min
+import kotlin.math.max
 
 class SampleHandle(
     var data: ShortArray,
@@ -101,13 +104,19 @@ class SampleHandle(
     ) {
         val wave_length = sample_rate.toFloat() / this.frequency
         val frames_delay = (this.sample_rate.toFloat() * this.delay)
+        val wave_length_samples = (sample_rate.toFloat() / this.frequency).toInt()
+
+        // DEBUG: using a simple-but-slow sin wave for the oscillator while i test this
+        val sin_values = Array(this.wave_length_samples) { x: Int ->
+            sin(x.toDouble() * PI / this.wave_length_samples).toFloat()
+        }
 
         fun get_frame(i: Int): Float {
             return if (i < this.frames_delay) {
                 0F
             } else {
                 val x = (i - this.frames_delay)
-                (abs((x % this.wave_length) - this.wave_length) - (this.wave_length / 2)) / this.wave_length
+                this.sin_values[x.toInt() % this.wave_length_samples]
             }
         }
     }
@@ -248,17 +257,19 @@ class SampleHandle(
             }
         }
 
-        // messed up notes held for too long.
-        //if (this.modulation_lfo.delay <= this.working_frame) {
-        //    val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
-        //    if (this.modulation_lfo.volume != 0F) {
-        //        frame_factor *= this.modulation_lfo.volume.pow(lfo_frame)
-        //    }
-        //    if (this.modulation_lfo.pitch != 1F) {
-        //        this.data_buffer.repitch(this.modulation_lfo.pitch.pow(lfo_frame))
-        //    }
-        //}
+        if (this.modulation_lfo.delay <= this.working_frame) {
+            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
+            if (this.modulation_lfo.volume != 0F) {
+                var lfo_volume = this.modulation_lfo.volume / 100F
+                frame_factor += lfo_volume.pow(lfo_frame)
+            }
 
+            // TODO: This is still terrible
+            //if (this.modulation_lfo.pitch != 1F) {
+            //    val pitch = (this.modulation_lfo.pitch - 1F) * ((lfo_frame + 1) / 2)
+            //    this.data_buffer.repitch(pitch + 1F)
+            //}
+        }
 
         this.working_frame += 1
 

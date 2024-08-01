@@ -103,12 +103,11 @@ class SampleHandle(
         val volume: Float
     ) {
         val wave_length = sample_rate.toFloat() / this.frequency
-        val frames_delay = (this.sample_rate.toFloat() * this.delay)
-        val wave_length_samples = (sample_rate.toFloat() / this.frequency).toInt()
-
-        // DEBUG: using a simple-but-slow sin wave for the oscillator while i test this
-        val sin_values = Array(this.wave_length_samples) { x: Int ->
-            sin(x.toDouble() * PI / this.wave_length_samples).toFloat()
+        val frames_delay = (this.sample_rate.toFloat() * this.delay).toInt()
+        // TODO: This may take up a sizeable amount of memory. check to see the damage and
+        // maybe use a shared table when applicable
+        val sine_table = Array(wave_length.toInt()) { i: Int ->
+            sin(i.toFloat() * 2F * PI.toFloat() / this.wave_length).toFloat()
         }
 
         fun get_frame(i: Int): Float {
@@ -116,7 +115,7 @@ class SampleHandle(
                 0F
             } else {
                 val x = (i - this.frames_delay)
-                this.sin_values[x.toInt() % this.wave_length_samples]
+                this.sine_table[x % this.sine_table.size]
             }
         }
     }
@@ -222,7 +221,7 @@ class SampleHandle(
 
         if (this.working_frame < this.volume_envelope.frames_attack) {
             val r = (this.working_frame).toFloat() / this.volume_envelope.frames_attack.toFloat()
-            frame_factor *= r * this.initial_attenuation
+            frame_factor *= 2F.pow(r * (1F - this.initial_attenuation))
         } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
             frame_factor *= this.initial_attenuation
         } else if (this.volume_envelope.sustain_attenuation < 1F) {
@@ -230,7 +229,7 @@ class SampleHandle(
             val relative_frame = this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold
             frame_factor *= if (relative_frame < this.volume_envelope.frames_decay) {
                 val r = 1F - ((relative_frame).toFloat() / this.volume_envelope.frames_decay.toFloat())
-                (r * (this.initial_attenuation - this.volume_envelope.sustain_attenuation)) + this.volume_envelope.sustain_attenuation
+                2F.pow((1F - this.volume_envelope.sustain_attenuation) * r)
             } else {
                 this.volume_envelope.sustain_attenuation
             }
@@ -259,15 +258,15 @@ class SampleHandle(
 
         if (this.modulation_lfo.delay <= this.working_frame) {
             val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
+            
             if (this.modulation_lfo.volume != 0F) {
-                var lfo_volume = this.modulation_lfo.volume / 100F
-                frame_factor += lfo_volume.pow(lfo_frame)
+                frame_factor *= 2F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
             }
 
             // TODO: This is still terrible
             //if (this.modulation_lfo.pitch != 1F) {
-            //    val pitch = (this.modulation_lfo.pitch - 1F) * ((lfo_frame + 1) / 2)
-            //    this.data_buffer.repitch(pitch + 1F)
+            //    //val pitch = (this.modulation_lfo.pitch - 1F) * lfo_frame
+            //    //this.data_buffer.repitch(1F + (lfo_frame / 2F))
             //}
         }
 

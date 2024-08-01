@@ -96,7 +96,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             release = (sample_directive.vol_env_release ?: global_sample_directive.vol_env_release ?: 0F )
                 * (instrument_directive.vol_env_release ?: 1F)
                 * (global_instrument_directive.vol_env_release ?: 1F),
-            sustain_attenuation = 1F - (max(0F, min(vol_env_sustain, 1000F)) / 100F)
+            sustain_attenuation = vol_env_sustain
         )
 
         val mod_env_sustain = (sample_directive.mod_env_sustain ?: global_sample_directive.mod_env_sustain ?: 0F) * (instrument_directive.mod_env_sustain ?: 0F) * (global_instrument_directive.mod_env_sustain ?: 0F)
@@ -133,7 +133,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             sample_rate = sample_rate,
             pan = (sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) * 100F / 500F,
             pitch_shift = pitch_shift,
-            initial_attenuation = 1F - (initial_attenuation / 100F),
+            initial_attenuation = initial_attenuation,
             stereo_mode = sample_directive.sample!!.sampleType,
             loop_points = if (sample_directive.sampleMode != null && sample_directive.sampleMode!! and 1 == 1) {
                 val start = sample_directive.sample!!.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0)

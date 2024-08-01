@@ -18,9 +18,16 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
     }
 
     fun repitch(new_pitch: Float) {
+        val old_pitch = this.pitch
+        val next_pitch = this.original_pitch * new_pitch
+        if (old_pitch == next_pitch) {
+            return 
+        }
+
         this.pitch = this.original_pitch * new_pitch
         this.size = (this.data_size.toFloat() / this.pitch).toInt()
-        this.virtual_position = min(this.virtual_position, this.size - 1)
+        val new_position = (this.virtual_position.toFloat() * this.pitch / old_pitch).toInt()
+        this.virtual_position = min(this.size - 1, new_position)
     }
 
     fun reset_pitch() {

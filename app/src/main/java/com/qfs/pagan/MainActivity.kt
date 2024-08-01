@@ -633,7 +633,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        this.populate_active_percussion_names()
+        this.update_channel_instruments(this.get_opus_manager().channels.size)
+        this.populate_active_percussion_names(true)
         ///////////////////////////////////////////
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

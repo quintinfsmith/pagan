@@ -103,19 +103,16 @@ class SampleHandle(
         val volume: Float
     ) {
         val wave_length = sample_rate.toFloat() / this.frequency
-        val frames_delay = (this.sample_rate.toFloat() * this.delay).toInt()
-        // TODO: This may take up a sizeable amount of memory. check to see the damage andj
-        // maybe use a shared table when applicable
-        // UPDATE: DEFINIATELY CAUSES OOM
-       // val sine_table = Array(wave_length.toInt()) { i: Int ->
-       // }
+        val frames_delay = 0 // (this.sample_rate.toFloat() * this.delay).toInt()
 
-        fun get_frame(i: Int): Float {
+        fun get_frame(i: Int): Float? {
             return if (i < this.frames_delay) {
-                0F
+                null
             } else {
-                val x = (i - this.frames_delay)
-                sin(x.toFloat() * 2F * PI.toFloat() / this.wave_length).toFloat()
+                val x = (i - this.frames_delay).toFloat()
+                val divisor = this.wave_length / 4F
+                abs((((x + divisor) % this.wave_length) / divisor) - 2F) - 1F
+                //sin(x.toFloat() * 2F * PI.toFloat() / this.wave_length).toFloat()
             }
         }
     }
@@ -257,17 +254,18 @@ class SampleHandle(
         }
 
         if (this.modulation_lfo.delay <= this.working_frame) {
-            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame)
-            
-            if (this.modulation_lfo.volume != 0F) {
-                frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
-            }
+            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame) 
+            if (lfo_frame != null) {
+                if (this.modulation_lfo.volume != 0F) {
+                    frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
+                }
 
-            // TODO: This is still terrible
-            //if (this.modulation_lfo.pitch != 1F) {
-            //    //val pitch = (this.modulation_lfo.pitch - 1F) * lfo_frame
-            //    //this.data_buffer.repitch(1F + (lfo_frame / 2F))
-            //}
+                // TODO: This is still terrible (i think its loop points)
+                //if (this.modulation_lfo.pitch != 0F) {
+                //    this.data_buffer.repitch(1F + ((lfo_frame + 1F) * .2F / 2F))
+                //    //println("NP: ${this.data_buffer.pitch} (${this.data_buffer.original_pitch} | ${this.modulation_lfo.pitch})")
+                //}
+            }
         }
 
         this.working_frame += 1

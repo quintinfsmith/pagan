@@ -147,8 +147,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             modulation_lfo = SampleHandle.LFO(
                 sample_rate = this.sample_rate,
                 frequency = mod_lfo_freq,
-                volume = mod_lfo_to_volume,
-                pitch = target_pitch.pow((1200F + mod_lfo_pitch.toFloat()) / 1200F) / target_pitch,
+                volume = mod_lfo_to_volume / 100F, // Centibels -> bels
+                pitch = mod_lfo_pitch.toFloat(),
                 filter = mod_lfo_filter,
                 delay = mod_lfo_delay
             ),

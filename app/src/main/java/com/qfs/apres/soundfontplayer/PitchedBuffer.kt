@@ -3,6 +3,8 @@ package com.qfs.apres.soundfontplayer
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.log
 
 class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, known_size: Int? = null) {
     val data_size = data.size
@@ -10,7 +12,7 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
     var size: Int
 
     private var virtual_position: Int = 0
-    private val original_pitch: Float = this.pitch
+    val original_pitch: Float = this.pitch
 
     init {
         this.max = known_max ?: max(abs(data.min().toInt()), data.max().toInt())
@@ -23,8 +25,19 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
         if (old_pitch == next_pitch) {
             return 
         }
+        this.pitch = next_pitch
+        this.size = (this.data_size.toFloat() / this.pitch).toInt()
+        this.virtual_position = min(this.size - 1, this.virtual_position)
+    }
 
-        this.pitch = this.original_pitch * new_pitch
+    fun repitch_pow(pitch_factor: Float) {
+        val old_pitch = this.pitch
+        val next_pitch = 2F.pow(log(this.original_pitch, 2F) + pitch_factor)
+        if (old_pitch == next_pitch) {
+            return 
+        }
+
+        this.pitch = next_pitch
         this.size = (this.data_size.toFloat() / this.pitch).toInt()
         val new_position = (this.virtual_position.toFloat() * this.pitch / old_pitch).toInt()
         this.virtual_position = min(this.size - 1, new_position)

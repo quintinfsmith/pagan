@@ -135,12 +135,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             pitch_shift = pitch_shift,
             initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
             stereo_mode = sample_directive.sample!!.sampleType,
-            loop_points = if (sample_directive.sampleMode != null && sample_directive.sampleMode!! and 1 == 1) {
-                val start = sample_directive.sample!!.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0)
-                val end = sample_directive.sample!!.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
-                val size = (end - start).toFloat() / pitch_shift
-                val pitched_start = start.toFloat() / pitch_shift
-                Pair(pitched_start.toInt(), (pitched_start + size).toInt())
+            loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
+                Pair(
+                    sample_directive.sample!!.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
+                    sample_directive.sample!!.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
+                )
             } else {
                 null
             },

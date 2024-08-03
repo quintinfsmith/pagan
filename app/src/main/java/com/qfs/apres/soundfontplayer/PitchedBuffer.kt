@@ -5,34 +5,32 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.log
+import kotlin.math.roundToInt
 
-class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, known_size: Int? = null) {
-    val data_size = data.size
+class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null) {
     val max: Int
-    var size: Int
+    val size: Int = data.size
 
     private var virtual_position: Int = 0
-    val original_pitch: Float = this.pitch
+    var pitch_adjustment: Float = 1F
+    var pitched_size: Int = (this.data.size.toFloat() * this.pitch / this.pitch_adjustment).roundToInt()
 
     init {
         this.max = known_max ?: max(abs(data.min().toInt()), data.max().toInt())
-        this.size = known_size ?: (this.data.size.toFloat() / this.pitch).toInt()
     }
 
-    fun repitch(new_pitch: Float) {
-        val old_pitch = this.pitch
-        val next_pitch = this.original_pitch * new_pitch
-        if (old_pitch == next_pitch) {
-            return
-        }
-        this.pitch = next_pitch
-        this.size = (this.data_size.toFloat() / this.pitch).toInt()
-        this.virtual_position = min(this.size - 1, this.virtual_position)
+    fun is_overflowing(): Boolean {
+        return this.virtual_position >= this.pitched_size
+    }
+
+    fun repitch(new_pitch_adjustment: Float) {
+        this.pitch_adjustment = new_pitch_adjustment
+        this.pitched_size = (this.data.size * (this.pitch / this.pitch_adjustment)).toInt()
     }
 
     fun reset_pitch() {
-        this.pitch = this.original_pitch
-        this.size = (this.data_size.toFloat() / this.pitch).toInt()
+        this.pitch_adjustment = 1F
+        this.pitched_size = (this.data.size * this.pitch).toInt()
     }
 
     fun position(): Int {
@@ -43,8 +41,18 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
         this.virtual_position = index
     }
 
+    fun pitched_position(): Int {
+        return ((this.virtual_position).toFloat() * (this.pitch / this.pitch_adjustment)).toInt()
+    }
+
+    fun pitched_position(index: Int) {
+        this.virtual_position = (index.toFloat() / (this.pitch / this.pitch_adjustment)).toInt()
+    }
+
     fun get(): Short {
-        return this.data[((this.virtual_position++).toFloat() * this.pitch).toInt()]
+        val output = this.data[this.pitched_position()]
+        this.virtual_position++
+        return output
     }
 
 }

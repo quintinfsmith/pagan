@@ -29,8 +29,6 @@ class SampleHandle(
 ) {
     var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
     val smoothing_factor: Float
-    var pitch_adjustment: Float = 1F
-    var adjusted_loop_points: Pair<Int, Int>? = this.loop_points?.copy()
 
     var previous_frame = 0f
     init {
@@ -113,8 +111,8 @@ class SampleHandle(
             } else {
                 val x = (i - this.frames_delay).toFloat()
                 val divisor = this.wave_length / 4F
-                abs((((x + divisor) % this.wave_length) / divisor) - 2F) - 1F
-                //sin(x.toFloat() * 2F * PI.toFloat() / this.wave_length).toFloat()
+                //abs((((x + divisor) % this.wave_length) / divisor) - 2F) - 1F
+                sin(x.toFloat() * 2F * PI.toFloat() / this.wave_length).toFloat()
             }
         }
     }
@@ -139,14 +137,13 @@ class SampleHandle(
                 data_buffer = PitchedBuffer(
                     original.data,
                     original.pitch_shift,
-                    original.data_buffer.max,
-                    original.data_buffer.size
+                    original.data_buffer.max
                 ), // constructing this way allows us to skip calculating max
                 modulators = original.modulators
             )
+
             output.release_frame = original.release_frame
             output.kill_frame = original.kill_frame
-            output.repitch(original.pitch_adjustment)
 
             return output
         }
@@ -178,23 +175,22 @@ class SampleHandle(
             return
         }
 
-        val adjusted_loop_points = this.adjusted_loop_points
         val adj_frame = if (this.release_frame == null) {
-            if (adjusted_loop_points == null || frame < adjusted_loop_points.second) {
+            if (this.loop_points == null || frame < this.loop_points.second) {
                 frame
             } else {
-                val loop_size = (adjusted_loop_points.second - adjusted_loop_points.first)
-                val loops = ((frame - adjusted_loop_points.first) / loop_size)
-                val loop_remainder = (frame - adjusted_loop_points.first) % loop_size
-                adjusted_loop_points.first + (loops * loop_size) + loop_remainder
+                val loop_size = (this.loop_points.second - this.loop_points.first)
+                val loops = ((frame - this.loop_points.first) / loop_size)
+                val loop_remainder = (frame - this.loop_points.first) % loop_size
+                this.loop_points.first + (loops * loop_size) + loop_remainder
             }
-        } else if (adjusted_loop_points != null && adjusted_loop_points.first < adjusted_loop_points.second) {
-            if (frame < adjusted_loop_points.second) {
+        } else if (this.loop_points != null && this.loop_points.first < this.loop_points.second) {
+            if (frame < this.loop_points.second) {
                 frame
             } else {
-                val loop_size = (adjusted_loop_points.second - adjusted_loop_points.first)
-                val loop_remainder = (frame - adjusted_loop_points.first) % loop_size
-                adjusted_loop_points.first + loop_remainder
+                val loop_size = (this.loop_points.second - this.loop_points.first)
+                val loop_remainder = (frame - this.loop_points.first) % loop_size
+                this.loop_points.first + loop_remainder
             }
         } else {
             frame
@@ -236,43 +232,44 @@ class SampleHandle(
             }
         }
 
-        val adjusted_loop_points = this.adjusted_loop_points
         if (!is_pressed) {
-            val offset = this.data_buffer.position()
-            if (this.data_buffer.size == offset + 1) {
+            if (this.data_buffer.is_overflowing()) {
                 this.is_dead = true
                 return null
             }
-            val release_frame_count = min(this.volume_envelope.frames_release, this.data_buffer.size - this.release_frame!!)
+
+            val release_frame_count = min(this.volume_envelope.frames_release, this.data_buffer.pitched_size - this.release_frame!!)
             val current_position_release = this.working_frame - this.release_frame!!
+
             if (current_position_release < release_frame_count) {
                 frame_factor *= 1F - (current_position_release.toFloat() / release_frame_count.toFloat())
             } else {
                 this.is_dead = true
                 return null
             }
-        } else if (adjusted_loop_points != null) {
-            val offset = this.data_buffer.position() - adjusted_loop_points.second
-            if (offset >= 0) {
-                this.data_buffer.position(adjusted_loop_points.first + offset)
+
+        } else if (this.loop_points != null) {
+            val offset = this.data_buffer.position() - this.loop_points.second
+            if (offset > 0) {
+                this.data_buffer.position(this.loop_points.first)
             }
         }
 
-        if (this.modulation_lfo.delay <= this.working_frame) {
-            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame) 
-            if (lfo_frame != null) {
-                if (this.modulation_lfo.volume != 0F) {
-                    frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
-                }
+        //if (this.modulation_lfo.delay <= this.working_frame) {
+        //    val lfo_frame = this.modulation_lfo.get_frame(this.working_frame) 
+        //    if (lfo_frame != null) {
+        //        if (this.modulation_lfo.volume != 0F) {
+        //            frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
+        //        }
 
-                // TODO: This is mostly functional but still getting clicking because of imperfect re-calculation of the loop points
-                //if (this.modulation_lfo.pitch != 1F) {
-                //    val diff = modulation_lfo.pitch - 1F
-                //    val new_pitch = 1F + (((lfo_frame + 1F) / 2F) * diff)
-                //    this.repitch(1F / new_pitch)
-                //}
-            }
-        }
+        //        // TODO: This is mostly functional but still getting clicking because of imperfect re-calculation of the loop points
+        //        if (this.modulation_lfo.pitch != 1F) {
+        //            val diff = modulation_lfo.pitch - 1F
+        //            val new_pitch = 1F + (((lfo_frame + 1F) / 2F) * diff)
+        //            this.data_buffer.repitch(1F / new_pitch)
+        //        }
+        //    }
+        //}
 
         this.working_frame += 1
 
@@ -308,23 +305,5 @@ class SampleHandle(
             this.release_frame!! + this.get_release_duration()
         }
     }
-
-    fun repitch(adjustment: Float) {
-        this.pitch_adjustment = adjustment
-        this.data_buffer.repitch(adjustment)
-
-        if (this.loop_points == null) {
-            return
-        }
-
-        var size = this.loop_points.second - this.loop_points.first
-        var start = this.loop_points.first / this.pitch_adjustment
-
-        this.adjusted_loop_points = Pair(
-            start.toInt(),
-            (start + (size / this.pitch_adjustment)).toInt()
-        )
-    }
-
 }
 

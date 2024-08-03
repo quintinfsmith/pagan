@@ -7,6 +7,7 @@ import kotlin.math.sin
 import kotlin.math.pow
 import kotlin.math.min
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 class SampleHandle(
     var data: ShortArray,
@@ -29,12 +30,16 @@ class SampleHandle(
 ) {
     var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
     val smoothing_factor: Float
+    var pitched_loop_points: Pair<Int, Int>? = null
+    var pitch_adjustment: Float = 1F
 
     var previous_frame = 0f
     init {
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)
+        this.repitch(1F)
     }
+
 
     data class VolumeEnvelope(
         var sample_rate: Int,
@@ -144,6 +149,7 @@ class SampleHandle(
 
             output.release_frame = original.release_frame
             output.kill_frame = original.kill_frame
+            output.repitch(original.pitch_adjustment)
 
             return output
         }
@@ -164,6 +170,30 @@ class SampleHandle(
         this.release_frame = frame
     }
 
+    private fun calc_adj_frame(frame: Int): Int {
+        val loop_points = this.pitched_loop_points
+        return if (this.release_frame == null) {
+            if (loop_points == null || frame < loop_points.second) {
+                frame
+            } else {
+                val loop_size = (loop_points.second - loop_points.first)
+                val loops = ((frame - loop_points.first) / loop_size)
+                val loop_remainder = (frame - loop_points.first) % loop_size
+                loop_points.first + (loops * loop_size) + loop_remainder
+            }
+        } else if (loop_points != null && loop_points.first < loop_points.second) {
+            if (frame < loop_points.second) {
+                frame
+            } else {
+                val loop_size = (loop_points.second - loop_points.first)
+                val loop_remainder = (frame - loop_points.first) % loop_size
+                loop_points.first + loop_remainder
+            }
+        } else {
+            frame
+        }
+    }
+
     fun set_working_frame(frame: Int) {
         this.working_frame = frame
         if (this.kill_frame != null && this.working_frame >= this.kill_frame!!) {
@@ -174,27 +204,7 @@ class SampleHandle(
             this.is_dead = true
             return
         }
-
-        val adj_frame = if (this.release_frame == null) {
-            if (this.loop_points == null || frame < this.loop_points.second) {
-                frame
-            } else {
-                val loop_size = (this.loop_points.second - this.loop_points.first)
-                val loops = ((frame - this.loop_points.first) / loop_size)
-                val loop_remainder = (frame - this.loop_points.first) % loop_size
-                this.loop_points.first + (loops * loop_size) + loop_remainder
-            }
-        } else if (this.loop_points != null && this.loop_points.first < this.loop_points.second) {
-            if (frame < this.loop_points.second) {
-                frame
-            } else {
-                val loop_size = (this.loop_points.second - this.loop_points.first)
-                val loop_remainder = (frame - this.loop_points.first) % loop_size
-                this.loop_points.first + loop_remainder
-            }
-        } else {
-            frame
-        }
+        val adj_frame = this.calc_adj_frame(frame)
 
         if (adj_frame < this.data_buffer.size) {
             this.data_buffer.position(adj_frame)
@@ -238,7 +248,11 @@ class SampleHandle(
                 return null
             }
 
-            val release_frame_count = min(this.volume_envelope.frames_release, this.data_buffer.pitched_size - this.release_frame!!)
+            val release_frame_count = min(
+                this.volume_envelope.frames_release,
+                this.data_buffer.size - this.release_frame!!
+            )
+
             val current_position_release = this.working_frame - this.release_frame!!
 
             if (current_position_release < release_frame_count) {
@@ -248,10 +262,10 @@ class SampleHandle(
                 return null
             }
 
-        } else if (this.loop_points != null) {
-            val offset = this.data_buffer.position() - this.loop_points.second
+        } else if (this.pitched_loop_points != null) {
+            val offset = this.data_buffer.position() - this.pitched_loop_points!!.second
             if (offset > 0) {
-                this.data_buffer.position(this.loop_points.first)
+                this.data_buffer.position(this.pitched_loop_points!!.first)
             }
         }
 
@@ -304,6 +318,22 @@ class SampleHandle(
         } else {
             this.release_frame!! + this.get_release_duration()
         }
+    }
+
+    fun repitch(adjustment: Float) {
+        this.data_buffer.repitch(adjustment)
+        if (this.loop_points == null) {
+            return
+        }
+
+        val new_pitch = this.pitch_shift * adjustment
+        val start = (this.loop_points.first.toFloat() / new_pitch).roundToInt()
+        val size = ((this.loop_points.second - this.loop_points.first).toFloat() / new_pitch).roundToInt()
+
+        this.pitched_loop_points = Pair(
+            start,
+            start + size
+        )
     }
 }
 

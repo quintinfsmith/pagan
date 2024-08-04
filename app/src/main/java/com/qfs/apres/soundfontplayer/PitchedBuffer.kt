@@ -25,7 +25,7 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
     }
 
     fun is_overflowing(): Boolean {
-        return (this.virtual_position.toFloat() * this.get_calculated_pitch()).toInt()>= this.data.size
+        return (this.virtual_position.toFloat() * this.get_calculated_pitch()).toInt() + this.minor_offset >= this.data.size
     }
 
     fun get_calculated_pitch(): Float {
@@ -34,7 +34,8 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
 
     fun repitch(new_pitch_adjustment: Float) {
         this.pitch_adjustment = new_pitch_adjustment
-        this.size = (this.data.size.toFloat() / this.get_calculated_pitch()).roundToInt()
+        this.size = (this.data.size.toFloat() / this.get_calculated_pitch()).toInt()
+        this.minor_offset = 0
     }
 
     fun reset_pitch() {
@@ -50,6 +51,8 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
     }
 
     fun get(): Short {
-        return this.data[((this.virtual_position++).toFloat() * this.get_calculated_pitch()).toInt() + this.minor_offset]
+        val pitch = this.get_calculated_pitch()
+        val position = ((this.virtual_position++).toFloat() * pitch).toInt() + this.minor_offset
+        return this.data[min(position, this.data.size - 1)]
     }
 }

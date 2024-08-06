@@ -75,7 +75,7 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
             // 24 Sample rate
             data_output_stream.writeInt(Integer.reverseBytes(sample_rate))
             // 28 byte rate
-            data_output_stream.writeInt(Integer.reverseBytes(sample_rate * 2))
+            data_output_stream.writeInt(Integer.reverseBytes(sample_rate * 4))
             // 32 Block Alignment
             data_output_stream.writeByte(0x04)
             data_output_stream.writeByte(0x00)

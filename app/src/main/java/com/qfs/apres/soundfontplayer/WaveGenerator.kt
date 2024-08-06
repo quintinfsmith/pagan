@@ -78,8 +78,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val output = FloatArray(this.buffer_size * 2 / this.core_count) {
             0f
         }
-
-        for ((_, item) in this._active_sample_handles) {
+        val to_remove = mutableSetOf<Int>()
+        for ((key, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
                 continue
             }
@@ -102,11 +102,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 sample_handle.set_working_frame(start_frame)
                 item.sample_handles[real_index] = Pair(sample_handle, 0)
             }
+
             if (!sample_handle.is_dead) {
+                // FIXME: This is wonky. not sure whats up
                 // Ignore Samples in Right for mono mode
-                if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
-                    continue
-                }
+                // if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
+                //     continue
+                // }
 
                 this.populate_partial_int_array(
                     sample_handle,
@@ -118,6 +120,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     }
                 )
             }
+            // Check again, couldve died during partial population
+            if (sample_handle.is_dead) {
+                to_remove.add(key)
+            }
+        }
+        for (key in to_remove) {
+            this._active_sample_handles.remove(key)
         }
 
         return output
@@ -208,8 +217,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
             working_int_array[(f * 2) + 1] += left_value
         }
-
-        sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
+        if (!sample_handle.is_dead) {
+            sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
+        }
     }
 
     private fun update_active_sample_handles(initial_frame: Int) {

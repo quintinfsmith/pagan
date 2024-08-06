@@ -200,10 +200,12 @@ class SampleHandle(
             this.is_dead = true
             return
         }
+
         if (this.release_frame != null && this.working_frame >= this.release_frame!! + this.volume_envelope.frames_release) {
             this.is_dead = true
             return
         }
+
         val adj_frame = this.calc_adj_frame(frame)
 
         if (adj_frame < this.data_buffer.size) {

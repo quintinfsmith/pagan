@@ -86,7 +86,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         val handles = this._sample_handle_manager.gen_sample_handles(event)
 
         for (handle in handles) {
-            handle.release_frame = duration_millis * this.sample_rate / 1000
+            handle.set_release_frame(duration_millis * this.sample_rate / 1000)
             handle.volume = (event.velocity shr 8).toFloat() * 0.2F / 128F
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }

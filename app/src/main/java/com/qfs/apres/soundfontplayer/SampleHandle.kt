@@ -34,6 +34,12 @@ class SampleHandle(
     var pitch_adjustment: Float = 1F
 
     var previous_frame = 0f
+    var uuid: Int = SampleHandle.uuid_gen++
+
+    var working_frame: Int = 0
+    var release_frame: Int? = null
+    var kill_frame: Int? = null
+    var is_dead = false
     init {
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)
@@ -155,12 +161,6 @@ class SampleHandle(
         }
     }
 
-    var uuid: Int = SampleHandle.uuid_gen++
-
-    var working_frame: Int = 0
-    var release_frame: Int? = null
-    var kill_frame: Int? = null
-    var is_dead = false
 
     fun max_frame_value(): Int {
         return this.data_buffer.max

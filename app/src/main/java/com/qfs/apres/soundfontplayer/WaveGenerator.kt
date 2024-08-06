@@ -3,6 +3,8 @@ package com.qfs.apres.soundfontplayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
     enum class StereoMode {
@@ -26,6 +28,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
     private var timeout: Int? = null
     private val core_count = Runtime.getRuntime().availableProcessors()
+    private val active_sample_handle_mutex = Mutex()
 
 
     fun generate(): FloatArray {
@@ -75,59 +78,61 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     }
 
     private fun gen_partial_int_array(first_frame: Int, sample_index: Int): FloatArray {
+        val sample_handles_to_use = mutableSetOf<Pair<SampleHandle, Int>>()
+        runBlocking {
+            this@WaveGenerator.active_sample_handle_mutex.withLock {
+                for ((_, item) in this@WaveGenerator._active_sample_handles) {
+                    if (item.first_frame >= first_frame + this@WaveGenerator.buffer_size) {
+                        continue
+                    }
+
+                    val real_index = if (item.first_section > 0) {
+                        if ((this@WaveGenerator.core_count - item.sample_handles.size) > sample_index) {
+                            continue
+                        }
+                        sample_index - item.first_section
+                    } else {
+                        if (item.sample_handles.size <= sample_index) {
+                            continue
+                        }
+                        sample_index
+                    }
+
+                    var (sample_handle, start_frame) = item.sample_handles[real_index]
+                    if (sample_handle == null) {
+                        sample_handle = SampleHandle.copy(item.handle)
+                        sample_handle.set_working_frame(start_frame)
+                        item.sample_handles[real_index] = Pair(sample_handle, 0)
+                    }
+                    if (!sample_handle.is_dead) {
+                        sample_handles_to_use.add(
+                            Pair(
+                                sample_handle,
+                                if (real_index == 0 && (0 until this@WaveGenerator.buffer_size).contains(item.first_frame - first_frame)) {
+                                    (item.first_frame - first_frame) - (this@WaveGenerator.buffer_size * sample_index / this@WaveGenerator.core_count)
+                                } else {
+                                    0
+                                }
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
         val output = FloatArray(this.buffer_size * 2 / this.core_count) {
             0f
         }
-        val to_remove = mutableSetOf<Int>()
-        for ((key, item) in this._active_sample_handles) {
-            if (item.first_frame >= first_frame + this.buffer_size) {
-                continue
-            }
+        for ((sample_handle, index) in sample_handles_to_use) {
+            // FIXME: This is wonky. not sure whats up
+            // Ignore Samples in Right for mono mode
+            // if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
+            //     continue
+            // }
 
-            val real_index = if (item.first_section > 0) {
-                if ((this.core_count - item.sample_handles.size) > sample_index) {
-                    continue
-                }
-                sample_index - item.first_section
-            } else {
-                if (item.sample_handles.size <= sample_index) {
-                    continue
-                }
-                sample_index
-            }
-
-            var (sample_handle, start_frame) = item.sample_handles[real_index]
-            if (sample_handle == null) {
-                sample_handle = SampleHandle.copy(item.handle)
-                sample_handle.set_working_frame(start_frame)
-                item.sample_handles[real_index] = Pair(sample_handle, 0)
-            }
-
-            if (!sample_handle.is_dead) {
-                // FIXME: This is wonky. not sure whats up
-                // Ignore Samples in Right for mono mode
-                // if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
-                //     continue
-                // }
-
-                this.populate_partial_int_array(
-                    sample_handle,
-                    output,
-                    if (real_index == 0 && (0 until this.buffer_size).contains(item.first_frame - first_frame)) {
-                        (item.first_frame - first_frame) - (this.buffer_size * sample_index / this.core_count)
-                    } else {
-                        0
-                    }
-                )
-            }
-            // Check again, couldve died during partial population
-            if (sample_handle.is_dead) {
-                to_remove.add(key)
-            }
+            this.populate_partial_int_array(sample_handle, output, index)
         }
-        for (key in to_remove) {
-            this._active_sample_handles.remove(key)
-        }
+
 
         return output
     }
@@ -276,8 +281,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // then populate the next active frames with upcoming sample handles
         val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
         for (handle in handles) {
+
+            // increase sample's volume so it take up the full range -1 .. 1 (the sample may be quieter)
             val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
-            handle.volume /= handle_volume_factor // increase sample's volume so it take up the full range -1 .. 1 (the sample may be quieter)
+            handle.volume /= handle_volume_factor
+
 
             val split_handles = Array<Pair<SampleHandle?, Int>>(this.core_count - core) { k: Int ->
                 Pair(

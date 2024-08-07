@@ -264,8 +264,8 @@ class LeafButtonStd(
                 else -> {}
             }
         // Commenting out OpusLayerOverlapControl functionality so I can merge changes to import_midi
-        //} else if (opus_manager.is_tree_blocked(beat_key, position)) {
-        //    new_state.add(R.attr.state_active)
+        } else if (opus_manager.is_tree_blocked(beat_key, position)) {
+            new_state.add(R.attr.state_active)
         }
 
         if (opus_manager.is_networked(beat_key)) {

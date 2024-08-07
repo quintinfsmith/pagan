@@ -222,6 +222,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
             working_int_array[(f * 2) + 1] += left_value
         }
+
         if (!sample_handle.is_dead) {
             sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
         }
@@ -235,11 +236,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 continue
             }
 
+            var dead_count = 0
             for ((handle, _) in item.sample_handles) {
                 if (handle != null && handle.is_dead) {
-                    remove_set.add(key)
-                    break
+                    dead_count += 1
                 }
+            }
+            if (dead_count == item.sample_handles.size) {
+                remove_set.add(key)
             }
         }
 
@@ -281,7 +285,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // then populate the next active frames with upcoming sample handles
         val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
         for (handle in handles) {
-
             // increase sample's volume so it take up the full range -1 .. 1 (the sample may be quieter)
             val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
             handle.volume /= handle_volume_factor

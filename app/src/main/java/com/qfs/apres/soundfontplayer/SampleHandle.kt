@@ -34,6 +34,12 @@ class SampleHandle(
     var pitch_adjustment: Float = 1F
 
     var previous_frame = 0f
+    var uuid: Int = SampleHandle.uuid_gen++
+
+    var working_frame: Int = 0
+    var release_frame: Int? = null
+    var kill_frame: Int? = null
+    var is_dead = false
     init {
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)
@@ -155,12 +161,6 @@ class SampleHandle(
         }
     }
 
-    var uuid: Int = SampleHandle.uuid_gen++
-
-    var working_frame: Int = 0
-    var release_frame: Int? = null
-    var kill_frame: Int? = null
-    var is_dead = false
 
     fun max_frame_value(): Int {
         return this.data_buffer.max
@@ -256,36 +256,35 @@ class SampleHandle(
             )
 
             val current_position_release = this.working_frame - this.release_frame!!
-
             if (current_position_release < release_frame_count) {
                 frame_factor *= 1F - (current_position_release.toFloat() / release_frame_count.toFloat())
             } else {
                 this.is_dead = true
                 return null
             }
-
         } else if (this.pitched_loop_points != null) {
             val offset = this.data_buffer.position() - this.pitched_loop_points!!.second
             if (offset >= 0) {
-                this.data_buffer.position(this.pitched_loop_points!!.first + offset)
+                this.data_buffer.position(this.pitched_loop_points!!.first)
             }
         }
 
-        if (this.modulation_lfo.delay <= this.working_frame) {
-            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame) 
-            if (lfo_frame != null) {
-                if (this.modulation_lfo.volume != 0F) {
-                    frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
-                }
+        // TODO: Needs testing. I think this may end up slowing too much in some cases, but i'll test it better before releasing
+        // if (this.modulation_lfo.delay <= this.working_frame) {
+        //     val lfo_frame = this.modulation_lfo.get_frame(this.working_frame) 
+        //     if (lfo_frame != null) {
+        //         if (this.modulation_lfo.volume != 0F) {
+        //             frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
+        //         }
 
-                // TODO: This is mostly functional but still getting clicking because of imperfect re-calculation of the loop points
-                //if (this.modulation_lfo.pitch != 1F) {
-                //    val diff = modulation_lfo.pitch - 1F
-                //    val new_pitch = 1F + ((lfo_frame + 1F) * diff / 2F)
-                //    this.repitch(new_pitch)
-                //}
-            }
-        }
+        //         // TODO: This is mostly functional but still getting clicking because of imperfect re-calculation of the loop points
+        //         //if (this.modulation_lfo.pitch != 1F) {
+        //         //    val diff = modulation_lfo.pitch - 1F
+        //         //    val new_pitch = 1F + ((lfo_frame + 1F) * diff / 2F)
+        //         //    this.repitch(new_pitch)
+        //         //}
+        //     }
+        // }
 
         this.working_frame += 1
 
@@ -331,18 +330,11 @@ class SampleHandle(
 
         val new_pitch = this.pitch_shift * adjustment
 
+        val start = (this.loop_points.first.toFloat() / new_pitch)
         this.pitched_loop_points = Pair(
-            (this.loop_points.first.toFloat() / new_pitch).toInt(),
-            (this.loop_points.second.toFloat() / new_pitch).toInt()
+            start.toInt(),
+            start.toInt() + ((this.loop_points.second - this.loop_points.first).toFloat() / new_pitch).toInt()
         )
-
-        /*
-         * NOTE: sometimes the pitching causes the loop points to be unatainable, so add an offset when that occurs to
-         * try to alay misalignments (eg loop point @14, pitch x3. mod = 4)
-         */
-
-        val closest_int: Int = (this.pitched_loop_points!!.second * new_pitch).toInt()
-        this.data_buffer.set_minor_offset(this.loop_points.second - closest_int)
     }
 }
 

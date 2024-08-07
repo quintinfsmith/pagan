@@ -269,21 +269,22 @@ class SampleHandle(
             }
         }
 
-        if (this.modulation_lfo.delay <= this.working_frame) {
-            val lfo_frame = this.modulation_lfo.get_frame(this.working_frame) 
-            if (lfo_frame != null) {
-                if (this.modulation_lfo.volume != 0F) {
-                    frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
-                }
+        // TODO: Needs testing. I think this may end up slowing too much in some cases, but i'll test it better before releasing
+        // if (this.modulation_lfo.delay <= this.working_frame) {
+        //     val lfo_frame = this.modulation_lfo.get_frame(this.working_frame) 
+        //     if (lfo_frame != null) {
+        //         if (this.modulation_lfo.volume != 0F) {
+        //             frame_factor *= 10F.pow(this.modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
+        //         }
 
-                // TODO: This is mostly functional but still getting clicking because of imperfect re-calculation of the loop points
-                //if (this.modulation_lfo.pitch != 1F) {
-                //    val diff = modulation_lfo.pitch - 1F
-                //    val new_pitch = 1F + ((lfo_frame + 1F) * diff / 2F)
-                //    this.repitch(new_pitch)
-                //}
-            }
-        }
+        //         // TODO: This is mostly functional but still getting clicking because of imperfect re-calculation of the loop points
+        //         //if (this.modulation_lfo.pitch != 1F) {
+        //         //    val diff = modulation_lfo.pitch - 1F
+        //         //    val new_pitch = 1F + ((lfo_frame + 1F) * diff / 2F)
+        //         //    this.repitch(new_pitch)
+        //         //}
+        //     }
+        // }
 
         this.working_frame += 1
 

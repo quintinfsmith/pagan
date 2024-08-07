@@ -1,0 +1,3 @@
+bugfixes:
+    - sometimes exporting malformed wav files.
+    - percussion instrument names weren't loading correctly

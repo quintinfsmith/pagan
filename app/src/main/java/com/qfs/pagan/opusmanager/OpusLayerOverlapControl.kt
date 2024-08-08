@@ -1,13 +1,14 @@
 package com.qfs.pagan.opusmanager
 
+import com.qfs.pagan.Rational
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 
 open class OpusLayerOverlapControl: OpusLayerBase() {
     class BlockedTreeException(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
 
-    private val _cache_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, MutableList<Triple<BeatKey, List<Int>, Float>>>()
-    private val _cache_inv_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, Triple<BeatKey, List<Int>, Float>>()
+    private val _cache_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, MutableList<Triple<BeatKey, List<Int>, Rational>>>()
+    private val _cache_inv_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, Triple<BeatKey, List<Int>, Rational>>()
 
     fun _blocked_tree_check(beat_key: BeatKey, position: List<Int>) {
         return
@@ -140,8 +141,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     // ----------------------------- Layer Specific functions ---------------------
 
-    // TODO: This is not correct. not sure whats up, but it's sometimes working, sometimes not
-    fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Float>> {
+    fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Rational>> {
         val (target_offset, target_width) = this.get_leaf_offset_and_width(beat_key, position)
         val target_tree = this.get_tree(beat_key, position)
 
@@ -149,51 +149,51 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             return mutableListOf()
         }
 
-        val duration_width = target_width.toFloat() * target_tree.get_event()!!.duration.toFloat()
+        val duration_width = Rational(target_tree.get_event()!!.duration, target_width)
 
         var next_beat_key = beat_key
         var next_position = position
 
-        val output = mutableListOf<Triple<BeatKey, List<Int>, Float>>() // BeatKey, Position, Width
+        val output = mutableListOf<Triple<BeatKey, List<Int>, Rational>>() // BeatKey, Position, Width
         val end = target_offset + duration_width
+
         while (true) {
             val next = this.get_proceding_leaf_position(next_beat_key, next_position) ?: break
             next_beat_key = next.first
             next_position = next.second
             val (next_offset, next_width) = this.get_leaf_offset_and_width(next_beat_key, next_position)
-            val adj_offset = (next_beat_key.beat - beat_key.beat).toFloat() + next_offset
+            val adj_offset = next_offset + next_width
 
-
-            if (adj_offset < end) {
-                val amount = if (adj_offset + next_width <= end) {
-                    1f
-                } else {
-                    (end - adj_offset) / next_width
-                }
-                output.add(Triple(next_beat_key, next_position, amount))
+            if (end > adj_offset) {
+                output.add(Triple(next_beat_key, next_position, Rational(1,1)))
+            } else if (end > next_offset) {
+                output.add(Triple(next_beat_key, next_position, (end - adj_offset) * -1))
+                break
             } else {
                 break
             }
         }
-        println("$output")
         return output
     }
 
-    fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Float, Float> {
+    fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Rational, Int> {
         var target_tree = this.get_tree(beat_key)
-        var width = 1F
-        var offset = 0F
+        var output = Rational(0, 1)
+        var width_denominator = 1
 
         for (p in position) {
-            width /= target_tree.size
-            offset += p.toFloat() * width
+            output = Rational(
+                output.n * (target_tree.size * target_tree.size) + (output.d * p),
+                output.d * (target_tree.size * target_tree.size)
+            )
+            width_denominator *= target_tree.size
+
             target_tree = target_tree[p]
         }
 
-        return Pair(
-            offset,
-            width
-        )
+        output += beat_key.beat
+
+        return Pair(output, width_denominator)
     }
 
     fun update_blocked_tree_cache(beat_key: BeatKey, position: List<Int>) {
@@ -216,7 +216,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         val (original_key, original_position, blocked_amount) = this._cache_inv_blocked_tree_map[hash_key] ?: return
 
         val tree = this.get_tree(beat_key, position)
-        val chunk_amount = 1f / tree.size.toFloat()
+        val chunk_amount = Rational(1, tree.size)
         for (i in 0 until tree.size) {
             val new_position = List(position.size + 1) { j: Int ->
                 if (j == position.size) {
@@ -226,7 +226,13 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                 }
             }
 
-            val new_blocked_amount = max(0f, (blocked_amount - (chunk_amount * (i + 1))) * tree.size.toFloat())
+
+            var new_blocked_amount = (blocked_amount - (chunk_amount * (i + 1))) * tree.size
+            new_blocked_amount = if (new_blocked_amount > 1) {
+                Rational(1,1)
+            } else {
+                new_blocked_amount
+            }
 
             this._cache_blocked_tree_map[Pair(original_key, original_position)]!!.add(Triple(
                 beat_key,
@@ -280,5 +286,4 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         return output
     }
-
 }

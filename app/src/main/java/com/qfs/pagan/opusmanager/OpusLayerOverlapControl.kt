@@ -300,7 +300,21 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         val output = callback()
 
         if (needs_recache != null) {
-            val recache_position = this.get_first_position(needs_recache.first, needs_recache.second)
+            val recache_position = try {
+                this.get_first_position(needs_recache.first, needs_recache.second)
+            } catch (e: OpusTree.InvalidGetCall) {
+                val new_position = mutableListOf<Int>()
+                var working_tree = this.get_tree(beat_key)
+                for (p in needs_recache.second) {
+                    if (working_tree.is_leaf()) {
+                        break
+                    } else {
+                        new_position.add(p)
+                        working_tree = working_tree[p]
+                    }
+                }
+                new_position
+            }
             this.update_blocked_tree_cache(needs_recache.first, recache_position)
         }
 

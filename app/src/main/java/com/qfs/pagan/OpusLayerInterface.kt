@@ -1784,6 +1784,13 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
+        println(" $overlapper Overlapped $overlappee")
+    }
+    override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
+        println(" $overlapper Stopped Overlapping $overlappee")
+    }
+
     /*
         Need to know when setting the FeedBackPlaybackDevice sample rate, since we want it as low as is possible without killing higher notes
     */

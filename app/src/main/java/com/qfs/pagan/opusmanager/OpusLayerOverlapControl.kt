@@ -46,6 +46,12 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         return this._cache_inv_blocked_tree_map.containsKey(Pair(beat_key, position))
     }
 
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
+        this.recache_blocked_tree_wrapper(beat_key, position) {
+            this.replace_tree(beat_key, position, tree)
+        }
+    }
+
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         this.recache_blocked_tree_wrapper(beat_key, position) {
             super.set_event(beat_key, position, event)
@@ -64,6 +70,18 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
     }
 
+    open fun decache_overlapping_leaf(beat_key: BeatKey, position: List<Int>) {
+        val cache_key = Pair(beat_key, position)
+        if (!this._cache_blocked_tree_map.containsKey(cache_key)) {
+            return
+        }
+        for ((blocked_beat_key, blocked_position, _) in this._cache_blocked_tree_map.remove(cache_key)!!) {
+            val overlapped_key = Pair(blocked_beat_key, blocked_position)
+            this._cache_inv_blocked_tree_map.remove(overlapped_key)
+            this.on_overlap_removed(cache_key, overlapped_key)
+        }
+    }
+
 
     override fun remove_beat(beat_index: Int) {
         val decache = mutableSetOf<Pair<BeatKey, List<Int>>>()
@@ -74,10 +92,9 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
 
         for (cache_key in decache) {
-            for ((blocked_beat_key, blocked_position, _) in this._cache_blocked_tree_map.remove(cache_key)!!) {
-                this._cache_inv_blocked_tree_map.remove(Pair(blocked_beat_key, blocked_position))
-            }
+            this.decache_overlapping_leaf(cache_key.first, cache_key.second)
         }
+
         decache.clear()
 
         for ((beat_key, position) in this._cache_blocked_tree_map.keys) {
@@ -88,6 +105,9 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                     beat_key.beat - 1
                 )
                 this._cache_blocked_tree_map[Pair(new_beat_key, position)] = this._cache_blocked_tree_map[Pair(beat_key, position)]!!
+                for (overlapped_triple in this._cache_blocked_tree_map[Pair(new_beat_key, position)]!!) {
+                    this.on_overlap(Pair(new_beat_key, position), Pair(overlapped_triple.first, overlapped_triple.second))
+                }
             }
         }
 
@@ -137,7 +157,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
             this._cache_blocked_tree_map[Pair(new_beat_key, position)] = this._cache_blocked_tree_map.remove(Pair(beat_key, position))!!
         }
-
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
@@ -163,8 +182,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     // ----------------------------- Layer Specific functions ---------------------
-
-    fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Rational>> {
+    private fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Rational>> {
         val (target_offset, target_width) = this.get_leaf_offset_and_width(beat_key, position)
         val target_tree = this.get_tree(beat_key, position)
 
@@ -201,7 +219,25 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         return output
     }
 
-    fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Rational, Int> {
+    open fun on_overlap(overlapper: Pair<BeatKey, List<Int>>, overlappee: Pair<BeatKey, List<Int>>) { }
+    open fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>, overlappee: Pair<BeatKey, List<Int>>) { }
+
+    private fun update_blocked_tree_cache(beat_key: BeatKey, position: List<Int>) {
+        this.decache_overlapping_leaf(beat_key, position)
+
+        val cache_key = Pair(beat_key, position)
+
+        this._cache_blocked_tree_map[cache_key] = this.calculate_blocking_leafs(beat_key, position)
+        for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
+            this._cache_inv_blocked_tree_map[Pair(blocked_beat_key, blocked_position)] = Triple(beat_key, position, blocked_amount)
+        }
+
+        for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
+            this.on_overlap(cache_key, Pair(blocked_beat_key, blocked_position))
+        }
+    }
+
+    private fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Rational, Int> {
         var target_tree = this.get_tree(beat_key)
         var output = Rational(0, 1)
         var width_denominator = 1
@@ -219,22 +255,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         return Pair(output, width_denominator)
     }
 
-    fun update_blocked_tree_cache(beat_key: BeatKey, position: List<Int>) {
-        val cache_key = Pair(beat_key, position)
-
-        if (this._cache_blocked_tree_map.containsKey(cache_key)) {
-            for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
-                this._cache_inv_blocked_tree_map.remove(Pair(blocked_beat_key, blocked_position))
-            }
-        }
-
-        this._cache_blocked_tree_map[cache_key] = this.calculate_blocking_leafs(beat_key, position)
-        for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
-            this._cache_inv_blocked_tree_map[Pair(blocked_beat_key, blocked_position)] = Triple(beat_key, position, blocked_amount)
-        }
-    }
-
-    fun recache_blocked_tree(beat_key: BeatKey, position: List<Int>) {
+    private fun recache_blocked_tree(beat_key: BeatKey, position: List<Int>) {
         val hash_key = Pair(beat_key, position)
         val (original_key, original_position, blocked_amount) = this._cache_inv_blocked_tree_map[hash_key] ?: return
 
@@ -268,38 +289,38 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                 original_position,
                 new_blocked_amount
             )
+            this.on_overlap(Pair(original_key, original_position), Pair(beat_key, new_position))
         }
+        // TODO: I think this is missing on_overlap_removed calls
     }
 
     private fun <T> recache_blocked_tree_wrapper(beat_key: BeatKey, position: List<Int>, callback: () -> T): T {
-        val block_key = Pair(beat_key, position)
         val tree = this.get_tree(beat_key, position)
-
-        val needs_recache: Pair<BeatKey, List<Int>>? = if (tree.is_event()) {
-            Pair(beat_key, position)
-        } else if (this._cache_inv_blocked_tree_map.containsKey(block_key)) {
-            val (a,b,_) = this._cache_inv_blocked_tree_map[block_key]!!
-            Pair(a, b)
-        } else {
-            null
-        }
-
-        if (needs_recache != null) {
-            if (this._cache_blocked_tree_map.containsKey(needs_recache)) {
-                for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_tree_map[needs_recache]!!) {
-                    this._cache_inv_blocked_tree_map.remove(
-                        Pair(
-                            blocked_beat_key,
-                            blocked_position
-                        )
-                    )
+        val stack = mutableListOf<Pair<OpusTree<*>, List<Int>>>(Pair(tree, position))
+        val need_recaches = mutableListOf<Pair<BeatKey, List<Int>>>()
+        while (stack.isNotEmpty()) {
+            var (working_tree, working_position) = stack.removeFirst()
+            if (working_tree.is_event()) {
+                this.decache_overlapping_leaf(beat_key, working_position)
+                continue
+            } else if (working_tree.is_leaf()) {
+                val block_key = Pair(beat_key, working_position)
+                if (this._cache_inv_blocked_tree_map.containsKey(block_key)) {
+                    val (a,b,_) = this._cache_inv_blocked_tree_map[block_key]!!
+                    this.decache_overlapping_leaf(a, b)
+                    need_recaches.add(Pair(a, b))
                 }
+                continue
+            }
+
+            for (i in 0 until working_tree.size) {
+                stack.add(Pair(working_tree[i], working_position + i))
             }
         }
 
-        val output = callback()
 
-        if (needs_recache != null) {
+        val output = callback()
+        for (needs_recache in need_recaches) {
             val recache_position = try {
                 this.get_first_position(needs_recache.first, needs_recache.second)
             } catch (e: OpusTree.InvalidGetCall) {

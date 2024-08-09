@@ -186,7 +186,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val position = cursor.get_position()
         val event_duration = opus_manager.get_tree().get_event()?.duration ?: return
 
-        main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99) { value: Int ->
+        main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->
             val adj_value = Integer.max(value, 1)
             opus_manager.set_duration(beat_key, position, adj_value)
         }

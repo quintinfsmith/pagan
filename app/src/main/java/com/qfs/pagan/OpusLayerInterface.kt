@@ -376,16 +376,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        var beat_keys_to_update = mutableSetOf<BeatKey>()
-        var next_key = beat_key
-        var next_position = position
-        while (true) {
-            beat_keys_to_update.add(next_key)
-            val pair = this.get_proceding_leaf_position(next_key, next_position) ?: break
-            next_key = pair.first
-            next_position = pair.second
-        }
-
         super.split_tree(beat_key, position, splits, move_event_to_end)
 
         if (this.get_activity() == null) {
@@ -396,7 +386,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        this._notify_cell_changes(beat_keys_to_update.toList())
+        this._notify_cell_change(beat_key)
     }
 
     override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
@@ -1061,6 +1051,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun apply_undo(repeat: Int) {
+        println("UNDO-----------------------")
         super.apply_undo(repeat)
         this.recache_line_maps()
         this.get_editor_table()?.apply_queued_cell_changes()
@@ -1785,10 +1776,13 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-        println(" $overlapper Overlapped $overlappee")
+        println("$overlapper --> $overlappee")
+        this._notify_cell_change(overlappee.first, true)
     }
+
     override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-        println(" $overlapper Stopped Overlapping $overlappee")
+        println("$overlapper -/> $overlappee")
+        this._notify_cell_change(overlappee.first, true)
     }
 
     /*

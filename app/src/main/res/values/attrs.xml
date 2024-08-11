@@ -19,6 +19,7 @@
         <attr name="state_linked" format="boolean" />
         <attr name="state_invalid" format="boolean" />
         <attr name="state_channel_even" format="boolean" />
+        <attr name="state_spill" format="boolean" />
     </declare-styleable>
 
 

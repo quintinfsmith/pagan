@@ -32,6 +32,7 @@ abstract class LeafButtonCtl(
         return intArrayOf(
             color_map[ColorMap.Palette.LeafInvalidSelected],
             color_map[ColorMap.Palette.LeafInvalid],
+
             color_map[ColorMap.Palette.CtlLine],
             color_map[ColorMap.Palette.CtlLine],
 
@@ -42,7 +43,9 @@ abstract class LeafButtonCtl(
             color_map[ColorMap.Palette.LinkSelected],
             color_map[ColorMap.Palette.Link],
             color_map[ColorMap.Palette.LinkEmptySelected],
-            color_map[ColorMap.Palette.LinkEmpty]
+            color_map[ColorMap.Palette.LinkEmpty],
+
+            color_map[ColorMap.Palette.CtlLeaf]
         )
     }
     override fun onAttachedToWindow() {

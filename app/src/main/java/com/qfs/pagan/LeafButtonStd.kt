@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.Color
 import android.view.Gravity
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -33,9 +34,18 @@ class LeafButtonStd(
     override fun get_tint_list(): IntArray {
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map
+        val col_leaf: Color = Color.valueOf(color_map[ColorMap.Palette.Leaf])
+        val col_empty: Color = Color.valueOf(color_map[ColorMap.Palette.ChannelEven])
+        val col_spill = Color.rgb(
+            ((col_leaf.red() * .7F) + (col_empty.red() * .3F)).toFloat(),
+            ((col_leaf.green() * .7F) + (col_empty.green() * .3F)).toFloat(),
+            ((col_leaf.blue() * .7F) + (col_empty.blue() * .3F)).toFloat()
+        )
+
         return intArrayOf(
             color_map[ColorMap.Palette.LeafInvalidSelected],
             color_map[ColorMap.Palette.LeafInvalid],
+
             color_map[ColorMap.Palette.ChannelEven],
             color_map[ColorMap.Palette.ChannelOdd],
 
@@ -46,7 +56,9 @@ class LeafButtonStd(
             color_map[ColorMap.Palette.LinkSelected],
             color_map[ColorMap.Palette.Link],
             color_map[ColorMap.Palette.LinkEmptySelected],
-            color_map[ColorMap.Palette.LinkEmpty]
+            color_map[ColorMap.Palette.LinkEmpty],
+
+            col_spill
         )
     }
 
@@ -265,7 +277,7 @@ class LeafButtonStd(
             }
         // Commenting out OpusLayerOverlapControl functionality so I can merge changes to import_midi
         } else if (opus_manager.is_tree_blocked(beat_key, position)) {
-            new_state.add(R.attr.state_active)
+            new_state.add(R.attr.state_spill)
         }
 
         if (opus_manager.is_networked(beat_key)) {

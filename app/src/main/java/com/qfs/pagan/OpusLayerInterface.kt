@@ -1082,6 +1082,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         super.set_duration(beat_key, position, duration)
 
+        // Needs to be set to trigger potentially queued cell changes from on_overlap()
+        this._notify_cell_change(beat_key)
 
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }

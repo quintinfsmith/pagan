@@ -31,28 +31,28 @@ class OpusLayerOverlapControlUnitTest {
 
 
         assertEquals(
-            Rational(0, 6),
-            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(0, 0)).first
+            Pair(Rational(0, 6), 6),
+            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(0, 0))
         )
 
         assertEquals(
-            Rational(1, 6),
-            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(0, 1)).first
+            Pair(Rational(1, 6), 6),
+            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(0, 1))
         )
 
 
         assertEquals(
-            Rational(2, 6),
-            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(0, 2)).first
+            Pair(Rational(2, 6), 6),
+            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(0, 2))
         )
 
         assertEquals(
-            Rational(1, 2),
-            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(1, 0)).first
+            Pair(Rational(1, 2), 4),
+            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(1, 0))
         )
         assertEquals(
-            Rational(3, 4),
-            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(1, 1)).first
+            Pair(Rational(3, 4), 4),
+            manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(1, 1))
         )
 
     }

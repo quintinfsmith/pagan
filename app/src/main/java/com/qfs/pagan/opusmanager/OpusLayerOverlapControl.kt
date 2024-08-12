@@ -37,7 +37,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     fun _blocked_tree_check(beat_key: BeatKey, position: List<Int>) {
-        return
         val (blocker_key, blocker_position, amount) = this._cache_inv_blocked_tree_map[Pair(beat_key, position)] ?: return
         throw BlockedTreeException(beat_key, position, blocker_key, blocker_position)
     }
@@ -250,17 +249,15 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
     }
 
-    private fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Rational, Int> {
+    internal fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>): Pair<Rational, Int> {
         var target_tree = this.get_tree(beat_key)
         var output = Rational(0, 1)
         var width_denominator = 1
 
         for (p in position) {
-            output = Rational(
-                output.n * (target_tree.size * target_tree.size) + (output.d * p),
-                output.d * (target_tree.size * target_tree.size)
-            )
             width_denominator *= target_tree.size
+
+            output += Rational(p, width_denominator)
 
             target_tree = target_tree[p]
         }

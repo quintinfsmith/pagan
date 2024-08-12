@@ -1,9 +1,20 @@
 package com.qfs.pagan
+import com.qfs.pagan.structure.greatest_common_denominator
 
 data class Rational(var n: Int, var d: Int) {
     override fun toString(): String {
+        this.reduce()
         return "($n / $d)"
     }
+
+    override fun equals(other: Any?): Boolean {
+        return when (other) {
+            is Rational -> (this.n * other.d) == (other.n * this.d)
+            is Int -> this == Rational(other, 1)
+            else -> false
+        }
+    }
+
     operator fun compareTo(other: Any): Int {
         return when (other) {
             is Rational -> (this.n * other.d) - (other.n * this.d)
@@ -43,6 +54,31 @@ data class Rational(var n: Int, var d: Int) {
             is Rational -> Rational(this.n * other.n, this.d * other.d)
             is Int -> this * Rational(other, 1)
             else -> throw Exception()
+        }
+    }
+
+    operator fun div(other: Any): Rational {
+        return when (other) {
+            is Rational -> this * Rational(other.d, other.n)
+            is Int -> this * Rational(1, other)
+            else -> throw Exception()
+        }
+    }
+
+    fun reduce() {
+        if (this.n == 0) {
+            this.n = 0
+            this.d = 1
+        } else {
+            val gcd = try {
+                greatest_common_denominator(this.n, this.d)
+            } catch (e: Exception) {
+                return
+            }
+
+            println("REDUCED BY $gcd")
+            this.n /= gcd
+            this.d /= gcd
         }
     }
 }

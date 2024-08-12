@@ -227,6 +227,47 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             }
         }
 
+        /*
+         * WARNING!!! this may eat up memory if abused.
+         * Currently, it's prevented by the 99 duration limit
+         */
+        // calculate overflowing values if the duration is longer than the song
+        if (next_beat_key.beat == this.beat_count - 1) {
+            next_position = listOf()
+            var next_beat = next_beat_key.beat + 1
+            while (true) {
+                if (end > next_beat + 1) {
+                    output.add(
+                        Triple(
+                            BeatKey(
+                                next_beat_key.channel,
+                                next_beat_key.line_offset,
+                                next_beat
+                            ),
+                            next_position,
+                            Rational(1, 1)
+                        )
+                    )
+                } else if (end > next_beat) {
+                    output.add(
+                        Triple(
+                            BeatKey(
+                                next_beat_key.channel,
+                                next_beat_key.line_offset,
+                                next_beat
+                            ),
+                            next_position,
+                            (Rational(next_beat, 1) - end) * -1
+                        )
+                    )
+                    break
+                } else {
+                    break
+                }
+                next_beat += 1
+            }
+        }
+
         return output
     }
 

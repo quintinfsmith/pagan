@@ -2,6 +2,9 @@ package com.qfs.pagan
 import com.qfs.pagan.structure.greatest_common_denominator
 
 data class Rational(var n: Int, var d: Int) {
+    init {
+        this.reduce()
+    }
     override fun toString(): String {
         this.reduce()
         return "($n / $d)"

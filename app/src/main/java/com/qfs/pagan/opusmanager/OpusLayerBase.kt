@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 
+import com.qfs.pagan.Rational
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -1925,8 +1926,8 @@ open class OpusLayerBase {
         val percussion_map = HashMap<Int, Int>()
 
         // Calculate the number of lines needed per channel
-        val blocked_ranges = HashMap<Int, MutableList<MutableList<Pair<Float, Float>>>>()
-        val blocked_percussion_ranges = mutableListOf<MutableList<MutableList<Pair<Float, Float>>>>()
+        val blocked_ranges = HashMap<Int, MutableList<MutableList<Pair<Rational, Rational>>>>()
+        val blocked_percussion_ranges = mutableListOf<MutableList<MutableList<Pair<Rational, Rational>>>>()
 
         // Map the events so i don't have to calculate overlaps twice
         val remapped_events = mutableListOf<Pair<List<Pair<Int, Int>>, MutableList<Pair<Array<Int>, Int>>>>()
@@ -1934,17 +1935,14 @@ open class OpusLayerBase {
         for ((position, event_set) in mapped_events) {
             remapped_events.add(Pair(position, mutableListOf()))
 
-            var working_denominator = 1
-            var working_numerator = 0
             val initial_position = position[0].first
+            var working_start = Rational(initial_position, 1)
+            var width_denominator = 1
 
             for ((i, size) in position.subList(1, position.size)) {
-                working_denominator *= size
-                working_numerator *= size
-                working_numerator += i
+                width_denominator *= size
+                working_start += Rational(i, width_denominator)
             }
-
-            val working_start = initial_position.toFloat() + (working_numerator.toFloat() / working_denominator.toFloat())
 
             for (event in event_set) {
                 val event_channel = event[0]
@@ -1952,8 +1950,8 @@ open class OpusLayerBase {
                     midi_channel_map[event_channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event_channel]!!
+                val working_end = working_start + Rational(event[2], width_denominator)
 
-                val working_end = initial_position.toFloat() + ((working_numerator + event[2]).toFloat() / working_denominator.toFloat())
                 if (event[0] == 9) {
                     val event_note = event[1]
                     if (!percussion_map.contains(event_note)) {
@@ -1965,7 +1963,7 @@ open class OpusLayerBase {
                     var insertion_index = 0
                     for (i in 0 until blocked_percussion_ranges[index].size) {
                         for ((start, end) in blocked_percussion_ranges[index][i]) {
-                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                            if ((working_start >= start && working_start < end) || (working_end > start && working_end <= end) || (start >= working_start && start < working_end) || (end > working_start && end <= working_end)) {
                                 insertion_index += 1
                                 break
                             }
@@ -1976,12 +1974,12 @@ open class OpusLayerBase {
                         }
                     }
 
-
                     if (insertion_index == blocked_percussion_ranges[index].size) {
                         blocked_percussion_ranges[index].add(mutableListOf())
                     }
                     blocked_percussion_ranges[index][insertion_index].add(Pair(working_start, working_end))
                     remapped_events.last().second.add(Pair(event, insertion_index))
+
                 } else {
                     if (!blocked_ranges.containsKey(channel_index)) {
                         blocked_ranges[channel_index] = mutableListOf()
@@ -1990,7 +1988,7 @@ open class OpusLayerBase {
                     var insertion_index = 0
                     for (i in 0 until blocked_ranges[channel_index]!!.size) {
                         for ((start, end) in blocked_ranges[channel_index]!![i]) {
-                            if ((start <= working_start && working_start < end) || (start < working_end && working_end <= end) || (start >= working_start && end <= working_end)) {
+                            if ((working_start >= start && working_start < end) || (working_end > start && working_end <= end) || (start >= working_start && start < working_end) || (end > working_start && end <= working_end)) {
                                 insertion_index += 1
                                 break
                             }
@@ -2045,7 +2043,6 @@ open class OpusLayerBase {
             midi_channel_map[9] = channel_sizes.size
             channel_sizes.add(1)
         }
-
 
         val sorted_channels = midi_channel_map.values.sortedBy { it }
         sorted_channels.forEachIndexed { i: Int, channel: Int ->
@@ -2214,6 +2211,7 @@ open class OpusLayerBase {
             tempo_controller.set_initial_event(first_tempo_leaf.event!!)
             first_tempo_leaf.unset_event()
         }
+
 
         this.on_project_changed()
     }

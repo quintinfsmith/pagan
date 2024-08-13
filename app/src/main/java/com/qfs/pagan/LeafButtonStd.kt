@@ -58,7 +58,8 @@ class LeafButtonStd(
             color_map[ColorMap.Palette.LinkEmptySelected],
             color_map[ColorMap.Palette.LinkEmpty],
 
-            col_spill
+            col_spill,
+            color_map[ColorMap.Palette.LeafSelected]
         )
     }
 

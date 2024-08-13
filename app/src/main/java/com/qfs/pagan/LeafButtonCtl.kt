@@ -45,7 +45,8 @@ abstract class LeafButtonCtl(
             color_map[ColorMap.Palette.LinkEmptySelected],
             color_map[ColorMap.Palette.LinkEmpty],
 
-            color_map[ColorMap.Palette.CtlLeaf]
+            color_map[ColorMap.Palette.CtlLeaf],
+            color_map[ColorMap.Palette.CtlLeafSelected]
         )
     }
     override fun onAttachedToWindow() {

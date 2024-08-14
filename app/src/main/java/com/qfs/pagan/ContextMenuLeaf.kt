@@ -118,8 +118,14 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             this.ros_relative_option.visibility = View.GONE
         }
 
+        val current_tree_position = opus_manager.get_original_position(
+            opus_manager.cursor.get_beatkey(),
+            opus_manager.cursor.get_position()
+        )
+        val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
         val current_tree = opus_manager.get_tree()
-        val event = current_tree.get_event()
+
+        val event = current_event_tree.get_event()
         when (event) {
             is TunedInstrumentEvent -> {
                 val value = if (event is RelativeNoteEvent) {
@@ -168,10 +174,10 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         )
 
 
-        this.button_duration.isEnabled = current_tree.is_event()
+        this.button_duration.isEnabled = current_event_tree.is_event()
         this.button_duration.isClickable = this.button_duration.isEnabled
 
-        this.button_unset.isEnabled = !(current_tree.is_leaf() && !current_tree.is_event())
+        this.button_unset.isEnabled = !(current_event_tree.is_leaf() && !current_event_tree.is_event())
         this.button_unset.isClickable = this.button_unset.isEnabled
 
         this.button_remove.isEnabled = opus_manager.cursor.get_position().isNotEmpty()
@@ -182,9 +188,11 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.cursor
-        val beat_key = cursor.get_beatkey()
-        val position = cursor.get_position()
-        val event_duration = opus_manager.get_tree().get_event()?.duration ?: return
+        val (beat_key, position) = opus_manager.get_original_position(
+            cursor.get_beatkey(),
+            cursor.get_position()
+        )
+        val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
 
         main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->
             val adj_value = Integer.max(value, 1)
@@ -245,8 +253,10 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val opus_manager = main.get_opus_manager()
 
         val cursor = opus_manager.cursor
-        val beat_key = cursor.get_beatkey()
-        val position = cursor.get_position()
+        val (beat_key, position) = opus_manager.get_original_position(
+            cursor.get_beatkey(),
+            cursor.get_position()
+        )
 
         opus_manager.set_duration(beat_key, position, 1)
         return true
@@ -280,7 +290,11 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val progress = view.getState()!!
-        val current_tree = opus_manager.get_tree()
+        val current_tree_position = opus_manager.get_original_position(
+            opus_manager.cursor.get_beatkey(),
+            opus_manager.cursor.get_position()
+        )
+        val current_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
         val duration = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
@@ -384,7 +398,11 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val progress = view.getState()!!
-        val current_tree = opus_manager.get_tree()
+        val current_tree_position = opus_manager.get_original_position(
+            opus_manager.cursor.get_beatkey(),
+            opus_manager.cursor.get_position()
+        )
+        val current_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
         val duration = if (current_tree.is_event()) {
             val event = current_tree.get_event()!!
@@ -487,7 +505,11 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val current_tree = opus_manager.get_tree()
+        val current_tree_position = opus_manager.get_original_position(
+            opus_manager.cursor.get_beatkey(),
+            opus_manager.cursor.get_position()
+        )
+        val current_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
         val event = current_tree.get_event()
         if (event == null) {

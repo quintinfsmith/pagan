@@ -192,6 +192,27 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         this._cache_inv_blocked_tree_map.clear()
     }
 
+    // Get all blocked positions connected, regardless of if the given position is an event or a blocked tree
+    fun get_all_blocked_positions(beat_key: BeatKey, position: List<Int>): List<Pair<BeatKey, List<Int>>> {
+        val original = this.get_original_position(beat_key, position)
+        val output = mutableListOf(original)
+        if (this._cache_blocked_tree_map.containsKey(original)) {
+            for ((blocked_beat_key, blocked_position, _) in this._cache_blocked_tree_map[original]!!) {
+                output.add(Pair(blocked_beat_key, blocked_position))
+            }
+        }
+        return output
+    }
+
+    fun get_original_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
+        return if (!this.is_tree_blocked(beat_key, position)) {
+            Pair(beat_key, position)
+        } else {
+            val entry = this._cache_inv_blocked_tree_map[Pair(beat_key, position)]!!
+            Pair(entry.first, entry.second)
+        }
+    }
+
     // ----------------------------- Layer Specific functions ---------------------
     private fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Rational>> {
         val (target_offset, target_width) = this.get_leaf_offset_and_width(beat_key, position)

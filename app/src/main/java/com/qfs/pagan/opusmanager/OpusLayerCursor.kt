@@ -991,12 +991,17 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
         }
     }
+
     open fun set_event_at_cursor(event: InstrumentEvent) {
         when (this.cursor.ctl_level) {
             null -> {
-                this.set_event(
+                val original = this.get_original_position(
                     this.cursor.get_beatkey(),
-                    this.cursor.get_position(),
+                    this.cursor.get_position()
+                )
+                this.set_event(
+                    original.first,
+                    original.second,
                     event as InstrumentEvent
                 )
             }
@@ -1405,8 +1410,16 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 beat_key in this.get_beatkeys_in_range(first, second)
             }
             OpusManagerCursor.CursorMode.Single -> {
+                val cbeat_key = this.cursor.get_beatkey()
                 val cposition = this.cursor.get_position()
-                this.cursor.get_beatkey() == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
+                var output = false
+                for ((working_key, working_position) in this.get_all_blocked_positions(beat_key, position)) {
+                    if (cbeat_key == working_key && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
+                        output = true
+                        break
+                    }
+                }
+                output
             }
             OpusManagerCursor.CursorMode.Unset -> {
                 false

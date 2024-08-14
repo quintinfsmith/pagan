@@ -1094,6 +1094,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
             }
         }
+        this.withFragment { fragment ->
+            fragment.refresh_context_menu()
+        }
     }
 
 

@@ -1400,7 +1400,12 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
-                this.cursor.beat == beat_key.beat
+                if (this.cursor.beat == beat_key.beat) {
+                    true
+                } else {
+                    val head = this.get_original_position(beat_key, position) 
+                    head.first.beat == this.cursor.beat
+                }
             }
             OpusManagerCursor.CursorMode.Row -> {
                 this.cursor.channel == beat_key.channel && this.cursor.line_offset == beat_key.line_offset
@@ -1412,6 +1417,27 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Single -> {
                 val cbeat_key = this.cursor.get_beatkey()
                 val cposition = this.cursor.get_position()
+                cbeat_key == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
+            }
+            OpusManagerCursor.CursorMode.Unset -> {
+                false
+            }
+        }
+    }
+
+    fun is_secondary_selection(beat_key: BeatKey, position: List<Int>): Boolean {
+        if (this.cursor.ctl_level != null) {
+            return false
+        }
+
+        return when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Single -> {
+                val cbeat_key = this.cursor.get_beatkey()
+                val cposition = this.cursor.get_position()
+                if (cbeat_key == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
+                    return false
+                }
+
                 var output = false
                 for ((working_key, working_position) in this.get_all_blocked_positions(beat_key, position)) {
                     if (cbeat_key == working_key && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
@@ -1421,10 +1447,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 }
                 output
             }
-            OpusManagerCursor.CursorMode.Unset -> {
+            else -> {
                 false
             }
         }
+
     }
 
     fun is_global_control_selected(control_type: ControlEventType, beat: Int, position: List<Int>): Boolean {

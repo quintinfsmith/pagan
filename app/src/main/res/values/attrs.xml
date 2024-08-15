@@ -16,6 +16,7 @@
         <attr name="state_active" format="boolean"/>
         <attr name="state_alternate" format="boolean"/>
         <attr name="state_focused" format="boolean" />
+        <attr name="state_focused_secondary" format="boolean" />
         <attr name="state_linked" format="boolean" />
         <attr name="state_invalid" format="boolean" />
         <attr name="state_channel_even" format="boolean" />

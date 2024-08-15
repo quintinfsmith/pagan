@@ -35,12 +35,21 @@ class LeafButtonStd(
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map
         val col_leaf: Color = Color.valueOf(color_map[ColorMap.Palette.Leaf])
+        val col_leaf_selection: Color = Color.valueOf(color_map[ColorMap.Palette.LeafSelected])
+        val col_selection: Color = Color.valueOf(color_map[ColorMap.Palette.Selection])
         val col_empty: Color = Color.valueOf(color_map[ColorMap.Palette.ChannelEven])
         val col_spill = Color.rgb(
             ((col_leaf.red() * .7F) + (col_empty.red() * .3F)).toFloat(),
             ((col_leaf.green() * .7F) + (col_empty.green() * .3F)).toFloat(),
             ((col_leaf.blue() * .7F) + (col_empty.blue() * .3F)).toFloat()
         )
+
+        val col_secondary = Color.rgb(
+            ((col_selection.red() * .5F) + (col_leaf_selection.red() * .5F)).toFloat(),
+            ((col_selection.green() * .5F) + (col_leaf_selection.green() * .5F)).toFloat(),
+            ((col_selection.blue() * .5F) + (col_leaf_selection.blue() * .5F)).toFloat()
+        )
+
 
         return intArrayOf(
             color_map[ColorMap.Palette.LeafInvalidSelected],
@@ -52,6 +61,7 @@ class LeafButtonStd(
             color_map[ColorMap.Palette.LeafSelected],
             color_map[ColorMap.Palette.Leaf],
             color_map[ColorMap.Palette.Selection],
+            col_secondary,
 
             color_map[ColorMap.Palette.LinkSelected],
             color_map[ColorMap.Palette.Link],
@@ -59,7 +69,8 @@ class LeafButtonStd(
             color_map[ColorMap.Palette.LinkEmpty],
 
             col_spill,
-            color_map[ColorMap.Palette.LeafSelected]
+            color_map[ColorMap.Palette.LeafSelected],
+            col_secondary
         )
     }
 
@@ -286,7 +297,10 @@ class LeafButtonStd(
         }
         if (opus_manager.is_selected(beat_key, position)) {
             new_state.add(R.attr.state_focused)
+        } else if (opus_manager.is_secondary_selection(beat_key, position)) {
+            new_state.add(R.attr.state_focused_secondary)
         }
+
         if (beat_key.channel % 2 == 0) {
             new_state.add(R.attr.state_alternate)
         }

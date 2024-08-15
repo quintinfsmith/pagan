@@ -195,7 +195,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     // Get all blocked positions connected, regardless of if the given position is an event or a blocked tree
     fun get_all_blocked_positions(beat_key: BeatKey, position: List<Int>): List<Pair<BeatKey, List<Int>>> {
         val original = this.get_original_position(beat_key, position)
-        val output = mutableListOf(original)
+        val output = mutableListOf<Pair<BeatKey, List<Int>>>(original)
         if (this._cache_blocked_tree_map.containsKey(original)) {
             for ((blocked_beat_key, blocked_position, _) in this._cache_blocked_tree_map[original]!!) {
                 output.add(Pair(blocked_beat_key, blocked_position))

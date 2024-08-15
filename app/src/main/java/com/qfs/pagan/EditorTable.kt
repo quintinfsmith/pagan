@@ -353,22 +353,29 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                         }
 
                         for (linked_key in beat_keys) {
-                            val y = try {
-                                opus_manager.get_visible_row_from_ctl_line(
-                                    opus_manager.get_ctl_line_index(
-                                        opus_manager.get_abs_offset(
-                                            linked_key.channel,
-                                            linked_key.line_offset
-                                        )
-                                    )
-                                ) ?: continue
-                            } catch (e: IndexOutOfBoundsException) {
-                                return
+                            val shadow_beat_keys = mutableSetOf<BeatKey>()
+                            for ((shadow_key, _) in opus_manager.get_all_blocked_positions(linked_key, cursor.position)) {
+                                shadow_beat_keys.add(shadow_key)
                             }
+                            // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
+                            for (shadow_key in shadow_beat_keys) {
+                                val y = try {
+                                    opus_manager.get_visible_row_from_ctl_line(
+                                        opus_manager.get_ctl_line_index(
+                                            opus_manager.get_abs_offset(
+                                                shadow_key.channel,
+                                                shadow_key.line_offset
+                                            )
+                                        )
+                                    ) ?: continue
+                                } catch (e: IndexOutOfBoundsException) {
+                                    return
+                                }
 
-                            this._line_label_layout.notify_item_changed(y)
-                            column_label_adapter.notifyItemChanged(linked_key.beat)
-                            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, linked_key.beat, true)
+                                this._line_label_layout.notify_item_changed(y)
+                                column_label_adapter.notifyItemChanged(shadow_key.beat)
+                                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, shadow_key.beat, true)
+                            }
                         }
                     }
 

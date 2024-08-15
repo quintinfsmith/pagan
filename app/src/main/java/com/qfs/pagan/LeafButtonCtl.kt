@@ -39,6 +39,8 @@ abstract class LeafButtonCtl(
             color_map[ColorMap.Palette.CtlLeafSelected],
             color_map[ColorMap.Palette.CtlLeaf],
             color_map[ColorMap.Palette.CtlLineSelection],
+            // TODO: SEcondary
+            color_map[ColorMap.Palette.CtlLeafSelected],
 
             color_map[ColorMap.Palette.LinkSelected],
             color_map[ColorMap.Palette.Link],
@@ -46,6 +48,8 @@ abstract class LeafButtonCtl(
             color_map[ColorMap.Palette.LinkEmpty],
 
             color_map[ColorMap.Palette.CtlLeaf],
+            color_map[ColorMap.Palette.CtlLeafSelected],
+            // TODO: SEcondary
             color_map[ColorMap.Palette.CtlLeafSelected]
         )
     }

@@ -1400,12 +1400,13 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
-                if (this.cursor.beat == beat_key.beat) {
-                    true
-                } else {
-                    val head = this.get_original_position(beat_key, position) 
-                    head.first.beat == this.cursor.beat
-                }
+                false
+                //if (this.cursor.beat == beat_key.beat) {
+                //    true
+                //} else {
+                //    val head = this.get_original_position(beat_key, position) 
+                //    head.first.beat == this.cursor.beat
+                //}
             }
             OpusManagerCursor.CursorMode.Row -> {
                 this.cursor.channel == beat_key.channel && this.cursor.line_offset == beat_key.line_offset

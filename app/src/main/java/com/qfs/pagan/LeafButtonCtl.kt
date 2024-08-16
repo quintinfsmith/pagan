@@ -29,28 +29,39 @@ abstract class LeafButtonCtl(
     override fun get_tint_list(): IntArray {
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map
+
         return intArrayOf(
-            color_map[ColorMap.Palette.LeafInvalidSelected],
             color_map[ColorMap.Palette.LeafInvalid],
+            color_map[ColorMap.Palette.LeafInvalidSelected],
+            color_map[ColorMap.Palette.LeafInvalidSelected], // B
 
-            color_map[ColorMap.Palette.CtlLine],
-            color_map[ColorMap.Palette.CtlLine],
-
-            color_map[ColorMap.Palette.CtlLeafSelected],
-            color_map[ColorMap.Palette.CtlLeaf],
-            color_map[ColorMap.Palette.CtlLineSelection],
-            // TODO: SEcondary
-            color_map[ColorMap.Palette.CtlLeafSelected],
-
-            color_map[ColorMap.Palette.LinkSelected],
-            color_map[ColorMap.Palette.Link],
-            color_map[ColorMap.Palette.LinkEmptySelected],
             color_map[ColorMap.Palette.LinkEmpty],
+            color_map[ColorMap.Palette.Link],
+            color_map[ColorMap.Palette.Link], // B
+
+            color_map[ColorMap.Palette.LinkEmptySelected],
+            color_map[ColorMap.Palette.LinkSelected],
+            color_map[ColorMap.Palette.LinkSelected], // B
+
+            color_map[ColorMap.Palette.LinkEmptySelected], // B
+            color_map[ColorMap.Palette.LinkSelected], // B
+            color_map[ColorMap.Palette.LinkSelected], // B
 
             color_map[ColorMap.Palette.CtlLeaf],
+            color_map[ColorMap.Palette.CtlLeaf], // B
+
+            // Primary
+            color_map[ColorMap.Palette.CtlLineSelection],
             color_map[ColorMap.Palette.CtlLeafSelected],
-            // TODO: SEcondary
-            color_map[ColorMap.Palette.CtlLeafSelected]
+            color_map[ColorMap.Palette.CtlLeafSelected], // B
+
+            // Secondary
+            color_map[ColorMap.Palette.CtlLineSelection],
+            color_map[ColorMap.Palette.CtlLeafSelected],
+            color_map[ColorMap.Palette.CtlLeafSelected], // B
+
+            color_map[ColorMap.Palette.CtlLine],
+            color_map[ColorMap.Palette.CtlLine]
         )
     }
     override fun onAttachedToWindow() {

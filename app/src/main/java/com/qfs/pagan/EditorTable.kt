@@ -459,6 +459,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, x, true)
                 }
             }
+
             OpusManagerCursor.CursorMode.Row -> {
                 val y = when (cursor.ctl_level) {
                     null -> {

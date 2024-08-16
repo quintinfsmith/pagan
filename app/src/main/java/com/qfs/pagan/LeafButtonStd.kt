@@ -50,28 +50,40 @@ class LeafButtonStd(
             ((col_selection.blue() * .5F) + (col_leaf_selection.blue() * .5F)).toFloat()
         )
 
-
         return intArrayOf(
-            color_map[ColorMap.Palette.LeafInvalidSelected],
             color_map[ColorMap.Palette.LeafInvalid],
+            color_map[ColorMap.Palette.LeafInvalidSelected],
+            color_map[ColorMap.Palette.LeafInvalidSelected], // B
 
-            color_map[ColorMap.Palette.ChannelEven],
-            color_map[ColorMap.Palette.ChannelOdd],
-
-            color_map[ColorMap.Palette.LeafSelected],
-            color_map[ColorMap.Palette.Leaf],
-            color_map[ColorMap.Palette.Selection],
-            col_secondary,
-
-            color_map[ColorMap.Palette.LinkSelected],
-            color_map[ColorMap.Palette.Link],
-            color_map[ColorMap.Palette.LinkEmptySelected],
             color_map[ColorMap.Palette.LinkEmpty],
+            color_map[ColorMap.Palette.Link],
+            color_map[ColorMap.Palette.Link], // B
 
+            color_map[ColorMap.Palette.LinkEmptySelected],
+            color_map[ColorMap.Palette.LinkSelected],
+            color_map[ColorMap.Palette.LinkSelected], // B
+
+            color_map[ColorMap.Palette.LinkEmptySelected], // B
+            color_map[ColorMap.Palette.LinkSelected], // B
+            color_map[ColorMap.Palette.LinkSelected], // B
+
+            color_map[ColorMap.Palette.Leaf],
             col_spill,
+
+            // Primary
+            color_map[ColorMap.Palette.Selection],
             color_map[ColorMap.Palette.LeafSelected],
-            col_secondary
+            color_map[ColorMap.Palette.LeafSelected], // B
+
+            // Secondary
+            color_map[ColorMap.Palette.Selection],
+            color_map[ColorMap.Palette.LeafSelected],
+            color_map[ColorMap.Palette.LeafSelected], // B
+
+            color_map[ColorMap.Palette.ChannelOdd],
+            color_map[ColorMap.Palette.ChannelEven]
         )
+
     }
 
     override fun long_click(): Boolean {

@@ -1051,7 +1051,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun apply_undo(repeat: Int) {
-        println("UNDO-----------------------")
         super.apply_undo(repeat)
         this.recache_line_maps()
         this.get_editor_table()?.apply_queued_cell_changes()
@@ -1281,7 +1280,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread {
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            println("???HM-------------------------------")
             editor_table.update_cursor(this.cursor, false)
 
             this.withFragment {
@@ -1782,12 +1780,10 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-        println("$overlapper --> $overlappee")
         this._notify_cell_change(overlappee.first, true)
     }
 
     override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-        println("$overlapper -/> $overlappee")
         this._notify_cell_change(overlappee.first, true)
     }
 

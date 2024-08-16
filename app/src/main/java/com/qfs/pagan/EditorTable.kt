@@ -329,7 +329,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun update_cursor(cursor: OpusManagerCursor, deep_update: Boolean = true) {
-        println("UPDATE: $cursor")
         if (cursor != this._active_cursor) {
             try {
                 this.update_cursor(this._active_cursor, deep_update)

@@ -79,7 +79,6 @@ data class Rational(var n: Int, var d: Int) {
                 return
             }
 
-            println("REDUCED BY $gcd")
             this.n /= gcd
             this.d /= gcd
         }

@@ -329,6 +329,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun update_cursor(cursor: OpusManagerCursor, deep_update: Boolean = true) {
+        println("UPDATE: $cursor")
         if (cursor != this._active_cursor) {
             try {
                 this.update_cursor(this._active_cursor, deep_update)
@@ -354,9 +355,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
                         for (linked_key in beat_keys) {
                             val shadow_beat_keys = mutableSetOf<BeatKey>()
-                            for ((shadow_key, _) in opus_manager.get_all_blocked_positions(linked_key, cursor.position)) {
+                            val event_head = opus_manager.get_original_position(linked_key, cursor.position)
+                            for ((shadow_key, _) in opus_manager.get_all_blocked_positions(event_head.first, event_head.second)) {
                                 shadow_beat_keys.add(shadow_key)
                             }
+
                             // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
                             for (shadow_key in shadow_beat_keys) {
                                 val y = try {

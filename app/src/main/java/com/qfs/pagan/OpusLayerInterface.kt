@@ -1281,6 +1281,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread {
             val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            println("???HM-------------------------------")
             editor_table.update_cursor(this.cursor, false)
 
             this.withFragment {

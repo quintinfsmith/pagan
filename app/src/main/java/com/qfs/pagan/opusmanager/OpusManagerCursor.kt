@@ -63,7 +63,7 @@ data class OpusManagerCursor(
                     when (this.ctl_level) {
                         null,
                         CtlLineLevel.Line -> {
-                            this.get_beatkey() == other.get_beatkey()
+                            this.get_beatkey() == other.get_beatkey() && this.get_position() == other.get_position()
                         }
                         CtlLineLevel.Channel -> {
                             this.channel == other.channel && other.beat == this.beat

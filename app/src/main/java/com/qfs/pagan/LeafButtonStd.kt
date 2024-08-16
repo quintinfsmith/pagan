@@ -50,10 +50,18 @@ class LeafButtonStd(
             ((col_selection.blue() * .5F) + (col_leaf_selection.blue() * .5F)).toFloat()
         )
 
+        val col_leaf_invalid_selected = Color.valueOf(color_map[ColorMap.Palette.LeafInvalidSelected])
+        val col_leaf_invalid = Color.valueOf(color_map[ColorMap.Palette.LeafInvalid])
+        val col_leaf_invalid_selected_b = Color.rgb(
+            ((col_leaf_invalid_selected.red() * .7F) + (col_leaf_invalid.red() * .3F)).toFloat(),
+            ((col_leaf_invalid_selected.green() * .7F) + (col_leaf_invalid.green() * .3F)).toFloat(),
+            ((col_leaf_invalid_selected.blue() * .7F) + (col_leaf_invalid.blue() * .3F)).toFloat()
+        )
+
         return intArrayOf(
             color_map[ColorMap.Palette.LeafInvalid],
             color_map[ColorMap.Palette.LeafInvalidSelected],
-            color_map[ColorMap.Palette.LeafInvalidSelected], // B
+            col_leaf_invalid_selected_b,
 
             color_map[ColorMap.Palette.LinkEmpty],
             color_map[ColorMap.Palette.Link],
@@ -73,12 +81,12 @@ class LeafButtonStd(
             // Primary
             color_map[ColorMap.Palette.Selection],
             color_map[ColorMap.Palette.LeafSelected],
-            color_map[ColorMap.Palette.LeafSelected], // B
+            color_map[ColorMap.Palette.LeafSelected], // spill
 
             // Secondary
             color_map[ColorMap.Palette.Selection],
-            color_map[ColorMap.Palette.LeafSelected],
-            color_map[ColorMap.Palette.LeafSelected], // B
+            col_secondary,
+            col_secondary,
 
             color_map[ColorMap.Palette.ChannelOdd],
             color_map[ColorMap.Palette.ChannelEven]
@@ -278,9 +286,23 @@ class LeafButtonStd(
             return drawableState
         }
         val position = this.position
-
         val tree = try {
             opus_manager.get_tree(beat_key, position)
+        } catch (e: OpusTree.InvalidGetCall) {
+            return drawableState
+        } catch (e: IndexOutOfBoundsException) {
+            return drawableState
+        }
+
+        val original_position = try {
+            opus_manager.get_original_position(beat_key, position)
+        } catch (e: OpusTree.InvalidGetCall) {
+            return drawableState
+        } catch (e: IndexOutOfBoundsException) {
+            return drawableState
+        }
+        val tree_original = try {
+            opus_manager.get_tree(original_position.first, original_position.second)
         } catch (e: OpusTree.InvalidGetCall) {
             return drawableState
         } catch (e: IndexOutOfBoundsException) {
@@ -299,14 +321,23 @@ class LeafButtonStd(
                 }
                 else -> {}
             }
-        // Commenting out OpusLayerOverlapControl functionality so I can merge changes to import_midi
-        } else if (opus_manager.is_tree_blocked(beat_key, position)) {
+        } else if (tree_original != tree) {
+            when (tree_original.get_event()) {
+                is RelativeNoteEvent -> {
+                    val abs_value = opus_manager.get_absolute_value(original_position.first, original_position.second)
+                    if (abs_value == null || abs_value < 0 || abs_value >= opus_manager.tuning_map.size * 8) {
+                        new_state.add(R.attr.state_invalid)
+                    }
+                }
+                else -> {}
+            }
             new_state.add(R.attr.state_spill)
         }
 
         if (opus_manager.is_networked(beat_key)) {
             new_state.add(R.attr.state_linked)
         }
+
         if (opus_manager.is_selected(beat_key, position)) {
             new_state.add(R.attr.state_focused)
         } else if (opus_manager.is_secondary_selection(beat_key, position)) {

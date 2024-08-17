@@ -97,13 +97,13 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     override fun remove_beat(beat_index: Int) {
         val decache = mutableSetOf<Pair<BeatKey, List<Int>>>()
         val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
-        val needs_decrement = mutableSetOf<Pair<BeatKey, List<Int>>>()
+        val needs_decrement = mutableListOf<Pair<BeatKey, List<Int>>>()
         for ((tail, head) in this._cache_inv_blocked_tree_map) {
             if (head.first.beat == beat_index) {
                 decache.add(Pair(head.first, head.second))
             } else if (tail.first.beat >= beat_index && head.first.beat < beat_index) {
                 needs_recache.add(Pair(head.first, head.second))
-            } else if (head.first.beat > beat_index) {
+            } else if (head.first.beat > beat_index && !needs_decrement.contains(Pair(head.first, head.second))) {
                 needs_decrement.add(Pair(head.first, head.second))
             }
         }
@@ -111,20 +111,15 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         for (cache_key in decache) {
             this.decache_overlapping_leaf(cache_key.first, cache_key.second)
         }
-        decache.clear()
 
-        for ((blocked_beat_key, blocked_position) in this._cache_inv_blocked_tree_map.keys) {
-            if (blocked_beat_key.beat != beat_index) {
-                continue
-            }
-            val (blocker_key, blocker_position, _) = this._cache_inv_blocked_tree_map[Pair(blocked_beat_key, blocked_position)]!!
-            needs_recache.add(Pair(blocker_key, blocker_position))
-        }
+        decache.clear()
 
         super.remove_beat(beat_index)
 
-        for ((beat_key, position) in needs_decrement) {
-            val original_blocked = this._cache_blocked_tree_map.remove(Pair(beat_key, position)) ?: continue // Already updated
+        val inv_pairs = mutableListOf<Triple<Pair<BeatKey, List<Int>>, Pair<BeatKey, List<Int>>, Rational>>()
+        val new_cache = Array(needs_decrement.size) { i: Int ->
+            val original_blocked = this._cache_blocked_tree_map.remove(needs_decrement[i])!!
+            var (beat_key, position) = needs_decrement[i]
 
             val new_beat_key = BeatKey(
                 beat_key.channel,
@@ -132,65 +127,111 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                 beat_key.beat - 1
             )
 
-            this._cache_blocked_tree_map[Pair(new_beat_key, position)] = MutableList(original_blocked.size) { i: Int ->
-                Triple(
-                    BeatKey(
-                        original_blocked[i].first.channel,
-                        original_blocked[i].first.line_offset,
-                        original_blocked[i].first.beat - 1
-                    ),
-                    original_blocked[i].second,
-                    original_blocked[i].third
+            Pair(
+                Pair(new_beat_key, position),
+                MutableList(original_blocked.size) { j: Int ->
+                    this._cache_inv_blocked_tree_map.remove(
+                        Pair(
+                            original_blocked[j].first,
+                            original_blocked[j].second
+                        )
+                    )
+
+                    Triple(
+                        BeatKey(
+                            original_blocked[j].first.channel,
+                            original_blocked[j].first.line_offset,
+                            original_blocked[j].first.beat - 1
+                        ),
+                        original_blocked[j].second,
+                        original_blocked[j].third
+                    )
+                }
+            )
+        }
+
+        for ((cache_key, blocked_map) in new_cache) {
+            for ((working_key, working_position, amount) in blocked_map) {
+                this._cache_inv_blocked_tree_map[Pair(working_key, working_position)] = Triple(
+                    cache_key.first,
+                    cache_key.second,
+                    amount
                 )
             }
+            this._cache_blocked_tree_map[cache_key] = blocked_map
         }
 
         for ((blocker_key, blocker_position) in needs_recache) {
             this.update_blocked_tree_cache(blocker_key, blocker_position)
         }
 
-
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
         val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
-        val needs_inc = mutableSetOf<Pair<BeatKey, List<Int>>>()
+        val needs_inc = mutableListOf<Pair<BeatKey, List<Int>>>()
+
         for ((tail, head) in this._cache_inv_blocked_tree_map) {
             if (tail.first.beat < beat_index) {
                 continue
-            } else if (head.first.beat <= beat_index) {
+            } else if (head.first.beat < beat_index) {
                 needs_recache.add(Pair(head.first, head.second))
-            } else {
+            } else if (!needs_inc.contains(Pair(head.first, head.second))) {
                 needs_inc.add(Pair(head.first, head.second))
             }
         }
+
         super.insert_beat(beat_index, beats_in_column)
 
-        for ((beat_key, position) in needs_inc) {
-            val original_blocked = this._cache_blocked_tree_map.remove(Pair(beat_key, position)) ?: continue // Already updated
+
+        val inv_pairs = mutableListOf<Triple<Pair<BeatKey, List<Int>>, Pair<BeatKey, List<Int>>, Rational>>()
+        val new_cache = Array(needs_inc.size) { i: Int ->
+            val original_blocked = this._cache_blocked_tree_map.remove(needs_inc[i])!!
+            var (beat_key, position) = needs_inc[i]
+
             val new_beat_key = BeatKey(
                 beat_key.channel,
                 beat_key.line_offset,
                 beat_key.beat + 1
             )
 
-            this._cache_blocked_tree_map[Pair(new_beat_key, position)] = MutableList(original_blocked.size) { i: Int ->
-                Triple(
-                    BeatKey(
-                        original_blocked[i].first.channel,
-                        original_blocked[i].first.line_offset,
-                        original_blocked[i].first.beat + 1
-                    ),
-                    original_blocked[i].second,
-                    original_blocked[i].third
+            Pair(
+                Pair(new_beat_key, position),
+                MutableList(original_blocked.size) { j: Int ->
+                    this._cache_inv_blocked_tree_map.remove(
+                        Pair(
+                            original_blocked[j].first,
+                            original_blocked[j].second
+                        )
+                    )
+
+                    Triple(
+                        BeatKey(
+                            original_blocked[j].first.channel,
+                            original_blocked[j].first.line_offset,
+                            original_blocked[j].first.beat + 1
+                        ),
+                        original_blocked[j].second,
+                        original_blocked[j].third
+                    )
+                }
+            )
+        }
+        
+        for ((cache_key, blocked_map) in new_cache) {
+            for ((working_key, working_position, amount) in blocked_map) {
+                this._cache_inv_blocked_tree_map[Pair(working_key, working_position)] = Triple(
+                    cache_key.first,
+                    cache_key.second,
+                    amount
                 )
             }
+            this._cache_blocked_tree_map[cache_key] = blocked_map
         }
 
         for (cache_key in needs_recache) {
             this.update_blocked_tree_cache(cache_key.first, cache_key.second)
         }
-
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {

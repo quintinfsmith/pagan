@@ -72,9 +72,14 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
     }
 
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
+    override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+        this.recache_blocked_tree_wrapper(beat_key, position) {
+            super.remove_standard(beat_key, position)
+        }
+    }
+    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
         this.recache_blocked_tree_wrapper(beat_key, position.subList(0, position.size - 1)) {
-            super.remove(beat_key, position)
+            super.remove_one_of_two(beat_key, position)
         }
     }
 

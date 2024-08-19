@@ -95,6 +95,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         } else {
             position
         }
+
         this.recache_blocked_tree_wrapper(beat_key, parent_position) {
             super.insert(beat_key, position)
         }
@@ -531,25 +532,13 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     // -------------------------------------------------------
+
     private fun is_blocked_remove(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
         val blocker = this.get_blocking_position(beat_key, position) ?: return null
 
         val (blocker_key, blocker_position) = blocker
-        var next_beat_key = beat_key
-        var next_position = position
-        while (true) {
-            val next = this.get_proceding_leaf_position(next_beat_key, next_position) ?: break
-            next_beat_key = next.first
-            next_position = next.second
+        var (next_beat_key, next_position) = this.get_proceding_event_position(beat_key, position) ?: return null
 
-            if (this.get_tree(next_beat_key, next_position).is_event()) {
-                break
-            }
-        }
-
-        if (next_beat_key == beat_key && next_position == position) {
-            return null
-        }
         val blocker_tree = this.get_tree(blocker_key, blocker_position)
         val (head_offset, head_width) = if (blocker_key == beat_key) {
             this.get_leaf_offset_and_width(blocker_key, blocker_position, position, -1)
@@ -572,31 +561,21 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     private fun is_blocked_set_event(beat_key: BeatKey, position: List<Int>, duration: Int): Pair<BeatKey, List<Int>>? {
         val blocker = this.get_blocking_position(beat_key, position)
+        println("A")
         if (blocker != null) {
             return blocker
         }
 
-        var next_beat_key = beat_key
-        var next_position = position
-        while (true) {
-            val next = this.get_proceding_leaf_position(next_beat_key, next_position) ?: break
-            next_beat_key = next.first
-            next_position = next.second
-
-            if (this.get_tree(next_beat_key, next_position).is_event()) {
-                break
-            }
-        }
-
-        if (next_beat_key == beat_key && next_position == position) {
-            return null
-        }
+        var (next_beat_key, next_position) = this.get_proceding_event_position(beat_key, position) ?: return null
+        println("C")
 
         val (head_offset, head_width) = this.get_leaf_offset_and_width(beat_key, position)
         val (target_offset, target_width) = this.get_leaf_offset_and_width(next_beat_key, next_position)
         return if (target_offset >= head_offset && target_offset <= head_offset + (head_width * duration)) {
+            println("D")
             Pair(next_beat_key, next_position)
         } else {
+            println("E")
             null
         }
     }

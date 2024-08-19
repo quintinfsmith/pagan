@@ -345,6 +345,28 @@ open class OpusLayerBase {
         return this.get_tree(working_beat_key, working_position).get_event()
     }
 
+    fun get_proceding_event_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+        val next = this.get_proceding_leaf_position(beat_key, position) ?: return null
+        var working_beat_key = next.first
+        var working_position = next.second
+        var found_position: Pair<BeatKey, List<Int>>? = null
+        while (found_position == null) {
+            val working_tree = this.get_tree(working_beat_key, working_position)
+            if (working_tree.is_event()) {
+                found_position = Pair(working_beat_key, working_position)
+            } else {
+                val tmp = this.get_proceding_leaf_position(working_beat_key, working_position) ?: break
+                working_beat_key = tmp.first
+                working_position = tmp.second
+            }
+        }
+        return if (found_position != null) {
+            Pair(working_beat_key, working_position)
+        } else {
+            null
+        }
+    }
+
     /**
      * Get the leaf immediately before the tree found at [beat_key]/[position], if any
      * *it may not be an immediate sibling, rather an aunt, niece, etc*

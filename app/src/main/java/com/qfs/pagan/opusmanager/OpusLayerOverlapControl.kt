@@ -308,8 +308,8 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     fun get_all_blocked_positions(beat_key: BeatKey, position: List<Int>): List<Pair<BeatKey, List<Int>>> {
         val original = this.get_original_position(beat_key, position)
         val output = mutableListOf<Pair<BeatKey, List<Int>>>(original)
-        val blocked_trees = this._cache_blocked_tree_map[original]
-        if (blocked_trees != null) {
+        if (this._cache_blocked_tree_map.containsKey(original)) {
+            val blocked_trees = this._cache_blocked_tree_map[original]!!
             for ((blocked_beat_key, blocked_position, _) in blocked_trees) {
                 output.add(Pair(blocked_beat_key, blocked_position))
             }
@@ -561,21 +561,17 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
     private fun is_blocked_set_event(beat_key: BeatKey, position: List<Int>, duration: Int): Pair<BeatKey, List<Int>>? {
         val blocker = this.get_blocking_position(beat_key, position)
-        println("A")
         if (blocker != null) {
             return blocker
         }
 
         var (next_beat_key, next_position) = this.get_proceding_event_position(beat_key, position) ?: return null
-        println("C")
 
         val (head_offset, head_width) = this.get_leaf_offset_and_width(beat_key, position)
         val (target_offset, target_width) = this.get_leaf_offset_and_width(next_beat_key, next_position)
         return if (target_offset >= head_offset && target_offset <= head_offset + (head_width * duration)) {
-            println("D")
             Pair(next_beat_key, next_position)
         } else {
-            println("E")
             null
         }
     }

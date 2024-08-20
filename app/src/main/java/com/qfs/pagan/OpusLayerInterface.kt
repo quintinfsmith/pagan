@@ -21,6 +21,8 @@ import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.pow
+import kotlin.math.max
+import kotlin.math.min
 
 class OpusLayerInterface : OpusLayerCursor() {
     class HidingNonEmptyPercussionException: Exception()
@@ -41,6 +43,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     private val _cached_ctl_map_line = HashMap<Triple<Int, Int, ControlEventType>, Int>()
     private val _cached_ctl_map_channel = HashMap<Pair<Int, ControlEventType>, Int>()
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
+
+    private var _previous_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -807,18 +811,20 @@ class OpusLayerInterface : OpusLayerCursor() {
         // }
 
         // this._notify_cell_changes(link_keys)
+        
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {
-                editor_table.update_cursor(bkp_cursor)
+                this.queue_cursor_update(bkp_cursor)
+                this.queue_cursor_update(this.cursor)
                 editor_table.new_column(beat_index, true)
-                editor_table.update_cursor(this.cursor)
             }
             else -> {
+                this.queue_cursor_update(bkp_cursor)
+                this.queue_cursor_update(this.cursor)
                 this.runOnUiThread {
-                    editor_table.update_cursor(bkp_cursor)
                     editor_table.new_column(beat_index)
-                    editor_table.update_cursor(this.cursor)
+                    editor_table.apply_queued_notifications()
                 }
             }
         }
@@ -831,23 +837,22 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val editor_table = this.get_editor_table() ?: return
-
         when (this.get_ui_lock_level()) {
             UI_LOCK_FULL -> { }
             UI_LOCK_PARTIAL -> {
-                editor_table.update_cursor(bkp_cursor)
+                this.queue_cursor_update(bkp_cursor)
+                this.queue_cursor_update(this.cursor)
                 for (i in 0 until count) {
                     editor_table.new_column(beat_index + i, true)
                 }
-                editor_table.update_cursor(this.cursor)
             }
             else -> {
+                this.queue_cursor_update(bkp_cursor)
+                this.queue_cursor_update(this.cursor)
                 this.runOnUiThread {
-                    editor_table.update_cursor(bkp_cursor)
                     for (i in 0 until count) {
                         editor_table.new_column(beat_index + i)
                     }
-                    editor_table.update_cursor(this.cursor)
                 }
             }
         }
@@ -1104,9 +1109,10 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.cursor_apply(cursor)
 
         if (this.get_ui_lock_level() != UI_LOCK_FULL) {
+            val editor_table = this.get_editor_table()
+            this.queue_cursor_update(this.cursor)
             this.runOnUiThread {
-                val editor_table = this.get_editor_table()
-                editor_table?.update_cursor(this.cursor)
+                editor_table?.apply_queued_notifications()
                 this.withFragment {
                     when (cursor.mode) {
                         OpusManagerCursor.CursorMode.Row -> {
@@ -1155,9 +1161,10 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.cursor_clear()
 
         if (this.get_ui_lock_level() != UI_LOCK_FULL) {
+            val editor_table = this.get_editor_table()
+            this.queue_cursor_update(this.cursor)
             this.runOnUiThread {
-                val editor_table = this.get_editor_table()
-                editor_table?.update_cursor(this.cursor)
+                editor_table?.apply_queued_notifications()
                 this.withFragment {
                     it.clear_context_menu()
                 }
@@ -1177,9 +1184,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        this.queue_cursor_update(this.cursor)
         this.runOnUiThread {
             val editor_table = this.get_editor_table()
-            editor_table?.update_cursor(this.cursor)
+            editor_table?.apply_queued_notifications()
 
             this.withFragment { main ->
                 main.set_context_menu_line()
@@ -1199,9 +1207,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        this.queue_cursor_update(this.cursor)
         this.runOnUiThread {
             val editor_table = this.get_editor_table()
-            editor_table?.update_cursor(this.cursor)
+            editor_table?.apply_queued_notifications()
 
             this.withFragment { main ->
                 main.set_context_menu_control_line()
@@ -1221,9 +1230,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        this.queue_cursor_update(this.cursor)
         this.runOnUiThread {
             val editor_table = this.get_editor_table()
-            editor_table?.update_cursor(this.cursor)
+            editor_table?.apply_queued_notifications()
 
             this.withFragment { main ->
                 main.set_context_menu_control_line()
@@ -1239,9 +1249,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        this.queue_cursor_update(this.cursor)
         this.runOnUiThread {
             val editor_table = this.get_editor_table()
-            editor_table?.update_cursor(this.cursor)
+            editor_table?.apply_queued_notifications()
 
             this.withFragment { main ->
                 main.set_context_menu_control_line()
@@ -1251,11 +1262,13 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_column(beat: Int) {
         super.cursor_select_column(beat)
+
+        this.queue_cursor_update(this.cursor)
         this.runOnUiThread {
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
+            val editor_table = this.get_editor_table()
+            editor_table?.apply_queued_notifications()
 
             this.withFragment { main ->
-                editor_table.update_cursor(this.cursor)
                 main.set_context_menu_column()
             }
         }
@@ -1278,10 +1291,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor, false)
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
 
+        this.runOnUiThread {
+            editor_table.apply_queued_notifications()
             this.withFragment {
                 if (this.is_percussion(beat_key.channel)) {
                     it.set_context_menu_leaf_percussion()
@@ -1304,10 +1318,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
         this.runOnUiThread {
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor, false)
-
+            editor_table.apply_queued_notifications()
             this.withFragment {
                  it.set_context_menu_line_control_leaf()
             }
@@ -1332,10 +1346,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
         this.runOnUiThread {
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor, false)
-
+            editor_table.apply_queued_notifications()
             this.withFragment {
                 it.set_context_menu_line_control_leaf()
             }
@@ -1354,11 +1368,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
         this.runOnUiThread {
+            editor_table.apply_queued_notifications()
             this.withFragment {
-                val editor_table = this.get_editor_table() ?: return@withFragment
-                editor_table.update_cursor(this.cursor, false)
-
                 it.set_context_menu_line_control_leaf()
             }
         }
@@ -1371,10 +1385,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor)
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
 
+        this.runOnUiThread {
+            editor_table.apply_queued_notifications()
             this.withFragment {
                 it.set_context_menu_linking()
             }
@@ -1388,10 +1403,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
         this.runOnUiThread {
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor)
-
+            editor_table.apply_queued_notifications()
             this.withFragment {
                 it.set_context_menu_line_control_leaf_b()
             }
@@ -1404,9 +1419,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
         this.runOnUiThread {
-            val editor_table = this.get_editor_table() ?: return@runOnUiThread
-            editor_table.update_cursor(this.cursor)
+            editor_table.apply_queued_notifications()
 
             this.withFragment {
                 it.set_context_menu_line_control_leaf_b()
@@ -1421,8 +1437,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        val editor_table = this.get_editor_table() ?: return
+        this.queue_cursor_update(this.cursor, false)
         this.runOnUiThread {
-            this.get_editor_table()?.update_cursor(this.cursor)
+            editor_table.apply_queued_notifications()
             this.withFragment {
                 it.set_context_menu_linking()
             }
@@ -1803,4 +1821,176 @@ class OpusLayerInterface : OpusLayerCursor() {
         return base_frequency * 2F.pow((transpose.toFloat() / radix.toFloat()) + (maximum_initial_frequency * max_octave.toFloat()))
     }
 
+    //------------------------------------------------------------------------
+    fun queue_cursor_update(cursor: OpusManagerCursor, deep_update: Boolean = true) {
+        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
+            return
+        }
+
+        if (cursor != this._previous_cursor) {
+            try {
+                this.queue_cursor_update(this._previous_cursor, deep_update)
+            } catch (e: OpusTree.InvalidGetCall) {
+                // Pass
+            }
+            this._previous_cursor = cursor.copy()
+        }
+
+
+        val coordinates_to_update = mutableSetOf<EditorTable.Coordinate>()
+        val columns_to_update = mutableSetOf<Int>()
+
+        when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Single -> {
+                when (cursor.ctl_level) {
+                    null -> {
+                        val beat_key = cursor.get_beatkey()
+                        val beat_keys = if (deep_update) {
+                            this.get_all_linked(beat_key)
+                        } else {
+                            listOf(beat_key)
+                        }
+
+                        for (linked_key in beat_keys) {
+                            val shadow_beat_keys = mutableSetOf<BeatKey>()
+                            val event_head = this.get_original_position(linked_key, cursor.position)
+                            for ((shadow_key, _) in this.get_all_blocked_positions(event_head.first, event_head.second)) {
+                                shadow_beat_keys.add(shadow_key)
+                            }
+
+                            // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
+                            for (shadow_key in shadow_beat_keys) {
+                                val y = try {
+                                    this.get_visible_row_from_ctl_line(
+                                        this.get_ctl_line_index(
+                                            this.get_abs_offset(
+                                                shadow_key.channel,
+                                                shadow_key.line_offset
+                                            )
+                                        )
+                                    ) ?: continue
+                                } catch (e: IndexOutOfBoundsException) {
+                                    return
+                                }
+
+                                coordinates_to_update.add(EditorTable.Coordinate(y, shadow_key.beat))
+                            }
+                        }
+                    }
+
+                    CtlLineLevel.Line -> {
+                        val y = this.get_visible_row_from_ctl_line_line(
+                            cursor.ctl_type!!,
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
+                    }
+                    CtlLineLevel.Channel -> {
+                        val y = this.get_visible_row_from_ctl_line_channel(
+                            cursor.ctl_type!!,
+                            cursor.channel
+                        )
+                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
+                    }
+
+                    CtlLineLevel.Global -> {
+                        val y = this.get_visible_row_from_ctl_line_global(
+                            cursor.ctl_type!!
+                        )
+
+                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
+                    }
+                }
+            }
+
+            OpusManagerCursor.CursorMode.Range -> {
+                when (cursor.ctl_level) {
+                    null -> {
+                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
+                        for (beat_key in this.get_beatkeys_in_range(top_left, bottom_right)) {
+                            val y = try {
+                                this.get_visible_row_from_ctl_line(
+                                    this.get_ctl_line_index(
+                                        this.get_abs_offset(
+                                            beat_key.channel, beat_key.line_offset
+                                        )
+                                    )
+                                ) ?: continue
+                            } catch (e: IndexOutOfBoundsException) {
+                                continue
+                            }
+
+                            coordinates_to_update.add(EditorTable.Coordinate(y, beat_key.beat))
+                        }
+                    }
+                    else -> {
+                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
+                        val y = when (cursor.ctl_level!!) {
+                            // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
+                            CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(
+                                cursor.ctl_type!!,
+                                top_left.channel,
+                                top_left.line_offset
+                            )
+                            // Can assume top_left.channel == bottom_right.channel
+                            CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+                            CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                        }
+
+                        val first_beat = min(top_left.beat, bottom_right.beat)
+                        val last_beat = max(top_left.beat, bottom_right.beat)
+
+                        for (x in first_beat..last_beat) {
+                            coordinates_to_update.add(EditorTable.Coordinate(y, x))
+                        }
+                    }
+                }
+            }
+
+            OpusManagerCursor.CursorMode.Row -> {
+                val y = when (cursor.ctl_level) {
+                    null -> {
+                        try {
+                            this.get_visible_row_from_ctl_line(
+                                this.get_ctl_line_index(
+                                    this.get_abs_offset(
+                                        cursor.channel,
+                                        cursor.line_offset
+                                    )
+                                )
+                            ) ?: return
+                        } catch (e: IndexOutOfBoundsException) {
+                            return
+                        }
+                    }
+                    CtlLineLevel.Line -> {
+                        this.get_visible_row_from_ctl_line_line(
+                            cursor.ctl_type!!,
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                    }
+                    CtlLineLevel.Channel -> {
+                        this.get_visible_row_from_ctl_line_channel(
+                            cursor.ctl_type!!,
+                            cursor.channel
+                        )
+                    }
+                    CtlLineLevel.Global -> {
+                        this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                    }
+                }
+
+                this.get_editor_table()?.notify_row_changed(y, true)
+            }
+
+            OpusManagerCursor.CursorMode.Column -> {
+                this.get_editor_table()?.notify_column_changed(cursor.beat, true)
+            }
+            OpusManagerCursor.CursorMode.Unset -> { }
+        }
+
+        this._notify_cell_change(coordinates_to_update.toList(), true)
+    }
 }

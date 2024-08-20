@@ -35,7 +35,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
 
-    private var _active_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
     // Scroll Locks
     var _label_scroll_locked = false
@@ -44,6 +43,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     var needs_setup = true
 
     private val _queued_cell_notifications = mutableListOf<Coordinate>()
+    private val _queued_column_notifications = mutableListOf<Int>()
 
     companion object {
         // Intentionally Not Enums, So we can use gt/lt comparisons instead of multiple checks
@@ -328,184 +328,199 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun update_cursor(cursor: OpusManagerCursor, deep_update: Boolean = true) {
-        if (cursor != this._active_cursor) {
-            try {
-                this.update_cursor(this._active_cursor, deep_update)
-            } catch (e: OpusTree.InvalidGetCall) {
-                // Pass
-            }
-            this._active_cursor = cursor.copy()
-        }
+    // fun update_cursor(cursor: OpusManagerCursor, deep_update: Boolean = true) {
+    //     if (cursor != this._active_cursor) {
+    //         try {
+    //             this.update_cursor(this._active_cursor, deep_update)
+    //         } catch (e: OpusTree.InvalidGetCall) {
+    //             // Pass
+    //         }
+    //         this._active_cursor = cursor.copy()
+    //     }
 
-        val opus_manager = this.get_opus_manager()
+    //     val opus_manager = this.get_opus_manager()
+    //     val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
+
+    //     when (cursor.mode) {
+    //         OpusManagerCursor.CursorMode.Single -> {
+    //             when (cursor.ctl_level) {
+    //                 null -> {
+    //                     val beat_key = cursor.get_beatkey()
+    //                     val beat_keys = if (deep_update) {
+    //                         opus_manager.get_all_linked(beat_key)
+    //                     } else {
+    //                         listOf(beat_key)
+    //                     }
+
+    //                     for (linked_key in beat_keys) {
+    //                         val shadow_beat_keys = mutableSetOf<BeatKey>()
+    //                         val event_head = opus_manager.get_original_position(linked_key, cursor.position)
+    //                         for ((shadow_key, _) in opus_manager.get_all_blocked_positions(event_head.first, event_head.second)) {
+    //                             shadow_beat_keys.add(shadow_key)
+    //                         }
+
+    //                         // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
+    //                         for (shadow_key in shadow_beat_keys) {
+    //                             val y = try {
+    //                                 opus_manager.get_visible_row_from_ctl_line(
+    //                                     opus_manager.get_ctl_line_index(
+    //                                         opus_manager.get_abs_offset(
+    //                                             shadow_key.channel,
+    //                                             shadow_key.line_offset
+    //                                         )
+    //                                     )
+    //                                 ) ?: continue
+    //                             } catch (e: IndexOutOfBoundsException) {
+    //                                 return
+    //                             }
+
+    //                             this._line_label_layout.notify_item_changed(y)
+    //                             column_label_adapter.notifyItemChanged(shadow_key.beat)
+    //                             (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, shadow_key.beat, true)
+    //                         }
+    //                     }
+    //                 }
+
+    //                 CtlLineLevel.Line -> {
+    //                     val y = opus_manager.get_visible_row_from_ctl_line_line(
+    //                         cursor.ctl_type!!,
+    //                         cursor.channel,
+    //                         cursor.line_offset
+    //                     )
+    //                     this._line_label_layout.notify_item_changed(y)
+    //                     column_label_adapter.notifyItemChanged(cursor.beat)
+    //                     (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
+    //                 }
+    //                 CtlLineLevel.Channel -> {
+    //                     val y = opus_manager.get_visible_row_from_ctl_line_channel(
+    //                         cursor.ctl_type!!,
+    //                         cursor.channel
+    //                     )
+    //                     this._line_label_layout.notify_item_changed(y)
+    //                     column_label_adapter.notifyItemChanged(cursor.beat)
+    //                     (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
+    //                 }
+
+    //                 CtlLineLevel.Global -> {
+    //                     val y = opus_manager.get_visible_row_from_ctl_line_global(
+    //                         cursor.ctl_type!!
+    //                     )
+
+    //                     this._line_label_layout.notify_item_changed(y)
+    //                     column_label_adapter.notifyItemChanged(cursor.beat)
+    //                     (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
+    //                 }
+    //             }
+    //         }
+
+    //         OpusManagerCursor.CursorMode.Range -> {
+    //             val coords_to_update = mutableListOf<Pair<Int, Int>>()
+    //             when (cursor.ctl_level) {
+    //                 null -> {
+    //                     val (top_left, bottom_right) = cursor.get_ordered_range()!!
+    //                     for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
+    //                         val y = try {
+    //                             opus_manager.get_visible_row_from_ctl_line(
+    //                                 opus_manager.get_ctl_line_index(
+    //                                     opus_manager.get_abs_offset(
+    //                                         beat_key.channel, beat_key.line_offset
+    //                                     )
+    //                                 )
+    //                             ) ?: continue
+    //                         } catch (e: IndexOutOfBoundsException) {
+    //                             continue
+    //                         }
+
+    //                         coords_to_update.add(Pair(y, beat_key.beat))
+    //                     }
+    //                 }
+    //                 else -> {
+    //                     val (top_left, bottom_right) = cursor.get_ordered_range()!!
+    //                     val y = when (cursor.ctl_level!!) {
+    //                         // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
+    //                         CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(
+    //                             cursor.ctl_type!!,
+    //                             top_left.channel,
+    //                             top_left.line_offset
+    //                         )
+    //                         // Can assume top_left.channel == bottom_right.channel
+    //                         CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+    //                         CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+    //                     }
+    //                     val first_beat = min(top_left.beat, bottom_right.beat)
+    //                     val last_beat = max(top_left.beat, bottom_right.beat)
+    //                     for (x in first_beat..last_beat) {
+    //                         coords_to_update.add(Pair(y, x))
+    //                     }
+    //                 }
+    //             }
+
+    //             for ((y, x) in coords_to_update) {
+    //                 this._line_label_layout.notify_item_changed(y)
+    //                 column_label_adapter.notifyItemChanged(x)
+    //                 (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, x, true)
+    //             }
+    //         }
+
+    //         OpusManagerCursor.CursorMode.Row -> {
+    //             val y = when (cursor.ctl_level) {
+    //                 null -> {
+    //                     try {
+    //                         opus_manager.get_visible_row_from_ctl_line(
+    //                             opus_manager.get_ctl_line_index(
+    //                                 opus_manager.get_abs_offset(
+    //                                     cursor.channel,
+    //                                     cursor.line_offset
+    //                                 )
+    //                             )
+    //                         ) ?: return
+    //                     } catch (e: IndexOutOfBoundsException) {
+    //                         return
+    //                     }
+    //                 }
+    //                 CtlLineLevel.Line -> {
+    //                     opus_manager.get_visible_row_from_ctl_line_line(
+    //                         cursor.ctl_type!!,
+    //                         cursor.channel,
+    //                         cursor.line_offset
+    //                     )
+    //                 }
+    //                 CtlLineLevel.Channel -> {
+    //                     opus_manager.get_visible_row_from_ctl_line_channel(
+    //                         cursor.ctl_type!!,
+    //                         cursor.channel
+    //                     )
+    //                 }
+    //                 CtlLineLevel.Global -> {
+    //                     opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+    //                 }
+    //             }
+
+    //             this._line_label_layout.notify_item_changed(y)
+    //             (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
+    //         }
+
+    //         OpusManagerCursor.CursorMode.Column -> {
+    //             (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(cursor.beat)
+    //             column_label_adapter.notifyItemChanged(cursor.beat)
+    //         }
+    //         OpusManagerCursor.CursorMode.Unset -> { }
+    //     }
+    // }
+    //
+    fun apply_queued_notifications() {
+        this.apply_queued_column_changes()
+        this.apply_queued_cell_changes()
+    }
+
+    fun apply_queued_column_changes() {
+        val queued_columns = this._queued_column_notifications.toList()
         val column_label_adapter = (this.column_label_recycler.adapter!! as ColumnLabelAdapter)
-
-        when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single -> {
-                when (cursor.ctl_level) {
-                    null -> {
-                        val beat_key = cursor.get_beatkey()
-                        val beat_keys = if (deep_update) {
-                            opus_manager.get_all_linked(beat_key)
-                        } else {
-                            listOf(beat_key)
-                        }
-
-                        for (linked_key in beat_keys) {
-                            val shadow_beat_keys = mutableSetOf<BeatKey>()
-                            val event_head = opus_manager.get_original_position(linked_key, cursor.position)
-                            for ((shadow_key, _) in opus_manager.get_all_blocked_positions(event_head.first, event_head.second)) {
-                                shadow_beat_keys.add(shadow_key)
-                            }
-
-                            // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
-                            for (shadow_key in shadow_beat_keys) {
-                                val y = try {
-                                    opus_manager.get_visible_row_from_ctl_line(
-                                        opus_manager.get_ctl_line_index(
-                                            opus_manager.get_abs_offset(
-                                                shadow_key.channel,
-                                                shadow_key.line_offset
-                                            )
-                                        )
-                                    ) ?: continue
-                                } catch (e: IndexOutOfBoundsException) {
-                                    return
-                                }
-
-                                this._line_label_layout.notify_item_changed(y)
-                                column_label_adapter.notifyItemChanged(shadow_key.beat)
-                                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, shadow_key.beat, true)
-                            }
-                        }
-                    }
-
-                    CtlLineLevel.Line -> {
-                        val y = opus_manager.get_visible_row_from_ctl_line_line(
-                            cursor.ctl_type!!,
-                            cursor.channel,
-                            cursor.line_offset
-                        )
-                        this._line_label_layout.notify_item_changed(y)
-                        column_label_adapter.notifyItemChanged(cursor.beat)
-                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
-                    }
-                    CtlLineLevel.Channel -> {
-                        val y = opus_manager.get_visible_row_from_ctl_line_channel(
-                            cursor.ctl_type!!,
-                            cursor.channel
-                        )
-                        this._line_label_layout.notify_item_changed(y)
-                        column_label_adapter.notifyItemChanged(cursor.beat)
-                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
-                    }
-
-                    CtlLineLevel.Global -> {
-                        val y = opus_manager.get_visible_row_from_ctl_line_global(
-                            cursor.ctl_type!!
-                        )
-
-                        this._line_label_layout.notify_item_changed(y)
-                        column_label_adapter.notifyItemChanged(cursor.beat)
-                        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, cursor.beat, true)
-                    }
-                }
-            }
-
-            OpusManagerCursor.CursorMode.Range -> {
-                val coords_to_update = mutableListOf<Pair<Int, Int>>()
-                when (cursor.ctl_level) {
-                    null -> {
-                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
-                        for (beat_key in opus_manager.get_beatkeys_in_range(top_left, bottom_right)) {
-                            val y = try {
-                                opus_manager.get_visible_row_from_ctl_line(
-                                    opus_manager.get_ctl_line_index(
-                                        opus_manager.get_abs_offset(
-                                            beat_key.channel, beat_key.line_offset
-                                        )
-                                    )
-                                ) ?: continue
-                            } catch (e: IndexOutOfBoundsException) {
-                                continue
-                            }
-
-                            coords_to_update.add(Pair(y, beat_key.beat))
-                        }
-                    }
-                    else -> {
-                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
-                        val y = when (cursor.ctl_level!!) {
-                            // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
-                            CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(
-                                cursor.ctl_type!!,
-                                top_left.channel,
-                                top_left.line_offset
-                            )
-                            // Can assume top_left.channel == bottom_right.channel
-                            CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
-                            CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                        }
-                        val first_beat = min(top_left.beat, bottom_right.beat)
-                        val last_beat = max(top_left.beat, bottom_right.beat)
-                        for (x in first_beat..last_beat) {
-                            coords_to_update.add(Pair(y, x))
-                        }
-                    }
-                }
-
-                for ((y, x) in coords_to_update) {
-                    this._line_label_layout.notify_item_changed(y)
-                    column_label_adapter.notifyItemChanged(x)
-                    (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_cell_changed(y, x, true)
-                }
-            }
-
-            OpusManagerCursor.CursorMode.Row -> {
-                val y = when (cursor.ctl_level) {
-                    null -> {
-                        try {
-                            opus_manager.get_visible_row_from_ctl_line(
-                                opus_manager.get_ctl_line_index(
-                                    opus_manager.get_abs_offset(
-                                        cursor.channel,
-                                        cursor.line_offset
-                                    )
-                                )
-                            ) ?: return
-                        } catch (e: IndexOutOfBoundsException) {
-                            return
-                        }
-                    }
-                    CtlLineLevel.Line -> {
-                        opus_manager.get_visible_row_from_ctl_line_line(
-                            cursor.ctl_type!!,
-                            cursor.channel,
-                            cursor.line_offset
-                        )
-                    }
-                    CtlLineLevel.Channel -> {
-                        opus_manager.get_visible_row_from_ctl_line_channel(
-                            cursor.ctl_type!!,
-                            cursor.channel
-                        )
-                    }
-                    CtlLineLevel.Global -> {
-                        opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                    }
-                }
-
-                this._line_label_layout.notify_item_changed(y)
-                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
-            }
-
-            OpusManagerCursor.CursorMode.Column -> {
-                (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(cursor.beat)
-                column_label_adapter.notifyItemChanged(cursor.beat)
-            }
-            OpusManagerCursor.CursorMode.Unset -> { }
+        for (x in queued_columns) {
+            column_label_adapter.notifyItemChanged(x)
+            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(x)
         }
+        this._queued_column_notifications.clear()   
     }
 
     fun apply_queued_cell_changes() {
@@ -590,9 +605,32 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 column_recycler_adapter.notify_cell_changed(coord.y, coord.x)
             }
         }
-
+        if (this._queued_column_notifications.isNotEmpty()) {
+            this.apply_queued_column_changes()
+        }
         if (this._queued_cell_notifications.isNotEmpty()) {
             this.apply_queued_cell_changes()
+        }
+    }
+
+    fun notify_column_changed(x: Int, queue: Boolean = false) {
+        if (queue) {
+            this._queued_column_notifications.add(x)
+        } else {
+            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(x)
+            val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
+            column_label_adapter.notifyItemChanged(x)
+        }
+    }
+
+    fun notify_row_changed(y: Int, queue: Boolean = false) {
+        if (queue) {
+            this.queue_cell_changes(List(this.get_opus_manager().beat_count) { i: Int ->
+                Coordinate(y, i)
+            })
+        } else {
+            this._line_label_layout.notify_item_changed(y)
+            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
         }
     }
 

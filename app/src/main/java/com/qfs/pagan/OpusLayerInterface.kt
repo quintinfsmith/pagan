@@ -44,7 +44,80 @@ class OpusLayerInterface : OpusLayerCursor() {
     private val _cached_ctl_map_channel = HashMap<Pair<Int, ControlEventType>, Int>()
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
 
-    private var _previous_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
+
+    class UIChangeBill() {
+        enum class BillableItem {
+            AddRow,
+            RemoveRow,
+            ChangeRow,
+            AddColumn,
+            RemoveColumn,
+            ChangeColumn,
+            ChangeCell,
+            ChangeInstrument
+        }
+        data class BillEntry(var item: BillableItem, var count: Int)
+
+        private val bill = mutableListOf<BillEntry>()
+        private var previous_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
+        private var queued_cell_changes: MutableList<EditorTable.Coordinate> = mutableListOf()
+        private var queued_column_changes: MutableList<Int> = mutableListOf()
+
+        private var queued_column_adds = mutableListOf<Int>()
+        private var queued_row_adds = mutableListOf<Int>()
+        private var queued_column_removals = mutableListOf<Int>()
+        private var queued_row_removals = mutableListOf<Pair<Int, Int>>()
+
+        private var queued_channel_instrument_change: MutableList<Pair<Int, Pair<Int, Int>> = mutableListOf()
+
+        fun queue_cell_changes(cells: List<EditorTable.Coordinate>) {
+            this.queued_cell_changes.addAll(cells)
+            this.bill.add(BillEntry(ChangeCell, cells.size))
+        }
+        fun queue_cell_change(cell: EditorTable.Coordinate) {
+            this.queued_cell_changes.add(cell)
+            this.bill.add(BillEntry(ChangeCell, 1))
+        }
+        fun queue_column_changes(columns: List<Int>) {
+            this.queued_column_changes.addAll(columns)
+            this.bill.add(BillEntry(ChangeColumn, columns.size))
+        }
+        fun queue_column_change(column: Int) {
+            this.queued_Column_changes.add(column)
+            this.bill.add(BillEntry(ChangeColumn, 1))
+        }
+
+        fun queue_instrument_change(channel: Int, instrument: Pair<Int, Int>) {
+            this.queued_channel_instrument_change.add(Pair(channel, instrument))
+            this.bill.add(BillEntry(InstrumentChange, 1))
+        }
+
+        fun apply_changes(editor_table: EditorTable) {
+            this.runOnUiThread {
+                for (entry in this@UIChangeBill) {
+                    when (entry.item) {
+                        AddRow -> {
+                            // TODO
+                        }
+                        RemoveRow -> {
+                            editor_table.remove_rows(
+                                this.queued_row_removals.removeFirst(),
+                                entry.count
+                            )
+                        }
+                        ChangeRow -> {}
+                        AddColumn -> {}
+                        RemoveColumn -> {}
+                        ChangeColumn -> {}
+                        ChangeCell -> {}
+                        ChangeInstrument -> {}
+                    }
+                }
+            }
+        }
+    }
+
+    private val ui_change_bill = UIChangeBill()
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -356,7 +429,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        if (this.get_ui_lock_level() == UI_LOCK_FULL) {
+        val lock_level = this.get_ui_lock_level() 
+        if (lock_level == UI_LOCK_FULL) {
             return
         }
 

@@ -684,13 +684,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         return this._scroll_view.column_recycler
     }
 
-    fun swap_lines(line_a: Int, line_b: Int) {
-        for (i in 0 until this._column_width_map.size) {
-            val tmp = this._column_width_map[i][line_a]
-            this._column_width_map[i][line_a] = this._column_width_map[i][line_b]
-            this._column_width_map[i][line_b] = tmp
-        }
-    }
 
     fun get_line_label_layout(): LineLabelColumnLayout {
         return this._line_label_layout

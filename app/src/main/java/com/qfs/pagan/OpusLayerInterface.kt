@@ -182,13 +182,14 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    private fun lock_ui_partial(callback: () -> Unit) {
+    private fun <T> lock_ui_partial(callback: () -> T): T {
         this.ui_lock.lock_partial()
-        callback()
+        val output = callback()
         this.ui_lock.unlock_partial()
         if (this.ui_lock.is_unlocked()) {
             this.ui_change_bill.apply_changes()
         }
+        return output
     }
     private fun lock_ui_full(callback: () -> Unit) {
     }
@@ -237,11 +238,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     /*
         Notify the editor table to update certain cells without following links
      */
-    private fun _notify_cell_changes(beat_keys: List<BeatKey>, force_queue: Boolean = false) {
-        if (this.get_activity() == null) {
-            return
-        }
-
+    private fun _queue_cell_changes(beat_keys: List<BeatKey>) {
         val coord_list = List(beat_keys.size) { i: Int ->
             EditorTable.Coordinate(
                 try {
@@ -289,492 +286,423 @@ class OpusLayerInterface : OpusLayerCursor() {
     /*
         Notify the editor table to update a cell and all linked cells
      */
-    private fun _notify_cell_change(beat_key: BeatKey, force_queue: Boolean = false) {
-        if (this.get_activity() == null) {
-            return
-        }
+    private fun _queue_cell_change(beat_key: BeatKey, follow_links: Boolean) {
         val ui_lock_level = this.get_ui_lock_level()
         if (ui_lock_level == UI_LOCK_FULL) {
             return
         }
 
-        val coord_list = this._get_all_linked_as_coords(beat_key)
-        this._notify_cell_change(coord_list, this.history_cache.isLocked() || force_queue)
-    }
-
-    private fun _notify_cell_change(coord_list: List<EditorTable.Coordinate>, force_queue: Boolean = false) {
-        when (this.get_ui_lock_level()) {
-            null -> {
-                this.runOnUiThread { _: MainActivity ->
-                    if (force_queue) {
-                        this.get_editor_table()?.queue_cell_changes(coord_list)
-                    } else {
-                        this.get_editor_table()?.notify_cell_changes(coord_list)
-                    }
-                }
-            }
-
-            UI_LOCK_PARTIAL -> {
-                if (force_queue) {
-                    this.get_editor_table()?.queue_cell_changes(coord_list)
-                } else {
-                    this.get_editor_table()?.notify_cell_changes(coord_list, true)
-                }
-            }
-
-            UI_LOCK_FULL -> {}
+        val coord_list = mutableListOf()
+        if (follow_links) {
+            coord_list.addAll(this._get_all_linked_as_coords(beat_key))
+        } else {
+            coord_list.add(beat_key)
         }
+
+        this.queue_cell_changes(coord_list)
     }
 
-    private fun _notify_cell_change(coordinate: EditorTable.Coordinate) {
-        this._notify_cell_change(listOf(coordinate))
+    private fun _queue_cell_change(coordinate: EditorTable.Coordinate) {
+        this._queue_cell_changes(listOf(coordinate))
     }
 
-    private fun _notify_global_ctl_cell_change(type: ControlEventType, beat: Int) {
-        this._notify_cell_change(
-            EditorTable.Coordinate(
-                y = this._cached_ctl_map_global[type]!!,
-                x = beat
+    private fun _queue_cell_changes(coord_list: List<EditorTable.Coordinate>) {
+        val ui_lock_level = this.get_ui_lock_level()
+        if (ui_lock_level == UI_LOCK_FULL) {
+            return
+        }
+
+
+        this.ui_change_bill.queue_cell_changes(coord_list)
+    }
+
+
+    private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {
+        this._queue_cell_changes(
+            listOf(
+                EditorTable.Coordinate(
+                    y = this._cached_ctl_map_global[type]!!,
+                    x = beat
+                )
             )
         )
     }
 
-    private fun _notify_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
-        this._notify_cell_change(
-            EditorTable.Coordinate(
-                y = this._cached_ctl_map_channel[Pair(channel, type)]!!,
-                x = beat
+    private fun _queue_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
+        this._queue_cell_changes(
+            listOf(
+                EditorTable.Coordinate(
+                    y = this._cached_ctl_map_channel[Pair(channel, type)]!!,
+                    x = beat
+                )
             )
         )
     }
 
-    private fun _notify_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
-        this._notify_cell_change(
-            EditorTable.Coordinate(
-                y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
-                x = beat_key.beat
+    private fun _queue_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
+        this._queue_cell_change(
+            listOf(
+                EditorTable.Coordinate(
+                    y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
+                    x = beat_key.beat
+                )
             )
         )
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
-        super.unset(beat_key, position)
-        this._notify_cell_change(beat_key)
+        this.lock_ui_partial {
+            super.unset(beat_key, position)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun unset_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        super.unset_global_ctl(type, beat, position)
-        this._notify_global_ctl_cell_change(type, beat)
+        this.lock_ui_partial {
+            super.unset_global_ctl(type, beat, position)
+            this._queue_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun unset_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        super.unset_channel_ctl(type, channel, beat, position)
-        this._notify_channel_ctl_cell_change(type, channel, beat)
+        this.lock_ui_partial {
+            super.unset_channel_ctl(type, channel, beat, position)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun unset_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        super.unset_line_ctl(type, beat_key, position)
-        this._notify_line_ctl_cell_change(type, beat_key)
+        this.lock_ui_partial {
+            super.unset_line_ctl(type, beat_key, position)
+            this._queue_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
-        val activity = this.get_activity() ?: return super.replace_tree(beat_key, position, tree)
-        if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
-            this.make_percussion_visible()
-        }
+        this.lock_ui_partial {
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                this.make_percussion_visible()
+            }
 
-        super.replace_tree(beat_key, position, tree)
-        this._notify_cell_change(beat_key)
+            super.replace_tree(beat_key, position, tree)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
-        super.replace_global_ctl_tree(type, beat, position, tree)
-        this._notify_global_ctl_cell_change(type, beat)
+        this.lock_ui_partial {
+            super.replace_global_ctl_tree(type, beat, position, tree)
+            this._notify_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
-        super.replace_channel_ctl_tree(type, channel, beat, position, tree)
-        this._notify_channel_ctl_cell_change(type, channel, beat)
+        this.lock_ui_partial {
+            super.replace_channel_ctl_tree(type, channel, beat, position, tree)
+            this._notify_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
-        super.replace_line_ctl_tree(type, beat_key, position, tree)
-        this._notify_line_ctl_cell_change(type, beat_key)
+        this.lock_ui_partial {
+            super.replace_line_ctl_tree(type, beat_key, position, tree)
+            this._notify_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: OpusControlEvent) {
-        super.set_global_ctl_event(type, beat, position, event)
-        this._notify_global_ctl_cell_change(type, beat)
+        this.lock_ui_partial {
+            super.set_global_ctl_event(type, beat, position, event)
+            this._notify_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: OpusControlEvent) {
-        super.set_channel_ctl_event(type, channel, beat, position, event)
-        this._notify_channel_ctl_cell_change(type, channel, beat)
+        this.lock_ui_partial {
+            super.set_channel_ctl_event(type, channel, beat, position, event)
+            this._notify_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: OpusControlEvent) {
-        super.set_line_ctl_event(type, beat_key, position, event)
-        this._notify_line_ctl_cell_change(type, beat_key)
+        this.lock_ui_partial {
+            super.set_line_ctl_event(type, beat_key, position, event)
+            this._notify_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
-        val activity = this.get_activity() ?: return super.set_event(beat_key, position, event)
-        if (!activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
-            this.make_percussion_visible()
-        }
+        this.lock_ui_partial {
+            val activity = this.get_activity()
 
-        super.set_event(beat_key, position, event)
-        // If the OM is applying history, change the relative mode, otherwise leave it.
-        if (event is TunedInstrumentEvent) {
-            this.set_relative_mode(event)
-        }
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                this.make_percussion_visible()
+            }
 
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-        this._notify_cell_change(beat_key)
+            super.set_event(beat_key, position, event)
 
-        this.withFragment {
-            it.refresh_context_menu()
+            if (event is TunedInstrumentEvent) {
+                this.set_relative_mode(event)
+            }
+
+            this._notify_cell_change(beat_key)
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        super.set_percussion_event(beat_key, position)
-        val activity = this.get_activity() ?: return
+        this.lock_ui_partial {
+            super.set_percussion_event(beat_key, position)
 
-        if (!activity.view_model.show_percussion) {
-            this.make_percussion_visible()
+            if (this.activity != null && !activity!!.view_model.show_percussion) {
+                this.make_percussion_visible()
+            }
+
+            this._notify_cell_change(beat_key)
         }
-
-        this._notify_cell_change(beat_key)
     }
 
     override fun set_percussion_event_at_cursor() {
-        super.set_percussion_event_at_cursor()
-        this.withFragment {
-            it.refresh_context_menu()
+        this.lock_ui_partial {
+            super.set_percussion_event_at_cursor()
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
-        super.set_percussion_instrument(line_offset, instrument)
-
-        if (this.get_activity() == null) {
-            return
-        }
-
-        val lock_level = this.get_ui_lock_level() 
-        if (lock_level == UI_LOCK_FULL) {
-            return
-        }
-
-        this.runOnUiThread { main: MainActivity ->
-            val btnChoosePercussion: TextView? = main.findViewById(R.id.btnChoosePercussion)
-            if (btnChoosePercussion != null) {
-                if (main.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    // Need to call get_drum name to repopulate instrument list if needed
-                    main.get_drum_name(instrument)
-                    btnChoosePercussion.text = main.getString(R.string.label_short_percussion, instrument)
-                } else {
-                    btnChoosePercussion.text = main.getString(
-                        R.string.label_choose_percussion,
-                        instrument,
-                        main.get_drum_name(instrument)
+        this.lock_ui_partial {
+            super.set_percussion_instrument(line_offset, instrument)
+            this.ui_change_bill.queue_line_label_refresh(
+                this.get_visible_row_from_ctl_line(
+                    this.get_ctl_line_index(
+                        this.get_abs_offset(channel, line_offset)
                     )
-                }
-                this.get_editor_table()?.update_line_label(this.channels.size, line_offset)
-            }
+                )
+            )
+
+
+            // TODO: MOVE TO new ui logic
+            // this.runOnUiThread { main: MainActivity ->
+            //     val btnChoosePercussion: TextView? = main.findViewById(R.id.btnChoosePercussion)
+            //     if (btnChoosePercussion != null) {
+            //         if (main.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            //             // Need to call get_drum name to repopulate instrument list if needed
+            //             main.get_drum_name(instrument)
+            //             btnChoosePercussion.text = main.getString(R.string.label_short_percussion, instrument)
+            //         } else {
+            //             btnChoosePercussion.text = main.getString(
+            //                 R.string.label_choose_percussion,
+            //                 instrument,
+            //                 main.get_drum_name(instrument)
+            //             )
+            //         }
+            //         this.get_editor_table()?.update_line_label(this.channels.size, line_offset)
+            //     }
+            // }
         }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        super.split_tree(beat_key, position, splits, move_event_to_end)
+        this.lock_ui_partial {
+            super.split_tree(beat_key, position, splits, move_event_to_end)
 
-        if (this.get_activity() == null) {
-            return
+            if (this._activity == null || (!this._activity!!.view_model.show_percussion && this.is_percussion(beat_key.channel))) {
+                return
+            }
+
+            this._notify_cell_change(beat_key)
         }
-
-        if (this.is_percussion(beat_key.channel) && !this._activity!!.view_model.show_percussion) {
-            return
-        }
-
-        this._notify_cell_change(beat_key)
     }
 
     override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
-        super.split_global_ctl_tree(type, beat, position, splits)
-        this._notify_global_ctl_cell_change(type, beat)
+        this.lock_ui_partial {
+            super.split_global_ctl_tree(type, beat, position, splits)
+            this._notify_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
-        super.split_channel_ctl_tree(type, channel, beat, position, splits)
+        this.lock_ui_partial {
+            super.split_channel_ctl_tree(type, channel, beat, position, splits)
 
-        if (this.get_activity() == null) {
-            return
+            if (this._activity == null || (!this._activity!!.view_model.show_percussion && this.is_percussion(channel))) {
+                return
+            }
+
+            this._notify_channel_ctl_cell_change(type, channel, beat)
         }
-
-        if (this.is_percussion(channel) && !this._activity!!.view_model.show_percussion) {
-            return
-        }
-
-        this._notify_channel_ctl_cell_change(type, channel, beat)
     }
 
     override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
-        super.split_line_ctl_tree(type, beat_key, position, splits)
+        this.lock_ui_partial {
+            super.split_line_ctl_tree(type, beat_key, position, splits)
 
-        if (this.get_activity() == null) {
-            return
+            if (this._activity == null || (!this._activity!!.view_model.show_percussion && this.is_percussion(beat_key.channel))) {
+                return
+            }
+
+            this._notify_line_ctl_cell_change(type, beat_key)
         }
-
-        if (this.is_percussion(beat_key.channel) && !this._activity!!.view_model.show_percussion) {
-            return
-        }
-
-        this._notify_line_ctl_cell_change(type, beat_key)
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        super.insert_after(beat_key, position)
-
-        if (this.get_activity() == null) {
-            return
+        this.lock_ui_partial {
+            super.insert_after(beat_key, position)
+            this._notify_cell_change(beat_key)
         }
-
-        this._notify_cell_change(beat_key)
     }
 
     override fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        super.insert_after_global_ctl(type, beat, position)
-        this._notify_global_ctl_cell_change(type, beat)
+        this.lock_ui_partial {
+            super.insert_after_global_ctl(type, beat, position)
+            this._notify_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        super.insert_after_channel_ctl(type, channel, beat, position)
-        this._notify_channel_ctl_cell_change(type, channel, beat)
+        this.lock_ui_partial {
+            super.insert_after_channel_ctl(type, channel, beat, position)
+            this._notify_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        super.insert_after_line_ctl(type, beat_key, position)
-        this._notify_line_ctl_cell_change(type, beat_key)
+        this.lock_ui_partial {
+            super.insert_after_line_ctl(type, beat_key, position)
+            this._notify_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
-        super.insert(beat_key, position)
-
-        if (this.get_activity() == null) {
-            return
+        this.lock_ui_partial {
+            super.insert(beat_key, position)
+            this._notify_cell_change(beat_key)
         }
-
-        this._notify_cell_change(beat_key)
     }
 
     override fun insert_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        super.insert_global_ctl(type, beat, position)
-        this._notify_global_ctl_cell_change(type, beat)
+        this.lock_ui_partial {
+            super.insert_global_ctl(type, beat, position)
+            this._notify_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun insert_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        super.insert_channel_ctl(type, channel, beat, position)
-        this._notify_channel_ctl_cell_change(type, channel, beat)
+        this.lock_ui_partial {
+            super.insert_channel_ctl(type, channel, beat, position)
+            this._notify_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun insert_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        super.insert_line_ctl(type, beat_key, position)
-        this._notify_line_ctl_cell_change(type, beat_key)
+        this.lock_ui_partial {
+            super.insert_line_ctl(type, beat_key, position)
+            this._notify_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        super.remove(beat_key, position)
-
-        if (this.get_activity() == null) {
-            return
+        this.lock_ui_partial {
+            super.remove(beat_key, position)
+            this._notify_cell_change(beat_key)
         }
-
-        this._notify_cell_change(beat_key)
     }
 
     override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        super.remove_global_ctl(type, beat, position)
-        this._notify_global_ctl_cell_change(type, beat)
+        this.lock_ui_partial {
+            super.remove_global_ctl(type, beat, position)
+            this._notify_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        super.remove_channel_ctl(type, channel, beat, position)
-        this._notify_channel_ctl_cell_change(type, channel, beat)
+        this.lock_ui_partial {
+            super.remove_channel_ctl(type, channel, beat, position)
+            this._notify_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        super.remove_line_ctl(type, beat_key, position)
-        this._notify_line_ctl_cell_change(type, beat_key)
-    }
-
-
-    private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {
-        for (i in 0 until this.beat_count) {
-            val tree = line.beats[i]
-            this._column_width_map[i].add(
-                y,
-                if (tree.is_leaf()) {
-                    1
-                } else {
-                    tree.get_max_child_weight() * tree.size
-                }
-            )
-            this._column_width_maxes[i] = this._column_width_map[i].max()
-        }
-        this.ui_change_bill.queue_new_row(y)
-    }
-
-    private fun _add_controller_to_column_width_map(y: Int, line: ActiveController) {
-        for (i in 0 until this.beat_count) {
-            val tree = line.events[i] ?: OpusTree()
-            this._column_width_map[i].add(
-                y,
-                if (tree.is_leaf()) {
-                    1
-                } else {
-                    tree.get_max_child_weight() * tree.size
-                }
-            )
-            this._column_width_maxes[i] = this._column_width_map[i].max()
-        }
-        this.ui_change_bill.queue_new_row(y)
-    }
-
-    private fun _update_after_new_line(channel: Int, line_offset: Int?) {
-        if (this.get_activity() == null) {
-            return
-        }
-
-        val working_channel = this.get_channel(channel)
-        val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
-        val abs_offset = this.get_abs_offset(channel, adj_line_offset)
-        val row_index = this.get_ctl_line_index(abs_offset)
-        val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
-
-        val new_line = if (line_offset == null) {
-            working_channel.lines.last()
-        } else {
-            working_channel.lines[line_offset]
-        }
-
-        this._add_line_to_column_width_map(visible_row, new_line)
-
-        val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
-        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
-            if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                this._add_controller_to_column_width_map(visible_row + i, controller)
-            }
+        this.lock_ui_partial {
+            super.remove_line_ctl(type, beat_key, position)
+            this._notify_line_ctl_cell_change(type, beat_key)
         }
     }
 
     override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
-        val output = super.new_line(channel, line_offset)
-        this._update_after_new_line(channel, line_offset)
-        return output
+        return this.lock_ui_partial {
+            var output = super.new_line(channel, line_offset)
+            this._update_after_new_line(channel, line_offset)
+            output
+        }
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
-        val activity = this.get_activity()
-        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
-            this.make_percussion_visible()
-        }
-
-        super.insert_line(channel, line_offset, line)
-
-        if (activity == null) {
-            return 
-        }
-
-        val abs_offset = this.get_abs_offset(channel, line_offset)
-        val row_index = this.get_visible_row_from_ctl_line(
-            this.get_ctl_line_index(abs_offset)
-        ) ?: return
-
-        when (this.get_ui_lock_level()) {
-            null -> {
-                this.runOnUiThread { _: MainActivity ->
-                    this.get_editor_table()?.new_row(row_index, line)
-                    val controllers = line.controllers.get_all()
-                    controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
-                        if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                            this.get_editor_table()?.new_row(row_index + i, controller)
-                        }
-                    }
-                }
+        this.lock_ui_partial {
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+                this.make_percussion_visible()
             }
-            UI_LOCK_PARTIAL -> {
-                this.get_editor_table()?.new_row(row_index, line, true)
-                val controllers = line.controllers.get_all()
-                controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
-                    if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                        this.get_editor_table()?.new_row(row_index + i, controller)
-                    }
-                }
-            }
-            UI_LOCK_FULL -> { }
+
+            super.insert_line(channel, line_offset, line)
+            this._update_after_new_line(channel, line_offset)
         }
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-        super.swap_lines(channel_a, line_a, channel_b, line_b)
+        this.lock_ui_partial {
+            super.swap_lines(channel_a, line_a, channel_b, line_b)
 
-        this.get_editor_table()?.swap_lines(
-            this.get_abs_offset(channel_a, line_a),
-            this.get_abs_offset(channel_b, line_b),
-        )
+            val vis_line_a = this.get_visible_row_from_ctl_line(
+                this.get_ctl_line_index(
+                    this.get_abs_offset(channel_a, line_a)
+                )
+            )!!
+            val vis_line_b = this.get_visible_row_from_ctl_line(
+                this.get_ctl_line_index(
+                    this.get_abs_offset(channel_b, line_b)
+                )
+            )!!
+
+            for (i in 0 until this._column_width_map.size) {
+                val tmp = this._column_width_map[i][vis_line_a]
+                this._column_width_map[i][vis_line_a] = this._column_width_map[i][vis_line_b]
+                this._column_width_map[i][vis_line_b] = tmp
+            }
+
+
+            this.ui_change_bill.queue_row_change(line_a)
+            this.ui_change_bill.queue_row_change(line_b)
+        }
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
-        val activity = this.get_activity()
-        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
-            this.make_percussion_visible()
-        }
-
-        val abs_line = this.get_visible_row_from_ctl_line(
-            this.get_ctl_line_index(
-                this.get_abs_offset(channel, line_offset)
-            )
-        )!!
-
-        val output = super.remove_line(channel, line_offset)
-
-        if (activity != null) {
-            when (this.get_ui_lock_level()) {
-                null -> {
-                    this.runOnUiThread { _: MainActivity ->
-                        val controllers = output.controllers.get_all()
-                        var control_line_count = 0
-                        for ((type, _) in controllers) {
-                            if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                                control_line_count += 1
-                            }
-                        }
-                        this.get_editor_table()?.remove_rows(abs_line, control_line_count + 1)
-                    }
-                }
-
-                UI_LOCK_PARTIAL -> {
-                    val controllers = output.controllers.get_all()
-                    var control_line_count = 0
-                    for ((type, _) in controllers) {
-                        if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                            control_line_count += 1
-                        }
-                    }
-                    this.get_editor_table()?.remove_rows(abs_line, control_line_count + 1, true)
-                }
-
-                UI_LOCK_FULL -> {}
+        return this.lock_ui_partial {
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+                this.make_percussion_visible()
             }
 
-            // TODO: Should be behind ui lock?
-            activity.update_channel_instruments()
-        }
+            val abs_line = this.get_visible_row_from_ctl_line(
+                this.get_ctl_line_index(
+                    this.get_abs_offset(channel, line_offset)
+                )
+            )!!
 
-        return output
+            val output = super.remove_line(channel, line_offset)
+
+            var row_count = 1
+            for ((type, _) in output.controllers.get_all()) {
+                if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                    row_count += 1
+                }
+            }
+
+            this.ui_change_bill.queue_remove_rows(abs_line, row_count)
+
+            output
+        }
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
@@ -2191,6 +2119,65 @@ class OpusLayerInterface : OpusLayerCursor() {
                    1
                 }
             )
+        }
+    }
+
+    private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {
+        for (i in 0 until this.beat_count) {
+            val tree = line.beats[i]
+            this._column_width_map[i].add(
+                y,
+                if (tree.is_leaf()) {
+                    1
+                } else {
+                    tree.get_max_child_weight() * tree.size
+                }
+            )
+            this._column_width_maxes[i] = this._column_width_map[i].max()
+        }
+        this.ui_change_bill.queue_new_row(y)
+    }
+
+    private fun _add_controller_to_column_width_map(y: Int, line: ActiveController) {
+        for (i in 0 until this.beat_count) {
+            val tree = line.events[i] ?: OpusTree()
+            this._column_width_map[i].add(
+                y,
+                if (tree.is_leaf()) {
+                    1
+                } else {
+                    tree.get_max_child_weight() * tree.size
+                }
+            )
+            this._column_width_maxes[i] = this._column_width_map[i].max()
+        }
+        this.ui_change_bill.queue_new_row(y)
+    }
+
+    private fun _update_after_new_line(channel: Int, line_offset: Int?) {
+        if (this.get_activity() == null) {
+            return
+        }
+
+        val working_channel = this.get_channel(channel)
+        val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
+        val abs_offset = this.get_abs_offset(channel, adj_line_offset)
+        val row_index = this.get_ctl_line_index(abs_offset)
+        val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
+
+        val new_line = if (line_offset == null) {
+            working_channel.lines.last()
+        } else {
+            working_channel.lines[line_offset]
+        }
+
+        this._add_line_to_column_width_map(visible_row, new_line)
+
+        val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
+        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
+            if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                this._add_controller_to_column_width_map(visible_row + i, controller)
+            }
         }
     }
 }

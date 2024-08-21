@@ -706,252 +706,206 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        val activity = this.get_activity() ?: return super.new_channel(channel, lines, uuid)
+        this.lock_ui_partial {
+            val notify_index = channel ?: this.channels.size
 
-        val notify_index = channel ?: this.channels.size
+            super.new_channel(channel, lines, uuid)
 
-        super.new_channel(channel, lines, uuid)
-
-        val editor_table = this.get_editor_table()
-        val line_list = mutableListOf<OpusLine>()
-        for (i in 0 until lines) {
-            line_list.add(this.channels[notify_index].lines[i])
-        }
-        val y = this.get_abs_offset(notify_index, 0)
-
-        // TODO: Should be behind ui lock?
-        activity.update_channel_instruments(notify_index)
-
-        when (this.get_ui_lock_level()) {
-            null,
-            UI_LOCK_PARTIAL -> {
-                this.runOnUiThread { main ->
-                    val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                    if (channel_recycler.adapter != null) {
-                        val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-                        channel_adapter.add_channel()
-                    }
-                }
+            val editor_table = this.get_editor_table()
+            val line_list = mutableListOf<OpusLine>()
+            for (i in 0 until lines) {
+                line_list.add(this.channels[notify_index].lines[i])
             }
-            UI_LOCK_FULL -> {}
-        }
+            val y = this.get_abs_offset(notify_index, 0)
 
-        if (this.is_percussion(notify_index) && !activity.view_model.show_percussion) {
-            return
-        }
+            //this._activity?.update_channel_instruments(notify_index)
+            //             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            //             if (channel_recycler.adapter != null) {
+            //                 val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+            //                 channel_adapter.add_channel()
+            //             }
+            this.ui_change_bill.queue_new_channel_instrument(notify_index)
+            val activity = this.get_activity()
+            if (activity == null || !this.is_percussion(notify_index) || activity.view_model.show_percussion) {
+                var ctl_row = this.get_visible_row_from_ctl_line(
+                    this.get_ctl_line_index(y)
+                )!!
 
-        when (this.get_ui_lock_level()) {
-            null -> {
-                this.runOnUiThread {
-                    if (editor_table == null) {
-                        return@runOnUiThread
-                    }
-                    var ctl_row = this.get_visible_row_from_ctl_line(
-                        this.get_ctl_line_index(y)
-                    )!!
-
-                    for (line in line_list) {
-                        editor_table.new_row(ctl_row++, line)
-
-                        for ((type, controller) in line.controllers.get_all()) {
-                            if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                                editor_table.new_row(ctl_row++, controller)
-                            }
-                        }
-                    }
-
-                    val controllers = this.channels[notify_index].controllers.get_all()
-                    for ((type, controller) in controllers) {
-                        if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
-                            editor_table.new_row(ctl_row++, controller)
-                        }
-                    }
-                }
-            }
-            UI_LOCK_PARTIAL -> {
-                if (editor_table == null) {
-                    return
-                }
-
-                var ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y)) ?: return
+                this.ui_change_bill.queue_new_row(ctl_row++)
                 for (line in line_list) {
-                    editor_table.new_row(ctl_row++, line, true)
                     for ((type, controller) in line.controllers.get_all()) {
                         if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                            editor_table.new_row(ctl_row++, controller, true)
+                            this.ui_change_bill.queue_new_row(ctl_row++)
                         }
                     }
                 }
+
                 val controllers = this.channels[notify_index].controllers.get_all()
                 for ((type, controller) in controllers) {
                     if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
-                        editor_table.new_row(ctl_row++, controller, true)
+                        this.ui_change_bill.queue_new_row(ctl_row++)
                     }
                 }
             }
-            UI_LOCK_FULL -> {}
         }
     }
 
     override fun set_link_pools(pools: List<Set<BeatKey>>) {
-        super.set_link_pools(pools)
-        val keys_as_single_list = mutableListOf<BeatKey>()
-        for (pool in pools) {
-            keys_as_single_list.addAll(pool)
+        this.lock_ui_partial {
+            super.set_link_pools(pools)
+            val keys_as_single_list = mutableListOf<BeatKey>()
+            for (pool in pools) {
+                keys_as_single_list.addAll(pool)
+            }
+            this._notify_cell_changes(keys_as_single_list)
         }
-        this._notify_cell_changes(keys_as_single_list)
     }
 
     override fun remove_beat(beat_index: Int) {
-        val editor_table = this.get_editor_table() ?: return super.remove_beat(beat_index)
+        this.lock_ui_partial {
 
-        val link_keys = mutableListOf<BeatKey>()
-        this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-            for (j in channel.lines.indices) {
-                for (key in this.get_all_linked(BeatKey(i, j, beat_index))) {
-                    if (key.beat == beat_index) {
-                        continue
-                    }
-                    link_keys.add(
-                        BeatKey(
-                            key.channel,
-                            key.line_offset,
-                            if (key.beat > beat_index) {
-                                key.beat - 1
-                            } else {
-                                key.beat
-                            }
+            val link_keys = mutableListOf<BeatKey>()
+            this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+                for (j in channel.lines.indices) {
+                    for (key in this.get_all_linked(BeatKey(i, j, beat_index))) {
+                        if (key.beat == beat_index) {
+                            continue
+                        }
+                        link_keys.add(
+                            BeatKey(
+                                key.channel,
+                                key.line_offset,
+                                if (key.beat > beat_index) {
+                                    key.beat - 1
+                                } else {
+                                    key.beat
+                                }
+                            )
                         )
-                    )
+                    }
                 }
             }
-        }
 
-       when (this.get_ui_lock_level()) {
-           UI_LOCK_FULL -> { }
-           UI_LOCK_PARTIAL -> {
-               editor_table.remove_column(beat_index, true)
-           }
-           else -> {
-               this.runOnUiThread {
-                   editor_table.remove_column(beat_index)
-               }
-           }
-       }
+            super.remove_beat(beat_index)
 
-        super.remove_beat(beat_index)
-
-        when (this.get_ui_lock_level()) {
-            UI_LOCK_FULL -> { }
-            UI_LOCK_PARTIAL -> {
-                this._notify_cell_changes(link_keys)
-            }
-            else -> {
-                this.runOnUiThread {
-                    this._notify_cell_changes(link_keys)
-                }
-            }
+            this.ui_change_bill.queue_remove_column(beat_index)
+            this._notify_cell_changes(link_keys)
         }
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
-        val bkp_cursor = this.cursor.copy()
-        super.insert_beat(beat_index, beats_in_column)
-        val editor_table = this.get_editor_table() ?: return
+        this.lock_ui_partial {
+            val bkp_cursor = this.cursor.copy()
 
-        // val link_keys = mutableListOf<BeatKey>()
-        // this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-        //     for (j in channel.lines.indices) {
-        //         link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
-        //     }
-        // }
+            super.insert_beat(beat_index, beats_in_column)
 
-        // this._notify_cell_changes(link_keys)
-        
-        when (this.get_ui_lock_level()) {
-            UI_LOCK_FULL -> { }
-            UI_LOCK_PARTIAL -> {
-                this.queue_cursor_update(bkp_cursor)
-                this.queue_cursor_update(this.cursor)
-                editor_table.new_column(beat_index, true)
-            }
-            else -> {
-                this.queue_cursor_update(bkp_cursor)
-                this.queue_cursor_update(this.cursor)
-                this.runOnUiThread {
-                    editor_table.new_column(beat_index)
-                    editor_table.apply_queued_notifications()
-                }
-            }
+            this.queue_cursor_update(bkp_cursor)
+            this.ui_change_bill.queue_add_column(beat_index)
+            this.queue_cursor_update(this.cursor)
+
+            // TODO: Is this necessary? I'm not seeing why linked cells would need updates
+            // val link_keys = mutableListOf<BeatKey>()
+            // this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+            //     for (j in channel.lines.indices) {
+            //         link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
+            //     }
+            // }
+            // this._notify_cell_changes(link_keys)
         }
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
-        val bkp_cursor = this.cursor.copy()
-        this.surpress_ui {
-            super.insert_beats(beat_index, count)
-        }
+        // TODO: is it necessary to queue ui changes in this function?
+        // Not sure but i think the new ui logic will be fine to individually call each insert_beat
+        super.insert_beats(beat_index, count)
+    }
 
-        val editor_table = this.get_editor_table() ?: return
-        when (this.get_ui_lock_level()) {
-            UI_LOCK_FULL -> { }
-            UI_LOCK_PARTIAL -> {
-                this.queue_cursor_update(bkp_cursor)
-                this.queue_cursor_update(this.cursor)
-                for (i in 0 until count) {
-                    editor_table.new_column(beat_index + i, true)
+    override fun remove_channel(channel: Int) {
+        this.lock_ui_partial {
+            val y = try {
+                this.get_abs_offset(channel, 0)
+            } catch (e: IndexOutOfBoundsException) {
+                this.get_total_line_count()
+            }
+
+            val ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y))!!
+            var removed_row_count = this.channels[channel].size
+
+            val activity = this.get_activity()
+
+            val force_show_percussion = activity != null
+                && !activity.view_model.show_percussion
+                && !this.is_percussion(channel)
+                && this.channels.size == 2
+
+            if (force_show_percussion) {
+                this.make_percussion_visible()
+            }
+
+            for ((type, _) in this.channels[channel].controllers.get_all()) {
+                if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
+                    removed_row_count += 1
                 }
             }
-            else -> {
-                this.queue_cursor_update(bkp_cursor)
-                this.queue_cursor_update(this.cursor)
-                this.runOnUiThread {
-                    for (i in 0 until count) {
-                        editor_table.new_column(beat_index + i)
+
+            for (line in this.channels[channel].lines) {
+                for ((type, _) in line.controllers.get_all()) {
+                    if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                        removed_row_count += 1
                     }
                 }
             }
+
+
+            super.remove_channel(channel)
+
+            //val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+            //if (channel_recycler.adapter != null) {
+            //    val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+            //        channel_adapter.remove_channel(channel)
+            //}
+            this.ui_change_bill.queue_remove_channel(channel)
+            this.ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
         }
     }
 
+
+
     override fun new() {
-        val activity = this.get_activity() ?: return super.new()
-
-        this._ui_clear()
-        activity.view_model.show_percussion = true
-        this.surpress_ui {
+        this.lock_ui_full {
+            this._ui_clear()
+            val activity = this.get_activity()
+            activity!!.view_model.show_percussion = true
             super.new()
-        }
 
-        val new_path = activity.get_new_project_path()
-        this.path = new_path
+            val new_path = activity!!.get_new_project_path()
+            this.path = new_path
+        }
     }
 
 
     override fun import_midi(midi: Midi) {
-        val activity = this.get_activity() ?: return super.import_midi(midi)
-
-        this._ui_clear()
-        this.surpress_ui {
+        this.lock_ui_full {
+            this._ui_clear()
             super.import_midi(midi)
+            val activity = this.get_activity()
+            activity!!.view_model.show_percussion = this.has_percussion()
+            this.recache_line_maps()
         }
-        activity.view_model.show_percussion = this.has_percussion()
-        this.recache_line_maps()
     }
 
     override fun load_json(json_data: JSONHashMap) {
-        val activity = this.get_activity() ?: return super.load_json(json_data)
+        this.lock_ui_full {
+            val activity = this.get_activity()!!
+            this._ui_clear()
 
-        this._ui_clear()
-        this.surpress_ui {
             super.load_json(json_data)
-        }
 
-        if (! this._in_reload) {
-            activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
-            this.recache_line_maps()
+            if (! this._in_reload) {
+                activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
+                this.recache_line_maps()
+            }
         }
-
     }
 
     fun reload(bytes: ByteArray, path: String) {
@@ -999,76 +953,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.clear()
     }
 
-    override fun remove_channel(channel: Int) {
-        val y = try {
-            this.get_abs_offset(channel, 0)
-        } catch (e: IndexOutOfBoundsException) {
-            this.get_total_line_count()
-        }
-
-        val ctl_row = this.get_visible_row_from_ctl_line(this.get_ctl_line_index(y))!!
-        var removed_row_count = this.channels[channel].size
-
-        val activity = this.get_activity()
-
-        val make_show_percussion = activity != null
-                && !activity.view_model.show_percussion
-                && !this.is_percussion(channel)
-                && this.channels.size == 2
-
-        if (make_show_percussion) {
-            this.make_percussion_visible()
-        }
-
-        for ((type, _) in this.channels[channel].controllers.get_all()) {
-            if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
-                removed_row_count += 1
-            }
-        }
-
-        for (line in this.channels[channel].lines) {
-            for ((type, _) in line.controllers.get_all()) {
-                if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                    removed_row_count += 1
-                }
-            }
-        }
-
-
-        super.remove_channel(channel)
-
-        when (this.get_ui_lock_level()) {
-            null,
-            UI_LOCK_PARTIAL -> {
-                this.runOnUiThread { main ->
-                    val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                    if (channel_recycler.adapter != null) {
-                        val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-                        channel_adapter.remove_channel(channel)
-                    }
-                }
-            }
-
-            UI_LOCK_FULL -> {}
-        }
-
-        val editor_table = this.get_editor_table() ?: return
-
-        when (this.get_ui_lock_level()) {
-            UI_LOCK_FULL -> {}
-            UI_LOCK_PARTIAL -> {
-                editor_table.remove_rows(ctl_row, removed_row_count, true)
-            }
-
-            null -> {
-                this.runOnUiThread {
-                    editor_table.remove_rows(ctl_row, removed_row_count)
-                }
-            }
-        }
-    }
-
-
     private fun _ui_clear() {
         this._column_width_map.clear()
         this._column_width_maxes.clear()
@@ -1084,28 +968,34 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun create_link_pool(beat_keys: List<BeatKey>) {
-        super.create_link_pool(beat_keys)
-        this._notify_cell_changes(beat_keys)
+        this.lock_ui_partial {
+            super.create_link_pool(beat_keys)
+            this._notify_cell_changes(beat_keys)
+        }
     }
 
     override fun unlink_beat(beat_key: BeatKey) {
-        val update_keys = this.get_all_linked(beat_key).toMutableList()
-        update_keys.remove(beat_key)
-        super.unlink_beat(beat_key)
+        this.lock_ui_partial {
+            val update_keys = this.get_all_linked(beat_key).toMutableList()
+            update_keys.remove(beat_key)
+            super.unlink_beat(beat_key)
 
-        this._notify_cell_change(beat_key)
-        this._notify_cell_changes(update_keys)
+            this._notify_cell_change(beat_key)
+            this._notify_cell_changes(update_keys)
+        }
     }
 
     override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
-        val originally_mapped = this.link_pool_map.keys
-        super.remap_links(remap_hook)
-        val unmapped = originally_mapped - this.link_pool_map.keys
-        val changed = (this.link_pool_map.keys - originally_mapped) + unmapped
+        this.lock_ui_partial {
+            val originally_mapped = this.link_pool_map.keys
+            super.remap_links(remap_hook)
+            val unmapped = originally_mapped - this.link_pool_map.keys
+            val changed = (this.link_pool_map.keys - originally_mapped) + unmapped
 
-        // Because remap_links isn't an end-function, we use queue_cell_changes instead
-        // of notify_cell_changes
-        this._notify_cell_changes(changed.toList(), true)
+            // Because remap_links isn't an end-function, we use queue_cell_changes instead
+            // of notify_cell_changes
+            this._notify_cell_changes(changed.toList(), true)
+        }
     }
 
     private fun <T> withFragment(callback: (FragmentEditor) -> T): T? {
@@ -1118,9 +1008,11 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun apply_undo(repeat: Int) {
-        super.apply_undo(repeat)
-        this.recache_line_maps()
-        this.get_editor_table()?.apply_queued_cell_changes()
+        //TODO: The recache_line_maps may not be needed, or may be needed outside the lock?
+        this.lock_ui_partial {
+            super.apply_undo(repeat)
+            this.recache_line_maps()
+        }
     }
 
     fun set_relative_mode(mode: Int) {
@@ -1146,22 +1038,14 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        super.set_duration(beat_key, position, duration)
+        this.lock_ui_partial {
+            super.set_duration(beat_key, position, duration)
 
-        // Needs to be set to trigger potentially queued cell changes from on_overlap()
-        this._notify_cell_change(beat_key)
-
-        when (this.get_ui_lock_level()) {
-            UI_LOCK_FULL -> { }
-            else -> {
-                this.runOnUiThread { main ->
-                    val btnDuration: TextView = main.findViewById(R.id.btnDuration) ?: return@runOnUiThread
-                    btnDuration.text = main.getString(R.string.label_duration, duration)
-                }
-            }
-        }
-        this.withFragment { fragment ->
-            fragment.refresh_context_menu()
+            // Needs to be set to trigger potentially queued cell changes from on_overlap()
+            this._notify_cell_change(beat_key)
+            // val btnDuration: TextView = main.findViewById(R.id.btnDuration) ?: return@runOnUiThread
+            // btnDuration.text = main.getString(R.string.label_duration, duration)
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -1220,174 +1104,111 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_clear() {
-        super.cursor_clear()
+        this.lock_ui_partial {
+            super.cursor_clear()
 
-        if (this.get_ui_lock_level() != UI_LOCK_FULL) {
-            val editor_table = this.get_editor_table()
             this.queue_cursor_update(this.cursor)
-            this.runOnUiThread {
-                editor_table?.apply_queued_notifications()
-                this.withFragment {
-                    it.clear_context_menu()
-                }
-            }
+            this.ui_change_bill.queue_clear_context_menu()
         }
     }
 
     override fun cursor_select_row(channel: Int, line_offset: Int) {
-        super.cursor_select_row(channel, line_offset)
+        this.lock_ui_partial {
+            super.cursor_select_row(channel, line_offset)
 
-        val activity = this.get_activity() ?: return
-        if (!activity.view_model.show_percussion && this.is_percussion(channel)) {
-            this.make_percussion_visible()
-        }
-
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        this.queue_cursor_update(this.cursor)
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.apply_queued_notifications()
-
-            this.withFragment { main ->
-                main.set_context_menu_line()
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+                this.make_percussion_visible()
             }
+
+
+            this.queue_cursor_update(this.cursor)
+            this.ui_change_bill.queue_set_context_menu_line()
         }
     }
 
     override fun cursor_select_ctl_row_at_channel(ctl_type: ControlEventType, channel: Int) {
-        super.cursor_select_ctl_row_at_channel(ctl_type, channel)
+        this.lock_ui_partial {
+            super.cursor_select_ctl_row_at_channel(ctl_type, channel)
 
-        val activity = this.get_activity() ?: return
-        if (!activity.view_model.show_percussion && this.is_percussion(channel)) {
-            this.make_percussion_visible()
-        }
-
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        this.queue_cursor_update(this.cursor)
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.apply_queued_notifications()
-
-            this.withFragment { main ->
-                main.set_context_menu_control_line()
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+                this.make_percussion_visible()
             }
+
+
+            this.queue_cursor_update(this.cursor)
+            this.ui_change_bill.queue_set_context_menu_control_line()
         }
     }
 
     override fun cursor_select_ctl_row_at_line(ctl_type: ControlEventType, channel: Int, line_offset: Int) {
-        super.cursor_select_ctl_row_at_line(ctl_type, channel, line_offset)
+        this.lock_ui_partial {
+            super.cursor_select_ctl_row_at_line(ctl_type, channel, line_offset)
 
-        val activity = this.get_activity() ?: return
-        if (!activity.view_model.show_percussion && this.is_percussion(channel)) {
-            this.make_percussion_visible()
-        }
-
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        this.queue_cursor_update(this.cursor)
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.apply_queued_notifications()
-
-            this.withFragment { main ->
-                main.set_context_menu_control_line()
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+                this.make_percussion_visible()
             }
 
+            this.queue_cursor_update(this.cursor)
+            this.ui_change_bill.queue_set_context_menu_control_line()
         }
     }
 
     override fun cursor_select_ctl_row_at_global(ctl_type: ControlEventType) {
-        super.cursor_select_ctl_row_at_global(ctl_type)
+        this.lock_ui_partial {
+            super.cursor_select_ctl_row_at_global(ctl_type)
 
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        this.queue_cursor_update(this.cursor)
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.apply_queued_notifications()
-
-            this.withFragment { main ->
-                main.set_context_menu_control_line()
-            }
+            this.queue_cursor_update(this.cursor)
+            this.ui_change_bill.queue_set_context_menu_control_line()
         }
     }
 
     override fun cursor_select_column(beat: Int) {
-        super.cursor_select_column(beat)
+        this.lock_ui_partial {
+            super.cursor_select_column(beat)
 
-        this.queue_cursor_update(this.cursor)
-        this.runOnUiThread {
-            val editor_table = this.get_editor_table()
-            editor_table?.apply_queued_notifications()
-
-            this.withFragment { main ->
-                main.set_context_menu_column()
-            }
+            this.queue_cursor_update(this.cursor)
+            this.ui_change_bill.queue_set_context_menu_column()
         }
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        val activity = this.get_activity()
-        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
-            this.make_percussion_visible()
-        }
-
-        super.cursor_select(beat_key, position)
-
-        val current_tree = this.get_tree()
-        if (!this.is_percussion(beat_key.channel) && current_tree.is_event()) {
-            this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
-        }
-
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        val editor_table = this.get_editor_table() ?: return
-        this.queue_cursor_update(this.cursor, false)
-
-        this.runOnUiThread {
-            editor_table.apply_queued_notifications()
-            this.withFragment {
-                if (this.is_percussion(beat_key.channel)) {
-                    it.set_context_menu_leaf_percussion()
-                } else {
-                    it.set_context_menu_leaf()
-                }
+        this.lock_ui_partial {
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                this.make_percussion_visible()
             }
+
+            super.cursor_select(beat_key, position)
+
+            val current_tree = this.get_tree()
+            if (!this.is_percussion(beat_key.channel) && current_tree.is_event()) {
+                this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
+            }
+
+            this.queue_cursor_update(this.cursor, false)
+            if (this.is_percussion(beat_key.channel)) {
+                this.ui_change_bill.queue_set_context_menu_leaf_percussion()
+            } else {
+                this.ui_change_bill.queue_set_context_menu_leaf()
+            }
+
         }
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        val activity = this.get_activity()
-        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
-            this.make_percussion_visible()
-        }
-
-        super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
-
-        if (this.get_ui_lock_level() != null) {
-            return
-        }
-
-        val editor_table = this.get_editor_table() ?: return
-        this.queue_cursor_update(this.cursor, false)
-        this.runOnUiThread {
-            editor_table.apply_queued_notifications()
-            this.withFragment {
-                 it.set_context_menu_line_control_leaf()
+        this.lock_ui_partial {
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                this.make_percussion_visible()
             }
 
+            super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+
+            this.queue_cursor_update(this.cursor, false)
+            this.ui_change_bill.queue_set_context_menu_line_control_leaf()
         }
     }
 

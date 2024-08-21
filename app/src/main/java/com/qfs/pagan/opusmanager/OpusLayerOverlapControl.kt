@@ -68,7 +68,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                 }
             }
         }
-
         return null
     }
 

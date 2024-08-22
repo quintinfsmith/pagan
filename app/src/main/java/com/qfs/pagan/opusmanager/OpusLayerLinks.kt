@@ -4,16 +4,19 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 open class OpusLayerLinks : OpusLayerOverlapControl() {
-    class SelfLinkError(beat_key_a: BeatKey, beat_key_b: BeatKey): Exception("$beat_key_a is $beat_key_b")
-    class LinkRangeOverlap(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey): Exception("Range($from_key .. $to_key) Contains $startkey")
-    class InvalidBeatKeyRange(a: BeatKey, b: BeatKey): Exception("$a .. $b")
-    class BadRowLink(from_key: BeatKey, channel: Int, line_offset: Int): Exception("Can only link an entire row (or rows) to the first range of beats of its own row ($from_key != ${BeatKey(channel, line_offset, 0)})")
+    class SelfLinkError(beat_key_a: BeatKey, beat_key_b: BeatKey) : Exception("$beat_key_a is $beat_key_b")
+    class LinkRangeOverlap(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) Contains $startkey")
+    class InvalidBeatKeyRange(a: BeatKey, b: BeatKey) : Exception("$a .. $b")
+    class BadRowLink(from_key: BeatKey, channel: Int, line_offset: Int) :
+        Exception("Can only link an entire row (or rows) to the first range of beats of its own row ($from_key != ${BeatKey(channel, line_offset, 0)})")
 
     var link_pools = mutableListOf<MutableSet<BeatKey>>()
     var link_pool_map = HashMap<BeatKey, Int>()
+
     // Indicates that the initial function has been called, and that links shouldn't be traversed
     // as they'll be handled later
     internal var link_lock: Int = 0
+
     // indicates that the current logic is being applied to a linked beat, rather than the original target
     internal var _link_deviation_count: Int = 0
 
@@ -23,6 +26,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         this.link_pool_map.clear()
         this.link_lock = 0
     }
+
     internal fun <T> lock_links(callback: () -> T): T {
         this.link_lock += 1
         return try {
@@ -56,7 +60,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             for (beat_key in pool) {
                 this.link_pool_map[beat_key] = i
             }
+
             this.link_pools.add(pool.toMutableSet())
+
+            for (beat_key in pool) {
+                this.on_link(beat_key)
+            }
         }
     }
 
@@ -65,8 +74,11 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         if (this.link_pools[index].size > 2) {
             this.link_pools[index].remove(beat_key)
             this.link_pool_map.remove(beat_key)
+            this.on_unlink(beat_key)
         } else {
-            this.remove_link_pool(index)
+            for (linked_key in this.remove_link_pool(index)) {
+                this.on_unlink(linked_key)
+            }
         }
     }
 
@@ -84,7 +96,9 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
 
     open fun clear_link_pool(beat_key: BeatKey) {
         val index = this.link_pool_map[beat_key] ?: return
-        this.remove_link_pool(index)
+        for (linked_key in this.remove_link_pool(index)) {
+            this.on_unlink(linked_key)
+        }
     }
 
     open fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
@@ -122,14 +136,14 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
 
     fun linked_have_preceding_absolute_event(beat_key: BeatKey, position: List<Int>): Boolean {
         for (linked_key in this.get_all_linked(beat_key)) {
-            if (! this.has_preceding_absolute_event(linked_key, position)) {
+            if (!this.has_preceding_absolute_event(linked_key, position)) {
                 return false
             }
         }
         return true
     }
 
-    open fun remove_link_pool(index: Int) {
+    open fun remove_link_pool(index: Int): MutableSet<BeatKey> {
         val keys = this.link_pools.removeAt(index)
         for (beat_key in keys) {
             this.link_pool_map.remove(beat_key)
@@ -141,6 +155,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                 this.link_pool_map[beat_key] = pool_index - 1
             }
         }
+
+        return keys
     }
 
     open fun create_link_pool(beat_keys: List<BeatKey>) {
@@ -195,6 +211,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                 this.link_pool_map[key] = index - 1
             }
         }
+        // TODO? do i need to call on_linked in here()?
     }
 
     private fun _get_all_others_linked(beat_key: BeatKey): Set<BeatKey> {
@@ -235,6 +252,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             }
         }
     }
+
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             super.insert_after(beat_key, position)
@@ -243,6 +261,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             }
         }
     }
+
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             super.remove(beat_key, position)
@@ -251,6 +270,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             }
         }
     }
+
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
@@ -259,6 +279,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             super.set_percussion_event(beat_key, position)
         }
     }
+
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
@@ -267,6 +288,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             super.set_event(beat_key, position, event.copy())
         }
     }
+
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
@@ -275,6 +297,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             super.split_tree(beat_key, position, splits, move_event_to_end)
         }
     }
+
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
@@ -306,7 +329,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             // Don't keep pools if there is only one entry left
             if (new_pool.size == 1) {
                 new_pool_map.remove(new_pool.first())
-            }  else {
+            } else {
                 new_pools.add(new_pool)
             }
         }
@@ -315,7 +338,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     }
 
     override fun remove_channel(channel: Int) {
-        this.remap_links { beat_key: BeatKey  ->
+        this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel) {
                 null
             } else if (beat_key.channel < channel) {
@@ -338,7 +361,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
         this.remap_links { beat_key: BeatKey ->
-             if (beat_key.beat >= beat_index) {
+            if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)
             } else {
                 beat_key
@@ -431,14 +454,6 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         this.create_link_pool(new_pool)
     }
 
-    override fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
-    }
-
-    override fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        super.overwrite_row(channel, line_offset, beat_key)
-    }
-
     open fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         // from_key -> to_key need to be first beat. it's a bit arbitrary but from a ui perspective makes it cleaner
@@ -457,7 +472,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         val abs_from_line_offset = this.get_abs_offset(from_key.channel, from_key.line_offset)
         val abs_to_line_offset = this.get_abs_offset(to_key.channel, to_key.line_offset)
 
-        for (c in abs_from_line_offset .. abs_to_line_offset) {
+        for (c in abs_from_line_offset..abs_to_line_offset) {
             val (working_channel, working_line_offset) = this.get_std_offset(c)
             for (i in 0 until range_width) {
                 val beat_key_list = mutableListOf<BeatKey>()
@@ -574,7 +589,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is OpusLayerLinks)  {
+        if (other !is OpusLayerLinks) {
             return false
         }
 
@@ -699,4 +714,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         }
         return rebuilt_list
     }
+
+    open fun on_link(beat_key: BeatKey) {}
+    open fun on_unlink(beat_key: BeatKey) {}
 }

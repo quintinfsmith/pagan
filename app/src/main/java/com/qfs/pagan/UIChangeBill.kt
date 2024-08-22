@@ -2,63 +2,79 @@ package com.qfs.pagan
 
 class UIChangeBill {
     enum class BillableItem {
-        AddRow,
-        RemoveRow,
-        ChangeRow,
-        AddColumn,
-        RemoveColumn,
-        ChangeColumn,
-        ChangeCell,
+        RowAdd,
+        RowRemove,
+        RowChange,
+        ColumnAdd,
+        ColumnRemove,
+        ColumnChange,
+        CellChange,
+        ChannelChange,
+        ChannelAdd,
+        ChannelRemove,
+        ProjectNameChange,
+        ProjectNameUnset,
         ChangeInstrument,
-        ChangeProjectName
     }
 
-    private val bill = mutableListOf<BillableItem>()
-    private var queued_cell_changes: MutableList<EditorTable.Coordinate> = mutableListOf()
-    private var queued_column_changes: MutableList<Int> = mutableListOf()
+    val bill = mutableListOf<BillableItem>()
+    private val _int_queue = mutableListOf<Int>()
+    private val _string_queue = mutableListOf<String>()
 
-    private var queued_column_adds = mutableListOf<Int>()
-    private var queued_row_adds = mutableListOf<Int>()
-    private var queued_column_removals = mutableListOf<Int>()
-    private var queued_row_removals = mutableListOf<Pair<Int, Int>>()
+    fun has_entries(): Boolean {
+        return this.bill.isNotEmpty()
+    }
 
-    private var queued_channel_instrument_change: MutableList<Pair<Int, Pair<Int, Int>> = mutableListOf()
-    private var queued_project_name_change = mutableListOf<String?>()
+    fun get_next_entry(): BillableItem? {
+        return if (this.bill.isEmpty()) {
+            null
+        } else {
+            this.bill.removeFirst()
+        }
+    }
+
+    fun get_next_int(): Int {
+        return this._int_queue.removeFirst()
+    }
+    fun get_next_string(): String {
+        return this._string_queue.removeFirst()
+    }
 
     fun queue_project_name_change(new_name: String?) {
-        this.queued_project_name_change.add(new_name)
-        this.bill.add(BillableItem.ChangeProjectName)
+        if (new_name == null) {
+            this.bill.add(BillableItem.ProjectNameUnset)
+        } else {
+            this._string_queue.add(new_name)
+            this.bill.add(BillableItem.ProjectNameChange)
+        }
     }
 
     fun queue_cell_changes(cells: List<EditorTable.Coordinate>) {
-        this.queued_cell_changes.addAll(cells)
         for (i in 0 until cells.size) {
-            this.bill.add(BillableItem.ChangeCell)
+            this._int_queue.add(cells[i].y)
+            this._int_queue.add(cells[i].x)
+            this.bill.add(BillableItem.CellChange)
         }
     }
     fun queue_cell_change(cell: EditorTable.Coordinate) {
-        this.queued_cell_changes.add(cell)
-        this.bill.add(BillableItem.ChangeCell)
+        this._int_queue.add(cell.y)
+        this._int_queue.add(cell.x)
+        this.bill.add(BillableItem.CellChange)
     }
     fun queue_column_changes(columns: List<Int>) {
-        this.queued_column_changes.addAll(columns)
+        this._int_queue.addAll(columns)
         for (i in 0 until columns.size) {
-            this.bill.add(BillableItem.ChangeColumn)
+            this.bill.add(BillableItem.ColumnChange)
         }
     }
     fun queue_column_change(column: Int) {
-        this.queued_column_changes.add(column)
-        this.bill.add(BillableItem.ChangeColumn)
+        this._int_queue.add(column)
+        this.bill.add(BillableItem.ColumnChange)
     }
 
     fun queue_new_row(y: Int) {
-        this.queued_row_adds.add(y)
-        this.bill.add(BillableItem.AddRow)
-    }
-
-    fun queue_instrument_change(channel: Int, instrument: Pair<Int, Int>) {
-        this.queued_channel_instrument_change.add(Pair(channel, instrument))
-        this.bill.add(BillableItem.ChangeInstrument)
+        this._int_queue.add(y)
+        this.bill.add(BillableItem.RowAdd)
     }
 
     fun queue_refresh_context_menu() {
@@ -70,6 +86,15 @@ class UIChangeBill {
     fun queue_set_context_menu_leaf() {
         TODO()
     }
+    fun queue_set_context_menu_leaf_percussion() {
+        TODO()
+    }
+    fun queue_set_context_menu_line_control_leaf() {
+        TODO()
+    }
+    fun queue_set_context_menu_line_control_leaf_b() {
+        TODO()
+    }
     fun queue_set_context_menu_linking() {
         TODO()
     }
@@ -77,9 +102,6 @@ class UIChangeBill {
         TODO()
     }
     fun queue_set_context_menu_control_line() {
-        TODO()
-    }
-    fun queue_set_context_menu_control_leaf() {
         TODO()
     }
     fun queue_clear_context_menu() {
@@ -91,47 +113,64 @@ class UIChangeBill {
     }
 
     fun queue_row_change(y: Int) {
-        TODO()
+        this._int_queue.add(y)
+        this.bill.add(BillableItem.RowChange)
     }
 
     fun queue_row_removal(y: Int, count: Int) {
-        this.queued_row_removals.add(Pair(y, count))
+        this._int_queue.add(y)
+        this._int_queue.add(count)
+        this.bill.add(BillableItem.RowRemove)
     }
 
+    fun queue_enable_delete_and_copy_buttons() {
+        TODO()
+    }
 
+    fun queue_config_drawer_redraw_export_button() {
+        //activity.setup_project_config_drawer_export_button()
+        TODO()
+    }
 
+    fun queue_add_channel(channel: Int) {
+        //this._activity?.update_channel_instruments(notify_index)
+        //             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        //             if (channel_recycler.adapter != null) {
+        //                 val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+        //                 channel_adapter.add_channel()
+        //             }
+        this._int_queue.add(channel)
+        this.bill.add(BillableItem.ChannelAdd)
+    }
+    fun queue_refresh_channel(channel: Int) {
+        //val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        //if (channel_option_recycler.adapter != null) {
+        //    val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
+        //    adapter.notifyItemChanged(adapter.itemCount - 1)
+        //}
+        this._int_queue.add(channel)
+        this.bill.add(BillableItem.ChannelChange)
+    }
+    fun queue_remove_channel(channel: Int) {
+        //val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        //if (channel_recycler.adapter != null) {
+        //    val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+        //        channel_adapter.remove_channel(channel)
+        //}
+        this._int_queue.add(channel)
+        this.bill.add(BillableItem.ChannelRemove)
+    }
 
-    /* Must be run on UI Thread */
-    fun apply_changes(editor_table: EditorTable) {
-        for (entry in this@UIChangeBill.bill) {
-            when (entry) {
-                BillableItem.AddRow -> {
-                    // TODO
-                }
-                BillableItem.RemoveRow -> {
-                    editor_table.remove_rows(
-                        this@UiChangeBill.queued_row_removals.removeFirst(),
-                        entry.count
-                    )
-                }
-                BillableItem.ChangeRow -> {}
-                BillableItem.AddColumn -> {}
-                BillableItem.RemoveColumn -> {}
-                BillableItem.ChangeColumn -> {}
-                BillableItem.ChangeCell -> {}
-                BillableItem.ChangeInstrument -> {
-                    val (channel, instruments) = this.queued_channel_instrument_change.removeFirst()!!
-                    main.update_channel_instruments(channel)
-                    main.populate_active_percussion_names()
-                    val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                    if (channel_recycler.adapter != null) {
-                        (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
-                    }
-                }
-                BillableItem.ChangeProjectName -> {
-                    main.update_title_text()
-                }
-            }
-        }
+    fun queue_add_column(column: Int) {
+
+        // (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
+        // (this.get_column_recycler().adapter as ColumnRecyclerAdapter).add_column(index)
+        this._int_queue.add(column)
+        this.bill.add(BillableItem.ColumnAdd)
+    }
+
+    fun queue_remove_column(column: Int) {
+        this._int_queue.add(column)
+        this.bill.add(BillableItem.ColumnRemove)
     }
 }

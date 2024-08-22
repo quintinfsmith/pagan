@@ -1353,6 +1353,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun update_channel_instrument(midi_channel: Int, instrument: Pair<Int, Int>) {
+        val (midi_bank, midi_program) = instrument
+        this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
+        this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
+        if (this._feedback_sample_manager != null) {
+            this._feedback_sample_manager!!.select_bank(
+                midi_channel,
+                midi_bank,
+            )
+            this._feedback_sample_manager!!.change_program(
+                midi_channel,
+                midi_program,
+            )
+        }
+
+        // Don't need to update anything but percussion here
+        if (this.sample_handle_manager != null) {
+            this.sample_handle_manager!!.select_bank(
+                midi_channel,
+                midi_bank
+            )
+            this.sample_handle_manager!!.change_program(
+                midi_channel,
+                midi_program
+            )
+        }
+    }
+
     // Update peripheral device instruments, ie feedback device and midi devices
     fun update_channel_instruments(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
@@ -1390,32 +1418,10 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
-            val midi_channel = opus_channel.get_midi_channel()
-            val (midi_bank, midi_program) = opus_channel.get_instrument()
-            this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
-            this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-            if (this._feedback_sample_manager != null) {
-                this._feedback_sample_manager!!.select_bank(
-                    midi_channel,
-                    midi_bank,
-                )
-                this._feedback_sample_manager!!.change_program(
-                    midi_channel,
-                    midi_program,
-                )
-            }
-
-            // Don't need to update anything but percussion here
-            if (this.sample_handle_manager != null) {
-                this.sample_handle_manager!!.select_bank(
-                    midi_channel,
-                    midi_bank
-                )
-                this.sample_handle_manager!!.change_program(
-                    midi_channel,
-                    midi_program
-                )
-            }
+            this.update_channel_instrument(
+                opus_channel.get_midi_channel(),
+                opus_channel.get_instrument()
+            )
         }
     }
 

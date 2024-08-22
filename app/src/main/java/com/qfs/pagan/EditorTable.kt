@@ -124,133 +124,27 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.needs_setup = false
     }
 
-    fun new_row(y: Int, controller: ActiveController, ignore_ui: Boolean = false) {
-        for (i in 0 until this.get_opus_manager().beat_count) {
-            val tree = controller.events[i] ?: OpusTree()
-            this._column_width_map[i].add(
-                y,
-                if (tree.is_leaf()) {
-                    1
-                } else {
-                    tree.get_max_child_weight() * tree.size
-                }
-            )
-            this._column_width_maxes[i] = this._column_width_map[i].max()
-        }
-
-        if (!ignore_ui) {
-            val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
-            adapter.insert_row(y)
-            this._line_label_layout.insert_label(y)
-            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
-        }
+    fun new_row(y: Int) {
+        val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
+        adapter.insert_row(y)
+        this._line_label_layout.insert_label(y)
+        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
-    fun new_row(y: Int, opus_line: OpusLineAbstract<*>, ignore_ui: Boolean = false) {
-        for (i in 0 until this.get_opus_manager().beat_count) {
-            val tree = opus_line.beats[i]
-            this._column_width_map[i].add(
-                y,
-                if (tree.is_leaf()) {
-                    1
-                } else {
-                    tree.get_max_child_weight() * tree.size
-                }
-            )
-            this._column_width_maxes[i] = this._column_width_map[i].max()
-        }
-
-        if (!ignore_ui) {
-            val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
-            adapter.insert_row(y)
-            this._line_label_layout.insert_label(y)
-            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
-        }
+    fun remove_rows(y: Int, count: Int) {
+        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_rows(y, count)
+        this._line_label_layout.remove_labels(y, count)
+        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
-    fun remove_rows(y: Int, count: Int, ignore_ui: Boolean = false) {
-        for (i in 0 until this._column_width_map.size) {
-            for (j in 0 until count) {
-                this._column_width_map[i].removeAt(y)
-                this._column_width_maxes[i] = this._column_width_map[i].max()
-            }
-        }
-        if (! ignore_ui) {
-            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_rows(y, count)
-            this._line_label_layout.remove_labels(y, count)
-            (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
-        }
+    fun new_column(index: Int) {
+        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
+        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).add_column(index)
     }
 
-    fun new_column(index: Int, ignore_ui: Boolean = false) {
-        val opus_manager = this.get_opus_manager()
-        val column = mutableListOf<Int>()
-        opus_manager.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-            channel.lines.forEachIndexed { j: Int, line: OpusLineAbstract<*> ->
-                val tree = opus_manager.get_tree(BeatKey(i, j, index))
-                if (tree.is_leaf()) {
-                    column.add(1)
-                } else {
-                    column.add(tree.get_max_child_weight() * tree.size)
-                }
-                for ((type, controller) in channel.lines[j].controllers.get_all()) {
-                    if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
-                        continue
-                    }
-                    val ctl_tree = controller.get_beat(index)
-                    if (ctl_tree.is_leaf()) {
-                        column.add(1)
-                    } else {
-                        val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                        column.add(new_weight)
-                    }
-                }
-            }
-            for ((type, controller) in channel.controllers.get_all()) {
-                if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
-                    continue
-                }
-                val ctl_tree = controller.get_beat(index)
-                if (ctl_tree.is_leaf()) {
-                    column.add(1)
-                } else {
-                    val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                    column.add(new_weight)
-                }
-            }
-        }
-        for ((type, controller) in opus_manager.controllers.get_all()) {
-            if (! opus_manager.is_ctl_line_visible(CtlLineLevel.Global, type)) {
-                continue
-            }
-            val ctl_tree = controller.get_beat(index)
-            if (ctl_tree.is_leaf()) {
-                column.add(1)
-            } else {
-                val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                column.add(new_weight)
-            }
-        }
-
-        this._column_width_map.add(index, column)
-        this._column_width_maxes.add(index, if (column.isNotEmpty()) {
-            column.max()
-        } else {
-            1
-        })
-
-        if (! ignore_ui) {
-            (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
-            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).add_column(index)
-        }
-    }
-
-    fun remove_column(index: Int, ignore_ui: Boolean = false) {
-        this._column_width_maxes.removeAt(index)
-        if (! ignore_ui) {
-            (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
-            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_column(index)
-        }
+    fun remove_column(index: Int) {
+        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
+        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_column(index)
     }
 
     fun apply_queued_notifications() {
@@ -358,29 +252,15 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun notify_column_changed(x: Int, queue: Boolean = false) {
-        if (queue) {
-            this._queued_column_notifications.add(x)
-        } else {
-            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(x)
-            val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-            column_label_adapter.notifyItemChanged(x)
-        }
+    fun notify_column_changed(x: Int) {
+        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(x)
+        val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
+        column_label_adapter.notifyItemChanged(x)
     }
 
-    fun notify_row_changed(y: Int, queue: Boolean = false) {
-        if (queue) {
-            this.queue_cell_changes(List(this.get_opus_manager().beat_count) { i: Int ->
-                Coordinate(y, i)
-            })
-        } else {
-            this._line_label_layout.notify_item_changed(y)
-            (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
-        }
-    }
-
-    fun queue_cell_changes(cell_coords: List<Coordinate>) {
-        this._queued_cell_notifications.addAll(cell_coords)
+    fun notify_row_changed(y: Int) {
+        this._line_label_layout.notify_item_changed(y)
+        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
     }
 
     fun get_column_width(column: Int): Int {

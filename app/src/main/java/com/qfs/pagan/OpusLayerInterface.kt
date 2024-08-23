@@ -81,6 +81,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private fun apply_bill_changes() {
         val editor_table = this.get_editor_table()
+        val activity = this.get_activity() ?: return // TODO: Throw Exception?
         while (true) {
             when (this.ui_change_bill.get_next_entry()) {
                 BillableItem.RowAdd -> {
@@ -114,26 +115,42 @@ class OpusLayerInterface : OpusLayerCursor() {
                         this.ui_change_bill.get_next_int()
                     )
                 }
-                BillableItem.CellChange -> {}
-                BillableItem.ChangeInstrument -> {
-                    val (channel, instruments) = this.queued_channel_instrument_change.removeFirst()!!
-                    main.update_channel_instruments(channel)
-                    main.populate_active_percussion_names()
-                    val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                BillableItem.CellChange -> {
+                    editor_table!!.notify_column_changed(
+                        this.ui_change_bill.get_next_int()
+                    )
+                }
+
+                BillableItem.ChannelChange -> {
+                    val channel = this.ui_change_bill.get_next_int()
+
+                    activity.update_channel_instruments(channel)
+                    activity.populate_active_percussion_names()
+
+                    val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                     if (channel_recycler.adapter != null) {
                         (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
                     }
-                }
 
-                BillableItem.ChangeProjectName -> {
-                    main.update_title_text()
                 }
-
-                BillableItem.ChannelChange -> TODO()
                 BillableItem.ChannelAdd -> TODO()
                 BillableItem.ChannelRemove -> TODO()
-                BillableItem.ProjectNameChange -> TODO()
+                BillableItem.ProjectNameChange -> {
+                    activity.update_title_text()
+                }
                 BillableItem.ProjectNameUnset -> TODO()
+                BillableItem.ContextMenuRefresh -> TODO()
+                BillableItem.ContextMenuSetLine -> TODO()
+                BillableItem.ContextMenuSetLeaf -> TODO()
+                BillableItem.ContextMenuSetLeafPercussion -> TODO()
+                BillableItem.ContextMenuSetControlLeaf -> TODO()
+                BillableItem.ContextMenuSetControlLeafB -> TODO()
+                BillableItem.ContextMenuSetLinking -> TODO()
+                BillableItem.ContextMenuSetColumn -> TODO()
+                BillableItem.ContextMenuSetControlLine -> TODO()
+                BillableItem.ContextMenuClear -> TODO()
+                BillableItem.ConfigDrawerEnableCopyAndDelete -> TODO()
+                BillableItem.ConfigDrawerRefreshExportButton -> TODO()
                 null -> break
             }
         }

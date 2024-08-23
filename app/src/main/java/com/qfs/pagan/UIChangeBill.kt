@@ -14,16 +14,23 @@ class UIChangeBill {
         ChannelRemove,
         ProjectNameChange,
         ProjectNameUnset,
-        ChangeInstrument,
+        ContextMenuRefresh,
+        ContextMenuSetLine,
+        ContextMenuSetLeaf,
+        ContextMenuSetLeafPercussion,
+        ContextMenuSetControlLeaf,
+        ContextMenuSetControlLeafB,
+        ContextMenuSetLinking,
+        ContextMenuSetColumn,
+        ContextMenuSetControlLine,
+        ContextMenuClear,
+        ConfigDrawerEnableCopyAndDelete,
+        ConfigDrawerRefreshExportButton
     }
 
     val bill = mutableListOf<BillableItem>()
     private val _int_queue = mutableListOf<Int>()
     private val _string_queue = mutableListOf<String>()
-
-    fun has_entries(): Boolean {
-        return this.bill.isNotEmpty()
-    }
 
     fun get_next_entry(): BillableItem? {
         return if (this.bill.isEmpty()) {
@@ -56,11 +63,13 @@ class UIChangeBill {
             this.bill.add(BillableItem.CellChange)
         }
     }
+
     fun queue_cell_change(cell: EditorTable.Coordinate) {
         this._int_queue.add(cell.y)
         this._int_queue.add(cell.x)
         this.bill.add(BillableItem.CellChange)
     }
+
     fun queue_column_changes(columns: List<Int>) {
         this._int_queue.addAll(columns)
         for (i in 0 until columns.size) {
@@ -78,34 +87,34 @@ class UIChangeBill {
     }
 
     fun queue_refresh_context_menu() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuRefresh)
     }
     fun queue_set_context_menu_line() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetLine)
     }
     fun queue_set_context_menu_leaf() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetLeaf)
     }
     fun queue_set_context_menu_leaf_percussion() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetLeafPercussion)
     }
     fun queue_set_context_menu_line_control_leaf() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetControlLeaf)
     }
     fun queue_set_context_menu_line_control_leaf_b() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetControlLeafB)
     }
     fun queue_set_context_menu_linking() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetLinking)
     }
     fun queue_set_context_menu_column() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetColumn)
     }
     fun queue_set_context_menu_control_line() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuSetControlLine)
     }
     fun queue_clear_context_menu() {
-        TODO()
+        this.bill.add(BillableItem.ContextMenuClear)
     }
 
     fun queue_line_label_refresh(y: Int) {
@@ -124,12 +133,12 @@ class UIChangeBill {
     }
 
     fun queue_enable_delete_and_copy_buttons() {
-        TODO()
+        this.bill.add(BillableItem.ConfigDrawerEnableCopyAndDelete)
     }
 
     fun queue_config_drawer_redraw_export_button() {
         //activity.setup_project_config_drawer_export_button()
-        TODO()
+        this.bill.add(BillableItem.ConfigDrawerRefreshExportButton)
     }
 
     fun queue_add_channel(channel: Int) {

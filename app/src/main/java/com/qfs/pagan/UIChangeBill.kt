@@ -13,7 +13,6 @@ class UIChangeBill {
         ChannelAdd,
         ChannelRemove,
         ProjectNameChange,
-        ProjectNameUnset,
         ContextMenuRefresh,
         ContextMenuSetLine,
         ContextMenuSetLeaf,
@@ -30,7 +29,6 @@ class UIChangeBill {
 
     val bill = mutableListOf<BillableItem>()
     private val _int_queue = mutableListOf<Int>()
-    private val _string_queue = mutableListOf<String>()
 
     fun get_next_entry(): BillableItem? {
         return if (this.bill.isEmpty()) {
@@ -43,17 +41,9 @@ class UIChangeBill {
     fun get_next_int(): Int {
         return this._int_queue.removeFirst()
     }
-    fun get_next_string(): String {
-        return this._string_queue.removeFirst()
-    }
 
-    fun queue_project_name_change(new_name: String?) {
-        if (new_name == null) {
-            this.bill.add(BillableItem.ProjectNameUnset)
-        } else {
-            this._string_queue.add(new_name)
-            this.bill.add(BillableItem.ProjectNameChange)
-        }
+    fun queue_project_name_change() {
+        this.bill.add(BillableItem.ProjectNameChange)
     }
 
     fun queue_cell_changes(cells: List<EditorTable.Coordinate>) {
@@ -137,43 +127,23 @@ class UIChangeBill {
     }
 
     fun queue_config_drawer_redraw_export_button() {
-        //activity.setup_project_config_drawer_export_button()
         this.bill.add(BillableItem.ConfigDrawerRefreshExportButton)
     }
 
     fun queue_add_channel(channel: Int) {
-        //this._activity?.update_channel_instruments(notify_index)
-        //             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        //             if (channel_recycler.adapter != null) {
-        //                 val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-        //                 channel_adapter.add_channel()
-        //             }
         this._int_queue.add(channel)
         this.bill.add(BillableItem.ChannelAdd)
     }
     fun queue_refresh_channel(channel: Int) {
-        //val channel_option_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        //if (channel_option_recycler.adapter != null) {
-        //    val adapter = channel_option_recycler.adapter!! as ChannelOptionAdapter
-        //    adapter.notifyItemChanged(adapter.itemCount - 1)
-        //}
         this._int_queue.add(channel)
         this.bill.add(BillableItem.ChannelChange)
     }
     fun queue_remove_channel(channel: Int) {
-        //val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-        //if (channel_recycler.adapter != null) {
-        //    val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-        //        channel_adapter.remove_channel(channel)
-        //}
         this._int_queue.add(channel)
         this.bill.add(BillableItem.ChannelRemove)
     }
 
     fun queue_add_column(column: Int) {
-
-        // (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
-        // (this.get_column_recycler().adapter as ColumnRecyclerAdapter).add_column(index)
         this._int_queue.add(column)
         this.bill.add(BillableItem.ColumnAdd)
     }

@@ -59,15 +59,13 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         fun is_locked(): Boolean {
-            return this.partial == 0 && this.full == 0
+            return this.partial != 0 || this.full != 0
         }
 
         fun is_full_locked(): Boolean {
             return this.full > 0
         }
     }
-
-
 
     private val ui_change_bill = UIChangeBill()
     private val ui_lock = UILock()
@@ -87,6 +85,15 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     // UI BILL Interface functions ---------------------------------
     private fun lock_ui_full(callback: () -> Unit) {
+        this.ui_lock.lock_full()
+        val output = callback()
+        this.ui_lock.unlock_full()
+
+        if (!this.ui_lock.is_locked()) {
+            this.apply_bill_changes()
+        }
+
+        return output
     }
 
     private fun <T> lock_ui_partial(callback: () -> T): T {
@@ -159,12 +166,9 @@ class OpusLayerInterface : OpusLayerCursor() {
             editor_table.set_mapped_width(coord.y, coord.x, new_weight)
         }
 
-        this._queue_cell_changes(coord_list)
-    }
-
-    private fun _queue_cell_changes(coord_list: List<EditorTable.Coordinate>) {
         this.ui_change_bill.queue_cell_changes(coord_list)
     }
+
 
     private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {
         if (this.ui_lock.is_full_locked()) {
@@ -182,7 +186,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         editor_table.set_mapped_width(coord.y, coord.x, new_weight)
 
-        this._queue_cell_changes(listOf(coord))
+        this.ui_change_bill.queue_cell_change(coord)
     }
 
     private fun _queue_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
@@ -200,16 +204,14 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         editor_table.set_mapped_width(coord.y, coord.x, new_weight)
-        this._queue_cell_changes(listOf(coord))
+        this.ui_change_bill.queue_cell_change(coord)
     }
 
     private fun _queue_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
-        this._queue_cell_changes(
-            listOf(
-                EditorTable.Coordinate(
-                    y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
-                    x = beat_key.beat
-                )
+        this.ui_change_bill.queue_cell_change(
+            EditorTable.Coordinate(
+                y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
+                x = beat_key.beat
             )
         )
     }
@@ -219,6 +221,18 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.set_channel_instrument(channel, instrument)
             if (!this.ui_lock.is_full_locked()) {
+                // Updating channel instruments doesn't strictly need to be gated behind the full lock,
+                // BUT this way these don't get called multiple times every setup
+                val activity = this.get_activity()
+                activity?.update_channel_instrument(
+                    this.get_all_channels()[channel].get_midi_channel(),
+                    instrument
+                )
+
+                if (this.is_percussion(channel)) {
+                    activity?.populate_active_percussion_names()
+                }
+
                 this.ui_change_bill.queue_refresh_channel(channel)
             }
         }
@@ -810,23 +824,8 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun on_project_changed() {
         super.on_project_changed()
+        this.ui_change_bill.queue_full_refresh()
         this.first_load_done = true
-
-        this.runOnUiThread { main: MainActivity ->
-            val editor_table = this.get_editor_table()
-
-            main.setup_project_config_drawer()
-            main.validate_percussion_visibility()
-            main.update_menu_options()
-
-            this._init_editor_table_width_map()
-            editor_table?.setup(this.get_visible_line_count(), this.beat_count)
-
-            main.update_channel_instruments()
-            this.withFragment {
-                it.clear_context_menu()
-            }
-        }
     }
 
     override fun clear() {
@@ -1358,6 +1357,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 this.percussion_channel
             }
         }
+
         channels.forEachIndexed { channel_index: Int, channel: OpusChannelAbstract<*,*> ->
             val hide_channel = this.is_percussion(channel_index) && !percussion_visible
             for (line_offset in channel.lines.indices) {
@@ -1399,8 +1399,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             ctl_line += 1
         }
-    }
 
+    }
 
     fun is_ctl_line_visible(level: CtlLineLevel, type: ControlEventType): Boolean {
         return this.get_activity()!!.configuration.visible_line_controls.contains(
@@ -1699,7 +1699,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             OpusManagerCursor.CursorMode.Unset -> { }
         }
 
-        this._queue_cell_changes(coordinates_to_update.toList())
+        this.ui_change_bill.queue_cell_changes(coordinates_to_update.toList())
     }
 
     private fun _init_editor_table_width_map() {
@@ -1893,9 +1893,23 @@ class OpusLayerInterface : OpusLayerCursor() {
     // UI FUNCS -----------------------
     private fun apply_bill_changes() {
         val editor_table = this.get_editor_table()!!
+
         this.runOnUiThread { activity: MainActivity ->
             while (true) {
                 when (this.ui_change_bill.get_next_entry()) {
+                    BillableItem.FullRefresh -> {
+                        activity.setup_project_config_drawer()
+                        activity.validate_percussion_visibility()
+                        activity.update_menu_options()
+
+                        this._init_editor_table_width_map()
+                        editor_table?.setup(this.get_visible_line_count(), this.beat_count)
+
+                        activity.update_channel_instruments()
+                        this.withFragment {
+                            it.clear_context_menu()
+                        }
+                    }
                     BillableItem.RowAdd -> {
                         editor_table.new_row(
                             this.ui_change_bill.get_next_int()
@@ -1935,17 +1949,19 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
 
                     BillableItem.CellChange -> {
-                        editor_table.notify_column_changed(
-                            this.ui_change_bill.get_next_int()
-                        )
+                        val cells = List<EditorTable.Coordinate>(this.ui_change_bill.get_next_int()) {
+                            EditorTable.Coordinate(
+                                y = this.ui_change_bill.get_next_int(),
+                                x = this.ui_change_bill.get_next_int()
+                            )
+                        }
+
+                        editor_table.notify_cell_changes(cells)
                     }
 
                     BillableItem.ChannelChange -> {
                         val channel = this.ui_change_bill.get_next_int()
 
-                        // TODO: I don't think these 2 calls need to/should be here
-                        activity.update_channel_instruments(channel)
-                        activity.populate_active_percussion_names()
 
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                         if (channel_recycler.adapter != null) {

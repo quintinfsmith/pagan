@@ -1368,7 +1368,7 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        // Don't need to update anything but percussion here
+        // Don't need to update anything but percussion in the sample_handle_manager
         if (this.sample_handle_manager != null) {
             this.sample_handle_manager!!.select_bank(
                 midi_channel,

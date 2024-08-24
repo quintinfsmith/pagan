@@ -1341,8 +1341,8 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun remove_link_pool(index: Int) {
-        this._remember {
+    override fun remove_link_pool(index: Int): MutableSet<BeatKey> {
+        return this._remember {
             this.push_to_history_stack(HistoryToken.CREATE_LINK_POOL, listOf(this.link_pools[index]))
             super.remove_link_pool(index)
         }

@@ -272,7 +272,8 @@ class LeafButtonStd(
     }
 
     override fun _build_drawable_state(drawableState: IntArray?): IntArray? {
-        if (this.parent == null || this._get_editor_table().needs_setup) {
+        //if (this.parent == null || this._get_editor_table().needs_setup) {
+        if (this.parent == null) {
             return drawableState
         }
 

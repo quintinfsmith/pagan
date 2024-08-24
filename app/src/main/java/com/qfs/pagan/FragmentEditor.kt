@@ -137,6 +137,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         opus_manager.reload(bytes, backup_path)
     }
+
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         val main = this.get_main()
@@ -160,12 +161,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             return
         }
 
-
         if (savedInstanceState != null) {
             this.reload_from_bkp()
         } else {
             opus_manager.cursor_clear()
-            editor_table.setup()
+            editor_table.clear()
+            editor_table.setup(opus_manager.get_visible_line_count(), opus_manager.beat_count)
         }
 
         editor_table.visibility = View.VISIBLE
@@ -177,7 +178,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             opus_manager.history_cache = this.view_model.backup_undo_stack!!
             this.view_model.backup_undo_stack = null
         }
-
 
         main.setup_project_config_drawer()
     }

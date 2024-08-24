@@ -24,7 +24,9 @@ class UIChangeBill {
         ContextMenuSetControlLine,
         ContextMenuClear,
         ConfigDrawerEnableCopyAndDelete,
-        ConfigDrawerRefreshExportButton
+        ConfigDrawerRefreshExportButton,
+        PercussionButtonRefresh,
+        LineLabelRefresh
     }
 
     val bill = mutableListOf<BillableItem>()
@@ -108,7 +110,8 @@ class UIChangeBill {
     }
 
     fun queue_line_label_refresh(y: Int) {
-        TODO()
+        this._int_queue.add(y)
+        this.bill.add(BillableItem.LineLabelRefresh)
     }
 
     fun queue_row_change(y: Int) {
@@ -151,5 +154,10 @@ class UIChangeBill {
     fun queue_remove_column(column: Int) {
         this._int_queue.add(column)
         this.bill.add(BillableItem.ColumnRemove)
+    }
+
+    fun queue_refresh_choose_percussion_button(line_offset: Int) {
+        this._int_queue.add(line_offset)
+        this.bill.add(BillableItem.PercussionButtonRefresh)
     }
 }

@@ -131,6 +131,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 beat_keys[i].beat
             )
         }
+
         this.ui_change_bill.queue_cell_changes(coord_list)
     }
 
@@ -162,11 +163,22 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
+        val notify_columns = mutableSetOf<Int>()
         for (coord in coord_list) {
-            editor_table.set_mapped_width(coord.y, coord.x, new_weight)
+            if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+                notify_columns.add(coord.x)
+            }
         }
-
-        this.ui_change_bill.queue_cell_changes(coord_list)
+        val adj_coord_list = mutableListOf<EditorTable.Coordinate>()
+        for (coord in coord_list) {
+            if (notify_columns.contains(coord.x)) {
+                continue
+            }
+            adj_coord_list.add(coord)
+        }
+        println("Change Queued $adj_coord_list")
+        this.ui_change_bill.queue_cell_changes(adj_coord_list)
+        this.ui_change_bill.queue_column_changes(notify_columns.toList())
     }
 
 
@@ -184,9 +196,11 @@ class OpusLayerInterface : OpusLayerCursor() {
         val new_weight = tree.get_max_child_weight() * tree.size
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
-        editor_table.set_mapped_width(coord.y, coord.x, new_weight)
-
-        this.ui_change_bill.queue_cell_change(coord)
+        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+            this.ui_change_bill.queue_column_change(coord.x)
+        } else {
+            this.ui_change_bill.queue_cell_change(coord)
+        }
     }
 
     private fun _queue_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
@@ -204,16 +218,28 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         editor_table.set_mapped_width(coord.y, coord.x, new_weight)
-        this.ui_change_bill.queue_cell_change(coord)
+        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+            this.ui_change_bill.queue_column_change(coord.x)
+        } else {
+            this.ui_change_bill.queue_cell_change(coord)
+        }
     }
 
     private fun _queue_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
-        this.ui_change_bill.queue_cell_change(
-            EditorTable.Coordinate(
-                y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
-                x = beat_key.beat
-            )
+        val coord = EditorTable.Coordinate(
+            y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
+            x = beat_key.beat
         )
+
+        val tree = this.get_line_ctl_tree(type, beat_key)
+        val new_weight = tree.get_max_child_weight() * tree.size
+
+        val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
+        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+            this.ui_change_bill.queue_column_change(coord.x)
+        } else {
+            this.ui_change_bill.queue_cell_change(coord)
+        }
     }
     // END UI BILL Interface functions ---------------------------------
 
@@ -269,6 +295,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.unset(beat_key, position)
+
             this._queue_cell_change(beat_key, false)
         }
     }
@@ -599,6 +626,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     row_count += 1
                 }
             }
+
             this._queue_remove_rows(abs_line, row_count)
 
             output
@@ -606,8 +634,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _queue_remove_rows(y: Int, count: Int) {
-        this.get_editor_table()?.remove_mapped_lines(y, count)
         if (!this.ui_lock.is_full_locked()) {
+            this.get_editor_table()?.remove_mapped_lines(y, count)
             this.ui_change_bill.queue_row_removal(y, count)
         }
     }
@@ -656,6 +684,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun set_link_pools(pools: List<Set<BeatKey>>) {
         this.lock_ui_partial {
             super.set_link_pools(pools)
+            // TODO: I think the cell changes should be queued via on_linked callback
             val keys_as_single_list = mutableListOf<BeatKey>()
             for (pool in pools) {
                 keys_as_single_list.addAll(pool)
@@ -666,7 +695,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun remove_beat(beat_index: Int) {
         this.lock_ui_partial {
-
             val link_keys = mutableListOf<BeatKey>()
             this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
                 for (j in channel.lines.indices) {
@@ -708,7 +736,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             super.insert_beat(beat_index, beats_in_column)
 
-            if (this.ui_lock.is_full_locked()) {
+            if (!this.ui_lock.is_full_locked()) {
                 this.queue_cursor_update(bkp_cursor)
                 this._new_column_in_column_width_map(beat_index)
                 this.queue_cursor_update(this.cursor)
@@ -1508,9 +1536,11 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
+        println("OVERLAPPER...")
         this.lock_ui_partial {
             this._queue_cell_change(overlappee.first, true)
         }
+        println("....OVERLAPPER")
     }
 
     override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
@@ -1896,7 +1926,9 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.runOnUiThread { activity: MainActivity ->
             while (true) {
-                when (this.ui_change_bill.get_next_entry()) {
+                val entry = this.ui_change_bill.get_next_entry()
+                println("ENTRY: $entry")
+                when (entry) {
                     BillableItem.FullRefresh -> {
                         activity.setup_project_config_drawer()
                         activity.validate_percussion_visibility()
@@ -1943,9 +1975,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
 
                     BillableItem.ColumnChange -> {
-                        editor_table.notify_column_changed(
-                            this.ui_change_bill.get_next_int()
-                        )
+                        val column = this.ui_change_bill.get_next_int()
+                        editor_table.recalculate_column_max(column)
+                        editor_table.notify_column_changed(column)
                     }
 
                     BillableItem.CellChange -> {
@@ -1961,7 +1993,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ChannelChange -> {
                         val channel = this.ui_change_bill.get_next_int()
-
 
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                         if (channel_recycler.adapter != null) {

@@ -283,9 +283,11 @@ class LeafButtonStd(
         } catch (e: IndexOutOfBoundsException) {
             return drawableState
         }
+
         if (beat_key.beat == -1) {
             return drawableState
         }
+
         val position = this.position
         val tree = try {
             opus_manager.get_tree(beat_key, position)

@@ -144,7 +144,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun notify_column_changed(x: Int) {
-        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(x)
+        //(this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(x)
+        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notifyItemChanged(x)
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
         column_label_adapter.notifyItemChanged(x)
     }
@@ -153,6 +154,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.notify_item_changed(y)
         (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
     }
+
+    fun recalculate_column_max(x: Int) {
+        this._column_width_maxes[x] = this._column_width_map[x].max()
+    }
+
 
     fun get_column_width(column: Int): Int {
         return this._column_width_maxes[column]

@@ -166,7 +166,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         } else {
             opus_manager.cursor_clear()
             editor_table.clear()
-            editor_table.setup(opus_manager.get_visible_line_count(), opus_manager.beat_count)
+            editor_table.setup(opus_manager.get_visible_master_line_count(), opus_manager.beat_count)
         }
 
         editor_table.visibility = View.VISIBLE

@@ -209,7 +209,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        println("DRAWING...")
         val drawableState = super.onCreateDrawableState(extraSpace + 8)
         return this._build_drawable_state(drawableState)
     }

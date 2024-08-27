@@ -126,7 +126,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                         )
                     )!!
                 } catch (e: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
-                    this.get_visible_line_count()
+                    this.get_visible_master_line_count()
                 },
                 beat_keys[i].beat
             )
@@ -176,7 +176,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             adj_coord_list.add(coord)
         }
-        println("Change Queued $adj_coord_list")
         this.ui_change_bill.queue_cell_changes(adj_coord_list)
         this.ui_change_bill.queue_column_changes(notify_columns.toList())
     }
@@ -532,9 +531,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
+    override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove(beat_key, position)
+            super.remove_standard(beat_key, position)
             this._queue_cell_change(beat_key, false)
         }
     }
@@ -1304,7 +1303,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.recache_line_maps()
         this._init_editor_table_width_map()
-        editor_table.setup(this.get_visible_line_count(), this.beat_count)
+        editor_table.setup(this.get_visible_master_line_count(), this.beat_count)
         this.withFragment {
             it.restore_view_model_position()
             it.refresh_context_menu()
@@ -1361,7 +1360,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         this.recache_line_maps()
         this._init_editor_table_width_map()
-        editor_table.setup(this.get_visible_line_count(), this.beat_count)
+        editor_table.setup(this.get_visible_master_line_count(), this.beat_count)
         this.withFragment {
             it.restore_view_model_position()
         }
@@ -1536,11 +1535,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-        println("OVERLAPPER...")
         this.lock_ui_partial {
             this._queue_cell_change(overlappee.first, true)
         }
-        println("....OVERLAPPER")
     }
 
     override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
@@ -1923,11 +1920,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     // UI FUNCS -----------------------
     private fun apply_bill_changes() {
         val editor_table = this.get_editor_table()!!
-
         this.runOnUiThread { activity: MainActivity ->
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()
-                println("ENTRY: $entry")
                 when (entry) {
                     BillableItem.FullRefresh -> {
                         activity.setup_project_config_drawer()
@@ -1935,13 +1930,14 @@ class OpusLayerInterface : OpusLayerCursor() {
                         activity.update_menu_options()
 
                         this._init_editor_table_width_map()
-                        editor_table?.setup(this.get_visible_line_count(), this.beat_count)
+                        editor_table?.setup(this.get_visible_master_line_count(), this.beat_count)
 
                         activity.update_channel_instruments()
                         this.withFragment {
                             it.clear_context_menu()
                         }
                     }
+
                     BillableItem.RowAdd -> {
                         editor_table.new_row(
                             this.ui_change_bill.get_next_int()

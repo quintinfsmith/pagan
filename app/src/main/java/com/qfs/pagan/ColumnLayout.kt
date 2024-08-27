@@ -28,7 +28,6 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
     private fun _populate() {
         this._populated = true
         val opus_manager = this.get_opus_manager()
-
         for (y in 0 until opus_manager.get_visible_master_line_count()) {
             this.addView(CellLayout(this, y), y)
         }
@@ -92,5 +91,9 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
     }
     private fun _get_editor_table(): EditorTable {
         return this._get_column_recycler_adapter().get_editor_table()!!
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
     }
 }

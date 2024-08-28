@@ -15,7 +15,7 @@ import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
-    data class Coordinate(val y: Int, val x: Int)
+    data class Coordinate(var y: Int, var x: Int)
     val column_label_recycler = ColumnLabelRecycler(context)
     private val _line_label_layout = LineLabelColumnLayout(this)
     private var _scroll_view = CompoundScrollView(this)

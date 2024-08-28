@@ -335,7 +335,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
         this.lock_ui_partial {
             super.replace_global_ctl_tree(type, beat, position, tree)
-
             this._queue_global_ctl_cell_change(type, beat)
         }
     }

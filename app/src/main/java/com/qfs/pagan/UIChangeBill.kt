@@ -33,15 +33,24 @@ class UIChangeBill {
     private val _bill = mutableListOf<BillableItem>()
     private var _full_refresh_flagged = false
     private val _int_queue = mutableListOf<Int>()
+    private val queued_cells = mutableSetOf<EditorTable.Coordinate>()
 
     fun get_next_entry(): BillableItem? {
         return if (this._full_refresh_flagged) {
             this._full_refresh_flagged = false
             BillableItem.FullRefresh
-        } else if (this._bill.isEmpty()) {
-            null
-        } else {
+        } else if (this._bill.isNotEmpty()) {
             this._bill.removeFirst()
+        } else if (this.queued_cells.isNotEmpty()) {
+            this._int_queue.add(this.queued_cells.size)
+            for (cell in this.queued_cells.toList()) {
+                this._int_queue.add(cell.y)
+                this._int_queue.add(cell.x)
+            }
+            this.queued_cells.clear()
+            BillableItem.CellChange
+        } else {
+            null
         }
     }
 
@@ -53,6 +62,7 @@ class UIChangeBill {
         this._full_refresh_flagged = true
         this._bill.clear()
         this._int_queue.clear()
+        this.queued_cells.clear()
     }
 
     fun queue_project_name_change() {
@@ -67,29 +77,24 @@ class UIChangeBill {
         if (this._full_refresh_flagged) {
             return
         }
-        this._bill.add(BillableItem.CellChange)
-        this._int_queue.add(cells.size)
-        for (i in cells.indices) {
-            this._int_queue.add(cells[i].y)
-            this._int_queue.add(cells[i].x)
-        }
+        this.queued_cells.addAll(cells)
     }
 
     fun queue_cell_change(cell: EditorTable.Coordinate) {
         if (this._full_refresh_flagged) {
             return
         }
-
-        this._int_queue.add(1)
-        this._int_queue.add(cell.y)
-        this._int_queue.add(cell.x)
-        this._bill.add(BillableItem.CellChange)
+        this.queued_cells.add(cell)
     }
 
     fun queue_column_changes(columns: List<Int>) {
         if (this._full_refresh_flagged) {
             return
         }
+
+        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+            columns.contains(coord.x)
+        }.toSet()
 
         this._int_queue.addAll(columns)
         for (i in columns.indices) {
@@ -102,6 +107,10 @@ class UIChangeBill {
             return
         }
 
+        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+            coord.x == column
+        }.toSet()
+
         this._int_queue.add(column)
         this._bill.add(BillableItem.ColumnChange)
     }
@@ -109,6 +118,12 @@ class UIChangeBill {
     fun queue_new_row(y: Int) {
         if (this._full_refresh_flagged) {
             return
+        }
+
+        for (coord in this.queued_cells) {
+            if (coord.y >= y) {
+                coord.y += 1
+            }
         }
 
         this._int_queue.add(y)
@@ -200,6 +215,10 @@ class UIChangeBill {
             return
         }
 
+        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+            coord.y == y
+        }.toSet()
+
         this._int_queue.add(y)
         this._bill.add(BillableItem.RowChange)
     }
@@ -207,6 +226,18 @@ class UIChangeBill {
     fun queue_row_removal(y: Int, count: Int) {
         if (this._full_refresh_flagged) {
             return
+        }
+
+        val check_range = y until y + count
+
+        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+            check_range.contains(coord.y)
+        }.toSet()
+
+        for (coord in this.queued_cells) {
+            if (coord.y >= y + count) {
+                coord.y -= count
+            }
         }
 
         this._int_queue.add(y)
@@ -262,6 +293,12 @@ class UIChangeBill {
             return
         }
 
+        for (coord in this.queued_cells) {
+            if (coord.x >= column) {
+                coord.x += 1
+            }
+        }
+
         this._int_queue.add(column)
         this._bill.add(BillableItem.ColumnAdd)
     }
@@ -269,6 +306,16 @@ class UIChangeBill {
     fun queue_remove_column(column: Int) {
         if (this._full_refresh_flagged) {
             return
+        }
+
+        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+            coord.x == column
+        }.toSet()
+
+        for (coord in this.queued_cells) {
+            if (coord.x > column) {
+                coord.x -= 1
+            }
         }
 
         this._int_queue.add(column)

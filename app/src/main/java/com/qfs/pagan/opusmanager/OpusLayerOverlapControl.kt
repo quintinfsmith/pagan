@@ -240,7 +240,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         super.insert_beat(beat_index, beats_in_column)
 
-
         val new_cache = Array(needs_inc.size) { i: Int ->
             val original_blocked = this._cache_blocked_tree_map.remove(needs_inc[i])!!
             var (beat_key, position) = needs_inc[i]

@@ -176,6 +176,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             adj_coord_list.add(coord)
         }
+
+        for (x in notify_columns) {
+            editor_table.recalculate_column_max(x)
+        }
+
         this.ui_change_bill.queue_cell_changes(adj_coord_list)
         this.ui_change_bill.queue_column_changes(notify_columns.toList())
     }
@@ -216,8 +221,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         val new_weight = tree.get_max_child_weight() * tree.size
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
-        editor_table.set_mapped_width(coord.y, coord.x, new_weight)
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+            editor_table.recalculate_column_max(coord.x)
             this.ui_change_bill.queue_column_change(coord.x)
         } else {
             this.ui_change_bill.queue_cell_change(coord)
@@ -235,6 +240,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+            editor_table.recalculate_column_max(coord.x)
             this.ui_change_bill.queue_column_change(coord.x)
         } else {
             this.ui_change_bill.queue_cell_change(coord)
@@ -696,35 +702,21 @@ class OpusLayerInterface : OpusLayerCursor() {
             val link_keys = mutableListOf<BeatKey>()
             this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
                 for (j in channel.lines.indices) {
-                    for (key in this.get_all_linked(BeatKey(i, j, beat_index))) {
-                        if (key.beat == beat_index) {
-                            continue
-                        }
-                        link_keys.add(
-                            BeatKey(
-                                key.channel,
-                                key.line_offset,
-                                if (key.beat > beat_index) {
-                                    key.beat - 1
-                                } else {
-                                    key.beat
-                                }
-                            )
-                        )
-                    }
+                    // No need to adjust links, they'll be automatically adjusted in the bill
+                    link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
                 }
             }
 
-            super.remove_beat(beat_index)
-
-
+            // Queue changes Before calling supers,
+            // select_column is called in a super and the ui changes would get overwritten otherwise
             if (!this.ui_lock.is_full_locked()) {
                 this.get_editor_table()?.remove_mapped_column(beat_index)
+                this._queue_cell_changes(link_keys)
 
                 this.ui_change_bill.queue_remove_column(beat_index)
-
-                this._queue_cell_changes(link_keys)
             }
+
+            super.remove_beat(beat_index)
         }
     }
 
@@ -1533,17 +1525,17 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-        this.lock_ui_partial {
-            this._queue_cell_change(overlappee.first, true)
-        }
-    }
+    //override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
+    //    this.lock_ui_partial {
+    //        this._queue_cell_change(overlappee.first, true)
+    //    }
+    //}
 
-    override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-        this.lock_ui_partial {
-            this._queue_cell_change(overlappee.first, true)
-        }
-    }
+    //override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
+    //    this.lock_ui_partial {
+    //        this._queue_cell_change(overlappee.first, true)
+    //    }
+    //}
 
     /*
         Need to know when setting the FeedBackPlaybackDevice sample rate, since we want it as low as is possible without killing higher notes
@@ -1904,6 +1896,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                 }
             }
+
             for ((type, controller) in channel.controllers.get_all()) {
                 if (! this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
                     continue
@@ -1940,6 +1933,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.runOnUiThread { activity: MainActivity ->
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()
+                println("ENtRY: $entry")
                 when (entry) {
                     BillableItem.FullRefresh -> {
                         activity.setup_project_config_drawer()
@@ -2000,7 +1994,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 x = this.ui_change_bill.get_next_int()
                             )
                         }
-                        println("...$cells")
                         editor_table.notify_cell_changes(cells)
                     }
 

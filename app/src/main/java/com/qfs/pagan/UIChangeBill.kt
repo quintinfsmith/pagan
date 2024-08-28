@@ -35,6 +35,7 @@ class UIChangeBill {
     private var _full_refresh_flagged = false
     private val _int_queue = mutableListOf<Int>()
     private val queued_cells = mutableSetOf<EditorTable.Coordinate>()
+    private val queued_columns = mutableSetOf<Int>()
 
     fun get_next_entry(): BillableItem? {
         return if (this._full_refresh_flagged) {
@@ -42,6 +43,13 @@ class UIChangeBill {
             BillableItem.FullRefresh
         } else if (this._bill.isNotEmpty()) {
             this._bill.removeFirst()
+        } else if (this.queued_columns.isNotEmpty()) {
+            for (x in this.queued_columns.toList()) {
+                this._bill.add(BillableItem.ColumnChange)
+                this._int_queue.add(x)
+            }
+            this.queued_columns.clear()
+            this.get_next_entry()
         } else if (this.queued_cells.isNotEmpty()) {
             this._int_queue.add(this.queued_cells.size)
             for (cell in this.queued_cells.toList()) {
@@ -68,6 +76,7 @@ class UIChangeBill {
         this._bill.clear()
         this._int_queue.clear()
         this.queued_cells.clear()
+        this.queued_columns.clear()
     }
 
     fun queue_project_name_change() {
@@ -101,10 +110,12 @@ class UIChangeBill {
             columns.contains(coord.x)
         }.toSet()
 
-        this._int_queue.addAll(columns)
-        for (i in columns.indices) {
-            this._bill.add(BillableItem.ColumnChange)
-        }
+        this.queued_columns.addAll(columns)
+
+        //this._int_queue.addAll(columns)
+        //for (i in columns.indices) {
+        //    this._bill.add(BillableItem.ColumnChange)
+        //}
     }
 
     fun queue_column_change(column: Int) {
@@ -116,8 +127,7 @@ class UIChangeBill {
             coord.x == column
         }.toSet()
 
-        this._int_queue.add(column)
-        this._bill.add(BillableItem.ColumnChange)
+        this.queued_columns.add(column)
     }
 
     fun queue_new_row(y: Int) {
@@ -313,6 +323,16 @@ class UIChangeBill {
             }
         }
 
+        val old_columns = this.queued_columns.toSet()
+        this.queued_columns.clear()
+        for (x in old_columns) {
+            if (x < column) {
+                this.queued_columns.add(x)
+            } else {
+                this.queued_columns.add(x + 1)
+            }
+        }
+
         this._int_queue.add(column)
         this._bill.add(BillableItem.ColumnAdd)
     }
@@ -329,6 +349,18 @@ class UIChangeBill {
         for (coord in this.queued_cells) {
             if (coord.x > column) {
                 coord.x -= 1
+            }
+        }
+
+        val old_columns = this.queued_columns.toSet()
+        this.queued_columns.clear()
+        for (x in old_columns) {
+            if (x == column) {
+                continue
+            } else if (x < column) {
+                this.queued_columns.add(x)
+            } else {
+                this.queued_columns.add(x - 1)
             }
         }
 

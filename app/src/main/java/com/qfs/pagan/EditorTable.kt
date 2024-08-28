@@ -133,6 +133,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun remove_column(index: Int) {
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
         (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_column(index)
+
     }
 
     fun notify_cell_changes(cell_coords: List<Coordinate>) {
@@ -157,6 +158,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun recalculate_column_max(x: Int) {
         this._column_width_maxes[x] = this._column_width_map[x].max()
+    }
+    fun recalculate_column_maxes() {
+        for (x in 0 until this._column_width_map.size) {
+            this._column_width_maxes[x] = this._column_width_map[x].max()
+        }
     }
 
 
@@ -492,6 +498,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun remove_mapped_column(x: Int) {
         this._column_width_map.removeAt(x)
+        this._column_width_maxes.removeAt(x)
     }
 
     fun add_column_to_map(x: Int, column: List<Int>) {

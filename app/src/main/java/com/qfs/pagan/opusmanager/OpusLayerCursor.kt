@@ -1159,10 +1159,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, position, count)
                 this.remove(beat_key, position, real_count)
 
-                //this.cursor_select(
-                //    beat_key,
-                //    this.get_first_position(beat_key, cursor_position)
-                //)
+                this.cursor_select(
+                    beat_key,
+                    this.get_first_position(beat_key, cursor_position)
+                )
             }
 
             CtlLineLevel.Global -> {

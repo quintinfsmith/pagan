@@ -176,6 +176,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.notify_item_changed(y)
     }
 
+    fun update_column_label(x: Int) {
+        val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
+        column_label_adapter.notifyItemChanged(x)
+    }
+
     fun align_column_labels() {
         val layout_manager_columns = this.get_column_recycler().layoutManager!! as LinearLayoutManager
         val layout_manager_labels = this.column_label_recycler.layoutManager!! as LinearLayoutManager

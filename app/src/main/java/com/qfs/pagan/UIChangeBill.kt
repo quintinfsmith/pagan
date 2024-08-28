@@ -27,6 +27,7 @@ class UIChangeBill {
         ConfigDrawerRefreshExportButton,
         PercussionButtonRefresh,
         LineLabelRefresh,
+        ColumnLabelRefresh,
         FullRefresh
     }
 
@@ -60,6 +61,10 @@ class UIChangeBill {
 
     fun queue_full_refresh() {
         this._full_refresh_flagged = true
+        this.clear()
+    }
+
+    fun clear() {
         this._bill.clear()
         this._int_queue.clear()
         this.queued_cells.clear()
@@ -199,6 +204,15 @@ class UIChangeBill {
         }
 
         this._bill.add(BillableItem.ContextMenuClear)
+    }
+
+    fun queue_column_label_refresh(x: Int) {
+        if (this._full_refresh_flagged) {
+            return
+        }
+
+        this._int_queue.add(x)
+        this._bill.add(BillableItem.ColumnLabelRefresh)
     }
 
     fun queue_line_label_refresh(y: Int) {

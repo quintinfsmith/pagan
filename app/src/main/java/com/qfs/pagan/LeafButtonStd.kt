@@ -283,7 +283,7 @@ class LeafButtonStd(
         } catch (e: IndexOutOfBoundsException) {
             return drawableState
         }
-
+        println("BUILDING... $beat_key, ${this.position}")
         if (beat_key.beat == -1) {
             return drawableState
         }
@@ -352,6 +352,7 @@ class LeafButtonStd(
         }
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
+        println("BUILT $beat_key, ${this.position}")
         return drawableState
     }
 }

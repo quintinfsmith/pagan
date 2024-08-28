@@ -1585,6 +1585,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                             listOf(beat_key)
                         }
 
+
                         for (linked_key in beat_keys) {
                             val shadow_beat_keys = mutableSetOf<BeatKey>()
                             val event_head = this.get_original_position(linked_key, cursor.position)
@@ -1607,6 +1608,10 @@ class OpusLayerInterface : OpusLayerCursor() {
                                     return
                                 }
 
+                                if (shadow_key == beat_key) {
+                                    this.ui_change_bill.queue_line_label_refresh(y)
+                                    this.ui_change_bill.queue_column_label_refresh(shadow_key.beat)
+                                }
                                 coordinates_to_update.add(EditorTable.Coordinate(y, shadow_key.beat))
                             }
                         }
@@ -1618,6 +1623,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                             cursor.channel,
                             cursor.line_offset
                         )
+                        this.ui_change_bill.queue_line_label_refresh(y)
+                        this.ui_change_bill.queue_column_label_refresh(cursor.beat)
+
                         coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
                     }
                     CtlLineLevel.Channel -> {
@@ -1625,6 +1633,8 @@ class OpusLayerInterface : OpusLayerCursor() {
                             cursor.ctl_type!!,
                             cursor.channel
                         )
+                        this.ui_change_bill.queue_line_label_refresh(y)
+                        this.ui_change_bill.queue_column_label_refresh(cursor.beat)
                         coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
                     }
 
@@ -1632,6 +1642,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                         val y = this.get_visible_row_from_ctl_line_global(
                             cursor.ctl_type!!
                         )
+
+                        this.ui_change_bill.queue_line_label_refresh(y)
+                        this.ui_change_bill.queue_column_label_refresh(cursor.beat)
 
                         coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
                     }
@@ -1655,6 +1668,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 continue
                             }
 
+                            this.ui_change_bill.queue_line_label_refresh(y)
+                            this.ui_change_bill.queue_column_label_refresh(beat_key.beat)
+
                             coordinates_to_update.add(EditorTable.Coordinate(y, beat_key.beat))
                         }
                     }
@@ -1675,7 +1691,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                         val first_beat = min(top_left.beat, bottom_right.beat)
                         val last_beat = max(top_left.beat, bottom_right.beat)
 
+                        this.ui_change_bill.queue_line_label_refresh(y)
                         for (x in first_beat..last_beat) {
+                            this.ui_change_bill.queue_column_label_refresh(x)
                             coordinates_to_update.add(EditorTable.Coordinate(y, x))
                         }
                     }
@@ -1982,7 +2000,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 x = this.ui_change_bill.get_next_int()
                             )
                         }
-
+                        println("...$cells")
                         editor_table.notify_cell_changes(cells)
                     }
 
@@ -2109,10 +2127,14 @@ class OpusLayerInterface : OpusLayerCursor() {
                     BillableItem.LineLabelRefresh -> {
                         editor_table.update_line_label(this.ui_change_bill.get_next_int())
                     }
+                    BillableItem.ColumnLabelRefresh -> {
+                        editor_table.update_column_label(this.ui_change_bill.get_next_int())
+                    }
 
                     null -> break
                 }
             }
+            this.ui_change_bill.clear()
         }
     }
 

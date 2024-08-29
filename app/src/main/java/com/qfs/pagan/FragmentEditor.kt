@@ -245,21 +245,21 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             thread {
                 val path = bundle?.getString("URI")
                 if (path != null) {
-                    try {
-                        main.import_midi(path)
-                    } catch (e: Exception) {
-                        val opus_manager = main.get_opus_manager()
-                        if (!opus_manager.first_load_done) {
-                            main.get_opus_manager().new()
-                        } else {
-                            main.runOnUiThread {
-                                this.reload_from_bkp()
-                                editor_table.visibility = View.VISIBLE
-                                this.restore_view_model_position()
-                            }
-                        }
-                        main.feedback_msg(getString(R.string.feedback_midi_fail))
-                    }
+                    main.import_midi(path)
+                    //try {
+                    //} catch (e: Exception) {
+                    //    val opus_manager = main.get_opus_manager()
+                    //    if (!opus_manager.first_load_done) {
+                    //        main.get_opus_manager().new()
+                    //    } else {
+                    //        main.runOnUiThread {
+                    //            this.reload_from_bkp()
+                    //            editor_table.visibility = View.VISIBLE
+                    //            this.restore_view_model_position()
+                    //        }
+                    //    }
+                    //    main.feedback_msg(getString(R.string.feedback_midi_fail))
+                    //}
                 }
 
                 main.runOnUiThread {

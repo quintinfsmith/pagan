@@ -1,6 +1,5 @@
 package com.qfs.pagan.opusmanager
 
-import com.qfs.pagan.Rational
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -12,6 +11,7 @@ import com.qfs.apres.event.TimeSignature
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.json.*
+import com.qfs.pagan.Rational
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.OpusTree
 import java.io.File
@@ -1916,7 +1916,6 @@ open class OpusLayerBase {
                 }
             }
             /////////////////////////////////////
-            //quantized_tree.reduce()
             opus[i] = quantized_tree
         }
 
@@ -1972,7 +1971,7 @@ open class OpusLayerBase {
                     midi_channel_map[event_channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event_channel]!!
-                val working_end = working_start + Rational(event[2], width_denominator)
+                val working_end = working_start + Rational(1,4)//Rational(event[2], width_denominator)
 
                 if (event[0] == 9) {
                     val event_note = event[1]
@@ -2143,7 +2142,6 @@ open class OpusLayerBase {
             }
         }
 
-        // Reduce
         val all_channels = List(this.channels.size + 1) { i: Int ->
             if (i < this.channels.size) {
                 this.channels[i]
@@ -2152,13 +2150,16 @@ open class OpusLayerBase {
             }
         }
 
+        // Reduce
         all_channels.forEachIndexed { i: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {
                     val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())
                     val original_size = beat_tree.size
 
+                    println("REDUCING $i $j $k (${beat_tree.size}")
                     beat_tree.reduce()
+                    println("REDUCED $i $j $k (${beat_tree.size}")
                     beat_tree.traverse { working_tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
                         if (event == null) {
                             return@traverse

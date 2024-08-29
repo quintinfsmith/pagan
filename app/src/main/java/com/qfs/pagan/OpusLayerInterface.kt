@@ -1929,7 +1929,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     // UI FUNCS -----------------------
     private fun apply_bill_changes() {
-        val editor_table = this.get_editor_table()!!
+        val editor_table = this.get_editor_table() ?: return // when importing
         this.runOnUiThread { activity: MainActivity ->
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()

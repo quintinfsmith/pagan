@@ -161,6 +161,33 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             }
         }
 
+        for (before in needs_recache) {
+            var working_beat_key = BeatKey(before.first.channel, before.first.line_offset, beat_index + 1)
+            var working_position = this.get_first_position(working_beat_key)
+
+            if (!this.get_tree(working_beat_key, working_position).is_event()) {
+                val next = this.get_proceding_event_position(working_beat_key, working_position) ?: continue
+                working_beat_key = next.first
+                working_position = next.second
+            }
+
+            val (before_offset, before_width) = this.get_leaf_offset_and_width(before.first, before.second)
+            var duration = this.get_tree(before.first, before.second).get_event()?.duration ?: 1
+
+            var (after_offset, _) = this.get_leaf_offset_and_width(working_beat_key, working_position)
+            after_offset -= 1
+
+            if (after_offset >= before_offset && after_offset < before_offset + Rational(duration, before_width)) {
+                throw BlockedTreeException(working_beat_key, working_position, before.first, before.second)
+            }
+
+            for (after in needs_decrement) {
+                if (!(before.first.channel == after.first.channel && before.first.line_offset == after.first.line_offset)) {
+                    continue
+                }
+            }
+        }
+
         for (cache_key in decache) {
             this.decache_overlapping_leaf(cache_key.first, cache_key.second)
         }
@@ -222,7 +249,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             amount
         )
     }
-
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
         val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
@@ -292,6 +318,11 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        val blocked_pair = this.is_blocked_set_event(beat_key, position, duration)
+        if (blocked_pair != null) {
+            throw BlockedTreeException(beat_key, position, blocked_pair.first, blocked_pair.second)
+        }
+
         super.set_duration(beat_key, position, duration)
         this.decache_overlapping_leaf(beat_key, position)
         this._cache_tree_overlaps(beat_key, position)
@@ -447,10 +478,10 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         var width_denominator = 1
 
         for (i in position.indices) {
-            if (mod_position != null && mod_position.size == i && position.subList(0, i) == mod_position) {
-                width_denominator *= target_tree.size + mod_amount
+            width_denominator *= if (mod_position != null && mod_position.size == i && position.subList(0, i) == mod_position) {
+                target_tree.size + mod_amount
             } else {
-                width_denominator *= target_tree.size
+                target_tree.size
             }
 
             val p = position[i]
@@ -558,7 +589,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             this.get_leaf_offset_and_width(next_beat_key, next_position)
         }
 
-        return if (target_offset >= head_offset && target_offset <= head_offset + (head_width * blocker_tree.get_event()!!.duration)) {
+        return if (target_offset >= head_offset && target_offset < head_offset + Rational(blocker_tree.get_event()!!.duration, head_width)) {
             Pair(next_beat_key.copy(), next_position.toList())
         } else {
             null
@@ -568,6 +599,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     private fun is_blocked_set_event(beat_key: BeatKey, position: List<Int>, duration: Int): Pair<BeatKey, List<Int>>? {
         val blocker = this.get_blocking_position(beat_key, position)
         if (blocker != null) {
+            println("SET BLOCKED!(A)")
             return blocker
         }
 
@@ -575,7 +607,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         val (head_offset, head_width) = this.get_leaf_offset_and_width(beat_key, position)
         val (target_offset, target_width) = this.get_leaf_offset_and_width(next_beat_key, next_position)
-        return if (target_offset >= head_offset && target_offset <= head_offset + (head_width * duration)) {
+        return if (target_offset >= head_offset && target_offset < head_offset + Rational(duration, head_width)) {
             Pair(next_beat_key.copy(), next_position.toList())
         } else {
             null

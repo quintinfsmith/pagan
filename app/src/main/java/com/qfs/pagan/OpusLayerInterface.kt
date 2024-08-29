@@ -1933,7 +1933,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.runOnUiThread { activity: MainActivity ->
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()
-                println("ENtRY: $entry")
                 when (entry) {
                     BillableItem.FullRefresh -> {
                         activity.setup_project_config_drawer()

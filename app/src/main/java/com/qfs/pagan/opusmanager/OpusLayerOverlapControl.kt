@@ -16,7 +16,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         for (i in 0 until channels.size) {
             for (j in 0 until channels[i].size) {
-                val line = channels[i].lines[j]
                 var beat_key = BeatKey(i, j, 0)
                 var position = this.get_first_position(beat_key, listOf())
                 while (true) {
@@ -75,6 +74,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
+        TODO("NEED OVERLAP CHECK")
         val working_position = position ?: listOf()
         this.decache_overlapping_leaf(beat_key, working_position)
         super.replace_tree(beat_key, position, tree)

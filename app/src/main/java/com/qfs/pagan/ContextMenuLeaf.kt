@@ -118,10 +118,10 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             this.ros_relative_option.visibility = View.GONE
         }
 
-        val current_tree_position = opus_manager.get_original_position(
-            opus_manager.cursor.get_beatkey(),
-            opus_manager.cursor.get_position()
-        )
+        val beat_key = opus_manager.cursor.get_beatkey()
+        val position = opus_manager.cursor.get_position()
+
+        val current_tree_position = opus_manager.get_original_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
         val current_tree = opus_manager.get_tree()
 
@@ -132,10 +132,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     if (main.configuration.relative_mode) {
                         abs(event.offset)
                     } else {
-                        opus_manager.get_absolute_value(
-                            opus_manager.cursor.get_beatkey(),
-                            opus_manager.cursor.get_position()
-                        )!!
+                        opus_manager.get_absolute_value(beat_key, position)!!
                     }
                 } else if (event is AbsoluteNoteEvent) {
                     event.note
@@ -172,7 +169,10 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             true,
             true
         )
-
+        val blocked_amount = opus_manager.get_blocking_amount(beat_key, position)
+        println("BLOCKED: $blocked_amount | ")
+        this.button_split.isEnabled = current_event_tree == current_tree || blocked_amount!! < 1
+        this.button_split.isClickable = this.button_split.isEnabled
 
         this.button_duration.isEnabled = current_event_tree.is_event()
         this.button_duration.isClickable = this.button_duration.isEnabled

@@ -1,5 +1,6 @@
 package com.qfs.pagan
 import com.qfs.pagan.structure.greatest_common_denominator
+import kotlin.math.abs
 
 data class Rational(var n: Int, var d: Int) {
     init {
@@ -74,13 +75,14 @@ data class Rational(var n: Int, var d: Int) {
             this.d = 1
         } else {
             val gcd = try {
-                greatest_common_denominator(this.n, this.d)
+                greatest_common_denominator(abs(this.n), abs(this.d))
             } catch (e: Exception) {
                 return
             }
 
             this.n /= gcd
             this.d /= gcd
+
         }
     }
 }

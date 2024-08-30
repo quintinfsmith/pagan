@@ -1774,7 +1774,7 @@ open class OpusLayerBase {
                 // Turn off note if its playing
                 if (active_event_map.containsKey(Pair(channel, note))) {
                     var existing_event = active_event_map[Pair(channel, note)]!!
-                    existing_event[2] = tick - existing_event[2]
+                    existing_event[2] = tick + 1 - existing_event[2]
                 }
 
                 // Add trees to list of trees
@@ -1808,7 +1808,7 @@ open class OpusLayerBase {
                 }
 
                 val opus_event = active_event_map.remove(Pair(channel, note)) ?: continue
-                opus_event[2] = tick - opus_event[2]
+                opus_event[2] = tick + 1 - opus_event[2]
             } else if (event is TimeSignature) {
                 total_beat_offset += (tick - last_ts_change) / beat_size
 
@@ -1861,7 +1861,7 @@ open class OpusLayerBase {
         }
 
         for ((_, opus_event) in active_event_map) {
-            opus_event[2] = max_tick - opus_event[2]
+            opus_event[2] = max_tick + 1 - opus_event[2]
         }
 
         active_event_map.clear()
@@ -1956,8 +1956,7 @@ open class OpusLayerBase {
         for ((position, event_set) in mapped_events) {
             remapped_events.add(Pair(position, mutableListOf()))
 
-            val initial_position = position[0].first
-            var working_start = Rational(initial_position, 1)
+            var working_start = Rational(position[0].first, 1)
             var width_denominator = 1
 
             for ((i, size) in position.subList(1, position.size)) {
@@ -1971,7 +1970,8 @@ open class OpusLayerBase {
                     midi_channel_map[event_channel] = midi_channel_map.size
                 }
                 val channel_index = midi_channel_map[event_channel]!!
-                val working_end = working_start + Rational(1,4)//Rational(event[2], width_denominator)
+                val event_size = Rational(event[2], position[1].second)
+                val working_end = working_start + event_size
 
                 if (event[0] == 9) {
                     val event_note = event[1]
@@ -2154,12 +2154,10 @@ open class OpusLayerBase {
         all_channels.forEachIndexed { i: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             for (j in channel.lines.indices) {
                 for (k in 0 until this.beat_count) {
+
                     val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())
                     val original_size = beat_tree.size
-
-                    println("REDUCING $i $j $k (${beat_tree.size}")
                     beat_tree.reduce()
-                    println("REDUCED $i $j $k (${beat_tree.size}")
                     beat_tree.traverse { working_tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
                         if (event == null) {
                             return@traverse
@@ -2167,7 +2165,8 @@ open class OpusLayerBase {
 
                         var tmp_tree = beat_tree
                         var denominator = 1
-                        for (p in working_tree.get_path()) {
+                        val tree_position = working_tree.get_path()
+                        for (p in tree_position) {
                             denominator *= tmp_tree.size
                             tmp_tree = tmp_tree[p]
                         }

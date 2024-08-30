@@ -48,6 +48,7 @@ class OpusTree<T> {
             for (key in to_delete) {
                 this.divisions.remove(key)
             }
+
         }
 
         this.size = new_size
@@ -77,10 +78,11 @@ class OpusTree<T> {
 
         val indices: MutableList<Pair<Int, OpusTree<T>>> = mutableListOf()
         for ((key, child_node) in this.divisions) {
-            indices.add(Pair(key, child_node))
+            if (child_node.is_event()) {
+                indices.add(Pair(key, child_node))
+            }
         }
         indices.sortWith(compareBy { it.first })
-
         val place_holder: OpusTree<T> = this.copy()
         val stack = mutableListOf(
             ReducerTuple(

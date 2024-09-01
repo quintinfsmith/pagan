@@ -538,29 +538,29 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_standard(beat_key, position)
             this._queue_cell_change(beat_key, false)
+            super.remove_standard(beat_key, position)
         }
     }
 
     override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_global_ctl(type, beat, position)
             this._queue_global_ctl_cell_change(type, beat)
+            super.remove_global_ctl(type, beat, position)
         }
     }
 
     override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_channel_ctl(type, channel, beat, position)
             this._queue_channel_ctl_cell_change(type, channel, beat)
+            super.remove_channel_ctl(type, channel, beat, position)
         }
     }
 
     override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_line_ctl(type, beat_key, position)
             this._queue_line_ctl_cell_change(type, beat_key)
+            super.remove_line_ctl(type, beat_key, position)
         }
     }
 

@@ -1150,6 +1150,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     fun remove(count: Int) {
         val cursor = this.cursor
+        // TODO: I don't know if i like this kludge.
+        this.cursor_clear()
         when (cursor.ctl_level) {
             null -> {
                 val beat_key = cursor.get_beatkey()
@@ -1157,6 +1159,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
                 var working_tree = this.get_tree(beat_key).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, position, count)
+
                 this.remove(beat_key, position, real_count)
 
                 this.cursor_select(

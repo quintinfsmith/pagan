@@ -418,7 +418,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 KeyEvent.KEYCODE_X -> {
                     val repeat = this.clear_value_buffer(1)
                     if (repeat > 0) {
-                        this.opus_manager.remove(repeat)
+                        this.opus_manager.remove_at_cursor(repeat)
                     }
                     true
                 }

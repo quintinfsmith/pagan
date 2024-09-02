@@ -127,7 +127,7 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
     }
     fun click_button_remove() {
         val opus_manager = this.get_opus_manager()
-        opus_manager.remove(1)
+        opus_manager.remove_at_cursor(1)
     }
 
     fun long_click_button_remove(): Boolean {

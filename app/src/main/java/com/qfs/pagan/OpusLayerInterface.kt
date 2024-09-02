@@ -246,7 +246,14 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.ui_change_bill.queue_cell_change(coord)
         }
     }
-    // END UI BILL Interface functions ---------------------------------
+    // END UI BILL Interface functions ---------------------------------W
+
+    override fun remove_at_cursor(count: Int) {
+        this.lock_ui_partial {
+            this.queue_cursor_update(this.cursor.copy())
+            super.remove_at_cursor(count)
+        }
+    }
 
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         this.lock_ui_partial {
@@ -2136,6 +2143,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             callback(main)
         }
     }
+
 
     // END UI FUNCS -----------------------
 }

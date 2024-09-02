@@ -139,7 +139,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     fun click_button_remove() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        opus_manager.remove(1)
+        opus_manager.remove_at_cursor(1)
     }
 
     fun long_click_button_split(): Boolean {

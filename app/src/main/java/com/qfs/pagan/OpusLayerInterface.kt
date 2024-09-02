@@ -1532,17 +1532,17 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    //override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-    //    this.lock_ui_partial {
-    //        this._queue_cell_change(overlappee.first, true)
-    //    }
-    //}
+    override fun on_overlap(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
+        this.lock_ui_partial {
+            this._queue_cell_change(overlappee.first, true)
+        }
+    }
 
-    //override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
-    //    this.lock_ui_partial {
-    //        this._queue_cell_change(overlappee.first, true)
-    //    }
-    //}
+    override fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>,overlappee: Pair<BeatKey, List<Int>>) {
+        this.lock_ui_partial {
+            this._queue_cell_change(overlappee.first, true)
+        }
+    }
 
     /*
         Need to know when setting the FeedBackPlaybackDevice sample rate, since we want it as low as is possible without killing higher notes

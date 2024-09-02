@@ -163,6 +163,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+        TODO("not checking correctly")
         val blocked_pair = this.is_blocked_remove(beat_key, position)
         if (blocked_pair != null) {
             throw BlockedTreeException(beat_key, position, blocked_pair.first, blocked_pair.second)

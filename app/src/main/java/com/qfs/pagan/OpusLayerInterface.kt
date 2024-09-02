@@ -86,9 +86,18 @@ class OpusLayerInterface : OpusLayerCursor() {
     // UI BILL Interface functions ---------------------------------
     private fun lock_ui_full(callback: () -> Unit) {
         this.ui_lock.lock_full()
-        val output = callback()
-        this.ui_lock.unlock_full()
+        val output = try {
+            callback()
+        } catch (e: Exception) {
+            this.ui_lock.unlock_full()
+            if (!this.ui_lock.is_locked()) {
+                this.apply_bill_changes()
+            }
 
+            throw e
+        }
+
+        this.ui_lock.unlock_full()
         if (!this.ui_lock.is_locked()) {
             this.apply_bill_changes()
         }
@@ -98,7 +107,17 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private fun <T> lock_ui_partial(callback: () -> T): T {
         this.ui_lock.lock_partial()
-        val output = callback()
+
+        val output = try {
+            callback()
+        } catch (e: Exception) {
+            this.ui_lock.unlock_partial()
+            if (!this.ui_lock.is_locked()) {
+                this.apply_bill_changes()
+            }
+            throw e
+        }
+
         this.ui_lock.unlock_partial()
         if (!this.ui_lock.is_locked()) {
             this.apply_bill_changes()

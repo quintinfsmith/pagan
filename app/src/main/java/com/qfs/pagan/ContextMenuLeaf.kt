@@ -7,6 +7,7 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
+import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import kotlin.math.abs
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
@@ -196,7 +197,11 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->
             val adj_value = Integer.max(value, 1)
-            opus_manager.set_duration(beat_key, position, adj_value)
+            try {
+                opus_manager.set_duration(beat_key, position, adj_value)
+            } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                main.feedback_msg("blocked")
+            }
         }
     }
 

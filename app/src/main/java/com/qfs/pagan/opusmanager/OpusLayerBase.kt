@@ -155,6 +155,15 @@ open class OpusLayerBase {
         return output
     }
 
+    fun is_valid(beat_key: BeatKey, position: List<Int>): Boolean {
+        return try {
+            this.get_tree(beat_key, position)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     /**
      * Calculates how many lines are in use.
      */

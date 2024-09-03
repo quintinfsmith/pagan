@@ -405,7 +405,8 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         for ((blocked_beat_key, blocked_position, _) in this._cache_blocked_tree_map.remove(cache_key)!!) {
             val overlapped_key = Pair(blocked_beat_key, blocked_position)
             this._cache_inv_blocked_tree_map.remove(overlapped_key)
-            this.on_overlap_removed(cache_key, overlapped_key)
+
+            this._on_overlap_removed(cache_key, overlapped_key)
         }
     }
     private fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Rational>> {
@@ -495,7 +496,25 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         return output
     }
-
+    
+    /*
+     * Wrapper around on_overlap that includes a check if the overlapped position exists.
+     */
+    private fun _on_overlap(overlapper: Pair<BeatKey, List<Int>>, overlappee: Pair<BeatKey, List<Int>>) {
+        if (!this.is_valid(overlappee.first, overlappee.second)) {
+            return
+        }
+        this.on_overlap(overlapper, overlappee)
+    }
+    /*
+     * Wrapper around on_overlap_removed that includes a check if the overlapped position exists.
+     */
+    private fun _on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>, overlappee: Pair<BeatKey, List<Int>>) {
+        if (!this.is_valid(overlappee.first, overlappee.second)) {
+            return
+        }
+        this.on_overlap_removed(overlapper, overlappee)
+    }
     open fun on_overlap(overlapper: Pair<BeatKey, List<Int>>, overlappee: Pair<BeatKey, List<Int>>) { }
     open fun on_overlap_removed(overlapper: Pair<BeatKey, List<Int>>, overlappee: Pair<BeatKey, List<Int>>) { }
 
@@ -511,7 +530,9 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                     this._assign_to_inv_cache(blocked_beat_key, blocked_position, working_beat_key, working_position, blocked_amount)
                 }
                 for ((blocked_beat_key, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
-                    this.on_overlap(cache_key, Pair(blocked_beat_key.copy(), blocked_position.toList()))
+                    val overlappee_pair = Pair(blocked_beat_key.copy(), blocked_position.toList())
+
+                    this._on_overlap(cache_key, overlappee_pair)
                 }
             } else {
                 for (i in 0 until working_tree.size) {
@@ -587,7 +608,8 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
             this._assign_to_inv_cache(beat_key, new_position, original_key, original_position, new_blocked_amount)
 
-            this.on_overlap(Pair(original_key.copy(), original_position.toList()), Pair(beat_key.copy(), new_position))
+            val overlappee_pair = Pair(beat_key.copy(), new_position)
+            this._on_overlap(Pair(original_key.copy(), original_position.toList()), overlappee_pair)
         }
         // TODO: I think this is missing on_overlap_removed calls
     }

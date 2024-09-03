@@ -743,6 +743,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             super.remove_beat(beat_index)
+
+
         }
     }
 
@@ -2008,8 +2010,10 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ColumnChange -> {
                         val column = this.ui_change_bill.get_next_int()
-                        editor_table.recalculate_column_max(column)
-                        editor_table.notify_column_changed(column)
+                        if (column < editor_table.get_column_map_size()) {
+                            editor_table.recalculate_column_max(column)
+                            editor_table.notify_column_changed(column)
+                        }
                     }
 
                     BillableItem.CellChange -> {

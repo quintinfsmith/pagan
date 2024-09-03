@@ -155,10 +155,15 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.notify_item_changed(y)
         (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
     }
+    
+    fun get_column_map_size(): Int {
+        return this._column_width_map.size
+    }
 
     fun recalculate_column_max(x: Int) {
         this._column_width_maxes[x] = this._column_width_map[x].max()
     }
+
     fun recalculate_column_maxes() {
         for (x in 0 until this._column_width_map.size) {
             this._column_width_maxes[x] = this._column_width_map[x].max()

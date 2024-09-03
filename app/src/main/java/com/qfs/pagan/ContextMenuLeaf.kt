@@ -171,7 +171,6 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             true
         )
         val blocked_amount = opus_manager.get_blocking_amount(beat_key, position)
-        println("BLOCKED: $blocked_amount | ")
         this.button_split.isEnabled = current_event_tree == current_tree || blocked_amount!! < 1
         this.button_split.isClickable = this.button_split.isEnabled
 

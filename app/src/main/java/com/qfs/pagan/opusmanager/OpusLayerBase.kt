@@ -1954,6 +1954,7 @@ open class OpusLayerBase {
         val channel_sizes = mutableListOf<Int>()
 
         val percussion_map = HashMap<Int, Int>()
+        val percussion_instrument_map = HashMap<Int, Int>()
 
         // Calculate the number of lines needed per channel
         val blocked_ranges = HashMap<Int, MutableList<MutableList<Pair<Rational, Rational>>>>()
@@ -2102,12 +2103,11 @@ open class OpusLayerBase {
                     var re_adj_line_offset = 0
                     val coarse_index = percussion_map[event_note]!!
                     for (i in 0 until coarse_index) {
-                        re_adj_line_offset += blocked_percussion_ranges[coarse_index].size
+                        re_adj_line_offset += blocked_percussion_ranges[i].size
                     }
 
                     val new_offset = line_offset + re_adj_line_offset
-                    // While we're here, set the percussions' instruments
-                    this.set_percussion_instrument(new_offset, event_note - 27)
+                    percussion_instrument_map[new_offset] = event_note - 27
                     new_offset
                 } else {
                     line_offset
@@ -2136,6 +2136,7 @@ open class OpusLayerBase {
         for ((beatkey, position, event) in events_to_set) {
             if (event[0] == 9) {
                 this.set_percussion_event(beatkey, position)
+                this.set_duration(beatkey, position, event[2])
             } else {
                 val event_note = event[1] - 21
                 if (event_note in 0..127) {
@@ -2197,6 +2198,10 @@ open class OpusLayerBase {
             if (program != null) {
                 this.set_channel_program(opus_channel, program)
             }
+        }
+
+        for ((line_offset, instrument) in percussion_instrument_map) {
+            this.set_percussion_instrument(line_offset, instrument)
         }
 
         this._setup_default_controllers()

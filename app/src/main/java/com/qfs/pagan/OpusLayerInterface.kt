@@ -196,10 +196,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             adj_coord_list.add(coord)
         }
 
-        for (x in notify_columns) {
-            editor_table.recalculate_column_max(x)
-        }
-
         this.ui_change_bill.queue_cell_changes(adj_coord_list)
         this.ui_change_bill.queue_column_changes(notify_columns.toList())
     }
@@ -241,7 +237,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            editor_table.recalculate_column_max(coord.x)
+            //editor_table.recalculate_column_max(coord.x)
             this.ui_change_bill.queue_column_change(coord.x)
         } else {
             this.ui_change_bill.queue_cell_change(coord)
@@ -259,7 +255,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            editor_table.recalculate_column_max(coord.x)
+            //editor_table.recalculate_column_max(coord.x)
             this.ui_change_bill.queue_column_change(coord.x)
         } else {
             this.ui_change_bill.queue_cell_change(coord)
@@ -564,29 +560,29 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            this._queue_cell_change(beat_key, false)
             super.remove_standard(beat_key, position)
+            this._queue_cell_change(beat_key, false)
         }
     }
 
     override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            this._queue_global_ctl_cell_change(type, beat)
             super.remove_global_ctl(type, beat, position)
+            this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
     override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            this._queue_channel_ctl_cell_change(type, channel, beat)
             super.remove_channel_ctl(type, channel, beat, position)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
     override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            this._queue_line_ctl_cell_change(type, beat_key)
             super.remove_line_ctl(type, beat_key, position)
+            this._queue_line_ctl_cell_change(type, beat_key)
         }
     }
 

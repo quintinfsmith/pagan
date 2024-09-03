@@ -530,7 +530,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val is_trivial = this._column_width_map[x][y] == width
         if (! is_trivial) {
             this._column_width_map[x][y] = width
-            this._column_width_maxes[x] = this._column_width_map[x].max()
         }
         return !is_trivial
     }

@@ -1762,7 +1762,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.ui_change_bill.queue_cell_changes(coordinates_to_update.toList())
     }
 
-    private fun _init_editor_table_width_map() {
+    fun _init_editor_table_width_map() {
         if (this.ui_lock.is_full_locked()) {
             return
         }

@@ -60,6 +60,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     override fun onStop() {
+        println("STOPPING")
         // Assign to view model on stop, will be destroyed onDestroy, so need to
         // essentially dup this in onSaveInstanceState
         this.backup_position()
@@ -112,6 +113,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // and if it's not destroyed onViewStateRestored won't be called
         val main = this.get_main()
         val editor_table = main.findViewById<EditorTable?>(R.id.etEditorTable)
+        editor_table?.clear_column_map()
         editor_table?.clear()
 
         super.onDestroy()
@@ -165,6 +167,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             this.reload_from_bkp()
         } else {
             opus_manager.cursor_clear()
+            opus_manager._init_editor_table_width_map()
             editor_table.clear()
             editor_table.setup(opus_manager.get_visible_master_line_count(), opus_manager.beat_count)
         }

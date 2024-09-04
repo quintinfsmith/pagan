@@ -90,7 +90,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun clear() {
-        this.clear_column_map()
         this.get_activity().runOnUiThread {
             (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter).clear()
             (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()

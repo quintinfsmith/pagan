@@ -820,14 +820,21 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-
+    override fun on_project_changed() {
+        super.on_project_changed()
+        this.recache_line_maps()
+        this.ui_change_bill.queue_full_refresh()
+        this.first_load_done = true
+    }
 
     override fun new() {
         this.lock_ui_full {
             this._ui_clear()
             val activity = this.get_activity()
             activity!!.view_model.show_percussion = true
+
             super.new()
+            this.on_project_changed()
 
             val new_path = activity!!.get_new_project_path()
             this.path = new_path
@@ -837,7 +844,10 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun import_midi(midi: Midi) {
         this.lock_ui_full {
             this._ui_clear()
+
             super.import_midi(midi)
+            this.on_project_changed()
+
             val activity = this.get_activity()
             activity!!.view_model.show_percussion = this.has_percussion()
             this.recache_line_maps()
@@ -850,6 +860,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             this._ui_clear()
 
             super.load_json(json_data)
+            this.on_project_changed()
 
             if (! this._in_reload) {
                 activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
@@ -864,11 +875,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._in_reload = false
     }
 
-    override fun on_project_changed() {
-        super.on_project_changed()
-        this.ui_change_bill.queue_full_refresh()
-        this.first_load_done = true
-    }
 
     override fun clear() {
         this._cached_visible_line_map.clear()

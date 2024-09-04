@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
+import com.qfs.json.*
 import java.lang.Integer.max
 import java.lang.Integer.min
 
@@ -398,20 +399,20 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         super.remove_beat(beat_index)
     }
 
-    override fun import_from_other(other: OpusLayerBase) {
-        super.import_from_other(other)
-        if (other !is OpusLayerLinks) {
-            return
-        }
+    //override fun import_from_other(other: OpusLayerBase) {
+    //    super.import_from_other(other)
+    //    if (other !is OpusLayerLinks) {
+    //        return
+    //    }
 
-        for (i in other.link_pools.indices) {
-            val pool = other.link_pools[i]
-            this.link_pools.add(pool)
-            for (beatkey in pool) {
-                this.link_pool_map[beatkey] = i
-            }
-        }
-    }
+    //    for (i in other.link_pools.indices) {
+    //        val pool = other.link_pools[i]
+    //        this.link_pools.add(pool)
+    //        for (beatkey in pool) {
+    //            this.link_pool_map[beatkey] = i
+    //        }
+    //    }
+    //}
 
     open fun link_beat_range(beat_key: BeatKey, target_a: BeatKey, target_b: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(target_a, target_b)
@@ -713,6 +714,26 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             linked_key_set.addAll(this._get_all_others_linked(key))
         }
         return rebuilt_list
+    }
+
+    override fun load_json(input: JSONHashMap) {
+        super.load_json(input)
+
+        val inner_map = input["d"] as JSONHashMap
+        val generalized_reflections = inner_map.get_list("reflections")
+        for (i in 0 until generalized_reflections.list.size) {
+            val pool = generalized_reflections.get_list(i)
+            this.link_pools.add(
+                MutableList<BeatKey>(pool.list.size) { j: Int ->
+                    val generalized_beat_key = pool.get_list(j)
+                    BeatKey(
+                        generalized_beat_key.get_int(0),
+                        generalized_beat_key.get_int(1),
+                        generalized_beat_key.get_int(2)
+                    )
+                }.toMutableSet()
+            )
+        }
     }
 
     open fun on_link(beat_key: BeatKey) {}

@@ -362,12 +362,15 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        val blocked_pair = this.is_blocked_set_event(beat_key, position, duration)
-        if (blocked_pair != null) {
-            throw BlockedTreeException(beat_key, position, blocked_pair.first, blocked_pair.second)
+        if (this.get_tree(beat_key, position).is_event()) {
+            val blocked_pair = this.is_blocked_set_event(beat_key, position, duration)
+            if (blocked_pair != null) {
+                throw BlockedTreeException(beat_key, position, blocked_pair.first, blocked_pair.second)
+            }
         }
 
         super.set_duration(beat_key, position, duration)
+
         this.decache_overlapping_leaf(beat_key, position)
         this._cache_tree_overlaps(beat_key, position)
     }

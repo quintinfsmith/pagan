@@ -334,15 +334,16 @@ class OpusLayerLinksUnitTest {
     fun test_set_duration() {
         val (manager, main_key) = this.setup_linked_manager()
 
-        val new_duration = 12
-        manager.set_event(main_key, listOf(), AbsoluteNoteEvent(20))
-        manager.set_duration(main_key, listOf(), new_duration)
+        val new_duration = 3
+        manager.split_tree(main_key, listOf(), new_duration)
+        manager.set_event(main_key, listOf(0), AbsoluteNoteEvent(20))
+        manager.set_duration(main_key, listOf(0), new_duration)
 
         this.batch_link_test(manager, main_key) {
             assertEquals(
                 "Failed to set duration on all linked beats",
                 new_duration,
-                it.get_event()!!.duration
+                it[0].get_event()!!.duration
             )
         }
     }

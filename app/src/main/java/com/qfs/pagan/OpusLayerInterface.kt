@@ -1757,11 +1757,11 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                 }
 
-                this.ui_change_bill.queue_row_change(y)
+                this.ui_change_bill.queue_row_change(y, true)
             }
 
             OpusManagerCursor.CursorMode.Column -> {
-                this.ui_change_bill.queue_column_change(cursor.beat)
+                this.ui_change_bill.queue_column_change(cursor.beat, true)
             }
             OpusManagerCursor.CursorMode.Unset -> { }
         }

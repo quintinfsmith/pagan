@@ -60,7 +60,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     override fun onStop() {
-        println("STOPPING")
         // Assign to view model on stop, will be destroyed onDestroy, so need to
         // essentially dup this in onSaveInstanceState
         this.backup_position()

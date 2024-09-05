@@ -877,6 +877,8 @@ class OpusLayerInterface : OpusLayerCursor() {
 
 
     override fun clear() {
+        super.clear()
+
         this._cached_visible_line_map.clear()
         this._cached_inv_visible_line_map.clear()
         this._cached_ctl_map_line.clear()
@@ -888,7 +890,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.runOnUiThread {
             editor_table?.precise_scroll(0, 0, 0, 0)
         }
-        super.clear()
     }
 
     private fun _ui_clear() {

@@ -2,6 +2,7 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.Rational
 import com.qfs.pagan.structure.OpusTree
+import com.qfs.json.*
 
 open class OpusLayerOverlapControl: OpusLayerBase() {
     class BlockedTreeException(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
@@ -57,9 +58,10 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
                     var lane_index = 0
                     while (lane_index < overlap_lanes.size) {
-                        if (overlap_lanes[k] == null) {
+                        val check_position = overlap_lanes[lane_index]
+                        if (check_position == null) {
                             break
-                        } else if (overlap_lanes[k] >= end_position) {
+                        } else if (check_position >= end_position) {
                             break
                         }
 
@@ -95,7 +97,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                 }
 
                 val replaced_beat_keys = mutableSetOf<BeatKey>()
-                for ((working_beat_key, working_position, new_index) in remap_trees[j]) {
+                for ((working_beat_key, working_position, new_index) in remaps) {
                     val new_tree = this.get_tree(working_beat_key).copy() // TODO: Needs copy function
                     val new_key = BeatKey(
                         working_beat_key.channel,
@@ -111,7 +113,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
                         replaced_beat_keys.add(new_key)
                     }
-                    this.replace_tree(new_key, position, this.get_tree(working_beat_key, working_position))
+                    this.replace_tree(new_key, working_position, this.get_tree(working_beat_key, working_position))
                     this.unset(working_beat_key, working_position)
                 }
             }
@@ -844,7 +846,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         return null
     }
 
-    override fun load_json(json_map: JSONHashMap) {
-        super.load_json(json_map)
+    override fun load_json(json_data: JSONHashMap) {
+        super.load_json(json_data)
     }
 }

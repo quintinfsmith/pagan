@@ -5,10 +5,13 @@ class UIChangeBill {
         RowAdd,
         RowRemove,
         RowChange,
+        RowStateChange,
         ColumnAdd,
         ColumnRemove,
         ColumnChange,
+        ColumnStateChange,
         CellChange,
+        CellStateChange,
         ChannelChange,
         ChannelAdd,
         ChannelRemove,
@@ -34,8 +37,12 @@ class UIChangeBill {
     private val _bill = mutableListOf<BillableItem>()
     private var _full_refresh_flagged = false
     private val _int_queue = mutableListOf<Int>()
-    private val queued_cells = mutableSetOf<EditorTable.Coordinate>()
-    private val queued_columns = mutableSetOf<Int>()
+    private val queued_cells = Array<MutableSet<EditorTable.Coordinate>>(2) {
+        mutableSetOf()
+    }
+    private val queued_columns = Array<MutableSet<Int>>(2) {
+        mutableSetOf()
+    }
 
     fun get_next_entry(): BillableItem? {
         return if (this._full_refresh_flagged) {
@@ -43,21 +50,54 @@ class UIChangeBill {
             BillableItem.FullRefresh
         } else if (this._bill.isNotEmpty()) {
             this._bill.removeFirst()
-        } else if (this.queued_columns.isNotEmpty()) {
-            for (x in this.queued_columns.toList()) {
+        } else if (this.queued_columns[0].isNotEmpty()) {
+            val columns = (this.queued_columns[0] - this.queued_columns[1]).toList()
+
+            for (x in columns) {
+                this._bill.add(BillableItem.ColumnStateChange)
+                this._int_queue.add(x)
+            }
+
+            this.queued_columns[0].clear()
+            this.get_next_entry()
+
+        } else if (this.queued_columns[1].isNotEmpty()) {
+            val columns = this.queued_columns[1].toList()
+
+            for (x in columns) {
                 this._bill.add(BillableItem.ColumnChange)
                 this._int_queue.add(x)
             }
-            this.queued_columns.clear()
+
+            this.queued_columns[1].clear()
             this.get_next_entry()
-        } else if (this.queued_cells.isNotEmpty()) {
-            this._int_queue.add(this.queued_cells.size)
-            for (cell in this.queued_cells.toList()) {
+        } else if (this.queued_cells[0].isNotEmpty()) {
+            val cells = (this.queued_cells[0] - this.queued_cells[1]).toList()
+
+            this._int_queue.add(cells.size)
+            for (cell in cells.toList()) {
                 this._int_queue.add(cell.y)
                 this._int_queue.add(cell.x)
             }
-            this.queued_cells.clear()
-            BillableItem.CellChange
+            this._bill.add(BillableItem.CellStateChange)
+
+            this.queued_cells[0].clear()
+
+            this.get_next_entry()
+
+        } else if (this.queued_cells[1].isNotEmpty()) {
+            val cells = this.queued_cells[1].toList()
+
+            this._int_queue.add(cells.size)
+            for (cell in cells.toList()) {
+                this._int_queue.add(cell.y)
+                this._int_queue.add(cell.x)
+            }
+            this._bill.add(BillableItem.CellChange)
+
+            this.queued_cells[1].clear()
+
+            this.get_next_entry()
         } else {
             null
         }
@@ -75,8 +115,10 @@ class UIChangeBill {
     fun clear() {
         this._bill.clear()
         this._int_queue.clear()
-        this.queued_cells.clear()
-        this.queued_columns.clear()
+        this.queued_cells[0].clear()
+        this.queued_cells[1].clear()
+        this.queued_columns[0].clear()
+        this.queued_columns[1].clear()
     }
 
     fun queue_project_name_change() {
@@ -87,47 +129,70 @@ class UIChangeBill {
         this._bill.add(BillableItem.ProjectNameChange)
     }
 
-    fun queue_cell_changes(cells: List<EditorTable.Coordinate>) {
+    fun queue_cell_changes(cells: List<EditorTable.Coordinate>, state_only: Boolean = false) {
         if (this._full_refresh_flagged) {
             return
         }
-        this.queued_cells.addAll(cells)
+
+        val i = if (state_only) {
+            0
+        } else {
+            1
+        }
+
+        this.queued_cells[i].addAll(cells)
     }
 
-    fun queue_cell_change(cell: EditorTable.Coordinate) {
+    fun queue_cell_change(cell: EditorTable.Coordinate, state_only: Boolean = false) {
         if (this._full_refresh_flagged) {
             return
         }
-        this.queued_cells.add(cell)
+
+        val i = if (state_only) {
+            0
+        } else {
+            1
+        }
+
+        this.queued_cells[i].add(cell)
+
     }
 
-    fun queue_column_changes(columns: List<Int>) {
+    fun queue_column_changes(columns: List<Int>, state_only: Boolean = false) {
         if (this._full_refresh_flagged) {
             return
         }
 
-        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+        val i = if (state_only) {
+            0
+        } else {
+            1
+        }
+
+
+        this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
             columns.contains(coord.x)
         }.toSet()
 
-        this.queued_columns.addAll(columns)
-
-        //this._int_queue.addAll(columns)
-        //for (i in columns.indices) {
-        //    this._bill.add(BillableItem.ColumnChange)
-        //}
+        this.queued_columns[i].addAll(columns)
     }
 
-    fun queue_column_change(column: Int) {
+    fun queue_column_change(column: Int, state_only: Boolean = false) {
         if (this._full_refresh_flagged) {
             return
         }
 
-        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+        val i = if (state_only) {
+            0
+        } else {
+            1
+        }
+
+        this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
             coord.x == column
         }.toSet()
 
-        this.queued_columns.add(column)
+        this.queued_columns[i].add(column)
     }
 
     fun queue_new_row(y: Int) {
@@ -135,9 +200,11 @@ class UIChangeBill {
             return
         }
 
-        for (coord in this.queued_cells) {
-            if (coord.y >= y) {
-                coord.y += 1
+        for (i in 0 until this.queued_cells.size) {
+            for (coord in this.queued_cells[i]) {
+                if (coord.y >= y) {
+                    coord.y += 1
+                }
             }
         }
 
@@ -234,12 +301,18 @@ class UIChangeBill {
         this._bill.add(BillableItem.LineLabelRefresh)
     }
 
-    fun queue_row_change(y: Int) {
+    fun queue_row_change(y: Int, state_only: Boolean = false) {
         if (this._full_refresh_flagged) {
             return
         }
 
-        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
+        val i = if (state_only) {
+            0
+        } else {
+            1
+        }
+
+        this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
             coord.y == y
         }.toSet()
 
@@ -253,14 +326,16 @@ class UIChangeBill {
         }
 
         val check_range = y until y + count
+        for (i in 0 until this.queued_cells.size) {
+            this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
+                check_range.contains(coord.y)
+            }.toSet()
 
-        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
-            check_range.contains(coord.y)
-        }.toSet()
 
-        for (coord in this.queued_cells) {
-            if (coord.y >= y + count) {
-                coord.y -= count
+            for (coord in this.queued_cells[i]) {
+                if (coord.y >= y + count) {
+                    coord.y -= count
+                }
             }
         }
 
@@ -317,19 +392,21 @@ class UIChangeBill {
             return
         }
 
-        for (coord in this.queued_cells) {
-            if (coord.x >= column) {
-                coord.x += 1
+        for (i in 0 until this.queued_cells.size) {
+            for (coord in this.queued_cells[i]) {
+                if (coord.x >= column) {
+                    coord.x += 1
+                }
             }
-        }
 
-        val old_columns = this.queued_columns.toSet()
-        this.queued_columns.clear()
-        for (x in old_columns) {
-            if (x < column) {
-                this.queued_columns.add(x)
-            } else {
-                this.queued_columns.add(x + 1)
+            val old_columns = this.queued_columns[i].toSet()
+            this.queued_columns[i].clear()
+            for (x in old_columns) {
+                if (x < column) {
+                    this.queued_columns[i].add(x)
+                } else {
+                    this.queued_columns[i].add(x + 1)
+                }
             }
         }
 
@@ -342,25 +419,29 @@ class UIChangeBill {
             return
         }
 
-        this.queued_cells -= this.queued_cells.filter { coord: EditorTable.Coordinate ->
-            coord.x == column
-        }.toSet()
+        for (i in 0 until this.queued_cells.size) {
+            val queued_cell_set = this.queued_cells[i]
+            queued_cell_set -= queued_cell_set.filter { coord: EditorTable.Coordinate ->
+                coord.x == column
+            }.toSet()
 
-        for (coord in this.queued_cells) {
-            if (coord.x > column) {
-                coord.x -= 1
+            for (coord in queued_cell_set) {
+                if (coord.x > column) {
+                    coord.x -= 1
+                }
             }
-        }
 
-        val old_columns = this.queued_columns.toSet()
-        this.queued_columns.clear()
-        for (x in old_columns) {
-            if (x == column) {
-                continue
-            } else if (x < column) {
-                this.queued_columns.add(x)
-            } else {
-                this.queued_columns.add(x - 1)
+            val old_columns = this.queued_columns[i].toSet()
+            this.queued_columns[i].clear()
+
+            for (x in old_columns) {
+                if (x == column) {
+                    continue
+                } else if (x < column) {
+                    this.queued_columns[i].add(x)
+                } else {
+                    this.queued_columns[i].add(x - 1)
+                }
             }
         }
 

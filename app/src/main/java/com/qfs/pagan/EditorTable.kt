@@ -135,24 +135,28 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     }
 
-    fun notify_cell_changes(cell_coords: List<Coordinate>) {
+    fun notify_cell_changes(cell_coords: List<Coordinate>, state_only: Boolean = false) {
         // TODO: This may need optimization
         val column_recycler_adapter = (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter)
         for (coord in cell_coords) {
-            column_recycler_adapter.notify_cell_changed(coord.y, coord.x)
+            column_recycler_adapter.notify_cell_changed(coord.y, coord.x, state_only)
         }
     }
 
-    fun notify_column_changed(x: Int) {
-        //(this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_column_state_changed(x)
-        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notifyItemChanged(x)
+    fun notify_column_changed(x: Int, state_only: Boolean = false) {
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
+        val column_adapter = this.get_column_recycler().adapter as ColumnRecyclerAdapter
+        if (state_only) {
+            column_adapter.notify_column_state_changed(x)
+        } else {
+            column_adapter.notifyItemChanged(x)
+        }
         column_label_adapter.notifyItemChanged(x)
     }
 
-    fun notify_row_changed(y: Int) {
+    fun notify_row_changed(y: Int, state_only: Boolean = false) {
         this._line_label_layout.notify_item_changed(y)
-        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, true)
+        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, state_only)
     }
     
     fun get_column_map_size(): Int {
@@ -168,7 +172,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             this._column_width_maxes[x] = this._column_width_map[x].max()
         }
     }
-
 
     fun get_column_width(column: Int): Int {
         return this._column_width_maxes[column]

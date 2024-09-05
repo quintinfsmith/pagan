@@ -1766,7 +1766,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             OpusManagerCursor.CursorMode.Unset -> { }
         }
 
-        this.ui_change_bill.queue_cell_changes(coordinates_to_update.toList())
+        this.ui_change_bill.queue_cell_changes(coordinates_to_update.toList(), true)
     }
 
     fun _init_editor_table_width_map() {
@@ -2154,6 +2154,27 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                     BillableItem.ColumnLabelRefresh -> {
                         editor_table.update_column_label(this.ui_change_bill.get_next_int())
+                    }
+                    BillableItem.ColumnStateChange -> {
+                        val column = this.ui_change_bill.get_next_int()
+                        if (column < editor_table.get_column_map_size()) {
+                            editor_table.notify_column_changed(column, true)
+                        }
+                    }
+                    BillableItem.RowStateChange -> {
+                        editor_table.notify_row_changed(
+                            this.ui_change_bill.get_next_int(),
+                            true
+                        )
+                    }
+                    BillableItem.CellStateChange -> {
+                        val cells = List<EditorTable.Coordinate>(this.ui_change_bill.get_next_int()) {
+                            EditorTable.Coordinate(
+                                y = this.ui_change_bill.get_next_int(),
+                                x = this.ui_change_bill.get_next_int()
+                            )
+                        }
+                        editor_table.notify_cell_changes(cells, true)
                     }
 
                     null -> break

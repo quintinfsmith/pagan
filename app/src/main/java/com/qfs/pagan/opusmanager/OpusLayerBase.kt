@@ -111,7 +111,7 @@ open class OpusLayerBase {
                     // Turn off note if its playing
                     if (active_event_map.containsKey(Pair(channel, note))) {
                         var existing_event = active_event_map[Pair(channel, note)]!!
-                        existing_event[2] = tick + 1 - existing_event[2]
+                        existing_event[2] = tick - existing_event[2]
                     }
 
                     // Add trees to list of trees
@@ -145,7 +145,7 @@ open class OpusLayerBase {
                     }
 
                     val opus_event = active_event_map.remove(Pair(channel, note)) ?: continue
-                    opus_event[2] = tick + 1 - opus_event[2]
+                    opus_event[2] = tick - opus_event[2]
                 } else if (event is TimeSignature) {
                     total_beat_offset += (tick - last_ts_change) / beat_size
 
@@ -198,7 +198,7 @@ open class OpusLayerBase {
             }
 
             for ((_, opus_event) in active_event_map) {
-                opus_event[2] = max_tick + 1 - opus_event[2]
+                opus_event[2] = max_tick - opus_event[2]
             }
 
             active_event_map.clear()

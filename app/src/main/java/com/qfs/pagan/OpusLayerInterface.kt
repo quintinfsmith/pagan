@@ -42,34 +42,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
 
     private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
-
-    class UILock {
-        var full = 0
-        var partial = 0
-        fun lock_partial() {
-            this.partial += 1
-        }
-        fun unlock_partial() {
-            this.partial -= 1
-        }
-        fun lock_full() {
-            this.full += 1
-        }
-        fun unlock_full() {
-            this.full -= 1
-        }
-
-        fun is_locked(): Boolean {
-            return this.partial != 0 || this.full != 0
-        }
-
-        fun is_full_locked(): Boolean {
-            return this.full > 0
-        }
-    }
+    private var _on_remap_pending_offsets = Array<Int>(2) { 0 }
 
     private val ui_change_bill = UIChangeBill()
-    private val ui_lock = UILock()
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -83,44 +58,42 @@ class OpusLayerInterface : OpusLayerCursor() {
         return this._activity?.findViewById(R.id.etEditorTable)
     }
 
-
     // UI BILL Interface functions ---------------------------------
-    private fun lock_ui_full(callback: () -> Unit) {
-        this.ui_lock.lock_full()
+    private fun <T> lock_ui_full(callback: () -> T): T {
+        this.ui_change_bill.lock_full()
+
         val output = try {
             callback()
         } catch (e: Exception) {
-            this.ui_lock.unlock_full()
-            if (!this.ui_lock.is_locked()) {
-                this.apply_bill_changes()
-            }
-
+            this.ui_change_bill.unlock_full()
+            //if (!this.ui_change_bill.is_locked()) {
+            //    this.apply_bill_changes()
+            //}
             throw e
         }
 
-        this.ui_lock.unlock_full()
-        if (!this.ui_lock.is_locked()) {
+        this.ui_change_bill.unlock_full()
+        if (!this.ui_change_bill.is_locked()) {
             this.apply_bill_changes()
         }
-
         return output
     }
 
     private fun <T> lock_ui_partial(callback: () -> T): T {
-        this.ui_lock.lock_partial()
+        this.ui_change_bill.lock_partial()
 
         val output = try {
             callback()
         } catch (e: Exception) {
-            this.ui_lock.unlock_partial()
-            if (!this.ui_lock.is_locked()) {
-                this.apply_bill_changes()
-            }
+            this.ui_change_bill.unlock_partial()
+            //if (!this.ui_change_bill.is_locked()) {
+            //    this.apply_bill_changes()
+            //}
             throw e
         }
 
-        this.ui_lock.unlock_partial()
-        if (!this.ui_lock.is_locked()) {
+        this.ui_change_bill.unlock_partial()
+        if (!this.ui_change_bill.is_locked()) {
             this.apply_bill_changes()
         }
         return output
@@ -130,7 +103,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         Notify the editor table to update certain cells without following links
      */
     private fun _queue_cell_changes(beat_keys: List<BeatKey>) {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -159,7 +132,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         Notify the editor table to update a cell and all linked cells
      */
     private fun _queue_cell_change(beat_key: BeatKey, follow_links: Boolean) {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -203,7 +176,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
 
     private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -224,7 +197,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _queue_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -285,7 +258,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
         this.lock_ui_partial {
             super.set_channel_instrument(channel, instrument)
-            if (!this.ui_lock.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 // Updating channel instruments doesn't strictly need to be gated behind the full lock,
                 // BUT this way these don't get called multiple times every setup
                 val activity = this.get_activity()
@@ -306,7 +279,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun set_project_name(new_name: String?) {
         this.lock_ui_partial {
             super.set_project_name(new_name)
-            if (!this.ui_lock.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 this.ui_change_bill.queue_project_name_change()
             }
         }
@@ -431,7 +404,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     this.set_relative_mode(event)
                 }
 
-                if (!this.ui_lock.is_full_locked()) {
+                if (!this.ui_change_bill.is_full_locked()) {
                     this._queue_cell_change(beat_key, false)
                     this.ui_change_bill.queue_refresh_context_menu()
                 }
@@ -456,7 +429,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun set_percussion_event_at_cursor() {
         this.lock_ui_partial {
             super.set_percussion_event_at_cursor()
-            if (!this.ui_lock.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 this.ui_change_bill.queue_refresh_context_menu()
             }
         }
@@ -469,7 +442,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             // Need to call get_drum name to repopulate instrument list if needed
             this.get_activity()?.get_drum_name(instrument)
 
-            if (!this.ui_lock.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 this.ui_change_bill.queue_refresh_choose_percussion_button(line_offset)
                 this.ui_change_bill.queue_line_label_refresh(
                     this.get_visible_row_from_ctl_line(
@@ -633,7 +606,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.swap_lines(channel_a, line_a, channel_b, line_b)
 
-            if (!this.ui_lock.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 val vis_line_a = this.get_visible_row_from_ctl_line(
                     this.get_ctl_line_index(
                         this.get_abs_offset(channel_a, line_a)
@@ -683,7 +656,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _queue_remove_rows(y: Int, count: Int) {
-        if (!this.ui_lock.is_full_locked()) {
+        if (!this.ui_change_bill.is_full_locked()) {
             this.get_editor_table()?.remove_mapped_lines(y, count)
             this.ui_change_bill.queue_row_removal(y, count)
         }
@@ -695,7 +668,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             super.new_channel(channel, lines, uuid)
 
-            if (!this.ui_lock.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 val line_list = mutableListOf<OpusLine>()
                 for (i in 0 until lines) {
                     line_list.add(this.channels[notify_index].lines[i])
@@ -745,24 +718,15 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun remove_beat(beat_index: Int) {
         this._catch_blocked_action {
             this.lock_ui_partial {
-                val link_keys = mutableListOf<BeatKey>()
-                this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-                    for (j in channel.lines.indices) {
-                        // No need to adjust links, they'll be automatically adjusted in the bill
-                        link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
-                    }
-                }
-
-                if (!this.ui_lock.is_full_locked()) {
+                if (!this.ui_change_bill.is_full_locked()) {
                     this.queue_cursor_update(this.cursor)
                 }
 
                 super.remove_beat(beat_index)
 
-                if (!this.ui_lock.is_full_locked()) {
+                if (!this.ui_change_bill.is_full_locked()) {
                     this.get_editor_table()?.remove_mapped_column(beat_index)
 
-                    this._queue_cell_changes(link_keys)
                     this.ui_change_bill.queue_remove_column(beat_index)
                     this.queue_cursor_update(this.cursor)
                     this.ui_change_bill.queue_refresh_context_menu()
@@ -773,27 +737,17 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
         this.lock_ui_partial {
-            val bkp_cursor = this.cursor.copy()
-
-
+            if (!this.ui_change_bill.is_full_locked()) {
+                this.queue_cursor_update(this.cursor)
+                this.ui_change_bill.queue_add_column(index)
+            }
 
             super.insert_beat(beat_index, beats_in_column)
 
-            if (!this.ui_lock.is_full_locked()) {
-                this.queue_cursor_update(bkp_cursor)
+            if (!this.ui_change_bill.is_full_locked()) {
                 this._new_column_in_column_width_map(beat_index)
                 this.queue_cursor_update(this.cursor)
-
-                // Necessary since linked cells need to be redrawn
-                val link_keys = mutableListOf<BeatKey>()
-                this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-                    for (j in channel.lines.indices) {
-                        link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
-                    }
-                }
-                this._queue_cell_changes(link_keys)
             }
-
         }
     }
 
@@ -805,7 +759,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun remove_channel(channel: Int) {
         this.lock_ui_partial {
-            if (!this.ui_lock.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 val y = try {
                     this.get_abs_offset(channel, 0)
                 } catch (e: IndexOutOfBoundsException) {
@@ -849,6 +803,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
         }
     }
+
 
     override fun on_project_changed() {
         super.on_project_changed()
@@ -933,6 +888,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun on_remap_link(old_beat_key: BeatKey, new_beat_key: BeatKey) {
+        this.lock_ui_partial {
+            this._queue_cell_change(new_beat_key, false)
+        }
+    }
+
     override fun create_link_pool(beat_keys: List<BeatKey>) {
         this.lock_ui_partial {
             super.create_link_pool(beat_keys)
@@ -942,7 +903,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun unlink_beat(beat_key: BeatKey) {
         this.lock_ui_partial {
-            if (this.ui_lock.is_full_locked()) {
+            if (this.ui_change_bill.is_full_locked()) {
                 super.unlink_beat(beat_key)
             } else {
                 val update_keys = this.get_all_linked(beat_key).toMutableList()
@@ -1802,7 +1763,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun _init_editor_table_width_map() {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -1867,7 +1828,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -1886,7 +1847,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _add_controller_to_column_width_map(y: Int, line: ActiveController) {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -1906,7 +1867,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _update_after_new_line(channel: Int, line_offset: Int?) {
-        if (this.ui_lock.is_full_locked() || this.get_activity() == null) {
+        if (this.ui_change_bill.is_full_locked() || this.get_activity() == null) {
             return
         }
 
@@ -1933,7 +1894,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _new_column_in_column_width_map(index: Int) {
-        if (this.ui_lock.is_full_locked()) {
+        if (this.ui_change_bill.is_full_locked()) {
             return
         }
 
@@ -1987,7 +1948,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         this.get_editor_table()?.add_column_to_map(index, column)
-        this.ui_change_bill.queue_add_column(index)
     }
 
     // UI FUNCS -----------------------

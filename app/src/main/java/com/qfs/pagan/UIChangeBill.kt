@@ -1,6 +1,41 @@
 package com.qfs.pagan
 
 class UIChangeBill {
+    class UILock {
+        companion object {
+            const val FULL = 2
+            const val PARTIAL = 1
+            const val NONE = 0
+        }
+
+        var flag = 0
+        var level = 0
+        fun lock_partial() {
+            this.flag = max(this.flag, UILock.PARTIAL)
+            
+        }
+
+        fun lock_full() {
+            this.flag = max(this.flag, UILock.FULL)
+        }
+
+        fun unlock() {
+            this.level -= 1
+            if (this.level == 0) {
+                this.flag == this.NONE
+            }
+        }
+
+
+        fun is_locked(): Boolean {
+            return this.level > 0
+        }
+
+        fun is_full_locked(): Boolean {
+            return this.flag == UILock.FULL
+        }
+    }
+
     enum class BillableItem {
         RowAdd,
         RowRemove,
@@ -34,9 +69,13 @@ class UIChangeBill {
         FullRefresh
     }
 
-    private val _bill = mutableListOf<BillableItem>()
+    private val ui_lock = UILock()
+    private val _working_bill = mutableListOf<MutableList<BillableItem>>()
+    private val _working_int_queue = mutableListOf<MutableList<Int>>()
+
+    private val _consolidated_bill = mutableListOf<BillableItem>()
+    private val _consolidated_int_queue = mutableListOf<Int>()
     private var _full_refresh_flagged = false
-    private val _int_queue = mutableListOf<Int>()
     private val queued_cells = Array<MutableSet<EditorTable.Coordinate>>(2) {
         mutableSetOf()
     }
@@ -111,6 +150,7 @@ class UIChangeBill {
         this._full_refresh_flagged = true
         this.clear()
     }
+
 
     fun clear() {
         this._bill.clear()
@@ -456,5 +496,25 @@ class UIChangeBill {
 
         this._int_queue.add(line_offset)
         this._bill.add(BillableItem.PercussionButtonRefresh)
+    }
+
+    fun lock_full() {
+        this.ui_lock.lock_full()
+        this._working_bill.add(mutableListOf())
+        this._working_int_queue.add(mutableListOf())
+    }
+
+    fun lock_partial() {
+        this.ui_lock.lock_partial()
+        this._working_bill.add(mutableListOf())
+        this._working_int_queue.add(mutableListOf())
+    }
+
+    fun is_locked(): Boolean {
+        return this.ui_lock.is_locked()
+    }
+
+    fun is_full_locked(): Boolean {
+        return this.ui_lock.is_full_locked()
     }
 }

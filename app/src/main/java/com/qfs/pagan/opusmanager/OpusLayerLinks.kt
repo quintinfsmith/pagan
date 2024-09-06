@@ -308,6 +308,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         }
     }
 
+    open fun on_remap_link(old_beat_key: BeatKey, new_beat_key: BeatKey) { }
+
     /////////
     // NOTE: Remap_links always needs to be called BEFORE the super call
     // This puts it in the correct order on the history stack
@@ -326,7 +328,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                 val new_beatkey = remap_hook(beatkey) ?: continue
                 new_pool.add(new_beatkey)
                 new_pool_map[new_beatkey] = new_pools.size
+
+                if (new_beatkey != beatkey) {
+                    this.on_remap_link(beatkey, new_beatkey)
+                }
             }
+
             // Don't keep pools if there is only one entry left
             if (new_pool.size == 1) {
                 new_pool_map.remove(new_pool.first())

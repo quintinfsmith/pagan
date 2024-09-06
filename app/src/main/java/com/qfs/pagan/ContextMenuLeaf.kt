@@ -9,6 +9,7 @@ import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import kotlin.math.abs
+import kotlin.math.max
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
     lateinit var button_split: ButtonIcon
@@ -195,12 +196,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
 
         main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->
-            val adj_value = Integer.max(value, 1)
-            try {
-                opus_manager.set_duration(beat_key, position, adj_value)
-            } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
-                main.feedback_msg("blocked")
-            }
+            opus_manager.set_duration(beat_key, position, max(1, value))
         }
     }
 

@@ -213,78 +213,43 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        // Need to clear cursor before change since the way the editor_table updates
-        // Cursors doesn't take into account changes to column count
-        val bkp_cursor = this.cursor.copy()
-        this.cursor_clear()
-
-        super.remove_beat(beat_index)
-
-        when (bkp_cursor.mode) {
+        when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Column -> {
-                this.cursor_select_column(
-                    if (bkp_cursor.beat <= beat_index) {
-                        min(bkp_cursor.beat, this.beat_count - 1)
-                    } else {
-                        max(0, bkp_cursor.beat - 1)
-                    }
-                )
-            }
-
-            OpusManagerCursor.CursorMode.Row -> {
-                this.cursor_select_row(
-                    bkp_cursor.channel,
-                    bkp_cursor.line_offset
-                )
-            }
-
-            OpusManagerCursor.CursorMode.Single -> {
-                val (new_beat, new_position) = if (bkp_cursor.beat < beat_index) {
-                    Pair(bkp_cursor.beat, bkp_cursor.position)
-                } else if (bkp_cursor.beat == beat_index) {
-                    Pair(min(bkp_cursor.beat, this.beat_count - 1), listOf())
+                this.cursor.beat = if (this.cursor.beat > beat_index) {
+                    this.cursor.beat - 1
+                } else if (this.cursor.beat == beat_index) {
+                    min(max(0, this.cursor.beat), this.beat_count - 2)
                 } else {
-                    Pair(max(0, bkp_cursor.beat - 1), bkp_cursor.position)
+                    this.cursor.beat
                 }
-
-                this.cursor_select(
-                    BeatKey(
-                        bkp_cursor.channel,
-                        bkp_cursor.line_offset,
-                        new_beat
-                    ),
-                    new_position
-                )
             }
+
             OpusManagerCursor.CursorMode.Range -> {
-                val first_corner = bkp_cursor.range!!.first
-                val new_first_beat = if (first_corner.beat <= beat_index) {
-                    min(first_corner.beat, this.beat_count - 1)
+                val first_corner = this.cursor.range!!.first
+                first_corner.beat = if (first_corner.beat > beat_index) {
+                    first_corner.beat - 1
+                } else if (first_corner.beat == beat_index) {
+                    min(max(0, first_corner.beat), this.beat_count - 2)
                 } else {
-                    max(0, first_corner.beat - 1)
+                    first_corner.beat
                 }
-                val second_corner = bkp_cursor.range!!.second
-                val new_second_beat = if (second_corner.beat <= beat_index) {
-                    min(second_corner.beat, this.beat_count - 1)
+
+                val second_corner = this.cursor.range!!.second
+                second_corner.beat = if (second_corner.beat > beat_index) {
+                    second_corner.beat - 1
+                } else if (second_corner.beat == beat_index) {
+                    min(max(0, second_corner.beat), this.beat_count - 2)
                 } else {
-                    max(0, second_corner.beat - 1)
+                    second_corner.beat
                 }
-                this.cursor_select_range(
-                    BeatKey(
-                        first_corner.channel,
-                        first_corner.line_offset,
-                        new_first_beat
-                    ),
-                    BeatKey(
-                        second_corner.channel,
-                        second_corner.line_offset,
-                        new_second_beat
-                    )
-                )
+                this.cursor.range = Pair(first_corner, second_corner)
             }
 
             else -> {}
         }
+
+        super.remove_beat(beat_index)
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {

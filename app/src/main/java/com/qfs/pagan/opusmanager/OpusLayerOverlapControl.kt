@@ -5,7 +5,7 @@ import com.qfs.pagan.structure.OpusTree
 import com.qfs.json.*
 
 open class OpusLayerOverlapControl: OpusLayerBase() {
-    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
+    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
 
     private val _cache_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, MutableList<Triple<BeatKey, List<Int>, Rational>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, Triple<BeatKey, List<Int>, Rational>>()
@@ -826,6 +826,42 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         } else {
             null
         }
+    }
+
+    fun blocked_check_remove_beat(beat_index: Int): Pair<Pair<BeatKey, List<Int>>, Pair<BeatKey, List<Int>>>? {
+        val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
+
+        for ((tail, head) in this._cache_inv_blocked_tree_map) {
+            if (head.first.beat == beat_index) {
+            } else if (tail.first.beat >= beat_index && head.first.beat < beat_index) {
+                needs_recache.add(Pair(head.first, head.second))
+            }
+        }
+
+        if (beat_index < this.beat_count - 1) {
+            for (before in needs_recache) {
+                var working_beat_key = BeatKey(before.first.channel, before.first.line_offset, beat_index + 1)
+                var working_position = this.get_first_position(working_beat_key)
+
+                if (!this.get_tree(working_beat_key, working_position).is_event()) {
+                    val next = this.get_proceding_event_position(working_beat_key, working_position) ?: continue
+                    working_beat_key = next.first
+                    working_position = next.second
+                }
+
+                val (before_offset, before_width) = this.get_leaf_offset_and_width(before.first, before.second)
+                var duration = this.get_tree(before.first, before.second).get_event()?.duration ?: 1
+
+                var (after_offset, _) = this.get_leaf_offset_and_width(working_beat_key, working_position)
+                after_offset -= 1
+
+                if (after_offset >= before_offset && after_offset < before_offset + Rational(duration, before_width)) {
+                    return Pair(Pair(working_beat_key, working_position), before)
+                }
+            }
+        }
+
+        return null
     }
 
     private fun is_blocked_set_event(beat_key: BeatKey, position: List<Int>, duration: Int): Pair<BeatKey, List<Int>>? {

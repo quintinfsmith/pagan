@@ -14,6 +14,7 @@ import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerCursor
+import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusLinePercussion
@@ -263,6 +264,17 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
     // END UI BILL Interface functions ---------------------------------W
 
+    private fun <T> _catch_blocked_action(callback: () -> T): T? {
+        return try {
+            callback()
+        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+            this.withFragment {
+                //it.blocked_action_feedback(e)
+            }
+            null
+        }
+    }
+
     override fun remove_at_cursor(count: Int) {
         this.lock_ui_partial {
             this.queue_cursor_update(this.cursor.copy())
@@ -349,14 +361,16 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
-        this.lock_ui_partial {
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
-                this.make_percussion_visible()
-            }
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                val activity = this.get_activity()
+                if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                    this.make_percussion_visible()
+                }
 
-            super.replace_tree(beat_key, position, tree)
-            this._queue_cell_change(beat_key, false)
+                super.replace_tree(beat_key, position, tree)
+                this._queue_cell_change(beat_key, false)
+            }
         }
     }
 
@@ -403,36 +417,39 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
-        this.lock_ui_partial {
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                val activity = this.get_activity()
 
-            val activity = this.get_activity()
+                if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                    this.make_percussion_visible()
+                }
 
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
-                this.make_percussion_visible()
-            }
+                super.set_event(beat_key, position, event)
 
-            super.set_event(beat_key, position, event)
+                if (event is TunedInstrumentEvent) {
+                    this.set_relative_mode(event)
+                }
 
-            if (event is TunedInstrumentEvent) {
-                this.set_relative_mode(event)
-            }
-
-            if (!this.ui_lock.is_full_locked()) {
-                this._queue_cell_change(beat_key, false)
-                this.ui_change_bill.queue_refresh_context_menu()
+                if (!this.ui_lock.is_full_locked()) {
+                    this._queue_cell_change(beat_key, false)
+                    this.ui_change_bill.queue_refresh_context_menu()
+                }
             }
         }
     }
 
     override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.set_percussion_event(beat_key, position)
-            val activity = this.get_activity()
-            if (activity != null && !activity!!.view_model.show_percussion) {
-                this.make_percussion_visible()
-            }
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                super.set_percussion_event(beat_key, position)
+                val activity = this.get_activity()
+                if (activity != null && !activity!!.view_model.show_percussion) {
+                    this.make_percussion_visible()
+                }
 
-            this._queue_cell_change(beat_key, false)
+                this._queue_cell_change(beat_key, false)
+            }
         }
     }
 
@@ -555,6 +572,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.insert_line_ctl(type, beat_key, position)
             this._queue_line_ctl_cell_change(type, beat_key)
+        }
+    }
+
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
+        this._catch_blocked_action {
+            super.remove(beat_key, position)
         }
     }
 
@@ -720,27 +743,31 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun remove_beat(beat_index: Int) {
-        this.lock_ui_partial {
-            val link_keys = mutableListOf<BeatKey>()
-            this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-                for (j in channel.lines.indices) {
-                    // No need to adjust links, they'll be automatically adjusted in the bill
-                    link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                val link_keys = mutableListOf<BeatKey>()
+                this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+                    for (j in channel.lines.indices) {
+                        // No need to adjust links, they'll be automatically adjusted in the bill
+                        link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
+                    }
+                }
+
+                if (!this.ui_lock.is_full_locked()) {
+                    this.queue_cursor_update(this.cursor)
+                }
+
+                super.remove_beat(beat_index)
+
+                if (!this.ui_lock.is_full_locked()) {
+                    this.get_editor_table()?.remove_mapped_column(beat_index)
+
+                    this._queue_cell_changes(link_keys)
+                    this.ui_change_bill.queue_remove_column(beat_index)
+                    this.queue_cursor_update(this.cursor)
+                    this.ui_change_bill.queue_refresh_context_menu()
                 }
             }
-
-            // Queue changes Before calling supers,
-            // select_column is called in a super and the ui changes would get overwritten otherwise
-            if (!this.ui_lock.is_full_locked()) {
-                this.get_editor_table()?.remove_mapped_column(beat_index)
-                this._queue_cell_changes(link_keys)
-
-                this.ui_change_bill.queue_remove_column(beat_index)
-            }
-
-            super.remove_beat(beat_index)
-
-
         }
     }
 
@@ -748,22 +775,25 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             val bkp_cursor = this.cursor.copy()
 
+
+
             super.insert_beat(beat_index, beats_in_column)
 
             if (!this.ui_lock.is_full_locked()) {
                 this.queue_cursor_update(bkp_cursor)
                 this._new_column_in_column_width_map(beat_index)
                 this.queue_cursor_update(this.cursor)
+
+                // Necessary since linked cells need to be redrawn
+                val link_keys = mutableListOf<BeatKey>()
+                this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+                    for (j in channel.lines.indices) {
+                        link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
+                    }
+                }
+                this._queue_cell_changes(link_keys)
             }
 
-            // TODO: Is this necessary? I'm not seeing why linked cells would need updates
-            // val link_keys = mutableListOf<BeatKey>()
-            // this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-            //     for (j in channel.lines.indices) {
-            //         link_keys.addAll(this.get_all_linked(BeatKey(i, j, beat_index)))
-            //     }
-            // }
-            // this._notify_cell_changes(link_keys)
         }
     }
 
@@ -979,14 +1009,16 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        this.lock_ui_partial {
-            super.set_duration(beat_key, position, duration)
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                super.set_duration(beat_key, position, duration)
 
-            // Needs to be set to trigger potentially queued cell changes from on_overlap()
-            this._queue_cell_change(beat_key, false)
-            // val btnDuration: TextView = main.findViewById(R.id.btnDuration) ?: return@runOnUiThread
-            // btnDuration.text = main.getString(R.string.label_duration, duration)
-            this.ui_change_bill.queue_refresh_context_menu()
+                // Needs to be set to trigger potentially queued cell changes from on_overlap()
+                this._queue_cell_change(beat_key, false)
+                // val btnDuration: TextView = main.findViewById(R.id.btnDuration) ?: return@runOnUiThread
+                // btnDuration.text = main.getString(R.string.label_duration, duration)
+                this.ui_change_bill.queue_refresh_context_menu()
+            }
         }
     }
 

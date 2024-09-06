@@ -119,7 +119,6 @@ abstract class ActiveController(beat_count: Int) {
         this.events.removeAt(n)
     }
 
-
     fun get_tree(beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
         var tree = this.get_beat(beat)
         if (position != null) {

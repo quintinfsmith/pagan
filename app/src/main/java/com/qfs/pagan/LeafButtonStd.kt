@@ -139,7 +139,10 @@ class LeafButtonStd(
                         opus_manager.merge_into_beat(beat_key)
                     }
                 }
-                opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                // Kludge, if the temporary blocker is set, assume the cursor has already changed
+                if (opus_manager.temporary_blocker == null) {
+                    opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                }
             } catch (e: Exception) {
                 when (e) {
                     is OpusLayerLinks.SelfLinkError -> { }
@@ -314,14 +317,18 @@ class LeafButtonStd(
         val new_state = mutableListOf<Int>()
         if (tree.is_event()) {
             new_state.add(R.attr.state_active)
-            when (tree.get_event()) {
-                is RelativeNoteEvent -> {
-                    val abs_value = opus_manager.get_absolute_value(beat_key, position)
-                    if (abs_value == null || abs_value < 0 || abs_value >= opus_manager.tuning_map.size * 8) {
-                        new_state.add(R.attr.state_invalid)
+            if (opus_manager.temporary_blocker == original_position) {
+                new_state.add(R.attr.state_invalid)
+            } else {
+                when (tree.get_event()) {
+                    is RelativeNoteEvent -> {
+                        val abs_value = opus_manager.get_absolute_value(beat_key, position)
+                        if (abs_value == null || abs_value < 0 || abs_value >= opus_manager.tuning_map.size * 8) {
+                            new_state.add(R.attr.state_invalid)
+                        }
                     }
+                    else -> {}
                 }
-                else -> {}
             }
         } else if (tree_original != tree) {
             when (tree_original.get_event()) {

@@ -46,6 +46,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     private var _blocked_action_catcher_active = false
 
     private val ui_change_bill = UIChangeBill()
+    var temporary_blocker: Pair<BeatKey, List<Int>>? = null
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -67,6 +68,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             callback()
         } catch (e: Exception) {
             this.ui_change_bill.unlock()
+            this.ui_change_bill.cancel_most_recent()
             //if (!this.ui_change_bill.is_locked()) {
             //    this.apply_bill_changes()
             //}
@@ -86,8 +88,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         val output = try {
             callback()
         } catch (e: Exception) {
-            this.ui_change_bill.cancel_most_recent()
             this.ui_change_bill.unlock()
+            this.ui_change_bill.cancel_most_recent()
 
             //if (!this.ui_change_bill.is_locked()) {
             //    this.apply_bill_changes()
@@ -255,9 +257,10 @@ class OpusLayerInterface : OpusLayerCursor() {
             val output = try {
                 callback()
             } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
-                this.withFragment {
-                    //it.blocked_action_feedback(e)
-                }
+                this.set_temporary_blocker(e.blocker_key, e.blocker_position)
+                //this.withFragment {
+                //    //it.blocked_action_feedback(e)
+                //}
                 null
             }
             this._blocked_action_catcher_active = false
@@ -1046,6 +1049,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun cursor_clear() {
         this.lock_ui_partial {
             super.cursor_clear()
+            this.temporary_blocker = null
 
             this.queue_cursor_update(this.cursor)
             this.ui_change_bill.queue_clear_context_menu()
@@ -1055,6 +1059,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun cursor_select_row(channel: Int, line_offset: Int) {
         this.lock_ui_partial {
             super.cursor_select_row(channel, line_offset)
+            this.temporary_blocker = null
 
             val activity = this.get_activity()
             if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
@@ -1069,6 +1074,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun cursor_select_ctl_row_at_channel(ctl_type: ControlEventType, channel: Int) {
         this.lock_ui_partial {
             super.cursor_select_ctl_row_at_channel(ctl_type, channel)
+            this.temporary_blocker = null
 
             val activity = this.get_activity()
             if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
@@ -1083,6 +1089,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun cursor_select_ctl_row_at_line(ctl_type: ControlEventType, channel: Int, line_offset: Int) {
         this.lock_ui_partial {
             super.cursor_select_ctl_row_at_line(ctl_type, channel, line_offset)
+            this.temporary_blocker = null
 
             val activity = this.get_activity()
             if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
@@ -1097,6 +1104,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun cursor_select_ctl_row_at_global(ctl_type: ControlEventType) {
         this.lock_ui_partial {
             super.cursor_select_ctl_row_at_global(ctl_type)
+            this.temporary_blocker = null
 
             this.queue_cursor_update(this.cursor)
             this.ui_change_bill.queue_set_context_menu_control_line()
@@ -1106,6 +1114,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun cursor_select_column(beat: Int) {
         this.lock_ui_partial {
             super.cursor_select_column(beat)
+            this.temporary_blocker = null
 
             this.queue_cursor_update(this.cursor)
             this.ui_change_bill.queue_set_context_menu_column()
@@ -1114,6 +1123,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
+            this.temporary_blocker = null
             val activity = this.get_activity()
             if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
                 this.make_percussion_visible()
@@ -1138,6 +1148,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
+            this.unset_temporary_blocker()
             val activity = this.get_activity()
             if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
                 this.make_percussion_visible()
@@ -1152,6 +1163,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_ctl_at_channel(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
+            this.unset_temporary_blocker()
             val activity = this.get_activity()
             if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
                 this.make_percussion_visible()
@@ -1166,6 +1178,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_ctl_at_global(ctl_type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
+            this.unset_temporary_blocker()
             super.cursor_select_ctl_at_global(ctl_type, beat, position)
 
             this.queue_cursor_update(this.cursor, false)
@@ -1175,6 +1188,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_first_corner(beat_key: BeatKey) {
         this.lock_ui_partial {
+            this.unset_temporary_blocker()
             super.cursor_select_first_corner(beat_key)
 
             this.queue_cursor_update(this.cursor, false)
@@ -1184,6 +1198,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_global_ctl_range(type: ControlEventType, first: Int, second: Int) {
         this.lock_ui_partial {
+            this.unset_temporary_blocker()
             super.cursor_select_global_ctl_range(type, first, second)
 
             this.queue_cursor_update(this.cursor, false)
@@ -1193,6 +1208,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
         this.lock_ui_partial {
+            this.unset_temporary_blocker()
             super.cursor_select_global_ctl_end_point(type, beat)
 
             this.queue_cursor_update(this.cursor, false)
@@ -1202,6 +1218,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.lock_ui_partial {
+            this.unset_temporary_blocker()
             super.cursor_select_range(beat_key_a, beat_key_b)
 
             this.queue_cursor_update(this.cursor, false)
@@ -1215,6 +1232,22 @@ class OpusLayerInterface : OpusLayerCursor() {
            super.clear_link_pool(beat_key)
            this._queue_cell_changes(update_keys)
        }
+    }
+
+    fun set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
+        this.lock_ui_partial {
+            this.cursor_select(beat_key, position)
+            this.temporary_blocker = Pair(beat_key, position)
+        }
+    }
+
+    fun unset_temporary_blocker() {
+        this.lock_ui_partial {
+            if (this.temporary_blocker != null) {
+                this._queue_cell_change(this.temporary_blocker!!.first, false)
+            }
+            this.temporary_blocker = null
+        }
     }
 
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
@@ -2169,10 +2202,8 @@ class OpusLayerInterface : OpusLayerCursor() {
                         }
                     }
                     BillableItem.RowStateChange -> {
-                        editor_table.notify_row_changed(
-                            this.ui_change_bill.get_next_int(),
-                            true
-                        )
+                        val y = this.ui_change_bill.get_next_int()
+                        editor_table.notify_row_changed(y,true)
                     }
                     BillableItem.CellStateChange -> {
                         val cells = List<EditorTable.Coordinate>(this.ui_change_bill.get_next_int()) {

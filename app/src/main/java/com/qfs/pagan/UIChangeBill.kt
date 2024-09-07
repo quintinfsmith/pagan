@@ -210,7 +210,7 @@ class UIChangeBill {
                         val new_queue_line_labels = mutableSetOf<Int>()
                         for (i in queued_line_labels) {
                             if (i >= y + count) {
-                                new_queue_line_labels.add(i + count)
+                                new_queue_line_labels.add(i - count)
                             } else if (i < y) {
                                 new_queue_line_labels.add(i)
                             }
@@ -220,6 +220,7 @@ class UIChangeBill {
                         queued_line_labels += new_queue_line_labels
 
                         this._tree.int_queue.add(y)
+                        this._tree.int_queue.add(count)
                     }
 
                     BillableItem.ColumnAdd -> {
@@ -242,7 +243,7 @@ class UIChangeBill {
                                 }
                             }
                         }
-                        
+
                         val new_queue_column_labels = mutableSetOf<Int>()
                         for (i in queued_column_labels) {
                             if (i > column) {

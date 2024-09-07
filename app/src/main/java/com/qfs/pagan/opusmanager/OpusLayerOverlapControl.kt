@@ -224,7 +224,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         val working_position = position ?: listOf()
         val overlapper = this.get_blocking_position(beat_key, working_position)
         val tree_is_eventless = tree.is_eventless()
-        if (overlapper != null && !tree_is_eventless) {
+        if (overlapper != null && (overlapper.first != beat_key || working_position.size >= overlapper.second.size || working_position != overlapper.second.subList(0, working_position.size)) && !tree_is_eventless) {
             throw BlockedTreeException(beat_key, working_position, overlapper.first, overlapper.second)
         }
 

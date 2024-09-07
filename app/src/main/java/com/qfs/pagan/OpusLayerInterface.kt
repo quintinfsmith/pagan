@@ -1226,9 +1226,11 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun link_beats(beat_key: BeatKey, target: BeatKey) {
-        this.lock_ui_partial {
-            super.link_beats(beat_key, target)
-            this._queue_cell_change(beat_key, false)
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                super.link_beats(beat_key, target)
+                this._queue_cell_change(beat_key, false)
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 package com.qfs.pagan.opusmanager
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
-import com.qfs.json.*
 import java.lang.Integer.max
 import java.lang.Integer.min
 
@@ -309,6 +309,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     }
 
     open fun on_remap_link(old_beat_key: BeatKey, new_beat_key: BeatKey) { }
+    // on_remap_link needs to be called AFTER super function, but remapping needs to be done BEFORE, so we collect then call
+    fun dispatch_remap_link_callback(list_of_keys: List<Pair<BeatKey, BeatKey>>) {
+        for (pair in list_of_keys) {
+            this.on_remap_link(pair.first, pair.second)
+        }
+    }
 
     /////////
     // NOTE: Remap_links always needs to be called BEFORE the super call
@@ -316,10 +322,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     // Since remap_links is only needed on line/channel/beat operations, there's no need to
     // consider links in the base layer operations so it's ok to remap before
     // ALSO: remap_links should always be called outside of the lock_links wrapper
-    open fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
+    open fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?): List<Pair<BeatKey, BeatKey>> {
+        val remapped = mutableListOf<Pair<BeatKey, BeatKey>>()
         if (this.link_lock > 0) {
-            return
+            return remapped
         }
+
         val new_pool_map = HashMap<BeatKey, Int>()
         val new_pools = mutableListOf<MutableSet<BeatKey>>()
         for (pool in this.link_pools) {
@@ -330,7 +338,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                 new_pool_map[new_beatkey] = new_pools.size
 
                 if (new_beatkey != beatkey) {
-                    this.on_remap_link(beatkey, new_beatkey)
+                    remapped.add(Pair(beatkey, new_beatkey))
                 }
             }
 
@@ -343,10 +351,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         }
         this.link_pools = new_pools
         this.link_pool_map = new_pool_map
+
+        return remapped
     }
 
     override fun remove_channel(channel: Int) {
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel) {
                 null
             } else if (beat_key.channel < channel) {
@@ -361,6 +371,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         }
 
         super.remove_channel(channel)
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     fun is_networked(beat_key: BeatKey): Boolean {
@@ -368,7 +380,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)
             } else {
@@ -377,10 +389,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         }
 
         super.insert_beat(beat_index, beats_in_column)
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + count)
             } else {
@@ -391,10 +405,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         this.lock_links {
             super.insert_beats(beat_index, count)
         }
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     override fun remove_beat(beat_index: Int) {
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.beat > beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat - 1)
             } else if (beat_key.beat < beat_index) {
@@ -403,7 +419,10 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                 null
             }
         }
+
         super.remove_beat(beat_index)
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     //override fun import_from_other(other: OpusLayerBase) {
@@ -505,7 +524,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
                 BeatKey(
                     beat_key.channel,
@@ -517,10 +536,11 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             }
         }
         super.insert_line(channel, line_offset, line)
+        this.dispatch_remap_link_callback(remapped)
     }
 
     override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
-        if (line_offset != null) {
+        val remapped = if (line_offset != null) {
             this.remap_links { beat_key: BeatKey ->
                 if (beat_key.channel == channel && beat_key.line_offset >= line_offset) {
                     BeatKey(
@@ -532,12 +552,19 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                     beat_key
                 }
             }
+        } else {
+            listOf()
         }
-        return super.new_line(channel, line_offset)
+
+        val output = super.new_line(channel, line_offset)
+
+        this.dispatch_remap_link_callback(remapped)
+
+        return output
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel) {
                 if (beat_key.line_offset > line_offset) {
                     BeatKey(
@@ -554,12 +581,16 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                 beat_key
             }
         }
-        return super.remove_line(channel, line_offset)
+        val output = super.remove_line(channel, line_offset)
+
+        this.dispatch_remap_link_callback(remapped)
+
+        return output
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         val working_channel = channel ?: this.channels.size
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel < working_channel) {
                 beat_key
             } else {
@@ -571,6 +602,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             }
         }
         super.new_channel(channel, lines, uuid)
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
@@ -583,7 +616,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-        this.remap_links { beat_key: BeatKey ->
+        val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.channel == channel_a && beat_key.line_offset == line_a) {
                 BeatKey(channel_b, line_b, beat_key.beat)
             } else if (beat_key.channel == channel_b && beat_key.line_offset == line_b) {
@@ -594,6 +627,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         }
 
         super.swap_lines(channel_a, line_a, channel_b, line_b)
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -635,7 +670,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             )
         )
 
-        this.remap_links { working_key: BeatKey ->
+        val remapped = this.remap_links { working_key: BeatKey ->
             if (keys_to_forget.contains(working_key)) {
                 null
             } else if (keys_in_range.contains(working_key)) {
@@ -651,6 +686,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             }
         }
         super.move_beat_range(beat_key, first_corner, second_corner)
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     override fun move_leaf(
@@ -659,7 +696,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         beatkey_to: BeatKey,
         position_to: List<Int>
     ) {
-        if (position_from.isEmpty()) {
+        val remapped = if (position_from.isEmpty()) {
             this.remap_links { beat_key: BeatKey ->
                 when (beat_key) {
                     beatkey_from -> beatkey_to
@@ -667,11 +704,15 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                     else -> beat_key
                 }
             }
+        } else {
+            listOf()
         }
 
         this.lock_links {
             super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
         }
+
+        this.dispatch_remap_link_callback(remapped)
     }
 
     /* Not Currently In Use. */

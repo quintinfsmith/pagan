@@ -1390,10 +1390,10 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
+    override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?): List<Pair<BeatKey, BeatKey>> {
         val original_link_pools = this.link_pools.toList()
         this.push_to_history_stack(HistoryToken.RESTORE_LINK_POOLS, listOf(original_link_pools))
-        super.remap_links(remap_hook)
+        return super.remap_links(remap_hook)
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {

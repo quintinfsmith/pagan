@@ -65,14 +65,14 @@ class OpusLayerInterface : OpusLayerCursor() {
         val output = try {
             callback()
         } catch (e: Exception) {
-            this.ui_change_bill.unlock_full()
+            this.ui_change_bill.unlock()
             //if (!this.ui_change_bill.is_locked()) {
             //    this.apply_bill_changes()
             //}
             throw e
         }
 
-        this.ui_change_bill.unlock_full()
+        this.ui_change_bill.unlock()
         if (!this.ui_change_bill.is_locked()) {
             this.apply_bill_changes()
         }
@@ -85,14 +85,16 @@ class OpusLayerInterface : OpusLayerCursor() {
         val output = try {
             callback()
         } catch (e: Exception) {
-            this.ui_change_bill.unlock_partial()
+            this.ui_change_bill.cancel_most_recent()
+            this.ui_change_bill.unlock()
+
             //if (!this.ui_change_bill.is_locked()) {
             //    this.apply_bill_changes()
             //}
             throw e
         }
 
-        this.ui_change_bill.unlock_partial()
+        this.ui_change_bill.unlock()
         if (!this.ui_change_bill.is_locked()) {
             this.apply_bill_changes()
         }
@@ -720,14 +722,14 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.lock_ui_partial {
                 if (!this.ui_change_bill.is_full_locked()) {
                     this.queue_cursor_update(this.cursor)
+                    this.get_editor_table()?.remove_mapped_column(beat_index)
+                    this.ui_change_bill.queue_remove_column(beat_index)
                 }
 
                 super.remove_beat(beat_index)
 
                 if (!this.ui_change_bill.is_full_locked()) {
-                    this.get_editor_table()?.remove_mapped_column(beat_index)
 
-                    this.ui_change_bill.queue_remove_column(beat_index)
                     this.queue_cursor_update(this.cursor)
                     this.ui_change_bill.queue_refresh_context_menu()
                 }
@@ -739,9 +741,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             if (!this.ui_change_bill.is_full_locked()) {
                 this.queue_cursor_update(this.cursor)
-                this.ui_change_bill.queue_add_column(index)
+                this.ui_change_bill.queue_add_column(beat_index)
             }
-
             super.insert_beat(beat_index, beats_in_column)
 
             if (!this.ui_change_bill.is_full_locked()) {
@@ -914,19 +915,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                 this._queue_cell_change(beat_key, false)
                 this._queue_cell_changes(update_keys)
             }
-        }
-    }
-
-    override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?) {
-        this.lock_ui_partial {
-            val originally_mapped = this.link_pool_map.keys
-            super.remap_links(remap_hook)
-            val unmapped = originally_mapped - this.link_pool_map.keys
-            val changed = (this.link_pool_map.keys - originally_mapped) + unmapped
-
-            // Because remap_links isn't an end-function, we use queue_cell_changes instead
-            // of notify_cell_changes
-            this._queue_cell_changes(changed.toList())
         }
     }
 
@@ -1954,6 +1942,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     private fun apply_bill_changes() {
         val editor_table = this.get_editor_table() ?: return // when importing
         this.runOnUiThread { activity: MainActivity ->
+            this.ui_change_bill.consolidate()
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()
                 when (entry) {

@@ -78,9 +78,19 @@ class UIChangeBill {
         fun new_node() {
             this.sub_nodes.add(Node())
         }
+
+        fun get(path: List<Int>): Node {
+            return if (path.isEmpty()) {
+                this
+            } else {
+                this.sub_nodes[path[0]].get(path.subList(1, path.size))
+            }
+        }
+
+
         fun remove_node(path: List<Int>) {
             val next = path[0]
-            if (path.isEmpty()) {
+            if (path.size == 1) {
                 this.sub_nodes.removeAt(next)
             } else {
                 this.sub_nodes[next].remove_node(path.subList(1, path.size))
@@ -94,6 +104,7 @@ class UIChangeBill {
             }
             return working_node
         }
+
         fun remove_last() {
             val path = mutableListOf<Int>()
             var working_node = this
@@ -105,40 +116,264 @@ class UIChangeBill {
                 this.remove_node(path)
             }
         }
-    }
 
+        fun clear() {
+            this.sub_nodes.clear()
+            this.bill.clear()
+            this.int_queue.clear()
+        }
+    }
 
     private val ui_lock = UILock()
     private val _tree: Node = Node()
-
+    private val working_path = mutableListOf<Int>()
+    
     fun consolidate() {
-        val _consolidated_bill = mutableListOf<BillableItem>()
-        val _consolidated_int_queue = mutableListOf<Int>()
         val queued_cells = Array<MutableSet<EditorTable.Coordinate>>(2) {
             mutableSetOf()
         }
         val queued_columns = Array<MutableSet<Int>>(2) {
             mutableSetOf()
         }
+        val queued_line_labels = mutableSetOf<Int>()
+        val queued_column_labels = mutableSetOf<Int>()
 
         var stack = mutableListOf<Node>(this._tree)
         while (stack.isNotEmpty()) {
             var node = stack.removeFirst()
             for (bill_item in node.bill) {
+                // The Specified BillableItems will be manually added to the end of the queue after some calculations
+                // The rest can be handled FIFO
                 when (bill_item) {
-                    BillableItem.RowAdd -> { }
-                    BillableItem.RowRemove -> { }
-                    BillableItem.RowChange -> { }
-                    BillableItem.RowStateChange -> { }
-                    BillableItem.ColumnAdd -> { }
-                    BillableItem.ColumnRemove -> { }
-                    BillableItem.ColumnChange -> { }
-                    BillableItem.ColumnStateChange -> { }
-                    BillableItem.CellChange -> { }
-                    BillableItem.CellStateChange -> { }
-                    BillableItem.ChannelChange -> { }
-                    BillableItem.ChannelAdd -> { }
-                    BillableItem.ChannelRemove -> { }
+                    BillableItem.FullRefresh,
+                    BillableItem.CellChange,
+                    BillableItem.CellStateChange,
+                    BillableItem.ColumnChange,
+                    BillableItem.ColumnStateChange,
+                    BillableItem.LineLabelRefresh,
+                    BillableItem.ColumnLabelRefresh -> { }
+                    else -> {
+                        this._tree.bill.add(bill_item)
+                    }
+                }
+
+                when (bill_item) {
+                    BillableItem.FullRefresh -> {
+                        this._tree.clear()
+                        this._tree.bill.add(bill_item)
+                        return
+                    }
+
+                    BillableItem.RowAdd -> {
+                        val y = node.int_queue.removeFirst()
+                        for (i in 0 until queued_cells.size) {
+                            for (coord in queued_cells[i]) {
+                                if (coord.y >= y) {
+                                    coord.y += 1
+                                }
+                            }
+                        }
+
+                        val new_queue_line_labels = mutableSetOf<Int>()
+                        for (i in queued_line_labels) {
+                            if (i > y) {
+                                new_queue_line_labels.add(i + 1)
+                            } else {
+                                new_queue_line_labels.add(i)
+                            }
+                        }
+
+                        queued_line_labels.clear()
+                        queued_line_labels += new_queue_line_labels
+
+                        this._tree.int_queue.add(y)
+                    }
+
+                    BillableItem.RowRemove -> {
+                        val y = node.int_queue.removeFirst()
+                        val count = node.int_queue.removeFirst()
+
+                        val check_range = y until y + count
+                        for (i in 0 until queued_cells.size) {
+                            queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
+                                check_range.contains(coord.y)
+                            }.toSet()
+
+
+                            for (coord in queued_cells[i]) {
+                                if (coord.y >= y + count) {
+                                    coord.y -= count
+                                }
+                            }
+                        }
+
+                        val new_queue_line_labels = mutableSetOf<Int>()
+                        for (i in queued_line_labels) {
+                            if (i >= y + count) {
+                                new_queue_line_labels.add(i + count)
+                            } else if (i < y) {
+                                new_queue_line_labels.add(i)
+                            }
+                        }
+
+                        queued_line_labels.clear()
+                        queued_line_labels += new_queue_line_labels
+
+                        this._tree.int_queue.add(y)
+                    }
+
+                    BillableItem.ColumnAdd -> {
+                        val column = node.int_queue.removeFirst()
+
+                        for (i in 0 until queued_cells.size) {
+                            for (coord in queued_cells[i]) {
+                                if (coord.x >= column) {
+                                    coord.x += 1
+                                }
+                            }
+
+                            val old_columns = queued_columns[i].toSet()
+                            queued_columns[i].clear()
+                            for (x in old_columns) {
+                                if (x < column) {
+                                    queued_columns[i].add(x)
+                                } else {
+                                    queued_columns[i].add(x + 1)
+                                }
+                            }
+                        }
+                        
+                        val new_queue_column_labels = mutableSetOf<Int>()
+                        for (i in queued_column_labels) {
+                            if (i > column) {
+                                new_queue_column_labels.add(i + 1)
+                            } else {
+                                new_queue_column_labels.add(i)
+                            }
+                        }
+
+                        queued_column_labels.clear()
+                        queued_column_labels += new_queue_column_labels
+
+                        this._tree.int_queue.add(column)
+                    }
+
+                    BillableItem.ColumnRemove -> {
+                        val column = node.int_queue.removeFirst()
+                        for (i in 0 until queued_cells.size) {
+                            val queued_cell_set = queued_cells[i]
+                            queued_cell_set -= queued_cell_set.filter { coord: EditorTable.Coordinate ->
+                                coord.x == column
+                            }.toSet()
+
+                            for (coord in queued_cell_set) {
+                                if (coord.x > column) {
+                                    coord.x -= 1
+                                }
+                            }
+
+                            val old_columns = queued_columns[i].toSet()
+                            queued_columns[i].clear()
+
+                            for (x in old_columns) {
+                                if (x == column) {
+                                    continue
+                                } else if (x < column) {
+                                    queued_columns[i].add(x)
+                                } else {
+                                    queued_columns[i].add(x - 1)
+                                }
+                            }
+                        }
+
+                        val new_queue_column_labels = mutableSetOf<Int>()
+                        for (i in queued_column_labels) {
+                            if (i > column) {
+                                new_queue_column_labels.add(i + 1)
+                            } else if (i < column) {
+                                new_queue_column_labels.add(i)
+                            }
+                        }
+
+                        queued_column_labels.clear()
+                        queued_column_labels += new_queue_column_labels
+
+                        this._tree.int_queue.add(column)
+                    }
+
+                    BillableItem.ChannelChange,
+                    BillableItem.ChannelAdd,
+                    BillableItem.ChannelRemove -> {
+                        this._tree.int_queue.add(node.int_queue.removeFirst())
+                    }
+
+                    BillableItem.LineLabelRefresh -> {
+                        queued_line_labels.add(node.int_queue.removeFirst())
+                    }
+                    BillableItem.ColumnLabelRefresh -> {
+                        queued_column_labels.add(node.int_queue.removeFirst())
+                    }
+
+                    BillableItem.PercussionButtonRefresh -> {
+                        this._tree.int_queue.add(node.int_queue.removeFirst())
+                    }
+
+                    BillableItem.RowChange,
+                    BillableItem.RowStateChange -> {
+                        val i = if (bill_item == BillableItem.RowChange) {
+                            1
+                        } else {
+                            0
+                        }
+
+                        val y = node.int_queue.removeFirst()
+
+                        queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
+                            coord.y == y
+                        }.toSet()
+
+                        this._tree.int_queue.add(y)
+                    }
+
+                    BillableItem.ColumnChange,
+                    BillableItem.ColumnStateChange -> {
+                        val count = node.int_queue.removeFirst()
+                        val columns = Array<Int>(count) {
+                            node.int_queue.removeFirst()
+                        }
+
+                        val i = if (bill_item == BillableItem.ColumnChange) {
+                            1
+                        } else {
+                            0
+                        }
+
+                        queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
+                            columns.contains(coord.x)
+                        }.toSet()
+
+                        queued_columns[i].addAll(columns)
+                    }
+
+                    BillableItem.CellChange,
+                    BillableItem.CellStateChange -> {
+                        val count = node.int_queue.removeFirst()
+                        val i = if (bill_item == BillableItem.CellChange) {
+                            1
+                        } else {
+                            0
+                        }
+
+                        for (j in 0 until count) {
+                            queued_cells[i].add(
+                                EditorTable.Coordinate(
+                                    node.int_queue.removeFirst(),
+                                    node.int_queue.removeFirst()
+                                )
+                            )
+                        }
+
+                    }
 
                     BillableItem.ProjectNameChange,
                     BillableItem.ContextMenuRefresh,
@@ -152,191 +387,83 @@ class UIChangeBill {
                     BillableItem.ContextMenuSetControlLine,
                     BillableItem.ContextMenuClear,
                     BillableItem.ConfigDrawerEnableCopyAndDelete,
-                    BillableItem.ConfigDrawerRefreshExportButton -> {
-                        this._tree.bill.add(bill_item)
-                    }
-
-                    BillableItem.PercussionButtonRefresh -> { }
-
-                    BillableItem.LineLabelRefresh -> { }
-                    BillableItem.ColumnLabelRefresh -> { }
-                    BillableItem.FullRefresh -> { }
+                    BillableItem.ConfigDrawerRefreshExportButton -> { }
                 }
             }
 
-            stack.addAll(node.sub_nodes)
+            stack.addAll(0, node.sub_nodes)
+        }
+
+        if (queued_columns[0].isNotEmpty()) {
+            val columns = (queued_columns[0] - queued_columns[1]).toList()
+
+            for (x in columns) {
+                this._tree.bill.add(BillableItem.ColumnStateChange)
+                this._tree.int_queue.add(x)
+            }
+        }
+
+        if (queued_columns[1].isNotEmpty()) {
+            val columns = queued_columns[1].toList()
+
+            for (x in columns) {
+                this._tree.bill.add(BillableItem.ColumnChange)
+                this._tree.int_queue.add(x)
+            }
+
+        } 
+
+        if (queued_cells[0].isNotEmpty()) {
+            val cells = (queued_cells[0] - queued_cells[1]).toList()
+
+            this._tree.int_queue.add(cells.size)
+            for (cell in cells.toList()) {
+                this._tree.int_queue.add(cell.y)
+                this._tree.int_queue.add(cell.x)
+            }
+            this._tree.bill.add(BillableItem.CellStateChange)
+        } 
+
+        if (queued_cells[1].isNotEmpty()) {
+            val cells = queued_cells[1].toList()
+
+            this._tree.int_queue.add(cells.size)
+            for (cell in cells.toList()) {
+                this._tree.int_queue.add(cell.y)
+                this._tree.int_queue.add(cell.x)
+            }
+            this._tree.bill.add(BillableItem.CellChange)
+        } 
+
+        for (y in queued_line_labels) {
+            this._tree.bill.add(BillableItem.LineLabelRefresh)
+            this._tree.int_queue.add(y)
+        }
+
+        for (x in queued_column_labels) {
+            this._tree.bill.add(BillableItem.ColumnLabelRefresh)
+            this._tree.int_queue.add(x)
         }
     }
 
     fun get_next_entry(): BillableItem? {
-        return if (this.is_full_locked()) {
-            this.is_full_locked() = false
-            BillableItem.FullRefresh
-        } else if (this._bill.isNotEmpty()) {
-            this._bill.removeFirst()
-        } else if (this.queued_columns[0].isNotEmpty()) {
-            val columns = (this.queued_columns[0] - this.queued_columns[1]).toList()
-
-            for (x in columns) {
-                this._working_bill.last().add(BillableItem.ColumnStateChange)
-                this._working_int_queue.last().add(x)
-            }
-
-            this.queued_columns[0].clear()
-            this.get_next_entry()
-
-        } else if (this.queued_columns[1].isNotEmpty()) {
-            val columns = this.queued_columns[1].toList()
-
-            for (x in columns) {
-                this._working_bill.last().add(BillableItem.ColumnChange)
-                this._working_int_queue.last().add(x)
-            }
-
-            this.queued_columns[1].clear()
-            this.get_next_entry()
-        } else if (this.queued_cells[0].isNotEmpty()) {
-            val cells = (this.queued_cells[0] - this.queued_cells[1]).toList()
-
-            this._working_int_queue.last().add(cells.size)
-            for (cell in cells.toList()) {
-                this._working_int_queue.last().add(cell.y)
-                this._working_int_queue.last().add(cell.x)
-            }
-            this._working_bill.last().add(BillableItem.CellStateChange)
-
-            this.queued_cells[0].clear()
-
-            this.get_next_entry()
-
-        } else if (this.queued_cells[1].isNotEmpty()) {
-            val cells = this.queued_cells[1].toList()
-
-            this._working_int_queue.last().add(cells.size)
-            for (cell in cells.toList()) {
-                this._working_int_queue.last().add(cell.y)
-                this._working_int_queue.last().add(cell.x)
-            }
-            this._working_bill.last().add(BillableItem.CellChange)
-
-            this.queued_cells[1].clear()
-
-            this.get_next_entry()
+        return if (this._tree.bill.isNotEmpty()) {
+            this._tree.bill.removeFirst()
         } else {
             null
         }
     }
 
-
     fun get_next_int(): Int {
-        return this._int_queue.removeFirst()
+        return this._tree.int_queue.removeFirst()
     }
-
-    fun queue_full_refresh() {
-        TODO()
-        this.clear()
-    }
-
 
     fun clear() {
-        this._consolidated_bill.clear()
-        this._consolidated_int_queue.clear()
-        this._working_bill.clear()
-        this._working_int_queue.clear()
-        this.queued_cells[0].clear()
-        this.queued_cells[1].clear()
-        this.queued_columns[0].clear()
-        this.queued_columns[1].clear()
+        this._tree.clear()
     }
 
-    //fun queue_cell_changes(cells: List<EditorTable.Coordinate>, state_only: Boolean = false) {
-    //    if (this.is_full_locked()) {
-    //        return
-    //    }
-
-    //    val i = if (state_only) {
-    //        0
-    //    } else {
-    //        1
-    //    }
-
-    //    this.queued_cells[i].addAll(cells)
-    //}
-
-    //fun queue_cell_change(cell: EditorTable.Coordinate, state_only: Boolean = false) {
-    //    if (this.is_full_locked()) {
-    //        return
-    //    }
-
-    //    val i = if (state_only) {
-    //        0
-    //    } else {
-    //        1
-    //    }
-
-    //    this.queued_cells[i].add(cell)
-    //}
-    //fun queue_column_changes(columns: List<Int>, state_only: Boolean = false) {
-    //    if (this.is_full_locked()) {
-    //        return
-    //    }
-
-    //    val i = if (state_only) {
-    //        0
-    //    } else {
-    //        1
-    //    }
-
-
-    //    this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
-    //        columns.contains(coord.x)
-    //    }.toSet()
-
-    //    this.queued_columns[i].addAll(columns)
-    //}
-    //fun queue_column_change(column: Int, state_only: Boolean = false) {
-    //    if (this.is_full_locked()) {
-    //        return
-    //    }
-
-    //    val i = if (state_only) {
-    //        0
-    //    } else {
-    //        1
-    //    }
-
-    //    this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
-    //        coord.x == column
-    //    }.toSet()
-
-    //    this.queued_columns[i].add(column)
-    //}
-    // fun queue_new_row(y: Int) {
-    //     if (this.is_full_locked()) {
-    //         return
-    //     }
-
-    //     for (i in 0 until this.queued_cells.size) {
-    //         for (coord in this.queued_cells[i]) {
-    //             if (coord.y >= y) {
-    //                 coord.y += 1
-    //             }
-    //         }
-    //     }
-
-    //     this._working_int_queue.last().add(y)
-    //     this._working_bill.last().add(BillableItem.RowAdd)
-    // }
-
-
-
-
     fun queue_cell_changes(cells: List<EditorTable.Coordinate>, state_only: Boolean = false) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        val working_tree = this._tree.last()
+        val working_tree = this.get_working_tree() ?: return
 
         working_tree.bill.add(
             if (state_only) {
@@ -354,180 +481,135 @@ class UIChangeBill {
     }
 
     fun queue_cell_change(cell: EditorTable.Coordinate, state_only: Boolean = false) {
-        if (this.is_full_locked()) {
-            return
-        }
+        val working_tree = this.get_working_tree() ?: return
         if (state_only) {
-            this._working_bill.last().add(BillableItem.CellStateChange)
+            working_tree.bill.add(BillableItem.CellStateChange)
         } else {
-            this._working_bill.last().add(BillableItem.CellChange)
+            working_tree.bill.add(BillableItem.CellChange)
         }
 
-        this._working_int_queue.last().add(cell.y)
-        this._working_int_queue.last().add(cell.x)
+
+        working_tree.int_queue.add(1)
+        working_tree.int_queue.add(cell.y)
+        working_tree.int_queue.add(cell.x)
     }
 
     fun queue_column_changes(columns: List<Int>, state_only: Boolean = false) {
-        if (this.is_full_locked()) {
-            return
-        }
-
+        val working_tree = this.get_working_tree() ?: return
         val bill_item = if (state_only) {
             BillableItem.ColumnStateChange
         } else {
             BillableItem.ColumnChange
         }
 
+        working_tree.bill.add(bill_item)
+        working_tree.int_queue.add(columns.size)
         for (column in columns) {
-            this._working_bill.last().add(bill_item)
-            this._working_int_queue.last().add(column)
+            working_tree.int_queue.add(column)
         }
     }
 
     fun queue_column_change(column: Int, state_only: Boolean = false) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(
             if (state_only) {
                 BillableItem.ColumnStateChange
             } else {
                 BillableItem.ColumnChange
             }
         )
-        this._working_int_queue.last().add(column)
-    }
 
+        working_tree.int_queue.add(1)
+        working_tree.int_queue.add(column)
+    }
 
     fun queue_new_row(y: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(y)
-        this._working_bill.last().add(BillableItem.RowAdd)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(y)
+        working_tree.bill.add(BillableItem.RowAdd)
     }
-
 
     fun queue_refresh_context_menu() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuRefresh)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuRefresh)
     }
+
     fun queue_set_context_menu_line() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetLine)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetLine)
     }
+
     fun queue_set_context_menu_leaf() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetLeaf)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetLeaf)
     }
+
     fun queue_set_context_menu_leaf_percussion() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetLeafPercussion)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetLeafPercussion)
     }
+
     fun queue_set_context_menu_line_control_leaf() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetControlLeaf)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetControlLeaf)
     }
+
     fun queue_set_context_menu_line_control_leaf_b() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetControlLeafB)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetControlLeafB)
     }
+
     fun queue_set_context_menu_linking() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetLinking)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetLinking)
     }
+
     fun queue_set_context_menu_column() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetColumn)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetColumn)
     }
+
     fun queue_set_context_menu_control_line() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuSetControlLine)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetControlLine)
     }
+
     fun queue_clear_context_menu() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ContextMenuClear)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuClear)
     }
+    
     fun queue_enable_delete_and_copy_buttons() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ConfigDrawerEnableCopyAndDelete)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ConfigDrawerEnableCopyAndDelete)
     }
 
     fun queue_config_drawer_redraw_export_button() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ConfigDrawerRefreshExportButton)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ConfigDrawerRefreshExportButton)
     }
     fun queue_project_name_change() {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_bill.last().add(BillableItem.ProjectNameChange)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ProjectNameChange)
     }
 
     fun queue_column_label_refresh(x: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(x)
-        this._working_bill.last().add(BillableItem.ColumnLabelRefresh)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(x)
+        working_tree.bill.add(BillableItem.ColumnLabelRefresh)
     }
 
     fun queue_line_label_refresh(y: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(y)
-        this._working_bill.last().add(BillableItem.LineLabelRefresh)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(y)
+        working_tree.bill.add(BillableItem.LineLabelRefresh)
     }
 
     fun queue_row_change(y: Int, state_only: Boolean = false) {
-        if (this.is_full_locked()) {
-            return
-        }
+        val working_tree = this.get_working_tree() ?: return
 
-        this._working_int_queue.last().add(y)
-        this._working_bill.last().add(
+        working_tree.int_queue.add(y)
+        working_tree.bill.add(
             if (state_only) {
                 BillableItem.RowStateChange
             } else {
@@ -536,185 +618,78 @@ class UIChangeBill {
         )
     }
 
-    // fun queue_row_change(y: Int, state_only: Boolean = false) {
-    //     if (this.is_full_locked()) {
-    //         return
-    //     }
-
-    //     val i = if (state_only) {
-    //         0
-    //     } else {
-    //         1
-    //     }
-
-    //     this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
-    //         coord.y == y
-    //     }.toSet()
-
-    //     this._working_int_queue.last().add(y)
-    //     this._working_bill.last().add(BillableItem.RowChange)
-    // }
-
-
     fun queue_row_removal(y: Int, count: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(y)
-        this._working_int_queue.last().add(count)
-        this._working_bill.last().add(BillableItem.RowRemove)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(y)
+        working_tree.int_queue.add(count)
+        working_tree.bill.add(BillableItem.RowRemove)
     }
 
-    // fun queue_row_removal(y: Int, count: Int) {
-    //     if (this.is_full_locked()) {
-    //         return
-    //     }
-
-    //     val check_range = y until y + count
-    //     for (i in 0 until this.queued_cells.size) {
-    //         this.queued_cells[i] -= this.queued_cells[i].filter { coord: EditorTable.Coordinate ->
-    //             check_range.contains(coord.y)
-    //         }.toSet()
-
-
-    //         for (coord in this.queued_cells[i]) {
-    //             if (coord.y >= y + count) {
-    //                 coord.y -= count
-    //             }
-    //         }
-    //     }
-
-    //     this._working_int_queue.last().add(y)
-    //     this._working_int_queue.last().add(count)
-    //     this._working_bill.last().add(BillableItem.RowRemove)
-    // }
-
-
     fun queue_add_channel(channel: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(channel)
-        this._working_bill.last().add(BillableItem.ChannelAdd)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(channel)
+        working_tree.bill.add(BillableItem.ChannelAdd)
     }
 
     fun queue_refresh_channel(channel: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(channel)
-        this._working_bill.last().add(BillableItem.ChannelChange)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(channel)
+        working_tree.bill.add(BillableItem.ChannelChange)
     }
 
     fun queue_remove_channel(channel: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(channel)
-        this._working_bill.last().add(BillableItem.ChannelRemove)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(channel)
+        working_tree.bill.add(BillableItem.ChannelRemove)
     }
 
     fun queue_add_column(column: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(column)
-        this._working_bill.last().add(BillableItem.ColumnAdd)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(column)
+        working_tree.bill.add(BillableItem.ColumnAdd)
     }
-
-    // fun queue_add_column(column: Int) {
-    //     if (this.is_full_locked()) {
-    //         return
-    //     }
-
-    //     for (i in 0 until this.queued_cells.size) {
-    //         for (coord in this.queued_cells[i]) {
-    //             if (coord.x >= column) {
-    //                 coord.x += 1
-    //             }
-    //         }
-
-    //         val old_columns = this.queued_columns[i].toSet()
-    //         this.queued_columns[i].clear()
-    //         for (x in old_columns) {
-    //             if (x < column) {
-    //                 this.queued_columns[i].add(x)
-    //             } else {
-    //                 this.queued_columns[i].add(x + 1)
-    //             }
-    //         }
-    //     }
-
-    //     this._working_int_queue.last().add(column)
-    //     this._working_bill.last().add(BillableItem.ColumnAdd)
-    // }
 
     fun queue_remove_column(column: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
-
-        this._working_int_queue.last().add(column)
-        this._working_bill.last().add(BillableItem.ColumnRemove)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(column)
+        working_tree.bill.add(BillableItem.ColumnRemove)
     }
 
-    // fun queue_remove_column(column: Int) {
-    //     if (this.is_full_locked()) {
-    //         return
-    //     }
-
-    //     for (i in 0 until this.queued_cells.size) {
-    //         val queued_cell_set = this.queued_cells[i]
-    //         queued_cell_set -= queued_cell_set.filter { coord: EditorTable.Coordinate ->
-    //             coord.x == column
-    //         }.toSet()
-
-    //         for (coord in queued_cell_set) {
-    //             if (coord.x > column) {
-    //                 coord.x -= 1
-    //             }
-    //         }
-
-    //         val old_columns = this.queued_columns[i].toSet()
-    //         this.queued_columns[i].clear()
-
-    //         for (x in old_columns) {
-    //             if (x == column) {
-    //                 continue
-    //             } else if (x < column) {
-    //                 this.queued_columns[i].add(x)
-    //             } else {
-    //                 this.queued_columns[i].add(x - 1)
-    //             }
-    //         }
-    //     }
-
-    //     this._working_int_queue.last().add(column)
-    //     this._working_bill.last().add(BillableItem.ColumnRemove)
-    // }
-
     fun queue_refresh_choose_percussion_button(line_offset: Int) {
-        if (this.is_full_locked()) {
-            return
-        }
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(line_offset)
+        working_tree.bill.add(BillableItem.PercussionButtonRefresh)
+    }
 
-        this._working_int_queue.last().add(line_offset)
-        this._working_bill.last().add(BillableItem.PercussionButtonRefresh)
+    fun queue_full_refresh() {
+        this._tree.get(this.working_path).bill.add(BillableItem.FullRefresh)
+    }
+        
+    fun get_working_tree(): Node? {
+        return if (this.is_full_locked()) {
+            null
+        } else {
+            this._tree.get(this.working_path)
+        }
     }
 
     fun lock_full() {
         this.ui_lock.lock_full()
-        this._tree.new_node()
+        val working_tree = this._tree.get(this.working_path)
+        this.working_path.add(working_tree.sub_nodes.size)
+        working_tree.new_node()
     }
 
     fun lock_partial() {
         this.ui_lock.lock_partial()
-        this._tree.new_node()
+        val working_tree = this._tree.get(this.working_path)
+        this.working_path.add(working_tree.sub_nodes.size)
+        working_tree.new_node()
+    }
+
+    fun unlock() {
+        this.ui_lock.unlock()
+        this.working_path.removeLast()
     }
 
     fun is_locked(): Boolean {
@@ -728,5 +703,4 @@ class UIChangeBill {
     fun cancel_most_recent() {
         this._tree.remove_last()
     }
-
 }

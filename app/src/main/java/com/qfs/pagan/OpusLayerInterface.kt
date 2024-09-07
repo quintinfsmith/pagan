@@ -42,7 +42,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
 
     private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
-    private var _on_remap_pending_offsets = Array<Int>(2) { 0 }
+
+    private var _blocked_action_catcher_active = false
 
     private val ui_change_bill = UIChangeBill()
 
@@ -239,14 +240,29 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
     // END UI BILL Interface functions ---------------------------------W
 
+    /*
+        Wrap a function such that if it throws a BlockedTreeException,
+        it is caught and provides feedback, but doesn't stop the propogation of other
+        exceptions OR BlockedTreeExceptions thrown in a higher degree _catched_blocked_action call.
+        eg: move_leaf is wrapped but also calls replace_tree, which is wrapped so the exception
+        will be handled at the first level so the rest of the function is still cancelled
+     */
     private fun <T> _catch_blocked_action(callback: () -> T): T? {
-        return try {
+        return if (this._blocked_action_catcher_active) {
             callback()
-        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
-            this.withFragment {
-                //it.blocked_action_feedback(e)
+        } else {
+            this._blocked_action_catcher_active = true
+            val output = try {
+                callback()
+            } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                this.withFragment {
+                    //it.blocked_action_feedback(e)
+                }
+                null
             }
-            null
+            this._blocked_action_catcher_active = false
+
+            output
         }
     }
 
@@ -345,6 +361,14 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                 super.replace_tree(beat_key, position, tree)
                 this._queue_cell_change(beat_key, false)
+            }
+        }
+    }
+
+    override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
             }
         }
     }

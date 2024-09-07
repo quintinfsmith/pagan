@@ -1788,8 +1788,8 @@ open class OpusLayerBase {
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         val from_tree = this.get_tree_copy(beatkey_from, position_from)
-        this.unset(beatkey_from, position_from)
         this.replace_tree(beatkey_to, position_to, from_tree)
+        this.unset(beatkey_from, position_from)
     }
 
     open fun move_global_ctl_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {

@@ -2,7 +2,6 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.Rational
 import com.qfs.pagan.structure.OpusTree
-import com.qfs.json.*
 
 open class OpusLayerOverlapControl: OpusLayerBase() {
     class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")

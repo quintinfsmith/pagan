@@ -7,7 +7,6 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
-import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import kotlin.math.abs
 import kotlin.math.max
 

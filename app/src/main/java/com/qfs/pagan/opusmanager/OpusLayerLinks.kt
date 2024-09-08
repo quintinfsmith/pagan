@@ -409,10 +409,10 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         this.dispatch_remap_link_callback(remapped)
     }
 
-    override fun remove_beat(beat_index: Int) {
+    override fun remove_beat(beat_index: Int, count: Int) {
         val remapped = this.remap_links { beat_key: BeatKey ->
-            if (beat_key.beat > beat_index) {
-                BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat - 1)
+            if (beat_key.beat >= beat_index + count) {
+                BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat - count)
             } else if (beat_key.beat < beat_index) {
                 beat_key
             } else {
@@ -420,7 +420,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
             }
         }
 
-        super.remove_beat(beat_index)
+        super.remove_beat(beat_index, count)
 
         this.dispatch_remap_link_callback(remapped)
     }

@@ -212,14 +212,14 @@ open class OpusLayerCursor: OpusLayerHistory() {
         //}
     }
 
-    override fun remove_beat(beat_index: Int) {
+    override fun remove_beat(beat_index: Int, count: Int) {
         when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Column -> {
-                this.cursor.beat = if (this.cursor.beat > beat_index) {
-                    this.cursor.beat - 1
+                this.cursor.beat = if (this.cursor.beat >= beat_index + count) {
+                    this.cursor.beat - count
                 } else if (this.cursor.beat == beat_index) {
-                    min(max(0, this.cursor.beat), this.beat_count - 2)
+                    min(max(0, this.cursor.beat), this.beat_count - count - 1)
                 } else {
                     this.cursor.beat
                 }
@@ -227,19 +227,19 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
             OpusManagerCursor.CursorMode.Range -> {
                 val first_corner = this.cursor.range!!.first
-                first_corner.beat = if (first_corner.beat > beat_index) {
-                    first_corner.beat - 1
+                first_corner.beat = if (first_corner.beat >= beat_index + count) {
+                    first_corner.beat - count
                 } else if (first_corner.beat == beat_index) {
-                    min(max(0, first_corner.beat), this.beat_count - 2)
+                    min(max(0, first_corner.beat), this.beat_count - count - 1)
                 } else {
                     first_corner.beat
                 }
 
                 val second_corner = this.cursor.range!!.second
-                second_corner.beat = if (second_corner.beat > beat_index) {
-                    second_corner.beat - 1
+                second_corner.beat = if (second_corner.beat >= beat_index + count) {
+                    second_corner.beat - count
                 } else if (second_corner.beat == beat_index) {
-                    min(max(0, second_corner.beat), this.beat_count - 2)
+                    min(max(0, second_corner.beat), this.beat_count - count - 1)
                 } else {
                     second_corner.beat
                 }
@@ -249,7 +249,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             else -> {}
         }
 
-        super.remove_beat(beat_index)
+        super.remove_beat(beat_index, count)
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {

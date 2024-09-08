@@ -1715,25 +1715,27 @@ open class OpusLayerBase {
     }
 
 
-    open fun remove_beat(beat_index: Int) {
-        if (this.beat_count == 1) {
+    open fun remove_beat(beat_index: Int, count: Int = 1) {
+        if (this.beat_count <= count) {
             throw RemovingLastBeatException()
         }
 
-        if (!(0 until this.beat_count).contains(beat_index)) {
+        if (beat_index < 0 || beat_index + count > this.beat_count) {
             throw IndexOutOfBoundsException()
         }
 
-        this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
-            channel.remove_beat(beat_index)
-        }
-        this.percussion_channel.remove_beat(beat_index)
+        for (i in 0 until count) {
+            this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+                channel.remove_beat(beat_index)
+            }
+            this.percussion_channel.remove_beat(beat_index)
 
-        for (controller in this.controllers.controllers.values) {
-            controller.remove_beat(beat_index)
+            for (controller in this.controllers.controllers.values) {
+                controller.remove_beat(beat_index)
+            }
         }
 
-        this.beat_count -= 1
+        this.beat_count -= count
     }
 
     fun remove_channel_by_uuid(uuid: Int) {

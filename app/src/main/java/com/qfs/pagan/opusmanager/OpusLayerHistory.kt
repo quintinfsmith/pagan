@@ -748,32 +748,29 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )
     }
 
-    fun remove_beat(beat_index: Int, count: Int) {
-        val adj_count = min(this.beat_count, count)
+    override fun remove_beat(beat_index: Int, count: Int) {
         this._remember {
-            for (i in 0 until adj_count) {
-                this.remove_beat(min(beat_index, this.beat_count - 1))
-            }
-        }
-    }
-
-    override fun remove_beat(beat_index: Int) {
-        this._remember {
-            val beat_cells = mutableListOf<OpusTree<out InstrumentEvent>>()
-            this.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*,*> ->
-                val line_count = channel.size
-                for (j in 0 until line_count) {
-                    beat_cells.add(
-                        this.get_tree_copy(BeatKey(c, j, beat_index))
-                    )
+            val beat_cells = List(count) { i: Int ->
+                val working_list = mutableListOf<OpusTree<out InstrumentEvent>>()
+                this.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*,*> ->
+                    val line_count = channel.size
+                    for (j in 0 until line_count) {
+                        working_list.add(
+                            this.get_tree_copy(BeatKey(c, j, beat_index + i))
+                        )
+                    }
                 }
+                working_list
             }
-            super.remove_beat(beat_index)
 
-            this.push_to_history_stack(
-                HistoryToken.INSERT_BEAT,
-                listOf(beat_index, beat_cells)
-            )
+            super.remove_beat(beat_index, count)
+
+            for (i in 0 until beat_cells.size) {
+                this.push_to_history_stack(
+                    HistoryToken.INSERT_BEAT,
+                    listOf(beat_index, beat_cells[i])
+                )
+            }
         }
     }
 
@@ -1432,6 +1429,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
             throw real_exception
         }
     }
+
     private fun <T> _forget(callback: () -> T): T {
         return this.history_cache.forget {
             callback()

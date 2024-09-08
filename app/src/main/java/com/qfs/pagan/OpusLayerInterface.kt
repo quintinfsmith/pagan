@@ -744,19 +744,20 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun remove_beat(beat_index: Int) {
+    override fun remove_beat(beat_index: Int, count: Int) {
         this._catch_blocked_action {
             this.lock_ui_partial {
                 if (!this.ui_change_bill.is_full_locked()) {
                     this.queue_cursor_update(this.cursor)
-                    this.get_editor_table()?.remove_mapped_column(beat_index)
-                    this.ui_change_bill.queue_remove_column(beat_index)
+                    for (i in 0 until count) {
+                        this.get_editor_table()?.remove_mapped_column(beat_index)
+                        this.ui_change_bill.queue_remove_column(beat_index)
+                    }
                 }
 
-                super.remove_beat(beat_index)
+                super.remove_beat(beat_index, count)
 
                 if (!this.ui_change_bill.is_full_locked()) {
-
                     this.queue_cursor_update(this.cursor)
                     this.ui_change_bill.queue_refresh_context_menu()
                 }

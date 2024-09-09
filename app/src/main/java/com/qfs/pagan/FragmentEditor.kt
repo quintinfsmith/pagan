@@ -126,6 +126,16 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         super.onSaveInstanceState(outState)
     }
 
+    fun load_from_bkp() {
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
+        val bytes = FileInputStream(bkp_json_path).readBytes()
+        val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
+
+        opus_manager.load(bytes, backup_path)
+    }
+
     fun reload_from_bkp() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
@@ -247,21 +257,21 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             thread {
                 val path = bundle?.getString("URI")
                 if (path != null) {
-                    main.import_midi(path)
-                    //try {
-                    //} catch (e: Exception) {
-                    //    val opus_manager = main.get_opus_manager()
-                    //    if (!opus_manager.first_load_done) {
-                    //        main.get_opus_manager().new()
-                    //    } else {
-                    //        main.runOnUiThread {
-                    //            this.reload_from_bkp()
-                    //            editor_table.visibility = View.VISIBLE
-                    //            this.restore_view_model_position()
-                    //        }
-                    //    }
-                    //    main.feedback_msg(getString(R.string.feedback_midi_fail))
-                    //}
+                    try {
+                        main.import_midi(path)
+                    } catch (e: Exception) {
+                        val opus_manager = main.get_opus_manager()
+                        if (!opus_manager.first_load_done) {
+                            main.get_opus_manager().new()
+                        } else {
+                            main.runOnUiThread {
+                                this.reload_from_bkp()
+                                editor_table.visibility = View.VISIBLE
+                                this.restore_view_model_position()
+                            }
+                        }
+                        main.feedback_msg(getString(R.string.feedback_midi_fail))
+                    }
                 }
 
                 main.runOnUiThread {
@@ -287,6 +297,43 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     bundle!!.getString("URI")?.let { path ->
                         main.import_project(path)
                     }
+                } catch (e: Exception) {
+                    val opus_manager = main.get_opus_manager()
+                    // if Not Loaded, just create new and throw a message up
+                    if (!opus_manager.first_load_done) {
+                        opus_manager.new()
+                    } else {
+                        main.runOnUiThread {
+                            this.reload_from_bkp()
+                            editor_table.visibility = View.VISIBLE
+                            this.restore_view_model_position()
+                        }
+                    }
+
+                    this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
+                }
+                main.runOnUiThread {
+                    editor_table?.visibility = View.VISIBLE
+                }
+                main.loading_reticle_hide()
+                this.project_change_flagged = false
+            }
+        }
+
+        setFragmentResultListener(IntentFragmentToken.MostRecent.name) { _, bundle: Bundle? ->
+            val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
+            val main = this.get_main()
+
+            main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
+
+            main.runOnUiThread {
+                editor_table?.visibility = View.INVISIBLE
+            }
+
+            thread {
+                try {
+                    this.load_from_bkp()
                 } catch (e: Exception) {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up

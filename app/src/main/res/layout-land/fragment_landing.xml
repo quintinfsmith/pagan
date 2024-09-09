@@ -86,6 +86,17 @@
                     android:orientation="vertical">
 
                 <com.qfs.pagan.ButtonStd
+                    android:id="@+id/btnMostRecent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Open Last Project"
+                    android:theme="@style/button_front" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/normal_padding" />
+
+                <com.qfs.pagan.ButtonStd
                     android:id="@+id/btnFrontNew"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

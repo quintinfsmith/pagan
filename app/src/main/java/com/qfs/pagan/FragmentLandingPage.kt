@@ -12,6 +12,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
 import kotlin.concurrent.thread
+import java.io.File
 
 class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
     override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentLandingBinding {
@@ -21,6 +22,7 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val btn_mostRecent = view.findViewById<View>(R.id.btnMostRecent)
         val btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
@@ -51,6 +53,16 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         btn_newProject.setOnClickListener {
             this.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
             this.get_main().navigate(R.id.EditorFragment)
+        }
+
+        val bkp_json_path = "${this.get_main().applicationInfo.dataDir}/.bkp.json"
+        if (File(bkp_json_path).exists()) {
+            btn_mostRecent.setOnClickListener {
+                this.setFragmentResult(IntentFragmentToken.MostRecent.name, bundleOf())
+                this.get_main().navigate(R.id.EditorFragment)
+            }
+        } else {
+            btn_mostRecent.visibility = View.GONE
         }
 
         if (this.get_main().has_projects_saved()) {

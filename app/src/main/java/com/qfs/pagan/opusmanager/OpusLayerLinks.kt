@@ -769,7 +769,9 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
 
         val inner_map = input["d"] as JSONHashMap
         val generalized_reflections = inner_map.get_list("reflections")
+
         println("${generalized_reflections.to_string()}")
+
         for (i in 0 until generalized_reflections.list.size) {
             val pool = generalized_reflections.get_list(i)
             this.link_pools.add(
@@ -782,6 +784,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                     )
                 }.toMutableSet()
             )
+        }
+        for (i in 0 until this.link_pools.size) {
+            val pool = this.link_pools[i]
+            for (beat_key in pool) {
+                this.link_pool_map[beat_key] = i
+            }
         }
     }
 

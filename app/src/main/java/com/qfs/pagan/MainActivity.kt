@@ -424,6 +424,9 @@ class MainActivity : AppCompatActivity() {
 
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
+        if (!opus_manager.first_load_done) {
+            return
+        }
         val path = opus_manager.path
         if (path != null) {
             val path_file = File("${applicationInfo.dataDir}/.bkp_path")

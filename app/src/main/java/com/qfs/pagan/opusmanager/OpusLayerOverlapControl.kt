@@ -294,7 +294,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         val needs_recache = mutableSetOf<Pair<BeatKey, List<Int>>>()
         val needs_decrement = mutableListOf<Pair<BeatKey, List<Int>>>()
 
-        val del_range = (beat_index until beat_count + count)
+        val del_range = (beat_index until beat_index + count)
         for ((tail, head) in this._cache_inv_blocked_tree_map) {
             if (del_range.contains(head.first.beat)) {
                 decache.add(Pair(head.first, head.second))

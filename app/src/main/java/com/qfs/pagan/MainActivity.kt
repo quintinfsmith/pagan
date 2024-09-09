@@ -449,6 +449,8 @@ class MainActivity : AppCompatActivity() {
 
         // TODO: Save current project and restart. temporary code for now
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+            this@MainActivity.save_to_backup()
+
             val ctx = applicationContext
             val pm = ctx.packageManager
             val intent = pm.getLaunchIntentForPackage(ctx.packageName)

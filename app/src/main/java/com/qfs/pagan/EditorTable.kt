@@ -158,7 +158,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.notify_item_changed(y)
         (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, state_only)
     }
-    
+
     fun get_column_map_size(): Int {
         return this._column_width_map.size
     }

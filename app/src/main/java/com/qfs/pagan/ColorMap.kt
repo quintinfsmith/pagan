@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.graphics.Color
 
 class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
+    class InvalidColorException(msg: String): Exception(msg) {}
     enum class Palette {
         Background,
         Foreground,
@@ -42,7 +43,13 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         CtlLeaf,
         CtlLeafText,
         CtlLeafSelected,
-        CtlLeafSelectedText
+        CtlLeafSelectedText,
+        //----(implicitly calculated)-----------------
+        Spill,
+        SpillLink,
+        SecondarySelection,
+        SecondarySelectionInvalid,
+        SecondarySelectionLinkActive
     }
     private val _default = Color.parseColor("#FF00FF")
     private val _palette = HashMap<Palette, Int>()
@@ -73,10 +80,30 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         for ((k, v) in palette) {
             this._palette[k] = v
         }
+        val calculated_colors = listOf(
+            ColorMap.Palette.Spill,
+            ColorMap.Palette.SpillLink,
+            ColorMap.Palette.SecondarySelection,
+            ColorMap.Palette.SecondarySelectionInvalid,
+            ColorMap.Palette.SecondarySelectionLinkActive
+        )
+        for (key in calculated_colors) {
+            this._palette[key] = this.calculate_color(key)
+        }
     }
 
     fun set_fallback_palette(palette: HashMap<Palette, Int>) {
         this._palette_fallback = palette
+        val calculated_colors = listOf(
+            ColorMap.Palette.Spill,
+            ColorMap.Palette.SpillLink,
+            ColorMap.Palette.SecondarySelection,
+            ColorMap.Palette.SecondarySelectionInvalid,
+            ColorMap.Palette.SecondarySelectionLinkActive
+        )
+        for (key in calculated_colors) {
+            this._palette_fallback[key] = this.calculate_color(key, true)
+        }
     }
 
     operator fun get(key: Palette): Int {
@@ -87,8 +114,94 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         }
     }
 
+    fun calculate_color(key: ColorMap.Palette, fallback: Boolean = false): Int {
+        val palette = if (fallback) {
+            this._palette_fallback
+        } else {
+            this._palette
+        }
+
+        return when (key) {
+            ColorMap.Palette.Spill -> {
+                // Calculate Spill
+                val col_leaf: Color = Color.valueOf(palette[ColorMap.Palette.Leaf]!!)
+                val col_empty: Color = Color.valueOf(palette[ColorMap.Palette.ChannelEven]!!)
+                Color.rgb(
+                    ((col_leaf.red() * .7F) + (col_empty.red() * .3F)).toFloat(),
+                    ((col_leaf.green() * .7F) + (col_empty.green() * .3F)).toFloat(),
+                    ((col_leaf.blue() * .7F) + (col_empty.blue() * .3F)).toFloat()
+                )
+            }
+            ColorMap.Palette.SpillLink -> {
+                val col_link: Color = Color.valueOf(palette[ColorMap.Palette.Link]!!)
+                val col_link_empty: Color = Color.valueOf(palette[ColorMap.Palette.LinkEmpty]!!)
+                Color.rgb(
+                    ((col_link.red() * .7F) + (col_link_empty.red() * .3F)).toFloat(),
+                    ((col_link.green() * .7F) + (col_link_empty.green() * .3F)).toFloat(),
+                    ((col_link.blue() * .7F) + (col_link_empty.blue() * .3F)).toFloat()
+                )
+            }
+            ColorMap.Palette.SecondarySelection -> {
+                val col_leaf_selection: Color = Color.valueOf(palette[ColorMap.Palette.LeafSelected]!!)
+                val col_selection: Color = Color.valueOf(palette[ColorMap.Palette.Selection]!!)
+
+                Color.rgb(
+                    ((col_selection.red() * .5F) + (col_leaf_selection.red() * .5F)).toFloat(),
+                    ((col_selection.green() * .5F) + (col_leaf_selection.green() * .5F)).toFloat(),
+                    ((col_selection.blue() * .5F) + (col_leaf_selection.blue() * .5F)).toFloat()
+                )
+            }
+            ColorMap.Palette.SecondarySelectionLinkActive -> {
+                val col_link_selected: Color = Color.valueOf(palette[ColorMap.Palette.LinkSelected]!!)
+                val col_empty_link_selected: Color = Color.valueOf(palette[ColorMap.Palette.LinkEmptySelected]!!)
+
+                Color.rgb(
+                    ((col_link_selected.red() * .5F) + (col_empty_link_selected.red() * .5F)).toFloat(),
+                    ((col_link_selected.green() * .5F) + (col_empty_link_selected.green() * .5F)).toFloat(),
+                    ((col_link_selected.blue() * .5F) + (col_empty_link_selected.blue() * .5F)).toFloat()
+                )
+            }
+            ColorMap.Palette.SecondarySelectionInvalid -> {
+                val col_leaf_invalid_selected = Color.valueOf(palette[ColorMap.Palette.LeafInvalidSelected]!!)
+                val col_leaf_invalid = Color.valueOf(palette[ColorMap.Palette.LeafInvalid]!!)
+                Color.rgb(
+                    ((col_leaf_invalid_selected.red() * .7F) + (col_leaf_invalid.red() * .3F)).toFloat(),
+                    ((col_leaf_invalid_selected.green() * .7F) + (col_leaf_invalid.green() * .3F)).toFloat(),
+                    ((col_leaf_invalid_selected.blue() * .7F) + (col_leaf_invalid.blue() * .3F)).toFloat()
+                )
+            }
+            else -> {
+                throw InvalidColorException("$key is not a calculated color")
+            }
+        }
+    }
+
     operator fun set(key: Palette, value: Int) {
         this._palette[key] = value
+
+        when (key) {
+            ColorMap.Palette.ChannelEven,
+            ColorMap.Palette.Leaf -> {
+                this._palette[ColorMap.Palette.Spill] = this.calculate_color(ColorMap.Palette.Spill)
+            }
+            ColorMap.Palette.Link,
+            ColorMap.Palette.LinkEmpty -> {
+                this._palette[ColorMap.Palette.SpillLink] = this.calculate_color(ColorMap.Palette.SpillLink)
+            }
+            ColorMap.Palette.Selection,
+            ColorMap.Palette.LeafSelected -> {
+                this._palette[ColorMap.Palette.SecondarySelection] = this.calculate_color(ColorMap.Palette.SecondarySelection)
+            }
+            ColorMap.Palette.LinkSelected,
+            ColorMap.Palette.LinkEmptySelected -> {
+                this._palette[ColorMap.Palette.SecondarySelectionLinkActive] = this.calculate_color(ColorMap.Palette.SecondarySelectionLinkActive)
+            }
+            ColorMap.Palette.LeafInvalidSelected,
+            ColorMap.Palette.LeafInvalid -> {
+                this._palette[ColorMap.Palette.SecondarySelectionInvalid] = this.calculate_color(ColorMap.Palette.SecondarySelectionInvalid)
+            }
+            else -> {}
+        }
     }
 
     fun unset(key: Palette) {

@@ -34,49 +34,26 @@ class LeafButtonStd(
     override fun get_tint_list(): IntArray {
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map
-        val col_leaf: Color = Color.valueOf(color_map[ColorMap.Palette.Leaf])
-        val col_leaf_selection: Color = Color.valueOf(color_map[ColorMap.Palette.LeafSelected])
-        val col_selection: Color = Color.valueOf(color_map[ColorMap.Palette.Selection])
-        val col_empty: Color = Color.valueOf(color_map[ColorMap.Palette.ChannelEven])
-        val col_spill = Color.rgb(
-            ((col_leaf.red() * .7F) + (col_empty.red() * .3F)).toFloat(),
-            ((col_leaf.green() * .7F) + (col_empty.green() * .3F)).toFloat(),
-            ((col_leaf.blue() * .7F) + (col_empty.blue() * .3F)).toFloat()
-        )
-
-        val col_secondary = Color.rgb(
-            ((col_selection.red() * .5F) + (col_leaf_selection.red() * .5F)).toFloat(),
-            ((col_selection.green() * .5F) + (col_leaf_selection.green() * .5F)).toFloat(),
-            ((col_selection.blue() * .5F) + (col_leaf_selection.blue() * .5F)).toFloat()
-        )
-
-        val col_leaf_invalid_selected = Color.valueOf(color_map[ColorMap.Palette.LeafInvalidSelected])
-        val col_leaf_invalid = Color.valueOf(color_map[ColorMap.Palette.LeafInvalid])
-        val col_leaf_invalid_selected_b = Color.rgb(
-            ((col_leaf_invalid_selected.red() * .7F) + (col_leaf_invalid.red() * .3F)).toFloat(),
-            ((col_leaf_invalid_selected.green() * .7F) + (col_leaf_invalid.green() * .3F)).toFloat(),
-            ((col_leaf_invalid_selected.blue() * .7F) + (col_leaf_invalid.blue() * .3F)).toFloat()
-        )
 
         return intArrayOf(
             color_map[ColorMap.Palette.LeafInvalid],
             color_map[ColorMap.Palette.LeafInvalidSelected],
-            col_leaf_invalid_selected_b,
+            color_map[ColorMap.Palette.SecondarySelectionInvalid],
 
             color_map[ColorMap.Palette.LinkEmpty],
             color_map[ColorMap.Palette.Link],
-            color_map[ColorMap.Palette.Link], // B
+            color_map[ColorMap.Palette.SpillLink],
 
             color_map[ColorMap.Palette.LinkEmptySelected],
             color_map[ColorMap.Palette.LinkSelected],
             color_map[ColorMap.Palette.LinkSelected], // B
 
             color_map[ColorMap.Palette.LinkEmptySelected], // B
-            color_map[ColorMap.Palette.LinkSelected], // B
-            color_map[ColorMap.Palette.LinkSelected], // B
+            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
+            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
 
             color_map[ColorMap.Palette.Leaf],
-            col_spill,
+            color_map[ColorMap.Palette.Spill],
 
             // Primary
             color_map[ColorMap.Palette.Selection],
@@ -85,8 +62,8 @@ class LeafButtonStd(
 
             // Secondary
             color_map[ColorMap.Palette.Selection],
-            col_secondary,
-            col_secondary,
+            color_map[ColorMap.Palette.SecondarySelection],
+            color_map[ColorMap.Palette.SecondarySelection],
 
             color_map[ColorMap.Palette.ChannelOdd],
             color_map[ColorMap.Palette.ChannelEven]
@@ -343,7 +320,7 @@ class LeafButtonStd(
             new_state.add(R.attr.state_spill)
         }
 
-        if (opus_manager.is_networked(beat_key)) {
+        if (opus_manager.is_networked(original_position.first)) {
             new_state.add(R.attr.state_linked)
         }
 

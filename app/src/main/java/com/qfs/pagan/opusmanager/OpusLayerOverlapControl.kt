@@ -198,6 +198,9 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             if (working_tree.is_leaf()) {
                 if (this._cache_inv_blocked_tree_map.containsKey(Pair(beat_key, working_position))) {
                     val entry = this._cache_inv_blocked_tree_map[Pair(beat_key, working_position)]!!
+                    if (entry.first == beat_key && position.size < entry.second.size && entry.second.subList(0, position.size) == position) {
+                        continue
+                    }
                     return Pair(entry.first.copy(), entry.second.toList())
                 }
             } else {
@@ -224,7 +227,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         val working_position = position ?: listOf()
         val overlapper = this.get_blocking_position(beat_key, working_position)
         val tree_is_eventless = tree.is_eventless()
-        if (overlapper != null && (overlapper.first != beat_key || working_position.size >= overlapper.second.size || working_position != overlapper.second.subList(0, working_position.size)) && !tree_is_eventless) {
+        if (overlapper != null && !tree_is_eventless) {
             throw BlockedTreeException(beat_key, working_position, overlapper.first, overlapper.second)
         }
 
@@ -235,6 +238,8 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         this.decache_overlapping_leaf(beat_key, working_position)
         super.replace_tree(beat_key, position, tree)
+
+        println("$beat_key, $position ||| $overlapper")
 
         if (overlapper != null) {
             this._cache_tree_overlaps(overlapper.first, overlapper.second)

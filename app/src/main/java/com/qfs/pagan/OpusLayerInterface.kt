@@ -1687,10 +1687,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                             cursor.channel,
                             cursor.line_offset
                         )
-                        this.ui_change_bill.queue_line_label_refresh(y)
-                        this.ui_change_bill.queue_column_label_refresh(cursor.beat)
+                        this.ui_change_bill.queue_row_change(y, true)
 
-                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
+                        //coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
                     }
                     CtlLineLevel.Channel -> {
                         val y = this.get_visible_row_from_ctl_line_channel(

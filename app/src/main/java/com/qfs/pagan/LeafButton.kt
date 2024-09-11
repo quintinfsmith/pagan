@@ -66,6 +66,7 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
                 -R.attr.state_active,
                 R.attr.state_spill
             ),
+
             intArrayOf(
                 R.attr.state_linked,
                 R.attr.state_focused,
@@ -87,6 +88,7 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
                 -R.attr.state_active,
                 R.attr.state_spill
             ),
+
             intArrayOf(
                 R.attr.state_linked,
                 -R.attr.state_focused,

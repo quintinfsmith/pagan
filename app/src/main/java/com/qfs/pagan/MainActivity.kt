@@ -2138,7 +2138,7 @@ class MainActivity : AppCompatActivity() {
             )
 
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(this.getString(R.string.export_wav_notification_title, this.get_opus_manager().project_name))
+                .setContentTitle(this.getString(R.string.export_wav_notification_title, this.get_opus_manager().project_name ?: "Untitled Project"))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.small_logo)
                 .setSilent(true)

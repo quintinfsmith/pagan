@@ -3,11 +3,8 @@ package com.qfs.apres.soundfontplayer
 import com.qfs.apres.soundfont.Modulator
 import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.sin
-import kotlin.math.pow
 import kotlin.math.min
-import kotlin.math.max
-import kotlin.math.roundToInt
+import kotlin.math.pow
 
 class SampleHandle(
     var data: ShortArray,
@@ -228,14 +225,18 @@ class SampleHandle(
         var frame_factor = 1F / this.linked_handle_count
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
-        if (this.working_frame < this.volume_envelope.frames_attack) {
-            val r = (this.working_frame).toFloat() / this.volume_envelope.frames_attack.toFloat()
+        if (this.working_frame < this.volume_envelope.frames_delay) {
+            this.working_frame += 1
+            this.previous_frame = 0F
+            return 0
+        } else if (this.working_frame - this.volume_envelope.frames_delay < this.volume_envelope.frames_attack) {
+            val r = (this.working_frame - this.volume_envelope.frames_delay).toFloat() / this.volume_envelope.frames_attack.toFloat()
             frame_factor /= 10F.pow(r * this.initial_attenuation)
-        } else if (this.working_frame - this.volume_envelope.frames_attack < this.volume_envelope.frames_hold) {
+        } else if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_delay < this.volume_envelope.frames_hold) {
             frame_factor /= 10F.pow(this.initial_attenuation)
         } else if (this.volume_envelope.sustain_attenuation < 1F) {
             frame_factor /= 10F.pow(this.initial_attenuation)
-            val relative_frame = this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold
+            val relative_frame = this.working_frame - this.volume_envelope.frames_delay - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold
             frame_factor /= if (relative_frame < this.volume_envelope.frames_decay) {
                 val r = 1F - (relative_frame.toFloat() / this.volume_envelope.frames_decay.toFloat())
                 10F.pow(this.volume_envelope.sustain_attenuation * r)

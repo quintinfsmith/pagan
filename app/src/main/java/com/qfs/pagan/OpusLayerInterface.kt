@@ -467,7 +467,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
         this.lock_ui_partial {
             super.set_percussion_instrument(line_offset, instrument)
-
             // Need to call get_drum name to repopulate instrument list if needed
             this.get_activity()?.get_drum_name(instrument)
 
@@ -2175,7 +2174,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.PercussionButtonRefresh -> {
                         val line_offset = this.ui_change_bill.get_next_int()
-                        val btnChoosePercussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: return@runOnUiThread
+                        val btnChoosePercussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: continue
                         val instrument = this.get_percussion_instrument(line_offset)
 
                         if (activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {

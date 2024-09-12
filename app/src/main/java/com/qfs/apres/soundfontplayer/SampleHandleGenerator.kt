@@ -9,7 +9,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
-class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
+class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var ignore_envelopes: Boolean = false, var ignore_lfo: Boolean = false) {
     // Hash ignores velocity since velocity isn't baked into sample data
     data class MapKey(
         var note: Int,
@@ -79,46 +79,62 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
         val data = sample_directive.sample!!.data!!
         val initial_attenuation: Float = (sample_directive.attenuation ?: global_sample_directive.attenuation ?: 0F) + (instrument_directive.attenuation ?: 0F) + (global_instrument_directive.attenuation ?: 0F)
         val vol_env_sustain: Float = (sample_directive.vol_env_sustain ?: global_sample_directive.vol_env_sustain ?: 0F) + (instrument_directive.vol_env_sustain ?: 0F) + (global_instrument_directive.vol_env_sustain ?: 0F)
-        val volume_envelope = SampleHandle.VolumeEnvelope(
-            sample_rate = this.sample_rate,
-            delay = (sample_directive.vol_env_delay ?: global_sample_directive.vol_env_delay ?: 0F )
-                * (instrument_directive.vol_env_delay ?: 1F)
-                * (global_instrument_directive.vol_env_delay ?: 1F),
-            attack = (sample_directive.vol_env_attack ?: global_sample_directive.vol_env_attack ?: 0F )
-                * (instrument_directive.vol_env_attack ?: 1F)
-                * (global_instrument_directive.vol_env_attack ?: 1F),
-            hold = (sample_directive.vol_env_hold ?: global_sample_directive.vol_env_hold ?: 0F )
-                * (instrument_directive.vol_env_hold ?: 1F)
-                * (global_instrument_directive.vol_env_hold ?: 1F),
-            decay = (sample_directive.vol_env_decay ?: global_sample_directive.vol_env_decay ?: 0F )
-                * (instrument_directive.vol_env_decay ?: 1F)
-                * (global_instrument_directive.vol_env_decay ?: 1F),
-            release = (sample_directive.vol_env_release ?: global_sample_directive.vol_env_release ?: 0F )
-                * (instrument_directive.vol_env_release ?: 1F)
-                * (global_instrument_directive.vol_env_release ?: 1F),
-            sustain_attenuation = max(0F, min(vol_env_sustain, 1440F)) / 100F // Centibels -> bels
-        )
+        val volume_envelope = if (this.ignore_envelopes) {
+            // Delay is still needed
+            SampleHandle.VolumeEnvelope(
+                sample_rate = this.sample_rate,
+                delay = (sample_directive.vol_env_delay ?: global_sample_directive.vol_env_delay ?: 0F )
+                    * (instrument_directive.vol_env_delay ?: 1F)
+                    * (global_instrument_directive.vol_env_delay ?: 1F)
+            )
+        } else {
+            SampleHandle.VolumeEnvelope(
+                sample_rate = this.sample_rate,
+                delay = (sample_directive.vol_env_delay ?: global_sample_directive.vol_env_delay ?: 0F )
+                    * (instrument_directive.vol_env_delay ?: 1F)
+                    * (global_instrument_directive.vol_env_delay ?: 1F),
+                attack = (sample_directive.vol_env_attack ?: global_sample_directive.vol_env_attack ?: 0F )
+                    * (instrument_directive.vol_env_attack ?: 1F)
+                    * (global_instrument_directive.vol_env_attack ?: 1F),
+                hold = (sample_directive.vol_env_hold ?: global_sample_directive.vol_env_hold ?: 0F )
+                    * (instrument_directive.vol_env_hold ?: 1F)
+                    * (global_instrument_directive.vol_env_hold ?: 1F),
+                decay = (sample_directive.vol_env_decay ?: global_sample_directive.vol_env_decay ?: 0F )
+                    * (instrument_directive.vol_env_decay ?: 1F)
+                    * (global_instrument_directive.vol_env_decay ?: 1F),
+                release = (sample_directive.vol_env_release ?: global_sample_directive.vol_env_release ?: 0F )
+                    * (instrument_directive.vol_env_release ?: 1F)
+                    * (global_instrument_directive.vol_env_release ?: 1F),
+                sustain_attenuation = max(0F, min(vol_env_sustain, 1440F)) / 100F // Centibels -> bels
+            )
+        }
 
         val mod_env_sustain = (sample_directive.mod_env_sustain ?: global_sample_directive.mod_env_sustain ?: 0F) * (instrument_directive.mod_env_sustain ?: 0F) * (global_instrument_directive.mod_env_sustain ?: 0F)
-        val modulation_envelope = SampleHandle.ModulationEnvelope(
-            sample_rate = this.sample_rate,
-            delay = (sample_directive.mod_env_delay ?: global_sample_directive.mod_env_delay ?: 0F )
-                * (instrument_directive.mod_env_delay ?: 1F)
-                * (global_instrument_directive.mod_env_delay ?: 1F),
-            attack = (sample_directive.mod_env_attack ?: global_sample_directive.mod_env_attack ?: 0F )
-                * (instrument_directive.mod_env_attack ?: 1F)
-                * (global_instrument_directive.mod_env_attack ?: 1F),
-            hold = (sample_directive.mod_env_hold ?: global_sample_directive.mod_env_hold ?: 0F)
-                * (instrument_directive.mod_env_hold ?: 1F)
-                * (global_instrument_directive.mod_env_hold ?: 1F),
-            decay = (sample_directive.mod_env_decay ?: global_sample_directive.mod_env_decay ?: 0F)
-                * (instrument_directive.mod_env_decay ?: 1F)
-                * (global_instrument_directive.mod_env_decay ?: 1F),
-            release = (sample_directive.mod_env_release ?: global_sample_directive.mod_env_release ?: 0F)
-                * (instrument_directive.mod_env_release ?: 1F)
-                * (global_instrument_directive.mod_env_release ?: 1F),
-            sustain_attenuation = max(0F, min(vol_env_sustain, 1440F)) / 100F // Centibels -> bels
-        )
+        val modulation_envelope = if (this.ignore_envelopes) {
+            SampleHandle.ModulationEnvelope(
+                sample_rate = this.sample_rate
+            )
+        } else {
+            SampleHandle.ModulationEnvelope(
+                sample_rate = this.sample_rate,
+                delay = (sample_directive.mod_env_delay ?: global_sample_directive.mod_env_delay ?: 0F )
+                    * (instrument_directive.mod_env_delay ?: 1F)
+                    * (global_instrument_directive.mod_env_delay ?: 1F),
+                attack = (sample_directive.mod_env_attack ?: global_sample_directive.mod_env_attack ?: 0F )
+                    * (instrument_directive.mod_env_attack ?: 1F)
+                    * (global_instrument_directive.mod_env_attack ?: 1F),
+                hold = (sample_directive.mod_env_hold ?: global_sample_directive.mod_env_hold ?: 0F)
+                    * (instrument_directive.mod_env_hold ?: 1F)
+                    * (global_instrument_directive.mod_env_hold ?: 1F),
+                decay = (sample_directive.mod_env_decay ?: global_sample_directive.mod_env_decay ?: 0F)
+                    * (instrument_directive.mod_env_decay ?: 1F)
+                    * (global_instrument_directive.mod_env_decay ?: 1F),
+                release = (sample_directive.mod_env_release ?: global_sample_directive.mod_env_release ?: 0F)
+                    * (instrument_directive.mod_env_release ?: 1F)
+                    * (global_instrument_directive.mod_env_release ?: 1F),
+                sustain_attenuation = max(0F, min(vol_env_sustain, 1440F)) / 100F // Centibels -> bels
+            )
+        }
 
         val mod_lfo_freq: Float = (sample_directive.mod_lfo_freq ?: global_sample_directive.mod_lfo_freq ?: 0F) * (instrument_directive.mod_lfo_freq ?: 1F) * (global_instrument_directive.mod_lfo_freq ?: 1F)
         val mod_lfo_delay: Float = (sample_directive.mod_lfo_delay ?: global_sample_directive.mod_lfo_delay ?: 0F) * (instrument_directive.mod_lfo_delay ?: 1F) * (global_instrument_directive.mod_lfo_delay ?: 1F)
@@ -143,15 +159,19 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int) {
             } else {
                 null
             },
-            modulation_lfo = SampleHandle.LFO(
-                sample_rate = this.sample_rate,
-                frequency = mod_lfo_freq,
-                volume = mod_lfo_to_volume / 100F, // Centibels -> bels
-                pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
-                filter = mod_lfo_filter,
-                delay = mod_lfo_delay
-            ),
-            volume_envelope =  volume_envelope,
+            modulation_lfo = if (this.ignore_lfo) {
+                null
+            } else {
+                SampleHandle.LFO(
+                    sample_rate = this.sample_rate,
+                    frequency = mod_lfo_freq,
+                    volume = mod_lfo_to_volume / 100F, // Centibels -> bels
+                    pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
+                    filter = mod_lfo_filter,
+                    delay = mod_lfo_delay
+                )
+            },
+            volume_envelope = volume_envelope,
             modulation_envelope = modulation_envelope,
             filter_cutoff = filter_cutoff,
             linked_handle_count = linked_handle_count,

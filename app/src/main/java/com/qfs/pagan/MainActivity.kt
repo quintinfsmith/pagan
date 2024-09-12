@@ -201,8 +201,7 @@ class MainActivity : AppCompatActivity() {
                     val exporter_sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         44100,
-                        44100,
-                        sample_limit = this.configuration.playback_sample_limit
+                        44100
                     )
                     this.view_model.export_wav(exporter_sample_handle_manager, tmp_file, object : WavConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
@@ -627,7 +626,8 @@ class MainActivity : AppCompatActivity() {
                         this._soundfont!!,
                         this.configuration.sample_rate,
                         this.configuration.sample_rate, // Use Large buffer
-                        sample_limit = this.configuration.playback_sample_limit
+                        sample_limit = this.configuration.playback_sample_limit ?: 1,
+                        true
                     )
 
                     this._midi_playback_device = PlaybackDevice(
@@ -639,7 +639,9 @@ class MainActivity : AppCompatActivity() {
                     if (!this._midi_interface.output_devices_connected()) {
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
-                            this.configuration.sample_rate
+                            this.configuration.sample_rate,
+                            sample_limit = this.configuration.playback_sample_limit ?: 1,
+                            ignore_envelopes_and_lfo = true
                         )
                     }
                 } catch (e: Riff.InvalidRiff) {
@@ -2023,11 +2025,17 @@ class MainActivity : AppCompatActivity() {
         this._midi_playback_device?.kill()
 
         if (this.get_soundfont() != null) {
+            /*
+             * TODO: Put the ignore envelope/lfo option somewhere better.
+             * I don't think it should be in apres if theres a reasonable way to avoid it
+             */
             this.sample_handle_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
                 this.configuration.sample_rate,
-                sample_limit = this.configuration.playback_sample_limit
+                sample_limit = this.configuration.playback_sample_limit ?: 1,
+                // true to ignore volume/mod envelopes in playback
+                true
             )
 
             this._midi_playback_device = PlaybackDevice(

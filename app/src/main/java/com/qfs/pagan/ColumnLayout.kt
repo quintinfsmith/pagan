@@ -67,7 +67,6 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         }
 
         this.removeViewAt(index)
-
         this.addView(CellLayout(this, index), index)
     }
 

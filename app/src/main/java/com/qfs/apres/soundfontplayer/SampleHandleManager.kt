@@ -9,12 +9,14 @@ import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.max
+import kotlin.math.min
 
 class SampleHandleManager(
     var soundfont: SoundFont,
     var sample_rate: Int,
     target_buffer_size: Int = 0,
-    var sample_limit: Int? = null
+    var sample_limit: Int? = null,
+    ignore_envelopes_and_lfo: Boolean = false
     ) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
@@ -37,7 +39,9 @@ class SampleHandleManager(
 
         this.sample_handle_generator = SampleHandleGenerator(
             this.sample_rate,
-            this.buffer_size
+            this.buffer_size,
+            ignore_envelopes_and_lfo,
+            ignore_envelopes_and_lfo,
         )
     }
 
@@ -118,16 +122,16 @@ class SampleHandleManager(
                     }
                 }
                 sample_count += 1
-                if (this.sample_limit != null && sample_count >= this.sample_limit!!) {
-                    break
-                }
-            }
-
-            if (this.sample_limit != null && sample_count >= this.sample_limit!!) {
-                break
             }
         }
+
         for ((sample,p_instrument) in sample_pairs) {
+            val linked_count = when (sample.sample!!.sampleType and 7) {
+                1 -> sample_counts[1]
+                2 -> sample_counts[0]
+                4 -> sample_counts[2]
+                else -> continue
+            }
             val new_handle = this.sample_handle_generator.get(
                 event,
                 sample,
@@ -135,15 +139,14 @@ class SampleHandleManager(
                 p_instrument,
                 preset.global_zone,
                 preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> sample_counts[1]
-                    2 -> sample_counts[0]
-                    4 -> sample_counts[2]
-                    else -> continue
-                }
+                min(linked_count, this.sample_limit ?: linked_count)
             )
+
             new_handle.volume = velocity.toFloat()  / 128.toFloat()
             output.add(new_handle)
+            if (this.sample_limit != null && output.size >= this.sample_limit!!) {
+                break
+            }
         }
 
         return output
@@ -183,12 +186,16 @@ class SampleHandleManager(
                     }
                 }
                 sample_count += 1
-                if (this.sample_limit != null && this.sample_limit!! <= sample_count) {
-                    break
-                }
             }
         }
+
         for ((sample, p_instrument) in sample_pairs) {
+            val linked_count = when (sample.sample!!.sampleType and 7) {
+                1 -> sample_counts[1]
+                2 -> sample_counts[0]
+                4 -> sample_counts[2]
+                else -> continue
+            }
             val new_handle = this.sample_handle_generator.get(
                 event,
                 sample,
@@ -196,15 +203,14 @@ class SampleHandleManager(
                 p_instrument,
                 preset.global_zone,
                 preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> sample_counts[1]
-                    2 -> sample_counts[0]
-                    4 -> sample_counts[2]
-                    else -> continue
-                }
+                min(linked_count, this.sample_limit ?: linked_count)
             )
             new_handle.volume = (event.get_velocity().toFloat() / 128F)
             output.add(new_handle)
+
+            if (this.sample_limit != null && output.size >= this.sample_limit!!) {
+                break
+            }
         }
 
         return output

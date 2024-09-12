@@ -239,8 +239,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         this.decache_overlapping_leaf(beat_key, working_position)
         super.replace_tree(beat_key, position, tree)
 
-        println("$beat_key, $position ||| $overlapper")
-
         if (overlapper != null) {
             this._cache_tree_overlaps(overlapper.first, overlapper.second)
         }

@@ -15,7 +15,7 @@ class SampleHandle(
 
     var volume_envelope: VolumeEnvelope,
     var modulation_envelope: ModulationEnvelope,
-    var modulation_lfo: LFO,
+    var modulation_lfo: LFO?,
 
     var pitch_shift: Float = 1F,
     var filter_cutoff: Float = 13500F,

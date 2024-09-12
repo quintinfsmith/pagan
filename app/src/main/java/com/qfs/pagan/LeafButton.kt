@@ -15,12 +15,12 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
     init {
         this.isClickable = false
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
+
+        this.animate().alpha(1f)
+        this._setup_colors()
         this.setOnClickListener {
             this.callback_click()
         }
-        this.animate().alpha(1f)
-        this._setup_colors()
-
         this.setOnLongClickListener {
             this.long_click()
         }

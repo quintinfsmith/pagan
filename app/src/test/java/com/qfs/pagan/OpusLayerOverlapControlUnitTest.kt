@@ -54,6 +54,78 @@ class OpusLayerOverlapControlUnitTest {
             Pair(Rational(3, 4), 4),
             manager.get_leaf_offset_and_width(BeatKey(0,0,0), listOf(1, 1))
         )
+    }
 
+
+    fun test_set_event() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        manager.split_tree(BeatKey(0,0,1), listOf(), 2)
+        manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
+
+        assertThrows(OpusManager.BlockedTreeException::class.java) {
+            manager.set_event(BeatKey(0,0,1), listOf(0), AbsoluteNoteEvent(10))
+        }
+
+        manager.unset(BeatKey(0,0,0), listOf(0))
+        try {
+            manager.set_event(BeatKey(0,0,1), listOf(0), AbsoluteNoteEvent(10))
+            assertTrue(true)
+        } catch (e: OpusManager.BlockedTreeException) {
+            assertFalse(true)
+        }
+    }
+    
+    fun test_replace_tree() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        manager.split_tree(BeatKey(0,0,1), listOf(), 2)
+        manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
+
+        assertThrows(OpusManager.BlockedTreeException::class.java) {
+            val tree = OpusTree<InstrumentEvent>()
+            tree.set_event(AbsoluteNoteEvent(10))
+            manager.replace_tree(BeatKey(0,0,1), listOf(0), tree)
+        }
+
+        manager.unset(BeatKey(0,0,0), listOf(0))
+        assertTrue(try {
+            val tree = OpusTree<InstrumentEvent>()
+            tree.set_event(AbsoluteNoteEvent(10))
+            manager.replace_tree(BeatKey(0,0,1), listOf(0), tree)
+            true
+        } catch (e: OpusManager.BlockedTreeException) {
+            false
+        })
+    }
+
+    fun test_remove_beat() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.split_tree(BeatKey(0,0,0), listOf(), 2)
+        manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
+        manager.set_event(BeatKey(0,0,2), listOf(), AbsoluteNoteEvent(10))
+
+        assertThrows(OpusManager.BlockedTreeException::class.java) {
+            manager.remove_beat(1)
+        }
+    }
+
+    fun test_remove() {
+        val manager = OpusManager()
+        manager.new()
+
+        manager.split_tree(BeatKey(0,0,0), listOf(), 3)
+        manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 2))
+        manager.set_event(BeatKey(0,0,0), listOf(2), AbsoluteNoteEvent(10))
+
+        assertThrows(OpusManager.BlockedTreeException::class.java) {
+            manager.remove(BeatKey(0,0,0), listOf(1))
+        }
     }
 }

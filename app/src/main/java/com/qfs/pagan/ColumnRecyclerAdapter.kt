@@ -59,14 +59,22 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
     private fun apply_and_notify_remaining(callback: (Int, ColumnLayout) -> Unit) {
         var minimum_visible = this.itemCount
         var maximum_visible = 0
+
+        for (beat in 0 until this.itemCount) {
+            val viewHolder = this._recycler.findViewHolderForAdapterPosition(beat) ?: continue
+            if ((viewHolder.itemView as ViewGroup).childCount == 0) {
+                continue
+            }
+            minimum_visible = min(beat, minimum_visible)
+            maximum_visible = max(beat, maximum_visible)
+        }
+
         // Need to notify The recycler FIRST, since the updates may change the
         // widths of the visible columns and therefore, the number of columns that need to be notified
         this.notifyItemRangeChanged(0, minimum_visible)
         this.notifyItemRangeChanged(maximum_visible + 1, this.itemCount)
 
         this._apply_to_visible_columns { beat: Int, column_layout: ColumnLayout ->
-            minimum_visible = min(beat, minimum_visible)
-            maximum_visible = max(beat, maximum_visible)
             callback(beat, column_layout)
         }
     }
@@ -169,11 +177,19 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
             column_layout.notifyItemChanged(y, state_only)
         }
     }
+
     fun notify_row_changed(y: Int, state_only: Boolean = false) {
-        this.apply_and_notify_remaining { _: Int, column_layout: ColumnLayout ->
-            column_layout.notifyItemChanged(y, state_only)
+        if (state_only) {
+            this._apply_to_visible_columns { _: Int, column_layout: ColumnLayout ->
+                column_layout.notifyItemChanged(y, true)
+            }
+        } else {
+            this.apply_and_notify_remaining { _: Int, column_layout: ColumnLayout ->
+                column_layout.notifyItemChanged(y, false)
+            }
         }
     }
+
     fun notify_column_state_changed(x: Int) {
         val column_layout = this._get_column_layout(x) ?: return
         column_layout.notifyItemRangeChanged(0, column_layout.childCount, true)

@@ -197,29 +197,32 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     else -> Pair(0,0)
                 }
                 StereoMode.Mono -> {
-                    when (sample_handle.stereo_mode and 7) {
-                        1, 2, 4 -> {
-                            Pair(
-                                frame_value,
-                                frame_value
-                            )
-                        }
-                        else -> Pair(0, 0)
-                    }
+                    Pair(frame_value, frame_value)
                 }
             }
 
-            val right_value = when (sample_handle.stereo_mode and 7) {
-                1, 2 -> right_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
-                else -> 0f
+            val (left_value, right_value) = when (this.stereo_mode) {
+                StereoMode.Stereo -> {
+                    Pair(
+                        when (sample_handle.stereo_mode and 7) {
+                            1, 4 -> left_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
+                            else -> 0f
+                        },
+                        when (sample_handle.stereo_mode and 7) {
+                            1, 2 -> right_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
+                            else -> 0f
+                        }
+                    )
+                }
+                StereoMode.Mono -> {
+                    Pair(
+                        left_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat(),
+                        right_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
+                    )
+                }
             }
 
             working_int_array[(f * 2)] += right_value
-
-            val left_value = when (sample_handle.stereo_mode and 7) {
-                1, 4 -> left_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
-                else -> 0f
-            }
             working_int_array[(f * 2) + 1] += left_value
         }
 

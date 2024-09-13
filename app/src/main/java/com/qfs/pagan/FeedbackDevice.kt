@@ -6,12 +6,13 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import com.qfs.apres.soundfontplayer.WaveGenerator
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 
-class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), _sample_handle_manager.sample_rate, _sample_handle_manager.buffer_size), VirtualMidiOutputDevice {
+class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), _sample_handle_manager.sample_rate, _sample_handle_manager.buffer_size, WaveGenerator.StereoMode.Mono), VirtualMidiOutputDevice {
     class ImmediateFrameMap: FrameMap {
         private val _handles = mutableSetOf<SampleHandle>()
         private val _mutex = Mutex()

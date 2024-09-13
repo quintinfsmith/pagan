@@ -635,15 +635,16 @@ class MainActivity : AppCompatActivity() {
                     this._midi_playback_device = PlaybackDevice(
                         this,
                         this.sample_handle_manager!!,
-                        this.configuration.playback_stereo_mode
+                        WaveGenerator.StereoMode.Mono
+                        //this.configuration.playback_stereo_mode
                     )
 
                     if (!this._midi_interface.output_devices_connected()) {
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
-                            this.configuration.sample_rate,
-                            sample_limit = this.configuration.playback_sample_limit ?: 1,
-                            ignore_envelopes_and_lfo = true
+                            this.configuration.sample_rate
+                            //sample_limit = this.configuration.playback_sample_limit ?: 1,
+                            //ignore_envelopes_and_lfo = true
                         )
                     }
                 } catch (e: Riff.InvalidRiff) {
@@ -2043,7 +2044,8 @@ class MainActivity : AppCompatActivity() {
             this._midi_playback_device = PlaybackDevice(
                 this,
                 this.sample_handle_manager!!,
-                this.configuration.playback_stereo_mode,
+                WaveGenerator.StereoMode.Mono
+                //this.configuration.playback_stereo_mode,
             )
         } else {
             this._midi_playback_device = null
@@ -2120,7 +2122,9 @@ class MainActivity : AppCompatActivity() {
         this.disconnect_feedback_device()
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
-            this.configuration.sample_rate
+            this.configuration.sample_rate,
+            //sample_limit = this.configuration.playback_sample_limit ?: 1,
+            //ignore_envelopes_and_lfo = true
         )
     }
 

@@ -640,9 +640,11 @@ class MainActivity : AppCompatActivity() {
                     )
 
                     if (!this._midi_interface.output_devices_connected()) {
+                        val buffer_size = this.configuration.sample_rate / 4
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
-                            this.configuration.sample_rate
+                            this.configuration.sample_rate,
+                            buffer_size - 2 + (if (buffer_size % 2 == 0) { 2 } else { 1 })
                             //sample_limit = this.configuration.playback_sample_limit ?: 1,
                             //ignore_envelopes_and_lfo = true
                         )

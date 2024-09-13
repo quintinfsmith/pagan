@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.os.Environment
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
@@ -236,26 +237,27 @@ class MainActivity : AppCompatActivity() {
                             parcel_file_descriptor.close()
                             val builder = this@MainActivity.get_notification()
                             if (builder != null) {
-                                // NON functional ATM, Open file from notification
-                                //var go_to_file_intent = Intent()
-                                //go_to_file_intent.action = Intent.ACTION_VIEW
-                                //go_to_file_intent.data = uri
-                                //go_to_file_intent.type = "audio/*"
 
-                                //val pending_go_to_intent = PendingIntent.getActivity(
-                                //    this@MainActivity,
-                                //    1,
-                                //    go_to_file_intent,
-                                //    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
-                                //)
+                                // NON functional ATM, Open file from notification
+                                var go_to_file_intent = Intent()
+                                go_to_file_intent.action = Intent.ACTION_VIEW
+                                go_to_file_intent.data = uri
+                                go_to_file_intent.type = "audio/wav"
+
+                                val pending_go_to_intent = PendingIntent.getActivity(
+                                    this@MainActivity,
+                                    0,
+                                    go_to_file_intent,
+                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+                                )
 
                                 builder.setContentText(this@MainActivity.getString(R.string.export_wav_notification_complete))
-                                    .setProgress(0, 0, false)
                                     .clearActions()
                                     .setAutoCancel(true)
+                                    .setProgress(0, 0, false)
                                     .setTimeoutAfter(5000)
                                     .setSilent(false)
-                                    //.setContentIntent(pending_go_to_intent)
+                                    .setContentIntent(pending_go_to_intent)
 
                                 this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
                             }
@@ -446,8 +448,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // TODO: Save current project and restart. temporary code for now
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+            println("$paramThrowable")
             this@MainActivity.save_to_backup()
 
             val ctx = applicationContext

@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.os.Environment
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
@@ -25,6 +24,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -449,7 +449,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
-            println("$paramThrowable")
+            Log.d("pagandebug", "$paramThrowable")
             this@MainActivity.save_to_backup()
 
             val ctx = applicationContext

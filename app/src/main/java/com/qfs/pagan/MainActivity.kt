@@ -239,16 +239,15 @@ class MainActivity : AppCompatActivity() {
                             if (builder != null) {
 
                                 // NON functional ATM, Open file from notification
-                                var go_to_file_intent = Intent()
+                                val go_to_file_intent = Intent()
                                 go_to_file_intent.action = Intent.ACTION_VIEW
-                                go_to_file_intent.data = uri
-                                go_to_file_intent.type = "audio/wav"
+                                go_to_file_intent.setDataAndType(uri, "*/*")
 
                                 val pending_go_to_intent = PendingIntent.getActivity(
                                     this@MainActivity,
                                     0,
                                     go_to_file_intent,
-                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+                                    PendingIntent.FLAG_IMMUTABLE
                                 )
 
                                 builder.setContentText(this@MainActivity.getString(R.string.export_wav_notification_complete))
@@ -1958,7 +1957,8 @@ class MainActivity : AppCompatActivity() {
 
     fun select_midi_file() {
         val intent = Intent()
-            .setType(MimeTypes.AUDIO_MIDI)
+            //.setType(MimeTypes.AUDIO_MIDI)
+            .setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
             .setAction(Intent.ACTION_GET_CONTENT)
         this._import_midi_intent_launcher.launch(intent)
     }

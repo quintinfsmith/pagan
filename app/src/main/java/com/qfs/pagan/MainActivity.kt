@@ -63,7 +63,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.ViewModel
-import androidx.media3.common.MimeTypes
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -470,7 +469,11 @@ class MainActivity : AppCompatActivity() {
                 }
             },
             IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV"),
-            RECEIVER_NOT_EXPORTED
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                RECEIVER_NOT_EXPORTED
+            } else {
+                0
+            }
         )
 
         this._midi_interface = object : MidiController(this) {
@@ -1989,7 +1992,8 @@ class MainActivity : AppCompatActivity() {
         val name = this.get_export_name()
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.type = MimeTypes.AUDIO_WAV
+        //intent.type = MimeTypes.AUDIO_WAV
+        intent.type = "audio/wav"
         intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
         this._export_wav_intent_launcher.launch(intent)
     }
@@ -2003,7 +2007,8 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.type = MimeTypes.AUDIO_MIDI
+        //intent.type = MimeTypes.AUDIO_MIDI
+        intent.type = "audio/midi"
         intent.putExtra(Intent.EXTRA_TITLE, "$name.mid")
 
         this._export_midi_intent_launcher.launch(intent)

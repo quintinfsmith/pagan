@@ -220,7 +220,9 @@ class MainActivity : AppCompatActivity() {
                             }
                             this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_wav_feedback))
                             val builder = this@MainActivity.get_notification() ?: return
-                            this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            if (this@MainActivity.has_notification_permission()) {
+                                this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            }
 
                         }
 

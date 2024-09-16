@@ -584,11 +584,6 @@ class MainActivity : AppCompatActivity() {
             PaganConfiguration()
         }
 
-        // Temporary while i figure out why mono playback is more complicated than I assumed, force stereo & no limit on samples
-        this.configuration.playback_stereo_mode = WaveGenerator.StereoMode.Stereo
-        this.configuration.playback_sample_limit = null
-
-
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         setContentView(this._binding.root)
         setSupportActionBar(this._binding.appBarMain.toolbar)
@@ -630,7 +625,7 @@ class MainActivity : AppCompatActivity() {
                         this._soundfont!!,
                         this.configuration.sample_rate,
                         this.configuration.sample_rate, // Use Large buffer
-                        sample_limit = this.configuration.playback_sample_limit ?: 1,
+                        sample_limit = 1,
                         true
                     )
 
@@ -638,7 +633,6 @@ class MainActivity : AppCompatActivity() {
                         this,
                         this.sample_handle_manager!!,
                         WaveGenerator.StereoMode.Mono
-                        //this.configuration.playback_stereo_mode
                     )
 
                     if (!this._midi_interface.output_devices_connected()) {
@@ -647,7 +641,7 @@ class MainActivity : AppCompatActivity() {
                             this._soundfont!!,
                             this.configuration.sample_rate,
                             buffer_size - 2 + (if (buffer_size % 2 == 0) { 2 } else { 1 })
-                            //sample_limit = this.configuration.playback_sample_limit ?: 1,
+                            //sample_limit = this.configuration.playback_sample_limit,
                             //ignore_envelopes_and_lfo = true
                         )
                     }
@@ -2043,7 +2037,7 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont!!,
                 this.configuration.sample_rate,
                 this.configuration.sample_rate,
-                sample_limit = this.configuration.playback_sample_limit ?: 1,
+                sample_limit = 1,
                 // true to ignore volume/mod envelopes in playback
                 true
             )
@@ -2052,7 +2046,6 @@ class MainActivity : AppCompatActivity() {
                 this,
                 this.sample_handle_manager!!,
                 WaveGenerator.StereoMode.Mono
-                //this.configuration.playback_stereo_mode,
             )
         } else {
             this._midi_playback_device = null
@@ -2130,7 +2123,7 @@ class MainActivity : AppCompatActivity() {
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
             this.configuration.sample_rate,
-            //sample_limit = this.configuration.playback_sample_limit ?: 1,
+            //sample_limit = this.configuration.playback_sample_limit,
             //ignore_envelopes_and_lfo = true
         )
     }

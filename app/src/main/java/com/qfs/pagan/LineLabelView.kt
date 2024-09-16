@@ -16,7 +16,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
             val adapter = (view.parent.parent as LineLabelColumnLayout)
             val opus_manager = this.get_opus_manager()
             val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
-                opus_manager.get_ctl_line_from_visible_row( this.row )
+                opus_manager.get_ctl_line_from_row( this.row )
             )
             if (ctl_level != null) {
                 return@setOnDragListener true
@@ -26,7 +26,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
                 DragEvent.ACTION_DROP -> {
                     if (adapter.is_dragging()) {
                         val (from_channel, from_line) = adapter.dragging_position!!
-                        val (to_channel, to_line) = opus_manager.get_std_offset(pointer)
+                        val (to_channel, to_line) = opus_manager.get_channel_and_line_offset(pointer)
                         if (from_channel != to_channel || from_line != to_line) {
                             try {
                                 opus_manager.swap_lines(
@@ -70,13 +70,13 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         val opus_manager = this.get_opus_manager()
 
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_visible_row(this.row)
+            opus_manager.get_ctl_line_from_row(this.row)
         )
 
         this.addView(
             when (ctl_level) {
                 null -> {
-                    val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                     LineLabelStd(this.context, channel, line_offset)
                 }
                 CtlLineLevel.Global -> {
@@ -86,7 +86,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
                     LineLabelCtlChannel(this.context, ctl_type!!, pointer)
                 }
                 CtlLineLevel.Line -> {
-                    val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                     LineLabelCtlLine(this.context, ctl_type!!, channel, line_offset)
                 }
             }

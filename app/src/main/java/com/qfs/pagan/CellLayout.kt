@@ -27,7 +27,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         this.removeAllViews()
         val opus_manager = this.get_opus_manager()
         val (pointer, control_level, control_type) = try {
-            opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_visible_row(this.row))
+            opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(this.row))
         } catch (e: NullPointerException) {
             return // Caused by an unfortunately timed refresh, shouldn't be a problem to ignore
         }
@@ -40,7 +40,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         val beat = this.get_beat()
         val tree = when (control_level) {
             CtlLineLevel.Line -> {
-                val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                 opus_manager.get_line_ctl_tree(
                     control_type!!,
                     BeatKey(channel, line_offset, beat),
@@ -62,7 +62,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                 )
             }
             null -> {
-                val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                 this.get_beat_tree(BeatKey(channel, line_offset, beat))
             }
         }
@@ -99,7 +99,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
     fun is_control_line(): Boolean {
         val opus_manager = this.get_opus_manager()
         return this.get_opus_manager().ctl_line_level(
-            opus_manager.get_ctl_line_from_visible_row(this.row)
+            opus_manager.get_ctl_line_from_row(this.row)
         ) != null
     }
 
@@ -111,7 +111,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         if (tree.is_leaf()) {
             val opus_manager = this.get_opus_manager()
             val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
-                opus_manager.get_ctl_line_from_visible_row(this.row)
+                opus_manager.get_ctl_line_from_row(this.row)
             )
 
             val tvLeaf = when (control_level) {
@@ -141,7 +141,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                     )
                 }
                 CtlLineLevel.Line -> {
-                    val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                     LeafButtonCtlLine(
                         this.context,
                         tree.get_event() as OpusControlEvent?,
@@ -196,13 +196,13 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
     fun get_beat_key(): BeatKey? {
         val opus_manager = this.get_opus_manager()
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_visible_row(this.row)
+            opus_manager.get_ctl_line_from_row(this.row)
         )
         if (ctl_level != null) {
             return null
         }
 
-        val (channel, line_offset) = opus_manager.get_std_offset(pointer)
+        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
         return BeatKey(channel, line_offset, this.get_beat())
     }
 

@@ -29,16 +29,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
-    private val _line_height_map = mutableListOf<Int>()
-
-    companion object {
-        // Intentionally Not Enums, So we can use gt/lt comparisons instead of multiple checks
-        const val SECTION_OUT_OF_VIEW = 0
-        const val SECTION_VIEW_PARTIAL_LEFT = 1
-        const val SECTION_VIEW_PARTIAL_RIGHT = 2
-        const val SECTION_VIEW_PARTIAL_OVERSIZED = 3
-        const val SECTION_VIEW_COMPLETE = 4
-    }
+    private val _row_height_map = mutableListOf<Int>()
 
     init {
         this._top_row.addView(this._spacer)
@@ -373,13 +364,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._label_scroll_locked = false
     }
 
-    // TODO: Create line_height_map so OpusManager isn't accessed here
+    // TODO: Create row_height_map so OpusManager isn't accessed here
     fun scroll_to_y(y: Int) {
-        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        val control_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt()
+        val row_height = (resources.getDimension(R.dimen.line_height)).toInt()
+        val control_row_height = resources.getDimension(R.dimen.ctl_line_height).toInt()
         var target_y = 0
         var count = 0
-        var working_line_height = line_height
+        var working_row_height = row_height
         val opus_manager = this.get_opus_manager()
         for (channel in opus_manager.get_visible_channels()) {
             for (line in channel.lines) {
@@ -387,8 +378,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     break
                 }
 
-                target_y += line_height
-                working_line_height = line_height
+                target_y += row_height
+                working_row_height = row_height
                 count += 1
                 for ((type, _) in line.controllers.get_all()) {
                     if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
@@ -398,8 +389,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                         break
                     }
 
-                    target_y += control_line_height
-                    working_line_height = control_line_height
+                    target_y += control_row_height
+                    working_row_height = control_row_height
                     count += 1
                 }
             }
@@ -411,8 +402,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     break
                 }
 
-                target_y += control_line_height
-                working_line_height = control_line_height
+                target_y += control_row_height
+                working_row_height = control_row_height
                 count += 1
             }
         }
@@ -424,13 +415,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             if (count >= y) {
                 break
             }
-            target_y += control_line_height
-            working_line_height = control_line_height
+            target_y += control_row_height
+            working_row_height = control_row_height
             count += 1
         }
 
-        if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + working_line_height) {
-            val adj_target_y = target_y - (this._scroll_view.measuredHeight - (working_line_height * 1.5).toInt())
+        if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + working_row_height) {
+            val adj_target_y = target_y - (this._scroll_view.measuredHeight - (working_row_height * 1.5).toInt())
             this._line_label_layout.scrollTo(0, adj_target_y)
             this._scroll_view.scrollTo(0, adj_target_y)
         } else if (target_y < this._scroll_view.scrollY) {

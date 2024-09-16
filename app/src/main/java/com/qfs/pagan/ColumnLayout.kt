@@ -28,7 +28,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
     private fun _populate() {
         this._populated = true
         val opus_manager = this.get_opus_manager()
-        for (y in 0 until opus_manager.get_visible_master_line_count()) {
+        for (y in 0 until opus_manager.get_row_count()) {
             this.addView(CellLayout(this, y), y)
         }
     }

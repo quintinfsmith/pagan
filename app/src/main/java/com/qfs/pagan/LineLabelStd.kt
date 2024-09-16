@@ -55,7 +55,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
         when (opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Row -> {
+            OpusManagerCursor.CursorMode.Line -> {
                 if (opus_manager.cursor.ctl_level == null && opus_manager.cursor.channel == this.channel && opus_manager.cursor.line_offset == this.line_offset) {
                     new_state.add(R.attr.state_focused)
                 }
@@ -114,7 +114,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                     }
 
                     else -> {
-                        opus_manager.overwrite_row(this.channel, this.line_offset, beat_key)
+                        opus_manager.overwrite_line(this.channel, this.line_offset, beat_key)
                     }
                 }
             } catch (e: OpusLayerLinks.BadRowLink) {
@@ -125,7 +125,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
             cursor.selecting_range = false
         }
-        opus_manager.cursor_select_row(this.channel, this.line_offset)
+        opus_manager.cursor_select_line(this.channel, this.line_offset)
     }
 
     private fun _set_colors() {

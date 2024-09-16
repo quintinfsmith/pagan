@@ -51,8 +51,8 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     override fun refresh() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Row) {
-            throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Row)
+        if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Line) {
+            throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
         }
 
         val channel = opus_manager.cursor.channel

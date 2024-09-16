@@ -496,11 +496,11 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         from_key.beat = 0
         to_key.beat = range_width - 1
 
-        val abs_from_line_offset = this.get_abs_offset(from_key.channel, from_key.line_offset)
-        val abs_to_line_offset = this.get_abs_offset(to_key.channel, to_key.line_offset)
+        val abs_from_line_offset = this.get_instrument_line_index(from_key.channel, from_key.line_offset)
+        val abs_to_line_offset = this.get_instrument_line_index(to_key.channel, to_key.line_offset)
 
         for (c in abs_from_line_offset..abs_to_line_offset) {
-            val (working_channel, working_line_offset) = this.get_std_offset(c)
+            val (working_channel, working_line_offset) = this.get_channel_and_line_offset(c)
             for (i in 0 until range_width) {
                 val beat_key_list = mutableListOf<BeatKey>()
                 for (j in 0 until this.beat_count / range_width) {
@@ -658,8 +658,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         val keys_in_range = this.get_beatkeys_in_range(from_key, to_key)
 
         val difference = this.get_abs_difference(from_key, to_key)
-        val abs_offset = this.get_abs_offset(beat_key.channel, beat_key.line_offset)
-        val (new_channel, new_line_offset) = this.get_std_offset(abs_offset + difference.first)
+        val abs_offset = this.get_instrument_line_index(beat_key.channel, beat_key.line_offset)
+        val (new_channel, new_line_offset) = this.get_channel_and_line_offset(abs_offset + difference.first)
 
         val keys_to_forget = this.get_beatkeys_in_range(
             beat_key,
@@ -675,7 +675,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
                 null
             } else if (keys_in_range.contains(working_key)) {
                 val (y_diff, x_diff) = this.get_abs_difference(from_key, working_key)
-                val (to_channel, to_line_offset) = this.get_std_offset(abs_offset + y_diff)
+                val (to_channel, to_line_offset) = this.get_channel_and_line_offset(abs_offset + y_diff)
                 BeatKey(
                     to_channel,
                     to_line_offset,
@@ -749,8 +749,8 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         return rebuilt_list
     }
 
-    override fun _get_beat_keys_for_overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
-        val current_list = super._get_beat_keys_for_overwrite_row(channel, line_offset, beat_key)
+    override fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
+        val current_list = super._get_beat_keys_for_overwrite_line(channel, line_offset, beat_key)
         val linked_key_set = mutableSetOf<BeatKey>()
         val rebuilt_list = mutableListOf<BeatKey>()
         for (key in current_list) {

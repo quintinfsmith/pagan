@@ -44,7 +44,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
             else -> {
                 when (this.opus_manager.cursor.mode) {
-                    OpusManagerCursor.CursorMode.Row -> this._input_row(key_code, event)
+                    OpusManagerCursor.CursorMode.Line -> this._input_row(key_code, event)
                     OpusManagerCursor.CursorMode.Column -> this._input_column(key_code, event)
                     OpusManagerCursor.CursorMode.Single -> this._input_single(key_code, event)
                     OpusManagerCursor.CursorMode.Range -> this._input_range(key_code, event)
@@ -81,15 +81,15 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
             KeyEvent.KEYCODE_J -> {
                 val repeat = this.clear_value_buffer(1)
-                if (repeat % (this.opus_manager.get_visible_master_line_count() + 1) != 0) {
-                    val visible_line = (repeat % (this.opus_manager.get_visible_master_line_count() + 1)) - 1
+                if (repeat % (this.opus_manager.get_row_count() + 1) != 0) {
+                    val visible_line = (repeat % (this.opus_manager.get_row_count() + 1)) - 1
                     this._cursor_select_line_from_column(visible_line)
                 }
                 true
             }
 
             KeyEvent.KEYCODE_K -> {
-                val master_line_count = this.opus_manager.get_visible_master_line_count()
+                val master_line_count = this.opus_manager.get_row_count()
                 val repeat = this.clear_value_buffer(1)
                 if (repeat % (master_line_count + 1) != 0) {
                     val visible_line = master_line_count - (repeat % (master_line_count + 1))
@@ -464,8 +464,8 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         val current_line = when (this.opus_manager.cursor.ctl_level) {
             null -> {
                 this.opus_manager.get_visible_row_from_ctl_line(
-                    this.opus_manager.get_ctl_line_index(
-                        this.opus_manager.get_abs_offset(
+                    this.opus_manager.get_actual_line_index(
+                        this.opus_manager.get_instrument_line_index(
                             this.opus_manager.cursor.channel,
                             this.opus_manager.cursor.line_offset
                         )
@@ -478,7 +478,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             CtlLineLevel.Line -> TODO()
             CtlLineLevel.Channel -> TODO()
         } + 1
-        val line_count = this.opus_manager.get_visible_master_line_count()
+        val line_count = this.opus_manager.get_row_count()
         val direction_mod = if (direction_up) {
             -1
         } else {
@@ -491,7 +491,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         } else if (next_line == 0) {
             this.opus_manager.cursor_select_column(this.opus_manager.cursor.beat)
         } else {
-            val next_ctl_line = this.opus_manager.get_ctl_line_from_visible_row(next_line - 1)
+            val next_ctl_line = this.opus_manager.get_ctl_line_from_row(next_line - 1)
             val (target, ctl_level, ctl_type) = this.opus_manager.get_ctl_line_info(next_ctl_line)
             when (ctl_level) {
                 CtlLineLevel.Global -> {
@@ -500,7 +500,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     this.opus_manager.cursor_select_ctl_at_global(ctl_type!!, beat, target_position)
                 }
                 null -> {
-                    val (channel, offset) = this.opus_manager.get_std_offset(target)
+                    val (channel, offset) = this.opus_manager.get_channel_and_line_offset(target)
                     val target_beat_key = BeatKey(channel, offset, this.opus_manager.cursor.beat)
                     val target_position = this.opus_manager.get_first_position(target_beat_key, listOf())
                     this.opus_manager.cursor_select(target_beat_key, target_position)
@@ -522,7 +522,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
     private fun _cursor_select_line_from_column(visible_line: Int) {
         val cursor = this.opus_manager.cursor
-        val ctl_line = this.opus_manager.get_ctl_line_from_visible_row(visible_line)
+        val ctl_line = this.opus_manager.get_ctl_line_from_row(visible_line)
 
         val (target, ctl_level, ctl_type) = this.opus_manager.get_ctl_line_info(ctl_line)
         when (ctl_level) {
@@ -533,7 +533,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 this.opus_manager.cursor_select_ctl_at_global(ctl_type!!, cursor.beat, target_position)
             }
             null -> {
-                val (channel, line_offset) = this.opus_manager.get_std_offset(target)
+                val (channel, line_offset) = this.opus_manager.get_channel_and_line_offset(target)
                 val target_key = BeatKey(channel, line_offset, cursor.beat)
                 val target_position = this.opus_manager.get_first_position(target_key, listOf())
                 this.opus_manager.cursor_select(target_key, target_position)

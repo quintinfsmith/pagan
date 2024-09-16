@@ -12,7 +12,7 @@ data class OpusManagerCursor(
 ) {
 
     enum class CursorMode {
-        Row,
+        Line,
         Column,
         Single,
         Range,
@@ -33,7 +33,7 @@ data class OpusManagerCursor(
         }
 
         return when (this.mode) {
-            CursorMode.Row -> {
+            CursorMode.Line -> {
                 if (this.ctl_level != other.ctl_level || this.ctl_type != other.ctl_type) {
                     false
                 } else {
@@ -128,8 +128,8 @@ data class OpusManagerCursor(
         this.ctl_level = null
     }
 
-    fun select_row(channel: Int, line_offset: Int) {
-        this.mode = CursorMode.Row
+    fun select_line(channel: Int, line_offset: Int) {
+        this.mode = CursorMode.Line
         this.channel = channel
         this.line_offset = line_offset
         this.selecting_range = false
@@ -178,8 +178,8 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Global
     }
 
-    fun select_ctl_row_at_line(channel: Int, line_offset: Int, type: ControlEventType) {
-        this.mode = CursorMode.Row
+    fun select_line_ctl_line(channel: Int, line_offset: Int, type: ControlEventType) {
+        this.mode = CursorMode.Line
         this.channel = channel
         this.line_offset = line_offset
         this.selecting_range = false
@@ -187,8 +187,8 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Line
     }
 
-    fun select_ctl_row_at_channel(channel: Int, type: ControlEventType) {
-        this.mode = CursorMode.Row
+    fun select_channel_ctl_line(channel: Int, type: ControlEventType) {
+        this.mode = CursorMode.Line
         this.channel = channel
         this.line_offset = 0
         this.selecting_range = false
@@ -196,8 +196,8 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Channel
     }
 
-    fun select_ctl_row_at_global(type: ControlEventType) {
-        this.mode = CursorMode.Row
+    fun select_global_ctl_line(type: ControlEventType) {
+        this.mode = CursorMode.Line
         this.channel = 0
         this.line_offset = 0
         this.selecting_range = false

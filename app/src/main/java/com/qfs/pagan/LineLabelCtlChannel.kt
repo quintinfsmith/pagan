@@ -6,7 +6,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 
 class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val channel: Int): LineLabelCtl(context, CtlLineLevel.Channel, ctl_type) {
     override fun on_click() {
-        this.get_opus_manager().cursor_select_ctl_row_at_channel(this.ctl_type, this.channel)
+        this.get_opus_manager().cursor_select_channel_ctl_line(this.ctl_type, this.channel)
     }
 
     override fun is_selected(): Boolean {

@@ -16,8 +16,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         super.insert_line(channel, line_offset, line)
 
-        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
-            this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Line) {
+            this.cursor_select_line(bkp_cursor.channel, bkp_cursor.line_offset)
         }
     }
 
@@ -27,8 +27,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         val output = super.new_line(channel, line_offset)
 
-        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
-            this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Line) {
+            this.cursor_select_line(bkp_cursor.channel, bkp_cursor.line_offset)
         }
 
         return output
@@ -36,7 +36,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
-        this.cursor_select_row(channel_b, line_b)
+        this.cursor_select_line(channel_b, line_b)
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
@@ -51,12 +51,12 @@ open class OpusLayerCursor: OpusLayerHistory() {
             throw e
         }
 
-        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Row) {
+        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Line) {
             val working_channel = this.get_channel(bkp_cursor.channel)
             if (bkp_cursor.line_offset < working_channel.size) {
-                this.cursor_select_row(bkp_cursor.channel, bkp_cursor.line_offset)
+                this.cursor_select_line(bkp_cursor.channel, bkp_cursor.line_offset)
             } else {
-                this.cursor_select_row(bkp_cursor.channel, working_channel.size - 1)
+                this.cursor_select_line(bkp_cursor.channel, working_channel.size - 1)
             }
         }
 
@@ -74,13 +74,13 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor_select_column(bkp_cursor.beat)
             }
-            OpusManagerCursor.CursorMode.Row -> {
+            OpusManagerCursor.CursorMode.Line -> {
                 val new_channel = if (compare_channel <= bkp_cursor.channel) {
                     bkp_cursor.channel + 1
                 } else {
                     bkp_cursor.channel
                 }
-                this.cursor_select_row(new_channel, bkp_cursor.line_offset)
+                this.cursor_select_line(new_channel, bkp_cursor.line_offset)
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val new_first = if (bkp_cursor.range!!.first.channel >= compare_channel) {
@@ -128,88 +128,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     override fun remove_channel(channel: Int) {
-        val bkp_cursor = this.cursor.copy()
         this.cursor_clear()
-
         super.remove_channel(channel)
-
-        //when (bkp_cursor.mode) {
-        //    OpusManagerCursor.CursorMode.Row -> {
-        //        val (new_channel, new_line_offset) = if (bkp_cursor.channel > channel) {
-        //            Pair(
-        //                bkp_cursor.channel - 1,
-        //                bkp_cursor.line_offset
-        //            )
-        //        } else if (bkp_cursor.channel == channel) {
-        //            Pair(
-        //                min(bkp_cursor.channel, this.channels.size - 1),
-        //                0
-        //            )
-        //        } else {
-        //            Pair(
-        //                bkp_cursor.channel,
-        //                bkp_cursor.line_offset
-        //            )
-        //        }
-
-        //        //this.cursor_select_row(new_channel, new_line_offset)
-        //    }
-        //    OpusManagerCursor.CursorMode.Range -> {
-        //        val first_corner = bkp_cursor.range!!.first
-        //        val (first_channel, first_line_offset) = if (first_corner.channel > channel) {
-        //            Pair(first_corner.channel - 1, first_corner.line_offset)
-        //        } else if (first_corner.channel == channel) {
-        //            Pair(min(first_corner.channel, this.channels.size - 1), 0)
-        //        } else {
-        //            Pair(first_corner.channel, first_corner.line_offset)
-        //        }
-
-        //        val second_corner = bkp_cursor.range!!.second
-        //        val (second_channel, second_line_offset) = if (second_corner.channel > channel) {
-        //            Pair(second_corner.channel - 1, second_corner.line_offset)
-        //        } else if (second_corner.channel == channel) {
-        //            Pair(min(second_corner.channel, this.channels.size - 1), 0)
-        //        } else {
-        //            Pair(second_corner.channel, second_corner.line_offset)
-        //        }
-
-        //       // this.cursor_select_range(
-        //       //     BeatKey(first_channel, first_line_offset, first_corner.beat),
-        //       //     BeatKey(second_channel, second_line_offset, second_corner.beat)
-        //       // )
-        //    }
-        //    OpusManagerCursor.CursorMode.Single -> {
-        //        val (new_channel, new_line_offset, new_position) = if (bkp_cursor.channel > channel) {
-        //            Triple(bkp_cursor.channel - 1, bkp_cursor.line_offset, bkp_cursor.position)
-        //        } else if (bkp_cursor.channel == channel) {
-        //            val tmp_a = min(bkp_cursor.channel, this.channels.size - 1)
-        //            Triple(
-        //                tmp_a,
-        //                0,
-        //                this.get_first_position(
-        //                    BeatKey(tmp_a, 0, bkp_cursor.beat),
-        //                    listOf()
-        //                )
-        //            )
-        //        } else {
-        //            Triple(bkp_cursor.channel, bkp_cursor.line_offset, bkp_cursor.position)
-        //        }
-
-        //        this.cursor_select(
-        //            BeatKey(
-        //                new_channel,
-        //                new_line_offset,
-        //                bkp_cursor.beat
-        //            ),
-        //            new_position
-        //        )
-        //    }
-
-        //    OpusManagerCursor.CursorMode.Column -> {
-        //        this.cursor_select_column(bkp_cursor.beat)
-        //    }
-        //    else -> {}
-        //}
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
@@ -303,8 +223,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     )
                 )
             }
-            OpusManagerCursor.CursorMode.Row -> {
-                this.cursor_select_row(
+            OpusManagerCursor.CursorMode.Line -> {
+                this.cursor_select_line(
                     bkp_cursor.channel,
                     bkp_cursor.line_offset
                 )
@@ -347,11 +267,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     override fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int) {
         when (current_node.token) {
-            HistoryToken.CURSOR_SELECT_ROW -> {
+            HistoryToken.CURSOR_SELECT_LINE -> {
                 var args = this.checked_cast<List<Int>>(current_node.args)
                 this.queue_cursor_select(
                     OpusManagerCursor(
-                        mode = OpusManagerCursor.CursorMode.Row,
+                        mode = OpusManagerCursor.CursorMode.Line,
                         channel = args[0],
                         line_offset =  args[1]
                     )
@@ -435,7 +355,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW -> {
                 this.queue_cursor_select(
                     OpusManagerCursor(
-                        mode = OpusManagerCursor.CursorMode.Row,
+                        mode = OpusManagerCursor.CursorMode.Line,
                         ctl_level = CtlLineLevel.Channel,
                         channel = current_node.args[1] as Int,
                         ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
@@ -445,7 +365,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW -> {
                 this.queue_cursor_select(
                     OpusManagerCursor(
-                        mode = OpusManagerCursor.CursorMode.Row,
+                        mode = OpusManagerCursor.CursorMode.Line,
                         ctl_level = CtlLineLevel.Global,
                         ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
                     )
@@ -471,7 +391,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         val to_channel = args[2] as Int
                         val to_line = args[3] as Int
                         this.push_to_history_stack(
-                            HistoryToken.CURSOR_SELECT_ROW,
+                            HistoryToken.CURSOR_SELECT_LINE,
                             listOf(
                                 to_channel,
                                 if (from_channel == to_channel && to_line >= from_line) {
@@ -486,7 +406,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     HistoryToken.INSERT_LINE_PERCUSSION,
                     HistoryToken.INSERT_LINE -> {
                         this.push_to_history_stack(
-                            HistoryToken.CURSOR_SELECT_ROW,
+                            HistoryToken.CURSOR_SELECT_LINE,
                             listOf(
                                 args[0] as Int,
                                 args[1] as Int
@@ -502,7 +422,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         )
 
                         this.push_to_history_stack(
-                            HistoryToken.CURSOR_SELECT_ROW,
+                            HistoryToken.CURSOR_SELECT_LINE,
                             listOf(channel, max(0, line_offset - 1))
                         )
                     }
@@ -583,7 +503,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
                     HistoryToken.SET_PERCUSSION_INSTRUMENT -> {
                         this.push_to_history_stack(
-                            HistoryToken.CURSOR_SELECT_ROW,
+                            HistoryToken.CURSOR_SELECT_LINE,
                             listOf(
                                 this.channels.size,
                                 args[0] as Int
@@ -593,7 +513,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
                     HistoryToken.SET_CHANNEL_INSTRUMENT -> {
                         this.push_to_history_stack(
-                            HistoryToken.CURSOR_SELECT_ROW,
+                            HistoryToken.CURSOR_SELECT_LINE,
                             listOf(args[0], 0)
                         )
                     }
@@ -714,7 +634,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     }
                     HistoryToken.SET_LINE_CTL_INITIAL_EVENT -> {
                         this.push_to_history_stack(
-                            HistoryToken.CURSOR_SELECT_ROW,
+                            HistoryToken.CURSOR_SELECT_LINE,
                             listOf(
                                 args[1] as Int,
                                 args[2] as Int
@@ -764,20 +684,20 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.clear()
     }
 
-    open fun cursor_select_row(channel: Int, line_offset: Int) {
-        this.cursor.select_row(channel, line_offset)
+    open fun cursor_select_line(channel: Int, line_offset: Int) {
+        this.cursor.select_line(channel, line_offset)
     }
 
-    open fun cursor_select_ctl_row_at_line(ctl_type: ControlEventType, channel: Int, line_offset: Int) {
-        this.cursor.select_ctl_row_at_line(channel, line_offset, ctl_type)
+    open fun cursor_select_line_ctl_line(ctl_type: ControlEventType, channel: Int, line_offset: Int) {
+        this.cursor.select_line_ctl_line(channel, line_offset, ctl_type)
     }
 
-    open fun cursor_select_ctl_row_at_channel(ctl_type: ControlEventType, channel: Int) {
-        this.cursor.select_ctl_row_at_channel(channel, ctl_type)
+    open fun cursor_select_channel_ctl_line(ctl_type: ControlEventType, channel: Int) {
+        this.cursor.select_channel_ctl_line(channel, ctl_type)
     }
 
-    open fun cursor_select_ctl_row_at_global(ctl_type: ControlEventType) {
-        this.cursor.select_ctl_row_at_global(ctl_type)
+    open fun cursor_select_global_ctl_line(ctl_type: ControlEventType) {
+        this.cursor.select_global_ctl_line(ctl_type)
     }
 
     open fun cursor_select_column(beat: Int) {
@@ -1368,7 +1288,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Column -> {
                 false
             }
-            OpusManagerCursor.CursorMode.Row -> {
+            OpusManagerCursor.CursorMode.Line -> {
                 this.cursor.channel == beat_key.channel && this.cursor.line_offset == beat_key.line_offset
             }
             OpusManagerCursor.CursorMode.Range -> {
@@ -1426,7 +1346,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor.beat == beat
             }
-            OpusManagerCursor.CursorMode.Row -> {
+            OpusManagerCursor.CursorMode.Line -> {
                 control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Global
             }
             OpusManagerCursor.CursorMode.Single -> {
@@ -1457,7 +1377,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor.beat == beat
             }
-            OpusManagerCursor.CursorMode.Row -> {
+            OpusManagerCursor.CursorMode.Line -> {
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Channel
                         && this.cursor.channel == channel
@@ -1483,7 +1403,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor.beat == beat_key.beat
             }
-            OpusManagerCursor.CursorMode.Row -> {
+            OpusManagerCursor.CursorMode.Line -> {
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Line
                         && this.cursor.channel == beat_key.channel
@@ -1510,7 +1430,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     fun is_line_control_line_selected(control_type: ControlEventType, channel: Int, line_offset: Int): Boolean {
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Row,
+            OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Single -> {
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Line
@@ -1518,9 +1438,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         && this.cursor.line_offset == line_offset
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val target = this.get_abs_offset(channel, line_offset)
-                val first = this.get_abs_offset(this.cursor.range!!.first.channel, this.cursor.range!!.first.line_offset)
-                val second = this.get_abs_offset(this.cursor.range!!.second.channel, this.cursor.range!!.second.line_offset)
+                val target = this.get_instrument_line_index(channel, line_offset)
+                val first = this.get_instrument_line_index(this.cursor.range!!.first.channel, this.cursor.range!!.first.line_offset)
+                val second = this.get_instrument_line_index(this.cursor.range!!.second.channel, this.cursor.range!!.second.line_offset)
                 (first .. second).contains(target)
             }
             OpusManagerCursor.CursorMode.Column,
@@ -1530,7 +1450,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     fun is_channel_control_line_selected(control_type: ControlEventType, channel: Int): Boolean {
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Row,
+            OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Single -> {
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Channel
@@ -1544,7 +1464,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     fun is_global_control_line_selected(control_type: ControlEventType): Boolean {
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Row,
+            OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Range -> {
                 control_type == this.cursor.ctl_type

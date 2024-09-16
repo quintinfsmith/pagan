@@ -1209,7 +1209,7 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_overwrite_global_ctl_row() {
+    fun test_overwrite_global_ctl_line() {
         val manager = OpusManager()
         manager.new()
         val type = ControlEventType.Tempo
@@ -1219,7 +1219,7 @@ class OpusLayerBaseUnitTest {
         manager.set_global_ctl_event(type, 0, listOf(), event)
 
         // apply overwrite
-        manager.overwrite_global_ctl_row(type, 0)
+        manager.overwrite_global_ctl_line(type, 0)
 
         for (beat in 0 until manager.beat_count) {
             assertEquals(
@@ -1238,7 +1238,7 @@ class OpusLayerBaseUnitTest {
         manager.split_global_ctl_tree(type, 0, listOf(), 3)
 
         // apply overwrite
-        manager.overwrite_global_ctl_row(type, 3)
+        manager.overwrite_global_ctl_line(type, 3)
 
         for (beat in 0 until 3) {
             assertNotEquals(
@@ -1259,7 +1259,7 @@ class OpusLayerBaseUnitTest {
 
     }
     @Test
-    fun test_overwrite_channel_ctl_row() {
+    fun test_overwrite_channel_ctl_line() {
         val manager = OpusManager()
         manager.new()
         val type = ControlEventType.Volume
@@ -1270,11 +1270,11 @@ class OpusLayerBaseUnitTest {
         manager.set_channel_ctl_event(type, working_channel, 0, listOf(), event)
 
         assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_channel_ctl_row(type, working_channel + 1, working_channel, 0)
+            manager.overwrite_channel_ctl_line(type, working_channel + 1, working_channel, 0)
         }
 
         // apply overwrite
-        manager.overwrite_channel_ctl_row(type, working_channel, 0, 0)
+        manager.overwrite_channel_ctl_line(type, working_channel, 0, 0)
 
         for (beat in 0 until manager.beat_count) {
             assertEquals(
@@ -1293,7 +1293,7 @@ class OpusLayerBaseUnitTest {
         manager.split_channel_ctl_tree(type, working_channel, 0, listOf(), 3)
 
         // apply overwrite
-        manager.overwrite_channel_ctl_row(type, working_channel, working_channel, 3)
+        manager.overwrite_channel_ctl_line(type, working_channel, working_channel, 3)
 
         for (beat in 0 until 3) {
             assertNotEquals(
@@ -1313,7 +1313,7 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_overwrite_line_ctl_row() {
+    fun test_overwrite_line_ctl_line() {
         val manager = OpusManager()
         manager.new()
         val type = ControlEventType.Volume
@@ -1325,7 +1325,7 @@ class OpusLayerBaseUnitTest {
         manager.set_line_ctl_event(type, working_key, listOf(), event)
 
         // apply overwrite
-        manager.overwrite_line_ctl_row(type, working_key.channel, working_key.line_offset, working_key)
+        manager.overwrite_line_ctl_line(type, working_key.channel, working_key.line_offset, working_key)
 
         for (beat in 0 until manager.beat_count) {
             assertEquals(
@@ -1344,14 +1344,14 @@ class OpusLayerBaseUnitTest {
         manager.split_line_ctl_tree(type, working_key, listOf(), 5)
 
         assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_line_ctl_row(type, working_key_b.channel + 1, working_key_b.line_offset, working_key_b)
+            manager.overwrite_line_ctl_line(type, working_key_b.channel + 1, working_key_b.line_offset, working_key_b)
         }
         assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_line_ctl_row(type, working_key_b.channel, working_key_b.line_offset + 1, working_key_b)
+            manager.overwrite_line_ctl_line(type, working_key_b.channel, working_key_b.line_offset + 1, working_key_b)
         }
 
         // apply overwrite
-        manager.overwrite_line_ctl_row(type, working_key_b.channel, working_key_b.line_offset, working_key_b)
+        manager.overwrite_line_ctl_line(type, working_key_b.channel, working_key_b.line_offset, working_key_b)
 
         for (beat in 0 until working_key_b.beat) {
             assertNotEquals(
@@ -2214,7 +2214,7 @@ class OpusLayerBaseUnitTest {
         manager.new()
 
         assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.get_std_offset(2)
+            manager.get_channel_and_line_offset(2)
         }
 
         manager.new_line(0)
@@ -2233,13 +2233,13 @@ class OpusLayerBaseUnitTest {
                 assertEquals(
                     "incorrect std_offset",
                     Pair(i, j),
-                    manager.get_std_offset(abs)
+                    manager.get_channel_and_line_offset(abs)
                 )
 
                 assertEquals(
                     "incorrect abs_offset",
                     abs,
-                    manager.get_abs_offset(i, j)
+                    manager.get_instrument_line_index(i, j)
                 )
 
                 abs += 1
@@ -2908,14 +2908,14 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_overwrite_row() {
+    fun test_overwrite_line() {
         val manager = OpusManager()
         manager.new()
         manager.set_beat_count(24)
         val event = AbsoluteNoteEvent(5)
         manager.set_event(BeatKey(0,0,12), listOf(), event)
 
-        manager.overwrite_row(0, 0, BeatKey(0,0,12))
+        manager.overwrite_line(0, 0, BeatKey(0,0,12))
 
         for (i in 0 until 12) {
             assertNotEquals(
@@ -2932,7 +2932,7 @@ class OpusLayerBaseUnitTest {
 
         val event_b = AbsoluteNoteEvent(6)
         manager.set_event(BeatKey(0,0,0), listOf(), event_b)
-        manager.overwrite_row(0, 0, BeatKey(0,0,0))
+        manager.overwrite_line(0, 0, BeatKey(0,0,0))
 
         for (i in 1 until 24) {
             assertEquals(
@@ -2943,11 +2943,11 @@ class OpusLayerBaseUnitTest {
 
         manager.new_line(0)
         assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_row(0, 0, BeatKey(0, 1, 0))
+            manager.overwrite_line(0, 0, BeatKey(0, 1, 0))
         }
         manager.new_channel()
         assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_row(0, 0, BeatKey(1, 0, 0))
+            manager.overwrite_line(0, 0, BeatKey(1, 0, 0))
         }
 
     }
@@ -3281,7 +3281,7 @@ class OpusLayerBaseUnitTest {
 
         assertEquals(
             3, // line, line control, chanenl control, then second line
-            manager.get_ctl_line_index(1)
+            manager.get_actual_line_index(1)
         )
 
         assertEquals(

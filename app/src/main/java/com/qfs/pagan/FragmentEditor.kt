@@ -178,7 +178,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             opus_manager.cursor_clear()
             opus_manager._init_editor_table_width_map()
             editor_table.clear()
-            editor_table.setup(opus_manager.get_visible_master_line_count(), opus_manager.beat_count)
+            editor_table.setup(opus_manager.get_row_count(), opus_manager.beat_count)
         }
 
         editor_table.visibility = View.VISIBLE
@@ -442,7 +442,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val opus_manager = this.get_main().get_opus_manager()
         val cursor = opus_manager.cursor
         val y = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Row,
+            OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Single -> {
                 when (cursor.ctl_level) {
                     CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
@@ -450,8 +450,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     null -> {
                         opus_manager.get_visible_row_from_ctl_line(
-                            opus_manager.get_ctl_line_index(
-                                opus_manager.get_abs_offset(
+                            opus_manager.get_actual_line_index(
+                                opus_manager.get_instrument_line_index(
                                     opus_manager.cursor.channel,
                                     opus_manager.cursor.line_offset
                                 )
@@ -466,8 +466,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
                     CtlLineLevel.Global ->  opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     null -> opus_manager.get_visible_row_from_ctl_line(
-                        opus_manager.get_ctl_line_index(
-                            opus_manager.get_abs_offset(
+                        opus_manager.get_actual_line_index(
+                            opus_manager.get_instrument_line_index(
                                 cursor.range!!.second.channel,
                                 cursor.range!!.second.line_offset
                             )
@@ -481,7 +481,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Row -> Triple(null, 0f, 1f)
+            OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
             OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
             OpusManagerCursor.CursorMode.Single -> {
                 var tree = when (cursor.ctl_level) {

@@ -1351,14 +1351,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 throw BadRowLink(from_key, channel, line_offset)
             }
 
-            val y_top = this.get_abs_offset(first_key.channel, first_key.line_offset)
-            val y_bottom = this.get_abs_offset(second_key.channel, second_key.line_offset)
-            val y_link_top = this.get_abs_offset(channel, line_offset)
+            val y_top = this.get_instrument_line_index(first_key.channel, first_key.line_offset)
+            val y_bottom = this.get_instrument_line_index(second_key.channel, second_key.line_offset)
+            val y_link_top = this.get_instrument_line_index(channel, line_offset)
             val y_link_bottom = y_link_top + (y_bottom - y_top)
 
 
             val (bottom_channel, bottom_line_offset) = try {
-                this.get_std_offset(y_link_bottom)
+                this.get_channel_and_line_offset(y_link_bottom)
             } catch (e: IndexOutOfBoundsException) {
                 throw BadRowLink(first_key, channel, line_offset)
             }
@@ -1437,27 +1437,27 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
 
-    override fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
+    override fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
         this._remember {
-            super.overwrite_row(channel, line_offset, beat_key)
+            super.overwrite_line(channel, line_offset, beat_key)
         }
     }
 
-    override fun overwrite_line_ctl_row(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
+    override fun overwrite_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
         this._remember {
-            super.overwrite_line_ctl_row(type, channel, line_offset, beat_key)
+            super.overwrite_line_ctl_line(type, channel, line_offset, beat_key)
         }
     }
 
-    override fun overwrite_channel_ctl_row(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
+    override fun overwrite_channel_ctl_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
         this._remember {
-            super.overwrite_channel_ctl_row(type, target_channel, original_channel, original_beat)
+            super.overwrite_channel_ctl_line(type, target_channel, original_channel, original_beat)
         }
     }
 
-    override fun overwrite_global_ctl_row(type: ControlEventType, beat: Int) {
+    override fun overwrite_global_ctl_line(type: ControlEventType, beat: Int) {
         this._remember {
-            super.overwrite_global_ctl_row(type, beat)
+            super.overwrite_global_ctl_line(type, beat)
         }
     }
 

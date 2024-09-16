@@ -44,12 +44,11 @@ open class OpusLayerBase {
     class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
     class NoteOutOfRange(n: Int) : Exception("Attempting to use unsupported note $n")
 
-    class UnknownSaveConfiguration: Exception()
     class EmptyPath : Exception("Path Required but not given")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here")
 
     companion object {
-        var _channel_uuid_generator: Int = 0x00
+        private var _channel_uuid_generator: Int = 0x00
         fun gen_channel_uuid(): Int {
             return OpusLayerBase._channel_uuid_generator++
         }
@@ -85,7 +84,7 @@ open class OpusLayerBase {
             return Pair(from_key, to_key)
         }
 
-        fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<Array<Int>>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
+        private fun _tree_from_midi(midi: Midi): Triple<OpusTree<Set<Array<Int>>>, List<OpusTree<OpusControlEvent>>, List<Triple<Int, Int?, Int?>>> {
             var beat_size = midi.get_ppqn()
             var total_beat_offset = 0
             var last_ts_change = 0
@@ -280,7 +279,7 @@ open class OpusLayerBase {
         fun from_midi(midi: Midi): OpusLayerBase {
             val new_manager = OpusLayerBase()
 
-            val (settree, tempo_line, instrument_map) = OpusLayerBase.tree_from_midi(midi)
+            val (settree, tempo_line, instrument_map) = OpusLayerBase._tree_from_midi(midi)
 
             val mapped_events = settree.get_events_mapped()
             val midi_channel_map = HashMap<Int, Int>()
@@ -584,8 +583,7 @@ open class OpusLayerBase {
             return new_manager
         }
 
-        // TODO: Needs better name than 'new'
-        fun new(): OpusLayerBase {
+        fun initialize_basic(): OpusLayerBase {
             val new_manager = OpusLayerBase()
             new_manager.new_line(0) // Add percussion line
             new_manager.new_channel()
@@ -643,7 +641,7 @@ open class OpusLayerBase {
     var transpose: Int = 0
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
 
-    private var _cached_abs_line_map = mutableListOf<Pair<Int, Int>>()
+    private var _cached_instrument_line_map = mutableListOf<Pair<Int, Int>>()
     private var _cached_std_line_map = HashMap<Pair<Int, Int>, Int>()
 
     // key: absolute line
@@ -712,16 +710,16 @@ open class OpusLayerBase {
     }
 
     /**
-     * Calculates how many lines are in use.
+     * Calculates how many instrument lines are in use.
      */
     fun get_total_line_count(): Int {
-        return this._cached_abs_line_map.size
+        return this._cached_instrument_line_map.size
     }
 
     /**
      * Calculates how many lines down a given row is.
      */
-    fun get_abs_offset(channel_index: Int, line_offset: Int): Int {
+    fun get_instrument_line_index(channel_index: Int, line_offset: Int): Int {
         return this._cached_std_line_map[Pair(channel_index, line_offset)] ?: throw IndexOutOfBoundsException()
     }
 
@@ -768,8 +766,8 @@ open class OpusLayerBase {
      * Calculate the x & y difference between two BeatKeys [beata] & [beatb]
      */
     open fun get_abs_difference(beata: BeatKey, beatb: BeatKey): Pair<Int, Int> {
-        val beata_y = this.get_abs_offset(beata.channel, beata.line_offset)
-        val beatb_y = this.get_abs_offset(beatb.channel, beatb.line_offset)
+        val beata_y = this.get_instrument_line_index(beata.channel, beata.line_offset)
+        val beatb_y = this.get_instrument_line_index(beatb.channel, beatb.line_offset)
 
         return Pair(beatb_y - beata_y, beatb.beat - beata.beat)
     }
@@ -777,12 +775,12 @@ open class OpusLayerBase {
     /**
      * Calculate which channel and line offset is denoted by the [absolute]th line
      */
-    fun get_std_offset(absolute: Int): Pair<Int, Int> {
-        if (absolute >= this._cached_abs_line_map.size) {
+    fun get_channel_and_line_offset(absolute: Int): Pair<Int, Int> {
+        if (absolute >= this._cached_instrument_line_map.size) {
             throw IndexOutOfBoundsException()
         }
 
-        return this._cached_abs_line_map[absolute]
+        return this._cached_instrument_line_map[absolute]
     }
 
     /**
@@ -2222,7 +2220,7 @@ open class OpusLayerBase {
     }
 
     open fun new() {
-        this.import_from_other(OpusLayerBase.new())
+        this.import_from_other(OpusLayerBase.initialize_basic())
     }
 
     open fun load_json(json_data: JSONHashMap) {
@@ -2290,7 +2288,7 @@ open class OpusLayerBase {
         }
 
         val (target_channel, target_offset) = try {
-            this.get_std_offset(this.get_abs_offset(beat_key.channel, beat_key.line_offset) + y_diff)
+            this.get_channel_and_line_offset(this.get_instrument_line_index(beat_key.channel, beat_key.line_offset) + y_diff)
         } catch (e: IndexOutOfBoundsException) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }
@@ -2531,13 +2529,13 @@ open class OpusLayerBase {
     // Calling this function every time a channel/line is modified should still be more efficient
     // than calculating offsets as needed
     open fun recache_line_maps() {
-        this._cached_abs_line_map.clear()
+        this._cached_instrument_line_map.clear()
         this._cached_std_line_map.clear()
         var y = 0
         this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
-                this._cached_abs_line_map.add(keypair)
+                this._cached_instrument_line_map.add(keypair)
                 this._cached_std_line_map[keypair] = y
                 y += 1
             }
@@ -2545,7 +2543,7 @@ open class OpusLayerBase {
 
         for (line_offset in this.percussion_channel.lines.indices) {
             val keypair = Pair(this.channels.size, line_offset)
-            this._cached_abs_line_map.add(keypair)
+            this._cached_instrument_line_map.add(keypair)
             this._cached_std_line_map[keypair] = y
             y += 1
         }
@@ -2714,7 +2712,7 @@ open class OpusLayerBase {
     }
 
 
-    open fun overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
+    open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
         if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
             throw InvalidOverwriteCall()
         }
@@ -2724,7 +2722,7 @@ open class OpusLayerBase {
             this.replace_tree(working_key, null, this.get_tree_copy(beat_key))
         }
     }
-    open fun _get_beat_keys_for_overwrite_row(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
+    open fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
         val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
         return List<BeatKey>(this.beat_count - beat_key.beat) { i: Int ->
             working_key.beat = i + beat_key.beat
@@ -2733,14 +2731,14 @@ open class OpusLayerBase {
 
     }
 
-    open fun overwrite_global_ctl_row(type: ControlEventType, beat: Int) {
+    open fun overwrite_global_ctl_line(type: ControlEventType, beat: Int) {
         val original_tree = this.get_global_ctl_tree(type, beat)
         for (i in beat + 1 until this.beat_count) {
             this.replace_global_ctl_tree(type, i, null, original_tree.copy(this::copy_control_event))
         }
     }
 
-    open fun overwrite_channel_ctl_row(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
+    open fun overwrite_channel_ctl_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
         if (target_channel != original_channel) {
             throw InvalidOverwriteCall()
         }
@@ -2751,7 +2749,7 @@ open class OpusLayerBase {
         }
     }
 
-    open fun overwrite_line_ctl_row(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
+    open fun overwrite_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
         if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
             throw InvalidOverwriteCall()
         }
@@ -2886,7 +2884,7 @@ open class OpusLayerBase {
         return this._cached_abs_line_map_map[y]
     }
 
-    fun get_ctl_line_index(abs: Int): Int {
+    fun get_actual_line_index(abs: Int): Int {
         return this._cached_inv_abs_line_map_map[abs]!!
     }
 
@@ -2953,7 +2951,7 @@ open class OpusLayerBase {
         this.project_name = other.project_name
         this.tuning_map = other.tuning_map.clone()
         this.transpose = other.transpose
-        this._cached_abs_line_map = other._cached_abs_line_map
+        this._cached_instrument_line_map = other._cached_instrument_line_map
         this._cached_std_line_map = other._cached_std_line_map
         this.controllers = other.controllers
         this.percussion_channel = other.percussion_channel

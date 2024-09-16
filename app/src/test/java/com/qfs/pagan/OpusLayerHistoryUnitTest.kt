@@ -454,7 +454,7 @@ class HistoryCacheUnitTest {
         val event = AbsoluteNoteEvent(24)
         manager.set_event(BeatKey(0,0,0), listOf(), event)
         this.undo_and_check(manager) {
-            it.overwrite_row(0, 0, BeatKey(0,0,0))
+            it.overwrite_line(0, 0, BeatKey(0,0,0))
         }
     }
     @Test
@@ -466,7 +466,7 @@ class HistoryCacheUnitTest {
         manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(24))
 
         this.undo_and_check(manager) {
-            it.overwrite_channel_ctl_row(type, 0, 0, 1)
+            it.overwrite_channel_ctl_line(type, 0, 0, 1)
         }
     }
 
@@ -479,7 +479,7 @@ class HistoryCacheUnitTest {
         manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(24f))
 
         this.undo_and_check(manager) {
-            it.overwrite_global_ctl_row(type, 0)
+            it.overwrite_global_ctl_line(type, 0)
         }
     }
 
@@ -491,7 +491,7 @@ class HistoryCacheUnitTest {
         val type = ControlEventType.Volume
         manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(24))
         this.undo_and_check(manager) {
-            it.overwrite_line_ctl_row(type, 0, 0, BeatKey(0, 0, 0))
+            it.overwrite_line_ctl_line(type, 0, 0, BeatKey(0, 0, 0))
         }
     }
 

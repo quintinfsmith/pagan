@@ -1235,6 +1235,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
+        val activity = this.get_activity()?.vibrate()
+            
         this.lock_ui_partial {
             this.cursor_select(beat_key, position)
             this.temporary_blocker = Pair(beat_key, position)

@@ -13,6 +13,8 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.os.Vibrator
+import android.os.VibrationEffect
 import android.database.Cursor
 import android.graphics.Color
 import android.graphics.drawable.LayerDrawable
@@ -2409,6 +2411,15 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
             Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
         )
+    }
+
+    fun vibrate() {
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.EFFECT_TICK));
+        } else {
+            vibrator.vibrate(200);
+        }
     }
 
 }

@@ -736,12 +736,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun set_link_pools(pools: List<Set<BeatKey>>) {
         this.lock_ui_partial {
             super.set_link_pools(pools)
-            // TODO: I think the cell changes should be queued via on_linked callback
-            val keys_as_single_list = mutableListOf<BeatKey>()
-            for (pool in pools) {
-                keys_as_single_list.addAll(pool)
-            }
-            this._queue_cell_changes(keys_as_single_list)
         }
     }
 
@@ -2268,6 +2262,16 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private fun _block_cursor_selection(): Boolean {
         return (this._blocked_action_catcher_active && this.temporary_blocker != null)
+    }
+
+    override fun on_link(beat_key: BeatKey) {
+        this._queue_cell_change(beat_key, false)
+        super.on_link(beat_key)
+    }
+
+    override fun on_unlink(beat_key: BeatKey) {
+        this._queue_cell_change(beat_key, false)
+        super.on_unlink(beat_key)
     }
 
     // END UI FUNCS -----------------------

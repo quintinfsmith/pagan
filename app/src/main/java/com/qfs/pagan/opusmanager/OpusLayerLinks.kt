@@ -55,6 +55,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
     }
 
     open fun set_link_pools(pools: List<Set<BeatKey>>) {
+        val unlinked = this.link_pool_map.keys.toMutableSet()
         this.link_pools.clear()
         this.link_pool_map.clear()
         pools.forEachIndexed { i: Int, pool: Set<BeatKey> ->
@@ -66,7 +67,12 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
 
             for (beat_key in pool) {
                 this.on_link(beat_key)
+                unlinked.remove(beat_key)
             }
+        }
+
+        for (beat_key in unlinked) {
+            this.on_unlink(beat_key)
         }
     }
 

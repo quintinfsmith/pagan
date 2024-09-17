@@ -706,11 +706,14 @@ open class OpusLayerHistory : OpusLayerLinks() {
         )
     }
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        this.push_to_history_stack(
-            HistoryToken.INSERT,
-            listOf(beat_key, position.toList(), this.get_tree_copy(beat_key, position))
-        )
-        super.remove_standard(beat_key, position)
+        this._remember {
+            val tree = this.get_tree_copy(beat_key, position)
+            super.remove_standard(beat_key, position)
+            this.push_to_history_stack(
+                HistoryToken.INSERT,
+                listOf(beat_key, position.toList(), tree)
+            )
+        }
     }
 
     override fun remove_global_ctl_standard(type: ControlEventType, beat: Int, position: List<Int>) {

@@ -1032,7 +1032,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
         return Pair(real_count, cursor_position)
     }
-
     open fun remove_at_cursor(count: Int) {
         val cursor = this.cursor
         when (cursor.ctl_level) {

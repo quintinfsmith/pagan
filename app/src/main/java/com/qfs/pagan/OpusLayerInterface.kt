@@ -270,9 +270,11 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun remove_at_cursor(count: Int) {
-        this.lock_ui_partial {
-            this.queue_cursor_update(this.cursor.copy())
-            super.remove_at_cursor(count)
+        this._catch_blocked_action {
+            this.lock_ui_partial {
+                this.queue_cursor_update(this.cursor.copy())
+                super.remove_at_cursor(count)
+            }
         }
     }
 
@@ -1000,6 +1002,9 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     override fun cursor_apply(cursor: OpusManagerCursor) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             super.cursor_apply(cursor)
 
@@ -1047,6 +1052,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_clear() {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             super.cursor_clear()
             this.temporary_blocker = null
@@ -1057,6 +1065,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_line(channel: Int, line_offset: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             super.cursor_select_line(channel, line_offset)
             this.temporary_blocker = null
@@ -1072,6 +1083,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_channel_ctl_line(ctl_type: ControlEventType, channel: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             super.cursor_select_channel_ctl_line(ctl_type, channel)
             this.temporary_blocker = null
@@ -1087,6 +1101,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_line_ctl_line(ctl_type: ControlEventType, channel: Int, line_offset: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             super.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
             this.temporary_blocker = null
@@ -1102,6 +1119,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_global_ctl_line(ctl_type: ControlEventType) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             super.cursor_select_global_ctl_line(ctl_type)
             this.temporary_blocker = null
@@ -1112,6 +1132,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_column(beat: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             super.cursor_select_column(beat)
             this.temporary_blocker = null
@@ -1122,6 +1145,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.temporary_blocker = null
             val activity = this.get_activity()
@@ -1147,6 +1173,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
             val activity = this.get_activity()
@@ -1162,6 +1191,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_ctl_at_channel(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
             val activity = this.get_activity()
@@ -1177,6 +1209,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_ctl_at_global(ctl_type: ControlEventType, beat: Int, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
             super.cursor_select_ctl_at_global(ctl_type, beat, position)
@@ -1187,6 +1222,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_first_corner(beat_key: BeatKey) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
             super.cursor_select_first_corner(beat_key)
@@ -1197,6 +1235,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_global_ctl_range(type: ControlEventType, first: Int, second: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
             super.cursor_select_global_ctl_range(type, first, second)
@@ -1207,6 +1248,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
             super.cursor_select_global_ctl_end_point(type, beat)
@@ -1217,6 +1261,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
             super.cursor_select_range(beat_key_a, beat_key_b)
@@ -2219,6 +2266,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    private fun _block_cursor_selection(): Boolean {
+        return (this._blocked_action_catcher_active && this.temporary_blocker != null)
+    }
 
     // END UI FUNCS -----------------------
 }

@@ -290,6 +290,26 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             super.remove_standard(beat_key, position)
         }
     }
+    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+        val other_position = List(position.size) { i: Int -> 
+            if (i == position.size - 1) {
+                if (position[i] == 0) {
+                    1
+                } else {
+                    0
+                }
+            } else {
+                position[i]
+            }
+        }
+
+        val blocked_pair = this.is_blocked_replace_tree(beat_key, position.subList(0, position.size - 1), this.get_tree_copy(beat_key, other_position))
+        if (blocked_pair != null) {
+            throw BlockedTreeException(beat_key, position, blocked_pair.first, blocked_pair.second)
+        }
+
+        super.remove_one_of_two(beat_key, position)
+    }
 
 
     override fun remove_beat(beat_index: Int, count: Int) {
@@ -704,23 +724,25 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     internal fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>, mod_position: List<Int>? = null, mod_amount: Int = 0): Pair<Rational, Int> {
         /* use mod amount/mod_position to calculate size if a leaf were removed or added */
 
-        var target_tree = this.get_tree(beat_key)
+        var working_tree = this.get_tree(beat_key)
         var output = Rational(0, 1)
         var width_denominator = 1
-
         for (i in position.indices) {
-            width_denominator *= if (mod_position != null && mod_position.size == i && position.subList(0, i) == mod_position) {
-                target_tree.size + mod_amount
-            } else {
-                target_tree.size
+            var p = position[i]
+            var new_width_factor = working_tree.size
+            if (mod_position != null) {
+                if (i == mod_position.size - 1) {
+                    if (p >= mod_position[i]) {
+                        p += mod_amount
+                    }
+                    new_width_factor += mod_amount
+                }
             }
-
-            val p = position[i]
-
+            width_denominator *= new_width_factor
             output += Rational(p, width_denominator)
-
-            target_tree = target_tree[p]
+            working_tree = working_tree[position[i]]
         }
+
         output += beat_key.beat
         return Pair(output, width_denominator)
     }
@@ -809,16 +831,17 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         val blocker = this.get_blocking_position(beat_key, position) ?: return null
 
         val (blocker_key, blocker_position) = blocker
-        var (next_beat_key, next_position) = this.get_proceding_event_position(beat_key, position) ?: return null
+        val (next_beat_key, next_position) = this.get_proceding_event_position(blocker_key, blocker_position) ?: return null
 
         val blocker_tree = this.get_tree(blocker_key, blocker_position)
+
         val (head_offset, head_width) = if (blocker_key == beat_key) {
             this.get_leaf_offset_and_width(blocker_key, blocker_position, position, -1)
         } else {
             this.get_leaf_offset_and_width(blocker_key, blocker_position)
         }
 
-        val (target_offset, target_width) = if (next_beat_key == beat_key) {
+        val (target_offset, _) = if (next_beat_key == beat_key) {
             this.get_leaf_offset_and_width(next_beat_key, next_position, position, -1)
         } else {
             this.get_leaf_offset_and_width(next_beat_key, next_position)

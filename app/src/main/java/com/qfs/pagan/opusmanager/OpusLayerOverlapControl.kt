@@ -226,16 +226,27 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         val working_position = position ?: listOf()
         val overlapper = this.get_blocking_position(beat_key, working_position)
+        val overlap_amount = this.get_blocking_amount(beat_key, working_position)
         val tree_is_eventless = tree.is_eventless()
         if (overlapper != null && !tree_is_eventless) {
-            throw BlockedTreeException(beat_key, working_position, overlapper.first, overlapper.second)
+            val first_position = tree.get_first_event_tree_position()
+            var working_tree = tree
+            var event_offset: Rational = Rational(0, 1)
+            var w = 1
+            for (p in first_position!!) {
+                w *= working_tree.size
+                event_offset += Rational(p, w)
+                working_tree = tree[p]
+            }
+            if (event_offset < overlap_amount!!) {
+                throw BlockedTreeException(beat_key, working_position, overlapper.first, overlapper.second)
+            }
         }
 
         val blocker_pair = this.is_blocked_replace_tree(beat_key, working_position, tree)
         if (blocker_pair != null && !tree_is_eventless) {
             throw BlockedTreeException(beat_key, working_position, blocker_pair.first, blocker_pair.second)
         }
-
         this.decache_overlapping_leaf(beat_key, working_position)
         super.replace_tree(beat_key, position, tree)
 
@@ -551,6 +562,9 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     open fun decache_overlapping_leaf(beat_key: BeatKey, position: List<Int>) {
+        val cache_key = Pair(beat_key, position)
+        this._cache_inv_blocked_tree_map.remove(Pair(beat_key, position))
+
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
@@ -563,7 +577,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                 })
             }
         }
-        val cache_key = Pair(beat_key, position)
 
         if (!this._cache_blocked_tree_map.containsKey(cache_key)) {
             return

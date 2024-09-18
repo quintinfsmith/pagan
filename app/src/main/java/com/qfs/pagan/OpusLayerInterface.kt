@@ -2274,5 +2274,11 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.on_unlink(beat_key)
     }
 
+    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this._catch_blocked_action {
+            super.move_beat_range(beat_key, first_corner, second_corner)
+        }
+    }
+
     // END UI FUNCS -----------------------
 }

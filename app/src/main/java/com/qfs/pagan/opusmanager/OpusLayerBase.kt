@@ -2348,6 +2348,14 @@ open class OpusLayerBase {
             trees.add(this.get_tree_copy(o_key))
         }
 
+        for (clear_key in original_keys) {
+            this.unset(clear_key, listOf())
+        }
+
+        for (clear_key in target_keys) {
+            this.unset(clear_key, listOf())
+        }
+
         for (i in target_keys.indices) {
             this.replace_tree(
                 target_keys[i],
@@ -2356,9 +2364,7 @@ open class OpusLayerBase {
             )
         }
 
-        for (clear_key in (original_keys - target_keys)) {
-            this.unset(clear_key, listOf())
-        }
+
     }
 
     fun is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {

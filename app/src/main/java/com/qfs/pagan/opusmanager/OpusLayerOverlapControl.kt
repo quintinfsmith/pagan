@@ -527,8 +527,12 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
+        val overlap = this.get_blocking_position(beat_key, position)
         this.decache_overlapping_leaf(beat_key, position)
         super.unset(beat_key, position)
+        if (overlap != null) {
+            this._cache_tree_overlaps(overlap.first, overlap.second)
+        }
     }
 
     override fun clear() {

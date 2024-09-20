@@ -1760,29 +1760,12 @@ open class OpusLayerBase {
             throw InvalidMergeException()
         }
 
-        val from_tree = this.get_tree(beat_key_from, position_from) as OpusTree<InstrumentEvent>
-        val to_tree = this.get_tree(beat_key_to, position_to) as OpusTree<InstrumentEvent>
-        val mid_tree = to_tree.merge(from_tree.get_set_tree())
-        mid_tree.flatten()
+        var (from_offset, from_width) = this.get_leaf_offset_and_width(beat_key_from, position_from)
+        var (to_offset, to_width) this.get_leaf_offset_and_width(beat_key_to, position_to)
+        TODO("In progress")
 
-        val new_tree = OpusTree<InstrumentEvent>()
-        if (mid_tree.is_event()) {
-            new_tree.set_event(mid_tree.event!!.first())
-        } else {
-            new_tree.set_size(mid_tree.size)
-            // Can assume all subtrees are events since we've just flattened
-            for ((offset, eventset) in mid_tree.divisions) {
-                if (eventset.event!!.size > 1) {
-                    throw InvalidMergeException()
-                }
-
-                new_tree[offset].set_event(eventset.event!!.first())
-            }
-            new_tree.reduce()
-        }
-
-        this.replace_tree(beat_key_to, position_to, new_tree)
-        this.unset(beat_key_from, position_from)
+        //this.replace_tree(beat_key_to, position_to, new_tree)
+        //this.unset(beat_key_from, position_from)
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
@@ -3185,4 +3168,31 @@ open class OpusLayerBase {
             }
         }
     }
+
+    internal fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>, mod_position: List<Int>? = null, mod_amount: Int = 0): Pair<Rational, Int> {
+        /* use mod amount/mod_position to calculate size if a leaf were removed or added */
+
+        var working_tree = this.get_tree(beat_key)
+        var output = Rational(0, 1)
+        var width_denominator = 1
+        for (i in position.indices) {
+            var p = position[i]
+            var new_width_factor = working_tree.size
+            if (mod_position != null) {
+                if (i == mod_position.size - 1) {
+                    if (p >= mod_position[i]) {
+                        p += mod_amount
+                    }
+                    new_width_factor += mod_amount
+                }
+            }
+            width_denominator *= new_width_factor
+            output += Rational(p, width_denominator)
+            working_tree = working_tree[position[i]]
+        }
+
+        output += beat_key.beat
+        return Pair(output, width_denominator)
+    }
+
 }

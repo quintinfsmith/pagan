@@ -82,7 +82,6 @@ class ContextMenuLink(primary_container: ViewGroup, secondary_container: ViewGro
             PaganConfiguration.LinkMode.MERGE -> R.id.rbLinkModeMerge
         })
 
-
         val (is_networked, many_links) = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
             this.label.text = when (main.configuration.link_mode) {
                 PaganConfiguration.LinkMode.LINK -> this.context.resources.getString(R.string.label_link_range)

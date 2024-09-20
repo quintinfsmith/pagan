@@ -734,32 +734,6 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
     }
 
-    internal fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>, mod_position: List<Int>? = null, mod_amount: Int = 0): Pair<Rational, Int> {
-        /* use mod amount/mod_position to calculate size if a leaf were removed or added */
-
-        var working_tree = this.get_tree(beat_key)
-        var output = Rational(0, 1)
-        var width_denominator = 1
-        for (i in position.indices) {
-            var p = position[i]
-            var new_width_factor = working_tree.size
-            if (mod_position != null) {
-                if (i == mod_position.size - 1) {
-                    if (p >= mod_position[i]) {
-                        p += mod_amount
-                    }
-                    new_width_factor += mod_amount
-                }
-            }
-            width_denominator *= new_width_factor
-            output += Rational(p, width_denominator)
-            working_tree = working_tree[position[i]]
-        }
-
-        output += beat_key.beat
-        return Pair(output, width_denominator)
-    }
-
     private fun recache_blocked_tree(beat_key: BeatKey, position: List<Int>) {
         val hash_key = Pair(beat_key, position)
         val (original_key, original_position, blocked_amount) = this._cache_inv_blocked_tree_map[hash_key] ?: return

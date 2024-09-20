@@ -10,6 +10,13 @@ enum class ControlEventType {
     Reverb,
 }
 
+enum class ControlTransition {
+    Instant,
+    Linear,
+    Concave,
+    Convex
+}
+
 class OpusTempoEvent(var value: Float): OpusControlEvent() {
     override fun equals(other: Any?): Boolean {
         return other is OpusTempoEvent && this.value == other.value
@@ -37,3 +44,11 @@ class OpusReverbEvent(var value: Float): OpusControlEvent() {
     }
 }
 
+class OpusBendEvent(var numerator: Int, var denominator: Int, var transition: ControlTransition = ControlTransition.Instant): OpusControlEvent() {
+    override fun copy(): OpusBendEvent {
+        return OpusBendEvent(this.numerator, this.denominator, this.transition)
+    }
+    override fun equals(other: Any?): Boolean {
+        return other is OpusBendEvent && this.numerator == other.numerator && this.denominator == other.denominator && this.transition == other.transition
+    }
+}

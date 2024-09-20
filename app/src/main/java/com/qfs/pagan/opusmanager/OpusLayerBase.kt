@@ -53,7 +53,6 @@ open class OpusLayerBase {
             return OpusLayerBase._channel_uuid_generator++
         }
 
-
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
             val (from_key, to_key) = if (first.channel < second.channel) {
                 Pair(

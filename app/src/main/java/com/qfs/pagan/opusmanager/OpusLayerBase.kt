@@ -1761,7 +1761,7 @@ open class OpusLayerBase {
         }
 
         var (from_offset, from_width) = this.get_leaf_offset_and_width(beat_key_from, position_from)
-        var (to_offset, to_width) this.get_leaf_offset_and_width(beat_key_to, position_to)
+        var (to_offset, to_width) = this.get_leaf_offset_and_width(beat_key_to, position_to)
         TODO("In progress")
 
         //this.replace_tree(beat_key_to, position_to, new_tree)

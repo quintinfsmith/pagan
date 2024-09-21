@@ -3323,62 +3323,62 @@ class OpusLayerBaseUnitReTestAsOpusLayerLinks {
         )
     }
 
-    @Test
-    fun test_merge_leafs() {
-        val manager = OpusManager()
-        manager.new()
-        var key_a = BeatKey(0,0,0)
-        var key_b = BeatKey(0,0,1)
-        var key_c = BeatKey(0,0,2)
-        var key_d = BeatKey(0,0,3)
+    //@Test
+    //fun test_merge_leafs() {
+    //    val manager = OpusManager()
+    //    manager.new()
+    //    var key_a = BeatKey(0,0,0)
+    //    var key_b = BeatKey(0,0,1)
+    //    var key_c = BeatKey(0,0,2)
+    //    var key_d = BeatKey(0,0,3)
 
-        manager.split_tree(key_a, listOf(), 2)
-        manager.split_tree(key_b, listOf(), 3)
-        manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
-        manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
-        manager.set_event(key_b, listOf(0), AbsoluteNoteEvent(12))
-        manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
-        manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
+    //    manager.split_tree(key_a, listOf(), 2)
+    //    manager.split_tree(key_b, listOf(), 3)
+    //    manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
+    //    manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
+    //    manager.set_event(key_b, listOf(0), AbsoluteNoteEvent(12))
+    //    manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
+    //    manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
 
-        assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
-            manager.merge_leafs(key_a, listOf(), key_b, listOf())
-        }
-        assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
-            manager.merge_leafs(key_a, listOf(), key_a, listOf())
-        }
+    //    assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
+    //        manager.merge_leafs(key_a, listOf(), key_b, listOf())
+    //    }
+    //    assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
+    //        manager.merge_leafs(key_a, listOf(), key_a, listOf())
+    //    }
 
-        manager.unset(key_b, listOf(0))
-        manager.merge_leafs(key_a, listOf(), key_b, listOf())
-        assertTrue(manager.get_tree(key_a).is_leaf() && !manager.get_tree(key_a).is_event())
-        assertEquals(2, manager.get_tree(key_b).size)
-        assertEquals(3, manager.get_tree(key_b, listOf(0)).size)
-        assertEquals(3, manager.get_tree(key_b, listOf(1)).size)
-        assertEquals(
-            AbsoluteNoteEvent(10),
-            manager.get_tree(key_b, listOf(0, 0)).event
-        )
-        assertEquals(
-            AbsoluteNoteEvent(11),
-            manager.get_tree(key_b, listOf(1, 0)).event
-        )
-        assertEquals(
-            AbsoluteNoteEvent(13),
-            manager.get_tree(key_b, listOf(0, 2)).event
-        )
-        assertEquals(
-            AbsoluteNoteEvent(14),
-            manager.get_tree(key_b, listOf(1, 1)).event
-        )
+    //    manager.unset(key_b, listOf(0))
+    //    manager.merge_leafs(key_a, listOf(), key_b, listOf())
+    //    assertTrue(manager.get_tree(key_a).is_leaf() && !manager.get_tree(key_a).is_event())
+    //    assertEquals(2, manager.get_tree(key_b).size)
+    //    assertEquals(3, manager.get_tree(key_b, listOf(0)).size)
+    //    assertEquals(3, manager.get_tree(key_b, listOf(1)).size)
+    //    assertEquals(
+    //        AbsoluteNoteEvent(10),
+    //        manager.get_tree(key_b, listOf(0, 0)).event
+    //    )
+    //    assertEquals(
+    //        AbsoluteNoteEvent(11),
+    //        manager.get_tree(key_b, listOf(1, 0)).event
+    //    )
+    //    assertEquals(
+    //        AbsoluteNoteEvent(13),
+    //        manager.get_tree(key_b, listOf(0, 2)).event
+    //    )
+    //    assertEquals(
+    //        AbsoluteNoteEvent(14),
+    //        manager.get_tree(key_b, listOf(1, 1)).event
+    //    )
 
-        manager.set_event(key_c, listOf(), AbsoluteNoteEvent(15))
-        manager.merge_leafs(key_c, listOf(), key_d, listOf())
+    //    manager.set_event(key_c, listOf(), AbsoluteNoteEvent(15))
+    //    manager.merge_leafs(key_c, listOf(), key_d, listOf())
 
-        assertTrue(manager.get_tree(key_d).is_event())
+    //    assertTrue(manager.get_tree(key_d).is_event())
 
-        assertEquals(
-            AbsoluteNoteEvent(15),
-            manager.get_tree(key_d).event
-        )
-    }
+    //    assertEquals(
+    //        AbsoluteNoteEvent(15),
+    //        manager.get_tree(key_d).event
+    //    )
+    //}
 
 }

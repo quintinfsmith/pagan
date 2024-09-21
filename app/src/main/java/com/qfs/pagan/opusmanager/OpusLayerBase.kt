@@ -1760,12 +1760,49 @@ open class OpusLayerBase {
             throw InvalidMergeException()
         }
 
-        var (from_offset, from_width) = this.get_leaf_offset_and_width(beat_key_from, position_from)
-        var (to_offset, to_width) this.get_leaf_offset_and_width(beat_key_to, position_to)
-        TODO("In progress")
+        val blocked_ranges = mutableSetOf<Pair<Rational, Rational>>()
+        var working_position_pair = Pair(beat_key_from, this.get_first_position(beat_key_from, position_from))
+        while (working_position_pair.first == beat_key_from && working_position_pair.second.size > position_from && working_position_pair.second.subList(0, position_from.size) == position_from) {
+            val working_tree = this.get_tree(working_position_pair.first, working_position_pair.second)
+            if (working_tree.is_event()) {
+                val duration = working_tree.get_event()!!.duration
+                var (working_offset, working_width) = this.get_leaf_offset_and_width(working_position_pair.first, working_position_pair.second)
+                working_offset -= working_position_pair.first.beat
+                val working_offset_end = working_offset + Rational(duration, working_width)
+                blocked_ranges.add(Pair(working_offset, working_offset_end))
+            }
 
-        //this.replace_tree(beat_key_to, position_to, new_tree)
-        //this.unset(beat_key_from, position_from)
+            working_position_pair = this.get_proceding_leaf_position(working_position_pair.first, working_position_pair.second) ?: break
+
+        }
+
+        working_position_pair = Pair(beat_key_to, this.get_first_position(beat_key_to, position_to))
+        while (working_position_pair.first == beat_key_to && working_position_pair.second.size > position_to && working_position_pair.second.subList(0, position_to.size) == position_to) {
+            val working_tree = this.get_tree(working_position_pair.first, working_position_pair.second)
+            if (working_tree.is_event()) {
+                val duration = working_tree.get_event()!!.duration
+                var (working_offset, working_width) = this.get_leaf_offset_and_width(working_position_pair.first, working_position_pair.second)
+                working_offset -= working_position_pair.first.beat
+                val working_offset_end = working_offset + Rational(duration, working_width)
+                for ((from_offset, to_offset) in blocked_ranges) {
+                    if ((working_offset >= from_offset && working_offset < to_offset) || (working_offset <= from_offset && working_offset_end > from_offset)) {
+                        throw InvalidMergeException()
+                    }
+                }
+                blocked_ranges.add(Pair(working_offset, working_offset_end))
+            }
+
+            working_position_pair = this.get_proceding_leaf_position(working_position_pair.first, working_position_pair.second) ?: break
+        }
+
+        TODO("In Progress")
+
+       // var (from_offset, from_width) = this.get_leaf_offset_and_width(beat_key_from, position_from)
+       // var (to_offset, to_width) this.get_leaf_offset_and_width(beat_key_to, position_to)
+       // TODO("In progress")
+
+        this.replace_tree(beat_key_to, position_to, new_tree)
+        this.unset(beat_key_from, position_from)
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {

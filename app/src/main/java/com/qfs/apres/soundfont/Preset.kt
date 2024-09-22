@@ -4,7 +4,6 @@ class Preset(
     var name: String = "",
     var preset: Int = 0, // MIDI Preset Number
     var bank: Int = 0, // MIDI Bank Number
-    val modulators: MutableList<Modulator> = mutableListOf()
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
 ) {
     var instruments = HashMap<Int, InstrumentDirective>()

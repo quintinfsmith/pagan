@@ -3,7 +3,6 @@ package com.qfs.apres.soundfont
 class Instrument(var name: String) {
     var samples = HashMap<Int, SampleDirective>()
     var global_zone: SampleDirective = SampleDirective()
-    val modulators: MutableList<Modulator> = mutableListOf()
 
     private val quick_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
     private val quick_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }

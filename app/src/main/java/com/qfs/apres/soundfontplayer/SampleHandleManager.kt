@@ -138,7 +138,6 @@ class SampleHandleManager(
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
                 preset.global_zone,
-                preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
                 min(linked_count, this.sample_limit ?: linked_count)
             )
 
@@ -202,7 +201,6 @@ class SampleHandleManager(
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
                 preset.global_zone,
-                preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
                 min(linked_count, this.sample_limit ?: linked_count)
             )
             new_handle.volume = (event.get_velocity().toFloat() / 128F)

@@ -29,6 +29,10 @@ class Modulator(
                 throw InvalidModulatorException(sfModSrcOper)
             }
         }
+
+        fun to_string(): String {
+            return "link: ${this.link}\ncontinuous: ${this.continuous}\npolar: ${this.polar}\ndirection: ${this.direction}\nsource_type: ${this.source_type}"
+        }
     }
 
     enum class TransformOperation {
@@ -45,11 +49,9 @@ class Modulator(
         else -> throw InvalidTransformOperation(sfModTransOper)
     }
 
-    //init {
-    //    Log.d("AAA", "Mod Amount: ${Integer.toHexString(amount.toInt())}")
-    //    Log.d("AAA", "Source Mod: ${Integer.toHexString(sfModAmtSrcOper)}")
-    //    Log.d("AAA", "Source Trans Oper: ${transform_operation}")
-    //    Log.d("AAA", " ------")
-
-    //}
+    fun to_string(): String {
+        return "Mod Amount: ${Integer.toHexString(amount.toInt())}\n" +
+        "Source Mod: ${this.source_operator.to_string().replace("\n", "\n    ")}\n" +
+        "Source Trans Oper: ${this.transform_operation}"
+    }
 }

@@ -38,6 +38,10 @@ class SampleHandle(
     var kill_frame: Int? = null
     var is_dead = false
     init {
+        for (modulator in this.modulators) {
+            println("${modulator.to_string()}")
+        }
+        println("-----------")
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)
         this.repitch(1F)

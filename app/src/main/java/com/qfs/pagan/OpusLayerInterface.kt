@@ -634,26 +634,23 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         this.lock_ui_partial {
+            val vis_line_a = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(channel_a, line_a)
+                )
+            )!!
+
+            val vis_line_b = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(channel_b, line_b)
+                )
+            )!!
+
             super.swap_lines(channel_a, line_a, channel_b, line_b)
 
-            if (!this.ui_change_bill.is_full_locked()) {
-                val vis_line_a = this.get_visible_row_from_ctl_line(
-                    this.get_actual_line_index(
-                        this.get_instrument_line_index(channel_a, line_a)
-                    )
-                )!!
-
-                val vis_line_b = this.get_visible_row_from_ctl_line(
-                    this.get_actual_line_index(
-                        this.get_instrument_line_index(channel_b, line_b)
-                    )
-                )!!
-
-                this.get_editor_table()?.swap_mapped_lines(vis_line_a, vis_line_b)
-
-                this.ui_change_bill.queue_row_change(line_a)
-                this.ui_change_bill.queue_row_change(line_b)
-            }
+            this.get_editor_table()?.swap_mapped_lines(vis_line_a, vis_line_b)
+            this.ui_change_bill.queue_row_change(vis_line_a)
+            this.ui_change_bill.queue_row_change(vis_line_b)
         }
     }
 

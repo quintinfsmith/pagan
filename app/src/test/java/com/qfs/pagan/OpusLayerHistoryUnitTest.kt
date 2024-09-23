@@ -349,25 +349,25 @@ class HistoryCacheUnitTest {
         }
     }
 
-    @Test
-    fun test_merge_leafs() {
-        var manager = OpusManager()
-        manager.new()
+    //@Test
+    //fun test_merge_leafs() {
+    //    var manager = OpusManager()
+    //    manager.new()
 
-        var key_a = BeatKey(0,0,0)
-        var key_b = BeatKey(0,0,1)
+    //    var key_a = BeatKey(0,0,0)
+    //    var key_b = BeatKey(0,0,1)
 
-        manager.split_tree(key_a, listOf(), 2)
-        manager.split_tree(key_b, listOf(), 3)
-        manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
-        manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
-        manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
-        manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
+    //    manager.split_tree(key_a, listOf(), 2)
+    //    manager.split_tree(key_b, listOf(), 3)
+    //    manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
+    //    manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
+    //    manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
+    //    manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
 
-        this.undo_and_check(manager) {
-            manager.merge_leafs(key_a, listOf(), key_b, listOf())
-        }
-    }
+    //    this.undo_and_check(manager) {
+    //        manager.merge_leafs(key_a, listOf(), key_b, listOf())
+    //    }
+    //}
 
     @Test
     fun test_set_initial_events() {

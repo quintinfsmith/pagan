@@ -1635,10 +1635,10 @@ open class OpusLayerBase {
     }
 
     open fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+
         if (this.is_percussion(channel_a) != this.is_percussion(channel_b)) {
             throw IncompatibleChannelException(channel_a, channel_b)
         }
-
         if (this.is_percussion(channel_a)) {
             val tmp_value = this.percussion_channel.lines[line_a].instrument
             this.percussion_channel.lines[line_a].instrument = this.percussion_channel.lines[line_b].instrument
@@ -1651,6 +1651,7 @@ open class OpusLayerBase {
             this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]
             this.channels[channel_b].lines[line_b] = tmp_line
         }
+        this.recache_line_maps()
     }
 
     open fun insert_beats(beat_index: Int, count: Int) {
@@ -1773,7 +1774,6 @@ open class OpusLayerBase {
             }
 
             working_position_pair = this.get_proceding_leaf_position(working_position_pair.first, working_position_pair.second) ?: break
-
         }
 
         working_position_pair = Pair(beat_key_to, this.get_first_position(beat_key_to, position_to))

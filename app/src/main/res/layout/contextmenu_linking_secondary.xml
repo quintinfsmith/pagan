@@ -23,6 +23,7 @@
         android:layout_width="match_parent">
         <com.qfs.pagan.PaganRadioButton
             android:id="@+id/rbLinkModeMerge"
+            android:visibility="gone"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"
             android:text="Merge"
@@ -31,6 +32,7 @@
             android:layout_width="wrap_content"/>
         <Space
             android:layout_width="0dp"
+            android:visibility="gone"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
         <com.qfs.pagan.PaganRadioButton

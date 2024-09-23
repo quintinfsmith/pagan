@@ -249,17 +249,15 @@ class SoundFont(file_path: String) {
             for ((pbag, next_pbag) in pbag_pairs) {
                 val generators_to_use: List<Generator> = this.get_preset_generators(
                     pbag.first,
-                    next_pbag.first
+                    next_pbag.first,
                 )
 
-                preset.modulators.addAll(
-                    this.get_preset_modulators(
-                        pbag.second,
-                        next_pbag.second
-                    )
+                val modulators_to_use = this.get_preset_modulators(
+                    pbag.second,
+                    next_pbag.second
                 )
 
-                this.generate_preset(preset, generators_to_use, current_index)
+                this.generate_preset(preset, generators_to_use, modulators_to_use)
             }
             output = preset
             break
@@ -341,14 +339,12 @@ class SoundFont(file_path: String) {
                 next_ibag.first
             )
 
-            instrument.modulators.addAll(
-                this.get_instrument_modulators(
-                    ibag.second,
-                    next_ibag.second
-                )
+            val modulators_to_use = this.get_instrument_modulators(
+                ibag.second,
+                next_ibag.second
             )
 
-            this.generate_instrument(instrument, generators_to_use)
+            this.generate_instrument(instrument, generators_to_use, modulators_to_use)
         }
 
         return instrument
@@ -366,10 +362,10 @@ class SoundFont(file_path: String) {
             val offset = i * 10
             try {
                 output.add(
-                    Modulator(
+                    Modulator.from_spec(
                         toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
                         toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
-                        (toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256)).toShort(),
+                        toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
                         toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
                         toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
                     )
@@ -394,10 +390,10 @@ class SoundFont(file_path: String) {
             val offset = i * 10
             try {
                 output.add(
-                    Modulator(
+                    Modulator.from_spec(
                         toUInt(bytes[offset + 0]) + (toUInt(bytes[offset + 1]) * 256),
                         toUInt(bytes[offset + 2]) + (toUInt(bytes[offset + 3]) * 256),
-                        (toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256)).toShort(),
+                        toUInt(bytes[offset + 4]) + (toUInt(bytes[offset + 5]) * 256),
                         toUInt(bytes[offset + 6]) + (toUInt(bytes[offset + 7]) * 256),
                         toUInt(bytes[offset + 8]) + (toUInt(bytes[offset + 9]) * 256)
                     )
@@ -583,10 +579,11 @@ class SoundFont(file_path: String) {
         }
     }
 
-    private fun generate_instrument(instrument: Instrument, generators: List<Generator>) {
+    private fun generate_instrument(instrument: Instrument, generators: List<Generator>, modulators: List<Modulator>) {
         val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x35
 
         val working_sample = SampleDirective()
+        working_sample.modulators.addAll(modulators)
         generators.forEachIndexed { i, generator ->
             when (generator.sfGenOper) {
                 0x35 -> {
@@ -667,9 +664,10 @@ class SoundFont(file_path: String) {
         }
     }
 
-    private fun generate_preset(preset: Preset, generators: List<Generator>, default_instrument: Int = 0) {
+    private fun generate_preset(preset: Preset, generators: List<Generator>, modulators: List<Modulator>) {
         val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x29 // && preset.instruments.isEmpty()
         val working_instrument = InstrumentDirective()
+        working_instrument.modulators.addAll(modulators)
 
         for (generator in generators) {
             when (generator.sfGenOper) {

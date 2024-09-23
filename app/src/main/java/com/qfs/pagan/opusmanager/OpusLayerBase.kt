@@ -1763,7 +1763,7 @@ open class OpusLayerBase {
 
         val blocked_ranges = mutableSetOf<Pair<Rational, Rational>>()
         var working_position_pair = Pair(beat_key_from, this.get_first_position(beat_key_from, position_from))
-        while (working_position_pair.first == beat_key_from && working_position_pair.second.size > position_from && working_position_pair.second.subList(0, position_from.size) == position_from) {
+        while (working_position_pair.first == beat_key_from && working_position_pair.second.size > position_from.size && working_position_pair.second.subList(0, position_from.size) == position_from) {
             val working_tree = this.get_tree(working_position_pair.first, working_position_pair.second)
             if (working_tree.is_event()) {
                 val duration = working_tree.get_event()!!.duration
@@ -1777,7 +1777,7 @@ open class OpusLayerBase {
         }
 
         working_position_pair = Pair(beat_key_to, this.get_first_position(beat_key_to, position_to))
-        while (working_position_pair.first == beat_key_to && working_position_pair.second.size > position_to && working_position_pair.second.subList(0, position_to.size) == position_to) {
+        while (working_position_pair.first == beat_key_to && working_position_pair.second.size > position_to.size && working_position_pair.second.subList(0, position_to.size) == position_to) {
             val working_tree = this.get_tree(working_position_pair.first, working_position_pair.second)
             if (working_tree.is_event()) {
                 val duration = working_tree.get_event()!!.duration
@@ -1801,8 +1801,8 @@ open class OpusLayerBase {
        // var (to_offset, to_width) this.get_leaf_offset_and_width(beat_key_to, position_to)
        // TODO("In progress")
 
-        this.replace_tree(beat_key_to, position_to, new_tree)
-        this.unset(beat_key_from, position_from)
+        //this.replace_tree(beat_key_to, position_to, new_tree)
+        //this.unset(beat_key_from, position_from)
     }
 
     open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {

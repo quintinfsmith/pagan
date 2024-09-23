@@ -28,14 +28,12 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
     fun get(event: NoteOn, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective, linked_handle_count: Int = 1): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
-        val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive, modulators, linked_handle_count)
-        println("copying ${sample_directive.sample?.name ?: null}...")
+        val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive, linked_handle_count)
         return SampleHandle.copy(this.sample_data_map[map_key]!!)
     }
 
     fun get(event: NoteOn79, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective, linked_handle_count: Int = 1): SampleHandle {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive, linked_handle_count)
-        println("copying ${sample_directive.sample?.name ?: null}...")
         return SampleHandle.copy(this.sample_data_map[map_key]!!)
     }
 
@@ -146,8 +144,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val filter_cutoff: Float = (sample_directive.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 13500F ) * (instrument_directive.filter_cutoff ?: 1F) * (global_instrument_directive.filter_cutoff ?: 1F)
         this.generated += 1
 
-        println("Generating ${sample_directive.sample!!.name}...")
-        val modulators = listOf<Modulator>() // TODO
+        // TODO was is the priority order of global directives
+        val modulators = instrument_directive.modulators.toSet() + sample_directive.modulators.toSet()
         return SampleHandle(
             data = data,
             sample_rate = sample_rate,

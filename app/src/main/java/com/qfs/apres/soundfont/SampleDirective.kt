@@ -11,5 +11,7 @@ class SampleDirective: Generated() {
     var exclusive_class: Int? = null
     var keynum: Int? = null
     var velocity: Int? = null
-    val modulators: MutableList<Modulator> = mutableListOf()
+    val modulators: MutableList<Modulator> = mutableListOf(
+        //Modulator(0x0502, 48, 960, 0x0, 0)
+    )
 }

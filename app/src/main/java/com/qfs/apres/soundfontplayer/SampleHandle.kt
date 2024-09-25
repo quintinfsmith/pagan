@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import com.qfs.apres.soundfont.Modulator
+import com.qfs.apres.soundfont.Generator.Operation
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -26,7 +27,7 @@ class SampleHandle(
     var volume: Float = 1F,
     var linked_handle_count: Int = 1,
     var data_buffer: PitchedBuffer = PitchedBuffer(data, pitch_shift),
-    //var modulators: Set<Modulator> = setOf(),
+    var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
 ) {
     var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
@@ -42,6 +43,18 @@ class SampleHandle(
     var kill_frame: Int? = null
     var is_dead = false
     init {
+        // Handle non-continuous modulators
+        for ((key, modulator) in this.modulators) {
+            if (!modulator.source_operator.continuous) {
+                when (key) {
+                    Operation.FilterCutoff -> {
+                        this.filter_cutoff =
+                    }
+                    else -> {}
+                }
+            }
+        }
+
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)
         this.repitch(1F)
@@ -151,7 +164,7 @@ class SampleHandle(
                     original.pitch_shift,
                     original.data_buffer.max
                 ), // constructing this way allows us to skip calculating max
-                //modulators = original.modulators,
+                modulators = original.modulators,
                 //note_on_event = original.note_on_event
             )
 

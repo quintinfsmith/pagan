@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfont
 
-class Modulator(val source_operator: Operator, val value: Operator, val destination: Int, val transform: TransformOperation, val amount: Short) {
+
+class Modulator(val source_operator: Operator, val value: Operator, val destination: Generator.Operation, val transform: TransformOperation, val amount: Short) {
     companion object {
         // Defaults
         val DEFAULT_NOTEON_VELOCITY_TO_INITIAL_ATTENUATION = Modulator(
@@ -11,10 +12,10 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = false,
                 index = 2,
             ),
-            Operator.NO_CONTROLLER,
-            48,
-            TransformOperation.Linear,
-            960
+            value = Operator.NO_CONTROLLER,
+            destination = Generator.Operation.Attenuation,
+            transform = TransformOperation.Linear,
+            amount = 960.toShort()
         )
         val DEFAULT_NOTEON_VELOCITY_TO_FILTER_CUTOFF = Modulator(
             Operator(
@@ -24,8 +25,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = false,
                 index = 2,
             ),
-            destination = 8,
-            amount = -2400, //TODO: Double check this doesn't need to be altered
+            destination = Generator.Operation.FilterCutoff,
+            amount = -2400.toShort(), //TODO: Double check this doesn't need to be altered
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -37,8 +38,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = false,
                 index = 13
             ),
-            destination = 6,
-            amount = 50,
+            destination = Generator.Operation.VibLFOPitch,
+            amount = 50.toShort(),
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -50,8 +51,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = true,
                 index = 1
             ),
-            destination = 6,
-            amount = 50,
+            destination = Generator.Operation.VibLFOPitch,
+            amount = 50.toShort(),
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -63,8 +64,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = true,
                 index = 7
             ),
-            destination = 48,
-            amount = 960,
+            destination = Generator.Operation.Attenuation,
+            amount = 960.toShort(),
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -76,8 +77,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = true,
                 index = 10
             ),
-            destination = 17,
-            amount = 1000, // 1000 tenths of a percent. TODO: Double check this is stored correctly
+            destination = Generator.Operation.Pan,
+            amount = 1000.toShort(), // 1000 tenths of a percent. TODO: Double check this is stored correctly
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -90,8 +91,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = true,
                 index = 11
             ),
-            destination = 48,
-            amount = 960,
+            destination = Generator.Operation.Attenuation,
+            amount = 960.toShort(),
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -104,8 +105,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = true,
                 index = 91
             ),
-            destination = 16,
-            amount = 200, // 200 tenths of a percent TODO: DOUBLE CHECK
+            destination = Generator.Operation.Reverb,
+            amount = 200.toShort(), // 200 tenths of a percent TODO: DOUBLE CHECK
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -118,8 +119,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 continuous = true,
                 index = 93
             ),
-            destination = 15,
-            amount = 200, // 10ths of a percent TODO DOUBLE CHECK
+            destination = Generator.Operation.Chorus,
+            amount = 200.toShort(), // 10ths of a percent TODO DOUBLE CHECK
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -127,7 +128,7 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
         // TODO: Not sure what is meant by 'initial Pitch' in the spec (8.4.10), leaving for now
         //val DEFAULT_PITCH_WHEEL_TO_INITIAL_PITCH_CONTROLLED_BY_PITCH_WHEEL_SENSITIVITY = Modulator(
         //    Operator(
-        //        type = ModulatorSourceType.Linear,
+        )//        type = ModulatorSourceType.Linear,
         //        polar = true,
         //        direction = false,
         //        continuous = false,

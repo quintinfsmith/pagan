@@ -1,5 +1,6 @@
 package com.qfs.apres.soundfont
 
+import com.qfs.apres.soundfont.Generator.Operation
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -577,7 +578,10 @@ class SoundFont(file_path: String) {
         val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x35
 
         val working_sample = SampleDirective()
-        working_sample.modulators.addAll(modulators)
+        for (modulator in modulators) {
+            working_sample.add_modulator(modulator)
+        }
+
         generators.forEachIndexed { i, generator ->
             when (generator.sfGenOper) {
                 0x35 -> {
@@ -661,7 +665,9 @@ class SoundFont(file_path: String) {
     private fun generate_preset(preset: Preset, generators: List<Generator>, modulators: List<Modulator>) {
         val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x29 // && preset.instruments.isEmpty()
         val working_instrument = InstrumentDirective()
-        working_instrument.modulators.addAll(modulators)
+        for (modulator in modulators) {
+            working_instrument.add_modulator(modulator)
+        }
 
         for (generator in generators) {
             when (generator.sfGenOper) {
@@ -680,7 +686,6 @@ class SoundFont(file_path: String) {
         } else {
             preset.set_global_zone(working_instrument)
         }
-
     }
 
     fun get_sample_data(start_index: Int, end_index: Int): ShortArray {

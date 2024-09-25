@@ -124,12 +124,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             0f
         }
         for ((sample_handle, index) in sample_handles_to_use) {
-            // FIXME: This is wonky. not sure whats up
-            // Ignore Samples in Right for mono mode
-            // if (this.stereo_mode == StereoMode.Mono && sample_handle.stereo_mode and 7 == 4 && item.sample_handles.size > 1) {
-            //     continue
-            // }
-
             this.populate_partial_int_array(sample_handle, output, index)
         }
 
@@ -144,6 +138,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         } else {
             offset until working_int_array.size / 2
         }
+
         for (f in range) {
             var frame_value = sample_handle.get_next_frame() ?: break
 

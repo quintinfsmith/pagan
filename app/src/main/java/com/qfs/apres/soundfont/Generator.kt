@@ -7,6 +7,89 @@ class Generator(
     var shAmount: Int,
     var wAmount: Int
 ) {
+    enum class Operation {
+        ModLFOPitch,
+        VibLFOPitch,
+        ModEnvPitch,
+        FilterCutoff,
+        FilterResonance,
+        ModLFOFilter,
+        ModEnvFilter,
+        ModLFOToVolume,
+        Chorus,
+        Reverb,
+        Pan,
+        ModLFODelay,
+        ModLFOFrequency,
+        VibLFODelay,
+        VibLFOFrequency,
+        ModEnvDelay,
+        ModEnvAttack,
+        ModEnvHold,
+        ModEnvDecay,
+        ModEnvSustain,
+        ModEnvRelease,
+        KeyModEnvHold,
+        KeyModEnvDecay,
+        VolEnvDelay,
+        VolEnvAttack,
+        VolEnvHold,
+        VolEnvDecay,
+        VolEnvSustain,
+        VolEnvRelease,
+        KeyVolEnvHold,
+        KeyVolEnvDecay,
+        KeyRange,
+        VelocityRange,
+        Attenuation,
+        TuningFine,
+        TuningCoarse,
+        ScaleTuning,
+    }
+
+    fun get_operation(): Generator.Operation? {
+        return when (this.sfGenOper) {
+            0x05 -> Operation.ModLFOPitch
+            0x06 -> Operation.VibLFOPitch
+            0x07 -> Operation.ModEnvPitch
+            0x08 -> Operation.FilterCutoff
+            0x09 -> Operation.FilterResonance
+            0x0A -> Operation.ModLFOFilter
+            0x0B -> Operation.ModEnvFilter
+            0x0D -> Operation.ModLFOToVolume
+            0x0F -> Operation.Chorus
+            0x10 -> Operation.Reverb
+            0x11 -> Operation.Pan
+            0x15 -> Operation.ModLFODelay
+            0x16 -> Operation.ModLFOFrequency
+            0x17 -> Operation.VibLFODelay
+            0x18 -> Operation.VibLFOFrequency
+            0x19 -> Operation.ModEnvDelay
+            0x1A -> Operation.ModEnvAttack
+            0x1B -> Operation.ModEnvHold
+            0x1C -> Operation.ModEnvDecay
+            0x1D -> Operation.ModEnvSustain
+            0x1E -> Operation.ModEnvRelease
+            0x1F -> Operation.KeyModEnvHold
+            0x20 -> Operation.KeyModEnvDecay
+            0x21 -> Operation.VolEnvDelay
+            0x22 -> Operation.VolEnvAttack
+            0x23 -> Operation.VolEnvHold
+            0x24 -> Operation.VolEnvDecay
+            0x25 -> Operation.VolEnvSustain
+            0x26 -> Operation.VolEnvRelease
+            0x27 -> Operation.KeyVolEnvHold
+            0x28 -> Operation.KeyVolEnvDecay
+            0x2B -> Operation.KeyRange
+            0x2C -> Operation.VelocityRange
+            0x30 -> Operation.Attenuation
+            0x33 -> Operation.TuningFine
+            0x34 -> Operation.TuningCoarse
+            0x38 -> Operation.ScaleTuning
+            else -> null
+        }
+    }
+
     fun asInt(): Int {
         return shAmount + (wAmount * 256)
     }

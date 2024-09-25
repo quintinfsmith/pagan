@@ -451,131 +451,125 @@ class SoundFont(file_path: String) {
     //private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) { }
 
     private fun generate(working_generated: Generated, generator: Generator) {
-        when (generator.sfGenOper) {
-            0x05 -> {
+        when (generator.get_operation()) {
+            Operation.ModLFOPitch -> {
                 working_generated.mod_lfo_pitch = generator.asInt()
             }
-            0x06 -> {
+            Operation.VibLFOPitch -> {
                 working_generated.vib_lfo_pitch = generator.asInt()
             }
-            0x07 -> {
+            Operation.ModEnvPitch -> {
                 working_generated.mod_env_pitch = generator.asIntSigned()
             }
-            0x08 -> {
+            Operation.FilterCutoff -> {
                 working_generated.filter_cutoff = generator.asTimecent() * 8.176f
             }
-            0x09 -> {
+            Operation.FilterResonance -> {
                 working_generated.filter_resonance = generator.asInt().toFloat()
             }
-            0x0A -> {
+            Operation.ModLFOFilter -> {
                 working_generated.mod_lfo_filter = generator.asInt()
             }
-            0x0B -> {
+            Operation.ModEnvFilter -> {
                 working_generated.mod_env_filter = generator.asIntSigned()
             }
-            0x0D -> {
+            Operation.ModLFOToVolume -> {
                 working_generated.mod_lfo_to_volume = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
             }
-            0x0E -> { } // Unused
-            0x0F -> {
+            Operation.Chorus -> {
                 working_generated.chorus = generator.asInt().toFloat() / 10F
             }
-            0x10 -> {
+            Operation.Reverb -> {
                 working_generated.reverb = (generator.asInt().toFloat()) / 10F
             }
-            0x11 -> {
+            Operation.Pan -> {
                 working_generated.pan = (generator.asIntSigned().toFloat()) / 10F
             }
-            0x12 -> {}
-            0x13 -> {}
-            0x14 -> {}
-            0x15 -> {
+            Operation.ModLFODelay -> {
                 working_generated.mod_lfo_delay = generator.asTimecent()
             }
-            0x16 -> {
+            Operation.ModLFOFrequency -> {
                 working_generated.mod_lfo_freq = generator.asTimecent() * 8.176F
             }
-            0x17 -> {
+            Operation.VibLFODelay -> {
                 working_generated.vib_lfo_delay = generator.asTimecent()
             }
-            0x18 -> {
+            Operation.VibLFOFrequency -> {
                 working_generated.vib_lfo_freq = generator.asTimecent() * 8.176F
             }
-            0x19 -> {
+            Operation.ModEnvDelay -> {
                 working_generated.mod_env_delay = generator.asTimecent()
             }
-            0x1A -> {
+            Operation.ModEnvAttack-> {
                 working_generated.mod_env_attack = generator.asTimecent()
             }
-            0x1B -> {
+            Operation.ModEnvHold -> {
                 working_generated.mod_env_hold = generator.asTimecent()
             }
-            0x1C -> {
+            Operation.ModEnvDecay -> {
                 working_generated.mod_env_decay = generator.asTimecent()
             }
-            0x1D -> {
+            Operation.ModEnvSustain -> {
                 working_generated.mod_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
             }
-            0x1E -> {
+            Operation.ModEnvRelease -> {
                 working_generated.mod_env_release = generator.asTimecent()
             }
-            0x1F -> {
+            Operation.KeyModEnvHold -> {
                 working_generated.key_mod_env_hold = generator.asInt()
             }
-            0x20 -> {
+            Operation.KeyModEnvDecay -> {
                 working_generated.key_mod_env_decay = generator.asInt()
             }
-            0x21 -> {
+            Operation.VolEnvDelay -> {
                 working_generated.vol_env_delay = generator.asTimecent()
             }
-            0x22 -> {
+            Operation.VolEnvAttack -> {
                 working_generated.vol_env_attack = generator.asTimecent()
             }
-            0x23 -> {
+            Operation.VolEnvHold -> {
                 working_generated.vol_env_hold = generator.asTimecent()
             }
-            0x24 -> {
+            Operation.VolEnvDecay -> {
                 working_generated.vol_env_decay = generator.asTimecent()
             }
-            0x25 -> {
+            Operation.VolEnvSustain -> {
                 working_generated.vol_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
             }
-            0x26 -> {
+            Operation.VolEnvRelease -> {
                 working_generated.vol_env_release = generator.asTimecent()
             }
-            0x27 -> {
+            Operation.KeyVolEnvHold -> {
                 working_generated.key_vol_env_hold = generator.asInt()
             }
-            0x28 -> {
+            Operation.KeyVolEnvDecay -> {
                 working_generated.key_vol_env_decay = generator.asInt()
             }
-            0x2A -> { } // Reserved
-            0x2B -> {
+            Operation.KeyRange -> {
                 working_generated.key_range = generator.asPair()
             }
-            0x2C -> {
+            Operation.VelocityRange -> {
                 working_generated.velocity_range = generator.asPair()
             }
-            0x30 -> {
+            Operation.Attenuation -> {
                 // The spec appears to indicate a value range of 0 -> 1440 centibels,
                 // but looking at the fluid font, it has some samples with negative attenuation
                 // I'll treat the data type as signed, but still use the absolute value since that sounds right
                 // when I listen to the samples
                 working_generated.attenuation = abs(generator.asIntSigned().toFloat() / 10)
             }
-            0x31 -> {} //reserved 2
-            0x33 -> {
+            Operation.TuningFine -> {
                 working_generated.tuning_semi = generator.asIntSigned()
             }
-            0x34 -> {
+            Operation.TuningCoarse -> {
                 working_generated.tuning_cent = generator.asIntSigned()
             }
-            0x37 -> {} // Reserved 3
-            0x38 -> {
+            Operation.ScaleTuning -> {
                 working_generated.scale_tuning = generator.asInt()
             }
-            0x3B -> {} // Unused
-            0x3C -> {} // Unused / EOS
+            else -> {
+                // Unused Generator
+            }
         }
     }
 

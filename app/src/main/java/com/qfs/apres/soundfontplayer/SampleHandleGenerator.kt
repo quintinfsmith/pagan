@@ -144,8 +144,15 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val filter_cutoff: Float = (sample_directive.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 13500F ) * (instrument_directive.filter_cutoff ?: 1F) * (global_instrument_directive.filter_cutoff ?: 1F)
         this.generated += 1
 
-        // TODO was is the priority order of global directives
+        // TODO what is the priority order of global directives
         val modulators = instrument_directive.modulators.toSet() + sample_directive.modulators.toSet()
+        for (modulator in modulators) {
+            if (modulator.source_operator.index != 2) {
+                continue
+            }
+            when (modulator.destination) {
+            }
+        }
         return SampleHandle(
             data = data,
             sample_rate = sample_rate,

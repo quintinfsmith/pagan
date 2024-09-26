@@ -274,27 +274,27 @@ class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
         this.list[index] = null
     }
 
-    fun get_int(index: Int, default: Int?): Int? {
+    fun get_int(index: Int, default: Int): Int {
         if (this.list[index] == null) {
             return default
         }
         return (this.list[index] as JSONInteger).value
     }
-    fun get_string(index: Int, default: String?): String? {
+    fun get_string(index: Int, default: String): String {
         if (this.list[index] == null) {
             return default
         }
         return (this.list[index] as JSONString).value
     }
-    fun get_float(index: Int, default: Float?): Float? {
+    fun get_float(index: Int, default: Float): Float {
         if (this.list[index] == null) {
             return default
         }
         return (this.list[index] as JSONFloat).value
     }
-    fun get_boolean(index: Int, default: Boolean?): Boolean? {
+    fun get_boolean(index: Int, default: Boolean): Boolean {
         if (this.list[index] == null) {
-            return null
+            return default
         }
         return (this.list[index] as JSONBoolean).value
     }

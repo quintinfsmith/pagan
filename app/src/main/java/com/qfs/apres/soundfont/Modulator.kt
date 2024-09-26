@@ -26,7 +26,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 index = 2,
             ),
             destination = Generator.Operation.FilterCutoff,
-            amount = -2400.toShort(), //TODO: Double check this doesn't need to be altered
+            //amount = -2400.toShort(), //TODO: Double check this doesn't need to be altered
+            amount = 1.toShort(), //TODO: Double check this doesn't need to be altered
             value = Operator.NO_CONTROLLER,
             transform = TransformOperation.Linear
         )
@@ -128,7 +129,7 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
         // TODO: Not sure what is meant by 'initial Pitch' in the spec (8.4.10), leaving for now
         //val DEFAULT_PITCH_WHEEL_TO_INITIAL_PITCH_CONTROLLED_BY_PITCH_WHEEL_SENSITIVITY = Modulator(
         //    Operator(
-        )//        type = ModulatorSourceType.Linear,
+        //        type = ModulatorSourceType.Linear,
         //        polar = true,
         //        direction = false,
         //        continuous = false,
@@ -145,7 +146,7 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
             return Modulator(
                 source_operator = Operator.from_int(sfModSrcOper),
                 value = Operator.from_int(sfModAmtSrcOper),
-                destination = sfModDestOper,
+                destination = Generator.get_operation(sfModDestOper),
                 transform = when (sfModTransOper) {
                     0 -> TransformOperation.Linear
                     2 -> TransformOperation.Absolute
@@ -204,5 +205,9 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
         "D: ${this.destination}\n" +
         "Source Mod: ${this.source_operator.to_string().replace("\n", "\n    ")}\n" +
         "Source Trans Oper: ${this.transform}"
+    }
+
+    fun modulate(source_value: Float, mod_value: Int): Float {
+        TODO()
     }
 }

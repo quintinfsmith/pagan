@@ -43,17 +43,16 @@ class SampleHandle(
     var kill_frame: Int? = null
     var is_dead = false
     init {
-        // Handle non-continuous modulators
-        for ((key, modulator) in this.modulators) {
-            if (!modulator.source_operator.continuous) {
-                when (key) {
-                    Operation.FilterCutoff -> {
-                        this.filter_cutoff =
-                    }
-                    else -> {}
-                }
-            }
-        }
+        // TODO: Handle non-continuous modulators
+        //for ((key, modulator) in this.modulators) {
+        //    if (!modulator.source_operator.continuous) {
+        //        when (key) {
+        //            Operation.FilterCutoff -> {
+        //            }
+        //            else -> {}
+        //        }
+        //    }
+        //}
 
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)

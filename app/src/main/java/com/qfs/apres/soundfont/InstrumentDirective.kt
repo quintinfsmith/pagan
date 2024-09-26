@@ -8,6 +8,6 @@ class InstrumentDirective: Generated() {
         if (!this.modulators.contains(key)) {
             this.modulators[key] = mutableSetOf()
         }
-        this.modulators[key].add(modulator)
+        this.modulators[key]!!.add(modulator)
     }
 }

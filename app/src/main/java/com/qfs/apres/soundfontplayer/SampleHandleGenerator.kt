@@ -3,7 +3,7 @@ package com.qfs.apres.soundfontplayer
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentDirective
-import com.qfs.pagan.soundfont.Generator
+import com.qfs.apres.soundfont.Generator
 import com.qfs.apres.soundfont.Modulator
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
@@ -147,13 +147,12 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         this.generated += 1
 
         // TODO what is the priority order of global directives
-        val new_modulators = HashMap<Generator.Operation, Modulator>()
+        val new_modulators = HashMap<Generator.Operation, Set<Modulator>>()
         for ((key, modulators) in sample_directive.modulators) {
-            if (new_modulators.containsKey(key)) {
-                new_modulators[key].addAll(modulators)
-            } else {
-                new_modulators[key] = modulators
+            if (!new_modulators.containsKey(key)) {
+                new_modulators[key] = mutableSetOf()
             }
+            new_modulators[key] = new_modulators[key]!! + modulators
         }
 
         return SampleHandle(

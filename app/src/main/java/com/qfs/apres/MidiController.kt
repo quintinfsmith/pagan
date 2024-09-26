@@ -173,6 +173,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         } else {
             this.midi_manager!!.devices.toList()
         }
+
         val output_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
             if (device_info.inputPortCount > 0) {

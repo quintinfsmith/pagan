@@ -54,24 +54,19 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val original_note = sample_directive.root_key ?: sample_directive.sample!!.originalPitch
 
         // TODO: Why did I do this check? I vaguely remember needing it but I need a note
-        val target_pitch = if (original_note != 255) {
+        if (original_note != 255) {
             val tuning_cent: Int = (sample_directive.tuning_cent ?: global_sample_directive.tuning_cent ?: 0 ) + (instrument_directive.tuning_cent ?: 0) + (global_instrument_directive.tuning_cent ?: 0)
             var tuning_semi: Float = ((sample_directive.tuning_semi ?: global_sample_directive.tuning_semi ?: 0 )
                 + (instrument_directive.tuning_semi ?: 0)
                 + (global_instrument_directive.tuning_semi ?: 0)).toFloat()
 
             // Skip tuning if we can
-            if (tuning_cent == 0 && tuning_semi == 0F && note == original_note && bend == 0) {
-                1F
-            } else {
+            if (tuning_cent != 0 || tuning_semi != 0F || note != original_note || bend != 0) {
                 tuning_semi += tuning_cent.toFloat() / 100F
                 val original_pitch = (2F).pow(original_note.toFloat() / 12F)
                 val required_pitch = (2F).pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512F)) / 12F)
                 pitch_shift = required_pitch / original_pitch
-                required_pitch
             }
-        } else {
-            1F
         }
 
         if (sample_directive.sample!!.sampleRate != this.sample_rate) {
@@ -134,7 +129,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                 release = (sample_directive.mod_env_release ?: global_sample_directive.mod_env_release ?: 0F)
                     * (instrument_directive.mod_env_release ?: 1F)
                     * (global_instrument_directive.mod_env_release ?: 1F),
-                sustain_attenuation = max(0F, min(vol_env_sustain, 1440F)) / 100F // Centibels -> bels
+                sustain_attenuation = max(0F, min(mod_env_sustain, 1440F)) / 100F // Centibels -> bels
             )
         }
 

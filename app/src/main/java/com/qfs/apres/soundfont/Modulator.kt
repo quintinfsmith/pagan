@@ -207,7 +207,7 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
         "Source Trans Oper: ${this.transform}"
     }
 
-    fun modulate(source_value: Float, mod_value: Int): Float {
-        TODO()
-    }
+    //fun modulate(source_value: Float, mod_value: Int): Float {
+    //    TODO()
+    //}
 }

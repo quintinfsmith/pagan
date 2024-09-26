@@ -25,10 +25,11 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var spacer: Space
 
     override fun init_properties() {
-        this.button_toggle_volume_control = this.primary!!.findViewById(R.id.btnToggleVolCtl)
-        this.button_insert = this.primary!!.findViewById(R.id.btnInsertLine)
-        this.button_remove = this.primary!!.findViewById(R.id.btnRemoveLine)
-        this.button_choose_percussion = this.primary!!.findViewById(R.id.btnChoosePercussion)
+        val primary = this.primary!!
+        this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
+        this.button_insert = primary.findViewById(R.id.btnInsertLine)
+        this.button_remove = primary.findViewById(R.id.btnRemoveLine)
+        this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
 
         this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0), this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
@@ -45,7 +46,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.widget_volume.layoutParams.width = MATCH_PARENT
         this.widget_volume.layoutParams.height = WRAP_CONTENT
 
-        this.spacer = this.primary.findViewById(R.id.spacer)
+        this.spacer = primary.findViewById(R.id.spacer)
     }
 
     override fun refresh() {

@@ -26,10 +26,11 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
 
     override fun init_properties() {
         this.widget_wrapper = this.secondary!! as LinearLayout
-        this.button_split = this.primary!!.findViewById(R.id.btnSplit)
-        this.button_insert = this.primary!!.findViewById(R.id.btnInsert)
-        this.button_remove = this.primary!!.findViewById(R.id.btnRemove)
-        this.button_unset = this.primary!!.findViewById(R.id.btnUnset)
+        val primary = this.primary!!
+        this.button_split = primary.findViewById(R.id.btnSplit)
+        this.button_insert = primary.findViewById(R.id.btnInsert)
+        this.button_remove = primary.findViewById(R.id.btnRemove)
+        this.button_unset = primary.findViewById(R.id.btnUnset)
     }
 
     private fun get_controller(): ActiveController {

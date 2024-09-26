@@ -102,7 +102,7 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
             ColorMap.Palette.SecondarySelectionLinkActive
         )
         for (key in calculated_colors) {
-            this._palette_fallback[key] = this.calculate_color(key, true)
+            this._palette_fallback[key] = this.calculate_color(key)
         }
     }
 
@@ -114,11 +114,11 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         }
     }
 
-    fun calculate_color(key: ColorMap.Palette, fallback: Boolean = false): Int {
+    fun calculate_color(key: ColorMap.Palette): Int {
         return when (key) {
             ColorMap.Palette.Spill -> {
-                val col_leaf: Color = Color.valueOf(this[ColorMap.Palette.Leaf]!!)
-                val col_empty: Color = Color.valueOf(this[ColorMap.Palette.ChannelEven]!!)
+                val col_leaf: Color = Color.valueOf(this[ColorMap.Palette.Leaf])
+                val col_empty: Color = Color.valueOf(this[ColorMap.Palette.ChannelEven])
                 Color.rgb(
                     ((col_leaf.red() * .7F) + (col_empty.red() * .3F)).toFloat(),
                     ((col_leaf.green() * .7F) + (col_empty.green() * .3F)).toFloat(),
@@ -126,8 +126,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
                 )
             }
             ColorMap.Palette.SpillLink -> {
-                val col_link: Color = Color.valueOf(this[ColorMap.Palette.Link]!!)
-                val col_link_empty: Color = Color.valueOf(this[ColorMap.Palette.LinkEmpty]!!)
+                val col_link: Color = Color.valueOf(this[ColorMap.Palette.Link])
+                val col_link_empty: Color = Color.valueOf(this[ColorMap.Palette.LinkEmpty])
                 Color.rgb(
                     ((col_link.red() * .7F) + (col_link_empty.red() * .3F)).toFloat(),
                     ((col_link.green() * .7F) + (col_link_empty.green() * .3F)).toFloat(),
@@ -135,8 +135,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
                 )
             }
             ColorMap.Palette.SecondarySelection -> {
-                val col_leaf_selection: Color = Color.valueOf(this[ColorMap.Palette.LeafSelected]!!)
-                val col_selection: Color = Color.valueOf(this[ColorMap.Palette.Selection]!!)
+                val col_leaf_selection: Color = Color.valueOf(this[ColorMap.Palette.LeafSelected])
+                val col_selection: Color = Color.valueOf(this[ColorMap.Palette.Selection])
 
                 Color.rgb(
                     ((col_selection.red() * .5F) + (col_leaf_selection.red() * .5F)).toFloat(),
@@ -145,8 +145,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
                 )
             }
             ColorMap.Palette.SecondarySelectionLinkActive -> {
-                val col_link_selected: Color = Color.valueOf(this[ColorMap.Palette.LinkSelected]!!)
-                val col_empty_link_selected: Color = Color.valueOf(this[ColorMap.Palette.LinkEmptySelected]!!)
+                val col_link_selected: Color = Color.valueOf(this[ColorMap.Palette.LinkSelected])
+                val col_empty_link_selected: Color = Color.valueOf(this[ColorMap.Palette.LinkEmptySelected])
 
                 Color.rgb(
                     ((col_link_selected.red() * .5F) + (col_empty_link_selected.red() * .5F)).toFloat(),
@@ -155,8 +155,8 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
                 )
             }
             ColorMap.Palette.SecondarySelectionInvalid -> {
-                val col_leaf_invalid_selected = Color.valueOf(this[ColorMap.Palette.LeafInvalidSelected]!!)
-                val col_leaf_invalid = Color.valueOf(this[ColorMap.Palette.LeafInvalid]!!)
+                val col_leaf_invalid_selected = Color.valueOf(this[ColorMap.Palette.LeafInvalidSelected])
+                val col_leaf_invalid = Color.valueOf(this[ColorMap.Palette.LeafInvalid])
                 Color.rgb(
                     ((col_leaf_invalid_selected.red() * .7F) + (col_leaf_invalid.red() * .3F)).toFloat(),
                     ((col_leaf_invalid_selected.green() * .7F) + (col_leaf_invalid.green() * .3F)).toFloat(),

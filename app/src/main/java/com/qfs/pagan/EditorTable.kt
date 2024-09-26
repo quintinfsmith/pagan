@@ -302,11 +302,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         var subdiv_int = 0
         var column_int = 0
-        var offset = 1
+        var working_offset = 1
         for (i in 0 until 4) {
-            subdiv_int += offset * if (subdiv_state[i]) { 1 } else { 0 }
-            column_int += offset * if (column_state[i]) { 1 } else { 0 }
-            offset *= 2
+            subdiv_int += working_offset * if (subdiv_state[i]) { 1 } else { 0 }
+            column_int += working_offset * if (column_state[i]) { 1 } else { 0 }
+            working_offset *= 2
         }
 
         // FITS, LEFT, RIGHT, ON SCREEN
@@ -330,7 +330,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             0b1011 -> box_width - target_offset - target_width
 
             // Try to scroll the column onto screen, then the section
-            0b1100 -> { 
+            0b1100 -> {
                 if (column_state[FITS_ON_SCREEN]) {
                     0
                 } else {

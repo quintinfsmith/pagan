@@ -195,7 +195,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
 
     fun get_beat_key(): BeatKey? {
         val opus_manager = this.get_opus_manager()
-        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+        val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
             opus_manager.get_ctl_line_from_row(this.row)
         )
         if (ctl_level != null) {

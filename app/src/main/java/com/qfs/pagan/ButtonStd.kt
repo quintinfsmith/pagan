@@ -30,6 +30,6 @@ class ButtonStd(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
         while (context !is MainActivity) {
             context = (context as ContextThemeWrapper).baseContext
         }
-        return context as MainActivity
+        return context
     }
 }

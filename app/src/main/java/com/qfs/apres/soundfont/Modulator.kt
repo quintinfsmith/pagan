@@ -157,8 +157,8 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
         }
     }
 
-    class InvalidModulatorException(modulator_value: Int): Exception("${Integer.toHexString(modulator_value)}")
-    class InvalidTransformOperation(value: Int): Exception("${value}")
+    class InvalidModulatorException(modulator_value: Int): Exception(Integer.toHexString(modulator_value))
+    class InvalidTransformOperation(value: Int): Exception("$value")
     enum class ModulatorSourceType {
         Linear,
         Concave,
@@ -173,11 +173,17 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
 
     class Operator(var index: Int, var continuous: Boolean, var polar: Boolean, var direction: Boolean, var type: ModulatorSourceType) {
         companion object {
-            val NO_CONTROLLER: Operator = Operator(0, false, false, false, ModulatorSourceType.Linear)
+            val NO_CONTROLLER: Operator = Operator(
+                index = 0,
+                continuous = false,
+                polar = false,
+                direction = false,
+                type = ModulatorSourceType.Linear
+            )
+
             fun from_int(input: Int): Operator {
                 return Operator(
                     index = input and 0x003f,
-                    //link = input and 0x00FF == 0x00FF,
                     continuous = (input and 0x0080) == 0x0080,
                     polar = input and 0x0100 == 0x0100,
                     direction = input and 0x0200 == 0x0200,

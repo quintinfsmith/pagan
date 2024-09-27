@@ -45,7 +45,7 @@ open class OpusLayerBase {
     class NoteOutOfRange(n: Int) : Exception("Attempting to use unsupported note $n")
 
     class EmptyPath : Exception("Path Required but not given")
-    class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here")
+    class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
 
     companion object {
         private var _channel_uuid_generator: Int = 0x00
@@ -108,7 +108,7 @@ open class OpusLayerBase {
 
                     // Turn off note if its playing
                     if (active_event_map.containsKey(Pair(channel, note))) {
-                        var existing_event = active_event_map[Pair(channel, note)]!!
+                        val existing_event = active_event_map[Pair(channel, note)]!!
                         existing_event[2] = tick - existing_event[2]
                     }
 

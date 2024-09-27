@@ -13,7 +13,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.os.Vibrator
 import android.os.VibrationEffect
 import android.database.Cursor
 import android.graphics.Color
@@ -23,6 +22,8 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
@@ -149,14 +150,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
     private lateinit var _config_path: String
-    private var integer_dialog_defaults = HashMap<String, Int>()
-    private var float_dialog_defaults = HashMap<String, Float>()
+    private var _integer_dialog_defaults = HashMap<String, Int>()
+    private var _float_dialog_defaults = HashMap<String, Float>()
     var active_percussion_names = HashMap<Int, String>()
 
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
-    private var sample_handle_manager: SampleHandleManager? = null
+    private var _sample_handle_manager: SampleHandleManager? = null
     private var _feedback_sample_manager: SampleHandleManager? = null
     private var _midi_playback_device: PlaybackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
@@ -409,7 +410,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         this.drawer_lock()
         this.view_model.color_map.set_fallback_palette(
-            if (this.is_night_mode()) {
+            if (this._is_night_mode()) {
                 this.get_night_palette()
             } else {
                 this.get_day_palette()
@@ -596,7 +597,7 @@ class MainActivity : AppCompatActivity() {
 
         this.view_model.color_map.use_palette = this.configuration.use_palette
         this.view_model.color_map.set_fallback_palette(
-            if (this.is_night_mode()) {
+            if (this._is_night_mode()) {
                 this.get_night_palette()
             } else {
                 this.get_day_palette()
@@ -625,7 +626,7 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 try {
                     this._soundfont = SoundFont(path)
-                    this.sample_handle_manager = SampleHandleManager(
+                    this._sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         this.configuration.sample_rate,
                         this.configuration.sample_rate, // Use Large buffer
@@ -635,7 +636,7 @@ class MainActivity : AppCompatActivity() {
 
                     this._midi_playback_device = PlaybackDevice(
                         this,
-                        this.sample_handle_manager!!,
+                        this._sample_handle_manager!!,
                         WaveGenerator.StereoMode.Mono
                     )
 
@@ -1343,12 +1344,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun get_drum_options(): List<Pair<String, Int>> {
-        if (this.sample_handle_manager == null || this.is_connected_to_physical_device()) {
+        if (this._sample_handle_manager == null || this.is_connected_to_physical_device()) {
             return this._get_default_drum_options()
         }
 
         val preset = try {
-            this.sample_handle_manager!!.get_preset(9) ?: return this._get_default_drum_options()
+            this._sample_handle_manager!!.get_preset(9) ?: return this._get_default_drum_options()
         } catch (e: SoundFont.InvalidPresetIndex) {
             return this._get_default_drum_options()
         }
@@ -1392,12 +1393,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Don't need to update anything but percussion in the sample_handle_manager
-        if (this.sample_handle_manager != null) {
-            this.sample_handle_manager!!.select_bank(
+        if (this._sample_handle_manager != null) {
+            this._sample_handle_manager!!.select_bank(
                 midi_channel,
                 midi_bank
             )
-            this.sample_handle_manager!!.change_program(
+            this._sample_handle_manager!!.change_program(
                 midi_channel,
                 midi_program
             )
@@ -1429,12 +1430,12 @@ class MainActivity : AppCompatActivity() {
             val midi_channel = opus_manager.percussion_channel.get_midi_channel()
             val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
 
-            if (this.sample_handle_manager != null) {
-                this.sample_handle_manager!!.select_bank(
+            if (this._sample_handle_manager != null) {
+                this._sample_handle_manager!!.select_bank(
                     midi_channel,
                     midi_bank
                 )
-                this.sample_handle_manager!!.change_program(
+                this._sample_handle_manager!!.change_program(
                     midi_channel,
                     midi_program
                 )
@@ -1658,7 +1659,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         this._soundfont = null
-        this.sample_handle_manager = null
+        this._sample_handle_manager = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
         this._feedback_sample_manager = null
@@ -1806,9 +1807,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+
     // TODO: fix code duplication in dialog_float/integer_input
     internal fun dialog_float_input(title: String, min_value: Float, max_value: Float, default: Float? = null, callback: (value: Float) -> Unit ) {
-        val coerced_default_value = default ?: (this.float_dialog_defaults[title] ?: min_value)
+        val coerced_default_value = default ?: (this._float_dialog_defaults[title] ?: min_value)
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_float,
@@ -1823,7 +1826,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val output_value = number_input.get_value() ?: coerced_default_value
-                this.float_dialog_defaults[title] = output_value
+                this._float_dialog_defaults[title] = output_value
                 callback(output_value)
             }
             .setNeutralButton(android.R.string.cancel) { _, _ -> }
@@ -1846,7 +1849,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun dialog_number_input(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit ) {
-        val coerced_default_value = default ?: (this.integer_dialog_defaults[title] ?: min_value)
+        val coerced_default_value = default ?: (this._integer_dialog_defaults[title] ?: min_value)
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_split,
@@ -1861,7 +1864,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val output_value = number_input.get_value() ?: coerced_default_value
-                this.integer_dialog_defaults[title] = output_value
+                this._integer_dialog_defaults[title] = output_value
                 callback(output_value)
             }
             .setNeutralButton(android.R.string.cancel) { _, _ -> }
@@ -2037,7 +2040,7 @@ class MainActivity : AppCompatActivity() {
              * TODO: Put the ignore envelope/lfo option somewhere better.
              * I don't think it should be in apres if theres a reasonable way to avoid it
              */
-            this.sample_handle_manager = SampleHandleManager(
+            this._sample_handle_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
                 this.configuration.sample_rate,
@@ -2048,7 +2051,7 @@ class MainActivity : AppCompatActivity() {
 
             this._midi_playback_device = PlaybackDevice(
                 this,
-                this.sample_handle_manager!!,
+                this._sample_handle_manager!!,
                 WaveGenerator.StereoMode.Mono
             )
         } else {
@@ -2068,7 +2071,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun has_notification_permission(): Boolean {
-        return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED )
+        return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED )
     }
 
     private fun getNotificationPermission(): Boolean {
@@ -2293,7 +2296,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    fun is_night_mode(): Boolean {
+    private fun _is_night_mode(): Boolean {
         // defaults to night mode since it's better
         return when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
             Configuration.UI_MODE_NIGHT_NO -> false
@@ -2416,12 +2419,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun vibrate() {
-        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.EFFECT_TICK));
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = this.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
         } else {
-            vibrator.vibrate(200);
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+
+        vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.EFFECT_TICK))
     }
 
 }

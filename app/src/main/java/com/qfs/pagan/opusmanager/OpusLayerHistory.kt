@@ -274,23 +274,21 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     val instrument_events = this.checked_cast<List<OpusTree<InstrumentEvent>>>(current_node.args[1])
                     val control_events = this.checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>, List<Pair<ControlEventType, OpusTree<OpusControlEvent>>>>>(current_node.args[2])
                     val beat_index = current_node.args[0] as Int
-                    this.insert_beat(
-                        beat_index,
-                        instrument_events
-                    )
-                    val channels = this.get_all_channels()
+                    this.insert_beat(beat_index, instrument_events)
+
+                    // re-add line control events
                     for ((line_pair, type, tree) in control_events.first) {
-                        channels[line_pair.first]
-                            .lines[line_pair.second]
-                            .controllers
-                            .get_controller(type)
-                            .events[beat_index] = tree
+                        this.replace_line_ctl_tree(type, BeatKey(line_pair.first, line_pair.second, beat_index), listOf(), tree)
                     }
+
+                    // re-add channel control events
                     for ((channel, type, tree) in control_events.second) {
-                        channels[channel].controllers.get_controller(type).events[beat_index] = tree
+                        this.replace_channel_ctl_tree(type, channel, beat_index, listOf(), tree)
                     }
+
+                    // re-add global control events
                     for ((type, tree) in control_events.third) {
-                        this.controllers.get_controller(type).events[beat_index] = tree
+                        this.replace_global_ctl_tree(type, beat_index, listOf(), tree)
                     }
                 }
 

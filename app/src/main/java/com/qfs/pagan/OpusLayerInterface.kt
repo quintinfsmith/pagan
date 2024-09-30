@@ -181,6 +181,9 @@ class OpusLayerInterface : OpusLayerCursor() {
 
 
     private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {
+        if (!this.is_ctl_line_visible(CtlLineLevel.Global, type)) {
+            return
+        }
         if (this.ui_change_bill.is_full_locked()) {
             return
         }
@@ -202,6 +205,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _queue_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
+        if (!this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
+            return
+        }
         if (this.ui_change_bill.is_full_locked()) {
             return
         }
@@ -224,6 +230,10 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _queue_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
+        if (!this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+           return
+        }
+
         val coord = EditorTable.Coordinate(
             y = this._cached_ctl_map_line[Triple(beat_key.channel, beat_key.line_offset, type)]!!,
             x = beat_key.beat
@@ -749,7 +759,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                         this.ui_change_bill.queue_remove_column(beat_index)
                     }
                 }
-
                 super.remove_beat(beat_index, count)
 
                 if (!this.ui_change_bill.is_full_locked()) {

@@ -158,10 +158,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._column_width_maxes[x] = this._column_width_map[x].max()
     }
 
-    fun recalculate_column_maxes() {
+    fun recalculate_column_maxes(): List<Int> {
+        val output = mutableListOf<Int>()
         for (x in 0 until this._column_width_map.size) {
-            this._column_width_maxes[x] = this._column_width_map[x].max()
+            val new_max = this._column_width_map[x].max()
+            if (new_max != this._column_width_maxes[x]) {
+                output.add(new_max)
+                this._column_width_maxes[x] = new_max
+            }
         }
+        return output
     }
 
     fun get_column_width(column: Int): Int {
@@ -485,13 +491,20 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
     }
 
-    fun remove_mapped_lines(y: Int, count: Int) {
+    fun remove_mapped_lines(y: Int, count: Int): List<Int> {
+        val output = mutableListOf<Int>()
         for (j in 0 until this._column_width_map.size) {
-            for (i in 0 until count) {
-                this._column_width_map[j].remove(y)
+            this._column_width_map[j] = this._column_width_map[j].filterIndexed { i: Int, value: Int ->
+                !(i >= y && i < y + count)
+            }.toMutableList()
+
+            val new_max = this._column_width_map[j].max()
+            if (new_max != this._column_width_maxes[j]) {
+                output.add(j)
+                this._column_width_maxes[j] = this._column_width_map[j].max()
             }
-            this._column_width_maxes[j] = this._column_width_map[j].max()
         }
+        return output
     }
 
     fun remove_mapped_column(x: Int) {
@@ -508,11 +521,17 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         })
     }
 
-    fun add_line_to_map(y: Int, line: List<Int>) {
+    fun add_line_to_map(y: Int, line: List<Int>): List<Int> {
+        val output = mutableListOf<Int>()
         for (x in line.indices) {
             this._column_width_map[x].add(y, line[x])
-            this._column_width_maxes[x] = this._column_width_map[x].max()
+            val new_max = this._column_width_map[x].max()
+            if (new_max != this._column_width_maxes[x]) {
+                this._column_width_maxes[x] = new_max
+                output.add(x)
+            }
         }
+        return output
     }
 
     fun set_mapped_width(y: Int, x: Int, width: Int): Boolean {

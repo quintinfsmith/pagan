@@ -1506,7 +1506,11 @@ class OpusLayerBaseUnitTest {
             }
         }
 
-        manager.move_beat_range(BeatKey(0, 0, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        manager.move_beat_range(
+            BeatKey(0, 0, 3),
+            BeatKey(0, 0, 0),
+            BeatKey(1, 2, 2)
+        )
 
         for (c in 0 until 2) {
             for (l in 0 until 2) {

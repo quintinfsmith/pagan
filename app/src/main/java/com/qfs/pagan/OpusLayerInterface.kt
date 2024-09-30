@@ -684,8 +684,11 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private fun _queue_remove_rows(y: Int, count: Int) {
         if (!this.ui_change_bill.is_full_locked()) {
-            this.get_editor_table()?.remove_mapped_lines(y, count)
+            val column_updates = this.get_editor_table()?.remove_mapped_lines(y, count) ?: listOf()
             this.ui_change_bill.queue_row_removal(y, count)
+            for (column in column_updates) {
+                this.ui_change_bill.queue_column_change(column)
+            }
         }
     }
 
@@ -795,11 +798,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 val force_show_percussion = activity != null
                         && !activity.view_model.show_percussion
                         && !this.is_percussion(channel)
-                        && this.channels.size == 2
-
-                if (force_show_percussion) {
-                    this.make_percussion_visible()
-                }
+                        && this.channels.size == 1
 
                 for ((type, _) in this.channels[channel].controllers.get_all()) {
                     if (this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
@@ -815,10 +814,18 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                 }
 
+
+                val changed_columns = this.get_editor_table()?.remove_mapped_lines(ctl_row, removed_row_count) ?: listOf()
+
                 super.remove_channel(channel)
 
                 this.ui_change_bill.queue_remove_channel(channel)
                 this.ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
+                this.ui_change_bill.queue_column_changes(changed_columns, false)
+
+                if (force_show_percussion) {
+                    this.make_percussion_visible()
+                }
             } else {
                 super.remove_channel(channel)
             }
@@ -1579,13 +1586,14 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             this.recache_line_maps()
 
-            this.ui_change_bill.queue_add_channel(this.channels.size)
+            this.ui_change_bill.queue_refresh_channel(this.channels.size)
 
             var ctl_line = this.get_visible_row_from_ctl_line(
                 this.get_actual_line_index(
                     this.get_instrument_line_index(this.channels.size, 0)
                 )
             )!!
+
 
             this.percussion_channel.lines.forEachIndexed { i: Int, line: OpusLinePercussion ->
                 this._add_line_to_column_width_map(ctl_line++, line)
@@ -1601,6 +1609,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     this._add_controller_to_column_width_map(ctl_line++, controller)
                 }
             }
+
         }
     }
 
@@ -1887,14 +1896,16 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        this.get_editor_table()?.add_line_to_map(
+        val column_updates = this.get_editor_table()?.add_line_to_map(
             y,
             List(this.beat_count) { x: Int ->
                 val tree = line.beats[x]
                 tree.get_total_child_weight()
             }
-        )
+        ) ?: listOf()
+
         this.ui_change_bill.queue_new_row(y)
+        this.ui_change_bill.queue_column_changes(column_updates, false)
     }
 
     private fun _add_controller_to_column_width_map(y: Int, line: ActiveController) {
@@ -1902,15 +1913,16 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        this.get_editor_table()?.add_line_to_map(
+        val column_updates = this.get_editor_table()?.add_line_to_map(
             y,
             List(this.beat_count) { x: Int ->
                 val tree = line.events[x]
                 tree?.get_total_child_weight() ?: 1
             }
-        )
+        ) ?: listOf()
 
         this.ui_change_bill.queue_new_row(y)
+        this.ui_change_bill.queue_column_changes(column_updates, false)
     }
 
     private fun _update_after_new_line(channel: Int, line_offset: Int?) {
@@ -1981,6 +1993,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     // UI FUNCS -----------------------
     private fun apply_bill_changes() {
         val editor_table = this.get_editor_table() ?: return // when importing
+        val force_column_updates = editor_table.recalculate_column_maxes()
         this.runOnUiThread { activity: MainActivity ->
             this.ui_change_bill.consolidate()
             while (true) {
@@ -2023,7 +2036,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                         editor_table.new_column(
                             this.ui_change_bill.get_next_int()
                         )
-
                     }
 
                     BillableItem.ColumnRemove -> {
@@ -2061,14 +2073,13 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ChannelAdd -> {
                         val channel = this.ui_change_bill.get_next_int()
-
-                        activity.update_channel_instruments(channel)
-
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                         if (channel_recycler.adapter != null) {
                             val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
                             channel_adapter.add_channel()
                         }
+
+                        activity.update_channel_instruments(channel)
                     }
 
                     BillableItem.ChannelRemove -> {

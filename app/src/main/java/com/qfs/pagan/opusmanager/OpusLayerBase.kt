@@ -1381,7 +1381,7 @@ open class OpusLayerBase {
     // remove_only, remove_one_of_two and remove_standard all exist so I could separate
     // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
     open fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree_copy(beat_key, position)
         val to_replace_position = List(position.size) { i: Int ->
             if (i < position.size - 1) {
                 position[i]
@@ -1393,7 +1393,6 @@ open class OpusLayerBase {
         }
 
         val replacer_tree = this.get_tree(beat_key, to_replace_position)
-        tree.detach()
 
         this.replace_tree(
             beat_key,

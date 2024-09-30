@@ -37,6 +37,7 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         for (i in y until y + count) {
             this.addView(CellLayout(this, i), i)
         }
+
         this.notifyItemRangeChanged(0, y)
         this.notifyItemRangeChanged(y + count, this.childCount - (y + count))
     }

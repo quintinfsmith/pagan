@@ -67,9 +67,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 }
 
                 HistoryToken.SET_PERCUSSION_EVENT -> {
-                    this.set_percussion_event(
-                        current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1])
+                    val beat_key = current_node.args[0] as BeatKey
+                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    this.set_percussion_event(beat_key, position)
+                    this.set_duration(
+                        beat_key,
+                        position,
+                        current_node.args[2] as Int
                     )
                 }
 
@@ -992,8 +996,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         original_event
                     )
                 } else {
+                    val duration = (tree.get_event() as InstrumentEvent).duration
                     super.unset(beat_key, position)
-                    this.push_set_percussion_event(beat_key, position)
+                    this.push_set_percussion_event(beat_key, position, duration)
                 }
             } else if (!tree.is_leaf()) {
                 this.push_replace_tree(beat_key, position, tree) {
@@ -1194,8 +1199,8 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this.push_to_history_stack( HistoryToken.SET_EVENT, listOf(beat_key.copy(), position, event.copy()) )
     }
 
-    private fun push_set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        this.push_to_history_stack( HistoryToken.SET_PERCUSSION_EVENT, listOf(beat_key.copy(), position.toList()) )
+    private fun push_set_percussion_event(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this.push_to_history_stack( HistoryToken.SET_PERCUSSION_EVENT, listOf(beat_key.copy(), position.toList(), duration) )
     }
 
     private fun push_unset(beat_key: BeatKey, position: List<Int>) {

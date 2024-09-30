@@ -25,9 +25,15 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
         val opus_manager = this.get_opus_manager()
 
-        val current_tree = opus_manager.get_tree()
-        if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
+        val beat_key = opus_manager.cursor.get_beatkey()
+        val position = opus_manager.cursor.get_position()
+
+        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
+        val current_tree = opus_manager.get_tree(beat_key, position)
+
+        if (current_event_tree.is_event()) {
+            val event = current_event_tree.get_event()!!
             this.button_unset.setImageResource(R.drawable.unset)
             this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
         } else {
@@ -35,8 +41,16 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
             this.button_duration.text = ""
         }
 
-        this.button_duration.isEnabled = current_tree.is_event()
-        this.button_remove.isEnabled = opus_manager.cursor.get_position().isNotEmpty()
+        val blocked_amount = opus_manager.get_blocking_amount(beat_key, position)
+
+        this.button_split.isEnabled = current_event_tree == current_tree || blocked_amount!! < 1
+        this.button_split.isClickable = this.button_split.isEnabled
+
+        this.button_duration.isEnabled = current_event_tree.is_event()
+        this.button_duration.isClickable = this.button_duration.isEnabled
+
+        this.button_remove.isEnabled = current_tree_position.second.isNotEmpty()
+        this.button_remove.isClickable = this.button_remove.isEnabled
     }
 
     override fun setup_interactions() {
@@ -110,11 +124,15 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val cursor = opus_manager.cursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
-        val event_duration = opus_manager.get_tree().get_event()?.duration ?: return
+
+        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
+
+        val event_duration = current_event_tree.get_event()?.duration ?: return
 
         main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, default=event_duration) { value: Int ->
             val adj_value = Integer.max(value, 1)
-            opus_manager.set_duration(beat_key, position, adj_value)
+            opus_manager.set_duration(current_tree_position.first, current_tree_position.second, adj_value)
         }
     }
 
@@ -173,8 +191,9 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val cursor = opus_manager.cursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
+        val current_tree_position = opus_manager.get_original_position(beat_key, position)
 
-        opus_manager.set_duration(beat_key, position, 1)
+        opus_manager.set_duration(current_tree_position.first, current_tree_position.second, 1)
         return true
     }
 
@@ -198,8 +217,12 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
     private fun click_button_unset() {
         val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val beat_key = cursor.get_beatkey()
+        val position = cursor.get_position()
+        val current_tree_position = opus_manager.get_original_position(beat_key, position)
 
-        if (opus_manager.get_tree().is_event()) {
+        if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).is_event()) {
             opus_manager.unset()
         } else {
             opus_manager.set_percussion_event_at_cursor()

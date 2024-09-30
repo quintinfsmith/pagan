@@ -363,7 +363,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
                     this.make_percussion_visible()
                 }
-
+                println("REPLACING: $beat_key, $position")
                 super.replace_tree(beat_key, position, tree)
                 this._queue_cell_change(beat_key, false)
             }

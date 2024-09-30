@@ -745,7 +745,7 @@ class OpusTree<T> {
                 this.get_event() == other.get_event()
             } else if (this.is_leaf() && other.is_leaf()) {
                 true
-            } else if (other.size == this.size) {
+            } else if (other._size == this._size) {
                 var is_match = true
                 for (i in 0 until this.size) {
                     if (this[i] != other[i]) {

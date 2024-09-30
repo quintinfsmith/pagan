@@ -29,7 +29,6 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         val label_view = LineLabelView(this.context, adj_y)
         this._inner_wrapper.addView(label_view, adj_y)
 
-        println("$adj_y, ${this._inner_wrapper.childCount - adj_y}")
         this._notify_item_range_changed(adj_y, this._inner_wrapper.childCount - adj_y)
     }
 

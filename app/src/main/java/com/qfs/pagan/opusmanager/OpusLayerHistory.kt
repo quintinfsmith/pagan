@@ -272,31 +272,24 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
                 HistoryToken.INSERT_BEAT -> {
                     val instrument_events = this.checked_cast<List<OpusTree<InstrumentEvent>>>(current_node.args[1])
-                    val control_events = this.checked_cast<List<Pair<ControlEventType, OpusTree<OpusControlEvent>>>>(current_node.args[2])
-                    println("$control_events")
+                    val control_events = this.checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>, List<Pair<ControlEventType, OpusTree<OpusControlEvent>>>>>(current_node.args[2])
                     val beat_index = current_node.args[0] as Int
                     this.insert_beat(
                         beat_index,
                         instrument_events
                     )
-
-                    var y = 0
-                    for (channel in this.channels) {
-                        for (line in channel.lines) {
-                            for (i in 0 until line.controllers.size()) {
-                                val (type, tree) = control_events[y++]
-                                println("l: $type, $tree")
-                                line.controllers.get_controller(type).events[beat_index] = tree
-                            }
-                        }
-                        for (i in 0 until channel.controllers.size()) {
-                            val (type, tree) = control_events[y++]
-                            println("C: $type, $tree")
-                            channel.controllers.get_controller(type).events[beat_index] = tree
-                        }
+                    val channels = this.get_all_channels()
+                    for ((line_pair, type, tree) in control_events.first) {
+                        channels[line_pair.first]
+                            .lines[line_pair.second]
+                            .controllers
+                            .get_controller(type)
+                            .events[beat_index] = tree
                     }
-                    for (i in 0 until this.controllers.get_all().size) {
-                        val (type, tree) = control_events[y++]
+                    for ((channel, type, tree) in control_events.second) {
+                        channels[channel].controllers.get_controller(type).events[beat_index] = tree
+                    }
+                    for ((type, tree) in control_events.third) {
                         this.controllers.get_controller(type).events[beat_index] = tree
                     }
                 }
@@ -783,7 +776,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this._remember {
             val beat_cells = List(count) { i: Int ->
                 val working_list = mutableListOf<OpusTree<out InstrumentEvent>>()
-                val working_controller_list = mutableListOf<Pair<ControlEventType, OpusTree<OpusControlEvent>>>()
+                val working_line_controller_list = mutableListOf<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>()
+                val working_channel_controller_list = mutableListOf<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>()
+                val working_global_controller_list = mutableListOf<Pair<ControlEventType, OpusTree<OpusControlEvent>>>()
                 this.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*,*> ->
                     val line_count = channel.size
                     for (j in 0 until line_count) {
@@ -792,23 +787,20 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         )
                         val controllers = channel.lines[j].controllers
                         for ((type, controller) in controllers.get_all()) {
-                            println("$type ??B")
-                            working_controller_list.add(Pair(type, controller.get_beat(beat_index + i)))
+                            working_line_controller_list.add(Triple(Pair(c, j), type, controller.get_beat(beat_index + i)))
                         }
                     }
                     val controllers = channel.controllers
                     for ((type, controller) in controllers.get_all()) {
-                        println("$type ??A")
-                        working_controller_list.add(Pair(type, controller.get_beat(beat_index + i)))
+                        working_channel_controller_list.add(Triple(c, type, controller.get_beat(beat_index + i)))
                     }
                 }
                 val controllers = this.controllers
                 for ((type, controller) in controllers.get_all()) {
-                    println("$type ??")
-                    working_controller_list.add(Pair(type, controller.get_beat(beat_index + i)))
+                    working_global_controller_list.add(Pair(type, controller.get_beat(beat_index + i)))
                 }
 
-                Pair(working_list, working_controller_list)
+                Pair(working_list, Triple(working_line_controller_list, working_channel_controller_list, working_global_controller_list))
             }
 
             super.remove_beat(beat_index, count)

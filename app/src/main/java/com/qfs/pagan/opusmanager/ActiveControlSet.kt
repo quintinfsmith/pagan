@@ -15,13 +15,11 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
     }
 
     fun size(): Int {
-        println("CONTROLLERS SIZE: ${this.controllers.size}")
         return this.controllers.size
     }
 
     fun get_all(): Array<Pair<ControlEventType, ActiveController>> {
         var keys = this.controllers.keys.toList().sorted()
-        println("$keys")
         return Array(this.controllers.size) {
             Pair(keys[it], this.controllers[keys[it]]!!)
         }

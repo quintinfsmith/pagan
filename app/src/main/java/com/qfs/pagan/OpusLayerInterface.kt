@@ -142,7 +142,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
 
         val tree = this.get_tree(beat_key)
-        val new_weight = tree.get_max_child_weight() * tree.size
+        val new_weight = tree.get_total_child_weight()
 
         val coord_list = mutableListOf<EditorTable.Coordinate>()
         if (follow_links) {
@@ -191,7 +191,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         )
 
         val tree = this.controllers.get_controller(type).get_tree(beat)
-        val new_weight = tree.get_max_child_weight() * tree.size
+        val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
@@ -212,7 +212,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         )
 
         val tree = this.get_all_channels()[channel].controllers.get_controller(type).get_tree(beat)
-        val new_weight = tree.get_max_child_weight() * tree.size
+        val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
@@ -230,7 +230,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         )
 
         val tree = this.get_line_ctl_tree(type, beat_key)
-        val new_weight = tree.get_max_child_weight() * tree.size
+        val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table() ?: return // TODO: Throw Error
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
@@ -1850,24 +1850,14 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
                 for (j in channel.lines.indices) {
                     val tree = this.get_tree(BeatKey(i, j, beat))
-                    if (tree.is_leaf()) {
-                        column.add(1)
-                    } else {
-                        val new_weight = tree.get_max_child_weight() * tree.size
-                        column.add(new_weight)
-                    }
+                    column.add(tree.get_total_child_weight())
 
                     for ((type, controller) in channel.lines[j].controllers.get_all()) {
                         if (! this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                             continue
                         }
                         val ctl_tree = controller.get_beat(beat)
-                        if (ctl_tree.is_leaf()) {
-                            column.add(1)
-                        } else {
-                            val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                            column.add(new_weight)
-                        }
+                        column.add(ctl_tree.get_total_child_weight())
                     }
                 }
 
@@ -1876,12 +1866,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                         continue
                     }
                     val ctl_tree = controller.get_beat(beat)
-                    if (ctl_tree.is_leaf()) {
-                        column.add(1)
-                    } else {
-                        val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                        column.add(new_weight)
-                    }
+                    column.add(ctl_tree.get_total_child_weight())
                 }
             }
 
@@ -1891,12 +1876,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
 
                 val ctl_tree = controller.get_beat(beat)
-                if (ctl_tree.is_leaf()) {
-                    column.add(1)
-                } else {
-                    val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                    column.add(new_weight)
-                }
+                column.add(ctl_tree.get_total_child_weight())
             }
             editor_table.add_column_to_map(beat, column)
         }
@@ -1911,11 +1891,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             y,
             List(this.beat_count) { x: Int ->
                 val tree = line.beats[x]
-                if (tree.is_leaf()) {
-                    1
-                } else {
-                    tree.get_max_child_weight() * tree.size
-                }
+                tree.get_total_child_weight()
             }
         )
         this.ui_change_bill.queue_new_row(y)
@@ -1930,11 +1906,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             y,
             List(this.beat_count) { x: Int ->
                 val tree = line.events[x]
-                if (tree == null || tree.is_leaf()) {
-                    1
-                } else {
-                    tree.get_max_child_weight() * tree.size
-                }
+                tree?.get_total_child_weight() ?: 1
             }
         )
 
@@ -1977,22 +1949,13 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
             channel.lines.forEachIndexed { j: Int, line: OpusLineAbstract<*> ->
                 val tree = this.get_tree(BeatKey(i, j, index))
-                if (tree.is_leaf()) {
-                    column.add(1)
-                } else {
-                    column.add(tree.get_max_child_weight() * tree.size)
-                }
+                column.add(tree.get_total_child_weight())
                 for ((type, controller) in channel.lines[j].controllers.get_all()) {
                     if (! this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                         continue
                     }
                     val ctl_tree = controller.get_beat(index)
-                    if (ctl_tree.is_leaf()) {
-                        column.add(1)
-                    } else {
-                        val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                        column.add(new_weight)
-                    }
+                    column.add(ctl_tree.get_total_child_weight())
                 }
             }
 
@@ -2001,12 +1964,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     continue
                 }
                 val ctl_tree = controller.get_beat(index)
-                if (ctl_tree.is_leaf()) {
-                    column.add(1)
-                } else {
-                    val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                    column.add(new_weight)
-                }
+                column.add(ctl_tree.get_total_child_weight())
             }
         }
         for ((type, controller) in this.controllers.get_all()) {
@@ -2014,12 +1972,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 continue
             }
             val ctl_tree = controller.get_beat(index)
-            if (ctl_tree.is_leaf()) {
-                column.add(1)
-            } else {
-                val new_weight = ctl_tree.get_max_child_weight() * ctl_tree.size
-                column.add(new_weight)
-            }
+            column.add(ctl_tree.get_total_child_weight())
         }
 
         this.get_editor_table()?.add_column_to_map(index, column)

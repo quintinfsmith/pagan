@@ -13,7 +13,8 @@ class OpusTree<T> {
         var parent_node: OpusTree<T>
     )
 
-    var size: Int = 0
+    private var _size: Int = 0
+    val size get() = max(1, this._size)
     var divisions = HashMap<Int, OpusTree<T>>()
     var event: T? = null
     var parent: OpusTree<T>? = null
@@ -51,11 +52,11 @@ class OpusTree<T> {
 
         }
 
-        this.size = new_size
+        this._size = new_size
     }
 
     fun resize(new_size: Int) {
-        val factor: Double = new_size.toDouble() / this.size.toDouble()
+        val factor: Double = new_size.toDouble() / this._size.toDouble()
 
         val new_divisions = HashMap<Int, OpusTree<T>>()
         for (current_index in this.divisions.keys) {
@@ -65,7 +66,7 @@ class OpusTree<T> {
         }
 
         this.divisions = new_divisions
-        this.size = new_size
+        this._size = new_size
     }
 
     fun reduce(target_size: Int = 1) {
@@ -170,7 +171,7 @@ class OpusTree<T> {
 
     fun copy(copy_func: ((event: T?) -> T?)? = null): OpusTree<T> {
         val copied = OpusTree<T>()
-        copied.size = this.size
+        copied._size = this._size
         for (key in this.divisions.keys) {
             val subdivision: OpusTree<T> = this.divisions[key] as OpusTree<T>
             val subcopy: OpusTree<T> = subdivision.copy(copy_func)
@@ -197,12 +198,12 @@ class OpusTree<T> {
         }
 
         val index = if (rel_index < 0) {
-            this.size + rel_index
+            this._size + rel_index
         } else {
             rel_index
         }
 
-        if (index >= this.size) {
+        if (index >= this._size) {
             throw InvalidGetCall()
         }
 
@@ -275,7 +276,7 @@ class OpusTree<T> {
     }
 
     fun is_leaf(): Boolean {
-        return this.event != null || (this.divisions.size == 0 && this.size == 0)
+        return this.event != null || (this.divisions.size == 0 && this._size == 0)
     }
 
     fun is_event(): Boolean {
@@ -284,7 +285,7 @@ class OpusTree<T> {
 
     operator fun set(rel_index: Int, tree: OpusTree<T>) {
         val index = if (rel_index < 0) {
-            this.size + rel_index
+            this._size + rel_index
         } else {
             rel_index
         }
@@ -294,13 +295,13 @@ class OpusTree<T> {
 
     fun set_event(event: T?) {
         this.event = event
-        this.size = 0
+        this._size = 0
         this.divisions.clear()
     }
 
     fun unset_event() {
         this.event = null
-        this.size = 0
+        this._size = 1
         this.divisions.clear()
     }
 
@@ -361,7 +362,7 @@ class OpusTree<T> {
         val adj_index = index ?: this.size
         val adj_new_tree = new_tree ?: OpusTree()
 
-        this.size += 1
+        this._size += 1
         val new_indices = HashMap<Int, OpusTree<T>>()
         for (old_index in this.divisions.keys) {
             val node = this.divisions[old_index]!!
@@ -391,7 +392,7 @@ class OpusTree<T> {
             }
         }
 
-        this.size = max(this.size - 1, 0)
+        this._size = max(this._size - 1, 0)
 
         return output
     }
@@ -415,7 +416,7 @@ class OpusTree<T> {
 
     fun empty() {
         this.divisions = HashMap()
-        this.size = 0
+        this._size = 1
     }
 
     fun split(split_func: (event: T) -> Int): List<OpusTree<T>> {
@@ -443,7 +444,7 @@ class OpusTree<T> {
             for ((path, event) in events) {
                 var working_node = node
                 for ((x, size) in path) {
-                    if (working_node.size != size) {
+                    if (working_node._size != size) {
                         working_node.set_size(size)
                     }
                     working_node = working_node[x]
@@ -465,7 +466,7 @@ class OpusTree<T> {
             for ((i, node) in this.divisions) {
                 for ((path, event) in node.get_events_mapped()) {
                     val new_path = path.toMutableList()
-                    new_path.add(0, Pair(i, this.size))
+                    new_path.add(0, Pair(i, this._size))
                     output.add(Pair(new_path, event))
                 }
             }

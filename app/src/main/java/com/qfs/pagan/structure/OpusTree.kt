@@ -301,7 +301,7 @@ class OpusTree<T> {
 
     fun unset_event() {
         this.event = null
-        this._size = 1
+        this._size = 0
         this.divisions.clear()
     }
 
@@ -416,7 +416,7 @@ class OpusTree<T> {
 
     fun empty() {
         this.divisions = HashMap()
-        this._size = 1
+        this._size = 0
     }
 
     fun split(split_func: (event: T) -> Int): List<OpusTree<T>> {

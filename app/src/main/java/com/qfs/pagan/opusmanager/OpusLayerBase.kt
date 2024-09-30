@@ -1593,7 +1593,6 @@ open class OpusLayerBase {
 
     private fun <T> _unset(tree: OpusTree<T>) {
         tree.unset_event()
-        tree.empty()
 
         if (tree.parent != null) {
             val index = tree.get_index()

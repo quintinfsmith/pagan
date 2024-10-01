@@ -569,7 +569,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         val target_x = args[0] as Int
                         val repeat = args[1] as Int
                         val x = max(0, min(target_x, this.beat_count - 1 - repeat))
-
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_COLUMN,
                             listOf(x)

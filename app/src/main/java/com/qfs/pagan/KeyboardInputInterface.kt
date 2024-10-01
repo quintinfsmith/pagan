@@ -422,6 +422,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     true
                 }
 
+
                 KeyEvent.KEYCODE_SLASH -> {
                     val splits = this.clear_value_buffer(2, minimum=2, maximum=64)
                     val cursor = this.opus_manager.cursor

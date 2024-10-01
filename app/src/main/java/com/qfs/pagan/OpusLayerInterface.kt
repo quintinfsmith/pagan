@@ -374,7 +374,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                 if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
                     this.make_percussion_visible()
                 }
-                println("REPLACING: $beat_key, $position")
                 super.replace_tree(beat_key, position, tree)
                 this._queue_cell_change(beat_key, false)
             }
@@ -775,7 +774,36 @@ class OpusLayerInterface : OpusLayerCursor() {
             if (!this.ui_change_bill.is_full_locked()) {
                 this.queue_cursor_update(this.cursor)
                 this.ui_change_bill.queue_add_column(beat_index)
+
+                // Need to find all notes that overflow into the proceding beats and queue a column refresh on those beats
+                if (beat_index > 0 && beat_index < this.beat_count) {
+                    val channels = this.get_all_channels()
+                    for (i in 0 until channels.size) {
+                        for (j in 0 until channels[i].lines.size) {
+                            var working_beat_key = BeatKey(i, j, beat_index)
+                            var working_position = this.get_first_position(working_beat_key, listOf())
+
+                            val head_position = this.get_original_position(working_beat_key, working_position)
+                            if (head_position.first.beat < beat_index) {
+                                var max_beat_blocked = beat_index
+                                for ((blocked_key, _) in this.get_all_blocked_positions(head_position.first, head_position.second)) {
+                                    max_beat_blocked = max(max_beat_blocked, blocked_key.beat)
+                                }
+
+                                if (max_beat_blocked > beat_index) {
+                                    for (b in beat_index .. max_beat_blocked) {
+                                        this.ui_change_bill.queue_column_change(b + 1, true)
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
             }
+
+
+
             super.insert_beat(beat_index, beats_in_column)
 
             if (!this.ui_change_bill.is_full_locked()) {

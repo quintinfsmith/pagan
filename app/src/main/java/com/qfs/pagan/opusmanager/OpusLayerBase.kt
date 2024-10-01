@@ -1381,7 +1381,7 @@ open class OpusLayerBase {
     // remove_only, remove_one_of_two and remove_standard all exist so I could separate
     // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
     open fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_tree(beat_key, position)
+        val tree = this.get_tree_copy(beat_key, position)
         val to_replace_position = List(position.size) { i: Int ->
             if (i < position.size - 1) {
                 position[i]
@@ -1393,7 +1393,6 @@ open class OpusLayerBase {
         }
 
         val replacer_tree = this.get_tree(beat_key, to_replace_position)
-        tree.detach()
 
         this.replace_tree(
             beat_key,
@@ -1594,7 +1593,6 @@ open class OpusLayerBase {
 
     private fun <T> _unset(tree: OpusTree<T>) {
         tree.unset_event()
-        tree.empty()
 
         if (tree.parent != null) {
             val index = tree.get_index()
@@ -1679,12 +1677,11 @@ open class OpusLayerBase {
         var y = 0
         for (channel in this.channels) {
             for (line in channel.lines) {
-                line.beats[beat_index] = beats_in_column[y] as OpusTree<TunedInstrumentEvent>
-                y += 1
+                line.beats[beat_index] = beats_in_column[y++] as OpusTree<TunedInstrumentEvent>
             }
         }
         for (line in this.percussion_channel.lines) {
-            line.beats[beat_index] = beats_in_column.last() as OpusTree<PercussionEvent>
+            line.beats[beat_index] = beats_in_column[y++] as OpusTree<PercussionEvent>
         }
     }
 
@@ -1853,7 +1850,7 @@ open class OpusLayerBase {
 
     open fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
         val tree_copy = tree.copy(this::copy_control_event)
-        val controller = this.channels[beat_key.channel].lines[beat_key.line_offset].get_controller(type)
+        val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller(type)
         controller.replace_tree(
             beat_key.beat,
             position ?: listOf(),
@@ -1863,7 +1860,7 @@ open class OpusLayerBase {
 
     open fun replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
         val tree_copy = tree.copy(this::copy_control_event)
-        val controller = this.channels[channel].controllers.get_controller(type)
+        val controller = this.get_all_channels()[channel].controllers.get_controller(type)
         controller.replace_tree(
             beat,
             position ?: listOf(),

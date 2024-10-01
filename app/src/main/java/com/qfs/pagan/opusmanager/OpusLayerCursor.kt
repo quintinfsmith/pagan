@@ -773,8 +773,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 } else {
                     val beat_key = this.cursor.get_beatkey()
                     val position = this.cursor.get_position()
+                    val real_position = this.get_original_position(beat_key, position)
 
-                    this.unset(beat_key, position)
+                    this.unset(real_position.first, real_position.second)
                     this.cursor_select(beat_key, position)
                 }
             }

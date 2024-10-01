@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.util.Log
 import android.view.KeyEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -25,7 +24,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
     }
 
     fun input(key_code: Int, event: KeyEvent): Boolean {
-        Log.d("AAA", "$event")
+        //Log.d("AAA", "$event")
         return when (event.keyCode) {
             KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_3, KeyEvent.KEYCODE_4,
             KeyEvent.KEYCODE_5, KeyEvent.KEYCODE_6, KeyEvent.KEYCODE_7, KeyEvent.KEYCODE_8, KeyEvent.KEYCODE_9 -> {

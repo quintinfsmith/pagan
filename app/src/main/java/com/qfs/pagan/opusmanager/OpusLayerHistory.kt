@@ -67,9 +67,13 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 }
 
                 HistoryToken.SET_PERCUSSION_EVENT -> {
-                    this.set_percussion_event(
-                        current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1])
+                    val beat_key = current_node.args[0] as BeatKey
+                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    this.set_percussion_event(beat_key, position)
+                    this.set_duration(
+                        beat_key,
+                        position,
+                        current_node.args[2] as Int
                     )
                 }
 
@@ -267,10 +271,25 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 }
 
                 HistoryToken.INSERT_BEAT -> {
-                    this.insert_beat(
-                        current_node.args[0] as Int,
-                        this.checked_cast<List<OpusTree<InstrumentEvent>>>(current_node.args[1])
-                    )
+                    val instrument_events = this.checked_cast<List<OpusTree<InstrumentEvent>>>(current_node.args[1])
+                    val control_events = this.checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>, List<Pair<ControlEventType, OpusTree<OpusControlEvent>>>>>(current_node.args[2])
+                    val beat_index = current_node.args[0] as Int
+                    this.insert_beat(beat_index, instrument_events)
+
+                    // re-add line control events
+                    for ((line_pair, type, tree) in control_events.first) {
+                        this.replace_line_ctl_tree(type, BeatKey(line_pair.first, line_pair.second, beat_index), listOf(), tree)
+                    }
+
+                    // re-add channel control events
+                    for ((channel, type, tree) in control_events.second) {
+                        this.replace_channel_ctl_tree(type, channel, beat_index, listOf(), tree)
+                    }
+
+                    // re-add global control events
+                    for ((type, tree) in control_events.third) {
+                        this.replace_global_ctl_tree(type, beat_index, listOf(), tree)
+                    }
                 }
 
                 HistoryToken.SET_TRANSPOSE -> {
@@ -755,15 +774,31 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this._remember {
             val beat_cells = List(count) { i: Int ->
                 val working_list = mutableListOf<OpusTree<out InstrumentEvent>>()
+                val working_line_controller_list = mutableListOf<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>()
+                val working_channel_controller_list = mutableListOf<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>()
+                val working_global_controller_list = mutableListOf<Pair<ControlEventType, OpusTree<OpusControlEvent>>>()
                 this.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*,*> ->
                     val line_count = channel.size
                     for (j in 0 until line_count) {
                         working_list.add(
                             this.get_tree_copy(BeatKey(c, j, beat_index + i))
                         )
+                        val controllers = channel.lines[j].controllers
+                        for ((type, controller) in controllers.get_all()) {
+                            working_line_controller_list.add(Triple(Pair(c, j), type, controller.get_beat(beat_index + i)))
+                        }
+                    }
+                    val controllers = channel.controllers
+                    for ((type, controller) in controllers.get_all()) {
+                        working_channel_controller_list.add(Triple(c, type, controller.get_beat(beat_index + i)))
                     }
                 }
-                working_list
+                val controllers = this.controllers
+                for ((type, controller) in controllers.get_all()) {
+                    working_global_controller_list.add(Pair(type, controller.get_beat(beat_index + i)))
+                }
+
+                Pair(working_list, Triple(working_line_controller_list, working_channel_controller_list, working_global_controller_list))
             }
 
             super.remove_beat(beat_index, count)
@@ -771,7 +806,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
             for (i in 0 until beat_cells.size) {
                 this.push_to_history_stack(
                     HistoryToken.INSERT_BEAT,
-                    listOf(beat_index, beat_cells[i])
+                    listOf(beat_index, beat_cells[i].first, beat_cells[i].second)
                 )
             }
         }
@@ -992,8 +1027,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         original_event
                     )
                 } else {
+                    val duration = (tree.get_event() as InstrumentEvent).duration
                     super.unset(beat_key, position)
-                    this.push_set_percussion_event(beat_key, position)
+                    this.push_set_percussion_event(beat_key, position, duration)
                 }
             } else if (!tree.is_leaf()) {
                 this.push_replace_tree(beat_key, position, tree) {
@@ -1194,8 +1230,8 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this.push_to_history_stack( HistoryToken.SET_EVENT, listOf(beat_key.copy(), position, event.copy()) )
     }
 
-    private fun push_set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        this.push_to_history_stack( HistoryToken.SET_PERCUSSION_EVENT, listOf(beat_key.copy(), position.toList()) )
+    private fun push_set_percussion_event(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this.push_to_history_stack( HistoryToken.SET_PERCUSSION_EVENT, listOf(beat_key.copy(), position.toList(), duration) )
     }
 
     private fun push_unset(beat_key: BeatKey, position: List<Int>) {

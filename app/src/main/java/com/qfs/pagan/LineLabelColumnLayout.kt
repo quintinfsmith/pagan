@@ -99,8 +99,10 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         for (i in 0 until count) {
             if (i + y < this._inner_wrapper.childCount) {
                 val label = this._inner_wrapper.getChildAt(i + y) as LineLabelView
-                label.reset_row(i + y)
-                view_stack.add(label)
+                try {
+                    label.reset_row(i + y)
+                    view_stack.add(label)
+                } catch (_: NullPointerException){}
             } else {
                 break
             }

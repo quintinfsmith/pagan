@@ -1,0 +1,5 @@
+UI:
+    - Changed cursor behaviour when undoing an inserted beat
+
+Bug-fixes:
+    - overlaps weren't being redrawn in columns immediately following an inserted column

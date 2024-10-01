@@ -1847,7 +1847,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             OpusManagerCursor.CursorMode.Column -> {
-                this.ui_change_bill.queue_column_change(cursor.beat, true)
+                this.ui_change_bill.queue_column_change(cursor.beat, false)
             }
             OpusManagerCursor.CursorMode.Unset -> { }
         }

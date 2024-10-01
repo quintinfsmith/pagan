@@ -1677,12 +1677,11 @@ open class OpusLayerBase {
         var y = 0
         for (channel in this.channels) {
             for (line in channel.lines) {
-                line.beats[beat_index] = beats_in_column[y] as OpusTree<TunedInstrumentEvent>
-                y += 1
+                line.beats[beat_index] = beats_in_column[y++] as OpusTree<TunedInstrumentEvent>
             }
         }
         for (line in this.percussion_channel.lines) {
-            line.beats[beat_index] = beats_in_column.last() as OpusTree<PercussionEvent>
+            line.beats[beat_index] = beats_in_column[y++] as OpusTree<PercussionEvent>
         }
     }
 

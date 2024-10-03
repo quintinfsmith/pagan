@@ -3,8 +3,6 @@ package com.qfs.apres.soundfontplayer
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.log
 import kotlin.math.roundToInt
 
 class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null) {
@@ -47,26 +45,32 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
         this.virtual_position = index
     }
 
-    fun get(): Short {
+    fun get(hold_frame: Boolean = false): Short {
         val pitch = this.get_calculated_pitch()
         var output = if (pitch < 1F) {
-            val position = ((this.virtual_position++).toFloat() * pitch).toInt()
+            val position = ((this.virtual_position).toFloat() * pitch).toInt()
             this.data[min(position, this.data.size - 1)]
         } else {
-            val position_a = ((this.virtual_position++).toFloat() * pitch).toInt()
-            val position_b = (this.virtual_position.toFloat() * pitch).toInt()
+            val position_a = (this.virtual_position.toFloat() * pitch).toInt()
+            val position_b = ((this.virtual_position + 1).toFloat() * pitch).toInt()
+
             var tmp = 0F
             for (i in position_a until position_b) {
                 tmp += this.data[min(i, this.data.size - 1)].toFloat()
             }
+
             tmp /= (position_b - position_a).toFloat()
             tmp.toInt().toShort()
         }
 
-        ///if (this.weight && this.prev_get != null) {
-        ///    output = ((this.prev_get!!.toInt() + output.toInt()) / 2).toShort()
-        ///    this.weight = false
-        ///}
+        if (!hold_frame) {
+            this.virtual_position += 1
+        }
+
+        if (this.weight && this.prev_get != null) {
+            output = ((this.prev_get!!.toInt() + output.toInt()) / 2).toShort()
+            this.weight = false
+        }
         this.prev_get = output
         return output
     }

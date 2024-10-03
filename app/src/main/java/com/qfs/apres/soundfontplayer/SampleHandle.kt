@@ -1,10 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.soundfont.Modulator
 import com.qfs.apres.soundfont.Generator.Operation
-import com.qfs.apres.event.MIDIEvent
-import com.qfs.apres.event.NoteOn
-import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.soundfont.Modulator
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.min
@@ -33,6 +30,8 @@ class SampleHandle(
     var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
     val smoothing_factor: Float
     var pitched_loop_points: Pair<Int, Int>? = null
+    var pitched_loop_remainder: Int = 0
+    var pitched_loop_remainder_position: Int = 0
     var pitch_adjustment: Float = 1F
 
     var previous_frame = 0f
@@ -261,7 +260,7 @@ class SampleHandle(
                 10F.pow(this.volume_envelope.sustain_attenuation)
             }
         }
-
+        var block_buffer_advance = false
         if (!is_pressed) {
             if (this.data_buffer.is_overflowing()) {
                 this.is_dead = true
@@ -284,6 +283,11 @@ class SampleHandle(
             val offset = this.data_buffer.position() - this.pitched_loop_points!!.second
             if (offset >= 0) {
                 this.data_buffer.position(this.pitched_loop_points!!.first)
+                block_buffer_advance = this.pitched_loop_remainder_position < this.pitched_loop_remainder
+                this.pitched_loop_remainder_position += 1
+                if (block_buffer_advance) {
+                    println("Hold Frame (${this.pitched_loop_remainder_position} / ${this.pitched_loop_remainder}")
+                }
             }
         }
 
@@ -308,7 +312,7 @@ class SampleHandle(
         this.working_frame += 1
 
         var frame_value = try {
-            this.data_buffer.get().toFloat()
+            this.data_buffer.get(block_buffer_advance).toFloat()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
             return null
@@ -344,6 +348,8 @@ class SampleHandle(
     fun repitch(adjustment: Float) {
         this.data_buffer.repitch(adjustment)
         if (this.loop_points == null) {
+            this.pitched_loop_remainder = 0
+            this.pitched_loop_remainder_position = 0
             return
         }
 
@@ -354,6 +360,21 @@ class SampleHandle(
             start.toInt(),
             start.toInt() + ((this.loop_points.second - this.loop_points.first).toFloat() / new_pitch).toInt()
         )
+
+        val loop_size = (this.pitched_loop_points!!.second - this.pitched_loop_points!!.first)
+        val f = this.sample_rate / loop_size
+
+        if (f < 27) {
+            this.pitched_loop_remainder = 0
+            this.pitched_loop_remainder_position = 0
+            return
+        }
+
+        this.pitched_loop_remainder = this.sample_rate % loop_size
+        this.pitched_loop_remainder_position = 0
+
+        val m = this.sample_rate % loop_size
+        println("Repitched, loop: $f, $m, ${(m * f)} ($loop_size)")
     }
 }
 

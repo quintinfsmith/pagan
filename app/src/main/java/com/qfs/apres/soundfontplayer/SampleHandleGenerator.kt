@@ -52,21 +52,24 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var pitch_shift = 1F
 
         val original_note = sample_directive.root_key ?: sample_directive.sample!!.originalPitch
+        println("Original Note; ${sample_directive.root_key} || ${sample_directive.sample!!.originalPitch}")
 
-        // TODO: Why did I do this check? I vaguely remember needing it but I need a note
+        // 255 Means its an unpitched note and needs no correction.
         if (original_note != 255) {
-            val tuning_cent: Int = (sample_directive.tuning_cent ?: global_sample_directive.tuning_cent ?: 0 ) + (instrument_directive.tuning_cent ?: 0) + (global_instrument_directive.tuning_cent ?: 0)
+            var tuning_cent: Int = (sample_directive.tuning_cent ?: global_sample_directive.tuning_cent ?: 0 ) + (instrument_directive.tuning_cent ?: 0) + (global_instrument_directive.tuning_cent ?: 0)
             var tuning_semi: Float = ((sample_directive.tuning_semi ?: global_sample_directive.tuning_semi ?: 0 )
                 + (instrument_directive.tuning_semi ?: 0)
                 + (global_instrument_directive.tuning_semi ?: 0)).toFloat()
 
+            println("Pitch Correction:  ${sample_directive.sample!!.pitchCorrection}")
             // Skip tuning if we can
             if (tuning_cent != 0 || tuning_semi != 0F || note != original_note || bend != 0) {
                 tuning_semi += tuning_cent.toFloat() / 100F
-                val original_pitch = (2F).pow(original_note.toFloat() / 12F)
+                val original_pitch = (2F).pow((original_note.toFloat() + (sample_directive.sample!!.pitchCorrection.toFloat() / 100F)) / 12F)
                 val required_pitch = (2F).pow((note.toFloat() + tuning_semi + (bend.toFloat() / 512F)) / 12F)
                 pitch_shift = required_pitch / original_pitch
             }
+
         }
 
         if (sample_directive.sample!!.sampleRate != this.sample_rate) {

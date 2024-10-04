@@ -4,6 +4,7 @@ import com.qfs.apres.soundfont.Generator.Operation
 import com.qfs.apres.soundfont.Modulator
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -41,45 +42,37 @@ class SampleHandle(
     var release_frame: Int? = null
     var kill_frame: Int? = null
     var is_dead = false
+    var _active_buffer = 0
+
     init {
-        this.data_buffers = arrayOf<PitchedBuffer>(
-            if (this.loop_points != null) {
+        this.data_buffers = if (this.loop_points != null) {
+            arrayOf<PitchedBuffer>(
                 PitchedBuffer(
                     data = this.data,
                     pitch = this.pitch_shift,
                     range = 0 until this.loop_points.first,
                     is_loop = false
-                )
-            } else {
-                PitchedBuffer(
-                    data = this.data
-                    pitch = this.pitch_shift
-                )
-            },
-            if (this.loop_points != null) {
+                ),
                 PitchedBuffer(
                     data = this.data,
                     pitch = this.pitch_shift,
                     range = this.loop_points.first until this.loop_points.second,
                     is_loop = true
-                )
-            } else {
-                null
-            },
-            if (this.loop_points != null) {
+                ),
                 PitchedBuffer(
                     data = this.data,
                     pitch = this.pitch_shift,
                     range = this.loop_points.second until this.data.size,
                     is_loop = false
                 )
-            } else {
-                null
-            }
-        )
-
-        if (this.loop_points != null) {
-            this.data_buffers.add
+            )
+        } else {
+            arrayOf(
+                PitchedBuffer(
+                    data = this.data,
+                    pitch = this.pitch_shift
+                )
+            )
         }
 
         // TODO: Handle non-continuous modulators
@@ -197,15 +190,22 @@ class SampleHandle(
                 pan = original.pan,
                 volume = original.volume,
                 linked_handle_count = original.linked_handle_count,
-                data_buffer = PitchedBuffer(
-                    original.data,
-                    original.pitch_shift,
-                    original.data_buffer.max
-                ), // constructing this way allows us to skip calculating max
+                data_buffers = Array(original.data_buffers.size) { i: Int ->
+                    var buffer = original.data_buffers[i]
+                    // constructing this way allows us to skip calculating max
+                    PitchedBuffer(
+                        data = buffer.data,
+                        pitch = buffer.pitch,
+                        known_max = buffer.max,
+                        range = buffer._range,
+                        is_loop = buffer.is_loop,
+                    )
+                },
                 modulators = original.modulators,
                 //note_on_event = original.note_on_event
             )
 
+            output._active_buffer = original._active_buffer
             output.release_frame = original.release_frame
             output.kill_frame = original.kill_frame
             output.repitch(original.pitch_adjustment)
@@ -216,35 +216,15 @@ class SampleHandle(
 
 
     fun max_frame_value(): Int {
-        return this.data_buffer.max
+        var output = 0
+        for (buffer in this.data_buffers) {
+            output = max(output, buffer.max)
+        }
+        return output
     }
 
     fun set_release_frame(frame: Int) {
         this.release_frame = frame
-    }
-
-    private fun calc_adj_frame(frame: Int): Int {
-        val loop_points = this.pitched_loop_points
-        return if (this.release_frame == null) {
-            if (loop_points == null || frame < loop_points.second) {
-                frame
-            } else {
-                val loop_size = (loop_points.second - loop_points.first)
-                val loops = ((frame - loop_points.first) / loop_size)
-                val loop_remainder = (frame - loop_points.first) % loop_size
-                loop_points.first + (loops * loop_size) + loop_remainder
-            }
-        } else if (loop_points != null && loop_points.first < loop_points.second) {
-            if (frame < loop_points.second) {
-                frame
-            } else {
-                val loop_size = (loop_points.second - loop_points.first)
-                val loop_remainder = (frame - loop_points.first) % loop_size
-                loop_points.first + loop_remainder
-            }
-        } else {
-            frame
-        }
     }
 
     fun set_working_frame(frame: Int) {
@@ -259,18 +239,54 @@ class SampleHandle(
             return
         }
 
-        val adj_frame = this.calc_adj_frame(frame)
-
-        if (adj_frame < this.data_buffer.size) {
-            this.data_buffer.position(adj_frame)
-            this.is_dead = false
-        } else {
-            this.is_dead = true
+        val loop_points = this.pitched_loop_points
+        val release_frame = this.release_frame
+        this.is_dead = try {
+            if (release_frame == null || release_frame <= frame) {
+                if (loop_points == null || frame < this.data_buffers[0].size) {
+                    this.data_buffers[0].position(frame)
+                    this._active_buffer = 0
+                } else {
+                    val loop_size = (loop_points.second - loop_points.first)
+                    this.data_buffers[1].position((frame - this.data_buffers[0].size) % loop_size)
+                    this._active_buffer = 1
+                }
+            } else if (loop_points != null && loop_points.first < loop_points.second) {
+                val remainder = frame - this.release_frame!!
+                if (frame < this.data_buffers[0].size) {
+                    this.data_buffers[0].position(frame)
+                    this._active_buffer = 0
+                } else if (frame < this.data_buffers[1].size) {
+                    this.data_buffers[1].position(frame - this.data_buffers[0].size)
+                    this._active_buffer = 1
+                } else {
+                    val loop_size = (loop_points.second - loop_points.first)
+                    val loop_count = (this.release_frame!! - loop_points.first) / loop_size
+                    if (remainder < loop_size) {
+                        this.data_buffers[1].position(remainder)
+                        this._active_buffer = 1
+                    } else {
+                        this.data_buffers[2].position(frame - this.data_buffers[0].size - loop_count * this.data_buffers[1].size)
+                        this._active_buffer = 2
+                    }
+                }
+            } else {
+                this.data_buffers[0].position(frame)
+                this._active_buffer = 0
+            }
+            false
+        } catch (e: PitchedBuffer.PitchedBufferOverflow) {
+            true
         }
+
     }
 
     fun get_release_duration(): Int {
         return this.volume_envelope.frames_release
+    }
+
+    private fun _get_active_data_buffer(): PitchedBuffer {
+        return this.data_buffers[this._active_buffer]
     }
 
     fun get_next_frame(): Int? {
@@ -282,6 +298,7 @@ class SampleHandle(
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (this.working_frame < this.volume_envelope.frames_delay) {
+            this._active_buffer = 0
             this.working_frame += 1
             this.previous_frame = 0F
             return 0
@@ -300,16 +317,27 @@ class SampleHandle(
                 10F.pow(this.volume_envelope.sustain_attenuation)
             }
         }
-        var block_buffer_advance = false
-        if (!is_pressed) {
-            if (this.data_buffer.is_overflowing()) {
-                this.is_dead = true
-                return null
+        if (this._get_active_data_buffer().is_overflowing()) {
+            if (!is_pressed || this.loop_points == null) {
+                if (this._active_buffer < this.data_buffers.size) {
+                    this._active_buffer += 1
+                    this._get_active_data_buffer().position(0)
+                } else {
+                    this.is_dead = true
+                    return null
+                }
+            } else {
+               if (this._active_buffer == 0) {
+                   this._active_buffer += 1
+                   this._get_active_data_buffer().position(0)
+               }
             }
+        }
 
+        if (!is_pressed) {
             val release_frame_count = min(
                 this.volume_envelope.frames_release,
-                this.data_buffer.size - this.release_frame!!
+                (Array(this.data_buffers.size) { this.data_buffers[it].size }.sum()) - this.release_frame!!
             )
 
             val current_position_release = this.working_frame - this.release_frame!!
@@ -318,16 +346,6 @@ class SampleHandle(
             } else {
                 this.is_dead = true
                 return null
-            }
-        } else if (this.pitched_loop_points != null) {
-            val offset = this.data_buffer.position() - this.pitched_loop_points!!.second
-            if (offset >= 0) {
-                this.data_buffer.position(this.pitched_loop_points!!.first)
-                block_buffer_advance = this.pitched_loop_remainder_position < this.pitched_loop_remainder
-                this.pitched_loop_remainder_position += 1
-                if (block_buffer_advance) {
-                    println("Hold Frame (${this.pitched_loop_remainder_position} / ${this.pitched_loop_remainder}")
-                }
             }
         }
 
@@ -352,7 +370,7 @@ class SampleHandle(
         this.working_frame += 1
 
         var frame_value = try {
-            this.data_buffer.get(block_buffer_advance).toFloat()
+            this._get_active_data_buffer().get().toFloat()
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
             return null
@@ -386,35 +404,14 @@ class SampleHandle(
     }
 
     fun repitch(adjustment: Float) {
-        this.data_buffer.repitch(adjustment)
-        if (this.loop_points == null) {
-            this.pitched_loop_remainder = 0
-            this.pitched_loop_remainder_position = 0
-            return
+        println("REPITCHING...")
+        var i = 0
+        for (buffer in this.data_buffers) {
+            buffer.repitch(adjustment)
+            println("${i}: |${buffer.pitch_adjustment}|${buffer.pitch}|${buffer._range.last - buffer._range.first} ${buffer.size}, ${this.sample_rate.toFloat() / buffer.size.toFloat()}")
+            i += 1
         }
-
-        val new_pitch = this.pitch_shift * adjustment
-
-        val start = (this.loop_points.first.toFloat() / new_pitch)
-        this.pitched_loop_points = Pair(
-            start.toInt(),
-            start.toInt() + ((this.loop_points.second - this.loop_points.first).toFloat() / new_pitch).toInt()
-        )
-
-        val loop_size = (this.pitched_loop_points!!.second - this.pitched_loop_points!!.first)
-        val f = this.sample_rate / loop_size
-
-        if (f < 27) {
-            this.pitched_loop_remainder = 0
-            this.pitched_loop_remainder_position = 0
-            return
-        }
-
-        this.pitched_loop_remainder = this.sample_rate % loop_size
-        this.pitched_loop_remainder_position = 0
-
-        val m = this.sample_rate % loop_size
-        println("Repitched, loop: $f, $m, ${(m * f)} ($loop_size)")
+        println("----")
     }
 }
 

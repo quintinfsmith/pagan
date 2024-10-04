@@ -5,12 +5,14 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null) {
+class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, range: Range? = null, var is_loop: Boolean = false) {
+    class PitchedBufferOverflow(): Exception()
     val max: Int
-    var size: Int = (data.size.toFloat() / this.pitch).roundToInt()
     var forced_points: MutableList<Int> = mutableListOf()
     var prev_get: Short? = null
     var weight: Boolean = false
+    var _range = range ?: 0 until data.size
+    var size: Int = ((this._range.first - this.range.second).toFloat() / this.pitch).roundToInt()
 
     private var virtual_position: Int = 0
     var pitch_adjustment: Float = 1F
@@ -20,7 +22,12 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
     }
 
     fun is_overflowing(): Boolean {
-        return (this.virtual_position.toFloat() * this.get_calculated_pitch()).toInt() >= this.data.size
+        if (this.is_loop) {
+            return false
+        }
+
+        val size = this._range.end - this._range.start
+        return (this.virtual_position.toFloat() * this.get_calculated_pitch()).toInt() - this._range.start >= this._range.end
     }
 
     fun get_calculated_pitch(): Float {
@@ -45,27 +52,46 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
         this.virtual_position = index
     }
 
-    fun get(hold_frame: Boolean = false): Short {
+    private fun _get_real_frame(i: Int): Short {
+        var adj_i = i + this._range.first
+        var range_size = this._range.end - this._range.start
+        var adj_i = this._range.first + if (is_loop) {
+            i % range_size
+        } else if (i >= range_size) {
+            throw PitchedBufferOverflow()
+        }  else {
+            i
+        }
+
+        this.data[adj_i]
+    }
+
+    fun get(): Short {
         val pitch = this.get_calculated_pitch()
+        val position = ((this.virtual_position).toFloat() * pitch).toInt()
         var output = if (pitch < 1F) {
-            val position = ((this.virtual_position).toFloat() * pitch).toInt()
-            this.data[min(position, this.data.size - 1)]
+            this.get_real_frame(position)
         } else {
-            val position_a = (this.virtual_position.toFloat() * pitch).toInt()
             val position_b = ((this.virtual_position + 1).toFloat() * pitch).toInt()
 
             var tmp = 0F
+            var x = 0
             for (i in position_a until position_b) {
-                tmp += this.data[min(i, this.data.size - 1)].toFloat()
+                tmp += try {
+                    this.get_real_frame(i)
+                } catch (e: PitchedBufferOverflow) {
+                    break
+                }
+                x += 1
             }
 
-            tmp /= (position_b - position_a).toFloat()
+            if (x != 0) 
+                tmp /= x.toFloat()
+            }
             tmp.toInt().toShort()
         }
 
-        if (!hold_frame) {
-            this.virtual_position += 1
-        }
+        this.virtual_position += 1
 
         if (this.weight && this.prev_get != null) {
             output = ((this.prev_get!!.toInt() + output.toInt()) / 2).toShort()

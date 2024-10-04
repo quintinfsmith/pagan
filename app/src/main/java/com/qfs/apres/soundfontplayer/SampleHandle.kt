@@ -23,7 +23,7 @@ class SampleHandle(
     var pan: Float = 0F,
     var volume: Float = 1F,
     var linked_handle_count: Int = 1,
-    var data_buffer: PitchedBuffer = PitchedBuffer(data, pitch_shift),
+    var data_buffers: Array<PitchedBuffer> = arrayOf(),
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
 ) {
@@ -42,6 +42,46 @@ class SampleHandle(
     var kill_frame: Int? = null
     var is_dead = false
     init {
+        this.data_buffers = arrayOf<PitchedBuffer>(
+            if (this.loop_points != null) {
+                PitchedBuffer(
+                    data = this.data,
+                    pitch = this.pitch_shift,
+                    range = 0 until this.loop_points.first,
+                    is_loop = false
+                )
+            } else {
+                PitchedBuffer(
+                    data = this.data
+                    pitch = this.pitch_shift
+                )
+            },
+            if (this.loop_points != null) {
+                PitchedBuffer(
+                    data = this.data,
+                    pitch = this.pitch_shift,
+                    range = this.loop_points.first until this.loop_points.second,
+                    is_loop = true
+                )
+            } else {
+                null
+            },
+            if (this.loop_points != null) {
+                PitchedBuffer(
+                    data = this.data,
+                    pitch = this.pitch_shift,
+                    range = this.loop_points.second until this.data.size,
+                    is_loop = false
+                )
+            } else {
+                null
+            }
+        )
+
+        if (this.loop_points != null) {
+            this.data_buffers.add
+        }
+
         // TODO: Handle non-continuous modulators
         //for ((key, modulator) in this.modulators) {
         //    if (!modulator.source_operator.continuous) {

@@ -89,10 +89,10 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
             this.virtual_position = this.virtual_position % this.size
         }
 
-        if (this.weight && this.prev_get != null) {
-            output = ((this.prev_get!!.toInt() + output.toInt()) / 2).toShort()
-            this.weight = false
-        }
+        //if (this.weight && this.prev_get != null) {
+        //    output = ((this.prev_get!!.toInt() + output.toInt()) / 2).toShort()
+        //    this.weight = false
+        //}
         this.prev_get = output
         return output
     }

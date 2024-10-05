@@ -52,7 +52,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var pitch_shift = 1F
 
         val original_note = sample_directive.root_key ?: sample_directive.sample!!.originalPitch
-        println("($note) ${sample_directive.root_key} | ${sample_directive.sample!!.originalPitch}")
 
         // 255 Means its an unpitched note and needs no correction.
         if (original_note != 255) {

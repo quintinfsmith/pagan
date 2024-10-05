@@ -123,6 +123,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val output = FloatArray(this.buffer_size * 2 / this.core_count) {
             0f
         }
+
         for ((sample_handle, index) in sample_handles_to_use) {
             this.populate_partial_int_array(sample_handle, output, index)
         }

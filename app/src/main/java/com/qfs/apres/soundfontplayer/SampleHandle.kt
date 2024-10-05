@@ -371,7 +371,7 @@ class SampleHandle(
         this.working_frame += 1
 
         var frame_value = try {
-            this._get_active_data_buffer().get(!is_pressed).toFloat()
+            this._get_active_data_buffer().get().toFloat()
         } catch (e: PitchedBuffer.PitchedBufferOverflow) {
             this.is_dead = true
             return null

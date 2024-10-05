@@ -7,8 +7,6 @@ import kotlin.math.roundToInt
 class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, range: IntRange? = null, var is_loop: Boolean = false) {
     class PitchedBufferOverflow(): Exception()
     val max: Int
-    var forced_points: MutableList<Int> = mutableListOf()
-    var prev_get: Short? = null
     var weight: Boolean = false
     var _range = range ?: 0 until data.size
     var size: Int = ((this._range.last + 1 - this._range.first).toFloat() / this.pitch).roundToInt()
@@ -59,16 +57,11 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
         return this.data[adj_i]
     }
 
-    fun get(ignore_loop: Boolean = false): Short {
+    fun get(): Short {
         val pitch = this.get_calculated_pitch()
         val position = (this.virtual_position++).toFloat() * pitch
         var output = this._get_real_frame(position)
 
-        //if (this.prev_get != null) {
-        //    output = ((this.prev_get!!.toInt() + output.toInt()) / 2).toShort()
-        //}
-
-        this.prev_get = output
         return output
     }
 }

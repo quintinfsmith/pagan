@@ -2029,7 +2029,7 @@ class MainActivity : AppCompatActivity() {
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
         this.save_configuration()
-        this.reinit_playback_device()
+        this.set_soundfont(this.configuration.soundfont)
     }
 
     fun reinit_playback_device() {
@@ -2127,12 +2127,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.disconnect_feedback_device()
+
+        val buffer_size = this.configuration.sample_rate / 4
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
             this.configuration.sample_rate,
-            //sample_limit = this.configuration.playback_sample_limit,
-            //ignore_envelopes_and_lfo = true
+            buffer_size - 2 + (if (buffer_size % 2 == 0) { 2 } else { 1 })
         )
+        this._current_feedback_device = 0
     }
 
     fun block_physical_midi_output() {

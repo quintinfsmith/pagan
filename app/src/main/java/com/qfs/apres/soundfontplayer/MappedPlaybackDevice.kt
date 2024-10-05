@@ -52,7 +52,6 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
 
         this.setup_frame_markers()
         this.wave_generator.set_position(start_frame, true)
-
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
             var ts: Long = System.currentTimeMillis()

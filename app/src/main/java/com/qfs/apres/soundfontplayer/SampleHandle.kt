@@ -24,15 +24,12 @@ class SampleHandle(
     var pan: Float = 0F,
     var volume: Float = 1F,
     var linked_handle_count: Int = 1,
-    var data_buffers: Array<PitchedBuffer> = arrayOf(),
+    data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
 ) {
     var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
     val smoothing_factor: Float
-    var pitched_loop_points: Pair<Int, Int>? = null
-    var pitched_loop_remainder: Int = 0
-    var pitched_loop_remainder_position: Int = 0
     var pitch_adjustment: Float = 1F
 
     var previous_frame = 0f
@@ -43,9 +40,12 @@ class SampleHandle(
     var kill_frame: Int? = null
     var is_dead = false
     var _active_buffer = 0
+    var _data_buffers: Array<PitchedBuffer>
+
+
 
     init {
-        this.data_buffers = if (this.loop_points != null) {
+        this._data_buffers = data_buffers ?: if (this.loop_points != null) {
             arrayOf<PitchedBuffer>(
                 PitchedBuffer(
                     data = this.data,
@@ -190,8 +190,8 @@ class SampleHandle(
                 pan = original.pan,
                 volume = original.volume,
                 linked_handle_count = original.linked_handle_count,
-                data_buffers = Array(original.data_buffers.size) { i: Int ->
-                    var buffer = original.data_buffers[i]
+                data_buffers = Array(original._data_buffers.size) { i: Int ->
+                    var buffer = original._data_buffers[i]
                     // constructing this way allows us to skip calculating max
                     val new_buffer = PitchedBuffer(
                         data = buffer.data,
@@ -219,7 +219,7 @@ class SampleHandle(
 
     fun max_frame_value(): Int {
         var output = 0
-        for (buffer in this.data_buffers) {
+        for (buffer in this._data_buffers) {
             output = max(output, buffer.max)
         }
         return output
@@ -245,36 +245,34 @@ class SampleHandle(
         val release_frame = this.release_frame
         this.is_dead = try {
             if (release_frame == null || release_frame > frame) {
-                if (loop_points == null || frame < this.data_buffers[0].size) {
-                    this.data_buffers[0].position(frame)
+                if (loop_points == null || frame < this._data_buffers[0].size) {
+                    this._data_buffers[0].position(frame)
                     this._active_buffer = 0
                 } else {
-                    val loop_size = (loop_points.second - loop_points.first)
-
-                    this.data_buffers[1].position((frame - this.data_buffers[0].size))
+                    this._data_buffers[1].position((frame - this._data_buffers[0].size))
                     this._active_buffer = 1
                 }
             } else if (loop_points != null && loop_points.first < loop_points.second) {
-                if (frame < this.data_buffers[0].size) {
-                    this.data_buffers[0].position(frame)
+                if (frame < this._data_buffers[0].size) {
+                    this._data_buffers[0].position(frame)
                     this._active_buffer = 0
-                } else if (frame < this.data_buffers[1].size) {
-                    this.data_buffers[1].position(frame - this.data_buffers[0].size)
+                } else if (frame < this._data_buffers[1].size) {
+                    this._data_buffers[1].position(frame - this._data_buffers[0].size)
                     this._active_buffer = 1
                 } else {
                     val remainder = frame - this.release_frame!!
                     val loop_size = (loop_points.second - loop_points.first)
                     if (remainder < loop_size) {
-                        this.data_buffers[1].position(remainder)
+                        this._data_buffers[1].position(remainder)
                         this._active_buffer = 1
                     } else {
                         val loop_count = (this.release_frame!! - loop_points.first) / loop_size
-                        this.data_buffers[2].position(frame - this.data_buffers[0].size - loop_count * this.data_buffers[1].size)
+                        this._data_buffers[2].position(frame - this._data_buffers[0].size - loop_count * this._data_buffers[1].size)
                         this._active_buffer = 2
                     }
                 }
             } else {
-                this.data_buffers[0].position(frame)
+                this._data_buffers[0].position(frame)
                 this._active_buffer = 0
             }
             false
@@ -288,7 +286,7 @@ class SampleHandle(
     }
 
     private fun _get_active_data_buffer(): PitchedBuffer {
-        return this.data_buffers[this._active_buffer]
+        return this._data_buffers[this._active_buffer]
     }
 
     fun get_next_frame(): Int? {
@@ -321,7 +319,7 @@ class SampleHandle(
 
         if (this._get_active_data_buffer().is_overflowing()) {
             if (!is_pressed || this.loop_points == null) {
-                if (this._active_buffer < this.data_buffers.size) {
+                if (this._active_buffer < this._data_buffers.size) {
                     this._active_buffer += 1
                 } else {
                     this.is_dead = true
@@ -338,7 +336,7 @@ class SampleHandle(
         if (!is_pressed) {
             val release_frame_count = min(
                 this.volume_envelope.frames_release,
-                (Array(this.data_buffers.size) { this.data_buffers[it].size }.sum()) - this.release_frame!!
+                (Array(this._data_buffers.size) { this._data_buffers[it].size }.sum()) - this.release_frame!!
             )
 
             val current_position_release = this.working_frame - this.release_frame!!
@@ -409,7 +407,7 @@ class SampleHandle(
 
     fun repitch(adjustment: Float) {
         var i = 0
-        for (buffer in this.data_buffers) {
+        for (buffer in this._data_buffers) {
             buffer.repitch(adjustment)
             i += 1
         }

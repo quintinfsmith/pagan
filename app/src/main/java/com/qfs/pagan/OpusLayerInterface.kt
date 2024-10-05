@@ -2030,8 +2030,12 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     // UI FUNCS -----------------------
     private fun apply_bill_changes() {
-        val editor_table = this.get_editor_table() ?: return // when importing
-        val force_column_updates = editor_table.recalculate_column_maxes()
+        val editor_table = try {
+            this.get_editor_table()
+        } catch (e: MissingEditorTableException) {
+            this.ui_change_bill.clear()
+            return
+        }
         this.runOnUiThread { activity: MainActivity ->
             this.ui_change_bill.consolidate()
             while (true) {

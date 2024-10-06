@@ -9,29 +9,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
     private var _queued_cursor_selection: OpusManagerCursor? = null
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
-        // Need to clear cursor before change since the way the editor_table updates
-        // Cursors doesn't take into account changes to row count
-        val bkp_cursor = this.cursor.copy()
-        this.cursor_clear()
-
         super.insert_line(channel, line_offset, line)
-
-        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Line) {
-            this.cursor_select_line(bkp_cursor.channel, bkp_cursor.line_offset)
-        }
     }
 
     override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
-        val bkp_cursor = this.cursor.copy()
-        this.cursor_clear()
-
-        val output = super.new_line(channel, line_offset)
-
-        if (bkp_cursor.mode == OpusManagerCursor.CursorMode.Line) {
-            this.cursor_select_line(bkp_cursor.channel, bkp_cursor.line_offset)
-        }
-
-        return output
+        return super.new_line(channel, line_offset)
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
@@ -174,7 +156,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
     override fun insert_beats(beat_index: Int, count: Int) {
         val bkp_cursor = this.cursor.copy()
-        this.cursor_clear()
 
         super.insert_beats(beat_index, count)
 
@@ -410,7 +391,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_LINE_CTL_ROW,
                             listOf(
-                                this.cursor.ctl_type,
+                                this.cursor.ctl_type!!,
                                 this.cursor.channel,
                                 this.cursor.line_offset
                             )
@@ -420,7 +401,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW,
                             listOf(
-                                this.cursor.ctl_type,
+                                this.cursor.ctl_type!!,
                                 this.cursor.channel
                             )
                         )
@@ -428,7 +409,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     CtlLineLevel.Global -> {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW,
-                            listOf(this.cursor.ctl_type)
+                            listOf(this.cursor.ctl_type!!)
                         )
                     }
                     null -> {
@@ -446,12 +427,12 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 this.push_to_history_stack(
                     HistoryToken.CURSOR_SELECT_RANGE,
                     listOf(
-                        this.cursor.range.first.channel,
-                        this.cursor.range.first.line_offset,
-                        this.cursor.range.first.beat,
-                        this.cursor.range.second.channel,
-                        this.cursor.range.second.line_offset,
-                        this.cursor.range.second.beat
+                        this.cursor.range!!.first.channel,
+                        this.cursor.range!!.first.line_offset,
+                        this.cursor.range!!.first.beat,
+                        this.cursor.range!!.second.channel,
+                        this.cursor.range!!.second.line_offset,
+                        this.cursor.range!!.second.beat
                     )
                 )
             }
@@ -461,7 +442,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_LINE_CTL,
                             listOf(
-                                this.cursor.ctl_type
+                                this.cursor.ctl_type!!,
                                 this.cursor.get_beatkey(),
                                 this.cursor.get_position()
                             )
@@ -471,7 +452,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_CHANNEL_CTL,
                             listOf(
-                                this.cursor.ctl_type
+                                this.cursor.ctl_type!!,
                                 this.cursor.channel,
                                 this.cursor.beat,
                                 this.cursor.get_position()
@@ -482,7 +463,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         this.push_to_history_stack(
                             HistoryToken.CURSOR_SELECT_GLOBAL_CTL,
                             listOf(
-                                this.cursor.ctl_type
+                                this.cursor.ctl_type!!,
                                 this.cursor.beat,
                                 this.cursor.get_position()
                             )

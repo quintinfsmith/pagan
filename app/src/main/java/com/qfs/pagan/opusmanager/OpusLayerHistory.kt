@@ -760,15 +760,19 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
-        this._forget {
-            super.insert_beats(beat_index, count)
+        this._remember {
+            this._forget {
+                super.insert_beats(beat_index, count)
+            }
+            this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, count) )
         }
-        this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, count) )
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
-        super.insert_beat(beat_index, beats_in_column)
-        this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )
+        this._remember {
+            super.insert_beat(beat_index, beats_in_column)
+            this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )
+        }
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {

@@ -1445,9 +1445,12 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    open fun on_remember() { }
+
     private fun <T> _remember(callback: () -> T): T {
         return try {
             this.history_cache.remember {
+                this.on_remember()
                 callback()
             }
         } catch (history_error: HistoryCache.HistoryError) {

@@ -5,6 +5,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.math.E
+import kotlin.math.pow
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
     enum class StereoMode {
@@ -222,6 +224,17 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             working_int_array[(f * 2) + 1] += left_value
         }
 
+        for (f in range) {
+            val right_pos = f * 2
+            val right_value = working_int_array[right_pos]
+            val e_right = E.toFloat().pow(2F * right_value)
+            working_int_array[right_pos] =  (e_right - 1F) / (e_right + 1F)
+            val left_pos = (f * 2) + 1
+            val left_value = working_int_array[left_pos]
+            val e_left = E.toFloat().pow(2F * left_value)
+            working_int_array[left_pos] =  (e_left - 1F) / (e_left + 1F)
+        }
+
         if (!sample_handle.is_dead) {
             sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
         }
@@ -285,8 +298,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
         for (handle in handles) {
             // increase sample's volume so it take up the full range -1 .. 1 (the sample may be quieter)
-            val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
-            handle.volume /= handle_volume_factor
+            //val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
+            //handle.volume /= handle_volume_factor
 
 
             val split_handles = Array<Pair<SampleHandle?, Int>>(this.core_count - core) { k: Int ->

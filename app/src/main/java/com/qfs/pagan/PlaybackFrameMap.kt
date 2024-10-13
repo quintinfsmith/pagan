@@ -228,14 +228,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 this._setter_overlaps[setter_id]!![0] + this._setter_overlaps[setter_id]!![1]
             }
 
-            val maximum = 1f / 3f
-            val minimum = 1f / 5f
-            val delta = maximum - minimum
-
-            var limit = maximum
-            for (i in 1 until overlap - 1) {
-                limit -= 2f.pow(0 - i) * delta
-            }
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
@@ -247,14 +239,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
 
                 handle_uuid_set.add(handle.uuid)
-                // won't increase sample's volume, but will use sample's actual volume if it is less than the available volume
-                val sample_volume_adjustment = limit // min(1F, limit / handle_volume_factor)
-
-                handle.volume = if (is_percussion) {
-                    handle.volume * sample_volume_adjustment
-                } else {
-                    handle.volume * sample_volume_adjustment * .6f // Not 100% sure about using this factor here, but it seems to do the trick
-                }
             }
 
             handles

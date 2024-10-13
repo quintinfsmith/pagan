@@ -297,10 +297,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // then populate the next active frames with upcoming sample handles
         val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
         for (handle in handles) {
-            // increase sample's volume so it take up the full range -1 .. 1 (the sample may be quieter)
-            //val handle_volume_factor = handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat()
-            //handle.volume /= handle_volume_factor
-
 
             val split_handles = Array<Pair<SampleHandle?, Int>>(this.core_count - core) { k: Int ->
                 Pair(

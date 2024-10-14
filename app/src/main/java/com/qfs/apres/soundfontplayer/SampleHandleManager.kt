@@ -126,19 +126,12 @@ class SampleHandleManager(
         }
 
         for ((sample,p_instrument) in sample_pairs) {
-            val linked_count = when (sample.sample!!.sampleType and 7) {
-                1 -> sample_counts[1]
-                2 -> sample_counts[0]
-                4 -> sample_counts[2]
-                else -> continue
-            }
             val new_handle = this.sample_handle_generator.get(
                 event,
                 sample,
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
-                preset.global_zone,
-                min(linked_count, this.sample_limit ?: linked_count)
+                preset.global_zone
             )
 
             new_handle.volume = velocity.toFloat()  / 128.toFloat()
@@ -189,21 +182,15 @@ class SampleHandleManager(
         }
 
         for ((sample, p_instrument) in sample_pairs) {
-            val linked_count = when (sample.sample!!.sampleType and 7) {
-                1 -> sample_counts[1]
-                2 -> sample_counts[0]
-                4 -> sample_counts[2]
-                else -> continue
-            }
             val new_handle = this.sample_handle_generator.get(
                 event,
                 sample,
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
-                preset.global_zone,
-                min(linked_count, this.sample_limit ?: linked_count)
+                preset.global_zone
             )
-            new_handle.volume = (event.get_velocity().toFloat() / 128F)
+            //new_handle.volume = (event.get_velocity().toFloat() / 128F)
+            new_handle.volume = (event.get_velocity().toFloat() * .9F / 128F)
             output.add(new_handle)
 
             if (this.sample_limit != null && output.size >= this.sample_limit!!) {

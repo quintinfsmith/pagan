@@ -23,7 +23,6 @@ class SampleHandle(
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
     var volume: Float = 1F,
-    var linked_handle_count: Int = 1,
     data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
@@ -189,7 +188,6 @@ class SampleHandle(
                 filter_cutoff = original.filter_cutoff,
                 pan = original.pan,
                 volume = original.volume,
-                linked_handle_count = original.linked_handle_count,
                 data_buffers = Array(original._data_buffers.size) { i: Int ->
                     var buffer = original._data_buffers[i]
                     // constructing this way allows us to skip calculating max
@@ -294,7 +292,7 @@ class SampleHandle(
             return null
         }
 
-        var frame_factor = 1F / this.linked_handle_count
+        var frame_factor = 1F
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (this.working_frame < this.volume_envelope.frames_delay) {

@@ -565,7 +565,12 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             output.add(Pair(blocker.first, blocker.second))
         }
 
-        val tree = this.get_tree(beat_key, position)
+        val tree = try {
+            this.get_tree(beat_key, position)
+        } catch (e: OpusTree.InvalidGetCall) {
+            return output
+        }
+
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
                 output.addAll(

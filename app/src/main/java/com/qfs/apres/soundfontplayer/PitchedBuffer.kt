@@ -2,6 +2,7 @@ package com.qfs.apres.soundfontplayer
 
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, range: IntRange? = null, var is_loop: Boolean = false) {
@@ -9,7 +10,7 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
     val max: Int
     var weight: Boolean = false
     var _range = range ?: 0 until data.size
-    var size: Int = ((this._range.last + 1 - this._range.first).toFloat() / this.pitch).roundToInt()
+    var size: Int = ((this._range.last - this._range.first).toFloat() / this.pitch).roundToInt()
 
     private var virtual_position: Int = 0
     var pitch_adjustment: Float = 1F
@@ -28,7 +29,7 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
 
     fun repitch(new_pitch_adjustment: Float) {
         this.pitch_adjustment = new_pitch_adjustment
-        this.size = ((this._range.last + 1 - this._range.first).toFloat() / this.pitch).roundToInt()
+        this.size = ((this._range.last - this._range.first).toFloat() / this.pitch).roundToInt()
     }
 
     fun reset_pitch() {
@@ -45,14 +46,14 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
     }
 
     private fun _get_real_frame(i: Float): Short {
-        var range_size = this._range.last + 1 - this._range.first
-        var adj_i = this._range.first + if (is_loop) {
+        var range_size = this._range.last - this._range.first
+        var adj_i = min(this._range.last, this._range.first + if (this.is_loop) {
             i.toInt() % range_size
-        } else if (i >= range_size) {
+        } else if (i > range_size + 1) {
             throw PitchedBufferOverflow()
         } else {
             i.toInt()
-        }
+        })
 
         return this.data[adj_i]
     }

@@ -39,8 +39,7 @@ class SoundFontPlayerUnitTest {
                 samples.first(),
                 preset_instrument.instrument?.global_zone ?: SampleDirective(),
                 preset_instrument,
-                preset.global_zone,
-                1
+                preset.global_zone
             )
 
             assertEquals(

@@ -77,20 +77,18 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val data = sample_directive.sample!!.data!!
         val initial_attenuation: Float = (sample_directive.attenuation ?: global_sample_directive.attenuation ?: 0F) + (instrument_directive.attenuation ?: 0F) + (global_instrument_directive.attenuation ?: 0F)
         val vol_env_sustain: Float = (sample_directive.vol_env_sustain ?: global_sample_directive.vol_env_sustain ?: 0F) + (instrument_directive.vol_env_sustain ?: 0F) + (global_instrument_directive.vol_env_sustain ?: 0F)
+        val vol_env_delay = (sample_directive.vol_env_delay ?: global_sample_directive.vol_env_delay ?: 0F ) * (instrument_directive.vol_env_delay ?: 1F) * (global_instrument_directive.vol_env_delay ?: 1F)
+
         val volume_envelope = if (this.ignore_envelopes) {
             // Delay is still needed
             SampleHandle.VolumeEnvelope(
                 sample_rate = this.sample_rate,
-                delay = (sample_directive.vol_env_delay ?: global_sample_directive.vol_env_delay ?: 0F )
-                    * (instrument_directive.vol_env_delay ?: 1F)
-                    * (global_instrument_directive.vol_env_delay ?: 1F)
+                delay = vol_env_delay
             )
         } else {
             SampleHandle.VolumeEnvelope(
                 sample_rate = this.sample_rate,
-                delay = (sample_directive.vol_env_delay ?: global_sample_directive.vol_env_delay ?: 0F )
-                    * (instrument_directive.vol_env_delay ?: 1F)
-                    * (global_instrument_directive.vol_env_delay ?: 1F),
+                delay = vol_env_delay,
                 attack = (sample_directive.vol_env_attack ?: global_sample_directive.vol_env_attack ?: 0F )
                     * (instrument_directive.vol_env_attack ?: 1F)
                     * (global_instrument_directive.vol_env_attack ?: 1F),

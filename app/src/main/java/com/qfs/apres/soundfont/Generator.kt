@@ -101,18 +101,23 @@ class Generator(
     }
 
     fun asIntSigned(): Int {
-        val unsigned = shAmount + (wAmount * 256)
-        // Get 2's compliment
-        return if (unsigned shr 15 == 1) {
-            0 - (((unsigned xor 0xFFFF) + 1) and 0x7FFF)
+        return if (this.wAmount and 0x80 == 0x80) {
+            val w_amount = this.wAmount and 0x7F
+            val unsigned = ((w_amount * 256) + this.shAmount)
+            0 - ((unsigned xor 0x00007FFF) + 1)
         } else {
-            unsigned
+            (this.wAmount * 256) + this.shAmount
         }
     }
 
     fun asTimecent(): Float {
-        val p = this.asIntSigned().toFloat() / 1200F
-        return (2F).pow(p)
+        val signed = this.asIntSigned()
+        return if (signed == -32768) {
+            0F
+        } else {
+            val p = signed.toFloat() / 1200F
+            (2F).pow(p)
+        }
     }
 
     fun asPair(): Pair<Int, Int> {

@@ -39,40 +39,37 @@ class SampleHandle(
     var kill_frame: Int? = null
     var is_dead = false
     var _active_buffer = 0
-    var _data_buffers: Array<PitchedBuffer>
-
-
+    var _data_buffers: Array<PitchedBuffer> = data_buffers ?: if (this.loop_points != null) {
+        arrayOf<PitchedBuffer>(
+            PitchedBuffer(
+                data = this.data,
+                pitch = this.pitch_shift,
+                range = 0 until this.loop_points.first,
+                is_loop = false
+            ),
+            PitchedBuffer(
+                data = this.data,
+                pitch = this.pitch_shift,
+                range = this.loop_points.first .. this.loop_points.second,
+                is_loop = true
+            ),
+            PitchedBuffer(
+                data = this.data,
+                pitch = this.pitch_shift,
+                range = this.loop_points.second + 1 until this.data.size,
+                is_loop = false
+            )
+        )
+    } else {
+        arrayOf(
+            PitchedBuffer(
+                data = this.data,
+                pitch = this.pitch_shift
+            )
+        )
+    }
 
     init {
-        this._data_buffers = data_buffers ?: if (this.loop_points != null) {
-            arrayOf<PitchedBuffer>(
-                PitchedBuffer(
-                    data = this.data,
-                    pitch = this.pitch_shift,
-                    range = 0 until this.loop_points.first,
-                    is_loop = false
-                ),
-                PitchedBuffer(
-                    data = this.data,
-                    pitch = this.pitch_shift,
-                    range = this.loop_points.first .. this.loop_points.second,
-                    is_loop = true
-                ),
-                PitchedBuffer(
-                    data = this.data,
-                    pitch = this.pitch_shift,
-                    range = this.loop_points.second + 1 until this.data.size,
-                    is_loop = false
-                )
-            )
-        } else {
-            arrayOf(
-                PitchedBuffer(
-                    data = this.data,
-                    pitch = this.pitch_shift
-                )
-            )
-        }
 
         // TODO: Handle non-continuous modulators
         //for ((key, modulator) in this.modulators) {
@@ -369,7 +366,6 @@ class SampleHandle(
         var frame_value = try {
             this._get_active_data_buffer().get().toFloat()
         } catch (e: PitchedBuffer.PitchedBufferOverflow) {
-            this.is_dead = true
             return null
         } catch (e: ArrayIndexOutOfBoundsException) {
             this.is_dead = true
@@ -404,10 +400,8 @@ class SampleHandle(
     }
 
     fun repitch(adjustment: Float) {
-        var i = 0
         for (buffer in this._data_buffers) {
             buffer.repitch(adjustment)
-            i += 1
         }
     }
 }

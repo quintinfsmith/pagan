@@ -134,7 +134,7 @@ class SampleHandleManager(
                 preset.global_zone
             )
 
-            new_handle.volume = velocity.toFloat()  / 128.toFloat()
+            new_handle.volume = velocity.toFloat() / 128.toFloat()
             output.add(new_handle)
             if (this.sample_limit != null && output.size >= this.sample_limit!!) {
                 break
@@ -189,8 +189,7 @@ class SampleHandleManager(
                 p_instrument,
                 preset.global_zone
             )
-            //new_handle.volume = (event.get_velocity().toFloat() / 128F)
-            new_handle.volume = (event.get_velocity().toFloat() * .9F / 128F)
+            new_handle.volume = (event.get_velocity().toFloat() / 128F)
             output.add(new_handle)
 
             if (this.sample_limit != null && output.size >= this.sample_limit!!) {

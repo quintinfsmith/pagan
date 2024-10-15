@@ -5,7 +5,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.math.E
+import kotlin.math.tanh
 import kotlin.math.pow
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
@@ -227,12 +227,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (f in range) {
             val right_pos = f * 2
             val right_value = working_int_array[right_pos]
-            val e_right = E.toFloat().pow(2F * right_value)
-            working_int_array[right_pos] =  (e_right - 1F) / (e_right + 1F)
+            working_int_array[right_pos] = tanh(right_value)
+
             val left_pos = (f * 2) + 1
             val left_value = working_int_array[left_pos]
-            val e_left = E.toFloat().pow(2F * left_value)
-            working_int_array[left_pos] =  (e_left - 1F) / (e_left + 1F)
+            working_int_array[left_pos] = tanh(left_value)
         }
 
         if (!sample_handle.is_dead) {

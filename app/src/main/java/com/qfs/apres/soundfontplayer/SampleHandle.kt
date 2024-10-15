@@ -314,7 +314,7 @@ class SampleHandle(
 
         if (this._get_active_data_buffer().is_overflowing()) {
             if (!is_pressed || this.loop_points == null) {
-                if (this._active_buffer < this._data_buffers.size) {
+                if (this._active_buffer < this._data_buffers.size - 1) {
                     this._active_buffer += 1
                 } else {
                     this.is_dead = true

@@ -7,7 +7,6 @@ import com.qfs.apres.soundfont.InstrumentDirective
 import com.qfs.apres.soundfont.Modulator
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -22,20 +21,21 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var preset: Int
     )
 
+    // Leaving this class in place, but max/avg aren't used anywhere for now
     class SampleData(
         var data: ShortArray,
         var max: Float? = null,
         var avg: Float? = null
     ) {
-       init {
-           if (this.max == null || this.avg == null) {
-               val tmp_array = FloatArray(this.data.size) { i: Int ->
-                   abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
-               }
-               this.max = tmp_array.max()
-               this.avg = tmp_array.average().toFloat()
-           }
-       }
+       //init {
+       //    if (this.max == null || this.avg == null) {
+       //        val tmp_array = FloatArray(this.data.size) { i: Int ->
+       //            abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
+       //        }
+       //        this.max = tmp_array.max()
+       //        this.avg = tmp_array.average().toFloat()
+       //    }
+       //}
     }
 
 

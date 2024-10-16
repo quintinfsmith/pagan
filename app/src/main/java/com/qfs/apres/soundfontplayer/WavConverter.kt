@@ -50,6 +50,7 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
             }
 
             val now = System.currentTimeMillis()
+
             if (now - current_ts > min_delta) {
                 handler.on_progress_update(chunk_count.toDouble() / total_chunk_count)
                 current_ts = now

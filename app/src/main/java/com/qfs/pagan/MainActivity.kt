@@ -207,7 +207,7 @@ class MainActivity : AppCompatActivity() {
                     val exporter_sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         44100,
-                        44100
+                        22050
                     )
 
                     val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return@thread

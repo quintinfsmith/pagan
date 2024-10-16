@@ -373,7 +373,7 @@ class SampleHandle(
         }
 
         // Low Pass Filtering
-        frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
+        //frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
         this.previous_frame = frame_value
         return (frame_value * frame_factor * this.volume).toInt()

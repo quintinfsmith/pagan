@@ -91,6 +91,7 @@ import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.BufferedOutputStream
+import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -118,9 +119,10 @@ class MainActivity : AppCompatActivity() {
         var opus_manager = OpusManager()
         var show_percussion = true
 
-        fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
+        fun export_wav(sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, handler: WavConverter.ExporterEventHandler) {
             val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
             frame_map.parse_opus()
+
             val start_frame = frame_map.get_marked_frames()[0]
 
             // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
@@ -130,7 +132,7 @@ class MainActivity : AppCompatActivity() {
 
             this.export_handle = WavConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
 
-            this.export_handle?.export_wav(frame_map, target_file, handler)
+            this.export_handle?.export_wav(frame_map, target_output_stream, tmp_file, handler)
             this.export_handle = null
         }
 
@@ -200,14 +202,28 @@ class MainActivity : AppCompatActivity() {
                     if (tmp_file.exists()) {
                         tmp_file.delete()
                     }
+
                     tmp_file.deleteOnExit()
                     val exporter_sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         44100,
                         44100
                     )
-                    this.view_model.export_wav(exporter_sample_handle_manager, tmp_file, object : WavConverter.ExporterEventHandler {
+
+                    val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return@thread
+                    val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                    val buffered_output_stream = BufferedOutputStream(output_stream)
+                    val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                    this.view_model.export_wav(exporter_sample_handle_manager, data_output_buffer, tmp_file, object : WavConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
+                        fun close_buffers() {
+                            data_output_buffer.close()
+                            buffered_output_stream.close()
+                            output_stream.close()
+                            parcel_file_descriptor.close()
+                            tmp_file.delete()
+                        }
 
                         override fun on_start() {
                             this@MainActivity.runOnUiThread {
@@ -228,20 +244,10 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         override fun on_complete() {
-                            val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return
-                            val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
-                            val buffered_output_stream = BufferedOutputStream(output_stream)
+                            this.close_buffers()
 
-                            val input_stream = tmp_file.inputStream()
-                            input_stream.copyTo(buffered_output_stream)
-                            input_stream.close()
-
-                            buffered_output_stream.close()
-                            output_stream.close()
-                            parcel_file_descriptor.close()
                             val builder = this@MainActivity.get_notification()
                             if (builder != null) {
-
                                 // NON functional ATM, Open file from notification
                                 val go_to_file_intent = Intent()
                                 go_to_file_intent.action = Intent.ACTION_VIEW
@@ -278,6 +284,8 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         override fun on_cancel() {
+                            this.close_buffers()
+
                             this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_cancelled))
                             this@MainActivity.runOnUiThread {
                                 val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress)
@@ -308,7 +316,6 @@ class MainActivity : AppCompatActivity() {
                             builder.setProgress(100, progress_rounded, false)
                             this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
                         }
-
                     })
                 }
             }

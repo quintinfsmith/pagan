@@ -9,7 +9,7 @@ import kotlin.math.min
 import kotlin.math.pow
 
 class SampleHandle(
-    var data: ShortArray,
+    var data: SampleHandleGenerator.SampleData,
     var sample_rate: Int,
     var initial_attenuation: Float = 0F,
     val loop_points: Pair<Int, Int>?,
@@ -42,28 +42,28 @@ class SampleHandle(
     var _data_buffers: Array<PitchedBuffer> = data_buffers ?: if (this.loop_points != null) {
         arrayOf<PitchedBuffer>(
             PitchedBuffer(
-                data = this.data,
+                data = this.data.data,
                 pitch = this.pitch_shift,
                 range = 0 until this.loop_points.first,
                 is_loop = false
             ),
             PitchedBuffer(
-                data = this.data,
+                data = this.data.data,
                 pitch = this.pitch_shift,
                 range = this.loop_points.first .. this.loop_points.second,
                 is_loop = true
             ),
             PitchedBuffer(
-                data = this.data,
+                data = this.data.data,
                 pitch = this.pitch_shift,
-                range = this.loop_points.second + 1 until this.data.size,
+                range = this.loop_points.second + 1 until this.data.data.size,
                 is_loop = false
             )
         )
     } else {
         arrayOf(
             PitchedBuffer(
-                data = this.data,
+                data = this.data.data,
                 pitch = this.pitch_shift
             )
         )
@@ -373,7 +373,7 @@ class SampleHandle(
         }
 
         // Low Pass Filtering
-        //frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
+        frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
         this.previous_frame = frame_value
         return (frame_value * frame_factor * this.volume).toInt()

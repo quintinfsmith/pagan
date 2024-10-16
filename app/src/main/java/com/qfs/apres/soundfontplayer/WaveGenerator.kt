@@ -6,7 +6,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.tanh
-import kotlin.math.pow
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
     enum class StereoMode {
@@ -106,6 +105,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         sample_handle.set_working_frame(start_frame)
                         item.sample_handles[real_index] = Pair(sample_handle, 0)
                     }
+
                     if (!sample_handle.is_dead) {
                         sample_handles_to_use.add(
                             Pair(
@@ -227,11 +227,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (f in range) {
             val right_pos = f * 2
             val right_value = working_int_array[right_pos]
-            working_int_array[right_pos] = tanh(right_value)
+            working_int_array[right_pos] = tanh(right_value) * .75F
 
             val left_pos = (f * 2) + 1
             val left_value = working_int_array[left_pos]
-            working_int_array[left_pos] = tanh(left_value)
+            working_int_array[left_pos] = tanh(left_value) * .75F
         }
 
         if (!sample_handle.is_dead) {
@@ -296,7 +296,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // then populate the next active frames with upcoming sample handles
         val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
         for (handle in handles) {
-
             val split_handles = Array<Pair<SampleHandle?, Int>>(this.core_count - core) { k: Int ->
                 Pair(
                     null,

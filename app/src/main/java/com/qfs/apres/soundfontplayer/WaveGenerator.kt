@@ -227,11 +227,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (f in range) {
             val right_pos = f * 2
             val right_value = working_int_array[right_pos]
-            working_int_array[right_pos] = tanh(right_value) * .75F
+            working_int_array[right_pos] = tanh(right_value)
 
             val left_pos = (f * 2) + 1
             val left_value = working_int_array[left_pos]
-            working_int_array[left_pos] = tanh(left_value) * .75F
+            working_int_array[left_pos] = tanh(left_value) 
         }
 
         if (!sample_handle.is_dead) {

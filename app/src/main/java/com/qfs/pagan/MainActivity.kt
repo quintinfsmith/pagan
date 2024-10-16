@@ -281,6 +281,7 @@ class MainActivity : AppCompatActivity() {
                                 val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
                                 btnExportProject.setImageResource(R.drawable.export)
                             }
+                            this@MainActivity._active_notification = null
                         }
 
                         override fun on_cancel() {
@@ -303,6 +304,7 @@ class MainActivity : AppCompatActivity() {
                                 .clearActions()
                             val notification_manager = NotificationManagerCompat.from(this@MainActivity)
                             notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            this@MainActivity._active_notification = null
                         }
 
                         override fun on_progress_update(progress: Double) {

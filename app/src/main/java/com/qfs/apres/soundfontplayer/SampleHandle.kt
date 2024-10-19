@@ -50,13 +50,13 @@ class SampleHandle(
             PitchedBuffer(
                 data = this.data.data,
                 pitch = this.pitch_shift,
-                range = this.loop_points.first .. this.loop_points.second,
+                range = this.loop_points.first until this.loop_points.second,
                 is_loop = true
             ),
             PitchedBuffer(
                 data = this.data.data,
                 pitch = this.pitch_shift,
-                range = this.loop_points.second + 1 until this.data.data.size,
+                range = this.loop_points.second until this.data.data.size,
                 is_loop = false
             )
         )

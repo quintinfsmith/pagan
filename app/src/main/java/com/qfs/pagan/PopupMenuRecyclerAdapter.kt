@@ -41,6 +41,7 @@ class PopupMenuRecyclerAdapter<T>(
         text_view.setOnClickListener {
             this._callback( position, this._options[position].first)
         }
+
         val color_map = (holder.itemView.context as MainActivity).view_model.color_map
         holder.itemView.setBackgroundColor(color_map[Palette.Foreground])
         text_view.background.setTint(color_map[Palette.Background])

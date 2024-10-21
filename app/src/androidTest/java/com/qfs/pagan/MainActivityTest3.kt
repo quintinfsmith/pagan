@@ -7,6 +7,8 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
+import androidx.test.espresso.action.ViewActions.slowSwipeLeft
+import androidx.test.espresso.action.ViewActions.swipeRight
 import androidx.test.espresso.action.ViewActions.swipeUp
 import androidx.test.espresso.action.ViewActions.typeTextIntoFocusedView
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -20,6 +22,7 @@ import androidx.test.filters.LargeTest
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.hamcrest.Matcher
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.TypeSafeMatcher
 import org.junit.Rule
@@ -72,6 +75,7 @@ class MainActivityTest3 {
     fun amen_break_test() {
         get(R.id.btnFrontNew).perform(click())
         get("com.qfs.pagan.LineLabelStd", 1).perform(click())
+
         get(R.id.btnInsertLine).perform(click()) // Kick
         get(R.id.btnInsertLine).perform(click()) // Ride
         get(R.id.btnInsertLine).perform(click()) // Snare
@@ -104,6 +108,83 @@ class MainActivityTest3 {
         get(R.id.etNumber).perform(click())
         get(R.id.etNumber).perform(typeTextIntoFocusedView("12"))
         onView(withText(android.R.string.ok)).perform(click())
+
+        get("com.qfs.pagan.CompoundScrollView").perform(swipeRight())
+
+        get("com.qfs.pagan.LeafButtonStd", 2).perform(click())
+        get(R.id.btnSplit).perform(click())
+        get(R.id.btnUnset).perform(click())
+        get("com.qfs.pagan.LeafButtonStd", 3).perform(click())
+        get(R.id.btnUnset).perform(click())
+
+        get("com.qfs.pagan.LeafButtonStd", 5).perform(click())
+        get(R.id.btnInsert).perform(click())
+        get(R.id.btnUnset).perform(click())
+
+        get("com.qfs.pagan.LeafButtonStd", 6).perform(click())
+        get(R.id.btnUnset).perform(click())
+
+        // dup ride cymbals across line
+        get("com.qfs.pagan.LeafButtonStd", 2).perform(longClick())
+        get("com.qfs.pagan.LineLabelStd", 2).perform(click())
+
+        get("com.qfs.pagan.LeafButtonStd", 11).perform(click())
+        get(R.id.btnInsert).perform(click())
+        get(R.id.btnInsert).perform(click())
+        get(R.id.btnInsert).perform(click())
+        get("com.qfs.pagan.LeafButtonStd", 11).perform(click())
+        get(R.id.btnUnset).perform(click())
+        get("com.qfs.pagan.LeafButtonStd", 14).perform(click())
+        get(R.id.btnUnset).perform(click())
+
+
+        get("com.qfs.pagan.LeafButtonStd", 20).perform(click())
+        get(R.id.btnSplit).perform(longClick())
+        get(R.id.etNumber).perform(click())
+        get(R.id.etNumber).perform(typeTextIntoFocusedView("4"))
+        onView(withText(android.R.string.ok)).perform(click())
+        get("com.qfs.pagan.LeafButtonStd", 21).perform(click())
+        get(R.id.btnUnset).perform(click())
+
+        onView(
+            allOf(
+                withText("2"),
+                withClassName(`is`("com.qfs.pagan.ColumnLabelView")),
+                isDisplayed()
+            )
+        ).perform(click())
+
+        get("com.qfs.pagan.LeafButtonStd", 24).perform(click())
+        get(R.id.btnSplit).perform(longClick())
+        get(R.id.etNumber).perform(click())
+        onView(withText(android.R.string.ok)).perform(click())
+
+        // Next button out of view, scroll
+        get("com.qfs.pagan.CompoundScrollView").perform(slowSwipeLeft())
+        onView(
+            allOf(
+                withText("3"),
+                withClassName(`is`("com.qfs.pagan.ColumnLabelView")),
+                isDisplayed()
+            )
+        ).perform(click())
+
+        //allOf(
+        //    withText("3"),
+        //    withClassName(`is`("com.qfs.pagan.ColumnLabelView")),
+        //    isDisplayed()
+        //)
+
+
+        get("com.qfs.pagan.LeafButtonStd", 16).perform(click())
+        get(R.id.btnSplit).perform(longClick())
+
+        // Assume 4 is now the default value and press ok
+        onView(withText(android.R.string.ok)).perform(click())
+        get("com.qfs.pagan.LeafButtonStd", 17).perform(click())
+        get(R.id.btnUnset).perform(click())
+        get("com.qfs.pagan.LeafButtonStd", 18).perform(click())
+        get(R.id.btnUnset).perform(click())
 
 
         Thread.sleep(2000)

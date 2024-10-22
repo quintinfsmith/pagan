@@ -23,8 +23,105 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         return output
     }
 
+    fun input_key_a(): Boolean {
+        return when (this.opus_manager.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line -> {
+                val repeat = this.clear_value_buffer(1, maximum=9999)
+                this.opus_manager.insert_line(repeat)
+                true
+            }
+            OpusManagerCursor.CursorMode.Column -> {
+                val repeat = this.clear_value_buffer(1, maximum=9999)
+                this.opus_manager.insert_beat_after_cursor(repeat)
+                true
+            }
+            OpusManagerCursor.CursorMode.Single -> {
+                var repeat = this.clear_value_buffer(1, maximum=64)
+                if (repeat > 0) {
+                    val tree = this.opus_manager.get_tree()
+                    if (tree.parent == null) {
+                        this.opus_manager.split_tree(repeat + 1)
+                    } else {
+                        this.opus_manager.insert_after(repeat)
+                    }
+                }
+                true
+            }
+            OpusManagerCursor.CursorMode.Range,
+            OpusManagerCursor.CursorMode.Unset -> false
+        }
+    }
+
+    fun input_key_b(): Boolean {
+        val beat = this.clear_value_buffer(0, 0, this.opus_manager.beat_count - 1)
+        return when (this.opus_manager.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Single -> {
+                val new_beat_key = BeatKey(
+                    this.opus_manager.cursor.channel,
+                    this.opus_manager.cursor.line_offset,
+                    beat
+                )
+
+                val new_position = this.opus_manager.get_first_position(new_beat_key)
+                this.opus_manager.cursor_select(new_beat_key, new_position)
+                true
+            }
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> {
+                this.opus_manager.cursor_select_column(beat)
+                true
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val new_beat_key = this.opus_manager.cursor.range!!.second
+                new_beat_key.beat = beat
+                this.opus_manager.cursor_select_range(
+                    this.opus_manager.cursor.range!!.first,
+                    new_beat_key
+                )
+                true
+            }
+        }
+    }
+
+    fun input_key_c(): Boolean {
+        this.opus_manager.unset()
+        return true
+    }
+
+    fun input_key_i(): Boolean {
+        return when (this.opus_manager.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line -> TODO()
+            OpusManagerCursor.CursorMode.Column -> {
+                val repeat = this.clear_value_buffer(1, maximum=9999)
+                this.opus_manager.insert_beat_at_cursor(repeat)
+                true
+            }
+            OpusManagerCursor.CursorMode.Single -> {
+                var repeat = this.clear_value_buffer(1, maximum=64, minimum=0)
+                if (repeat > 0) {
+                    val tree = this.opus_manager.get_tree()
+                    if (tree.parent == null) {
+                        this.opus_manager.split_tree(repeat + 1, true)
+                    } else {
+                        this.opus_manager.insert(repeat)
+                    }
+                }
+                true
+            }
+            OpusManagerCursor.CursorMode.Range -> TODO()
+            OpusManagerCursor.CursorMode.Unset -> TODO()
+        }
+    }
+
+
+    fun input_key_u(): Boolean {
+        val repeat = this.clear_value_buffer(1)
+        this.opus_manager.apply_undo(repeat)
+        return true
+    }
+
     fun input(key_code: Int, event: KeyEvent): Boolean {
-        //Log.d("AAA", "$event")
         return when (event.keyCode) {
             KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_3, KeyEvent.KEYCODE_4,
             KeyEvent.KEYCODE_5, KeyEvent.KEYCODE_6, KeyEvent.KEYCODE_7, KeyEvent.KEYCODE_8, KeyEvent.KEYCODE_9 -> {
@@ -40,6 +137,12 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     true
                 }
             }
+
+            KeyEvent.KEYCODE_A -> this.input_key_a()
+            KeyEvent.KEYCODE_B -> this.input_key_b()
+            KeyEvent.KEYCODE_C -> this.input_key_c()
+            KeyEvent.KEYCODE_I -> this.input_key_i()
+            KeyEvent.KEYCODE_U -> this.input_key_u()
 
             else -> {
                 when (this.opus_manager.cursor.mode) {
@@ -59,12 +162,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
     private fun _input_column(key_code: Int, event: KeyEvent): Boolean {
         return when (event.keyCode) {
-            KeyEvent.KEYCODE_A -> {
-                val repeat = this.clear_value_buffer(1, maximum=9999)
-                this.opus_manager.insert_beat_after_cursor(repeat)
-                true
-            }
-
             KeyEvent.KEYCODE_H -> {
                 val movement_value = this.clear_value_buffer(1)
                 val new_beat = max(0, this.opus_manager.cursor.beat - movement_value)
@@ -72,11 +169,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 true
             }
 
-            KeyEvent.KEYCODE_I -> {
-                val repeat = this.clear_value_buffer(1, maximum=9999)
-                this.opus_manager.insert_beat_at_cursor(repeat)
-                true
-            }
 
             KeyEvent.KEYCODE_J -> {
                 val repeat = this.clear_value_buffer(1)
@@ -103,13 +195,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 this.opus_manager.cursor_select_column(new_beat)
                 true
             }
-
-            KeyEvent.KEYCODE_U -> {
-                val repeat = this.clear_value_buffer(1)
-                this.opus_manager.apply_undo(repeat)
-                true
-            }
-
             KeyEvent.KEYCODE_X -> {
                 val repeat = this.clear_value_buffer(1)
                 if (repeat > 0) {
@@ -222,25 +307,16 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         } else {
             when (event.keyCode) {
-                KeyEvent.KEYCODE_A -> {
-                    var repeat = this.clear_value_buffer(1, maximum=64)
-                    if (repeat > 0) {
-                        val tree = this.opus_manager.get_tree()
-                        if (tree.parent == null) {
-                            this.opus_manager.split_tree(repeat + 1)
-                        } else {
-                            this.opus_manager.insert_after(repeat)
-                        }
-                    }
+                KeyEvent.KEYCODE_B -> {
+                    val cursor = this.opus_manager.cursor
+                    val new_beat_key = cursor.get_beatkey()
+                    new_beat_key.beat = this.clear_value_buffer(0, 0, this.opus_manager.beat_count - 1)
+
+                    val position = this.opus_manager.get_first_position(new_beat_key)
+                    this.opus_manager.cursor_select(new_beat_key, position)
                     true
                 }
 
-                KeyEvent.KEYCODE_C -> {
-                    if (this.clear_value_buffer(1) != 0) {
-                        this.opus_manager.unset()
-                    }
-                    true
-                }
 
                 KeyEvent.KEYCODE_H -> {
                     val movement_value = this.clear_value_buffer(1)
@@ -307,19 +383,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                             }
                             this.opus_manager.cursor_select(working_beat_key, working_position)
 
-                        }
-                    }
-                    true
-                }
-
-                KeyEvent.KEYCODE_I -> {
-                    var repeat = this.clear_value_buffer(1, maximum=64)
-                    if (repeat > 0) {
-                        val tree = this.opus_manager.get_tree()
-                        if (tree.parent == null) {
-                            this.opus_manager.split_tree(repeat + 1, true)
-                        } else {
-                            this.opus_manager.insert(repeat)
                         }
                     }
                     true

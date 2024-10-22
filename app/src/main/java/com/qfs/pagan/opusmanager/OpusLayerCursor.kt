@@ -578,6 +578,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun unset() {
+        // TODO: HANDLE MORE THAN SINGLE AND RANGE CURSOR MODES
         when (cursor.ctl_level) {
             null -> {
                 if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {

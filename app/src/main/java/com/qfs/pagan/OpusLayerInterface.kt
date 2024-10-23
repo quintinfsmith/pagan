@@ -2283,5 +2283,14 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    fun get_visible_channel_count(): Int {
+        val activity = this.get_activity()
+        return if (activity != null && !activity.view_model.show_percussion) {
+            this.channels.size
+        } else {
+            this.channels.size + 1
+        }
+    }
+
     // END UI FUNCS -----------------------
 }

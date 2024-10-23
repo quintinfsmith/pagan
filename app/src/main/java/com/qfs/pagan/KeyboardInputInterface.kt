@@ -5,6 +5,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.abs
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class KeyboardInputInterface(var opus_manager: OpusManager) {
@@ -81,6 +82,24 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 )
                 true
             }
+        }
+    }
+
+    fun input_key_shift_b(): Boolean {
+        return when (this.opus_manager.cursor.mode) {
+            OpusManagerCursor.CursorMode.Single -> {
+                val beat = this.clear_value_buffer(this.opus_manager.cursor.beat, 0, this.opus_manager.beat_count - 1)
+                this.opus_manager.cursor_select_column(beat)
+                true
+            }
+
+            OpusManagerCursor.CursorMode.Unset,
+            OpusManagerCursor.CursorMode.Column -> {
+                val beat = this.clear_value_buffer(this.opus_manager.beat_count - 1, 0, this.opus_manager.beat_count - 1)
+                this.opus_manager.cursor_select_column(beat)
+                true
+            }
+            else -> false
         }
     }
 
@@ -636,6 +655,21 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         }
     }
 
+    //fun input_key_shift_h(): Boolean {
+    //    return when (this.opus_manager.cursor.mode) {
+    //        OpusManagerCursor.CursorMode.Single -> {
+    //        }
+    //        else -> false
+    //    }
+    //}
+
+    fun input_key_shift_k(): Boolean {
+        return this._cursor_select_channel_next_prev_leaf(true)
+    }
+    fun input_key_shift_j(): Boolean {
+        return this._cursor_select_channel_next_prev_leaf(false)
+    }
+
     fun input_key_shift_l(): Boolean {
         return when (this.opus_manager.cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
@@ -670,7 +704,10 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             else -> {
                return if (event.isShiftPressed) {
                    when (event.keyCode) {
+                        KeyEvent.KEYCODE_B -> this.input_key_shift_b()
                         KeyEvent.KEYCODE_H -> this.input_key_shift_h()
+                        KeyEvent.KEYCODE_J -> this.input_key_shift_j()
+                        KeyEvent.KEYCODE_K -> this.input_key_shift_k()
                         KeyEvent.KEYCODE_L -> this.input_key_shift_l()
                         else -> false
                    }
@@ -746,6 +783,70 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         }
     }
 
+    private fun _cursor_select_channel_next_prev_leaf(direction_up: Boolean = false): Boolean {
+        val repeat = this.clear_value_buffer(1)
+        val cursor = this.opus_manager.cursor
+
+        return when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Single -> {
+                val start_channel = when (cursor.ctl_level) {
+                    CtlLineLevel.Global -> 0
+                    null,
+                    CtlLineLevel.Line,
+                    CtlLineLevel.Channel -> cursor.channel
+                }
+
+                val next_channel = (if (direction_up) {
+                    start_channel - repeat
+                } else {
+                    start_channel + repeat
+                }).mod(this.opus_manager.get_visible_channel_count())
+
+
+                when (cursor.mode) {
+                    OpusManagerCursor.CursorMode.Line -> {
+                        this.opus_manager.cursor_select_line(next_channel, 0)
+                    }
+                    OpusManagerCursor.CursorMode.Single -> {
+                        val new_key = cursor.get_beatkey()
+                        new_key.line_offset = 0
+                        new_key.channel = next_channel
+
+                        this.opus_manager.cursor_select(
+                            new_key,
+                            this.opus_manager.get_first_position(new_key)
+                        )
+                    }
+                    else -> {}
+                }
+
+                true
+            }
+
+            OpusManagerCursor.CursorMode.Column -> {
+                val new_key = BeatKey(
+                    if (direction_up) {
+                        (0 - repeat).mod(this.opus_manager.get_visible_channel_count())
+                    } else {
+                        (repeat + this.opus_manager.channels.size).mod(this.opus_manager.get_visible_channel_count())
+                    },
+                    0,
+                    cursor.beat
+                )
+
+                this.opus_manager.cursor_select(
+                    new_key,
+                    this.opus_manager.get_first_position(new_key)
+                )
+                true
+            }
+
+            OpusManagerCursor.CursorMode.Range,
+            OpusManagerCursor.CursorMode.Unset -> false
+        }
+    }
+
     private fun _cursor_select_next_leaf_down() {
         this._cursor_select_next_prev_leaf(false)
     }
@@ -813,5 +914,4 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         }
     }
-
 }

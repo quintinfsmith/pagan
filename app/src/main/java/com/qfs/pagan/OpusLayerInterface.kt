@@ -2292,5 +2292,28 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    fun get_nth_next_channel_at_cursor(n: Int): Int? {
+        return when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Single -> {
+                val start_channel = when (cursor.ctl_level) {
+                    CtlLineLevel.Global -> 0
+                    null,
+                    CtlLineLevel.Line,
+                    CtlLineLevel.Channel -> cursor.channel
+                }
+
+                (start_channel + n).mod(this.get_visible_channel_count())
+            }
+
+            OpusManagerCursor.CursorMode.Column -> {
+                (n + this.channels.size).mod(this.get_visible_channel_count())
+            }
+
+            OpusManagerCursor.CursorMode.Range,
+            OpusManagerCursor.CursorMode.Unset -> null
+        }
+    }
+
     // END UI FUNCS -----------------------
 }

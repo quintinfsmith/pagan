@@ -25,20 +25,8 @@ class LeafButtonCtlChannel(
     override fun long_click(): Boolean {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (!cursor.selecting_range || cursor.ctl_level != CtlLineLevel.Channel || cursor.ctl_type != this.control_type) {
-            opus_manager.cursor_select_channel_ctl_end_point(
-                this.control_type,
-                this.channel,
-                this.get_beat()
-            )
-        } else if (!cursor.is_linking_range()) {
-            opus_manager.cursor_select_channel_ctl_range(
-                this.control_type,
-                this.channel,
-                cursor.beat,
-                this.get_beat()
-            )
-        } else {
+
+        if (cursor.is_linking_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == this.control_type) {
             // Currently, can't select multiple channels in a range
             if (this.channel != cursor.range!!.first.channel) {
                 return true
@@ -48,6 +36,12 @@ class LeafButtonCtlChannel(
                 this.control_type,
                 this.channel,
                 cursor.range!!.first.beat,
+                this.get_beat()
+            )
+        } else {
+            opus_manager.cursor_select_channel_ctl_end_point(
+                this.control_type,
+                this.channel,
                 this.get_beat()
             )
         }

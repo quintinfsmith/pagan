@@ -76,18 +76,15 @@ class LeafButtonStd(
         val cursor = opus_manager.cursor
         val beat_key = this._get_beat_key()
         val current_link_mode = this.get_activity().configuration.link_mode
-        if (cursor.ctl_level != null || !cursor.selecting_range || current_link_mode == PaganConfiguration.LinkMode.MERGE) {
-            opus_manager.cursor_select_first_corner(beat_key)
-        } else if (!cursor.is_linking_range()) {
-            opus_manager.cursor_select_range(
-                opus_manager.cursor.get_beatkey(),
-                beat_key
-            )
-        } else {
+
+
+        if (cursor.is_linking_range() && cursor.ctl_level == null && current_link_mode != PaganConfiguration.LinkMode.MERGE) {
             opus_manager.cursor_select_range(
                 opus_manager.cursor.range!!.first,
                 beat_key
             )
+        } else {
+            opus_manager.cursor_select_first_corner(beat_key)
         }
 
         return true
@@ -100,7 +97,7 @@ class LeafButtonStd(
         val cursor = opus_manager.cursor
 
         val editor_table = this._get_editor_table() // Will need if overflow exception is passed
-        if (cursor.selecting_range && cursor.ctl_level == null) {
+        if (cursor.is_linking_range() && cursor.ctl_level == null) {
             try {
                 when (this.get_activity().configuration.link_mode) {
                     PaganConfiguration.LinkMode.LINK -> {
@@ -131,7 +128,6 @@ class LeafButtonStd(
                     is OpusLayerLinks.LinkRangeOverlap,
                     is OpusLayerBase.RangeOverflow -> {
                         editor_table.notify_cell_changes(listOf(this.get_coord()))
-                        cursor.selecting_range = false
                         opus_manager.cursor_select(beat_key, this.position)
                         this.get_activity().feedback_msg(context.getString(R.string.feedback_bad_range))
                     }

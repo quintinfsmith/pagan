@@ -24,24 +24,20 @@ class LeafButtonCtlGlobal(
     override fun long_click(): Boolean {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (!cursor.selecting_range || cursor.ctl_level != CtlLineLevel.Global || cursor.ctl_type != this.control_type) {
-            opus_manager.cursor_select_global_ctl_end_point(
-                this.control_type,
-                this.get_beat()
-            )
-        } else if (!cursor.is_linking_range()) {
+
+        if (cursor.is_linking_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == this.control_type) {
             opus_manager.cursor_select_global_ctl_range(
                 this.control_type,
                 cursor.beat,
                 this.get_beat()
             )
         } else {
-            opus_manager.cursor_select_global_ctl_range(
+            opus_manager.cursor_select_global_ctl_end_point(
                 this.control_type,
-                cursor.range!!.first.beat,
                 this.get_beat()
             )
         }
+
         return true
     }
 
@@ -58,9 +54,8 @@ class LeafButtonCtlGlobal(
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val beat = this.get_beat()
-        if (!cursor.selecting_range || cursor.ctl_level != this.control_level || cursor.ctl_type != this.control_type) {
-            opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
-        } else {
+
+        if (cursor.is_linking_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
             try {
                 when (this.get_activity().configuration.link_mode) {
                     PaganConfiguration.LinkMode.COPY -> {
@@ -85,6 +80,8 @@ class LeafButtonCtlGlobal(
                     }
                 }
             }
+        } else {
+            opus_manager.cursor_select_ctl_at_global(this.control_type, beat, this.position)
         }
     }
 }

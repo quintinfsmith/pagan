@@ -78,53 +78,52 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
         val cursor = opus_manager.cursor
         if (cursor.is_linking_range()) {
-            val first_key = cursor.range!!.first
-            try {
-                when (this.get_activity().configuration.link_mode) {
-                    PaganConfiguration.LinkMode.LINK -> {
-                        opus_manager.link_beat_range_horizontally(
-                            this.channel,
-                            this.line_offset,
-                            first_key,
-                            cursor.range!!.second
-                        )
-                    }
+            val (first_key, second_key) = cursor.range!!
+            if (first_key != second_key) {
+                try {
+                    when (this.get_activity().configuration.link_mode) {
+                        PaganConfiguration.LinkMode.LINK -> {
+                            opus_manager.link_beat_range_horizontally(
+                                    this.channel,
+                                    this.line_offset,
+                                    first_key,
+                                    cursor.range!!.second
+                                    )
+                        }
 
-                    else -> {
-                        opus_manager.overwrite_beat_range_horizontally(
-                            this.channel,
-                            this.line_offset,
-                            first_key,
-                            cursor.range!!.second
-                        )
+                        else -> {
+                            opus_manager.overwrite_beat_range_horizontally(
+                                    this.channel,
+                                    this.line_offset,
+                                    first_key,
+                                    cursor.range!!.second
+                                    )
+                        }
                     }
+                } catch (e: OpusLayerLinks.BadRowLink) {
+                    // No Feedback.  feels Redundant
+                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                    // No Feedback.  feels Redundant
                 }
-            } catch (e: OpusLayerLinks.BadRowLink) {
-                // No Feedback.  feels Redundant
-            } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                // No Feedback.  feels Redundant
-            }
-            cursor.selecting_range = false
-        } else if (cursor.selecting_range) {
-            val beat_key = opus_manager.cursor.get_beatkey()
-            try {
-                when (this.get_activity().configuration.link_mode) {
-                    PaganConfiguration.LinkMode.LINK -> {
-                        opus_manager.link_row(this.channel, this.line_offset, beat_key)
-                    }
+            } else {
+                try {
+                    when (this.get_activity().configuration.link_mode) {
+                        PaganConfiguration.LinkMode.LINK -> {
+                            opus_manager.link_row(this.channel, this.line_offset, first_key)
+                        }
 
-                    else -> {
-                        opus_manager.overwrite_line(this.channel, this.line_offset, beat_key)
+                        else -> {
+                            opus_manager.overwrite_line(this.channel, this.line_offset, first_key)
+                        }
                     }
+                } catch (e: OpusLayerLinks.BadRowLink) {
+                    // No Feedback.  feels Redundant
+                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                    // No Feedback.  feels Redundant
                 }
-            } catch (e: OpusLayerLinks.BadRowLink) {
-                // No Feedback.  feels Redundant
-            } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                // No Feedback.  feels Redundant
             }
-
-            cursor.selecting_range = false
         }
+
         opus_manager.cursor_select_line(this.channel, this.line_offset)
     }
 

@@ -660,6 +660,26 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         },
 
+        KeyEvent.KEYCODE_S to object: KeyStrokeNode(this) {
+            override fun single(opus_manager: OpusLayerInterface) {
+                val splits = this.clear_value_buffer(2, minimum=2, maximum=64)
+                val cursor = opus_manager.cursor
+                when (cursor.ctl_level) {
+                    null -> opus_manager.split_tree(splits)
+                    CtlLineLevel.Line -> TODO()
+                    CtlLineLevel.Channel -> TODO()
+                    CtlLineLevel.Global -> {
+                        opus_manager.split_global_ctl_tree(
+                            cursor.ctl_type!!,
+                            cursor.beat,
+                            cursor.position,
+                            splits
+                        )
+                    }
+                }
+            }
+        },
+
         KeyEvent.KEYCODE_U to object: KeyStrokeNode(this) {
             fun apply_undo(opus_manager: OpusManager) {
                 val repeat = this.clear_value_buffer(1)
@@ -709,28 +729,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
             override fun range(opus_manager: OpusLayerInterface) {
                 opus_manager.unset()
-            }
-        },
-        KeyEvent.KEYCODE_SLASH to object: KeyStrokeNode(this) {
-            override fun single(opus_manager: OpusLayerInterface) {
-                val splits = this.clear_value_buffer(2, minimum=2, maximum=64)
-                val cursor = opus_manager.cursor
-                when (cursor.ctl_level) {
-                    null -> {
-                        opus_manager.split_tree(splits)
-                    }
-
-                    CtlLineLevel.Line -> TODO()
-                    CtlLineLevel.Channel -> TODO()
-                    CtlLineLevel.Global -> {
-                        opus_manager.split_global_ctl_tree(
-                            cursor.ctl_type!!,
-                            cursor.beat,
-                            cursor.position,
-                            splits
-                        )
-                    }
-                }
             }
         }
     )

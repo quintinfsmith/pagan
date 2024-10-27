@@ -6,6 +6,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.max
 import kotlin.math.min
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class KeyboardInputInterface(var opus_manager: OpusManager) {
@@ -101,7 +102,21 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 return true
             }
         },
+        Pair(KeyEvent.KEYCODE_LEFT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun single(opus_manager: OpusManager) {
+                opus_manager.set_note_octave_at_cursor(
+                    this.get_buffer_value(0, 0, 7)
+                )
+            }
+        },
 
+        Pair(KeyEvent.KEYCODE_RIGHT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun single(opus_manager: OpusManager) {
+                opus_manager.set_note_offset_at_cursor(
+                    this.get_buffer_value(0, 0, opus_manager.tuning_map.size - 1)
+                )
+            }
+        },
         Pair(KeyEvent.KEYCODE_A, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=9999)
@@ -251,7 +266,11 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=64, minimum=0)
                 if (repeat > 0) {
-                    opus_manager.insert(repeat)
+                    try {
+                        opus_manager.insert(repeat)
+                    } catch (e: OpusLayerBase.BadInsertPosition) {
+                        opus_manager.split_tree(repeat + 1)
+                    }
                 }
             }
         },
@@ -336,7 +355,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
                 opus_manager.cursor_select(new_key, opus_manager.get_first_position(new_key))
             }
-
         },
 
         Pair(KeyEvent.KEYCODE_L, false) to object: CursorSpecificKeyStrokeNode(this) {

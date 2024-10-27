@@ -1381,6 +1381,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
     }
 
+
+
+
     /* Not Currently In Use. */
     //fun link_alike() {
     //    if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {

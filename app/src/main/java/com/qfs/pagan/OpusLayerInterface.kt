@@ -24,6 +24,7 @@ import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.abs
 import kotlin.math.pow
 
 class OpusLayerInterface : OpusLayerCursor() {
@@ -2307,7 +2308,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             OpusManagerCursor.CursorMode.Column -> {
-                max(0, min(n, this.get_visible_channel_count() - 1))
+                max(0, min(n - 1, this.get_visible_channel_count() - 1))
             }
 
             OpusManagerCursor.CursorMode.Range,
@@ -2716,6 +2717,247 @@ class OpusLayerInterface : OpusLayerCursor() {
                 this.cursor_select(working_beat_key, working_position)
             }
         }
+    }
+
+    fun set_note_octave_at_cursor(octave: Int) {
+        if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
+            throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
+        }
+        val current_tree_position = this.get_original_position(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position()
+        )
+        this.set_note_octave(current_tree_position.first, current_tree_position.second, octave)
+    }
+
+    fun set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int) {
+        val current_tree_position = this.get_original_position(
+            beat_key,
+            position
+        )
+        val current_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
+
+        val duration = if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            event.duration
+        } else {
+            1
+        }
+
+
+        val radix = this.tuning_map.size
+        val current_event = current_tree.get_event()
+        var convert_to_rel_flag = false
+        val value = when (this.relative_mode) {
+            0 -> {
+                when (current_event) {
+                    is AbsoluteNoteEvent -> (octave * radix) + (current_event.note % radix)
+                    null -> {
+                        val cursor = this.cursor
+                        val previous_value = this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
+                        (octave * radix) + (previous_value % radix)
+                    }
+                    else -> {
+                        // TODO: Specify (Shouldn't be reachable)
+                        throw Exception()
+                    }
+                }
+            }
+            1 -> {
+                when (current_event) {
+                    is RelativeNoteEvent -> {
+                        (octave * radix) + (current_event.offset % radix)
+                    }
+                    is AbsoluteNoteEvent -> {
+                        val activity = this.get_activity()
+                        if (activity != null) {
+                            val nsOffset = activity!!.findViewById<NumberSelector>(R.id.nsOffset)
+                            nsOffset.setState(0, manual = true, surpress_callback = true)
+                        }
+                        convert_to_rel_flag = true
+                        octave * radix
+                    }
+                    null -> {
+                        convert_to_rel_flag = true
+                        (octave * radix)
+                    }
+                    else -> {
+                        // TODO: Specify (Shouldn't be reachable)
+                        throw Exception()
+                    }
+                }
+            }
+            2 -> {
+                when (current_event) {
+                    is RelativeNoteEvent -> {
+                        0 - ((octave * radix) + (abs(current_event.offset) % radix))
+                    }
+                    is AbsoluteNoteEvent -> {
+                        val activity = this.get_activity()
+                        if (activity != null) {
+                            val nsOffset = activity!!.findViewById<NumberSelector>(R.id.nsOffset)
+                            nsOffset.setState(0, manual = true, surpress_callback = true)
+                        }
+                        convert_to_rel_flag = true
+                        0 - (octave * radix)
+                    }
+                    null -> {
+                        convert_to_rel_flag = true
+                        0 - (octave * radix)
+                    }
+                    else -> {
+                        // TODO: Specify (Shouldn't be reachable)
+                        throw Exception()
+                    }
+                }
+
+            }
+            else -> {
+                // TODO: Specify (Shouldn't be reachable)
+                throw Exception()
+            }
+        }
+
+        this.set_event(
+            beat_key,
+            position,
+            when (current_event) {
+                is RelativeNoteEvent -> {
+                    RelativeNoteEvent(value, duration)
+                }
+                null,
+                is AbsoluteNoteEvent -> {
+                    if (convert_to_rel_flag) {
+                        RelativeNoteEvent(value, duration)
+                    } else {
+                        AbsoluteNoteEvent(value, duration)
+                    }
+                }
+                else -> {
+                    // TODO: Specify (Shouldn't be reachable)
+                    throw Exception()
+                }
+            }
+        )
+    }
+
+
+    fun set_note_offset_at_cursor(offset: Int) {
+        if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
+            throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
+        }
+        val current_tree_position = this.get_original_position(
+            this.cursor.get_beatkey(),
+            this.cursor.get_position()
+        )
+        this.set_note_offset(current_tree_position.first, current_tree_position.second, offset)
+    }
+
+    fun set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int) {
+        val current_tree = this.get_tree(beat_key, position)
+
+        val duration = if (current_tree.is_event()) {
+            val event = current_tree.get_event()!!
+            event.duration
+        } else {
+            1
+        }
+
+        val radix = this.tuning_map.size
+        val current_event = current_tree.get_event()
+        var convert_to_rel_flag = false
+
+        val value = when (this.relative_mode) {
+            0 -> {
+                when (current_event) {
+                    is AbsoluteNoteEvent -> ((current_event.note / radix) * radix) + offset
+                    null -> {
+                        val cursor = this.cursor
+                        val previous_value = this.get_absolute_value(beat_key, position) ?: 0
+                        ((previous_value / radix) * radix) + offset
+                    }
+                    else -> {
+                        // TODO: Specify (Shouldn't be reachable)
+                        throw Exception()
+                    }
+                }
+            }
+            1 -> {
+                when (current_event) {
+                    is RelativeNoteEvent -> {
+                        ((current_event.offset / radix) * radix) + offset
+                    }
+                    is AbsoluteNoteEvent -> {
+                        val activity = this.get_activity() 
+                        if (activity != null) {
+                            val nsOctave = activity!!.findViewById<NumberSelector>(R.id.nsOctave)
+                            nsOctave.setState(0, manual = true, surpress_callback = true)
+                        }
+                        convert_to_rel_flag = true
+                        offset
+                    }
+                    null -> {
+                        convert_to_rel_flag = true
+                        offset
+                    }
+                    else -> {
+                        // TODO: Specify (Shouldn't be reachable)
+                        throw Exception()
+                    }
+                }
+            }
+            2 -> {
+                when (current_event) {
+                    is RelativeNoteEvent -> {
+                        ((current_event.offset / radix) * radix) - offset
+                    }
+                    is AbsoluteNoteEvent -> {
+                        val activity = this.get_activity() 
+                        if (activity != null) {
+                            val nsOctave = activity.findViewById<NumberSelector>(R.id.nsOctave)
+                            nsOctave.setState(0, manual = true, surpress_callback = true)
+                        }
+                        convert_to_rel_flag = true
+                        0 - offset
+                    }
+                    null -> {
+                        convert_to_rel_flag = true
+                        0 - offset
+                    }
+                    else -> {
+                        // TODO: Specify (Shouldn't be reachable)
+                        throw Exception()
+                    }
+                }
+
+            }
+            else -> {
+                // TODO: Specify (Shouldn't be reachable)
+                throw Exception()
+            }
+        }
+
+        this.set_event(
+            beat_key,
+            position,
+            when (current_event) {
+                is RelativeNoteEvent -> {
+                    RelativeNoteEvent(value, duration)
+                }
+                null,
+                is AbsoluteNoteEvent -> {
+                    if (convert_to_rel_flag) {
+                        RelativeNoteEvent(value, duration)
+                    } else {
+                        AbsoluteNoteEvent(value, duration)
+                    }
+                }
+                else -> {
+                    // TODO: Specify (Shouldn't be reachable)
+                    throw Exception()
+                }
+            }
+        )
     }
 
     // END UI FUNCS -----------------------

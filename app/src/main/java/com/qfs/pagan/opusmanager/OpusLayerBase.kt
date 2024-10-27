@@ -841,7 +841,7 @@ open class OpusLayerBase {
     }
 
     fun get_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
-        if (channel >= this.channels.size) {
+        if (channel > this.channels.size) {
             throw InvalidChannel(channel)
         }
         return this.get_channel(channel).get_ctl_tree(
@@ -852,7 +852,7 @@ open class OpusLayerBase {
     }
 
     fun get_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>? = null): OpusTree<OpusControlEvent> {
-        if (beat_key.channel >= this.channels.size) {
+        if (beat_key.channel > this.channels.size) {
             throw BadBeatKey(beat_key)
         }
 
@@ -2513,6 +2513,87 @@ open class OpusLayerBase {
 
     open fun move_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         this._copy_line_ctl_range(type, beat_key, first_corner, second_corner, true)
+    }
+
+    open fun unset_beat(beat: Int) {
+        /* Clear STD channels ----------------------------------*/
+        for (i in 0 until this.channels.size) {
+            val channel = this.channels[i]
+            for (j in 0 until channel.lines.size) {
+                val line = channel.lines[j]
+                this.unset(BeatKey(i, j, beat), listOf())
+                for ((type, controller) in line.controllers.get_all()) {
+                    this.unset_line_ctl(type, BeatKey(i, j, beat), listOf())
+                }
+
+            }
+            for ((type, controller) in channel.controllers.get_all()) {
+                this.unset_channel_ctl(type, i, beat, listOf())
+            }
+        }
+        /*-------------------------------------------------------*/
+
+        /* Clear percussion ------------------------------------*/
+        for (j in 0 until this.percussion_channel.lines.size) {
+            val beat_key = BeatKey(this.channels.size, j, beat)
+            val line = this.percussion_channel.lines[j]
+            this.unset(beat_key, listOf())
+            for ((type, controller) in line.controllers.get_all()) {
+                this.unset_line_ctl(type, beat_key, listOf())
+            }
+
+        }
+        for ((type, controller) in this.percussion_channel.controllers.get_all()) {
+            this.unset_channel_ctl(type, this.channels.size, beat, listOf())
+        }
+        /*-------------------------------------------------------*/
+
+        for ((type, controller) in this.controllers.get_all()) {
+            this.unset_global_ctl(type, beat, listOf())
+        }
+    }
+
+    open fun unset_line(channel: Int, line_offset: Int) {
+        val line = this.get_all_channels()[channel].lines[line_offset]
+        for (beat in 0 until this.beat_count) {
+            val tree = line.get_tree(beat)
+            if (tree.is_eventless()) {
+                continue
+            }
+            this.unset(BeatKey(channel, line_offset, beat), listOf())
+        }
+    }
+
+
+    open fun unset_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
+        val controller = this.get_all_channels()[channel].lines[line_offset].get_controller(type)
+        for (beat in 0 until this.beat_count) {
+            val line_ctl_tree = controller.get_tree(beat)
+            if (line_ctl_tree.is_eventless()) {
+                continue
+            }
+            this.unset_line_ctl(type, BeatKey(channel, line_offset, beat), listOf())
+        }
+    }
+    open fun unset_channel_ctl_line(type: ControlEventType, channel: Int) {
+        val controller = this.get_all_channels()[channel].controllers.get_controller(type)
+        for (beat in 0 until this.beat_count) {
+            val line_ctl_tree = controller.get_tree(beat)
+            if (line_ctl_tree.is_eventless()) {
+                continue
+            }
+            this.unset_channel_ctl(type, channel, beat, listOf())
+        }
+    }
+    open fun unset_global_ctl_line(type: ControlEventType) {
+        val controller = this.controllers.get_controller(type)
+        for (beat in 0 until this.beat_count) {
+            val line_ctl_tree = controller.get_tree(beat)
+            if (line_ctl_tree.is_eventless()) {
+                continue
+            }
+            this.unset_global_ctl(type, beat, listOf())
+        }
     }
 
     open fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {

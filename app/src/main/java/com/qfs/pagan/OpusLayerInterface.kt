@@ -2451,16 +2451,16 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun move_to_previous_visible_line(repeat: Int = 1) {
-        val cursor = opus_manager.cursor
-        if (cursor.mode != CursorMode.Line) {
+        val cursor = this.cursor
+        if (cursor.mode != OpusManagerCursor.CursorMode.Line) {
             throw Exception("Incorrect Cursor Mode ${cursor.mode}")
         }
 
         var visible_row = when (cursor.ctl_level) {
             null -> {
-                opus_manager.get_visible_row_from_ctl_line(
-                    opus_manager.get_actual_line_index(
-                        opus_manager.get_instrument_line_index(
+                this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
                             cursor.channel,
                             cursor.line_offset
                         )
@@ -2469,62 +2469,62 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             }
             CtlLineLevel.Line -> {
-                opus_manager.get_visible_row_from_ctl_line_line(
+                this.get_visible_row_from_ctl_line_line(
                     cursor.ctl_type!!,
                     cursor.channel,
                     cursor.line_offset
                 )
             }
             CtlLineLevel.Channel -> {
-                opus_manager.get_visible_row_from_ctl_line_channel(
+                this.get_visible_row_from_ctl_line_channel(
                     cursor.ctl_type!!,
                     cursor.channel
                 )
             }
-            CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+            CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
         }!!
 
-        visible_row = (visible_row - repeat) % opus_manager.get_row_count()
+        visible_row = (visible_row - repeat) % this.get_row_count()
 
-        val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_row(visible_row)
+        val (pointer, control_level, control_type) = this.get_ctl_line_info(
+            this.get_ctl_line_from_row(visible_row)
         )
 
         when (control_level) {
             null -> {
-                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                opus_manager.cursor_select_line(new_channel, new_line_offset)
+                val (new_channel, new_line_offset) = this.get_channel_and_line_offset(pointer)
+                this.cursor_select_line(new_channel, new_line_offset)
 
             }
             CtlLineLevel.Line -> {
-                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                opus_manager.cursor_select_line_ctl_line(
+                val (new_channel, new_line_offset) = this.get_channel_and_line_offset(pointer)
+                this.cursor_select_line_ctl_line(
                     control_type!!,
                     new_channel,
                     new_line_offset,
                 )
             }
             CtlLineLevel.Channel -> {
-                opus_manager.cursor_select_channel_ctl_line(
+                this.cursor_select_channel_ctl_line(
                     control_type!!,
                     pointer
                 )
             }
-            CtlLineLevel.Global -> opus_manager.cursor_select_global_ctl_line(control_type!!)
+            CtlLineLevel.Global -> this.cursor_select_global_ctl_line(control_type!!)
         }
     }
 
     fun move_to_next_visible_line(repeat: Int = 1) {
-        val cursor = opus_manager.cursor
-        if (cursor.mode != CursorMode.Line) {
+        val cursor = this.cursor
+        if (cursor.mode != OpusManagerCursor.CursorMode.Line) {
             throw Exception("Incorrect Cursor Mode ${cursor.mode}")
         }
 
         var visible_row = when (cursor.ctl_level) {
             null -> {
-                opus_manager.get_visible_row_from_ctl_line(
-                    opus_manager.get_actual_line_index(
-                        opus_manager.get_instrument_line_index(
+                this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
                             cursor.channel,
                             cursor.line_offset
                         )
@@ -2533,48 +2533,48 @@ class OpusLayerInterface : OpusLayerCursor() {
 
             }
             CtlLineLevel.Line -> {
-                opus_manager.get_visible_row_from_ctl_line_line(
+                this.get_visible_row_from_ctl_line_line(
                     cursor.ctl_type!!,
                     cursor.channel,
                     cursor.line_offset
                 )
             }
             CtlLineLevel.Channel -> {
-                opus_manager.get_visible_row_from_ctl_line_channel(
+                this.get_visible_row_from_ctl_line_channel(
                     cursor.ctl_type!!,
                     cursor.channel
                 )
             }
-            CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+            CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
         }!!
 
-        visible_row = (visible_row - repeat) % opus_manager.get_row_count()
+        visible_row = (visible_row - repeat) % this.get_row_count()
 
-        val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_row(visible_row)
+        val (pointer, control_level, control_type) = this.get_ctl_line_info(
+            this.get_ctl_line_from_row(visible_row)
         )
 
         when (control_level) {
             null -> {
-                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                opus_manager.cursor_select_line(new_channel, new_line_offset)
+                val (new_channel, new_line_offset) = this.get_channel_and_line_offset(pointer)
+                this.cursor_select_line(new_channel, new_line_offset)
 
             }
             CtlLineLevel.Line -> {
-                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                opus_manager.cursor_select_line_ctl_line(
+                val (new_channel, new_line_offset) = this.get_channel_and_line_offset(pointer)
+                this.cursor_select_line_ctl_line(
                     control_type!!,
                     new_channel,
                     new_line_offset,
                 )
             }
             CtlLineLevel.Channel -> {
-                opus_manager.cursor_select_channel_ctl_line(
+                this.cursor_select_channel_ctl_line(
                     control_type!!,
                     pointer
                 )
             }
-            CtlLineLevel.Global -> opus_manager.cursor_select_global_ctl_line(control_type!!)
+            CtlLineLevel.Global -> this.cursor_select_global_ctl_line(control_type!!)
         }
     }
 
@@ -2654,11 +2654,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Line -> {
                 var working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
+                val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].controllers.get_controller(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_line_ctl_preceding_leaf_position(
-                        cursor.ctl_type!!,
-                        working_beat_key,
+                    val next_pair = controller.get_preceding_leaf_position(
+                        working_beat_key.beat,
                         working_position
                     ) ?: break
 
@@ -2689,9 +2689,9 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
                 var working_position = cursor.position
+                val controller = this.controllers.get_controller(cursor.ctl_type!!)
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_global_ctl_preceding_leaf_position(
-                        cursor.ctl_type!!,
+                    val next_pair = controller.get_preceding_leaf_position(
                         working_beat,
                         working_position
                     ) ?: break

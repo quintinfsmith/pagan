@@ -11,7 +11,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class KeyboardInputInterface(var opus_manager: OpusManager) {
 
     abstract class KeyStrokeNode(val keyboard_interface: KeyboardInputInterface) {
-        abstract fun call(opus_manager: OpusManager)
+        abstract fun call(opus_manager: OpusManager): Boolean
     }
 
     abstract class CursorSpecificKeyStrokeNode(keyboard_interface: KeyboardInputInterface): KeyStrokeNode(keyboard_interface) {
@@ -154,8 +154,9 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         },
 
         Pair(KeyEvent.KEYCODE_C, false) to object: KeyStrokeNode(this) {
-            override fun call(opus_manager: OpusManager) {
+            override fun call(opus_manager: OpusManager): Boolean {
                 opus_manager.unset()
+                return true
             }
         },
 
@@ -182,7 +183,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     BeatKey(
                         opus_manager.cursor.range!!.second.channel,
                         opus_manager.cursor.range!!.second.line_offset,
-                        opus_manager.cursor.range!!.second.beat - this.clear_value_buffer(1, maximum=new_beat_key.beat, minimum=0)
+                        max(0, opus_manager.cursor.range!!.second.beat - this.clear_value_buffer(1, minimum=0))
                     )
                 )
             }
@@ -369,10 +370,10 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
         Pair(KeyEvent.KEYCODE_L, true) to object: CursorSpecificKeyStrokeNode(this) {
             override fun single(opus_manager: OpusLayerInterface) {
-                val movement_value = this.clear_value_buffer(1)
+                val movement_value = this.clear_value_buffer(1, minimum=0)
                 val cursor = opus_manager.cursor
-                var beat = (cursor.beat + movement_value) % opus_manager.beat_count
-                opus_manager.select_first_in_beat(beat, cursor)
+                var beat = min(opus_manager.beat_count - 1, cursor.beat + movement_value)
+                opus_manager.select_first_in_beat(beat)
             }
         },
 
@@ -451,7 +452,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
     fun input(key_code: Int, event: KeyEvent): Boolean {
         return if (this.key_code_map.containsKey(Pair(key_code, event.isShiftPressed))) {
-            this.key_code_map[key_code]!!.call(this.opus_manager)
+            this.key_code_map[Pair(key_code, event.isShiftPressed)]!!.call(this.opus_manager)
         } else {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_2, KeyEvent.KEYCODE_3, KeyEvent.KEYCODE_4,
@@ -555,10 +556,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
             null -> {
                 this.opus_manager.get_visible_row_from_ctl_line(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.line_offset
-                )
+                    this.opus_manager.get_ctl_line_from_row(
+                        this.opus_manager.get_instrument_line_index(
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                    )
+                )!!
             }
         }
 
@@ -569,10 +573,10 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             CtlLineLevel.Line -> {
                 val target_position = this.opus_manager.get_first_position_line_ctl(
                     ctl_type!!,
-                    cursor.beat,
+                    cursor.get_beatkey(),
                     listOf()
                 )
-                this.opus_manager.cursor_select_ctl_at_line(ctl_type!!, cursor.beat, target_position)
+                this.opus_manager.cursor_select_ctl_at_line(ctl_type!!, cursor.get_beatkey(), target_position)
             }
             CtlLineLevel.Channel -> {
                 var target_position = this.opus_manager.get_first_position_channel_ctl(

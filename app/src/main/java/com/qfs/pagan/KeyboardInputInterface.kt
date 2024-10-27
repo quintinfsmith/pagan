@@ -78,6 +78,17 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
     }
 
     val key_code_map = hashMapOf(
+        Pair(KeyEvent.KEYCODE_ESCAPE, false) to object: KeyStrokeNode(this) {
+            override fun call(opus_manager: OpusManager): Boolean {
+                return if (this@KeyboardInputInterface.input_buffer_value == null) {
+                    false
+                } else {
+                    this@KeyboardInputInterface.input_buffer_value = null
+                    true
+                }
+            }
+        },
+
         Pair(KeyEvent.KEYCODE_A, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusLayerInterface) {
                 val repeat = this.clear_value_buffer(1, maximum=9999)
@@ -461,14 +472,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     true
                 }
 
-                KeyEvent.KEYCODE_ESCAPE -> {
-                    if (this.input_buffer_value == null) {
-                        false
-                    } else {
-                        this.input_buffer_value = null
-                        true
-                    }
-                }
                 else -> false
             }
         }

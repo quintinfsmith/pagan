@@ -2303,11 +2303,11 @@ class OpusLayerInterface : OpusLayerCursor() {
                     CtlLineLevel.Channel -> cursor.channel
                 }
 
-                (start_channel + n).mod(this.get_visible_channel_count())
+                max(0, min(start_channel + n, this.get_visible_channel_count() - 1))
             }
 
             OpusManagerCursor.CursorMode.Column -> {
-                (n + this.channels.size).mod(this.get_visible_channel_count())
+                max(0, min(n, this.get_visible_channel_count() - 1))
             }
 
             OpusManagerCursor.CursorMode.Range,
@@ -2484,7 +2484,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
         }!!
 
-        visible_row = (visible_row - repeat) % this.get_row_count()
+        visible_row = max(0, visible_row - repeat)
 
         val (pointer, control_level, control_type) = this.get_ctl_line_info(
             this.get_ctl_line_from_row(visible_row)
@@ -2548,7 +2548,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
         }!!
 
-        visible_row = (visible_row - repeat) % this.get_row_count()
+        visible_row = max(0, min(this.get_total_line_count() - 1,visible_row + repeat))
 
         val (pointer, control_level, control_type) = this.get_ctl_line_info(
             this.get_ctl_line_from_row(visible_row)

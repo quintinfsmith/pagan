@@ -1320,6 +1320,45 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.remember_cursor()
     }
 
+    fun select_first_in_beat(beat: Int) {
+        when (this.cursor.ctl_level) {
+            null -> {
+                val new_beat_key = BeatKey(this.cursor.channel, cursor.line_offset, beat)
+                val new_position = this.get_first_position(new_beat_key, listOf())
+                this.cursor_select(
+                    new_beat_key,
+                    new_position
+                )
+            }
+            CtlLineLevel.Line -> {
+                val new_beat_key = BeatKey(this.cursor.channel, cursor.line_offset, beat)
+                val new_position = this.get_first_position_line_ctl(this.cursor.ctl_type!!, new_beat_key, listOf())
+                this.cursor_select_ctl_at_line(
+                    this.cursor.ctl_type!!,
+                    new_beat_key,
+                    new_position
+                )
+            }
+            CtlLineLevel.Channel -> {
+                val new_position = this.get_first_position_channel_ctl(this.cursor.ctl_type!!, cursor.channel, beat, listOf())
+                this.cursor_select_ctl_at_channel(
+                    this.cursor.ctl_type!!,
+                    this.cursor.channel,
+                    beat,
+                    new_position
+                )
+            }
+            CtlLineLevel.Global -> {
+                val new_position = this.get_first_position_global_ctl(this.cursor.ctl_type!!, beat, listOf())
+                this.cursor_select_ctl_at_global(
+                    this.cursor.ctl_type!!,
+                    beat,
+                    new_position
+                )
+            }
+        }
+    }
+
     /* Not Currently In Use. */
     //fun link_alike() {
     //    if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {

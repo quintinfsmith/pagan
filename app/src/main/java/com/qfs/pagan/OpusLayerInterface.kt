@@ -2315,5 +2315,408 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    fun select_first_leaf_in_previous_beat(repeat: Int = 1) {
+        when (this.cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                var working_beat = this.cursor.beat
+                var working_position = this.cursor.position
+                val controller = this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers.get_controller(this.cursor.ctl_type!!)
+
+                for (i in 0 until repeat) {
+                    val next_pair = controller.get_preceding_leaf_position(
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+
+                this.cursor_select_ctl_at_line(this.cursor.ctl_type!!, BeatKey(working_beat, this.cursor.channel, this.cursor.line_offset), working_position)
+            }
+            CtlLineLevel.Channel -> {
+                var working_beat = this.cursor.beat
+                val channel = this.cursor.channel
+                var working_position = this.cursor.position
+                val controller = this.channels[channel].controllers.get_controller(this.cursor.ctl_type!!)
+
+                for (i in 0 until repeat) {
+                    val next_pair = controller.get_preceding_leaf_position(
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_channel(this.cursor.ctl_type!!, channel, working_beat, working_position)
+            }
+            CtlLineLevel.Global -> {
+                var working_beat = this.cursor.beat
+                var working_position = this.cursor.position
+                val controller = this.controllers.get_controller(this.cursor.ctl_type!!)
+
+                for (i in 0 until repeat) {
+                    val next_pair = controller.get_preceding_leaf_position(
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_global(this.cursor.ctl_type!!, working_beat, working_position)
+
+            }
+            null -> {
+                var working_beat_key = this.cursor.get_beatkey()
+                var working_position = this.cursor.get_position()
+
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_preceding_leaf_position(
+                        working_beat_key,
+                        working_position
+                    ) ?: break
+                    working_beat_key = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select(working_beat_key, working_position)
+            }
+        }
+    }
+
+    fun select_first_leaf_in_next_beat(repeat: Int = 1) {
+        val cursor = this.cursor
+        when (cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                var working_beat_key = cursor.get_beatkey()
+                var working_position = cursor.get_position()
+
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_line_ctl_proceding_leaf_position(
+                        cursor.ctl_type!!,
+                        working_beat_key,
+                        working_position
+                    ) ?: break
+
+                    working_beat_key.beat = next_pair.first
+                    working_position = next_pair.second
+                }
+
+                this.cursor_select_ctl_at_line(cursor.ctl_type!!, working_beat_key, working_position)
+            }
+            CtlLineLevel.Channel -> {
+                var working_beat = cursor.beat
+                val channel = cursor.channel
+                var working_position = cursor.position
+                val controller = this.channels[channel].controllers.get_controller(cursor.ctl_type!!)
+
+                for (i in 0 until repeat) {
+                    val next_pair = controller.get_proceding_leaf_position(
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_channel(cursor.ctl_type!!, channel, working_beat, working_position)
+            }
+            CtlLineLevel.Global -> {
+                var working_beat = cursor.beat
+                var working_position = cursor.position
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_global_ctl_proceding_leaf_position(
+                        cursor.ctl_type!!,
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_global(cursor.ctl_type!!, working_beat, working_position)
+
+            }
+            null -> {
+                var working_beat_key = cursor.get_beatkey()
+                var working_position = cursor.get_position()
+
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_proceding_leaf_position(
+                        working_beat_key,
+                        working_position
+                    ) ?: break
+                    working_beat_key = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select(working_beat_key, working_position)
+            }
+        }
+    }
+
+    fun move_to_previous_visible_line(repeat: Int = 1) {
+        val cursor = opus_manager.cursor
+        if (cursor.mode != CursorMode.Line) {
+            throw Exception("Incorrect Cursor Mode ${cursor.mode}")
+        }
+
+        var visible_row = when (cursor.ctl_level) {
+            null -> {
+                opus_manager.get_visible_row_from_ctl_line(
+                    opus_manager.get_actual_line_index(
+                        opus_manager.get_instrument_line_index(
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                    )
+                )
+
+            }
+            CtlLineLevel.Line -> {
+                opus_manager.get_visible_row_from_ctl_line_line(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.line_offset
+                )
+            }
+            CtlLineLevel.Channel -> {
+                opus_manager.get_visible_row_from_ctl_line_channel(
+                    cursor.ctl_type!!,
+                    cursor.channel
+                )
+            }
+            CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+        }!!
+
+        visible_row = (visible_row - repeat) % opus_manager.get_row_count()
+
+        val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_row(visible_row)
+        )
+
+        when (control_level) {
+            null -> {
+                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                opus_manager.cursor_select_line(new_channel, new_line_offset)
+
+            }
+            CtlLineLevel.Line -> {
+                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                opus_manager.cursor_select_line_ctl_line(
+                    control_type!!,
+                    new_channel,
+                    new_line_offset,
+                )
+            }
+            CtlLineLevel.Channel -> {
+                opus_manager.cursor_select_channel_ctl_line(
+                    control_type!!,
+                    pointer
+                )
+            }
+            CtlLineLevel.Global -> opus_manager.cursor_select_global_ctl_line(control_type!!)
+        }
+    }
+
+    fun move_to_next_visible_line(repeat: Int = 1) {
+        val cursor = opus_manager.cursor
+        if (cursor.mode != CursorMode.Line) {
+            throw Exception("Incorrect Cursor Mode ${cursor.mode}")
+        }
+
+        var visible_row = when (cursor.ctl_level) {
+            null -> {
+                opus_manager.get_visible_row_from_ctl_line(
+                    opus_manager.get_actual_line_index(
+                        opus_manager.get_instrument_line_index(
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                    )
+                )
+
+            }
+            CtlLineLevel.Line -> {
+                opus_manager.get_visible_row_from_ctl_line_line(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.line_offset
+                )
+            }
+            CtlLineLevel.Channel -> {
+                opus_manager.get_visible_row_from_ctl_line_channel(
+                    cursor.ctl_type!!,
+                    cursor.channel
+                )
+            }
+            CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+        }!!
+
+        visible_row = (visible_row - repeat) % opus_manager.get_row_count()
+
+        val (pointer, control_level, control_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_row(visible_row)
+        )
+
+        when (control_level) {
+            null -> {
+                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                opus_manager.cursor_select_line(new_channel, new_line_offset)
+
+            }
+            CtlLineLevel.Line -> {
+                val (new_channel, new_line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                opus_manager.cursor_select_line_ctl_line(
+                    control_type!!,
+                    new_channel,
+                    new_line_offset,
+                )
+            }
+            CtlLineLevel.Channel -> {
+                opus_manager.cursor_select_channel_ctl_line(
+                    control_type!!,
+                    pointer
+                )
+            }
+            CtlLineLevel.Global -> opus_manager.cursor_select_global_ctl_line(control_type!!)
+        }
+    }
+
+    fun select_next_leaf(repeat: Int) {
+        val cursor = this.cursor
+        when (cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                var working_beat_key = cursor.get_beatkey()
+                var working_position = cursor.get_position()
+
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_line_ctl_proceding_leaf_position(
+                        cursor.ctl_type!!,
+                        working_beat_key,
+                        working_position
+                    ) ?: break
+
+                    working_beat_key.beat = next_pair.first
+                    working_position = next_pair.second
+                }
+
+                this.cursor_select_ctl_at_line(cursor.ctl_type!!, working_beat_key, working_position)
+            }
+
+            CtlLineLevel.Channel -> {
+                var working_beat = cursor.beat
+                val channel = cursor.channel
+                var working_position = cursor.position
+                val controller = this.channels[channel].controllers.get_controller(cursor.ctl_type!!)
+
+                for (i in 0 until repeat) {
+                    val next_pair = controller.get_proceding_leaf_position(
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_channel(cursor.ctl_type!!, channel, working_beat, working_position)
+            }
+
+            CtlLineLevel.Global -> {
+                var working_beat = cursor.beat
+                var working_position = cursor.position
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_global_ctl_proceding_leaf_position(
+                        cursor.ctl_type!!,
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_global(cursor.ctl_type!!, working_beat, working_position)
+
+            }
+            null -> {
+                var working_beat_key = cursor.get_beatkey()
+                var working_position = cursor.get_position()
+
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_proceding_leaf_position(
+                        working_beat_key,
+                        working_position
+                    ) ?: break
+                    working_beat_key = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select(working_beat_key, working_position)
+            }
+        }
+    }
+
+    fun select_previous_leaf(repeat: Int) {
+        val cursor = this.cursor
+        when (cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                var working_beat_key = cursor.get_beatkey()
+                var working_position = cursor.get_position()
+
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_line_ctl_preceding_leaf_position(
+                        cursor.ctl_type!!,
+                        working_beat_key,
+                        working_position
+                    ) ?: break
+
+                    working_beat_key.beat = next_pair.first
+                    working_position = next_pair.second
+                }
+
+                this.cursor_select_ctl_at_line(cursor.ctl_type!!, working_beat_key, working_position)
+            }
+
+            CtlLineLevel.Channel -> {
+                var working_beat = cursor.beat
+                val channel = cursor.channel
+                var working_position = cursor.position
+                val controller = this.channels[channel].controllers.get_controller(cursor.ctl_type!!)
+
+                for (i in 0 until repeat) {
+                    val next_pair = controller.get_preceding_leaf_position(
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_channel(cursor.ctl_type!!, channel, working_beat, working_position)
+            }
+
+            CtlLineLevel.Global -> {
+                var working_beat = cursor.beat
+                var working_position = cursor.position
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_global_ctl_preceding_leaf_position(
+                        cursor.ctl_type!!,
+                        working_beat,
+                        working_position
+                    ) ?: break
+                    working_beat = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select_ctl_at_global(cursor.ctl_type!!, working_beat, working_position)
+
+            }
+            null -> {
+                var working_beat_key = cursor.get_beatkey()
+                var working_position = cursor.get_position()
+
+                for (i in 0 until repeat) {
+                    val next_pair = this.get_preceding_leaf_position(
+                        working_beat_key,
+                        working_position
+                    ) ?: break
+                    working_beat_key = next_pair.first
+                    working_position = next_pair.second
+                }
+                this.cursor_select(working_beat_key, working_position)
+            }
+        }
+    }
+
     // END UI FUNCS -----------------------
 }

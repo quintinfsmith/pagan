@@ -764,12 +764,12 @@ class OpusLayerInterface : OpusLayerCursor() {
                 if (!this.ui_change_bill.is_full_locked()) {
                     this.queue_cursor_update(this.cursor)
                     val x = min(beat_index, this.beat_count - 1 - count)
-                    println("REMOVEING $count from $x")
                     for (i in 0 until count) {
                         this.get_editor_table().remove_mapped_column(x)
                         this.ui_change_bill.queue_remove_column(x)
                     }
                 }
+
                 super.remove_beat(beat_index, count)
 
                 if (!this.ui_change_bill.is_full_locked()) {

@@ -777,6 +777,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     override fun remove_beat(beat_index: Int, count: Int) {
         this._remember {
+            val working_beat_index = min(beat_index, this.beat_count - 1 - count)
             val beat_cells = List(count) { i: Int ->
                 val working_list = mutableListOf<OpusTree<out InstrumentEvent>>()
                 val working_line_controller_list = mutableListOf<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>()
@@ -786,21 +787,21 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     val line_count = channel.size
                     for (j in 0 until line_count) {
                         working_list.add(
-                            this.get_tree_copy(BeatKey(c, j, beat_index + i))
+                            this.get_tree_copy(BeatKey(c, j, working_beat_index + i))
                         )
                         val controllers = channel.lines[j].controllers
                         for ((type, controller) in controllers.get_all()) {
-                            working_line_controller_list.add(Triple(Pair(c, j), type, controller.get_beat(beat_index + i)))
+                            working_line_controller_list.add(Triple(Pair(c, j), type, controller.get_beat(working_beat_index + i)))
                         }
                     }
                     val controllers = channel.controllers
                     for ((type, controller) in controllers.get_all()) {
-                        working_channel_controller_list.add(Triple(c, type, controller.get_beat(beat_index + i)))
+                        working_channel_controller_list.add(Triple(c, type, controller.get_beat(working_beat_index + i)))
                     }
                 }
                 val controllers = this.controllers
                 for ((type, controller) in controllers.get_all()) {
-                    working_global_controller_list.add(Pair(type, controller.get_beat(beat_index + i)))
+                    working_global_controller_list.add(Pair(type, controller.get_beat(working_beat_index + i)))
                 }
 
                 Pair(working_list, Triple(working_line_controller_list, working_channel_controller_list, working_global_controller_list))
@@ -811,7 +812,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
             for (i in 0 until beat_cells.size) {
                 this.push_to_history_stack(
                     HistoryToken.INSERT_BEAT,
-                    listOf(beat_index, beat_cells[i].first, beat_cells[i].second)
+                    listOf(working_beat_index, beat_cells[i].first, beat_cells[i].second)
                 )
             }
         }

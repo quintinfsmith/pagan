@@ -1714,19 +1714,19 @@ open class OpusLayerBase {
         if (this.beat_count <= count) {
             throw RemovingLastBeatException()
         }
-
-        if (beat_index < 0 || beat_index + count > this.beat_count) {
+        val working_beat_index = min(beat_index, this.beat_count - 1 - count)
+        if (working_beat_index < 0 || working_beat_index + count > this.beat_count) {
             throw IndexOutOfBoundsException()
         }
 
         for (i in 0 until count) {
             this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
-                channel.remove_beat(beat_index)
+                channel.remove_beat(working_beat_index)
             }
-            this.percussion_channel.remove_beat(beat_index)
+            this.percussion_channel.remove_beat(working_beat_index)
 
             for (controller in this.controllers.controllers.values) {
-                controller.remove_beat(beat_index)
+                controller.remove_beat(working_beat_index)
             }
         }
 

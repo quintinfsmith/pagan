@@ -499,6 +499,13 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        val current_tree_position = this.get_original_position(beat_key, position)
+        val current_event_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
+        val blocked_amount = this.get_blocking_amount(beat_key, position)
+        if (current_event_tree != this.get_tree(beat_key, position) && blocked_amount!! >= 1) {
+            throw BlockedTreeException(beat_key, position, current_tree_position.first, current_tree_position.second)
+        }
+
         this.recache_blocked_tree_wrapper(beat_key, position) {
             super.split_tree(beat_key, position, splits, move_event_to_end)
         }

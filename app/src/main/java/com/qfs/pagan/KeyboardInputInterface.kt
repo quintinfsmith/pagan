@@ -7,10 +7,10 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class KeyboardInputInterface(var opus_manager: OpusManager) {
-
     abstract class KeyStrokeNode(val keyboard_interface: KeyboardInputInterface) {
         abstract fun call(opus_manager: OpusManager): Boolean
         internal fun get_buffer_value(default: Int = 0, minimum: Int? = null, maximum: Int? = null): Int {
@@ -132,7 +132,11 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 if (repeat > 0) {
                     val tree = opus_manager.get_tree()
                     if (tree.parent == null) {
-                        opus_manager.split_tree(repeat + 1)
+                        try {
+                            opus_manager.split_tree(repeat + 1)
+                        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                            // pass
+                        }
                     } else {
                         opus_manager.insert_after(repeat)
                     }
@@ -187,13 +191,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 val beat = this.get_buffer_value(default, 0, opus_manager.beat_count - 1)
 
                 opus_manager.cursor_select_column(beat)
-                return true
-            }
-        },
-
-        Pair(KeyEvent.KEYCODE_C, false) to object: KeyStrokeNode(this) {
-            override fun call(opus_manager: OpusManager): Boolean {
-                opus_manager.unset()
                 return true
             }
         },
@@ -258,6 +255,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 val repeat = this.get_buffer_value(1, maximum=9999, minimum=0)
                 opus_manager.new_line(opus_manager.cursor.channel, opus_manager.cursor.line_offset, repeat)
             }
+
             override fun column(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=9999)
                 opus_manager.insert_beat_at_cursor(repeat)
@@ -266,10 +264,15 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=64, minimum=0)
                 if (repeat > 0) {
-                    try {
+                    val tree = opus_manager.get_tree()
+                    if (tree.parent == null) {
+                        try {
+                            opus_manager.split_tree(repeat + 1, true)
+                        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                            // pass
+                        }
+                    } else {
                         opus_manager.insert(repeat)
-                    } catch (e: OpusLayerBase.BadInsertPosition) {
-                        opus_manager.split_tree(repeat + 1)
                     }
                 }
             }
@@ -407,12 +410,19 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         },
 
+
         Pair(KeyEvent.KEYCODE_S, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun single(opus_manager: OpusLayerInterface) {
                 val splits = this.get_buffer_value(2, minimum=2, maximum=64)
                 val cursor = opus_manager.cursor
                 when (cursor.ctl_level) {
-                    null -> opus_manager.split_tree(splits)
+                    null -> {
+                        try {
+                            opus_manager.split_tree(splits)
+                        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                            // ignore
+                        }
+                    }
                     CtlLineLevel.Line -> TODO()
                     CtlLineLevel.Channel -> TODO()
                     CtlLineLevel.Global -> {
@@ -487,9 +497,16 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         },
 
-        Pair(KeyEvent.KEYCODE_X, false) to object: CursorSpecificKeyStrokeNode(this) {
+        Pair(KeyEvent.KEYCODE_X, false) to object: KeyStrokeNode(this) {
+            override fun call(opus_manager: OpusManager): Boolean {
+                opus_manager.unset()
+                return true
+            }
+        },
+
+        Pair(KeyEvent.KEYCODE_X, true) to object: CursorSpecificKeyStrokeNode(this) {
             override fun column(opus_manager: OpusLayerInterface) {
-                val repeat = this.get_buffer_value(1)
+                val repeat = this.get_buffer_value(1, minimum=0, maximum=opus_manager.beat_count - 1)
                 if (repeat > 0) {
                     opus_manager.remove_beat_at_cursor(repeat)
                 }

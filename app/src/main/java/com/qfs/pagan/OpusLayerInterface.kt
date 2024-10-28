@@ -143,6 +143,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
+        val activity = this.get_activity()
+        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+            return
+        }
+
         val tree = this.get_tree(beat_key)
         val new_weight = tree.get_total_child_weight()
 
@@ -154,7 +159,10 @@ class OpusLayerInterface : OpusLayerCursor() {
                 EditorTable.Coordinate(
                     y = this.get_visible_row_from_ctl_line(
                         this.get_actual_line_index(
-                            this.get_instrument_line_index(beat_key.channel, beat_key.line_offset)
+                            this.get_instrument_line_index(
+                                beat_key.channel,
+                                beat_key.line_offset
+                            )
                         )
                     )!!,
                     x = beat_key.beat
@@ -755,9 +763,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.lock_ui_partial {
                 if (!this.ui_change_bill.is_full_locked()) {
                     this.queue_cursor_update(this.cursor)
+                    val x = min(beat_index, this.beat_count - 1 - count)
+                    println("REMOVEING $count from $x")
                     for (i in 0 until count) {
-                        this.get_editor_table().remove_mapped_column(beat_index)
-                        this.ui_change_bill.queue_remove_column(beat_index)
+                        this.get_editor_table().remove_mapped_column(x)
+                        this.ui_change_bill.queue_remove_column(x)
                     }
                 }
                 super.remove_beat(beat_index, count)

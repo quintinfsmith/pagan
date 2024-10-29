@@ -372,6 +372,38 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
+    override fun convert_events_in_line_to_absolute(channel: Int, line_offset: Int) {
+        this._remember {
+            super.convert_events_in_line_to_absolute(channel, line_offset)
+        }
+    }
+    override fun convert_events_in_tree_to_absolute(beat_key: BeatKey, position: List<Int>) {
+        this._remember {
+            super.convert_events_in_tree_to_absolute(beat_key, position)
+        }
+    }
+    override fun convert_events_in_beat_to_absolute(beat: Int) {
+        this._remember {
+            super.convert_events_in_beat_to_absolute(beat)
+        }
+    }
+
+    override fun convert_events_in_line_to_relative(channel: Int, line_offset: Int) {
+        this._remember {
+            super.convert_events_in_line_to_relative(channel, line_offset)
+        }
+    }
+    override fun convert_events_in_tree_to_relative(beat_key: BeatKey, position: List<Int>) {
+        this._remember {
+            super.convert_events_in_tree_to_relative(beat_key, position)
+        }
+    }
+    override fun convert_events_in_beat_to_relative(beat: Int) {
+        this._remember {
+            super.convert_events_in_beat_to_relative(beat)
+        }
+    }
+
     override fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
         this._remember {
             super.convert_event_to_absolute(beat_key, position)

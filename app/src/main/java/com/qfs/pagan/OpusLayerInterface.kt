@@ -1011,9 +1011,15 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    fun set_relative_mode(mode: Int) {
+    fun set_relative_mode(mode: Int, update_ui: Boolean = true) {
         this.relative_mode = mode
+        this.lock_ui_partial {
+            if (update_ui) {
+                this.ui_change_bill.queue_refresh_context_menu()
+            }
+        }
     }
+
     fun set_relative_mode(event: TunedInstrumentEvent) {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = if (event is AbsoluteNoteEvent) {

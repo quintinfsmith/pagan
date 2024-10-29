@@ -415,7 +415,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val event = current_tree.get_event()
         if (event == null) {
             val state = view.getState() ?: return
-            opus_manager.set_relative_mode(state)
+            opus_manager.set_relative_mode(state, false)
             return
         }
         val radix = opus_manager.tuning_map.size

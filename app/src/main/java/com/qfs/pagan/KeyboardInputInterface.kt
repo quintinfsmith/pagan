@@ -9,6 +9,7 @@ import kotlin.math.min
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import com.qfs.pagan.OpusLayerInterface as OpusManager
+import com.qfs.pagan.opusmanager.RelativeNoteEvent
 
 class KeyboardInputInterface(var opus_manager: OpusManager) {
     abstract class KeyStrokeNode(val keyboard_interface: KeyboardInputInterface) {
@@ -71,12 +72,14 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         if (minimum != null) {
             output = max(minimum, output)
         }
+
         if (maximum != null) {
             output = min(maximum, output)
         }
 
         return output
     }
+
     fun clear_buffer_value() {
         this.input_buffer_value = null
     }
@@ -92,6 +95,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 }
             }
         },
+
         Pair(KeyEvent.KEYCODE_GRAVE, false) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusManager): Boolean {
                 try {
@@ -102,6 +106,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 return true
             }
         },
+
         Pair(KeyEvent.KEYCODE_LEFT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun single(opus_manager: OpusManager) {
                 opus_manager.set_note_octave_at_cursor(
@@ -117,6 +122,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 )
             }
         },
+
         Pair(KeyEvent.KEYCODE_A, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=9999)
@@ -287,7 +293,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface) {
                 this.keyboard_interface._cursor_select_next_leaf_down()
             }
-
         },
 
         Pair(KeyEvent.KEYCODE_J, true) to object: CursorSpecificKeyStrokeNode(this) {
@@ -361,21 +366,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         },
 
         Pair(KeyEvent.KEYCODE_L, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun line(opus_manager: OpusLayerInterface) {
-                val movement_value = this.get_buffer_value(1, minimum=0)
-                if (movement_value != 0) {
-                    val beat_key = BeatKey(
-                        opus_manager.cursor.channel,
-                        opus_manager.cursor.line_offset,
-                        min(opus_manager.cursor.beat + movement_value, opus_manager.beat_count - 1)
-                    )
-
-                    opus_manager.cursor_select(
-                        beat_key,
-                        opus_manager.get_first_position(beat_key)
-                    )
-                }
-            }
 
             override fun column(opus_manager: OpusLayerInterface) {
                 val movement_value = this.get_buffer_value(1, minimum=0)
@@ -402,6 +392,21 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         },
 
         Pair(KeyEvent.KEYCODE_L, true) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun line(opus_manager: OpusLayerInterface) {
+                val movement_value = this.get_buffer_value(1, minimum=0)
+                if (movement_value != 0) {
+                    val beat_key = BeatKey(
+                        opus_manager.cursor.channel,
+                        opus_manager.cursor.line_offset,
+                        min(movement_value - 1, opus_manager.beat_count - 1)
+                    )
+
+                    opus_manager.cursor_select(
+                        beat_key,
+                        opus_manager.get_first_position(beat_key)
+                    )
+                }
+            }
             override fun single(opus_manager: OpusLayerInterface) {
                 val movement_value = this.get_buffer_value(1, minimum=0)
                 val cursor = opus_manager.cursor
@@ -410,6 +415,53 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         },
 
+        Pair(KeyEvent.KEYCODE_R, true) to object: CursorSpecificKeyStrokeNode(this) {
+            private fun _set_relative_mode(opus_manager: OpusManager, force_mode: Int = 1) {
+                if (opus_manager.relative_mode == 0) {
+                    val activity = opus_manager.get_activity()
+                    if (activity != null) {
+                        activity.configuration.relative_mode = true
+                        activity.save_configuration()
+                    }
+                    opus_manager.set_relative_mode(force_mode)
+                }
+            }
+
+            override fun column(opus_manager: OpusManager) {
+                this._set_relative_mode(opus_manager)
+                opus_manager.convert_events_in_beat_to_relative(opus_manager.cursor.beat)
+            }
+
+            override fun single(opus_manager: OpusManager) {
+                opus_manager.convert_events_in_tree_to_relative(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+                val tree = opus_manager.get_tree()
+                val force_mode = if (tree.is_event() && (tree.get_event() as RelativeNoteEvent).offset >= 0) {
+                    2
+                } else {
+                    1
+                }
+                this._set_relative_mode(opus_manager, force_mode)
+            }
+            override fun line(opus_manager: OpusManager) {
+                this._set_relative_mode(opus_manager)
+                opus_manager.convert_events_in_line_to_relative(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
+            }
+        },
+
+        Pair(KeyEvent.KEYCODE_R, false) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun column(opus_manager: OpusManager) {
+                opus_manager.convert_events_in_beat_to_absolute(opus_manager.cursor.beat)
+                opus_manager.set_relative_mode(0)
+            }
+            override fun single(opus_manager: OpusManager) {
+                opus_manager.convert_events_in_tree_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+                opus_manager.set_relative_mode(0)
+            }
+            override fun line(opus_manager: OpusManager) {
+                opus_manager.convert_events_in_line_to_absolute(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
+                opus_manager.set_relative_mode(0)
+            }
+        },
 
         Pair(KeyEvent.KEYCODE_S, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun single(opus_manager: OpusLayerInterface) {
@@ -459,7 +511,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 this.apply_undo(opus_manager)
             }
         },
-
 
         Pair(KeyEvent.KEYCODE_V, true) to object: CursorSpecificKeyStrokeNode(this) {
             /* All the methods call cursor_select_line, but choose the channel differently */

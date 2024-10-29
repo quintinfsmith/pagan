@@ -1128,6 +1128,78 @@ open class OpusLayerBase {
         }
         return (event as AbsoluteNoteEvent).note - (preceding_value ?: 0)
     }
+
+    open fun convert_events_in_tree_to_relative(beat_key: BeatKey, position: List<Int>) {
+        val stack = mutableListOf<Pair<BeatKey, List<Int>>>(Pair(beat_key, position))
+        while (stack.isNotEmpty()) {
+            val (working_beat_key, working_position) = stack.removeFirst()
+            val working_tree = this.get_tree(working_beat_key, working_position)
+            if (working_tree.is_event()) {
+                this.convert_event_to_relative(working_beat_key, working_position)
+            } else if (!working_tree.is_leaf()) {
+                for ((i, child) in working_tree.divisions) {
+                    stack.add(Pair(beat_key, List<Int>(working_position.size + 1) { j: Int ->
+                        if (j != working_position.size) {
+                            working_position[j]
+                        } else {
+                            i
+                        }
+                    }))
+                }
+            }
+        }
+    }
+
+    open fun convert_events_in_tree_to_absolute(beat_key: BeatKey, position: List<Int>) {
+        val stack = mutableListOf<Pair<BeatKey, List<Int>>>(Pair(beat_key, position))
+        while (stack.isNotEmpty()) {
+            val (working_beat_key, working_position) = stack.removeFirst()
+            val working_tree = this.get_tree(working_beat_key, working_position)
+            if (working_tree.is_event()) {
+                this.convert_event_to_absolute(working_beat_key, working_position)
+            } else if (!working_tree.is_leaf()) {
+                for ((i, child) in working_tree.divisions) {
+                    stack.add(Pair(beat_key, List<Int>(working_position.size + 1) { j: Int ->
+                        if (j != working_position.size) {
+                            working_position[j]
+                        } else {
+                            i
+                        }
+                    }))
+                }
+            }
+        }
+    }
+
+    open fun convert_events_in_beat_to_relative(beat: Int) {
+        val channels = this.get_all_channels()
+        for (i in 0 until channels.size) {
+            val channel = channels[i]
+            for (j in 0 until channel.lines.size) {
+                this.convert_events_in_tree_to_relative(BeatKey(i, j, beat), listOf())
+            }
+        }
+    }
+
+    open fun convert_events_in_beat_to_absolute(beat: Int) {
+        val channels = this.get_all_channels()
+        for (i in 0 until channels.size) {
+            val channel = channels[i]
+            for (j in 0 until channel.lines.size) {
+                this.convert_events_in_tree_to_absolute(BeatKey(i, j, beat), listOf())
+            }
+        }
+    }
+    open fun convert_events_in_line_to_relative(channel: Int, line_offset: Int) {
+        for (beat in 0 until this.beat_count) {
+            this.convert_events_in_tree_to_relative(BeatKey(channel, line_offset, beat), listOf())
+        }
+    }
+    open fun convert_events_in_line_to_absolute(channel: Int, line_offset: Int) {
+        for (beat in 0 until this.beat_count) {
+            this.convert_events_in_tree_to_absolute(BeatKey(channel, line_offset, beat), listOf())
+        }
+    }
     /**
      * Recalculate the event of the tree @ [beat_key]/[position]
      * to be relative to the events before it, if it isn't already
@@ -1177,6 +1249,7 @@ open class OpusLayerBase {
         if (!tree.is_event()) {
             throw NonEventConversion(beat_key, position)
         }
+
         val event = tree.get_event()!!
         if (event !is RelativeNoteEvent) {
             return

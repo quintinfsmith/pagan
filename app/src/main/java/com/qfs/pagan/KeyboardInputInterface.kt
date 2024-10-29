@@ -10,6 +10,7 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 
 class KeyboardInputInterface(var opus_manager: OpusManager) {
     abstract class KeyStrokeNode(val keyboard_interface: KeyboardInputInterface) {
@@ -423,6 +424,8 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                         activity.configuration.relative_mode = true
                         activity.save_configuration()
                     }
+                }
+                if (opus_manager.relative_mode != force_mode) {
                     opus_manager.set_relative_mode(force_mode)
                 }
             }
@@ -433,15 +436,46 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun single(opus_manager: OpusManager) {
-                opus_manager.convert_events_in_tree_to_relative(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
-                val tree = opus_manager.get_tree()
-                val force_mode = if (tree.is_event() && (tree.get_event() as RelativeNoteEvent).offset >= 0) {
-                    2
-                } else {
-                    1
+                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+                    return
                 }
-                this._set_relative_mode(opus_manager, force_mode)
+                
+                val tree = opus_manager.get_tree()
+
+                if (tree.is_event()) {
+                    val event = tree.get_event()
+                    if (event is AbsoluteNoteEvent) {
+                        opus_manager.convert_event_to_relative(
+                            opus_manager.cursor.get_beatkey(),
+                            opus_manager.cursor.get_position()
+                        )
+
+                        val force_mode = if ((tree.get_event() as RelativeNoteEvent).offset >= 0) {
+                            2
+                        } else {
+                            1
+                        }
+
+                        this._set_relative_mode(opus_manager, force_mode)
+                    } else if (event is RelativeNoteEvent) {
+                        opus_manager.set_event(
+                            opus_manager.cursor.get_beatkey(),
+                            opus_manager.cursor.get_position(),
+                            RelativeNoteEvent(0 - event.offset, event.duration)
+                        )
+                    }
+                } else {
+                    this._set_relative_mode(
+                        opus_manager,
+                        if (opus_manager.relative_mode == 1) {
+                            2
+                        } else {
+                            1
+                        }
+                    )
+                }
             }
+
             override fun line(opus_manager: OpusManager) {
                 this._set_relative_mode(opus_manager)
                 opus_manager.convert_events_in_line_to_relative(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
@@ -454,9 +488,25 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 opus_manager.set_relative_mode(0)
             }
             override fun single(opus_manager: OpusManager) {
-                opus_manager.convert_events_in_tree_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+                    return
+                }
+
+                try {
+                    opus_manager.convert_event_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+                } catch (e: OpusLayerBase.NoteOutOfRange) {
+                    val tree = opus_manager.get_tree()
+                    val event = tree.get_event()!! as RelativeNoteEvent
+                    opus_manager.set_event_at_cursor(
+                        AbsoluteNoteEvent(
+                            min((opus_manager.tuning_map.size * 8) - 1, max(0, e.n)),
+                            event.duration
+                        )
+                    )
+                }
                 opus_manager.set_relative_mode(0)
             }
+
             override fun line(opus_manager: OpusManager) {
                 opus_manager.convert_events_in_line_to_absolute(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
                 opus_manager.set_relative_mode(0)

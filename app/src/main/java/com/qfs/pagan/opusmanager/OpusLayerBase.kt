@@ -42,7 +42,7 @@ open class OpusLayerBase {
     class InvalidMergeException: Exception()
     class RemovingRootException: Exception()
     class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
-    class NoteOutOfRange(n: Int) : Exception("Attempting to use unsupported note $n")
+    class NoteOutOfRange(var n: Int) : Exception("Attempting to use unsupported note $n")
 
     class EmptyPath : Exception("Path Required but not given")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
@@ -1258,7 +1258,7 @@ open class OpusLayerBase {
         // The implied first value can be 0
         val value = this.get_absolute_value(beat_key, position) ?: event.offset
         val radix = this.tuning_map.size
-        if (value < 0 || value > radix * 8) {
+        if (value < 0 || value >= radix * 8) {
             throw NoteOutOfRange(value)
         }
         this.set_event(

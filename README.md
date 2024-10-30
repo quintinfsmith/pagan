@@ -1,12 +1,11 @@
 # Pagan
 A music sequencer
 
-[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/)
-
-[Manual](https://burnsomni.net/manual/pagan) 
+[Manual](https://burnsomni.net/manual/pagan)
 
 [Issue Tracker](https://burnsomni.net/issues/pagan)
 
+[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/)
 
 
 ## What is it?

@@ -174,6 +174,86 @@ class MainActivityTest3 {
         inst.sendStringSync("[")
         inst.sendStringSync("l")
         inst.sendStringSync("[")
+        inst.sendStringSync("5B2J2j")
+        inst.sendStringSync("4s")
+        inst.sendStringSync("[")
+        inst.sendStringSync("3l")
+        inst.sendStringSync("[")
+        inst.sendStringSync("l")
+        inst.sendStringSync("4s")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        inst.sendStringSync("j")
+        inst.sendStringSync("4s")
+        inst.sendStringSync("2l")
+        inst.sendStringSync("[")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        // Beat 7
+        inst.sendStringSync("lk")
+        inst.sendStringSync("4s[3l[")
+        // Beat 8
+        inst.sendStringSync("lj")
+        inst.sendStringSync("s")
+        inst.sendStringSync("[l[")
+        // beat 9
+        inst.sendStringSync("lk")
+        inst.sendStringSync("4s[3l[")
+        // Beat 10
+        inst.sendStringSync("l")
+        inst.sendStringSync("ss")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        inst.sendStringSync("j")
+        inst.sendStringSync("s")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        // Beat 11
+        inst.sendStringSync("lk")
+        inst.sendStringSync("s")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        // Beat 12
+        inst.sendStringSync("l")
+        inst.sendStringSync("ss")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        inst.sendStringSync("j")
+        inst.sendStringSync("sls")
+        inst.sendStringSync("[")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        // Beat 13
+        inst.sendStringSync("lk")
+        inst.sendStringSync("4s")
+        inst.sendStringSync("[")
+        inst.sendStringSync("3l")
+        inst.sendStringSync("[")
+        // Beat 14
+        inst.sendStringSync("l")
+        inst.sendStringSync("ssl[")
+        inst.sendStringSync("jsl[")
+        inst.sendStringSync("3k")
+        inst.sendStringSync("sl[")
+        inst.sendStringSync("jlx")
+        // Beat 15
+        inst.sendStringSync("ls")
+        inst.sendStringSync("[")
+        inst.sendStringSync("l")
+        inst.sendStringSync("[")
+        inst.sendStringSync("jsl")
+        inst.sendStringSync("[")
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -195,7 +275,7 @@ class MainActivityTest3 {
        // get("com.qfs.pagan.LeafButtonStd", 21).perform(click())
        // get(R.id.btnUnset).perform(click())
 
-        Thread.sleep(3000)
+        Thread.sleep(5000)
        // onView(
        //     allOf(
        //         withText("2"),

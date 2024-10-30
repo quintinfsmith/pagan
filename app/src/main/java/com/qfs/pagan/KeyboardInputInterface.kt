@@ -1,16 +1,16 @@
 package com.qfs.pagan
 import android.view.KeyEvent
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import kotlin.math.max
-import kotlin.math.min
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
-import com.qfs.pagan.OpusLayerInterface as OpusManager
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import kotlin.math.max
+import kotlin.math.min
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class KeyboardInputInterface(var opus_manager: OpusManager) {
     abstract class KeyStrokeNode(val keyboard_interface: KeyboardInputInterface) {
@@ -110,9 +110,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
         Pair(KeyEvent.KEYCODE_LEFT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun single(opus_manager: OpusManager) {
-                opus_manager.set_note_octave_at_cursor(
-                    this.get_buffer_value(0, 0, 7)
-                )
+                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+                    opus_manager.set_percussion_event_at_cursor()
+                } else {
+                    opus_manager.set_note_octave_at_cursor(
+                        this.get_buffer_value(0, 0, 7)
+                    )
+                }
             }
         },
 

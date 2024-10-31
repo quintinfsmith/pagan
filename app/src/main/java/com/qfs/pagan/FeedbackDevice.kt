@@ -33,6 +33,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
             for (handle in output) {
                 this.max_frame = max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
             }
+
             return output
         }
 

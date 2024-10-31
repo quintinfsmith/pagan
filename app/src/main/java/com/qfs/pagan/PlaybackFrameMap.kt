@@ -33,7 +33,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _setter_range_map = HashMap<Int, IntRange>()
     private var _cached_frame_count: Int? = null
     private var _cached_beat_frames: Array<Int>? = null
-    private val _setter_overlaps = HashMap<Int, Array<Int>>()
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
     private val _percussion_setter_ids = mutableSetOf<Int>()
@@ -190,7 +189,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._setter_frame_map.clear()
         this._setter_map.clear()
         this._setter_range_map.clear()
-        this._setter_overlaps.clear()
         this._cached_frame_count = null
     }
 
@@ -220,12 +218,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 is NoteOn -> this._sample_handle_manager.gen_sample_handles(start_event)
                 is NoteOn79 -> this._sample_handle_manager.gen_sample_handles(start_event)
                 else -> setOf()
-            }
-
-            val overlap = if (is_percussion) {
-                1
-            } else {
-                this._setter_overlaps[setter_id]!![0] + this._setter_overlaps[setter_id]!![1]
             }
 
 
@@ -277,8 +269,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, 0)
             }
         }
-
-        this.calculate_overlaps()
     }
 
     fun map_tempo_changes() {
@@ -321,68 +311,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    private fun calculate_overlaps() {
-        val event_list = mutableListOf<Triple<Int, Int, Boolean>>()
-        for ((handle_id,range) in this._setter_range_map) {
-            event_list.add(Triple(range.first, handle_id, true))
-            event_list.add(Triple(range.last, handle_id, false))
-        }
-        event_list.sortBy { it.first }
-
-        val working_std_set = mutableSetOf<Int>()
-        val working_perc_set = mutableSetOf<Int>()
-        this._setter_overlaps.clear()
-
-        // NOTE: Excluding percussion from overlap count, since they sort of exist in their own space
-        // Percussion will still be attenuated to fit with the song, but a snare hit shouldn't make
-        // Any notes played simultaneously play quieter
-        val working_overlaps = HashMap<Int, Array<Int>>() // Keep track of overlaps here, use _setter_overlaps to track the maximums
-        for ((_, setter_id, setter_on) in event_list) {
-            val is_perc = this._percussion_setter_ids.contains(setter_id)
-            if (setter_on) {
-                if (is_perc) {
-                    for (id in working_std_set) {
-                        working_overlaps[id]!![1] += 1
-                    }
-                    for (id in working_perc_set) {
-                        working_overlaps[id]!![1] += 1
-                    }
-
-                    working_perc_set.add(setter_id)
-                } else {
-                    for (id in working_std_set) {
-                        working_overlaps[id]!![0] += 1
-                    }
-                    for (id in working_perc_set) {
-                        working_overlaps[id]!![0] += 1
-                    }
-                    working_std_set.add(setter_id)
-                }
-                working_overlaps[setter_id] = arrayOf(working_std_set.size, working_perc_set.size)
-                this._setter_overlaps[setter_id] = arrayOf(working_std_set.size, working_perc_set.size)
-            } else if (is_perc) {
-                working_perc_set.remove(setter_id)
-                for (id in working_std_set) {
-                    this._setter_overlaps[id]!![1] = max(working_overlaps[id]!![1], this._setter_overlaps[id]!![1])
-                    working_overlaps[id]!![1] -= 1
-                }
-                for (id in working_perc_set) {
-                    this._setter_overlaps[id]!![1] = max(working_overlaps[id]!![1], this._setter_overlaps[id]!![1])
-                    working_overlaps[id]!![1] -= 1
-                }
-            } else {
-                working_std_set.remove(setter_id)
-                for (id in working_std_set) {
-                    this._setter_overlaps[id]!![0] = max(working_overlaps[id]!![0], this._setter_overlaps[id]!![0])
-                    working_overlaps[id]!![0] -= 1
-                }
-                for (id in working_perc_set) {
-                    this._setter_overlaps[id]!![0] = max(working_overlaps[id]!![0], this._setter_overlaps[id]!![0])
-                    working_overlaps[id]!![0] -= 1
-                }
-            }
-        }
-    }
 
     private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<out InstrumentEvent>, relative_width: Float, relative_offset: Float, bkp_note_value: Int): Int {
         if (!working_tree.is_leaf()) {

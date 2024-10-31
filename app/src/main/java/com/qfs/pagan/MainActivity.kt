@@ -1462,6 +1462,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Int) {
+        println("PLAY EVENT: $channel $event_value $velocity")
         if (!this._midi_interface.output_devices_connected()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()
@@ -1479,7 +1480,7 @@ class MainActivity : AppCompatActivity() {
         val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
             Pair(event_value + 27, 0)
         } else {
-            val octave = event_value/ radix
+            val octave = event_value / radix
             val offset = opus_manager.tuning_map[event_value % radix]
 
             val transpose_offset = 12.0 * opus_manager.transpose.toDouble() / radix.toDouble()

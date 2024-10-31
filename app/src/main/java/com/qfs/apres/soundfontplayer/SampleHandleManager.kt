@@ -15,7 +15,7 @@ class SampleHandleManager(
     var sample_rate: Int,
     target_buffer_size: Int = 0,
     var sample_limit: Int? = null,
-    ignore_envelopes_and_lfo: Boolean = false
+    ignore_lfo: Boolean = false
     ) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
@@ -39,8 +39,7 @@ class SampleHandleManager(
         this.sample_handle_generator = SampleHandleGenerator(
             this.sample_rate,
             this.buffer_size,
-            ignore_envelopes_and_lfo,
-            ignore_envelopes_and_lfo,
+            ignore_lfo,
         )
     }
 
@@ -90,6 +89,7 @@ class SampleHandleManager(
     }
 
     fun gen_sample_handles(event: NoteOn79): Set<SampleHandle> {
+        println("79")
         val preset = this.get_preset(event.channel) ?: return setOf()
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8

@@ -31,6 +31,9 @@ class SampleHandle(
     val smoothing_factor: Float
     var pitch_adjustment: Float = 1F
 
+    // Calculate here so it doesn't need to be on every frame
+    private val _initial_frame_factor = 1F / 10F.pow(this.initial_attenuation)
+
     var previous_frame = 0f
     var uuid: Int = SampleHandle.uuid_gen++
 
@@ -95,13 +98,16 @@ class SampleHandle(
         var hold: Float = 0F,
         var decay: Float = 0F,
         var release: Float = 0F,
-        var sustain_attenuation: Float = 1F
+        var sustain_attenuation: Float = 0F
     ) {
         var frames_delay: Int = 0
         var frames_attack: Int = 0
         var frames_hold: Int = 0
         var frames_decay: Int = 0
         var frames_release: Int = 0
+
+        // Calculate here so it doesn't need to be on every frame after decay phase
+        var true_sustain_attenuation: Float = 10F.pow(this.sustain_attenuation)
 
         init {
             this.set_sample_rate(this.sample_rate)
@@ -289,26 +295,29 @@ class SampleHandle(
             return null
         }
 
-        var frame_factor = 1F
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
 
         if (this.working_frame < this.volume_envelope.frames_delay) {
             this.working_frame += 1
             this.previous_frame = 0F
             return 0
-        } else if (this.working_frame - this.volume_envelope.frames_delay < this.volume_envelope.frames_attack) {
+        }
+
+        var frame_factor = this._initial_frame_factor
+
+        if (this.working_frame - this.volume_envelope.frames_delay < this.volume_envelope.frames_attack) {
+            // Linear Fade In
             val r = (this.working_frame - this.volume_envelope.frames_delay).toFloat() / this.volume_envelope.frames_attack.toFloat()
-            frame_factor /= 10F.pow(r * this.initial_attenuation)
+            frame_factor *= r
         } else if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_delay < this.volume_envelope.frames_hold) {
-            frame_factor /= 10F.pow(this.initial_attenuation)
-        } else if (this.volume_envelope.sustain_attenuation < 1F) {
-            frame_factor /= 10F.pow(this.initial_attenuation)
-            val relative_frame = this.working_frame - this.volume_envelope.frames_delay - this.volume_envelope.frames_attack - this.volume_envelope.frames_hold
+            // No Oper during hold phase
+        } else if (this.volume_envelope.sustain_attenuation > 0F) {
+            val relative_frame = this.working_frame - this.volume_envelope.frames_delay - this.volume_envelope.frames_attack
             frame_factor /= if (relative_frame < this.volume_envelope.frames_decay) {
-                val r = 1F - (relative_frame.toFloat() / this.volume_envelope.frames_decay.toFloat())
-                10F.pow(this.volume_envelope.sustain_attenuation * r)
+                val r = (relative_frame.toFloat() / this.volume_envelope.frames_decay.toFloat())
+                10F.pow(r * this.volume_envelope.sustain_attenuation)
             } else {
-                10F.pow(this.volume_envelope.sustain_attenuation)
+                this.volume_envelope.true_sustain_attenuation
             }
         }
 

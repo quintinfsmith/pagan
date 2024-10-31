@@ -639,7 +639,7 @@ class MainActivity : AppCompatActivity() {
                         this._soundfont!!,
                         this.configuration.sample_rate,
                         this.configuration.sample_rate, // Use Large buffer
-                        ignore_envelopes_and_lfo = true
+                        ignore_lfo = true
                     )
 
                     this._midi_playback_device = PlaybackDevice(
@@ -1501,16 +1501,15 @@ class MainActivity : AppCompatActivity() {
                 this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
             }
 
-            this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(
-                NoteOn79(
-                    index=0,
-                    channel=midi_channel,
-                    note=note,
-                    bend=bend,
-                    velocity = velocity shl 8,
-                ),
-                250
+            val event = NoteOn79(
+                index=0,
+                channel=midi_channel,
+                note=note,
+                bend=bend,
+                velocity = velocity shl 8,
             )
+            println("--------------> $event | ${event.velocity}")
+            this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
         } else {
             try {
@@ -2053,7 +2052,7 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont!!,
                 this.configuration.sample_rate,
                 this.configuration.sample_rate,
-                ignore_envelopes_and_lfo = true
+                ignore_lfo = true
             )
 
             this._midi_playback_device = PlaybackDevice(

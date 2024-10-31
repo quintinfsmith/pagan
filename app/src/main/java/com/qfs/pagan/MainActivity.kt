@@ -639,8 +639,7 @@ class MainActivity : AppCompatActivity() {
                         this._soundfont!!,
                         this.configuration.sample_rate,
                         this.configuration.sample_rate, // Use Large buffer
-                        sample_limit = 1,
-                        true
+                        ignore_envelopes_and_lfo = true
                     )
 
                     this._midi_playback_device = PlaybackDevice(
@@ -2053,9 +2052,7 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont!!,
                 this.configuration.sample_rate,
                 this.configuration.sample_rate,
-                sample_limit = 1,
-                // true to ignore volume/mod envelopes in playback
-                true
+                ignore_envelopes_and_lfo = true
             )
 
             this._midi_playback_device = PlaybackDevice(

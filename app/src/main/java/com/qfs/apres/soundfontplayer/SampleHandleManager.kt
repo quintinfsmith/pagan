@@ -89,7 +89,6 @@ class SampleHandleManager(
     }
 
     fun gen_sample_handles(event: NoteOn79): Set<SampleHandle> {
-        println("79")
         val preset = this.get_preset(event.channel) ?: return setOf()
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8

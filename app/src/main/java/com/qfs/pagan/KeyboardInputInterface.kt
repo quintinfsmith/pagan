@@ -206,12 +206,38 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         },
 
+        Pair(KeyEvent.KEYCODE_C, false) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun single(opus_manager: OpusManager) {
+                when (opus_manager.cursor.ctl_level) {
+                    CtlLineLevel.Line -> TODO()
+                    CtlLineLevel.Channel -> TODO()
+                    CtlLineLevel.Global -> TODO()
+                    null -> {
+                        if (opus_manager.marked_range != null) {
+                            opus_manager.overwrite_beat_range(
+                                opus_manager.cursor.get_beatkey(),
+                                opus_manager.marked_range!!.first,
+                                opus_manager.marked_range!!.second,
+                            )
+                            opus_manager.marked_range = null
+                        }
+                    }
+                }
+            }
+        },
         Pair(KeyEvent.KEYCODE_C, true) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusManager): Boolean {
                 val visible_channels = opus_manager.get_visible_channels()
                 val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
                 opus_manager.cursor_select_line(channel, 0)
                 return true
+            }
+        },
+
+        Pair(KeyEvent.KEYCODE_D, true) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun single(opus_manager: OpusManager) {
+                val beatkey = opus_manager.cursor.get_beatkey()
+                opus_manager.cursor_select_range(beatkey, beatkey)
             }
         },
 
@@ -417,6 +443,60 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 val cursor = opus_manager.cursor
                 var beat = min(opus_manager.beat_count - 1, cursor.beat + movement_value)
                 opus_manager.select_first_in_beat(beat)
+            }
+        },
+
+        Pair(KeyEvent.KEYCODE_M, false) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun single(opus_manager: OpusManager) {
+                when (opus_manager.cursor.ctl_level) {
+                    CtlLineLevel.Line -> TODO()
+                    CtlLineLevel.Channel -> TODO()
+                    CtlLineLevel.Global -> TODO()
+                    null -> {
+                        if (opus_manager.marked_range != null) {
+                            opus_manager.move_beat_range(
+                                opus_manager.cursor.get_beatkey(),
+                                opus_manager.marked_range!!.first,
+                                opus_manager.marked_range!!.second,
+                            )
+                            opus_manager.marked_range = null
+                        }
+                    }
+                }
+            }
+
+            override fun range(opus_manager: OpusManager) {
+                when (opus_manager.cursor.ctl_level) {
+                    CtlLineLevel.Line -> TODO()
+                    CtlLineLevel.Channel -> TODO()
+                    CtlLineLevel.Global -> TODO()
+                    null -> {
+                        val range = opus_manager.cursor.range
+                        opus_manager.marked_range = range
+                        val beat_key = opus_manager.cursor.range!!.second
+                        val position = opus_manager.get_first_position(beat_key)
+                        opus_manager.cursor_select(beat_key, position)
+                    }
+                }
+            }
+        },
+        Pair(KeyEvent.KEYCODE_N, false) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun single(opus_manager: OpusManager) {
+                when (opus_manager.cursor.ctl_level) {
+                    CtlLineLevel.Line -> TODO()
+                    CtlLineLevel.Channel -> TODO()
+                    CtlLineLevel.Global -> TODO()
+                    null -> {
+                        if (opus_manager.marked_range != null) {
+                            opus_manager.link_beat_range(
+                                opus_manager.cursor.get_beatkey(),
+                                opus_manager.marked_range!!.first,
+                                opus_manager.marked_range!!.second,
+                            )
+                            opus_manager.marked_range = null
+                        }
+                    }
+                }
             }
         },
 

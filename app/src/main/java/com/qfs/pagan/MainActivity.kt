@@ -401,7 +401,13 @@ class MainActivity : AppCompatActivity() {
         val active_fragment = this.get_active_fragment()
         val cancel_super = if (event != null) {
             when (active_fragment) {
-                is FragmentEditor -> active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
+                is FragmentEditor ->
+                    try {
+                        active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
+                    } catch (e: Exception) {
+                        println("Error caught from keyboard input: $e")
+                        true
+                    }
                 else -> false
             }
         } else {

@@ -47,6 +47,8 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private var _blocked_action_catcher_active = false
 
+    var marked_range: Pair<BeatKey, BeatKey>? = null
+
     private val ui_change_bill = UIChangeBill()
     var temporary_blocker: Pair<BeatKey, List<Int>>? = null
 

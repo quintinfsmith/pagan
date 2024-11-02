@@ -1,6 +1,6 @@
 package com.qfs.pagan.opusmanager
 
-abstract class OpusControlEvent: OpusEvent() {
+abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration) {
     abstract fun copy(): OpusControlEvent
 }
 
@@ -17,7 +17,7 @@ enum class ControlTransition {
     Convex
 }
 
-class OpusTempoEvent(var value: Float): OpusControlEvent() {
+class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
     override fun equals(other: Any?): Boolean {
         return other is OpusTempoEvent && this.value == other.value
     }
@@ -26,7 +26,8 @@ class OpusTempoEvent(var value: Float): OpusControlEvent() {
         return OpusTempoEvent(this.value)
     }
 }
-class OpusVolumeEvent(var value: Int, var transition: Int = 0): OpusControlEvent() {
+
+class OpusVolumeEvent(var value: Int, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
     override fun copy(): OpusVolumeEvent {
         return OpusVolumeEvent(this.value, this.transition)
     }
@@ -35,7 +36,8 @@ class OpusVolumeEvent(var value: Int, var transition: Int = 0): OpusControlEvent
         return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition
     }
 }
-class OpusReverbEvent(var value: Float): OpusControlEvent() {
+
+class OpusReverbEvent(var value: Float ): OpusControlEvent() {
     override fun copy(): OpusReverbEvent {
         return OpusReverbEvent(this.value)
     }
@@ -44,7 +46,7 @@ class OpusReverbEvent(var value: Float): OpusControlEvent() {
     }
 }
 
-class OpusBendEvent(var numerator: Int, var denominator: Int, var transition: ControlTransition = ControlTransition.Instant): OpusControlEvent() {
+class OpusBendEvent(var numerator: Int, var denominator: Int, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
     override fun copy(): OpusBendEvent {
         return OpusBendEvent(this.numerator, this.denominator, this.transition)
     }

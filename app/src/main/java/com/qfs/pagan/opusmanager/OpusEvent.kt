@@ -1,4 +1,4 @@
 package com.qfs.pagan.opusmanager
 
-abstract class OpusEvent {
+abstract class OpusEvent(var duration: Int = 1) {
 }

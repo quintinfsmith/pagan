@@ -84,17 +84,13 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val working_channel = opus_manager.get_channel(channel)
         this.button_remove.isEnabled = working_channel.size > 1
 
-        // Hiding volume control line for now (VOLCTLTMP)
-        this.button_toggle_volume_control.visibility = View.GONE
-
         if (opus_manager.is_ctl_line_visible(CtlLineLevel.Line, ControlEventType.Volume)) {
-            // Hiding volume control line for now (VOLCTLTMP)
-            //this.button_toggle_volume_control.setImageResource(R.drawable.volume_minus)
+            this.button_toggle_volume_control.setImageResource(R.drawable.volume_minus)
 
             this.widget_volume.visibility = View.GONE
         } else {
-            // Hiding volume control line for now (VOLCTLTMP)
-            //this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
+            this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
+
             val controller = working_channel.lines[line_offset].controllers.get_controller(ControlEventType.Volume)
             this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
 
@@ -139,14 +135,13 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             this.long_click_button_remove_line()
         }
 
-        // Hiding volume control line for now (VOLCTLTMP)
-        //this.button_toggle_volume_control.setOnClickListener {
-        //    if (!it.isEnabled) {
-        //        return@setOnClickListener
-        //    }
+        this.button_toggle_volume_control.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
 
-        //    this.click_button_toggle_volume_control()
-        //}
+            this.click_button_toggle_volume_control()
+        }
     }
 
     fun click_button_toggle_volume_control() {

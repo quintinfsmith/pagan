@@ -13,6 +13,7 @@ import com.qfs.pagan.opusmanager.OpusVolumeEvent
 class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
     private val _slider = PaganSeekBar(context)
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
+    private val _transition_button = ButtonIcon(context)
     private val _min = 0
     private val _max = 127
     private var _lockout_ui: Boolean = false
@@ -23,6 +24,8 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
         this._button.set_text(default.value.toString())
         this._button.set_icon(R.drawable.volume)
         this._button.label.minEms = 2
+
+        this._transition_button.setImageResource(R.drawable.volume) // TODO transition icons
 
         this._slider.max = this._max
         this._slider.min = this._min
@@ -62,9 +65,14 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
 
         this.addView(this._button)
         this.addView(this._slider)
+        this.addView(this._transition_button)
+
 
         this._button.layoutParams.width = WRAP_CONTENT
         this._button.layoutParams.height = WRAP_CONTENT
+
+        this._transition_button.layoutParams.width = WRAP_CONTENT
+        this._transition_button.layoutParams.height = WRAP_CONTENT
 
         this._slider.layoutParams.width = 0
         this._slider.layoutParams.height = MATCH_PARENT

@@ -1,6 +1,6 @@
 package com.qfs.pagan.opusmanager
 
-abstract class InstrumentEvent(var duration: Int = 1): OpusEvent() {
+abstract class InstrumentEvent(duration: Int = 1): OpusEvent(duration) {
     override fun equals(other: Any?): Boolean {
         return other is InstrumentEvent && other.duration == this.duration
     }

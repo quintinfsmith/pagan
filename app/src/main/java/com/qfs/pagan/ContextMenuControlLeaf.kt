@@ -20,6 +20,7 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
     lateinit var button_split: ButtonIcon
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
+    lateinit var button_duration: ButtonStd
     lateinit var button_unset: ButtonIcon
 
     private var _current_type: ControlEventType? = null
@@ -30,6 +31,7 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
         this.button_split = primary.findViewById(R.id.btnSplit)
         this.button_insert = primary.findViewById(R.id.btnInsert)
         this.button_remove = primary.findViewById(R.id.btnRemove)
+        this.button_duration = primary.findViewById(R.id.btnDuration)
         this.button_unset = primary.findViewById(R.id.btnUnset)
     }
 
@@ -87,6 +89,19 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
             this.long_click_button_split()
         }
 
+        this.button_duration.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+            this.click_button_duration()
+        }
+
+        this.button_duration.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+            this.long_click_button_duration()
+        }
         this.button_insert.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
@@ -274,8 +289,15 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
                 )
             }
         }
+
         this.button_remove.isEnabled = cursor.position.isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
+        this.button_duration.isEnabled = ctl_tree.is_event()
+
+        if (ctl_tree.is_event()) {
+            this.button_duration.text = this.context.getString(R.string.label_duration, ctl_tree.get_event()!!.duration)
+        }
+
         this.widget.set_event(current_event)
     }
 
@@ -304,6 +326,34 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
                 )
             }
         }
+    }
+
+    fun click_button_duration() {
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val event = this.get_control_event()
+        val event_duration = event.duration
+
+        main.feedback_msg("TODO")
+        //main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->
+        //    opus_manager.set_duration(beat_key, position, max(1, value))
+        //}
+    }
+
+    fun long_click_button_duration(): Boolean {
+        val main = this.get_main()
+        main.feedback_msg("TODO")
+        //val opus_manager = main.get_opus_manager()
+
+        //val cursor = opus_manager.cursor
+        //val (beat_key, position) = opus_manager.get_original_position(
+        //    cursor.get_beatkey(),
+        //    cursor.get_position()
+        //)
+
+        //opus_manager.set_duration(beat_key, position, 1)
+        return true
     }
 
 }

@@ -85,17 +85,40 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove.isEnabled = working_channel.size > 1
 
         if (opus_manager.is_ctl_line_visible(CtlLineLevel.Line, ControlEventType.Volume)) {
-            this.button_toggle_volume_control.setImageResource(R.drawable.volume_minus)
-
+            this.button_toggle_volume_control.visibility = View.GONE
             this.widget_volume.visibility = View.GONE
         } else {
-            this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
-
             val controller = working_channel.lines[line_offset].controllers.get_controller(ControlEventType.Volume)
             this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
+            this.widget_volume.visibility = View.VISIBLE
 
+            this.button_toggle_volume_control.visibility = View.VISIBLE
+            this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
         }
 
+    }
+
+    fun dialog_popup_hidden_lines() {
+        val domain = listOf(Pair(CtlLineLevel.Line, ControlEventType.Volume))
+        val opus_manager = this.get_opus_manager()
+        val options = mutableListOf<Pair<Pair<CtlLineLevel, ControlEventType>, String>>( )
+
+        for ((ctl_level, ctl_type) in domain) {
+            if (opus_manager.is_ctl_line_visible(ctl_level, ctl_type)) {
+                continue
+            }
+
+            options.add(
+                Pair(
+                    Pair(ctl_level, ctl_type),
+                    ctl_type.name
+                )
+            )
+        }
+
+        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, (ctl_level, ctl_type): Pair<CtlLineLevel, ControlEventType> ->
+            opus_manager.toggle_control_line_visibility(ctl_level, ctl_type)
+        }
     }
 
     override fun setup_interactions() {
@@ -139,7 +162,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-
+            this.dialog_popup_hidden_lines()
             this.click_button_toggle_volume_control()
         }
     }

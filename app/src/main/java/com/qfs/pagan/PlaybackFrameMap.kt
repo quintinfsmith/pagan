@@ -410,7 +410,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()
 
         // Calculate Start Position
-        println("$beat")
         var start_frame = this._cached_beat_frames!![beat]
         val target_start_position = (beat.toFloat() + relative_offset) / this.opus_manager.beat_count.toFloat()
         while (tempo_index < this._tempo_ratio_map.size) {

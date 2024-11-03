@@ -51,13 +51,23 @@ abstract class ActiveController(beat_count: Int) {
     }
 
     fun get_latest_event(beat: Int, position: List<Int>): OpusControlEvent {
-        val current_tree = this.get_tree(beat, position)
+
+        var current_tree = this.get_tree(beat)
+        val adj_position = mutableListOf<Int>()
+        for (p in position) {
+            if (current_tree.is_leaf()) {
+                break
+            }
+            adj_position.add(p)
+            current_tree = current_tree[p]
+        }
+
         if (current_tree.is_event()) {
             return current_tree.get_event()!!
         }
 
         var working_beat = beat
-        var working_position = position.toList()
+        var working_position = adj_position.toList()
         var output = this.initial_event
 
         while (true) {
@@ -65,7 +75,7 @@ abstract class ActiveController(beat_count: Int) {
             working_beat = pair.first
             working_position = pair.second
 
-            val working_tree = this.get_tree(working_beat, working_position)
+            val working_tree = this.get_tree(working_beat, working_position).copy()
             if (working_tree.is_event()) {
                 val working_event = working_tree.get_event()!!
                 output = working_event

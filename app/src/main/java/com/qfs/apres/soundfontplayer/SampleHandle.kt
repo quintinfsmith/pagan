@@ -22,7 +22,7 @@ class SampleHandle(
     var pitch_shift: Float = 1F,
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
-    var volume: Float = 1F,
+    var volume_profile: HashMap<Int, Float> = hashMapOf(0 to 1F),
     data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
@@ -38,6 +38,8 @@ class SampleHandle(
     var uuid: Int = SampleHandle.uuid_gen++
 
     var working_frame: Int = 0
+    var _current_volume: Float = 1F
+
     var release_frame: Int? = null
     var kill_frame: Int? = null
     var is_dead = false
@@ -177,6 +179,8 @@ class SampleHandle(
 
     companion object {
         var uuid_gen = 0
+        const val MAX_VOLUME = .6F
+
         fun copy(original: SampleHandle): SampleHandle {
             val output = SampleHandle(
                 data = original.data,
@@ -190,7 +194,7 @@ class SampleHandle(
                 pitch_shift = original.pitch_shift,
                 filter_cutoff = original.filter_cutoff,
                 pan = original.pan,
-                volume = original.volume,
+                volume_profile = original.volume_profile,
                 data_buffers = Array(original._data_buffers.size) { i: Int ->
                     var buffer = original._data_buffers[i]
                     // constructing this way allows us to skip calculating max
@@ -241,6 +245,24 @@ class SampleHandle(
             this.is_dead = true
             return
         }
+
+        // Set volume
+        this._current_volume = if (this.volume_profile.containsKey(frame)) {
+            this.volume_profile[frame]!!
+        } else {
+            val sorted_keys = this.volume_profile.keys.toMutableList()
+            sorted_keys.sort()
+            var working_volume = 1F
+            for (key_frame in sorted_keys) {
+                if (key_frame < frame) {
+                    working_volume = this.volume_profile[key_frame]!!
+                } else {
+                    break
+                }
+            }
+            working_volume
+        }
+
 
         val loop_points = this.loop_points
         val release_frame = this.release_frame
@@ -296,6 +318,11 @@ class SampleHandle(
         }
 
         val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
+
+        // Set Volume
+        if (this.volume_profile.containsKey(this.working_frame)) {
+            this._current_volume = this.volume_profile[this.working_frame]!!
+        }
 
         if (this.working_frame < this.volume_envelope.frames_delay) {
             this.working_frame += 1
@@ -385,7 +412,8 @@ class SampleHandle(
         frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
         this.previous_frame = frame_value
-        return (frame_value * frame_factor * this.volume).toInt()
+
+        return (frame_value * frame_factor * this._current_volume * SampleHandle.MAX_VOLUME).toInt()
     }
 
     fun release_note() {

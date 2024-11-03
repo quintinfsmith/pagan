@@ -49,12 +49,16 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     fun get(event: NoteOn, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
-        return SampleHandle.copy(this.sample_data_map[map_key]!!)
+        val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
+        output.volume_profile = hashMapOf(0 to event.get_velocity() / 128F)
+        return output
     }
 
     fun get(event: NoteOn79, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
-        return SampleHandle.copy(this.sample_data_map[map_key]!!)
+        val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
+        output.volume_profile = hashMapOf(0 to event.velocity / (128 shl 8).toFloat())
+        return output
     }
 
     fun cache_or_create_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): MapKey {

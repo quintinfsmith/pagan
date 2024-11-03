@@ -235,12 +235,13 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             options.add(Pair(note - 27, "${note - 27}: $name"))
         }
 
+
         main.dialog_popup_menu(this.context.getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)
             main.play_event(
                 opus_manager.channels.size,
                 value,
-                opus_manager.get_line_volume(opus_manager.channels.size, cursor.line_offset)
+                80
             )
         }
     }

@@ -1,17 +1,18 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.graphics.Color
 import android.view.Gravity
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLayerLinks
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
@@ -159,7 +160,7 @@ class LeafButtonStd(
                         (editor_table.context as MainActivity).play_event(
                             beat_key.channel,
                             note,
-                            opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
+                            (opus_manager.get_current_line_controller_event(ControlEventType.Volume, beat_key, position) as OpusVolumeEvent).value
                         )
                     }
                 }

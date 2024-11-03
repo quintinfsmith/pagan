@@ -9,17 +9,23 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.pow
+import kotlin.math.sin
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     private var _simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
@@ -35,6 +41,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private var _cached_beat_frames: Array<Int>? = null
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
+    private val _volume_map = HashMap<Pair<Int, Int>, HashMap<Int, Float>>() // (channel, line_offset)::[frame::volume]
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -183,6 +190,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._handle_map.clear()
         this._handle_range_map.clear()
         this._tempo_ratio_map.clear()
+        this._volume_map.clear()
         this._cached_beat_frames = null
 
         this._setter_id_gen = 0
@@ -192,7 +200,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: HashMap<Int, Float>? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -220,7 +228,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 else -> setOf()
             }
 
-
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
                 handle.set_release_frame(end_frame - start_frame)
@@ -228,6 +235,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 if (this._simple_mode) {
                     handle.volume_envelope.frames_release = 0
                     handle.volume_envelope.frames_delay = 0
+                }
+                if (volume_profile != null) {
+                    handle.volume_profile = volume_profile
                 }
 
                 handle_uuid_set.add(handle.uuid)
@@ -249,6 +259,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this.map_tempo_changes()
         this.get_marked_frames()
+        this.map_volume_changes()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             for (l in channel.lines.indices) {
@@ -311,26 +322,80 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
+    private fun map_volume_changes() {
+        data class StackItem(val position: List<Int>, val tree: OpusTree<OpusControlEvent>?, val relative_width: Float, val relative_offset: Float)
 
-    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<out InstrumentEvent>, relative_width: Float, relative_offset: Float, bkp_note_value: Int): Int {
-        if (!working_tree.is_leaf()) {
-            val new_width = relative_width / working_tree.size.toFloat()
-            var new_working_value = bkp_note_value
-            for (i in 0 until working_tree.size) {
-                val new_position = position.toMutableList()
-                new_position.add(i)
-                new_working_value = this.map_tree(beat_key, new_position, working_tree[i], new_width, relative_offset + (new_width * i), new_working_value)
+        this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
+            for (l in channel.lines.indices) {
+                val controller = channel.lines[l].get_controller(ControlEventType.Volume)
+                var working_volume = (controller.initial_event as OpusVolumeEvent).value
+                this._volume_map[Pair(c, l)] = hashMapOf(0 to working_volume.toFloat() / 128F)
+
+                for (b in 0 until this.opus_manager.beat_count) {
+                    val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_beat(b), 1F, 0F))
+                    while (stack.isNotEmpty()) {
+                        val working_item = stack.removeFirst()
+                        val working_tree = working_item.tree ?: continue
+
+                        if (working_tree.is_event()) {
+                            val working_event = working_tree.get_event()!! as OpusVolumeEvent
+                            val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
+                            val diff = working_volume - working_event.value
+                            if (diff == 0) {
+                                continue
+                            }
+
+                            when (working_event.transition) {
+                                ControlTransition.Instant -> {
+                                    this._volume_map[Pair(c, l)]!![start_frame] = working_event.value.toFloat() / 128F
+                                }
+
+                                ControlTransition.Linear -> {
+                                    val negative_modifier = diff / abs(diff)
+                                    val frame_step_size = (end_frame - start_frame) / abs(diff)
+                                    val float_value = working_event.value.toFloat()
+
+                                    for (i in 0 until abs(diff)) {
+                                        val intermediate_frame = (frame_step_size * i) + start_frame
+                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, (float_value + ((i + 1) * negative_modifier).toFloat())) / 128F
+                                    }
+                                }
+
+                                ControlTransition.Convex -> {
+                                    val count = abs(diff)
+                                    val frame_step_size = (end_frame - start_frame) / abs(diff)
+                                    val float_count = count.toFloat()
+                                    val float_value = working_event.value.toFloat()
+
+                                    val half_pi = PI.toFloat() / 2F
+                                    for (i in 0 until count) {
+                                        val intermediate_frame = (frame_step_size * i) + start_frame
+                                        val y: Float = sin(((i + 1).toFloat() / float_count) * half_pi) * diff
+                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
+                                    }
+                                }
+
+                                ControlTransition.Concave -> TODO()
+                            }
+                            working_volume = working_event.value
+                        } else if (!working_tree.is_leaf()) {
+                            val new_width = working_item.relative_width / working_tree.size.toFloat()
+                            for (i in 0 until working_tree.size) {
+                                val new_position = working_item.position.toMutableList()
+                                new_position.add(i)
+                                stack.add(StackItem(new_position, working_tree[i], new_width, working_item.relative_offset + (new_width * i)))
+                            }
+                        }
+                    }
+                }
             }
-            return new_working_value
-        } else if (!working_tree.is_event()) {
-            return bkp_note_value
         }
+    }
 
-        val event = working_tree.get_event()!!.copy()
-
+    private fun calculate_event_frame_range(beat: Int, duration: Int, relative_width: Float, relative_offset: Float): Pair<Int, Int> {
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         // Find the tempo active at the beginning of the beat
-        var working_position = beat_key.beat.toFloat() / this.opus_manager.beat_count.toFloat()
+        var working_position = beat.toFloat() / this.opus_manager.beat_count.toFloat()
         var working_tempo = 0f
         var tempo_index = 0
 
@@ -342,12 +407,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 break
             }
         }
-
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()
 
         // Calculate Start Position
-        var start_frame = this._cached_beat_frames!![beat_key.beat]
-        val target_start_position = (beat_key.beat.toFloat() + relative_offset) / this.opus_manager.beat_count.toFloat()
+        println("$beat")
+        var start_frame = this._cached_beat_frames!![beat]
+        val target_start_position = (beat.toFloat() + relative_offset) / this.opus_manager.beat_count.toFloat()
         while (tempo_index < this._tempo_ratio_map.size) {
             val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < target_start_position) {
@@ -361,13 +426,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 break
             }
         }
+
         start_frame += (frames_per_beat * (target_start_position - working_position)).toInt() * this.opus_manager.beat_count
 
         // Calculate End Position
         working_position = target_start_position
         var end_frame = start_frame
         // Note: divide duration to keep in-line with 0-1 range
-        val target_end_position = target_start_position + ((event.duration * relative_width) / this.opus_manager.beat_count.toFloat())
+        val target_end_position = target_start_position + ((duration * relative_width) / this.opus_manager.beat_count.toFloat())
         while (tempo_index < this._tempo_ratio_map.size) {
             val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < target_end_position) {
@@ -385,6 +451,27 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         end_frame += (frames_per_beat * (target_end_position - working_position)).toInt() * this.opus_manager.beat_count
 
+        return Pair(start_frame, end_frame)
+    }
+
+    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<out InstrumentEvent>, relative_width: Float, relative_offset: Float, bkp_note_value: Int): Int {
+        if (!working_tree.is_leaf()) {
+            val new_width = relative_width / working_tree.size.toFloat()
+            var new_working_value = bkp_note_value
+            for (i in 0 until working_tree.size) {
+                val new_position = position.toMutableList()
+                new_position.add(i)
+                new_working_value = this.map_tree(beat_key, new_position, working_tree[i], new_width, relative_offset + (new_width * i), new_working_value)
+            }
+            return new_working_value
+        } else if (!working_tree.is_event()) {
+            return bkp_note_value
+        }
+
+        val event = working_tree.get_event()!!.copy()
+
+        val (start_frame, end_frame) = this.calculate_event_frame_range(beat_key.beat, event.duration, relative_width, relative_offset)
+
         val start_event = this._gen_midi_event(
             when (event) {
                 is RelativeNoteEvent -> {
@@ -397,10 +484,25 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             },
             beat_key
         )
+
+        val line_pair = Pair(beat_key.channel, beat_key.line_offset)
+        val new_volume_profile = if (this._volume_map.containsKey(line_pair)) {
+            val tmp = HashMap<Int, Float>()
+            for ((key_frame, volume) in this._volume_map[line_pair]!!) {
+                if (key_frame in start_frame .. end_frame) {
+                    tmp[key_frame - start_frame] = volume
+
+                }
+            }
+            tmp
+        } else {
+            null
+        }
+
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up
         if (start_event != null) {
-            this._add_handles(start_frame, end_frame, start_event)
+            this._add_handles(start_frame, end_frame, start_event, new_volume_profile)
         }
 
         return when (event) {

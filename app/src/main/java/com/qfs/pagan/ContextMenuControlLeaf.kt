@@ -37,9 +37,10 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
+        val channels = opus_manager.get_all_channels()
         val control_set = when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> opus_manager.channels[cursor.channel].lines[cursor.line_offset].controllers
-            CtlLineLevel.Channel -> opus_manager.channels[cursor.channel].controllers
+            CtlLineLevel.Line -> channels[cursor.channel].lines[cursor.line_offset].controllers
+            CtlLineLevel.Channel -> channels[cursor.channel].controllers
             CtlLineLevel.Global -> opus_manager.controllers
         }
 

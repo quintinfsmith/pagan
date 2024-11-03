@@ -12,7 +12,7 @@ class OpusControlEventJSONInterface {
                 }
                 is OpusVolumeEvent -> {
                     output["volume"] = input.value
-                    output["transition"] = input.transition.toString()
+                    output["transition"] = input.transition.name
                 }
                 is OpusReverbEvent -> {
                     output["wetness"] = input.value
@@ -44,7 +44,12 @@ class OpusControlEventJSONInterface {
         fun volume_event(map: JSONHashMap): OpusVolumeEvent {
             return OpusVolumeEvent(
                 map.get_int("volume"),
-                ControlTransition.valueOf(map.get_string("transition", "Instant"))
+                /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
+                try {
+                    ControlTransition.valueOf(map.get_string("transition", "Instant"))
+                } catch (e: ClassCastException) {
+                    ControlTransition.Instant
+                }
             )
         }
         fun reverb_event(map: JSONHashMap): OpusReverbEvent {

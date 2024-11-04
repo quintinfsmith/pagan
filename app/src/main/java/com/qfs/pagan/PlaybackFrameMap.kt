@@ -25,6 +25,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.pow
 import kotlin.math.sin
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
@@ -340,7 +341,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         if (working_tree.is_event()) {
                             val working_event = working_tree.get_event()!! as OpusVolumeEvent
                             val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
-                            val diff = working_volume - working_event.value
+                            val diff = working_event.value - working_volume
                             if (diff == 0) {
                                 continue
                             }
@@ -353,11 +354,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                 ControlTransition.Linear -> {
                                     val negative_modifier = diff / abs(diff)
                                     val frame_step_size = (end_frame - start_frame) / abs(diff)
-                                    val float_value = working_event.value.toFloat()
+                                    val float_value = working_volume.toFloat()
 
-                                    for (i in 0 until abs(diff)) {
+                                    for (i in 0 .. abs(diff)) {
                                         val intermediate_frame = (frame_step_size * i) + start_frame
-                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, (float_value + ((i + 1) * negative_modifier).toFloat())) / 128F
+                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, (float_value + (i * negative_modifier).toFloat())) / 128F
                                     }
                                 }
 
@@ -365,7 +366,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                     val count = abs(diff)
                                     val frame_step_size = (end_frame - start_frame) / abs(diff)
                                     val float_count = count.toFloat()
-                                    val float_value = working_event.value.toFloat()
+                                    val float_value = working_volume.toFloat()
 
                                     val half_pi = PI.toFloat() / 2F
                                     for (i in 0 until count) {
@@ -375,7 +376,20 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                     }
                                 }
 
-                                ControlTransition.Concave -> TODO()
+                                ControlTransition.Concave -> {
+                                    val count = abs(diff)
+                                    val frame_step_size = (end_frame - start_frame) / abs(diff)
+                                    val float_count = count.toFloat()
+                                    val float_value = working_volume.toFloat()
+
+                                    val half_pi = PI.toFloat() / 2F
+                                    for (i in 0 until count) {
+                                        val intermediate_frame = (frame_step_size * i) + start_frame
+                                        val y: Float = (i.toFloat() / float_count).pow(2)
+                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
+                                    }
+                                }
+
                             }
                             working_volume = working_event.value
                         } else if (!working_tree.is_leaf()) {
@@ -487,10 +501,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val line_pair = Pair(beat_key.channel, beat_key.line_offset)
         val new_volume_profile = if (this._volume_map.containsKey(line_pair)) {
             val tmp = HashMap<Int, Float>()
-            for ((key_frame, volume) in this._volume_map[line_pair]!!) {
-                if (key_frame in start_frame .. end_frame) {
-                    tmp[key_frame - start_frame] = volume
+            val sorted_keys = this._volume_map[line_pair]!!.keys.toMutableList()
+            sorted_keys.sort()
 
+            for (key_frame in sorted_keys) {
+                if (key_frame < start_frame) {
+                    tmp[0] = this._volume_map[line_pair]!![key_frame]!!
+                } else if (key_frame in start_frame .. end_frame) {
+                    tmp[key_frame - start_frame] = this._volume_map[line_pair]!![key_frame]!!
                 }
             }
             tmp

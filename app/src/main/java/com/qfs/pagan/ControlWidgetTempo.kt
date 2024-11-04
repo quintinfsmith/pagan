@@ -7,7 +7,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetTempo(default: OpusTempoEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
+class ControlWidgetTempo(default: OpusTempoEvent, is_initial_event: Boolean, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, is_initial_event, callback) {
     private val input = ButtonStd(ContextThemeWrapper(context, R.style.icon_button), null)
     private val min = 0f
     private val max = 512f

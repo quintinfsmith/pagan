@@ -31,7 +31,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
 
-        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0), this.context) { event: OpusControlEvent ->
+        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0), true, this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             opus_manager.set_line_controller_initial_event(
@@ -163,7 +163,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
                 return@setOnClickListener
             }
             this.dialog_popup_hidden_lines()
-            this.click_button_toggle_volume_control()
+            //this.click_button_toggle_volume_control()
         }
     }
 

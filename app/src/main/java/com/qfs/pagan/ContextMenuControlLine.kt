@@ -58,9 +58,9 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         val controller = this.get_controller()
 
         this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, this.context, this::_callback)
-            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_callback)
-            ControlEventType.Reverb -> ControlWidgetReverb(controller.initial_event as OpusReverbEvent, this.context, this::_callback)
+            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, true, this.context, this::_callback)
+            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, true, this.context, this::_callback)
+            ControlEventType.Reverb -> ControlWidgetReverb(controller.initial_event as OpusReverbEvent, true, this.context, this::_callback)
         }
 
         this._current_type = cursor.ctl_type
@@ -68,7 +68,6 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         this.button_toggle_line_control = this.primary!!.findViewById(R.id.btnToggleCtl)
         this.button_toggle_line_control.setImageResource(R.drawable.volume_minus)
         this.button_toggle_line_control.setOnClickListener {
-            val opus_manager = this.get_opus_manager()
             opus_manager.toggle_control_line_visibility(cursor.ctl_level!!, cursor.ctl_type!!)
         }
 

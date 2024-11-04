@@ -63,9 +63,9 @@ class ContextMenuControlLeaf(primary_container: ViewGroup, secondary_container: 
         val controller = this.get_controller()
 
         this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, this.context, this::_widget_callback)
-            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, this.context, this::_widget_callback)
-            ControlEventType.Reverb -> ControlWidgetReverb(controller.initial_event as OpusReverbEvent, this.context, this::_widget_callback)
+            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, false, this.context, this::_widget_callback)
+            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, false, this.context, this::_widget_callback)
+            ControlEventType.Reverb -> ControlWidgetReverb(controller.initial_event as OpusReverbEvent, false, this.context, this::_widget_callback)
         }
 
         this._current_type = cursor.ctl_type

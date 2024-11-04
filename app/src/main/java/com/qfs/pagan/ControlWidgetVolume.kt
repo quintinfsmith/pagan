@@ -3,20 +3,23 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.Gravity.CENTER
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
+class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, is_initial_event, callback) {
     private val _slider = PaganSeekBar(context)
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _transition_button = ButtonIcon(context)
     private val _min = 0
     private val _max = 127
     private var _lockout_ui: Boolean = false
+    private var _transition = ControlTransition.Instant
 
     init {
         this.orientation = HORIZONTAL
@@ -25,7 +28,26 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
         this._button.set_icon(R.drawable.volume)
         this._button.label.minEms = 2
 
-        this._transition_button.setImageResource(R.drawable.volume) // TODO transition icons
+        this._transition = default.transition
+        if (this.is_initial_event) {
+            this._transition_button.visibility = View.GONE
+        } else {
+            this._transition_button.setImageResource(R.drawable.volume) // TODO transition icons
+            this._transition_button.setOnClickListener {
+                val main = (this.context as MainActivity)
+                val control_transitions = ControlTransition.values()
+                val options = List<Pair<ControlTransition, String>>(control_transitions.size) { i: Int ->
+                    Pair(control_transitions[i], control_transitions[i].name)
+                }
+
+                val event = this.get_event()
+                main.dialog_popup_menu("Transition", options, default = event.transition) { i: Int, transition: ControlTransition ->
+                    this._transition = transition
+                    event.transition = transition
+                    this.callback(event)
+                }
+            }
+        }
 
         this._slider.max = this._max
         this._slider.min = this._min
@@ -40,8 +62,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
             val dlg_default = this.get_event().value
             val dlg_title = context.getString(R.string.dlg_set_volume)
             context.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
-                val new_event = OpusVolumeEvent(new_value)
-                this.set_event(new_event)
+                val new_event = OpusVolumeEvent(new_value, this._transition)
                 this.callback(new_event)
             }
         }
@@ -58,7 +79,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                this@ControlWidgetVolume.callback(OpusVolumeEvent(seekbar.progress))
+                this@ControlWidgetVolume.callback(OpusVolumeEvent(seekbar.progress, this@ControlWidgetVolume._transition))
             }
         })
 
@@ -66,7 +87,6 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
         this.addView(this._button)
         this.addView(this._slider)
         this.addView(this._transition_button)
-
 
         this._button.layoutParams.width = WRAP_CONTENT
         this._button.layoutParams.height = WRAP_CONTENT
@@ -81,12 +101,13 @@ class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: 
     }
 
     override fun get_event(): OpusVolumeEvent {
-        return OpusVolumeEvent(this._slider.progress)
+        return OpusVolumeEvent(this._slider.progress, this._transition)
     }
 
     override fun set_event(event: OpusControlEvent) {
         val value = (event as OpusVolumeEvent).value
         this._slider.progress = value
         this._button.set_text(value.toString())
+        this._transition = event.transition
     }
 }

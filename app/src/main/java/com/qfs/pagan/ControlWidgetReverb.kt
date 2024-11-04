@@ -7,17 +7,15 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
-import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, is_initial_event, callback) {
+class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, context: Context, callback: (OpusReverbEvent) -> Unit): ControlWidget<OpusReverbEvent>(context, default, is_initial_event, callback) {
     private val _slider = PaganSeekBar(context)
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _min = 0f
     private val _max = 100f
     private var _lockout_ui: Boolean = false
-    private var _current_event = default
     init {
         this.orientation = HORIZONTAL
 
@@ -56,7 +54,7 @@ class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, c
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                this@ControlWidgetReverb.callback(this@ControlWidgetReverb._current_event)
+                this@ControlWidgetReverb.callback(this@ControlWidgetReverb.get_event())
             }
         })
 
@@ -73,14 +71,10 @@ class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, c
         (this._slider.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER
     }
 
-    override fun get_event(): OpusReverbEvent {
-        return this._current_event
-    }
 
-    override fun set_event(event: OpusControlEvent) {
-        val value = (event as OpusReverbEvent).value
+    override fun on_set(event: OpusReverbEvent) {
+        val value = event.value
         this._slider.progress = value.roundToInt()
         this._button.set_text(value.toString())
-        this._current_event = event
     }
 }

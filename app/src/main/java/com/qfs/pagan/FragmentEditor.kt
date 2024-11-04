@@ -17,6 +17,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.File
 import java.io.FileInputStream
@@ -524,9 +525,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.show_context_menus()
     }
 
-    internal fun set_context_menu_line_control_leaf() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf>()) {
+    internal fun <T: OpusControlEvent> set_context_menu_line_control_leaf(control_widget: ControlWidget<T>) {
+        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf<T>>()) {
             this.active_context_menu = ContextMenuControlLeaf(
+                control_widget,
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )

@@ -19,12 +19,15 @@ import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusLinePercussion
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusReverbEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.abs
 import kotlin.math.pow
 
 class OpusLayerInterface : OpusLayerCursor() {
@@ -205,7 +208,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             x = beat
         )
 
-        val tree = this.controllers.get_controller(type).get_tree(beat)
+        val tree = this.controllers.get_controller<OpusControlEvent>(type).get_tree(beat)
         val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table()
@@ -229,7 +232,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             x = beat
         )
 
-        val tree = this.get_all_channels()[channel].controllers.get_controller(type).get_tree(beat)
+        val tree = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).get_tree(beat)
         val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table()
@@ -251,7 +254,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             x = beat_key.beat
         )
 
-        val tree = this.get_line_ctl_tree(type, beat_key)
+        val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
         val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table()
@@ -399,21 +402,21 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+    override fun <T: OpusControlEvent> replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
         this.lock_ui_partial {
             super.replace_global_ctl_tree(type, beat, position, tree)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+    override fun <T: OpusControlEvent> replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
         this.lock_ui_partial {
             super.replace_channel_ctl_tree(type, channel, beat, position, tree)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+    override fun <T: OpusControlEvent> replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
         this.lock_ui_partial {
             super.replace_line_ctl_tree(type, beat_key, position, tree)
             this._queue_line_ctl_cell_change(type, beat_key)
@@ -424,6 +427,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.set_global_ctl_event(type, beat, position, event)
             this._queue_global_ctl_cell_change(type, beat)
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -431,6 +435,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.set_channel_ctl_event(type, channel, beat, position, event)
             this._queue_channel_ctl_cell_change(type, channel, beat)
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -438,6 +443,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.set_line_ctl_event(type, beat_key, position, event)
             this._queue_line_ctl_cell_change(type, beat_key)
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -1965,7 +1971,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.ui_change_bill.queue_column_changes(column_updates, false)
     }
 
-    private fun _add_controller_to_column_width_map(y: Int, line: ActiveController) {
+    private fun _add_controller_to_column_width_map(y: Int, line: ActiveController<*>) {
         if (this.ui_change_bill.is_full_locked()) {
             return
         }
@@ -2002,7 +2008,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._add_line_to_column_width_map(visible_row, new_line)
 
         val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
-        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController> ->
+        controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController<*>> ->
             if (this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                 this._add_controller_to_column_width_map(visible_row + i, controller)
             }
@@ -2182,7 +2188,47 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ContextMenuSetControlLeaf -> {
                         this.withFragment {
-                            it.set_context_menu_line_control_leaf()
+                            val controller_set = when (this.cursor.ctl_level) {
+                                CtlLineLevel.Line -> {
+                                    this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
+                                }
+                                CtlLineLevel.Channel -> {
+                                    val channel = this.cursor.channel
+                                    this.channels[channel].controllers
+                                }
+                                CtlLineLevel.Global -> {
+                                    this.controllers
+                                }
+                                null -> return@withFragment
+                            }
+
+                            when (this.cursor.ctl_type) {
+                                ControlEventType.Tempo -> {
+                                    val controller = controller_set.get_controller<OpusTempoEvent>(this.cursor.ctl_type!!)
+                                    it.set_context_menu_line_control_leaf(
+                                        ControlWidgetTempo(controller.initial_event, false, this.get_activity()!!) { event: OpusTempoEvent ->
+                                            this.set_event_at_cursor(event)
+                                        }
+                                    )
+                                }
+                                ControlEventType.Volume -> {
+                                    val controller = controller_set.get_controller<OpusVolumeEvent>(this.cursor.ctl_type!!)
+                                    it.set_context_menu_line_control_leaf(
+                                        ControlWidgetVolume(controller.initial_event, false, this.get_activity()!!) { event: OpusVolumeEvent ->
+                                            this.set_event_at_cursor(event)
+                                        }
+                                    )
+                                }
+                                ControlEventType.Reverb -> {
+                                    val controller = controller_set.get_controller<OpusReverbEvent>(this.cursor.ctl_type!!)
+                                    it.set_context_menu_line_control_leaf(
+                                        ControlWidgetReverb(controller.initial_event, false, this.get_activity()!!) { event: OpusReverbEvent ->
+                                            this.set_event_at_cursor(event)
+                                        }
+                                    )
+                                }
+                                null -> return@withFragment
+                            }
                         }
                     }
 
@@ -2339,7 +2385,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Line -> {
                 var working_beat = this.cursor.beat
                 var working_position = this.cursor.position
-                val controller = this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers.get_controller(this.cursor.ctl_type!!)
+                val controller = this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -2356,7 +2402,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 var working_beat = this.cursor.beat
                 val channel = this.cursor.channel
                 var working_position = this.cursor.position
-                val controller = this.channels[channel].controllers.get_controller(this.cursor.ctl_type!!)
+                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -2371,7 +2417,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Global -> {
                 var working_beat = this.cursor.beat
                 var working_position = this.cursor.position
-                val controller = this.controllers.get_controller(this.cursor.ctl_type!!)
+                val controller = this.controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -2425,7 +2471,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
                 var working_position = cursor.position
-                val controller = this.channels[channel].controllers.get_controller(cursor.ctl_type!!)
+                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_proceding_leaf_position(
@@ -2622,7 +2668,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
                 var working_position = cursor.position
-                val controller = this.channels[channel].controllers.get_controller(cursor.ctl_type!!)
+                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_proceding_leaf_position(
@@ -2673,7 +2719,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Line -> {
                 var working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
-                val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].controllers.get_controller(cursor.ctl_type!!)
+                val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -2692,7 +2738,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
                 var working_position = cursor.position
-                val controller = this.channels[channel].controllers.get_controller(cursor.ctl_type!!)
+                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -2708,7 +2754,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
                 var working_position = cursor.position
-                val controller = this.controllers.get_controller(cursor.ctl_type!!)
+                val controller = this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat,

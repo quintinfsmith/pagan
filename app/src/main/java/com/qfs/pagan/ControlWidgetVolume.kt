@@ -9,17 +9,15 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import com.qfs.pagan.opusmanager.ControlTransition
-import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, is_initial_event, callback) {
+class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, callback) {
     private val _slider = PaganSeekBar(context)
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _transition_button = ButtonIcon(context)
     private val _min = 0
     private val _max = 127
     private var _lockout_ui: Boolean = false
-    private var _transition = ControlTransition.Instant
 
     init {
         this.orientation = HORIZONTAL
@@ -28,7 +26,6 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
         this._button.set_icon(R.drawable.volume)
         this._button.label.minEms = 2
 
-        this._transition = default.transition
         if (this.is_initial_event) {
             this._transition_button.visibility = View.GONE
         } else {
@@ -36,13 +33,12 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
             this._transition_button.setOnClickListener {
                 val main = (this.context as MainActivity)
                 val control_transitions = ControlTransition.values()
-                val options = List<Pair<ControlTransition, String>>(control_transitions.size) { i: Int ->
+                val options = List(control_transitions.size) { i: Int ->
                     Pair(control_transitions[i], control_transitions[i].name)
                 }
 
                 val event = this.get_event()
                 main.dialog_popup_menu("Transition", options, default = event.transition) { i: Int, transition: ControlTransition ->
-                    this._transition = transition
                     event.transition = transition
                     this.callback(event)
                 }
@@ -62,7 +58,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
             val dlg_default = this.get_event().value
             val dlg_title = context.getString(R.string.dlg_set_volume)
             context.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
-                val new_event = OpusVolumeEvent(new_value, this._transition)
+                val new_event = OpusVolumeEvent(new_value, this.get_event().transition)
                 this.callback(new_event)
             }
         }
@@ -79,7 +75,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                this@ControlWidgetVolume.callback(OpusVolumeEvent(seekbar.progress, this@ControlWidgetVolume._transition))
+                this@ControlWidgetVolume.callback(OpusVolumeEvent(seekbar.progress, this@ControlWidgetVolume.get_event().transition))
             }
         })
 
@@ -100,14 +96,8 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
         (this._slider.layoutParams as LinearLayout.LayoutParams).gravity = CENTER
     }
 
-    override fun get_event(): OpusVolumeEvent {
-        return OpusVolumeEvent(this._slider.progress, this._transition)
-    }
-
-    override fun set_event(event: OpusControlEvent) {
-        val value = (event as OpusVolumeEvent).value
-        this._slider.progress = value
-        this._button.set_text(value.toString())
-        this._transition = event.transition
+    override fun on_set(event: OpusVolumeEvent) {
+        this._slider.progress = event.value
+        this._button.set_text(event.value.toString())
     }
 }

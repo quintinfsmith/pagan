@@ -2,9 +2,8 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.structure.OpusTree
 
-abstract class ActiveController(beat_count: Int) {
-    var events = mutableListOf<OpusTree<OpusControlEvent>?>()
-    abstract var initial_event: OpusControlEvent
+abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T) {
+    var events = mutableListOf<OpusTree<T>?>()
 
     init {
         for (i in 0 until beat_count) {
@@ -46,12 +45,11 @@ abstract class ActiveController(beat_count: Int) {
         return Pair(working_beat, working_position)
     }
 
-    fun set_initial_event(value: OpusControlEvent) {
+    fun set_initial_event(value: T) {
         this.initial_event = value
     }
 
-    fun get_latest_event(beat: Int, position: List<Int>): OpusControlEvent {
-
+    fun get_latest_event(beat: Int, position: List<Int>): T {
         var current_tree = this.get_tree(beat)
         val adj_position = mutableListOf<Int>()
         for (p in position) {
@@ -129,7 +127,7 @@ abstract class ActiveController(beat_count: Int) {
         this.events.removeAt(n)
     }
 
-    fun get_tree(beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
+    fun get_tree(beat: Int, position: List<Int>? = null): OpusTree<T> {
         var tree = this.get_beat(beat)
         if (position != null) {
             for (i in position) {
@@ -140,7 +138,7 @@ abstract class ActiveController(beat_count: Int) {
         return tree
     }
 
-    fun get_beat(beat: Int): OpusTree<OpusControlEvent> {
+    fun get_beat(beat: Int): OpusTree<T> {
         if (this.events[beat] == null) {
             this.events[beat] = OpusTree()
         }
@@ -148,7 +146,7 @@ abstract class ActiveController(beat_count: Int) {
         return this.events[beat]!!
     }
 
-    fun replace_tree(beat: Int, position: List<Int>, new_tree: OpusTree<OpusControlEvent>) {
+    fun replace_tree(beat: Int, position: List<Int>, new_tree: OpusTree<T>) {
         if (position.isEmpty()) {
             this.events[beat] = new_tree
         } else {
@@ -174,12 +172,6 @@ abstract class ActiveController(beat_count: Int) {
     }
 }
 
-class VolumeController(beat_count: Int): ActiveController(beat_count) {
-    override var initial_event: OpusControlEvent = OpusVolumeEvent(64)
-}
-class TempoController(beat_count: Int): ActiveController(beat_count) {
-    override var initial_event: OpusControlEvent = OpusTempoEvent(120F)
-}
-class ReverbController(beat_count: Int): ActiveController(beat_count) {
-    override var initial_event: OpusControlEvent = OpusReverbEvent(1F)
-}
+class VolumeController(beat_count: Int): ActiveController<OpusVolumeEvent>(beat_count, OpusVolumeEvent(64))
+class TempoController(beat_count: Int): ActiveController<OpusTempoEvent>(beat_count, OpusTempoEvent(120F))
+class ReverbController(beat_count: Int): ActiveController<OpusReverbEvent>(beat_count, OpusReverbEvent(1F))

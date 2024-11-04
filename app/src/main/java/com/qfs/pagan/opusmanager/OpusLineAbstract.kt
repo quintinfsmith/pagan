@@ -76,7 +76,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(var beats: MutableList<OpusT
         this.controllers.set_beat_count(new_beat_count)
     }
 
-    fun get_controller(type: ControlEventType): ActiveController {
+    fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {
         return this.controllers.get_controller(type)
     }
 

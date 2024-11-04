@@ -1,7 +1,7 @@
 package com.qfs.pagan.opusmanager
 
 class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
-    val controllers = HashMap<ControlEventType, ActiveController>()
+    val controllers = HashMap<ControlEventType, ActiveController<out OpusControlEvent>>()
 
     init {
         for (type in default_enabled ?: setOf()) {
@@ -18,14 +18,14 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         return this.controllers.size
     }
 
-    fun get_all(): Array<Pair<ControlEventType, ActiveController>> {
+    fun get_all(): Array<Pair<ControlEventType, ActiveController<out OpusControlEvent>>> {
         var keys = this.controllers.keys.toList().sorted()
         return Array(this.controllers.size) {
             Pair(keys[it], this.controllers[keys[it]]!!)
         }
     }
 
-    fun new_controller(type: ControlEventType, controller: ActiveController? = null) {
+    fun new_controller(type: ControlEventType, controller: ActiveController<*>? = null) {
         if (controller == null) {
             this.controllers[type] = when (type) {
                 ControlEventType.Tempo -> TempoController(this.beat_count)
@@ -57,12 +57,11 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
     }
 
 
-    fun get_controller(type: ControlEventType): ActiveController {
+    fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {
         if (!this.controllers.containsKey(type)) {
             this.new_controller(type)
         }
-
-        return this.controllers[type]!!
+        return this.controllers[type] as ActiveController<T>
     }
 
     fun has_controller(type: ControlEventType): Boolean {

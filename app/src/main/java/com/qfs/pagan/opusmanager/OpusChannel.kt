@@ -88,8 +88,8 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
         return this.lines[line].get_tree(beat, position)
     }
 
-    fun get_ctl_tree(line: Int, type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
-        var tree = this.lines[line].controllers.get_controller(type).get_beat(beat)
+    fun <T: OpusControlEvent> get_ctl_tree(line: Int, type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<T> {
+        var tree = this.lines[line].controllers.get_controller<T>(type).get_beat(beat)
 
         if (position != null) {
             for (i in position) {
@@ -100,8 +100,8 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
         return tree
     }
 
-    fun get_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<OpusControlEvent> {
-        var tree = this.controllers.get_controller(type).get_beat(beat)
+    fun <T: OpusControlEvent> get_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<T> {
+        var tree = this.controllers.get_controller<T>(type).get_beat(beat)
 
         if (position != null) {
             for (i in position) {
@@ -177,7 +177,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     fun set_line_volume(line_offset: Int, volume: Int) {
-        this.lines[line_offset].controllers.get_controller(ControlEventType.Volume).initial_event = OpusVolumeEvent(volume)
+        this.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event = OpusVolumeEvent(volume)
     }
 
     fun squish(factor: Int) {

@@ -11,39 +11,39 @@ import com.qfs.pagan.structure.OpusTree
 class ActiveControllerJSONInterface {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
     companion object {
-        fun from_json(obj: JSONHashMap, size: Int): ActiveController {
+        fun <T: OpusControlEvent> from_json(obj: JSONHashMap, size: Int): ActiveController<out OpusControlEvent> {
             val label = obj.get_string("type")
-            val new_controller: ActiveController = when (label) {
-                "tempo" -> TempoController(size)
-                "volume" -> VolumeController(size)
+
+            return when (label) {
+                "tempo" -> {
+                    val controller = TempoController(size)
+                    controller.set_initial_event(OpusControlEventJSONInterface.tempo_event(obj.get_hashmap("initial")))
+                    this.populate_controller(obj, controller, OpusControlEventJSONInterface::tempo_event)
+                    controller
+                }
+                "volume" -> {
+                    val controller = VolumeController(size)
+                    controller.set_initial_event(OpusControlEventJSONInterface.volume_event(obj.get_hashmap("initial")))
+                    this.populate_controller(obj, controller, OpusControlEventJSONInterface::volume_event)
+                    controller
+                }
                 else -> throw UnknownControllerException(label)
             }
-
-            new_controller.set_initial_event(
-                when (new_controller) {
-                    is TempoController -> OpusControlEventJSONInterface.tempo_event(obj.get_hashmap("initial"))
-                    is VolumeController -> OpusControlEventJSONInterface.volume_event(obj.get_hashmap("initial"))
-                    else -> throw UnknownControllerException(label)
-                }
-            )
-
+        }
+        private fun <T: OpusControlEvent> populate_controller(obj: JSONHashMap, controller: ActiveController<T>, converter: (JSONHashMap) -> T) {
             for (pair in obj.get_list("events").list) {
                 val index = (pair as JSONList).get_int(0)
                 val value = pair.get_hashmapn(1) ?: continue
 
-                new_controller.events[index] = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
+                val generic_event = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
                     if (event == null) {
                         null
                     } else {
-                        when (new_controller) {
-                            is TempoController -> OpusControlEventJSONInterface.tempo_event(event)
-                            is VolumeController -> OpusControlEventJSONInterface.volume_event(event)
-                            else -> throw UnknownControllerException(label)
-                        }
+                        converter(event)
                     }
                 }
+                controller.events[index] = generic_event
             }
-            return new_controller
         }
 
         fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {
@@ -83,10 +83,10 @@ class ActiveControllerJSONInterface {
             )
         }
 
-        fun to_json(controller: ActiveController): JSONHashMap {
+        fun to_json(controller: ActiveController<out OpusControlEvent>): JSONHashMap {
             val map = JSONHashMap()
             val event_list = JSONList()
-            controller.events.forEachIndexed { i: Int, event_tree: OpusTree<OpusControlEvent>? ->
+            controller.events.forEachIndexed { i: Int, event_tree: OpusTree<out OpusControlEvent>? ->
                 if (event_tree == null) {
                     return@forEachIndexed
                 }

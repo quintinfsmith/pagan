@@ -887,7 +887,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
 
             CtlLineLevel.Global -> {
-                val working_tree = this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat).copy()
+                val working_tree = this.get_global_ctl_tree<OpusControlEvent>(cursor.ctl_type!!, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
                 this.remove_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position, real_count)
@@ -900,7 +900,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
 
             CtlLineLevel.Channel -> {
-                val working_tree = this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat).copy()
+                val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
                 this.remove_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, real_count)
@@ -915,7 +915,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
-                val working_tree = this.get_line_ctl_tree(cursor.ctl_type!!, beat_key).copy()
+                val working_tree = this.get_line_ctl_tree<OpusControlEvent>(cursor.ctl_type!!, beat_key).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
                 this.remove_line_ctl(cursor.ctl_type!!, beat_key, cursor.position, real_count)
@@ -1074,7 +1074,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             throw InvalidCursorState()
         }
 
-        val tree = this.get_global_ctl_tree(
+        val tree = this.get_global_ctl_tree<OpusControlEvent>(
             this.cursor.ctl_type!!,
             beat,
             listOf()
@@ -1114,7 +1114,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             throw InvalidCursorState()
         }
 
-        val tree = this.get_global_ctl_tree(
+        val tree = this.get_global_ctl_tree<OpusControlEvent>(
             this.cursor.ctl_type!!,
             beat,
             listOf()

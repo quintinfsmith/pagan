@@ -110,7 +110,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                     for ((type, controller) in working_channel.lines[j].controllers.get_all()) {
 
                         working_channel.lines[j + 1].controllers.new_controller(type)
-                        working_channel.lines[j + 1].controllers.get_controller(type).set_initial_event(
+                        working_channel.lines[j + 1].controllers.get_controller<OpusControlEvent>(type).set_initial_event(
                             controller.initial_event.copy()
                         )
                     }

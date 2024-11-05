@@ -13,7 +13,6 @@ import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
-import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusTempoEvent
@@ -284,13 +283,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     fun map_tempo_changes() {
-        val controller = this.opus_manager.controllers.get_controller(ControlEventType.Tempo)
-        var working_tempo = (controller.initial_event as OpusTempoEvent).value
+        val controller = this.opus_manager.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
+        var working_tempo = controller.initial_event.value
 
 
         this._tempo_ratio_map.add(Pair(0f, working_tempo))
 
-        controller.events.forEachIndexed { i: Int, tree: OpusTree<OpusControlEvent>? ->
+        controller.events.forEachIndexed { i: Int, tree: OpusTree<OpusTempoEvent>? ->
             if (tree == null) {
                 return@forEachIndexed
             }
@@ -324,12 +323,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun map_volume_changes() {
-        data class StackItem(val position: List<Int>, val tree: OpusTree<OpusControlEvent>?, val relative_width: Float, val relative_offset: Float)
+        data class StackItem(val position: List<Int>, val tree: OpusTree<OpusVolumeEvent>?, val relative_width: Float, val relative_offset: Float)
 
         this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             for (l in channel.lines.indices) {
-                val controller = channel.lines[l].get_controller(ControlEventType.Volume)
-                var working_volume = (controller.initial_event as OpusVolumeEvent).value
+                val controller = channel.lines[l].get_controller<OpusVolumeEvent>(ControlEventType.Volume)
+                var working_volume = controller.initial_event.value
                 this._volume_map[Pair(c, l)] = hashMapOf(0 to working_volume.toFloat() / 128F)
 
                 for (b in 0 until this.opus_manager.beat_count) {

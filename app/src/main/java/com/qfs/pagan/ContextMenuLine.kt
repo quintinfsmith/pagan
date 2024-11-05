@@ -88,8 +88,8 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             this.button_toggle_volume_control.visibility = View.GONE
             this.widget_volume.visibility = View.GONE
         } else {
-            val controller = working_channel.lines[line_offset].controllers.get_controller(ControlEventType.Volume)
-            this.widget_volume.set_event(controller.initial_event as OpusVolumeEvent)
+            val controller = working_channel.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
+            this.widget_volume.set_event(controller.initial_event)
             this.widget_volume.visibility = View.VISIBLE
 
             this.button_toggle_volume_control.visibility = View.VISIBLE

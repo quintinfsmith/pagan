@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
-import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -30,20 +29,6 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.button_remove = primary.findViewById(R.id.btnRemove)
         this.button_duration = primary.findViewById(R.id.btnDuration)
         this.button_unset = primary.findViewById(R.id.btnUnset)
-    }
-
-    private fun get_controller(): ActiveController<out OpusControlEvent> {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        val channels = opus_manager.get_all_channels()
-        val control_set = when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> channels[cursor.channel].lines[cursor.line_offset].controllers
-            CtlLineLevel.Channel -> channels[cursor.channel].controllers
-            CtlLineLevel.Global -> opus_manager.controllers
-        }
-
-        return control_set.get_controller(cursor.ctl_type!!)
     }
 
     fun _widget_callback(event: T) {

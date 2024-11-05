@@ -3,16 +3,11 @@ package com.qfs.pagan
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isEmpty
-import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusReverbEvent
-import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent) {
-    lateinit var widget: ControlWidget
+class ContextMenuControlLine<T: OpusControlEvent>(var widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent) {
     lateinit var button_toggle_line_control: ButtonIcon
 
     private var _current_type: ControlEventType? = null
@@ -55,14 +50,6 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        val controller = this.get_controller()
-
-        this.widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> ControlWidgetTempo(controller.initial_event as OpusTempoEvent, true, this.context, this::_callback)
-            ControlEventType.Volume -> ControlWidgetVolume(controller.initial_event as OpusVolumeEvent, true, this.context, this::_callback)
-            ControlEventType.Reverb -> ControlWidgetReverb(controller.initial_event as OpusReverbEvent, true, this.context, this::_callback)
-        }
-
         this._current_type = cursor.ctl_type
 
         this.button_toggle_line_control = this.primary!!.findViewById(R.id.btnToggleCtl)
@@ -76,18 +63,14 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
         (this.widget as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
     }
 
-    private fun get_controller(): ActiveController {
+    fun <T: OpusControlEvent> get_control_event(): T {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val channels = opus_manager.get_all_channels()
-
-        val control_set = when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> channels[cursor.channel].lines[cursor.line_offset].controllers
-            CtlLineLevel.Channel -> channels[cursor.channel].controllers
-            CtlLineLevel.Global -> opus_manager.controllers
+        return when (cursor.ctl_level!!) {
+            CtlLineLevel.Global -> opus_manager.get_global_controller_initial_event(cursor.ctl_type!!)
+            CtlLineLevel.Channel -> opus_manager.get_channel_controller_initial_event(cursor.ctl_type!!, cursor.channel)
+            CtlLineLevel.Line -> opus_manager.get_line_controller_initial_event(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
         }
-
-        return control_set.get_controller(cursor.ctl_type!!)
     }
 
     override fun init_properties() {
@@ -97,20 +80,10 @@ class ContextMenuControlLine(primary_parent: ViewGroup, secondary_parent: ViewGr
     override fun setup_interactions() { }
 
     override fun refresh() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        if (this.secondary!!.isEmpty() || cursor.ctl_type != this._current_type) {
+        if (this.secondary!!.isEmpty()) {
             this.init_widget()
         } else {
-            val controller = this.get_controller()
-            this.widget.set_event(
-                when(this._current_type!!) {
-                    ControlEventType.Tempo -> controller.initial_event as OpusTempoEvent
-                    ControlEventType.Volume -> controller.initial_event as OpusVolumeEvent
-                    ControlEventType.Reverb -> controller.initial_event as OpusReverbEvent
-                }
-            )
+            this.widget.set_event(this.get_control_event())
         }
     }
 }

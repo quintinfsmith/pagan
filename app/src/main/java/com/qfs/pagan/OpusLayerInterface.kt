@@ -423,7 +423,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
         this.lock_ui_partial {
             super.set_global_ctl_event(type, beat, position, event)
             this._queue_global_ctl_cell_change(type, beat)
@@ -431,7 +431,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
         this.lock_ui_partial {
             super.set_channel_ctl_event(type, channel, beat, position, event)
             this._queue_channel_ctl_cell_change(type, channel, beat)
@@ -439,7 +439,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
         this.lock_ui_partial {
             super.set_line_ctl_event(type, beat_key, position, event)
             this._queue_line_ctl_cell_change(type, beat_key)
@@ -1676,21 +1676,21 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_global_controller_initial_event(type: ControlEventType, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_global_controller_initial_event(type: ControlEventType, event: T) {
         this.lock_ui_partial {
             super.set_global_controller_initial_event(type, event)
             this.ui_change_bill.queue_refresh_context_menu() 
         }
     }
 
-    override fun set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: T) {
         this.lock_ui_partial {
             super.set_channel_controller_initial_event(type, channel, event)
             this.ui_change_bill.queue_refresh_context_menu() 
         }
     }
 
-    override fun set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
         this.lock_ui_partial {
             super.set_line_controller_initial_event(type, channel, line_offset, event)
             this.ui_change_bill.queue_refresh_context_menu() 
@@ -2252,7 +2252,49 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ContextMenuSetControlLine -> {
                         this.withFragment {
-                            it.set_context_menu_control_line()
+                            val controller_set = when (this.cursor.ctl_level) {
+                                CtlLineLevel.Line -> {
+                                    this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
+                                }
+                                CtlLineLevel.Channel -> {
+                                    val channel = this.cursor.channel
+                                    this.channels[channel].controllers
+                                }
+                                CtlLineLevel.Global -> {
+                                    this.controllers
+                                }
+                                null -> return@withFragment
+                            }
+                            when (this.cursor.ctl_type) {
+                                ControlEventType.Tempo -> {
+                                    val controller = controller_set.get_controller<OpusTempoEvent>(this.cursor.ctl_type!!)
+                                    it.set_context_menu_control_line(
+                                        ControlWidgetTempo(controller.initial_event, false, this.get_activity()!!) { event: OpusTempoEvent ->
+                                            this.set_event_at_cursor(event)
+                                        }
+                                    )
+                                }
+                                ControlEventType.Volume -> {
+                                    val controller = controller_set.get_controller<OpusVolumeEvent>(this.cursor.ctl_type!!)
+                                    it.set_context_menu_control_line(
+                                        ControlWidgetVolume(controller.initial_event, false, this.get_activity()!!) { event: OpusVolumeEvent ->
+                                            this.set_event_at_cursor(event)
+                                        }
+                                    )
+                                }
+                                ControlEventType.Reverb -> {
+                                    val controller = controller_set.get_controller<OpusReverbEvent>(this.cursor.ctl_type!!)
+                                    it.set_context_menu_control_line(
+                                        ControlWidgetReverb(controller.initial_event, false, this.get_activity()!!) { event: OpusReverbEvent ->
+                                            this.set_event_at_cursor(event)
+                                        }
+                                    )
+                                }
+                                null -> return@withFragment
+                            }
+                        }
+                        this.withFragment {
+
                         }
                     }
 

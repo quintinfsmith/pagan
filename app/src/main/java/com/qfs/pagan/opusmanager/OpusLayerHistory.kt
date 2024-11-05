@@ -812,9 +812,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
             val working_beat_index = min(beat_index, this.beat_count - 1 - count)
             val beat_cells = List(count) { i: Int ->
                 val working_list = mutableListOf<OpusTree<out InstrumentEvent>>()
-                val working_line_controller_list = mutableListOf<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>()
-                val working_channel_controller_list = mutableListOf<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>()
-                val working_global_controller_list = mutableListOf<Pair<ControlEventType, OpusTree<OpusControlEvent>>>()
+                val working_line_controller_list = mutableListOf<Triple<Pair<Int, Int>, ControlEventType, OpusTree<out OpusControlEvent>>>()
+                val working_channel_controller_list = mutableListOf<Triple<Int, ControlEventType, OpusTree<out OpusControlEvent>>>()
+                val working_global_controller_list = mutableListOf<Pair<ControlEventType, OpusTree<out OpusControlEvent>>>()
                 this.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*,*> ->
                     val line_count = channel.size
                     for (j in 0 until line_count) {
@@ -850,7 +850,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+    override fun <T: OpusControlEvent> replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
         this._remember {
             this.push_replace_channel_ctl(type, channel,beat, position ?: listOf()) {
                 super.replace_channel_ctl_tree(type, channel, beat, position, tree)
@@ -858,7 +858,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+    override fun <T: OpusControlEvent> replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
         this._remember {
             this.push_replace_global_ctl(type, beat, position ?: listOf()) {
                 super.replace_global_ctl_tree(type, beat, position, tree)
@@ -866,7 +866,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<OpusControlEvent>) {
+    override fun <T: OpusControlEvent> replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
         this._remember {
             this.push_replace_line_ctl(type, beat_key, position ?: listOf()) {
                 super.replace_line_ctl_tree(type, beat_key, position, tree)
@@ -1006,9 +1006,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
 
-    override fun set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
         // Trivial?
-        if (this.get_line_ctl_tree(type, beat_key, position).get_event() == event) {
+        if (this.get_line_ctl_tree<T>(type, beat_key, position).get_event() == event) {
             return
         }
 
@@ -1019,9 +1019,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
         // Trivial?
-        if (this.get_channel_ctl_tree(type, channel, beat, position).get_event() == event) {
+        if (this.get_channel_ctl_tree<T>(type, channel, beat, position).get_event() == event) {
             return
         }
 
@@ -1032,9 +1032,9 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
         // Trivial?
-        if (this.get_global_ctl_tree(type, beat, position).get_event() == event) {
+        if (this.get_global_ctl_tree<T>(type, beat, position).get_event() == event) {
             return
         }
 
@@ -1155,7 +1155,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     private fun <T> push_replace_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
-            val use_tree = this.get_global_ctl_tree(type, beat, position).copy()
+            val use_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, position).copy()
 
             val output = callback()
 
@@ -1171,7 +1171,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     private fun <T> push_replace_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
-            val use_tree = this.get_channel_ctl_tree(type, channel, beat, position).copy()
+            val use_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position).copy()
 
             val output = callback()
 
@@ -1187,7 +1187,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
     private fun <T> push_replace_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
-            val use_tree = this.get_line_ctl_tree(type, beat_key, position).copy()
+            val use_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position).copy()
 
             val output = callback()
 
@@ -1249,7 +1249,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         if (position.isNotEmpty()) {
             val stamp_position = position.toMutableList()
             val parent_position = position.subList(0, position.size - 1)
-            val parent = this.get_global_ctl_tree(type, beat, parent_position)
+            val parent = this.get_global_ctl_tree<OpusControlEvent>(type, beat, parent_position)
             if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
                 stamp_position[stamp_position.size - 1] = parent.size - 2
             }
@@ -1261,7 +1261,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         if (position.isNotEmpty()) {
             val stamp_position = position.toMutableList()
             val parent_position = position.subList(0, position.size - 1)
-            val parent = this.get_channel_ctl_tree(type, channel, beat, parent_position)
+            val parent = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, parent_position)
             if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
                 stamp_position[stamp_position.size - 1] = parent.size - 2
             }
@@ -1273,7 +1273,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         if (position.isNotEmpty()) {
             val stamp_position = position.toMutableList()
             val parent_position = position.subList(0, position.size - 1)
-            val parent = this.get_line_ctl_tree(type, beat_key, parent_position)
+            val parent = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, parent_position)
             if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
                 stamp_position[stamp_position.size - 1] = parent.size - 2
             }
@@ -1611,34 +1611,34 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun set_global_controller_initial_event(type: ControlEventType, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_global_controller_initial_event(type: ControlEventType, event: T) {
         this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT,
                 listOf(
                     type,
-                    this.controllers.get_controller(type).initial_event
+                    this.controllers.get_controller<T>(type).initial_event
                 )
             )
             super.set_global_controller_initial_event(type, event)
         }
     }
 
-    override fun set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: T) {
         this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_CTL_INITIAL_EVENT,
                 listOf(
                     type,
                     channel,
-                    this.get_channel(channel).controllers.get_controller(type).initial_event
+                    this.get_channel(channel).controllers.get_controller<T>(type).initial_event
                 )
             )
             super.set_channel_controller_initial_event(type, channel, event)
         }
     }
 
-    override fun set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: OpusControlEvent) {
+    override fun <T: OpusControlEvent> set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
         this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_LINE_CTL_INITIAL_EVENT,
@@ -1646,7 +1646,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                     type,
                     channel,
                     line_offset,
-                    this.get_channel(channel).lines[line_offset].controllers.get_controller(type).initial_event
+                    this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type).initial_event
                 )
             )
             super.set_line_controller_initial_event(type, channel, line_offset, event)

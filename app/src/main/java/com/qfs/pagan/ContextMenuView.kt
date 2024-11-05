@@ -26,7 +26,6 @@ abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int
 
         this.init_properties()
         this.setup_interactions()
-        this.refresh()
     }
 
     abstract fun init_properties()

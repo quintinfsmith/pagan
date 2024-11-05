@@ -515,9 +515,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
 
-    internal fun set_context_menu_control_line() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLine>()) {
+    internal fun <T: OpusControlEvent> set_context_menu_control_line(control_widget: ControlWidget<T>) {
+        if (!this.refresh_or_clear_context_menu<ContextMenuControlLine<T>>()) {
             this.active_context_menu = ContextMenuControlLine(
+                control_widget,
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )

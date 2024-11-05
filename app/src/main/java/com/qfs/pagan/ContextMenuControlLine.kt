@@ -2,15 +2,18 @@ package com.qfs.pagan
 
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isEmpty
-import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 
 class ContextMenuControlLine<T: OpusControlEvent>(var widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent) {
     lateinit var button_toggle_line_control: ButtonIcon
 
-    private var _current_type: ControlEventType? = null
+
+    init {
+        this.init_widget()
+        this.refresh()
+    }
+
 
     private fun _callback(value: OpusControlEvent) {
         val opus_manager = this.get_opus_manager()
@@ -50,8 +53,6 @@ class ContextMenuControlLine<T: OpusControlEvent>(var widget: ControlWidget<T>, 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        this._current_type = cursor.ctl_type
-
         this.button_toggle_line_control = this.primary!!.findViewById(R.id.btnToggleCtl)
         this.button_toggle_line_control.setImageResource(R.drawable.volume_minus)
         this.button_toggle_line_control.setOnClickListener {
@@ -73,17 +74,11 @@ class ContextMenuControlLine<T: OpusControlEvent>(var widget: ControlWidget<T>, 
         }
     }
 
-    override fun init_properties() {
-        this.init_widget()
-    }
+    override fun init_properties() { }
 
     override fun setup_interactions() { }
 
     override fun refresh() {
-        if (this.secondary!!.isEmpty()) {
-            this.init_widget()
-        } else {
-            this.widget.set_event(this.get_control_event())
-        }
+        this.widget.set_event(this.get_control_event())
     }
 }

@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import kotlin.math.max
@@ -19,7 +18,11 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     lateinit var button_duration: ButtonStd
     lateinit var button_unset: ButtonIcon
 
-    private var _current_type: ControlEventType? = null
+    init {
+        this.init_widget()
+        this.refresh()
+    }
+
 
     override fun init_properties() {
         this.widget_wrapper = this.secondary!! as LinearLayout

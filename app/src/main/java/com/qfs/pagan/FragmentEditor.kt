@@ -516,24 +516,24 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
 
     internal fun <T: OpusControlEvent> set_context_menu_control_line(control_widget: ControlWidget<T>) {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLine<T>>()) {
-            this.active_context_menu = ContextMenuControlLine(
-                control_widget,
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
+        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
+        this.clear_context_menu()
+        this.active_context_menu = ContextMenuControlLine<T>(
+            control_widget,
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        )
         this.show_context_menus()
     }
 
     internal fun <T: OpusControlEvent> set_context_menu_line_control_leaf(control_widget: ControlWidget<T>) {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf<T>>()) {
-            this.active_context_menu = ContextMenuControlLeaf(
-                control_widget,
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
+        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
+        this.clear_context_menu()
+        this.active_context_menu = ContextMenuControlLeaf(
+            control_widget,
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        )
         this.show_context_menus()
     }
 

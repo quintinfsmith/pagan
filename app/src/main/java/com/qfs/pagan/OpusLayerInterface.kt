@@ -2188,13 +2188,14 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ContextMenuSetControlLeaf -> {
                         this.withFragment {
+                            val channels = this.get_all_channels()
                             val controller_set = when (this.cursor.ctl_level) {
                                 CtlLineLevel.Line -> {
-                                    this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
+                                    channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
                                 }
                                 CtlLineLevel.Channel -> {
                                     val channel = this.cursor.channel
-                                    this.channels[channel].controllers
+                                    channels[channel].controllers
                                 }
                                 CtlLineLevel.Global -> {
                                     this.controllers
@@ -2252,13 +2253,14 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ContextMenuSetControlLine -> {
                         this.withFragment {
+                            val channels = this.get_all_channels()
                             val controller_set = when (this.cursor.ctl_level) {
                                 CtlLineLevel.Line -> {
-                                    this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
+                                    channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
                                 }
                                 CtlLineLevel.Channel -> {
                                     val channel = this.cursor.channel
-                                    this.channels[channel].controllers
+                                    channels[channel].controllers
                                 }
                                 CtlLineLevel.Global -> {
                                     this.controllers

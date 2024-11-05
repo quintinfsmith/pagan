@@ -11,6 +11,10 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     lateinit var button_remove: ButtonIcon
     lateinit var button_duration: ButtonStd
 
+    init {
+        this.refresh()
+    }
+
     override fun init_properties() {
         val primary = this.primary!!
         this.button_split = primary.findViewById(R.id.btnSplit)

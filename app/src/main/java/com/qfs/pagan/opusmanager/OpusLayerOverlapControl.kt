@@ -2,16 +2,34 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.Rational
 import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.opusmanager.ControlEventType
 
 open class OpusLayerOverlapControl: OpusLayerBase() {
     class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
 
+    // TODO: Don't need to store channel and line offset in map values here.
     private val _cache_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, MutableList<Triple<BeatKey, List<Int>, Rational>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<BeatKey, List<Int>>, Triple<BeatKey, List<Int>, Rational>>()
+
+    private val _cache_global_ctl_blocked_tree_map = HashMap<ControlEventType, HashMap<Int, MutableList<Triple<Int, List<Int>, Rational>>>>()
+    private val _cache_global_ctl_inv_blocked_tree_map = HashMap<ControlEventType, HashMap<Pair<Int, List<Int>>, Triple<Int, List<Int>, Rational>>>()
+
+    private val _cache_channel_ctl_blocked_tree_map = HashMap<ControlEventType, HashMap<Pair<Int, Int>, MutableList<Triple<Pair<Int, Int>, List<Int>, Rational>>>>()
+    private val _cache_channel_ctl_inv_blocked_tree_map = HashMap<ControlEventType, HashMap<Triple<Int, Int, List<Int>>, Triple<Int, List<Int>, Rational>>>()
+
+    private val _cache_line_ctl_blocked_tree_map = HashMap<ControlEventType, HashMap<BeatKey, MutableList<Triple<Int, List<Int>, Rational>>>>()
+    private val _cache_line_ctl_inv_blocked_tree_map = HashMap<ControlEventType, HashMap<Pair<BeatKey, List<Int>>, Triple<Int, List<Int>, Rational>>>()
+
 
     private fun _init_blocked_tree_caches() {
         this._cache_blocked_tree_map.clear()
         this._cache_inv_blocked_tree_map.clear()
+        this._cache_global_ctl_blocked_tree_map.clear()
+        this._cache_global_ctl_inv_blocked_tree_map.clear()
+        this._cache_channel_ctl_blocked_tree_map.clear()
+        this._cache_channel_ctl_inv_blocked_tree_map.clear()
+        this._cache_line_ctl_blocked_tree_map.clear()
+        this._cache_line_ctl_inv_blocked_tree_map.clear()
 
         var channels = this.get_all_channels()
         for (i in 0 until channels.size) {
@@ -39,6 +57,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
     }
 
+    /* Insert extra lines to fit overlapping events (happens on import midi or old savve file versions) */
     private fun _reshape_lines_from_blocked_trees() {
         var channels = this.get_all_channels()
         this._cache_blocked_tree_map.clear()
@@ -179,16 +198,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             } else {
                 for (i in 0 until working_tree.size) {
                     stack.add(
-                        Pair(
-                            working_tree[i],
-                            List(working_position.size + 1) { j: Int ->
-                                if (j == working_position.size) {
-                                    i
-                                } else {
-                                    working_position[j]
-                                }
-                            }
-                        )
+                        Pair(working_tree[i], next_position(working_position, i))
                     )
                 }
             }
@@ -213,15 +223,89 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             } else {
                 for (i in 0 until working_tree.size) {
                     stack.add(
+                        Pair(working_tree[i], next_position(working_position, i))
+                    )
+                }
+            }
+        }
+        return null
+    }
+
+    fun get_blocking_position_global_ctl(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        val tree = this.get_global_ctl_tree<OpusControlEvent>(ctl_type, beat, position)
+        val stack = mutableListOf(Pair(tree, position))
+
+        while (stack.isNotEmpty()) {
+            val (working_tree, working_position) = stack.removeFirst()
+            if (working_tree.is_leaf()) {
+                if (this._cache_global_ctl_inv_blocked_tree_map.containsKey(ctl_type) && this._cache_global_ctl_inv_blocked_tree_map[ctl_type]!!.containsKey(Pair(beat, working_position))) {
+                    val entry = this._cache_global_ctl_inv_blocked_tree_map[ctl_type]!![Pair(beat, working_position)]!!
+                    if (entry.first == beat && position.size < entry.second.size && entry.second.subList(0, position.size) == position) {
+                        continue
+                    }
+                    return Pair(entry.first, entry.second.toList())
+                }
+            } else {
+                for (i in 0 until working_tree.size) {
+                    stack.add(
                         Pair(
                             working_tree[i],
-                            List(working_position.size + 1) { j: Int ->
-                                if (j == working_position.size) {
-                                    i
-                                } else {
-                                    working_position[j]
-                                }
-                            }
+                            next_position(working_position, i)
+                        )
+                    )
+                }
+            }
+        }
+        return null
+    }
+    fun get_blocking_position_channel_ctl(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        val tree = this.get_channel_ctl_tree<OpusControlEvent>(ctl_type, Pair(channel, beat), position)
+        val stack = mutableListOf(Pair(tree, position))
+
+        while (stack.isNotEmpty()) {
+            val (working_tree, working_position) = stack.removeFirst()
+            if (working_tree.is_leaf()) {
+                if (this._cache_channel_ctl_inv_blocked_tree_map.containsKey(ctl_type) && this._cache_channel_ctl_inv_blocked_tree_map[ctl_type]!!.containsKey(Triple(channel, beat, working_position))) {
+                    val entry = this._cache_channel_ctl_inv_blocked_tree_map[ctl_type]!![Triple(channel, beat, working_position)]!!
+                    if (entry.first == beat && position.size < entry.second.size && entry.second.subList(0, position.size) == position) {
+                        continue
+                    }
+                    return Pair(entry.first, entry.second.toList())
+                }
+            } else {
+                for (i in 0 until working_tree.size) {
+                    stack.add(
+                        Pair(
+                            working_tree[i],
+                            next_position(working_position, i)
+                        )
+                    )
+                }
+            }
+        }
+        return null
+    }
+
+    fun get_blocking_position_line_ctl(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
+        val tree = this.get_line_ctl_tree<OpusControlEvent>(ctl_type, beat_key, position)
+        val stack = mutableListOf(Pair(tree, position))
+
+        while (stack.isNotEmpty()) {
+            val (working_tree, working_position) = stack.removeFirst()
+            if (working_tree.is_leaf()) {
+                if (this._cache_line_ctl_inv_blocked_tree_map.containsKey(ctl_type) && this._cache_line_ctl_inv_blocked_tree_map[ctl_type]!!.containsKey(Pair(beat_key, working_position))) {
+                    val entry = this._cache_line_ctl_inv_blocked_tree_map[ctl_type]!![Pair(beat_key, working_position)]!!
+                    if (entry.first == beat_key.beat && position.size < entry.second.size && entry.second.subList(0, position.size) == position) {
+                        continue
+                    }
+                    return Pair(entry.first, entry.second.toList())
+                }
+            } else {
+                for (i in 0 until working_tree.size) {
+                    stack.add(
+                        Pair(
+                            working_tree[i],
+                            next_position(working_position, i)
                         )
                     )
                 }
@@ -247,6 +331,26 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         }
 
         this._cache_tree_overlaps(beat_key, working_position)
+    }
+
+    override fun <T: OpusControlEvent> replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+        val working_position = position ?: listOf()
+        val overlapper = this.get_blocking_position_global_ctl(type, beat, working_position)
+        val tree_is_eventless = tree.is_eventless()
+
+        val blocker_pair = this.is_blocked_replace_tree_global_ctl(type, beat, working_position, tree)
+        if (blocker_pair != null && !tree_is_eventless) {
+            throw BlockedTreeException(beat_key, working_position, blocker_pair.first, blocker_pair.second)
+        }
+
+        this.decache_overlapping_leaf_global_ctl(type, beat, working_position)
+        super.replace_global_ctl_tree(beat_key, position, tree)
+
+        if (overlapper != null) {
+            this._cache_tree_overlaps_global_ctl(overlapper.first, overlapper.second)
+        }
+
+        this._cache_tree_overlaps_global_ctl(beat_key, working_position)
     }
 
     override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
@@ -293,6 +397,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             super.remove_standard(beat_key, position)
         }
     }
+
     override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
         val other_position = List(position.size) { i: Int -> 
             if (i == position.size - 1) {
@@ -554,11 +659,56 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
     fun get_original_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
         return this.get_blocking_position(beat_key, position) ?: Pair(beat_key, position)
     }
+    fun get_original_position_global_ctl(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_blocking_position_global_ctl(ctl_type, beat, position) ?: Pair(beat, position)
+    }
+    fun get_original_position_channel_ctl(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_blocking_position_channel_ctl(ctl_type, channel: Int, beat, position) ?: Pair(beat, position)
+    }
+    fun get_original_position_line_ctl(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_blocking_position_line_ctl(ctl_type, beat_key, position) ?: Pair(beat_key.beat, position)
+    }
 
     // ----------------------------- Layer Specific functions ---------------------
     private fun _assign_to_inv_cache(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>, amount: Rational) {
         this._cache_inv_blocked_tree_map[Pair(beat_key.copy(), position.toList())] = Triple(
             blocker_key.copy(),
+            blocker_position.toList(),
+            amount
+        )
+    }
+
+    private fun _assign_to_inv_cache_global_ctl(ctl_type: ControlEventType, beat: Int, position: List<Int>, blocker: Int, blocker_position: List<Int>, amount: Rational) {
+        if (!this._cache_global_ctl_inv_blocked_tree_map.containsKey(ctl_type)) {
+            this._cache_global_ctl_inv_blocked_tree_map[ctl_type] = HashMap()
+        }
+
+        this._cache_global_ctl_inv_blocked_tree_map[ctl_type]!![Pair(beat, position.toList())] = Triple(
+            blocker,
+            blocker_position.toList(),
+            amount
+        )
+    }
+
+    private fun _assign_to_inv_cache_channel_ctl(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>, blocker: Int, blocker_position: List<Int>, amount: Rational) {
+        if (!this._cache_channel_ctl_inv_blocked_tree_map.containsKey(ctl_inv_type)) {
+            this._cache_channel_ctl_inv_blocked_tree_map[ctl_inv_type] = HashMap()
+        }
+
+        this._cache_channel_ctl_inv_blocked_tree_map[ctl_inv_type]!![Triple(channel, beat, position.toList())] = Triple(
+            blocker,
+            blocker_position.toList(),
+            amount
+        )
+    }
+
+    private fun _assign_to_inv_cache_line_ctl(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>, blocker: Int, blocker_position: List<Int>, amount: Rational) {
+        if (!this._cache_line_ctl_inv_blocked_tree_map.containsKey(ctl_inv_type)) {
+            this._cache_line_ctl_inv_blocked_tree_map[ctl_inv_type] = HashMap()
+        }
+
+        this._cache_line_ctl_inv_blocked_tree_map[ctl_inv_type]!![Pair(beat_key, position.toList())] = Triple(
+            blocker,
             blocker_position.toList(),
             amount
         )
@@ -581,13 +731,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
                 output.addAll(
-                    this.decache_overlapping_leaf(beat_key, List(position.size + 1) { j: Int ->
-                        if (j == position.size) {
-                            i
-                        } else {
-                            position[j]
-                        }
-                    })
+                    this.decache_overlapping_leaf(beat_key, next_position(position, i))
                 )
             }
         }
@@ -607,6 +751,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         return output
     }
+
     private fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<BeatKey, List<Int>, Rational>> {
         val (target_offset, target_width) = this.get_leaf_offset_and_width(beat_key, position)
         val target_tree = this.get_tree(beat_key, position)
@@ -694,7 +839,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
 
         return output
     }
-    
+
     /*
      * Wrapper around on_overlap that includes a check if the overlapped position exists.
      */
@@ -739,13 +884,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
                         Triple(
                             working_tree[i],
                             working_beat_key,
-                            List(working_position.size + 1) { j: Int ->
-                                if (j == working_position.size) {
-                                    i
-                                } else {
-                                    working_position[j]
-                                }
-                            }
+                            next_position(working_position, i)
                         )
                     )
                 }
@@ -760,13 +899,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
         val tree = this.get_tree(beat_key, position)
         val chunk_amount = Rational(1, tree.size)
         for (i in 0 until tree.size) {
-            val new_position = List(position.size + 1) { j: Int ->
-                if (j == position.size) {
-                    i
-                } else {
-                    position[j]
-                }
-            }
+            val new_position = next_position(position, i)
 
             var new_blocked_amount = (blocked_amount - (chunk_amount * (i + 1))) * tree.size
             new_blocked_amount = if (new_blocked_amount > 1) {
@@ -1045,8 +1178,7 @@ open class OpusLayerOverlapControl: OpusLayerBase() {
             }
             this._cache_blocked_tree_map[key] = values
         }
-        
+
         super.swap_lines(channel_a, line_a, channel_b, line_b)
     }
-
 }

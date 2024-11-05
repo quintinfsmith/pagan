@@ -627,6 +627,16 @@ open class OpusLayerBase {
 
             return opus_manager
         }
+
+        fun next_position(position: List<Int>, i: Int): List<Int> {
+            return List(position.size + 1) { j: Int ->
+                if (j == position.size) {
+                    i
+                } else {
+                    position[j]
+                }
+            }
+        }
     }
 
     private var _channel_uuid_map = HashMap<Int, OpusChannel>()

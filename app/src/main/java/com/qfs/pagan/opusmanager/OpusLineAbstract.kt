@@ -3,6 +3,7 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.Rational
 import com.qfs.pagan.opusmanager.OpusLayerBase.BadInsertPosition
 import com.qfs.pagan.opusmanager.OpusLayerBase.Companion.next_position
+import com.qfs.pagan.opusmanager.OpusLayerOverlapControl.BlockedTreeException
 import com.qfs.pagan.structure.OpusTree
 
 abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) {
@@ -331,6 +332,40 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         }
 
         this.cache_tree_overlaps(beat, working_position)
+    }
+
+    fun split_tree(beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        val current_tree_position = this.get_blocking_position(beat, position)
+        if (current_tree_position != null) {
+            val current_event_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
+            val blocked_amount = this.get_blocking_amount(beat, position)
+            if (current_event_tree != this.get_tree(beat, position) && blocked_amount!! >= 1) {
+                throw BlockedTreeException(beat, position, current_tree_position.first, current_tree_position.second)
+            }
+        }
+
+        this.recache_blocked_tree_wrapper(beat, position) {
+            val tree = this.get_tree(beat, position)
+            if (tree.is_event()) {
+                var working_tree = tree
+                val event = working_tree.get_event()!!
+
+                working_tree.unset_event()
+                working_tree.set_size(splits)
+
+                if (splits > 1) {
+                    working_tree = if (move_event_to_end) {
+                        working_tree[working_tree.size - 1]
+                    } else {
+                        working_tree[0]
+                    }
+                }
+
+                working_tree.set_event(event)
+            } else {
+                tree.set_size(splits)
+            }
+        }
     }
 
     fun get_proceding_leaf_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {

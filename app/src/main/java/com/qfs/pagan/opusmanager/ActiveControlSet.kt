@@ -8,6 +8,20 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             this.new_controller(type)
         }
     }
+    private fun _init_blocked_tree_caches() {
+        var beat = 0
+        var position = this.get_first_position(beat, listOf())
+        while (true) {
+            val working_tree = this.get_tree(beat_key, position)
+            if (working_tree.is_event()) {
+                this._cache_tree_overlaps(beat_key, position)
+            }
+
+            val pair = this.get_proceding_leaf_position(beat_key, position) ?: break
+            beat_key.beat = pair.first
+            position = pair.second
+        }
+    }
 
     fun clear() {
         this.beat_count = 0

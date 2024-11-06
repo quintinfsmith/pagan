@@ -1979,7 +1979,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         val column_updates = this.get_editor_table()?.add_line_to_map(
             y,
             List(this.beat_count) { x: Int ->
-                val tree = line.events[x]
+                val tree = line.beats[x]
                 tree?.get_total_child_weight() ?: 1
             }
         ) ?: listOf()

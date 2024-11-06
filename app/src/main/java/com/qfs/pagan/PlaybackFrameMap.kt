@@ -289,7 +289,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this._tempo_ratio_map.add(Pair(0f, working_tempo))
 
-        controller.events.forEachIndexed { i: Int, tree: OpusTree<OpusTempoEvent>? ->
+        controller.beats.forEachIndexed { i: Int, tree: OpusTree<OpusTempoEvent>? ->
             if (tree == null) {
                 return@forEachIndexed
             }

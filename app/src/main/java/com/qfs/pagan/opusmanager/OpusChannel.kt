@@ -89,7 +89,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     fun <T: OpusControlEvent> get_ctl_tree(line: Int, type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<T> {
-        var tree = this.lines[line].controllers.get_controller<T>(type).get_beat(beat)
+        var tree = this.lines[line].controllers.get_controller<T>(type).get_tree(beat)
 
         if (position != null) {
             for (i in position) {
@@ -101,7 +101,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
 
     fun <T: OpusControlEvent> get_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<T> {
-        var tree = this.controllers.get_controller<T>(type).get_beat(beat)
+        var tree = this.controllers.get_controller<T>(type).get_tree(beat)
 
         if (position != null) {
             for (i in position) {

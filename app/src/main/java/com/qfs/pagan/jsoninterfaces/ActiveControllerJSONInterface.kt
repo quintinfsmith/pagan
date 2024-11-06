@@ -42,7 +42,7 @@ class ActiveControllerJSONInterface {
                         converter(event)
                     }
                 }
-                controller.events[index] = generic_event
+                controller.beats[index] = generic_event
             }
         }
 
@@ -86,7 +86,7 @@ class ActiveControllerJSONInterface {
         fun to_json(controller: ActiveController<out OpusControlEvent>): JSONHashMap {
             val map = JSONHashMap()
             val event_list = JSONList()
-            controller.events.forEachIndexed { i: Int, event_tree: OpusTree<out OpusControlEvent>? ->
+            controller.beats.forEachIndexed { i: Int, event_tree: OpusTree<out OpusControlEvent>? ->
                 if (event_tree == null) {
                     return@forEachIndexed
                 }

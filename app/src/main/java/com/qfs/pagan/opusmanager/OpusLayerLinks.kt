@@ -287,7 +287,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         }
     }
 
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
+    override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         this.lock_links {
             this._apply_to_linked(beat_key) { linked_key: BeatKey ->
                 this.set_event(linked_key, position, event.copy())

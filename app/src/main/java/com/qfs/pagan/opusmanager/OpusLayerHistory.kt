@@ -823,17 +823,17 @@ open class OpusLayerHistory : OpusLayerLinks() {
                         )
                         val controllers = channel.lines[j].controllers
                         for ((type, controller) in controllers.get_all()) {
-                            working_line_controller_list.add(Triple(Pair(c, j), type, controller.get_beat(working_beat_index + i)))
+                            working_line_controller_list.add(Triple(Pair(c, j), type, controller.get_tree(working_beat_index + i)))
                         }
                     }
                     val controllers = channel.controllers
                     for ((type, controller) in controllers.get_all()) {
-                        working_channel_controller_list.add(Triple(c, type, controller.get_beat(working_beat_index + i)))
+                        working_channel_controller_list.add(Triple(c, type, controller.get_tree(working_beat_index + i)))
                     }
                 }
                 val controllers = this.controllers
                 for ((type, controller) in controllers.get_all()) {
-                    working_global_controller_list.add(Pair(type, controller.get_beat(working_beat_index + i)))
+                    working_global_controller_list.add(Pair(type, controller.get_tree(working_beat_index + i)))
                 }
 
                 Pair(working_list, Triple(working_line_controller_list, working_channel_controller_list, working_global_controller_list))
@@ -997,7 +997,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
+    override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         this._remember {
             this.push_replace_tree(beat_key, position) {
                 super.set_event(beat_key, position, event)

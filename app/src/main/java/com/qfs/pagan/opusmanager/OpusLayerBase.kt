@@ -3515,4 +3515,22 @@ open class OpusLayerBase {
             )
         }
     }
+
+    fun get_blocking_amount(beat_key: BeatKey, position: List<Int>): Rational? {
+        return this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_blocking_amount(beat_key.beat, position)
+    }
+
+    fun blocked_check_remove_beat(index: Int): Pair<Pair<Int, List<Int>>, Pair<Int, List<Int>>>? {
+        val channels = this.get_all_channels()
+        for (channel in 0 until channels.size) {
+            for (line in 0 until channels[channel].lines.size) {
+                val result = channels[channel].lines[line].blocked_check_remove_beat(index)
+                if (result != null) {
+                    return result
+                }
+            }
+        }
+
+        return null
+    }
 }

@@ -10,6 +10,30 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     private val _cache_blocked_tree_map = HashMap<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<Int, List<Int>>, Triple<Int, List<Int>, Rational>>()
 
+    fun _init_blocked_tree_caches() {
+        if (this.beats.isEmpty()) {
+            return
+        }
+
+        var beat = 0
+        var position = this.get_first_position(beat, listOf())
+        while (true) {
+            val working_tree = this.get_tree(beat, position)
+            if (working_tree.is_event()) {
+                this.cache_tree_overlaps(beat, position)
+            }
+
+            val pair = this.get_proceding_leaf_position(beat, position) ?: break
+            beat = pair.first
+            position = pair.second
+        }
+    }
+
+    init {
+        this._init_blocked_tree_caches()
+    }
+
+
     fun get_first_position(beat: Int, start_position: List<Int>? = null): List<Int> {
         val output = start_position?.toMutableList() ?: mutableListOf()
         var tree = this.get_tree(beat, output)

@@ -447,7 +447,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
+    override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         this._catch_blocked_action {
             this.lock_ui_partial {
                 val activity = this.get_activity()
@@ -799,14 +799,15 @@ class OpusLayerInterface : OpusLayerCursor() {
                     val channels = this.get_all_channels()
                     for (i in 0 until channels.size) {
                         for (j in 0 until channels[i].lines.size) {
-                            var working_beat_key = BeatKey(i, j, beat_index)
-                            var working_position = this.get_first_position(working_beat_key, listOf())
+                            var working_beat = beat_index
+                            val line = channels[i].lines[j]
+                            var working_position = line.get_first_position(working_beat, listOf())
 
-                            val head_position = this.get_actual_position(working_beat_key, working_position)
-                            if (head_position.first.beat < beat_index) {
+                            val head_position = line.get_blocking_position(working_beat, working_position) ?: Pair(working_beat, working_position)
+                            if (head_position.first < beat_index) {
                                 var max_beat_blocked = beat_index
-                                for ((blocked_key, _) in this.get_all_blocked_positions(head_position.first, head_position.second)) {
-                                    max_beat_blocked = max(max_beat_blocked, blocked_key.beat)
+                                for ((blocked_beat, _) in line.get_all_blocked_positions(head_position.first, head_position.second)) {
+                                    max_beat_blocked = max(max_beat_blocked, blocked_beat)
                                 }
 
                                 if (max_beat_blocked > beat_index) {
@@ -1749,12 +1750,12 @@ class OpusLayerInterface : OpusLayerCursor() {
                             listOf(beat_key)
                         }
 
-
+                        val line = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset]
                         for (linked_key in beat_keys) {
                             val shadow_beat_keys = mutableSetOf<BeatKey>()
-                            val event_head = this.get_actual_position(linked_key, cursor.position)
-                            for ((shadow_key, _) in this.get_all_blocked_positions(event_head.first, event_head.second)) {
-                                shadow_beat_keys.add(shadow_key)
+                            val event_head = line.get_blocking_position(linked_key.beat, cursor.position) ?: Pair(linked_key.beat, cursor.position)
+                            for ((shadow_beat, _) in line.get_all_blocked_positions(event_head.first, event_head.second)) {
+                                shadow_beat_keys.add(BeatKey(linked_key.channel, linked_key.line_offset, shadow_beat))
                             }
 
                             // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
@@ -1928,7 +1929,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                         if (! this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                             continue
                         }
-                        val ctl_tree = controller.get_beat(beat)
+                        val ctl_tree = controller.get_tree(beat)
                         column.add(ctl_tree.get_total_child_weight())
                     }
                 }
@@ -1937,7 +1938,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     if (! this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
                         continue
                     }
-                    val ctl_tree = controller.get_beat(beat)
+                    val ctl_tree = controller.get_tree(beat)
                     column.add(ctl_tree.get_total_child_weight())
                 }
             }
@@ -1947,7 +1948,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     continue
                 }
 
-                val ctl_tree = controller.get_beat(beat)
+                val ctl_tree = controller.get_tree(beat)
                 column.add(ctl_tree.get_total_child_weight())
             }
             editor_table.add_column_to_map(beat, column)
@@ -2029,7 +2030,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     if (! this.is_ctl_line_visible(CtlLineLevel.Line, type)) {
                         continue
                     }
-                    val ctl_tree = controller.get_beat(index)
+                    val ctl_tree = controller.get_tree(index)
                     column.add(ctl_tree.get_total_child_weight())
                 }
             }
@@ -2038,7 +2039,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 if (! this.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
                     continue
                 }
-                val ctl_tree = controller.get_beat(index)
+                val ctl_tree = controller.get_tree(index)
                 column.add(ctl_tree.get_total_child_weight())
             }
         }
@@ -2046,7 +2047,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             if (! this.is_ctl_line_visible(CtlLineLevel.Global, type)) {
                 continue
             }
-            val ctl_tree = controller.get_beat(index)
+            val ctl_tree = controller.get_tree(index)
             column.add(ctl_tree.get_total_child_weight())
         }
 

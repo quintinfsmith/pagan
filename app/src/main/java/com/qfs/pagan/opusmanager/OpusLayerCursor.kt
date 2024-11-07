@@ -1167,8 +1167,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 }
 
                 var output = false
-                for ((working_key, working_position) in this.get_all_blocked_positions(beat_key, position)) {
-                    if (cbeat_key == working_key && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
+                val line = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset]
+                for ((working_beat, working_position) in line.get_all_blocked_positions(beat_key.beat, position)) {
+                    if (cbeat_key.beat == working_beat && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
                         output = true
                         break
                     }

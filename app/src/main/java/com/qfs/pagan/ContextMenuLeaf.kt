@@ -127,7 +127,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
 
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
         val current_tree = opus_manager.get_tree()
 
@@ -194,7 +194,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.cursor
-        val (beat_key, position) = opus_manager.get_original_position(
+        val (beat_key, position) = opus_manager.get_actual_position(
             cursor.get_beatkey(),
             cursor.get_position()
         )
@@ -258,7 +258,8 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val opus_manager = main.get_opus_manager()
 
         val cursor = opus_manager.cursor
-        val (beat_key, position) = opus_manager.get_original_position(
+
+        val (beat_key, position) = opus_manager.get_actual_position(
             cursor.get_beatkey(),
             cursor.get_position()
         )
@@ -303,7 +304,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val progress = view.getState()!!
-        val current_tree_position = opus_manager.get_original_position(
+        val current_tree_position = opus_manager.get_actual_position(
             opus_manager.cursor.get_beatkey(),
             opus_manager.cursor.get_position()
         )
@@ -410,7 +411,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        val current_tree_position = opus_manager.get_original_position(
+        val current_tree_position = opus_manager.get_actual_position(
             opus_manager.cursor.get_beatkey(),
             opus_manager.cursor.get_position()
         )

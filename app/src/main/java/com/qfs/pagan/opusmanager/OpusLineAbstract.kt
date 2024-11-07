@@ -3,7 +3,6 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.Rational
 import com.qfs.pagan.opusmanager.OpusLayerBase.BadInsertPosition
 import com.qfs.pagan.opusmanager.OpusLayerBase.Companion.next_position
-import com.qfs.pagan.opusmanager.OpusLayerOverlapControl.BlockedTreeException
 import com.qfs.pagan.structure.OpusTree
 
 abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) {
@@ -24,6 +23,11 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     private fun _assign_to_inv_cache(beat: Int, position: List<Int>, blocker: Int, blocker_position: List<Int>, amount: Rational) {
         this._cache_inv_blocked_tree_map[Pair(beat, position.toList())] = Triple(blocker, blocker_position.toList(), amount)
     }
+
+    open fun insert_beat(index: Int) {
+        this.beats.add(OpusTree())
+    }
+
 
     fun cache_tree_overlaps(beat: Int, position: List<Int>): List<Array<Pair<Int, List<Int>>>> {
         val overlapped_pairs = mutableListOf<Array<Pair<Int, List<Int>>>>()
@@ -174,10 +178,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         }
 
         return true
-    }
-
-    open fun insert_beat(index: Int) {
-        this.beats.add(index, OpusTree())
     }
 
     open fun set_beat_count(new_beat_count: Int) {
@@ -579,6 +579,20 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         return output
     }
 
+    fun insert_after(beat: Int, position: List<Int>) {
+        val parent_position = if (position.isNotEmpty()) {
+            position.subList(0,  position.size - 1)
+        } else {
+            position
+        }
+
+        this.recache_blocked_tree_wrapper(beat, parent_position) {
+            val parent = this.get_tree(beat, parent_position)
+            val index = position.last()
+            parent.insert(index + 1)
+        }
+    }
+
     fun insert(beat: Int, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()
@@ -649,6 +663,18 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         }
         return null
     }
+
+    // Get all blocked positions connected, regardless of if the given position is an event or a blocked tree
+    fun get_all_blocked_positions(beat: Int, position: List<Int>): List<Pair<Int, List<Int>>> {
+        val original = this.get_blocking_position(beat, position) ?: Pair(beat, position)
+        val output = mutableListOf(original)
+        val blocked_trees = this._cache_blocked_tree_map[original] ?: listOf()
+        for ((blocked_beat, blocked_position, _) in blocked_trees) {
+            output.add(Pair(blocked_beat, blocked_position.toList()))
+        }
+        return output
+    }
+
 
     fun get_proceding_event_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         val next = this.get_proceding_leaf_position(beat, position) ?: return null
@@ -829,7 +855,25 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
 
+    fun get_blocking_amount(beat: Int, position: List<Int>): Rational? {
+        val tree = this.get_tree(beat, position)
+        val stack = mutableListOf(Pair(tree, position))
 
+        while (stack.isNotEmpty()) {
+            val (working_tree, working_position) = stack.removeFirst()
+            if (working_tree.is_leaf()) {
+                if (this._cache_inv_blocked_tree_map.containsKey(Pair(beat, working_position))) {
+                    val entry = this._cache_inv_blocked_tree_map[Pair(beat, working_position)]!!
+                    return entry.third
+                }
+            } else {
+                for (i in 0 until working_tree.size) {
+                    stack.add(Pair(working_tree[i], next_position(position, i)))
+                }
+            }
+        }
+        return null
+    }
 }
 
 abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<T>>): OpusTreeArray<T>(beats) {

@@ -802,7 +802,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                             var working_beat_key = BeatKey(i, j, beat_index)
                             var working_position = this.get_first_position(working_beat_key, listOf())
 
-                            val head_position = this.get_original_position(working_beat_key, working_position)
+                            val head_position = this.get_actual_position(working_beat_key, working_position)
                             if (head_position.first.beat < beat_index) {
                                 var max_beat_blocked = beat_index
                                 for ((blocked_key, _) in this.get_all_blocked_positions(head_position.first, head_position.second)) {
@@ -1752,7 +1752,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                         for (linked_key in beat_keys) {
                             val shadow_beat_keys = mutableSetOf<BeatKey>()
-                            val event_head = this.get_original_position(linked_key, cursor.position)
+                            val event_head = this.get_actual_position(linked_key, cursor.position)
                             for ((shadow_key, _) in this.get_all_blocked_positions(event_head.first, event_head.second)) {
                                 shadow_beat_keys.add(shadow_key)
                             }
@@ -2831,7 +2831,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
             throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
         }
-        val current_tree_position = this.get_original_position(
+        val current_tree_position = this.get_actual_position(
             this.cursor.get_beatkey(),
             this.cursor.get_position()
         )
@@ -2839,7 +2839,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int) {
-        val current_tree_position = this.get_original_position(
+        val current_tree_position = this.get_actual_position(
             beat_key,
             position
         )
@@ -2954,7 +2954,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
             throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
         }
-        val current_tree_position = this.get_original_position(
+        val current_tree_position = this.get_actual_position(
             this.cursor.get_beatkey(),
             this.cursor.get_position()
         )

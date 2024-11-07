@@ -274,7 +274,7 @@ class LeafButtonStd(
         }
 
         val original_position = try {
-            opus_manager.get_original_position(beat_key, position)
+            opus_manager.get_actual_position(beat_key, position)
         } catch (e: OpusTree.InvalidGetCall) {
             return drawableState
         } catch (e: IndexOutOfBoundsException) {

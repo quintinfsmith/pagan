@@ -744,6 +744,115 @@ open class OpusLayerBase {
             false
         }
     }
+
+    /* Insert extra lines to fit overlapping events (happens on import midi or old savve file versions) */
+    private fun _reshape_lines_from_blocked_trees() {
+        var channels = this.get_all_channels()
+        for (i in channels.indices) {
+            val remap_trees = mutableListOf<Pair<Int, MutableList<Triple<BeatKey, List<Int>, Int>>>>() // BeatKey, Position, New Line Offset
+            for (j in 0 until channels[i].size) {
+                var beat_key = BeatKey(i, j, 0)
+                var position = this.get_first_position(beat_key, listOf())
+
+                if (!this.get_tree(beat_key, position).is_event()) {
+                    val pair = this.get_proceding_event_position(beat_key, position) ?: continue
+                    beat_key = BeatKey(i, j, pair.first)
+                    position = pair.second
+                }
+
+                val current_remap = mutableListOf<Triple<BeatKey, List<Int>, Int>>()
+                val overlap_lanes = mutableListOf<Rational?>()
+
+                while (true) {
+                    val (offset, width) = this.get_leaf_offset_and_width(beat_key, position)
+                    val end_position = offset + Rational(this.get_tree(beat_key, position).get_event()!!.duration, width)
+
+                    var lane_index = 0
+                    while (lane_index < overlap_lanes.size) {
+                        val check_position = overlap_lanes[lane_index]
+                        if (check_position == null) {
+                            break
+                        } else if (check_position <= offset) {
+                            overlap_lanes[lane_index] = null
+                            break
+                        }
+
+                        lane_index += 1
+                    }
+
+                    if (lane_index == overlap_lanes.size) {
+                        overlap_lanes.add(null)
+                    }
+                    overlap_lanes[lane_index] = end_position
+
+                    if (lane_index != 0) {
+                        current_remap.add(Triple(beat_key, position, lane_index))
+                    }
+
+                    val pair = this.get_proceding_event_position(beat_key, position) ?: break
+                    beat_key.beat = pair.first
+                    position = pair.second
+                }
+                remap_trees.add(Pair(overlap_lanes.size, current_remap))
+            }
+
+            val working_channel = if (i < this.channels.size) {
+                this.channels[i]
+            } else {
+                this.percussion_channel
+            }
+
+            for (j in remap_trees.size - 1 downTo 0) {
+                val (lines_to_insert, remaps) = remap_trees[j]
+                for (k in 0 until lines_to_insert - 1) {
+                    this.new_line(i, j + 1)
+                    for ((type, controller) in working_channel.lines[j].controllers.get_all()) {
+
+                        working_channel.lines[j + 1].controllers.new_controller(type)
+                        working_channel.lines[j + 1].controllers.get_controller<OpusControlEvent>(type).set_initial_event(
+                            controller.initial_event.copy()
+                        )
+                    }
+                    if (i == this.channels.size) {
+                        this.set_percussion_instrument(
+                            j + 1,
+                            this.get_percussion_instrument(j)
+                        )
+                    }
+                }
+
+                val replaced_beat_keys = mutableSetOf<BeatKey>()
+                for ((working_beat_key, working_position, new_index) in remaps) {
+                    val new_key = BeatKey(
+                        working_beat_key.channel,
+                        working_beat_key.line_offset + new_index,
+                        working_beat_key.beat
+                    )
+
+                    if (!replaced_beat_keys.contains(new_key)) {
+                        val new_tree = this.get_tree(working_beat_key).copy() // TODO: Needs copy function
+
+                        new_tree.traverse { working_tree: OpusTree<*>, event: InstrumentEvent? ->
+                            if (event != null) {
+                                working_tree.unset_event()
+                            }
+                        }
+
+                        this.replace_tree(new_key, listOf(), new_tree)
+                        replaced_beat_keys.add(new_key)
+                    }
+
+                    this.replace_tree(
+                        new_key,
+                        working_position,
+                        this.get_tree_copy(working_beat_key, working_position)
+                    )
+                    this.unset(working_beat_key, working_position)
+                }
+            }
+        }
+    }
+
     /**
      * Calculates how many instrument lines are in use.
      */
@@ -1583,12 +1692,28 @@ open class OpusLayerBase {
         }
     }
 
-    open fun set_event(beat_key: BeatKey, position: List<Int>, event: TunedInstrumentEvent) {
+    open fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
+        if (this.is_percussion(beat_key.channel)) {
+            this.percussion_channel.lines[beat_key.line_offset].set_event(beat_key.beat, position, event as PercussionEvent)
+        } else {
+            this.channels[beat_key.channel].lines[beat_key.line_offset].set_event(beat_key.beat, position, event as TunedInstrumentEvent)
+        }
+    }
+
+    private fun _set_percussion_event(beat_key: BeatKey, position: List<Int>, event: TunedInstrumentEvent) {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
         this.channels[beat_key.channel].lines[beat_key.line_offset].set_event(beat_key.beat, position, event)
     }
+
+    private fun _set_event(beat_key: BeatKey, position: List<Int>, event: TunedInstrumentEvent) {
+        if (this.is_percussion(beat_key.channel)) {
+            throw NonPercussionEventSet()
+        }
+        this.channels[beat_key.channel].lines[beat_key.line_offset].set_event(beat_key.beat, position, event)
+    }
+
 
     open fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
         val tree = this.get_line_ctl_tree<T>(type, beat_key, position)
@@ -1737,14 +1862,15 @@ open class OpusLayerBase {
             return
         }
 
+
         var y = 0
-        for (channel in this.channels) {
-            for (line in channel.lines) {
-                line.beats[beat_index] = beats_in_column[y++] as OpusTree<TunedInstrumentEvent>
+        for (channel in 0 until this.channels.size) {
+            for (line in 0 until this.channels[channel].lines.size) {
+                this.replace_tree(BeatKey(channel, line, beat_index), listOf(), beats_in_column[y++] as OpusTree<TunedInstrumentEvent>)
             }
         }
-        for (line in this.percussion_channel.lines) {
-            line.beats[beat_index] = beats_in_column[y++] as OpusTree<PercussionEvent>
+        for (line in 0 until this.percussion_channel.lines.size) {
+            this.replace_tree(BeatKey(this.channels.size, line, beat_index), listOf(), beats_in_column[y++] as OpusTree<PercussionEvent>)
         }
     }
 
@@ -2692,7 +2818,9 @@ open class OpusLayerBase {
         if (!tree.is_event()) {
             throw EventlessTreeException()
         }
-        tree.event!!.duration = duration
+        val new_event = tree.event!!
+        new_event.duration = duration
+        this.set_event(beat_key, position, new_event)
     }
 
 
@@ -3359,5 +3487,32 @@ open class OpusLayerBase {
 
     internal fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>, mod_position: List<Int>? = null, mod_amount: Int = 0): Pair<Rational, Int> {
         return this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_leaf_offset_and_width(beat_key.beat, position, mod_position, mod_amount)
+    }
+
+
+    fun get_actual_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
+        val output = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_blocking_position(beat_key.beat, position)
+        return if (output == null) {
+            Pair(beat_key, position)
+        } else {
+            Pair(BeatKey(beat_key.channel, beat_key.line_offset, output.first), output.second)
+        }
+    }
+    fun <T: OpusControlEvent> get_actual_position_global_ctl(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.controllers.get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
+    }
+    fun <T: OpusControlEvent> get_actual_position_channel_ctl(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_all_channels()[channel].controllers.get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
+    }
+    fun <T: OpusControlEvent> get_actual_position_line_ctl(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
+        val output = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<T>(ctl_type).get_blocking_position(beat_key.beat, position)
+        return if (output == null) {
+            Pair(beat_key, position)
+        } else {
+            Pair(
+                BeatKey(beat_key.channel, beat_key.line_offset, output.first),
+                output.second
+            )
+        }
     }
 }

@@ -33,7 +33,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
 
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
         val current_tree = opus_manager.get_tree(beat_key, position)
 
@@ -130,7 +130,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
 
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
         val event_duration = current_event_tree.get_event()?.duration ?: return
@@ -196,7 +196,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val cursor = opus_manager.cursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
 
         opus_manager.set_duration(current_tree_position.first, current_tree_position.second, 1)
         return true
@@ -225,7 +225,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val cursor = opus_manager.cursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
 
         if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).is_event()) {
             opus_manager.unset()

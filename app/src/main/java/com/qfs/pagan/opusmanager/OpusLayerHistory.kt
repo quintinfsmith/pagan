@@ -20,7 +20,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
-        println("Applying: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {

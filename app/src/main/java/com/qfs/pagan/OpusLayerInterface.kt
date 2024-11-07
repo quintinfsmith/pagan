@@ -1751,22 +1751,22 @@ class OpusLayerInterface : OpusLayerCursor() {
                             listOf(beat_key)
                         }
 
-                        val line = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset]
                         for (linked_key in beat_keys) {
-                            val shadow_beat_keys = mutableSetOf<BeatKey>()
+                            val line = this.get_all_channels()[linked_key.channel].lines[linked_key.line_offset]
+                            val shadow_beats = mutableSetOf<Int>()
                             val event_head = line.get_blocking_position(linked_key.beat, cursor.position) ?: Pair(linked_key.beat, cursor.position)
                             for ((shadow_beat, _) in line.get_all_blocked_positions(event_head.first, event_head.second)) {
-                                shadow_beat_keys.add(BeatKey(linked_key.channel, linked_key.line_offset, shadow_beat))
+                                shadow_beats.add(shadow_beat)
                             }
 
                             // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
-                            for (shadow_key in shadow_beat_keys) {
+                            for (shadow_beat in shadow_beats) {
                                 val y = try {
                                     this.get_visible_row_from_ctl_line(
                                         this.get_actual_line_index(
                                             this.get_instrument_line_index(
-                                                shadow_key.channel,
-                                                shadow_key.line_offset
+                                                linked_key.channel,
+                                                linked_key.line_offset
                                             )
                                         )
                                     ) ?: continue
@@ -1774,11 +1774,11 @@ class OpusLayerInterface : OpusLayerCursor() {
                                     return
                                 }
 
-                                if (shadow_key == beat_key) {
+                                if (linked_key.channel == beat_key.channel && linked_key.line_offset == beat_key.line_offset && shadow_beat == beat_key.beat) {
                                     this.ui_change_bill.queue_line_label_refresh(y)
-                                    this.ui_change_bill.queue_column_label_refresh(shadow_key.beat)
+                                    this.ui_change_bill.queue_column_label_refresh(shadow_beat)
                                 }
-                                coordinates_to_update.add(EditorTable.Coordinate(y, shadow_key.beat))
+                                coordinates_to_update.add(EditorTable.Coordinate(y, shadow_beat))
                             }
                         }
                     }
@@ -1789,9 +1789,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                             cursor.channel,
                             cursor.line_offset
                         )
-                        this.ui_change_bill.queue_row_change(y, true)
+                        //this.ui_change_bill.queue_row_change(y, true)
 
-                        //coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
+                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
                     }
                     CtlLineLevel.Channel -> {
                         val y = this.get_visible_row_from_ctl_line_channel(
@@ -1945,11 +1945,9 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             for ((type, controller) in this.controllers.get_all()) {
-                println("boop? $type")
                 if (! this.is_ctl_line_visible(CtlLineLevel.Global, type)) {
                     continue
                 }
-                println("BWAP $beat")
 
                 val ctl_tree = controller.get_tree(beat)
                 column.add(ctl_tree.get_total_child_weight())

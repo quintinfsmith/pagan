@@ -2085,7 +2085,6 @@ open class OpusLayerBase {
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
-        println("R: $beat_key")
         if (this.is_percussion(beat_key.channel)) {
             this.percussion_channel.replace_tree(
                 beat_key.line_offset,
@@ -2445,7 +2444,9 @@ open class OpusLayerBase {
     }
 
     /* Needs to be called by interface after new()/load()/import_midi() */
-    open fun on_project_changed() { }
+    open fun on_project_changed() {
+        this._reshape_lines_from_blocked_trees()
+    }
 
     fun load_path(path: String) {
         val json_content = File(path).readBytes()
@@ -3281,6 +3282,7 @@ open class OpusLayerBase {
         val controller = this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type)
         controller.initial_event = event
     }
+
     fun get_channel(channel: Int): OpusChannelAbstract<*, *> {
         return if (this.is_percussion(channel)) {
             this.percussion_channel

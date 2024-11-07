@@ -267,7 +267,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         }
 
         decache.clear()
-
+        println("REMOVING $index")
         this.beats.removeAt(index)
 
         val new_cache = Array(needs_decrement.size) { i: Int ->
@@ -323,6 +323,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         if (old_tree == tree) {
             return // Don't waste the cycles
         }
+        println("REPLACEING: $beat ${tree.size}")
 
         val working_position = position ?: listOf()
         val overlapper = this.get_blocking_position(beat, working_position)

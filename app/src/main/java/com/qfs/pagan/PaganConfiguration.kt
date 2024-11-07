@@ -1,13 +1,12 @@
 package com.qfs.pagan
 
-import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONList
+import com.qfs.json.JSONParser
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import java.io.File
-import com.qfs.json.JSONParser
-import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONList
 
 data class PaganConfiguration(
     var soundfont: String? = null,
@@ -21,6 +20,10 @@ data class PaganConfiguration(
         Pair(CtlLineLevel.Global, ControlEventType.Tempo)
     )
 ) {
+    init {
+        this.visible_line_controls.add(Pair(CtlLineLevel.Global, ControlEventType.Tempo))
+    }
+
     enum class LinkMode {
         MOVE,
         COPY,

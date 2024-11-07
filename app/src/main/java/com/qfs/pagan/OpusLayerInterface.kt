@@ -13,6 +13,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import com.qfs.pagan.opusmanager.OpusLine
@@ -788,7 +789,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         this.lock_ui_partial {
             if (!this.ui_change_bill.is_full_locked()) {
                 this.queue_cursor_update(this.cursor)
@@ -1944,9 +1945,11 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             for ((type, controller) in this.controllers.get_all()) {
+                println("boop? $type")
                 if (! this.is_ctl_line_visible(CtlLineLevel.Global, type)) {
                     continue
                 }
+                println("BWAP $beat")
 
                 val ctl_tree = controller.get_tree(beat)
                 column.add(ctl_tree.get_total_child_weight())

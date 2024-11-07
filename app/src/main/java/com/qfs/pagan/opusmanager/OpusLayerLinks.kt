@@ -385,7 +385,7 @@ open class OpusLayerLinks : OpusLayerOverlapControl() {
         return this.link_pool_map.contains(beat_key)
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         val remapped = this.remap_links { beat_key: BeatKey ->
             if (beat_key.beat >= beat_index) {
                 BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat + 1)

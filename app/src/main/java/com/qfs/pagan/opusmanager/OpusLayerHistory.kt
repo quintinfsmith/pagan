@@ -20,6 +20,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        println("Applying: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -271,7 +272,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
                 }
 
                 HistoryToken.INSERT_BEAT -> {
-                    val instrument_events = this.checked_cast<List<OpusTree<InstrumentEvent>>>(current_node.args[1])
+                    val instrument_events = this.checked_cast<List<OpusTree<OpusEvent>>>(current_node.args[1])
                     val control_events = this.checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>, List<Pair<ControlEventType, OpusTree<OpusControlEvent>>>>>(current_node.args[2])
                     val beat_index = current_node.args[0] as Int
                     this.insert_beat(beat_index, instrument_events)
@@ -800,7 +801,7 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         this._remember {
             super.insert_beat(beat_index, beats_in_column)
             this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )

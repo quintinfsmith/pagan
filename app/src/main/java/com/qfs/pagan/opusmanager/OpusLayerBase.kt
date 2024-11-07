@@ -1846,7 +1846,7 @@ open class OpusLayerBase {
         }
     }
 
-    open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<InstrumentEvent>>? = null) {
+    open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>? = null) {
         if (beat_index > this.beat_count) {
             throw IndexOutOfBoundsException()
         }
@@ -1854,6 +1854,7 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
         }
+
         this.percussion_channel.insert_beat(beat_index)
 
         this.controllers.insert_beat(beat_index)
@@ -1862,15 +1863,79 @@ open class OpusLayerBase {
             return
         }
 
-
         var y = 0
         for (channel in 0 until this.channels.size) {
             for (line in 0 until this.channels[channel].lines.size) {
-                this.replace_tree(BeatKey(channel, line, beat_index), listOf(), beats_in_column[y++] as OpusTree<TunedInstrumentEvent>)
+                val beat_key = BeatKey(channel, line, beat_index)
+                this.replace_tree(beat_key, listOf(), beats_in_column[y++] as OpusTree<TunedInstrumentEvent>)
+                for ((type, controller) in this.channels[channel].lines[line].controllers.get_all()) {
+                    this.replace_line_ctl_tree(
+                        type,
+                        beat_key,
+                        listOf(),
+                        when (type) {
+                            ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
+                            ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
+                            ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
+                        }
+                    )
+                }
+            }
+            for ((type, controller) in this.channels[channel].controllers.get_all()) {
+                this.replace_channel_ctl_tree(
+                    type,
+                    channel,
+                    beat_index,
+                    listOf(),
+                    when (type) {
+                        ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
+                        ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
+                        ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
+                    }
+                )
             }
         }
         for (line in 0 until this.percussion_channel.lines.size) {
             this.replace_tree(BeatKey(this.channels.size, line, beat_index), listOf(), beats_in_column[y++] as OpusTree<PercussionEvent>)
+            for ((type, controller) in this.percussion_channel.lines[line].controllers.get_all()) {
+                this.replace_line_ctl_tree(
+                    type,
+                    BeatKey(this.channels.size, line, beat_index),
+                    listOf(),
+                    when (type) {
+                        ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
+                        ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
+                        ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
+                    }
+                )
+            }
+        }
+
+        for ((type, controller) in this.percussion_channel.controllers.get_all()) {
+            this.replace_channel_ctl_tree(
+                type,
+                this.channels.size,
+                beat_index,
+                listOf(),
+                when (type) {
+                    ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
+                    ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
+                    ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
+                }
+            )
+        }
+
+        for ((type, controller) in this.controllers.get_all()) {
+            this.replace_global_ctl_tree(
+                type,
+                beat_index,
+                listOf(),
+                when (type) {
+                    ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
+                    ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
+                    ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
+                }
+            )
         }
     }
 
@@ -1903,7 +1968,7 @@ open class OpusLayerBase {
         if (this.beat_count <= count) {
             throw RemovingLastBeatException()
         }
-        val working_beat_index = min(beat_index, this.beat_count - 1 - count)
+        val working_beat_index = min(beat_index, this.beat_count - count)
         if (working_beat_index < 0 || working_beat_index + count > this.beat_count) {
             throw IndexOutOfBoundsException()
         }
@@ -2020,6 +2085,7 @@ open class OpusLayerBase {
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
+        println("R: $beat_key")
         if (this.is_percussion(beat_key.channel)) {
             this.percussion_channel.replace_tree(
                 beat_key.line_offset,

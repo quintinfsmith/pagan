@@ -1,18 +1,7 @@
 package com.qfs.pagan.opusmanager
 
-import com.qfs.pagan.Rational
-
 open class OpusLayerOverlapControl: OpusLayerBase() {
     class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
-
-    // ----------------------------- Layer Specific functions ---------------------
-    open fun decache_overlapping_leaf(beat_key: BeatKey, position: List<Int>): List<Pair<Int, List<Int>>> {
-        return this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].decache_overlapping_leaf(beat_key.beat, position)
-    }
-
-    private fun calculate_blocking_leafs(beat_key: BeatKey, position: List<Int>): MutableList<Triple<Int, List<Int>, Rational>> {
-        return this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].calculate_blocking_leafs(beat_key.beat, position)
-    }
 
     /*
      * Wrapper around on_overlap that includes a check if the overlapped position exists.

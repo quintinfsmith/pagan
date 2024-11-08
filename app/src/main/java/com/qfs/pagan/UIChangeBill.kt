@@ -82,7 +82,10 @@ class UIChangeBill {
         fun get(path: List<Int>): Node {
             return if (path.isEmpty()) {
                 this
+            } else if (path == listOf(0)) {
+                this.sub_nodes[path[0]]
             } else {
+                println("${this.sub_nodes.size}, $path")
                 this.sub_nodes[path[0]].get(path.subList(1, path.size))
             }
         }

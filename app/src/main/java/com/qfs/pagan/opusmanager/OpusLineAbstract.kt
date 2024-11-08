@@ -10,7 +10,15 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     private val _cache_blocked_tree_map = HashMap<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<Int, List<Int>>, Triple<Int, List<Int>, Rational>>()
 
+    fun clear_block_caches() {
+        this._cache_blocked_tree_map.clear()
+        this._cache_inv_blocked_tree_map.clear()
+
+    }
+
     fun _init_blocked_tree_caches() {
+        this.clear_block_caches()
+        println("${this.beats.size}...")
         if (this.beats.isEmpty()) {
             return
         }

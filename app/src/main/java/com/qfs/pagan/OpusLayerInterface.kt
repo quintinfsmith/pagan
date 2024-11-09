@@ -14,8 +14,8 @@ import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerCursor
-import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusLinePercussion
@@ -54,7 +54,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     var marked_range: Pair<BeatKey, BeatKey>? = null
 
     private val ui_change_bill = UIChangeBill()
-    var temporary_blocker: Pair<BeatKey, List<Int>>? = null
+    var temporary_blocker: OpusManagerCursor? = null
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -282,13 +282,40 @@ class OpusLayerInterface : OpusLayerCursor() {
             this._blocked_action_catcher_active = true
             val output = try {
                 callback()
-            } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
-                this.set_temporary_blocker(e.blocker_key, e.blocker_position)
-                //this.withFragment {
-                //    //it.blocked_action_feedback(e)
-                //}
+            } catch (e: OpusLayerBase.BlockedTreeException) { // Standard leaf
+                this.set_temporary_blocker(
+                    BeatKey(
+                        e.channel,
+                        e.e.line_offset,
+                        e.e.e.blocker_beat
+                    ),
+                    e.e.e.blocker_position
+                )
+                null
+            } catch (e: OpusLayerBase.BlockedLineCtlTreeException) { // line control leaf
+                this.set_temporary_blocker_line_ctl(
+                    e.e.e.type,
+                    BeatKey(
+                        e.channel,
+                        e.e.line_offset,
+                        e.e.e.e.blocker_beat,
+                    ),
+                    e.e.e.e.blocker_position
+                )
+                null
+            } catch (e: OpusLayerBase.BlockedChannelCtlTreeException) { // channel control leaf
+                this.set_temporary_blocker_channel_ctl(
+                    e.e.e.type,
+                    e.channel,
+                    e.e.e.e.blocker_beat,
+                    e.e.e.e.blocker_position
+                )
+                null
+            } catch (e: OpusLineAbstract.BlockedCtlTreeException) { // Global Control Leaf
+                this.set_temporary_blocker_global_ctl(e.type, e.e.blocker_beat, e.e.blocker_position)
                 null
             }
+            // global is just a OpusLineAbstract.BlockedCtlTree at this layer
             this._blocked_action_catcher_active = false
 
             output
@@ -1347,18 +1374,53 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
-        val activity = this.get_activity()?.vibrate()
-            
+        this.get_activity()?.vibrate()
         this.lock_ui_partial {
             this.cursor_select(beat_key, position)
-            this.temporary_blocker = Pair(beat_key, position)
+            this.temporary_blocker = this.cursor.copy()
+        }
+    }
+    fun set_temporary_blocker_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        this.get_activity()?.vibrate()
+        this.lock_ui_partial {
+            this.cursor_select_ctl_at_line(type, beat_key, position)
+            this.temporary_blocker = this.cursor.copy()
+        }
+    }
+    fun set_temporary_blocker_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        this.get_activity()?.vibrate()
+        this.lock_ui_partial {
+            this.cursor_select_ctl_at_channel(type, channel, beat, position)
+            this.temporary_blocker = this.cursor.copy()
+        }
+    }
+
+    fun set_temporary_blocker_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        this.get_activity()?.vibrate()
+        this.lock_ui_partial {
+            this.cursor_select_ctl_at_global(type, beat, position)
+            this.temporary_blocker = this.cursor.copy()
         }
     }
 
     fun unset_temporary_blocker() {
         this.lock_ui_partial {
-            if (this.temporary_blocker != null) {
-                this._queue_cell_change(this.temporary_blocker!!.first, false)
+            val blocker = this.temporary_blocker
+            if (blocker != null) {
+                when (blocker.ctl_level) {
+                    CtlLineLevel.Line -> {
+                        this._queue_line_ctl_cell_change(blocker.ctl_type!!, blocker.get_beatkey())
+                    }
+                    CtlLineLevel.Channel -> {
+                        this._queue_channel_ctl_cell_change(blocker.ctl_type!!, blocker.channel, blocker.beat)
+                    }
+                    CtlLineLevel.Global -> {
+                        this._queue_global_ctl_cell_change(blocker.ctl_type!!, blocker.beat)
+                    }
+                    null -> {
+                        this._queue_cell_change(blocker.get_beatkey(), false)
+                    }
+                }
             }
             this.temporary_blocker = null
         }
@@ -1810,8 +1872,8 @@ class OpusLayerInterface : OpusLayerCursor() {
                             }
 
                             // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
+                            println("$linked_key,  $shadow_beats")
                             for (shadow_beat in shadow_beats) {
-                                println("$linked_key,  $shadow_beat")
                                 val y = try {
                                     this.get_visible_row_from_ctl_line(
                                         this.get_actual_line_index(

@@ -12,6 +12,7 @@ import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusLayerLinks
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
@@ -291,7 +292,14 @@ class LeafButtonStd(
         val new_state = mutableListOf<Int>()
         if (tree.is_event()) {
             new_state.add(R.attr.state_active)
-            if (opus_manager.temporary_blocker == original_position) {
+            val match_cursor = OpusManagerCursor(
+                OpusManagerCursor.CursorMode.Single,
+                original_position.first.channel,
+                original_position.first.line_offset,
+                original_position.first.beat
+            )
+
+            if (opus_manager.temporary_blocker == match_cursor) {
                 new_state.add(R.attr.state_invalid)
             } else {
                 when (tree.get_event()) {

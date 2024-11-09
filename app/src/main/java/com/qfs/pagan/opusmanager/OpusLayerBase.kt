@@ -3639,10 +3639,6 @@ open class OpusLayerBase {
     }
 
     fun <T> catch_blocked_tree_exception(channel: Int, callback: () -> T): T {
-        //class BlockedTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedTreeException): Exception()
-        //class BlockedLineCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedLineCtlTreeException): Exception()
-        //class BlockedChannelCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedCtlTreeException): Exception()
-
         return try {
             callback()
         } catch (e: OpusChannelAbstract.BlockedTreeException) {

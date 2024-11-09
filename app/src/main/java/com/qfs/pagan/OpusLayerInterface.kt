@@ -658,7 +658,9 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.insert_line(channel, line_offset, line)
             this._update_after_new_line(channel, line_offset)
         }
+        this.set_overlap_callbacks()
     }
+
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         this.lock_ui_partial {
@@ -1590,6 +1592,54 @@ class OpusLayerInterface : OpusLayerCursor() {
             ctl_line += 1
         }
 
+        //this.set_overlap_callbacks()
+    }
+
+    fun set_overlap_callbacks() {
+        val channels = this.get_all_channels()
+        for (channel in 0 until channels.size) {
+            for (line_offset in 0 until channels[channel].lines.size) {
+                val line = channels[channel].lines[line_offset]
+                line.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                    this._queue_cell_changes(
+                        listOf(BeatKey(channel, line_offset, blocker.first), BeatKey(channel, line_offset, blocked.first))
+                    )
+                }
+                line.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                    this._queue_cell_changes(
+                        listOf(BeatKey(channel, line_offset, blocker.first), BeatKey(channel, line_offset, blocked.first))
+                    )
+                }
+                for ((type, controller) in line.controllers.get_all()) {
+                    controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocker.first))
+                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocked.first))
+                    }
+                }
+            }
+            for ((type, controller) in channels[channel].controllers.get_all()) {
+                controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                    this._queue_channel_ctl_cell_change(type, channel, blocker.first)
+                    this._queue_channel_ctl_cell_change(type, channel, blocked.first)
+                }
+                controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                    this._queue_channel_ctl_cell_change(type, channel, blocker.first)
+                    this._queue_channel_ctl_cell_change(type, channel, blocked.first)
+                }
+            }
+        }
+
+        for ((type, controller) in this.controllers.get_all()) {
+            controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                this._queue_global_ctl_cell_change(type, blocker.first)
+                this._queue_global_ctl_cell_change(type, blocked.first)
+            }
+            controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                this._queue_global_ctl_cell_change(type, blocker.first)
+                this._queue_global_ctl_cell_change(type, blocked.first)
+            }
+        }
+
     }
 
     fun is_ctl_line_visible(level: CtlLineLevel, type: ControlEventType): Boolean {
@@ -1761,6 +1811,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                             // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
                             for (shadow_beat in shadow_beats) {
+                                println("$linked_key,  $shadow_beat")
                                 val y = try {
                                     this.get_visible_row_from_ctl_line(
                                         this.get_actual_line_index(

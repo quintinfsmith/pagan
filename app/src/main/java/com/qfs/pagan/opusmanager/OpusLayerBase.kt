@@ -46,6 +46,9 @@ open class OpusLayerBase {
 
     class EmptyPath : Exception("Path Required but not given")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
+    class BlockedTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedTreeException): Exception()
+    class BlockedLineCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedLineCtlTreeException): Exception()
+    class BlockedChannelCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedCtlTreeException): Exception()
 
     companion object {
         private var _channel_uuid_generator: Int = 0x00
@@ -1718,10 +1721,12 @@ open class OpusLayerBase {
     }
 
     open fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
-        if (this.is_percussion(beat_key.channel)) {
-            this.percussion_channel.lines[beat_key.line_offset].set_event(beat_key.beat, position, event as PercussionEvent)
-        } else {
-            this.channels[beat_key.channel].lines[beat_key.line_offset].set_event(beat_key.beat, position, event as TunedInstrumentEvent)
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            if (this.is_percussion(beat_key.channel)) {
+                this.percussion_channel.set_event(beat_key.line_offset, beat_key.beat, position, event as PercussionEvent)
+            } else {
+                this.channels[beat_key.channel].set_event(beat_key.line_offset, beat_key.beat, position, event as TunedInstrumentEvent)
+            }
         }
     }
 
@@ -1729,29 +1734,37 @@ open class OpusLayerBase {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
-        this.percussion_channel.lines[beat_key.line_offset].set_event(beat_key.beat, position, event)
+
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            this.percussion_channel.set_event(beat_key.line_offset, beat_key.beat, position, event)
+        }
     }
 
     private fun _set_event(beat_key: BeatKey, position: List<Int>, event: TunedInstrumentEvent) {
         if (this.is_percussion(beat_key.channel)) {
             throw NonPercussionEventSet()
         }
-        this.channels[beat_key.channel].lines[beat_key.line_offset].set_event(beat_key.beat, position, event)
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            this.channels[beat_key.channel].set_event(beat_key.line_offset, beat_key.beat, position, event)
+        }
     }
 
 
     open fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
         val tree = this.get_line_ctl_tree<T>(type, beat_key, position)
+        // TODO Use set_event in controller
         tree.set_event(event)
     }
 
     open fun <T: OpusControlEvent> set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
         val tree = this.get_channel_ctl_tree<T>(type, channel, beat, position)
+        // TODO Use set_event in controller
         tree.set_event(event)
     }
 
     open fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
         val tree = this.get_global_ctl_tree<T>(type, beat, position)
+        // TODO Use set_event in controller
         tree.set_event(event)
     }
 
@@ -1993,21 +2006,20 @@ open class OpusLayerBase {
         if (this.beat_count <= count) {
             throw RemovingLastBeatException()
         }
+        this.blocked_check_remove_beat(beat_index, count)
         val working_beat_index = min(beat_index, this.beat_count - count)
         if (working_beat_index < 0 || working_beat_index + count > this.beat_count) {
 
             throw IndexOutOfBoundsException()
         }
 
-        for (i in 0 until count) {
-            this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
-                channel.remove_beat(working_beat_index)
-            }
-            this.percussion_channel.remove_beat(working_beat_index)
+        this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+            channel.remove_beat(working_beat_index, count)
+        }
+        this.percussion_channel.remove_beat(working_beat_index, count)
 
-            for (controller in this.controllers.controllers.values) {
-                controller.remove_beat(working_beat_index)
-            }
+        for (controller in this.controllers.controllers.values) {
+            controller.remove_beat(working_beat_index, count)
         }
 
         this.beat_count -= count
@@ -2111,26 +2123,29 @@ open class OpusLayerBase {
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
-        if (this.is_percussion(beat_key.channel)) {
-            this.percussion_channel.replace_tree(
-                beat_key.line_offset,
-                beat_key.beat,
-                position,
-                (tree as OpusTree<PercussionEvent>)
-            )
-        } else {
-            this.channels[beat_key.channel].replace_tree(
-                beat_key.line_offset,
-                beat_key.beat,
-                position,
-                (tree as OpusTree<TunedInstrumentEvent>)
-            )
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            if (this.is_percussion(beat_key.channel)) {
+                this.percussion_channel.replace_tree(
+                    beat_key.line_offset,
+                    beat_key.beat,
+                    position,
+                    (tree as OpusTree<PercussionEvent>)
+                )
+            } else {
+                this.channels[beat_key.channel].replace_tree(
+                    beat_key.line_offset,
+                    beat_key.beat,
+                    position,
+                    (tree as OpusTree<TunedInstrumentEvent>)
+                )
+            }
         }
     }
 
     open fun <T: OpusControlEvent> replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
         val tree_copy = tree.copy(this::copy_control_event)
         val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<T>(type)
+
         controller.replace_tree(
             beat_key.beat,
             position ?: listOf(),
@@ -3614,17 +3629,30 @@ open class OpusLayerBase {
         return this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_blocking_amount(beat_key.beat, position)
     }
 
-    fun blocked_check_remove_beat(index: Int): Pair<Pair<Int, List<Int>>, Pair<Int, List<Int>>>? {
+    fun blocked_check_remove_beat(index: Int, count: Int = 1) {
         val channels = this.get_all_channels()
         for (channel in 0 until channels.size) {
-            for (line in 0 until channels[channel].lines.size) {
-                val result = channels[channel].lines[line].blocked_check_remove_beat(index)
-                if (result != null) {
-                    return result
-                }
+            this.catch_blocked_tree_exception(channel) {
+                channels[channel].blocked_check_remove_beat(index, count)
             }
         }
-
-        return null
     }
+
+    fun <T> catch_blocked_tree_exception(channel: Int, callback: () -> T): T {
+        //class BlockedTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedTreeException): Exception()
+        //class BlockedLineCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedLineCtlTreeException): Exception()
+        //class BlockedChannelCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedCtlTreeException): Exception()
+
+        return try {
+            callback()
+        } catch (e: OpusChannelAbstract.BlockedTreeException) {
+            throw OpusLayerBase.BlockedTreeException(channel, e) // Standard leaf
+        } catch (e: OpusChannelAbstract.BlockedLineCtlTreeException) {
+            throw OpusLayerBase.BlockedLineCtlTreeException(channel, e) // line control leaf
+        } catch (e: OpusChannelAbstract.BlockedCtlTreeException) {
+            throw OpusLayerBase.BlockedChannelCtlTreeException(channel, e) // channel control leaf
+        }
+        // global is just a OpusLineAbstract.BlockedCtlTree at this layer
+    }
+
 }

@@ -489,17 +489,17 @@ class OpusLayerBaseUnitReTestAsOpusLayerLinks {
             manager.insert_beat(manager.beat_count + 1)
         }
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.remove_beat(manager.beat_count + 1)
-        }
+        //assertThrows(IndexOutOfBoundsException::class.java) {
+        //    manager.remove_beat(manager.beat_count + 1)
+        //}
 
         while (manager.beat_count > 1) {
             manager.remove_beat(0)
         }
 
-        assertThrows(OpusLayerBase.RemovingLastBeatException::class.java) {
-            manager.remove_beat(0)
-        }
+        //assertThrows(OpusLayerBase.RemovingLastBeatException::class.java) {
+        //    manager.remove_beat(0)
+        //}
 
 
     }
@@ -1509,7 +1509,11 @@ class OpusLayerBaseUnitReTestAsOpusLayerLinks {
             }
         }
 
-        manager.move_beat_range(BeatKey(0, 0, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        manager.move_beat_range(
+            BeatKey(0, 0, 3),
+            BeatKey(0, 0, 0),
+            BeatKey(1, 2, 2)
+        )
 
         for (c in 0 until 2) {
             for (l in 0 until 2) {

@@ -51,62 +51,49 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         super.new_channel(channel, lines, uuid)
 
-        val compare_channel = channel ?: (this.get_channel_count() - 1)
-        when (bkp_cursor.mode) {
-            OpusManagerCursor.CursorMode.Column -> {
-                this.cursor_select_column(bkp_cursor.beat)
-            }
-            OpusManagerCursor.CursorMode.Line -> {
-                val new_channel = if (compare_channel <= bkp_cursor.channel) {
-                    bkp_cursor.channel + 1
-                } else {
-                    bkp_cursor.channel
-                }
-                this.cursor_select_line(new_channel, bkp_cursor.line_offset)
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val new_first = if (bkp_cursor.range!!.first.channel >= compare_channel) {
-                    bkp_cursor.range!!.first.channel + 1
-                } else {
-                    bkp_cursor.range!!.first.channel
-                }
+        //val compare_channel = channel ?: (this.get_channel_count() - 1)
+        // when (bkp_cursor.mode) {
+        //     OpusManagerCursor.CursorMode.Column -> {
+        //         this.cursor_select_column(bkp_cursor.beat)
+        //     }
+        //     OpusManagerCursor.CursorMode.Line -> {
+        //         val new_channel = if (compare_channel <= bkp_cursor.channel) {
+        //             bkp_cursor.channel + 1
+        //         } else {
+        //             bkp_cursor.channel
+        //         }
+        //         this.cursor_select_line(new_channel, bkp_cursor.line_offset)
+        //     }
+        //     OpusManagerCursor.CursorMode.Range -> {
+        //         val new_first = if (bkp_cursor.range!!.first.channel >= compare_channel) {
+        //             bkp_cursor.range!!.first.channel + 1
+        //         } else {
+        //             bkp_cursor.range!!.first.channel
+        //         }
 
-                val new_second = if (bkp_cursor.range!!.second.channel >= compare_channel) {
-                    bkp_cursor.range!!.second.channel + 1
-                } else {
-                    bkp_cursor.range!!.second.channel
-                }
+        //         val new_second = if (bkp_cursor.range!!.second.channel >= compare_channel) {
+        //             bkp_cursor.range!!.second.channel + 1
+        //         } else {
+        //             bkp_cursor.range!!.second.channel
+        //         }
 
-                this.cursor_select_range(
-                    BeatKey(
-                        new_first,
-                        bkp_cursor.range!!.first.line_offset,
-                        bkp_cursor.range!!.first.beat
-                    ),
-                    BeatKey(
-                        new_second,
-                        bkp_cursor.range!!.second.line_offset,
-                        bkp_cursor.range!!.second.beat
-                    )
-                )
-            }
-            OpusManagerCursor.CursorMode.Single -> {
-                val new_channel = if (compare_channel <= bkp_cursor.channel) {
-                    bkp_cursor.channel + 1
-                } else {
-                    bkp_cursor.channel
-                }
-                this.cursor_select(
-                    BeatKey(
-                        new_channel,
-                        bkp_cursor.line_offset,
-                        bkp_cursor.beat
-                    ),
-                    bkp_cursor.position
-                )
-            }
-            else -> {}
-        }
+        //         this.cursor_select_range(
+        //             BeatKey(
+        //                 new_first,
+        //                 bkp_cursor.range!!.first.line_offset,
+        //                 bkp_cursor.range!!.first.beat
+        //             ),
+        //             BeatKey(
+        //                 new_second,
+        //                 bkp_cursor.range!!.second.line_offset,
+        //                 bkp_cursor.range!!.second.beat
+        //             )
+        //         )
+        //     }
+        //     OpusManagerCursor.CursorMode.Single -> {
+        //     }
+        //     else -> {}
+        // }
     }
 
     override fun remove_channel(channel: Int) {

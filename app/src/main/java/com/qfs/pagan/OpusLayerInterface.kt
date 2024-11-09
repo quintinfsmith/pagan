@@ -550,16 +550,16 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
+    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
-            super.split_global_ctl_tree(type, beat, position, splits)
+            super.split_global_ctl_tree(type, beat, position, splits, move_event_to_end)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
+    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
-            super.split_channel_ctl_tree(type, channel, beat, position, splits)
+            super.split_channel_ctl_tree(type, channel, beat, position, splits, move_event_to_end)
 
             if ((this._activity != null && this._activity!!.view_model.show_percussion) || !this.is_percussion(channel)) {
                 this._queue_channel_ctl_cell_change(type, channel, beat)
@@ -567,9 +567,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
-            super.split_line_ctl_tree(type, beat_key, position, splits)
+            super.split_line_ctl_tree(type, beat_key, position, splits, move_event_to_end)
 
             if ((this._activity != null && this._activity!!.view_model.show_percussion) || !this.is_percussion(beat_key.channel)) {
                 this._queue_line_ctl_cell_change(type, beat_key)
@@ -1654,7 +1654,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             ctl_line += 1
         }
 
-        //this.set_overlap_callbacks()
+        this.set_overlap_callbacks()
     }
 
     fun set_overlap_callbacks() {
@@ -1872,20 +1872,19 @@ class OpusLayerInterface : OpusLayerCursor() {
                             }
 
                             // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
-                            println("$linked_key,  $shadow_beats")
-                            for (shadow_beat in shadow_beats) {
-                                val y = try {
-                                    this.get_visible_row_from_ctl_line(
-                                        this.get_actual_line_index(
-                                            this.get_instrument_line_index(
-                                                linked_key.channel,
-                                                linked_key.line_offset
-                                            )
+                            val y = try {
+                                this.get_visible_row_from_ctl_line(
+                                    this.get_actual_line_index(
+                                        this.get_instrument_line_index(
+                                            linked_key.channel,
+                                            linked_key.line_offset
                                         )
-                                    ) ?: continue
-                                } catch (e: IndexOutOfBoundsException) {
-                                    return
-                                }
+                                    )
+                                ) ?: continue
+                            } catch (e: IndexOutOfBoundsException) {
+                                return
+                            }
+                            for (shadow_beat in shadow_beats) {
 
                                 if (linked_key.channel == beat_key.channel && linked_key.line_offset == beat_key.line_offset && shadow_beat == beat_key.beat) {
                                     this.ui_change_bill.queue_line_label_refresh(y)

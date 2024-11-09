@@ -590,26 +590,26 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
+    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this._remember {
             this.push_replace_channel_ctl(type, channel, beat, position) {
-                super.split_channel_ctl_tree(type, channel, beat, position, splits)
+                super.split_channel_ctl_tree(type, channel, beat, position, splits, move_event_to_end)
             }
         }
     }
 
-    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
+    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this._remember {
             this.push_replace_global_ctl(type, beat, position) {
-                super.split_global_ctl_tree(type, beat, position, splits)
+                super.split_global_ctl_tree(type, beat, position, splits, move_event_to_end)
             }
         }
     }
 
-    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
+    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this._remember {
             this.push_replace_line_ctl(type, beat_key, position) {
-                super.split_line_ctl_tree(type, beat_key, position, splits)
+                super.split_line_ctl_tree(type, beat_key, position, splits, move_event_to_end)
             }
         }
     }

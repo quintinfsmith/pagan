@@ -788,20 +788,20 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_select(beat_key, new_position)
     }
 
-    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
-        super.split_global_ctl_tree(type, beat, position, splits)
+    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        super.split_global_ctl_tree(type, beat, position, splits, move_event_to_end)
         val new_position = position.toMutableList()
         new_position.add(0)
         this.cursor_select_ctl_at_global(type, beat, new_position)
     }
-    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
-        super.split_channel_ctl_tree(type, channel, beat, position, splits)
+    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        super.split_channel_ctl_tree(type, channel, beat, position, splits, move_event_to_end)
         val new_position = position.toMutableList()
         new_position.add(0)
         this.cursor_select_ctl_at_channel(type, channel, beat, new_position)
     }
-    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
-        super.split_line_ctl_tree(type, beat_key, position, splits)
+    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        super.split_line_ctl_tree(type, beat_key, position, splits, move_event_to_end)
         val new_position = position.toMutableList()
         new_position.add(0)
         this.cursor_select_ctl_at_line(type, beat_key, new_position)
@@ -1150,6 +1150,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val cbeat_key = this.cursor.get_beatkey()
                 val cposition = this.cursor.get_position()
                 if (cbeat_key == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
+                    return false
+                }
+                if (cbeat_key.channel != beat_key.channel || cbeat_key.line_offset != beat_key.line_offset) {
                     return false
                 }
 

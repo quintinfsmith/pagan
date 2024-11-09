@@ -85,7 +85,6 @@ class UIChangeBill {
             } else if (path == listOf(0)) {
                 this.sub_nodes[path[0]]
             } else {
-                println("${this.sub_nodes.size}, $path")
                 this.sub_nodes[path[0]].get(path.subList(1, path.size))
             }
         }
@@ -468,7 +467,6 @@ class UIChangeBill {
 
     fun queue_cell_changes(cells: List<EditorTable.Coordinate>, state_only: Boolean = false) {
         val working_tree = this.get_working_tree() ?: return
-
         working_tree.bill.add(
             if (state_only) {
                 BillableItem.CellStateChange

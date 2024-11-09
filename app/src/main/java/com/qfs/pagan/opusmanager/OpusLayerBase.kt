@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 
+import android.graphics.Path.Op
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -281,13 +282,10 @@ open class OpusLayerBase {
         fun from_midi(midi: Midi): OpusLayerBase {
             val new_manager = OpusLayerBase()
             val start_time = System.currentTimeMillis()
-            println("START: $start_time")
 
             val (settree, tempo_line, instrument_map) = OpusLayerBase._tree_from_midi(midi)
-            println("tree from midi ${System.currentTimeMillis() - start_time}")
 
             val mapped_events = settree.get_events_mapped()
-            println("get_events_mapped ${System.currentTimeMillis() - start_time}")
             val midi_channel_map = HashMap<Int, Int>()
             val channel_sizes = mutableListOf<Int>()
 
@@ -377,7 +375,6 @@ open class OpusLayerBase {
                     }
                 }
             }
-            println("remap ${System.currentTimeMillis() - start_time}")
 
             for ((channel, blocks) in blocked_ranges) {
                 while (channel >= channel_sizes.size) {
@@ -413,7 +410,6 @@ open class OpusLayerBase {
                 midi_channel_map[9] = channel_sizes.size
                 channel_sizes.add(1)
             }
-            println("reshape percussion ${System.currentTimeMillis() - start_time}")
 
             val sorted_channels = midi_channel_map.values.sortedBy { it }
             sorted_channels.forEachIndexed { i: Int, channel: Int ->
@@ -473,7 +469,6 @@ open class OpusLayerBase {
                 }
             }
 
-            println("set up splits ${System.currentTimeMillis() - start_time}")
 
             for ((beatkey, position, event) in events_to_set) {
                 if (event[0] == 9) {
@@ -497,7 +492,6 @@ open class OpusLayerBase {
                 }
             }
 
-            println("set events ${System.currentTimeMillis() - start_time}")
 
             val all_channels = new_manager.get_all_channels()
             // Reduce
@@ -529,7 +523,6 @@ open class OpusLayerBase {
                 }
             }
 
-            println("reduce ${System.currentTimeMillis() - start_time}")
 
             for ((midi_channel, bank, program) in instrument_map) {
                 // Midi may have contained programchange event for channel, but no music
@@ -546,7 +539,6 @@ open class OpusLayerBase {
                 new_manager.set_percussion_instrument(line_offset, instrument)
             }
 
-            println("set percussion instruments ${System.currentTimeMillis() - start_time}")
             new_manager._setup_default_controllers()
 
             val tempo_controller = new_manager.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
@@ -578,7 +570,6 @@ open class OpusLayerBase {
                     }
                 }
             }
-            println("setup temposs ${System.currentTimeMillis() - start_time}")
 
             /*
                 If the first leaf sets the tempo, use that as initial value instead of as a control event.
@@ -607,7 +598,6 @@ open class OpusLayerBase {
             for ((type, controller) in new_manager.controllers.get_all()) {
                 controller._init_blocked_tree_caches()
             }
-            println("initi blocked tree caches ${System.currentTimeMillis() - start_time}")
 
             return new_manager
         }
@@ -855,7 +845,6 @@ open class OpusLayerBase {
                         working_beat_key.beat
                     )
 
-                    println("----------------------")
                     if (!replaced_beat_keys.contains(new_key)) {
                         val new_tree = this.get_tree_copy(working_beat_key)
 
@@ -865,11 +854,9 @@ open class OpusLayerBase {
                             }
                         }
 
-                        println("${new_tree.size}, $working_position")
                         this.replace_tree(new_key, listOf(), new_tree)
                         replaced_beat_keys.add(new_key)
                     }
-                    println("replace_ttree: $new_key/$working_position $working_beat_key")
                     this.replace_tree(
                         new_key,
                         working_position,
@@ -1481,12 +1468,13 @@ open class OpusLayerBase {
         if (position.isEmpty()) {
             throw BadInsertPosition()
         }
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].insert_after(beat_key.beat, position)
 
-        val tree = this.get_tree(beat_key, position)
-        val parent = tree.get_parent()!!
+       // val tree = this.get_tree(beat_key, position)
+       // val parent = tree.get_parent()!!
 
-        val index = position.last()
-        parent.insert(index + 1)
+       // val index = position.last()
+       // parent.insert(index + 1)
     }
 
     open fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -1749,64 +1737,39 @@ open class OpusLayerBase {
         }
     }
 
-
     open fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
-        val tree = this.get_line_ctl_tree<T>(type, beat_key, position)
-        // TODO Use set_event in controller
-        tree.set_event(event)
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            this.get_all_channels()[beat_key.channel].set_line_controller_event(type, beat_key.line_offset, beat_key.beat, position, event)
+        }
     }
 
     open fun <T: OpusControlEvent> set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
-        val tree = this.get_channel_ctl_tree<T>(type, channel, beat, position)
-        // TODO Use set_event in controller
-        tree.set_event(event)
+        this.catch_blocked_tree_exception(channel) {
+            this.get_all_channels()[channel].set_controller_event(type, beat, position, event)
+        }
     }
 
     open fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
-        val tree = this.get_global_ctl_tree<T>(type, beat, position)
-        // TODO Use set_event in controller
-        tree.set_event(event)
+        this.catch_global_ctl_blocked_tree_exception(type) {
+            this.controllers.get_controller<T>(type).set_event(beat, position, event)
+        }
     }
 
     open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        val tree: OpusTree<out InstrumentEvent> = this.get_tree(beat_key, position)
-        this._split_opus_tree(tree, splits, move_event_to_end)
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].split_tree(beat_key.beat, position, splits, move_event_to_end)
     }
 
-    open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int) {
-        val tree: OpusTree<OpusControlEvent> = this.get_line_ctl_tree(type, beat_key, position)
-        this._split_opus_tree(tree, splits)
+    open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type).split_tree(beat_key.beat, position, splits, move_event_to_end)
     }
 
-    open fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int) {
-        val tree: OpusTree<OpusControlEvent> = this.get_channel_ctl_tree(type, channel, beat, position)
-        this._split_opus_tree(tree, splits)
+    open fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).split_tree(beat, position, splits, move_event_to_end)
     }
 
-    open fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int) {
-        val tree: OpusTree<OpusControlEvent> = this.get_global_ctl_tree(type, beat, position)
-        this._split_opus_tree(tree, splits)
-    }
-
-    private fun <T> _split_opus_tree(tree: OpusTree<T>, splits: Int, move_event_to_end: Boolean = false) {
-        if (tree.is_event()) {
-            var working_tree = tree
-            val event = working_tree.get_event()!!
-
-            working_tree.unset_event()
-            working_tree.set_size(splits)
-
-            if (splits > 1) {
-                working_tree = if (move_event_to_end) {
-                    working_tree[working_tree.size - 1]
-                } else {
-                    working_tree[0]
-                }
-            }
-
-            working_tree.set_event(event)
-        } else {
-            tree.set_size(splits)
+    open fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        this.catch_global_ctl_blocked_tree_exception(type) {
+            this.controllers.get_controller<OpusControlEvent>(type).split_tree(beat, position, splits, move_event_to_end)
         }
     }
 
@@ -2164,13 +2127,15 @@ open class OpusLayerBase {
     }
 
     open fun <T: OpusControlEvent> replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
-        val tree_copy = tree.copy(this::copy_control_event)
-        val controller = this.controllers.get_controller<T>(type)
-        controller.replace_tree(
-            beat,
-            position ?: listOf(),
-            tree_copy
-        )
+        this.catch_global_ctl_blocked_tree_exception(type) {
+            val tree_copy = tree.copy(this::copy_control_event)
+            val controller = this.controllers.get_controller<T>(type)
+            controller.replace_tree(
+                beat,
+                position ?: listOf(),
+                tree_copy
+            )
+        }
     }
 
     open fun set_beat_count(new_count: Int) {
@@ -3648,7 +3613,15 @@ open class OpusLayerBase {
         } catch (e: OpusChannelAbstract.BlockedCtlTreeException) {
             throw OpusLayerBase.BlockedChannelCtlTreeException(channel, e) // channel control leaf
         }
-        // global is just a OpusLineAbstract.BlockedCtlTree at this layer
+        // global is just a OpusTreeArray.BlockedTree at this layer
+    }
+
+    fun <T> catch_global_ctl_blocked_tree_exception(type: ControlEventType, callback: () -> T): T {
+        return try {
+            callback()
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw OpusLineAbstract.BlockedCtlTreeException(type, e)
+        }
     }
 
 }

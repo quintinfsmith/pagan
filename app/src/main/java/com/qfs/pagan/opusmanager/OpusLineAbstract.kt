@@ -21,7 +21,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
     fun _init_blocked_tree_caches() {
         this.clear_block_caches()
-        println("${this.beats.size}...")
         if (this.beats.isEmpty()) {
             return
         }
@@ -373,9 +372,9 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         if (current_tree_position != null) {
             val current_event_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
             val blocked_amount = this.get_blocking_amount(beat, position)
-            if (current_event_tree != this.get_tree(beat, position) && blocked_amount!! >= 1) {
-                throw BlockedTreeException(beat, position, current_tree_position.first, current_tree_position.second)
-            }
+            //if (current_event_tree != this.get_tree(beat, position) && blocked_amount!! >= 1) {
+            //    throw BlockedTreeException(beat, position, current_tree_position.first, current_tree_position.second)
+            //}
         }
 
         this.recache_blocked_tree_wrapper(beat, position) {
@@ -661,17 +660,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         }
     }
 
-    fun set_event(beat: Int, position: List<Int>, event: T) {
-        val blocked_pair = this.is_blocked_set_event(beat, position, event.duration)
-        if (blocked_pair != null) {
-            throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
-        }
-
-        this.recache_blocked_tree_wrapper(beat, position) {
-            val tree = this.get_tree(beat, position)
-            tree.set_event(event)
-        }
-    }
 
     fun get_blocking_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         val tree = this.get_tree(beat, position)
@@ -936,11 +924,24 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             false
         }
     }
+
+    fun set_event(beat: Int, position: List<Int>, event: T) {
+        val blocked_pair = this.is_blocked_set_event(beat, position, event.duration)
+        if (blocked_pair != null) {
+            throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
+        }
+
+        this.recache_blocked_tree_wrapper(beat, position) {
+            val tree = this.get_tree(beat, position)
+            tree.set_event(event)
+        }
+    }
 }
 
 abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<T>>): OpusTreeArray<T>(beats) {
     class BlockedCtlTreeException(var type: ControlEventType, var e: BlockedTreeException): Exception(e.message)
     var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
+
 
     override fun insert_beat(index: Int) {
         super.insert_beat(index)
@@ -957,7 +958,13 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {
         return this.controllers.get_controller(type)
     }
-
+    fun <T: OpusControlEvent> set_controller_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
+        try {
+            this.get_controller<T>(type).set_event(beat, position, event)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
+    }
     override fun remove_beat(index: Int, count: Int) {
         super.remove_beat(index, count)
         for ((type, controller) in this.controllers.get_all()) {

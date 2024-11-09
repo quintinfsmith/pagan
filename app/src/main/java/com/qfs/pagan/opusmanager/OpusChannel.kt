@@ -255,6 +255,18 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
             this.lines[line_offset].set_event(index, position, event)
         }
     }
+
+    fun <K: OpusControlEvent> set_line_controller_event(type: ControlEventType, line_offset: Int, index: Int, position: List<Int>, event: K) {
+        this.catch_blocked_tree_exception(line_offset) {
+            this.lines[line_offset].set_controller_event(type, index, position, event)
+        }
+    }
+
+    fun <K: OpusControlEvent> set_controller_event(type: ControlEventType, index: Int, position: List<Int>, event: K) {
+        this.catch_blocked_tree_exception_channel_controller(type) {
+            this.set_controller_event(type, index, position, event)
+        }
+    }
 }
 
 class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {

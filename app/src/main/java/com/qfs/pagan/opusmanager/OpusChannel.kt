@@ -267,6 +267,17 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
             this.set_controller_event(type, index, position, event)
         }
     }
+
+    fun remove(line_offset: Int, beat: Int, position: List<Int>) {
+        this.catch_blocked_tree_exception(line_offset) {
+            this.lines[line_offset].remove_standard(beat, position)
+        }
+    }
+    fun remove_line_ctl(type: ControlEventType, line_offset: Int, beat: Int, position: List<Int>) {
+        this.catch_blocked_tree_exception(line_offset) {
+
+        }
+    }
 }
 
 class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {

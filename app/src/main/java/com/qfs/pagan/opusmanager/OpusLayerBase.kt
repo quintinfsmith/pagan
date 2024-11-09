@@ -1,6 +1,5 @@
 package com.qfs.pagan.opusmanager
 
-import android.graphics.Path.Op
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.NoteOff
@@ -1653,7 +1652,9 @@ open class OpusLayerBase {
     // remove_only, remove_one_of_two and remove_standard all exist so I could separate
     // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
     open fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].remove_standard(beat_key.beat, position)
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            this.get_all_channels()[beat_key.channel].remove(beat_key.line_offset, beat_key.beat, position)
+        }
     }
 
     open fun remove_line_ctl_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {

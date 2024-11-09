@@ -870,15 +870,46 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         return null
     }
 
-
+    // TODO: BETTER NAME
     fun remove_standard(beat: Int, position: List<Int>) {
         val blocked_pair = this.is_blocked_remove(beat, position)
         if (blocked_pair != null) {
             throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
         }
+        // Check that removing this leaf won't cause proceding events to overlap
+        var working_beat = beat
+        var working_position = position
+        var next_position_pair = this.get_proceding_event_position(working_beat, working_position)
+        if (next_position_pair != null) {
+            working_beat = next_position_pair.first
+            working_position = next_position_pair.second
+            while (working_beat == beat) {
+
+                val (offset, width) = this.get_leaf_offset_and_width(working_beat, working_position, position, -1)
+                val check_pair = this.get_proceding_event_position(working_beat, working_position) ?: break
+
+                val (check_offset, _) = if (check_pair.first == working_beat) {
+                    this.get_leaf_offset_and_width(check_pair.first, check_pair.second, position, -1)
+                } else {
+                    this.get_leaf_offset_and_width(check_pair.first, check_pair.second)
+                }
+
+                var duration = this.get_tree(working_beat, working_position).get_event()?.duration ?: 1
+
+                if (check_offset >= offset && check_offset < offset + Rational(duration, width)) {
+                    throw BlockedTreeException(working_beat, working_position, check_pair.first, check_pair.second)
+                }
+
+                next_position_pair = this.get_proceding_event_position(working_beat, working_position) ?: break
+                working_beat = next_position_pair.first
+                working_position = next_position_pair.second
+
+            }
+        }
 
         this.recache_blocked_tree_wrapper(beat, position.subList(0, position.size - 1)) {
-            this.get_tree(beat, position).detach()
+            val tree = this.get_tree(beat, position)
+            tree.detach()
         }
     }
 
@@ -936,6 +967,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             tree.set_event(event)
         }
     }
+
 }
 
 abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<T>>): OpusTreeArray<T>(beats) {

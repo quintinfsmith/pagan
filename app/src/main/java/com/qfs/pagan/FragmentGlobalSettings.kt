@@ -236,8 +236,8 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_ctl_line_selection_text), Palette.CtlLineSelectionText))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_ctl_leaf), Palette.CtlLeaf))
                 llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_ctl_leaf_text), Palette.CtlLeafText))
-                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_ctl_leaf_selected), Palette.CtlLeafSelected))
-                llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_ctl_leaf_selected_text), Palette.CtlLeafSelectedText))
+                //llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_ctl_leaf_selected), Palette.CtlLeafSelected))
+                //llColorPalette.addView(InlineColorPicker(main, getString(R.string.palette_ctl_leaf_selected_text), Palette.CtlLeafSelectedText))
             } else {
                 color_map.use_palette = false
                 llColorPalette.visibility = View.GONE

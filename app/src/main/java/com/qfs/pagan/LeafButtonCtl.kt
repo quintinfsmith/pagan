@@ -54,14 +54,14 @@ abstract class LeafButtonCtl(
             color_map[ColorMap.Palette.CtlLeafSpill], // B
 
             // Primary
-            color_map[ColorMap.Palette.CtlLineSelection],
-            color_map[ColorMap.Palette.CtlLeafSelected],
-            color_map[ColorMap.Palette.CtlLeafSelected], // B
+            color_map[ColorMap.Palette.Selection],
+            color_map[ColorMap.Palette.LeafSelected],
+            color_map[ColorMap.Palette.LeafSelected], // spill
 
             // Secondary
-            color_map[ColorMap.Palette.CtlLineSelection],
-            color_map[ColorMap.Palette.CtlLeafSecondarySelected],
-            color_map[ColorMap.Palette.CtlLeafSecondarySelected], // B
+            color_map[ColorMap.Palette.Selection],
+            color_map[ColorMap.Palette.SecondarySelection],
+            color_map[ColorMap.Palette.SecondarySelection],
 
             color_map[ColorMap.Palette.CtlLine],
             color_map[ColorMap.Palette.CtlLine]
@@ -110,7 +110,6 @@ abstract class LeafButtonCtl(
 
         val controller = this.get_controller()
         val beat = this.get_beat()
-        println("?")
         val tree = try {
             controller.get_tree(beat, this.position)
         } catch (e: OpusTree.InvalidGetCall) {
@@ -133,11 +132,9 @@ abstract class LeafButtonCtl(
             return drawableState
         }
 
-        println("---------------------->")
         if (tree.is_event()) {
             new_state.add(R.attr.state_active)
         } else if (tree_original != tree) {
-            println("$original_position !!!!")
             new_state.add(R.attr.state_spill)
         }
 

@@ -42,16 +42,17 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
         CtlLineSelectionText,
         CtlLeaf,
         CtlLeafText,
-        CtlLeafSelected,
-        CtlLeafSelectedText,
+        // No longer used
+        // CtlLeafSelected,
+        // CtlLeafSelectedText,
+        
         //----(implicitly calculated)-----------------
         Spill,
         SpillLink,
         SecondarySelection,
         SecondarySelectionInvalid,
         SecondarySelectionLinkActive,
-        CtlLeafSpill,
-        CtlLeafSecondarySelected
+        CtlLeafSpill
     }
     private val _default = Color.parseColor("#FF00FF")
     private val _palette = HashMap<Palette, Int>()
@@ -89,7 +90,6 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
             ColorMap.Palette.SecondarySelectionInvalid,
             ColorMap.Palette.SecondarySelectionLinkActive,
             ColorMap.Palette.CtlLeafSpill,
-            ColorMap.Palette.CtlLeafSecondarySelected
         )
         for (key in calculated_colors) {
             this._palette[key] = this.calculate_color(key)
@@ -105,7 +105,6 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
             ColorMap.Palette.SecondarySelectionInvalid,
             ColorMap.Palette.SecondarySelectionLinkActive,
             ColorMap.Palette.CtlLeafSpill,
-            ColorMap.Palette.CtlLeafSecondarySelected
         )
         for (key in calculated_colors) {
             this._palette_fallback[key] = this.calculate_color(key)
@@ -178,16 +177,6 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
                     ((col_leaf.blue() * .7F) + (col_empty.blue() * .3F)).toFloat()
                 )
             }
-            ColorMap.Palette.CtlLeafSecondarySelected -> {
-                val col_leaf_selection: Color = Color.valueOf(this[ColorMap.Palette.CtlLeafSelected])
-                val col_selection: Color = Color.valueOf(this[ColorMap.Palette.CtlLeaf])
-
-                Color.rgb(
-                    ((col_selection.red() * .5F) + (col_leaf_selection.red() * .5F)).toFloat(),
-                    ((col_selection.green() * .5F) + (col_leaf_selection.green() * .5F)).toFloat(),
-                    ((col_selection.blue() * .5F) + (col_leaf_selection.blue() * .5F)).toFloat()
-                )
-            }
             else -> {
                 throw InvalidColorException("$key is not a calculated color")
             }
@@ -223,10 +212,6 @@ class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
             }
             ColorMap.Palette.CtlLeaf -> {
                 this._palette[ColorMap.Palette.CtlLeafSpill] = this.calculate_color(ColorMap.Palette.CtlLeafSpill)
-                this._palette[ColorMap.Palette.CtlLeafSecondarySelected] = this.calculate_color(ColorMap.Palette.CtlLeafSecondarySelected)
-            }
-            ColorMap.Palette.CtlLeafSelected -> {
-                this._palette[ColorMap.Palette.CtlLeafSecondarySelected] = this.calculate_color(ColorMap.Palette.CtlLeafSecondarySelected)
             }
             else -> {}
         }

@@ -2381,8 +2381,8 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.CtlLineSelectionText, this.getColor(R.color.ctl_line_selected_text)),
             Pair(Palette.CtlLeaf, this.getColor(R.color.ctl_leaf)),
             Pair(Palette.CtlLeafText, this.getColor(R.color.ctl_leaf_text)),
-            Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
-            Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
+            //Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
+            //Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
         )
     }
 
@@ -2425,8 +2425,8 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.CtlLineSelectionText, this.getColor(R.color.ctl_line_selected_text)),
             Pair(Palette.CtlLeaf, this.getColor(R.color.ctl_leaf)),
             Pair(Palette.CtlLeafText, this.getColor(R.color.ctl_leaf_text)),
-            Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
-            Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
+            //Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
+            //Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
         )
     }
 

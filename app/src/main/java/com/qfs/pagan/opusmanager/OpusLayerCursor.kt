@@ -1120,13 +1120,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
 
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Column -> {
-                false
-            }
             OpusManagerCursor.CursorMode.Line -> {
-                this.cursor.channel == beat_key.channel && this.cursor.line_offset == beat_key.line_offset
-            }
-            OpusManagerCursor.CursorMode.Range -> {
                 false
             }
             OpusManagerCursor.CursorMode.Single -> {
@@ -1134,6 +1128,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val cposition = this.cursor.get_position()
                 cbeat_key == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
             }
+            OpusManagerCursor.CursorMode.Range,
+            OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> {
                 false
             }
@@ -1176,6 +1172,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor.beat == beat_key.beat
             }
+            OpusManagerCursor.CursorMode.Line -> {
+                this.cursor.line_offset == beat_key.line_offset && this.cursor.channel == beat_key.channel
+            }
             else -> {
                 false
             }
@@ -1184,66 +1183,66 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun is_global_control_selected(control_type: ControlEventType, beat: Int, position: List<Int>): Boolean {
-        if (this.cursor.ctl_level != CtlLineLevel.Global || this.cursor.ctl_type != control_type) {
-            return false
-        }
-
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Column -> {
-                this.cursor.beat == beat
-            }
-            OpusManagerCursor.CursorMode.Line -> {
-                control_type == this.cursor.ctl_type
-            }
             OpusManagerCursor.CursorMode.Single -> {
-                val cposition = this.cursor.get_position()
-                println("$beat. ${this.cursor.beat} || $position, $cposition")
-                beat == this.cursor.beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
+                if (this.cursor.ctl_level == CtlLineLevel.Global && control_type == this.cursor.ctl_type) {
+                    val cposition = this.cursor.get_position()
+                    println("$beat. ${this.cursor.beat} || $position, $cposition")
+                    beat == this.cursor.beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
+                } else {
+                    false
+                }
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val first_beat = min(this.cursor.range!!.first.beat, this.cursor.range!!.second.beat)
                 val second_beat = max(this.cursor.range!!.first.beat, this.cursor.range!!.second.beat)
 
-                beat == second_beat || beat == first_beat
+                (this.cursor.ctl_level == CtlLineLevel.Global && control_type == this.cursor.ctl_type) && (beat == second_beat || beat == first_beat)
             }
-            OpusManagerCursor.CursorMode.Unset -> {
+            OpusManagerCursor.CursorMode.Unset,
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Line -> {
                 false
             }
         }
     }
-    fun is_global_control_secondary_selected(control_type: ControlEventType, beat: Int, position: List<Int>): Boolean {
-        if (this.cursor.ctl_level != CtlLineLevel.Global || control_type != this.cursor.ctl_type) {
-            return false
-        }
 
+    fun is_global_control_secondary_selected(control_type: ControlEventType, beat: Int, position: List<Int>): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
-                val cbeat = this.cursor.beat
-                val cposition = this.cursor.get_position()
-                if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
-                    return false
-                }
-
-                var output = false
-                val controller = this.controllers.get_controller<OpusControlEvent>(control_type)
-                for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
-                    if (working_beat == beat && position == working_position) {
-                        continue
+                if (this.cursor.ctl_level != CtlLineLevel.Global || control_type != this.cursor.ctl_type) {
+                    false
+                } else {
+                    val cbeat = this.cursor.beat
+                    val cposition = this.cursor.get_position()
+                    if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
+                        return false
                     }
 
-                    if (cbeat == working_beat && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
-                        output = true
-                        break
+                    var output = false
+                    val controller = this.controllers.get_controller<OpusControlEvent>(control_type)
+                    for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
+                        if (working_beat == beat && position == working_position) {
+                            continue
+                        }
+
+                        if (cbeat == working_beat && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
+                            output = true
+                            break
+                        }
                     }
+                    output
                 }
-                output
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
-                beat in first.beat + 1 until second.beat
+                (this.cursor.ctl_level == CtlLineLevel.Global && control_type == this.cursor.ctl_type) && (beat in first.beat + 1 until second.beat)
             }
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor.beat == beat
+            }
+            OpusManagerCursor.CursorMode.Line -> {
+                (this.cursor.ctl_level == CtlLineLevel.Global && control_type == this.cursor.ctl_type)
             }
             else -> {
                 false
@@ -1252,67 +1251,64 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun is_channel_control_selected(control_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Boolean {
-        if (this.cursor.ctl_level != CtlLineLevel.Channel || this.cursor.ctl_type != control_type) {
-            return false
-        }
-
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
                 val cposition = this.cursor.get_position()
                 control_type == this.cursor.ctl_type
+                        && this.cursor.ctl_level == CtlLineLevel.Channel
                         && this.cursor.channel == channel
                         && beat == this.cursor.beat
                         && position.size >= cposition.size
                         && position.subList(0, cposition.size) == cposition
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = this.cursor.get_ordered_range()!!
+                (beat == first.beat || beat == second.beat) && (this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type)
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Unset -> {
                 false
             }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = this.cursor.get_ordered_range()!!
-                beat == first.beat || beat == second.beat
-            }
         }
     }
 
     fun is_channel_control_secondary_selected(control_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Boolean {
-        if (this.cursor.ctl_level != CtlLineLevel.Channel || this.cursor.ctl_type != control_type) {
-            return false
-        }
-
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
                 beat == this.cursor.beat
             }
             OpusManagerCursor.CursorMode.Line -> {
-                this.cursor.channel == channel
+                this.cursor.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type
             }
             OpusManagerCursor.CursorMode.Single -> {
-                val cbeat = this.cursor.beat
-                val cposition = this.cursor.get_position()
-                if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
-                    return false
-                }
-
-                var output = false
-                val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(control_type)
-                for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
-                    if (working_beat == beat && position == working_position) {
-                        continue
+                if (this.cursor.ctl_level != CtlLineLevel.Channel || this.cursor.ctl_type != control_type) {
+                    false
+                } else {
+                    val cbeat = this.cursor.beat
+                    val cposition = this.cursor.get_position()
+                    if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
+                        return false
                     }
 
-                    if (cbeat == working_beat && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
-                        output = true
-                        break
+                    var output = false
+                    val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(control_type)
+                    for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
+                        if (working_beat == beat && position == working_position) {
+                            continue
+                        }
+
+                        if (cbeat == working_beat && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
+                            output = true
+                            break
+                        }
                     }
+                    output
                 }
-                output
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
-                beat in first.beat + 1 until second.beat
+                beat in first.beat + 1 until second.beat && this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type
             }
             OpusManagerCursor.CursorMode.Unset -> {
                 false
@@ -1321,72 +1317,67 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun is_line_control_selected(control_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Boolean {
-        if (control_type != this.cursor.ctl_type || this.cursor.ctl_level != CtlLineLevel.Line) {
-            return false
-        }
-
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Column -> {
-                false
-            }
-            OpusManagerCursor.CursorMode.Line -> {
-                false
-            }
             OpusManagerCursor.CursorMode.Single -> {
                 val cposition = this.cursor.get_position()
                 this.cursor.channel == beat_key.channel
-                && this.cursor.line_offset == beat_key.line_offset
-                && beat_key.beat == this.cursor.beat
-                && position.size >= cposition.size
-                && position.subList(0, cposition.size) == cposition
+                        && control_type == this.cursor.ctl_type
+                        && this.cursor.ctl_level == CtlLineLevel.Line
+                        && this.cursor.line_offset == beat_key.line_offset
+                        && beat_key.beat == this.cursor.beat
+                        && position.size >= cposition.size
+                        && position.subList(0, cposition.size) == cposition
             }
             OpusManagerCursor.CursorMode.Range -> {
-                //beat_key in this.get_beatkeys_in_range(this.cursor.range!!.first, this.cursor.range!!.second)
-                beat_key == this.cursor.range!!.first || beat_key == this.cursor.range!!.second
+                (beat_key == this.cursor.range!!.first || beat_key == this.cursor.range!!.second) && control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line
             }
-            OpusManagerCursor.CursorMode.Unset -> {
+            OpusManagerCursor.CursorMode.Unset,
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Line -> {
                 false
             }
         }
     }
 
     fun is_line_control_secondary_selected(control_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Boolean {
-        if (control_type != this.cursor.ctl_type || this.cursor.ctl_level != CtlLineLevel.Line) {
-            return false
-        }
-
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor.beat == beat_key.beat
             }
             OpusManagerCursor.CursorMode.Line -> {
-                this.cursor.channel == beat_key.channel && this.cursor.line_offset == beat_key.line_offset
+                this.cursor.channel == beat_key.channel
+                        && this.cursor.line_offset == beat_key.line_offset
+                        && control_type == this.cursor.ctl_type
+                        && this.cursor.ctl_level == CtlLineLevel.Line
             }
             OpusManagerCursor.CursorMode.Single -> {
-                val cbeat = this.cursor.beat
-                val cposition = this.cursor.get_position()
-                val beat = beat_key.beat
-                if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
-                    return false
-                }
-
-                var output = false
-                val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(control_type)
-                for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
-                    if (working_beat == beat && position == working_position) {
-                        continue
+                if (this.cursor.ctl_level != CtlLineLevel.Line || control_type != this.cursor.ctl_type) {
+                     false
+                } else {
+                    val cbeat = this.cursor.beat
+                    val cposition = this.cursor.get_position()
+                    val beat = beat_key.beat
+                    if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
+                        return false
                     }
 
-                    if (cbeat == working_beat && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
-                        output = true
-                        break
+                    var output = false
+                    val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(control_type)
+                    for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
+                        if (working_beat == beat && position == working_position) {
+                            continue
+                        }
+
+                        if (cbeat == working_beat && working_position.size >= cposition.size && working_position.subList(0, cposition.size) == cposition) {
+                            output = true
+                            break
+                        }
                     }
+                    output
                 }
-                output
             }
             OpusManagerCursor.CursorMode.Range -> {
-                //beat_key in this.get_beatkeys_in_range(this.cursor.range!!.first, this.cursor.range!!.second)
-                beat_key == this.cursor.range!!.first || beat_key == this.cursor.range!!.second
+                (beat_key == this.cursor.range!!.first || beat_key == this.cursor.range!!.second) && control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line
             }
             OpusManagerCursor.CursorMode.Unset -> {
                 false

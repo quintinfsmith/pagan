@@ -1658,18 +1658,21 @@ open class OpusLayerBase {
     }
 
     open fun remove_line_ctl_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position)
-        tree.detach()
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            this.get_all_channels()[beat_key.channel].remove_line_control_leaf(type, beat_key.line_offset, beat_key.beat, position)
+        }
     }
 
     open fun remove_channel_ctl_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position)
-        tree.detach()
+        this.catch_blocked_tree_exception(channel) {
+            this.get_all_channels()[channel].remove_channel_control_leaf(type, beat, position)
+        }
     }
 
     open fun remove_global_ctl_standard(type: ControlEventType, beat: Int, position: List<Int>) {
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, position)
-        tree.detach()
+        this.catch_global_ctl_blocked_tree_exception(type) {
+            this.controllers.get_controller<OpusControlEvent>(type).remove_standard(beat, position)
+        }
     }
 
     open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {

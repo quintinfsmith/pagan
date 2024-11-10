@@ -301,7 +301,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
     fun click_button_duration() {
         val main = this.get_main()
-        val event = this.get_control_event<T>()
+        val event = this.get_control_event<T>().copy() as T
         val event_duration = event.duration
 
         main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->

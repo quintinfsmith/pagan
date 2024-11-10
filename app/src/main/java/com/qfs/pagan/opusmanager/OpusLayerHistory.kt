@@ -768,27 +768,36 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun remove_global_ctl_standard(type: ControlEventType, beat: Int, position: List<Int>) {
-        this.push_to_history_stack(
-            HistoryToken.INSERT_CTL_GLOBAL,
-            listOf(type, beat, position.toList(), this.get_global_ctl_tree<OpusControlEvent>(type, beat, position).copy())
-        )
-        super.remove_global_ctl_standard(type, beat, position)
+        this._remember {
+            val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, position).copy()
+            super.remove_global_ctl_standard(type, beat, position)
+            this.push_to_history_stack(
+                HistoryToken.INSERT_CTL_GLOBAL,
+                listOf(type, beat, position.toList(), tree)
+            )
+        }
     }
 
     override fun remove_channel_ctl_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        this.push_to_history_stack(
-            HistoryToken.INSERT_CTL_CHANNEL,
-            listOf(type, channel, beat, position.toList(), this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position).copy())
-        )
-        super.remove_channel_ctl_standard(type, channel, beat, position)
+        this._remember {
+            val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position).copy()
+            super.remove_channel_ctl_standard(type, channel, beat, position)
+            this.push_to_history_stack(
+                HistoryToken.INSERT_CTL_CHANNEL,
+                listOf(type, channel, beat, position.toList(), tree)
+            )
+        }
     }
 
     override fun remove_line_ctl_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        this.push_to_history_stack(
-            HistoryToken.INSERT_CTL_LINE,
-            listOf(type, beat_key, position.toList(), this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position).copy())
-        )
-        super.remove_line_ctl_standard(type, beat_key, position)
+        this._remember {
+            val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position).copy()
+            super.remove_line_ctl_standard(type, beat_key, position)
+            this.push_to_history_stack(
+                HistoryToken.INSERT_CTL_LINE,
+                listOf(type, beat_key, position.toList(), tree)
+            )
+        }
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
@@ -1033,11 +1042,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     override fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
-        // Trivial?
-        if (this.get_global_ctl_tree<T>(type, beat, position).get_event() == event) {
-            return
-        }
-
         this._remember {
             this.push_replace_global_ctl(type, beat, position) {
                 super.set_global_ctl_event(type, beat, position, event)

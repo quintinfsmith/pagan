@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.Gravity
 import android.view.ViewGroup
 import androidx.appcompat.view.ContextThemeWrapper
+import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
@@ -25,6 +26,8 @@ abstract class LeafButtonCtl(
         this.set_text()
     }
     abstract fun is_selected(): Boolean
+    abstract fun is_secondary_selected(): Boolean
+    abstract fun get_controller(): ActiveController<OpusControlEvent>
 
     override fun get_tint_list(): IntArray {
         val activity = this.get_activity()
@@ -33,22 +36,22 @@ abstract class LeafButtonCtl(
         return intArrayOf(
             color_map[ColorMap.Palette.LeafInvalid],
             color_map[ColorMap.Palette.LeafInvalidSelected],
-            color_map[ColorMap.Palette.LeafInvalidSelected], // B
+            color_map[ColorMap.Palette.SecondarySelectionInvalid], // B
 
             color_map[ColorMap.Palette.LinkEmpty],
             color_map[ColorMap.Palette.Link],
-            color_map[ColorMap.Palette.Link], // B
+            color_map[ColorMap.Palette.SpillLink], // B
 
             color_map[ColorMap.Palette.LinkEmptySelected],
             color_map[ColorMap.Palette.LinkSelected],
             color_map[ColorMap.Palette.LinkSelected], // B
 
             color_map[ColorMap.Palette.LinkEmptySelected], // B
-            color_map[ColorMap.Palette.LinkSelected], // B
-            color_map[ColorMap.Palette.LinkSelected], // B
+            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
+            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
 
             color_map[ColorMap.Palette.CtlLeaf],
-            color_map[ColorMap.Palette.CtlLeaf], // B
+            color_map[ColorMap.Palette.CtlLeafSpill], // B
 
             // Primary
             color_map[ColorMap.Palette.CtlLineSelection],
@@ -57,8 +60,8 @@ abstract class LeafButtonCtl(
 
             // Secondary
             color_map[ColorMap.Palette.CtlLineSelection],
-            color_map[ColorMap.Palette.CtlLeafSelected],
-            color_map[ColorMap.Palette.CtlLeafSelected], // B
+            color_map[ColorMap.Palette.CtlLeafSecondarySelected],
+            color_map[ColorMap.Palette.CtlLeafSecondarySelected], // B
 
             color_map[ColorMap.Palette.CtlLine],
             color_map[ColorMap.Palette.CtlLine]
@@ -93,6 +96,7 @@ abstract class LeafButtonCtl(
         }
     }
 
+
     override fun _build_drawable_state(drawableState: IntArray?): IntArray? {
         //if (this.parent == null || this._get_editor_table().needs_setup) {
         if (this.parent == null) {
@@ -101,20 +105,46 @@ abstract class LeafButtonCtl(
 
         val new_state = mutableListOf<Int>()
 
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        val controller = this.get_controller()
+        val beat = this.get_beat()
+        println("?")
         val tree = try {
-            this.get_tree()
+            controller.get_tree(beat, this.position)
+        } catch (e: OpusTree.InvalidGetCall) {
+            return drawableState
+        } catch (e: IndexOutOfBoundsException) {
+            return drawableState
+        }
+        val original_position = try {
+            controller.get_blocking_position(beat, this.position) ?: Pair(beat, this.position)
+        } catch (e: OpusTree.InvalidGetCall) {
+            return drawableState
+        } catch (e: IndexOutOfBoundsException) {
+            return drawableState
+        }
+        val tree_original = try {
+            controller.get_tree(original_position.first, original_position.second)
         } catch (e: OpusTree.InvalidGetCall) {
             return drawableState
         } catch (e: IndexOutOfBoundsException) {
             return drawableState
         }
 
+        println("---------------------->")
         if (tree.is_event()) {
             new_state.add(R.attr.state_active)
+        } else if (tree_original != tree) {
+            println("$original_position !!!!")
+            new_state.add(R.attr.state_spill)
         }
 
         if (this.is_selected()) {
             new_state.add(R.attr.state_focused)
+        } else if (this.is_secondary_selected()) {
+            new_state.add(R.attr.state_focused_secondary)
         }
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
@@ -122,7 +152,4 @@ abstract class LeafButtonCtl(
     }
 
     // ------------------------------------------------------//
-    open fun get_tree(): OpusTree<OpusControlEvent> {
-        throw UninitializedPropertyAccessException()
-    }
 }

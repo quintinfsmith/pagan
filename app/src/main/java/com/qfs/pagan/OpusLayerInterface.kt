@@ -1895,35 +1895,54 @@ class OpusLayerInterface : OpusLayerCursor() {
                         }
                     }
 
-                    CtlLineLevel.Line -> {
-                        val y = this.get_visible_row_from_ctl_line_line(
-                            cursor.ctl_type!!,
-                            cursor.channel,
-                            cursor.line_offset
-                        )
-                        //this.ui_change_bill.queue_row_change(y, true)
+                    else -> {
+                        val (y, controller) = when (cursor.ctl_level!!) {
+                            CtlLineLevel.Line -> {
+                                Pair(
+                                    this.get_visible_row_from_ctl_line_line(
+                                        cursor.ctl_type!!,
+                                        cursor.channel,
+                                        cursor.line_offset
+                                    ),
+                                    this.get_all_channels()[cursor.channel].lines[cursor.line_offset].get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                                )
+                            }
 
-                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
-                    }
-                    CtlLineLevel.Channel -> {
-                        val y = this.get_visible_row_from_ctl_line_channel(
-                            cursor.ctl_type!!,
-                            cursor.channel
-                        )
+                            CtlLineLevel.Channel -> {
+                                Pair(
+                                    this.get_visible_row_from_ctl_line_channel(
+                                        cursor.ctl_type!!,
+                                        cursor.channel
+                                    ),
+                                    this.get_all_channels()[cursor.channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                                )
+                            }
+
+                            CtlLineLevel.Global -> {
+                                Pair(
+                                    this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
+                                    this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                                )
+                            }
+                        }
+
+
+                        val shadow_beats = mutableSetOf<Int>()
+                        val beat = cursor.beat
+                        val event_head = controller.get_blocking_position(beat, cursor.position) ?: Pair(beat, cursor.position)
+                        for ((shadow_beat, _) in controller.get_all_blocked_positions(event_head.first, event_head.second)) {
+                            shadow_beats.add(shadow_beat)
+                        }
+
+                        for (shadow_beat in shadow_beats) {
+                            if (shadow_beat == beat) {
+                                this.ui_change_bill.queue_column_label_refresh(shadow_beat)
+                            }
+                            coordinates_to_update.add(EditorTable.Coordinate(y, shadow_beat))
+                        }
+
                         this.ui_change_bill.queue_line_label_refresh(y)
-                        this.ui_change_bill.queue_column_label_refresh(cursor.beat)
-                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
-                    }
-
-                    CtlLineLevel.Global -> {
-                        val y = this.get_visible_row_from_ctl_line_global(
-                            cursor.ctl_type!!
-                        )
-
-                        this.ui_change_bill.queue_line_label_refresh(y)
-                        this.ui_change_bill.queue_column_label_refresh(cursor.beat)
-
-                        coordinates_to_update.add(EditorTable.Coordinate(y, cursor.beat))
+                        this.ui_change_bill.queue_column_label_refresh(beat)
                     }
                 }
             }

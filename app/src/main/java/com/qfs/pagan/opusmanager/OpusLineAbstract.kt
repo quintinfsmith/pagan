@@ -957,6 +957,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
     fun set_event(beat: Int, position: List<Int>, event: T) {
+        println("${event.duration} ???")
         val blocked_pair = this.is_blocked_set_event(beat, position, event.duration)
         if (blocked_pair != null) {
             throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
@@ -985,6 +986,14 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     override fun set_beat_count(new_beat_count: Int) {
         super.set_beat_count(new_beat_count)
         this.controllers.set_beat_count(new_beat_count)
+    }
+
+    fun remove_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
+        try {
+            this.get_controller<OpusControlEvent>(type).remove_standard(beat, position)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
     }
 
     fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {

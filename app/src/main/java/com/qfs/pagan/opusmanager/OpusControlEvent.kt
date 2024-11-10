@@ -19,7 +19,7 @@ enum class ControlTransition {
 
 class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
     override fun equals(other: Any?): Boolean {
-        return other is OpusTempoEvent && this.value == other.value
+        return other is OpusTempoEvent && this.value == other.value && super.equals(other)
     }
 
     override fun copy(): OpusTempoEvent {
@@ -33,7 +33,7 @@ class OpusVolumeEvent(var value: Int, var transition: ControlTransition = Contro
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition
+        return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
     }
 }
 
@@ -42,7 +42,7 @@ class OpusReverbEvent(var value: Float ): OpusControlEvent() {
         return OpusReverbEvent(this.value)
     }
     override fun equals(other: Any?): Boolean {
-        return other is OpusReverbEvent && this.value == other.value
+        return other is OpusReverbEvent && this.value == other.value && super.equals(other)
     }
 }
 
@@ -51,6 +51,6 @@ class OpusBendEvent(var numerator: Int, var denominator: Int, var transition: Co
         return OpusBendEvent(this.numerator, this.denominator, this.transition)
     }
     override fun equals(other: Any?): Boolean {
-        return other is OpusBendEvent && this.numerator == other.numerator && this.denominator == other.denominator && this.transition == other.transition
+        return other is OpusBendEvent && this.numerator == other.numerator && this.denominator == other.denominator && this.transition == other.transition && super.equals(other)
     }
 }

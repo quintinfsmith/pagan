@@ -6,6 +6,7 @@ class OpusControlEventJSONInterface {
     companion object {
         fun to_json(input: OpusControlEvent): JSONHashMap {
             val output = JSONHashMap()
+            output["duration"] = input.duration
             when (input) {
                 is OpusTempoEvent -> {
                     output["tempo"] = input.value
@@ -39,7 +40,7 @@ class OpusControlEventJSONInterface {
 
         // from_jsons-----------------
         fun tempo_event(map: JSONHashMap): OpusTempoEvent {
-            return OpusTempoEvent(map.get_float("tempo"))
+            return OpusTempoEvent(map.get_float("tempo"), map.get_int("duration", 1))
         }
         fun volume_event(map: JSONHashMap): OpusVolumeEvent {
             return OpusVolumeEvent(
@@ -49,7 +50,8 @@ class OpusControlEventJSONInterface {
                     ControlTransition.valueOf(map.get_string("transition", "Instant"))
                 } catch (e: ClassCastException) {
                     ControlTransition.Instant
-                }
+                },
+                map.get_int("duration", 1)
             )
         }
         fun reverb_event(map: JSONHashMap): OpusReverbEvent {

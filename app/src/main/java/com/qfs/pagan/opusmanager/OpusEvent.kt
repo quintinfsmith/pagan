@@ -1,11 +1,9 @@
 package com.qfs.pagan.opusmanager
-
-interface Copyable {
-    fun copy(): Copyable
+abstract class CopyableEvent<T: OpusEvent> {
+    abstract fun <T> copy(): T
 }
-abstract class OpusEvent(var duration: Int = 1): Copyable {
+abstract class OpusEvent(var duration: Int = 1): CopyableEvent<OpusEvent>() {
     override fun equals(other: Any?): Boolean {
         return other is OpusEvent && other.duration == this.duration
     }
-    abstract override fun copy(): OpusEvent
 }

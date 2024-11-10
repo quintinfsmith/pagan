@@ -76,7 +76,6 @@ class LeafButtonCtlLine(
         val beat = this.get_beat()
         val beat_key = this.get_beat_key()
 
-
         if (cursor.is_linking_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
             try {
                 when (this.get_activity().configuration.link_mode) {

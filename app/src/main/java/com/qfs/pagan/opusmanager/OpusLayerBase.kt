@@ -991,9 +991,7 @@ open class OpusLayerBase {
         val working_tree = this.get_tree(beat_key, position).copy()
         working_tree.traverse { tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
             if (event != null) {
-                (tree as OpusTree<InstrumentEvent>).set_event(
-                    event.copy()
-                )
+                tree.set_event(event.copy())
             }
         }
         return working_tree
@@ -1004,7 +1002,8 @@ open class OpusLayerBase {
         val working_tree = this.get_line_ctl_tree<T>(type, beat_key, position).copy()
         working_tree.traverse { tree: OpusTree<T>, event: T? ->
             if (event != null) {
-                tree.set_event(event.copy())
+                val event_copy: T = event.copy()
+                tree.set_event(event_copy)
             }
         }
         return working_tree

@@ -686,21 +686,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
-        super.remove(beat_key, position)
-    }
-
-    override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        super.remove_global_ctl(type, beat, position)
-    }
-
-    override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        super.remove_channel_ctl(type, channel, beat, position)
-    }
-
-    override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        super.remove_line_ctl(type, beat_key, position)
-    }
 
     override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
         val parent_position = position.subList(0, position.size - 1)

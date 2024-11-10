@@ -1469,11 +1469,6 @@ open class OpusLayerBase {
         }
         this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].insert_after(beat_key.beat, position)
 
-       // val tree = this.get_tree(beat_key, position)
-       // val parent = tree.get_parent()!!
-
-       // val index = position.last()
-       // parent.insert(index + 1)
     }
 
     open fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -1481,35 +1476,21 @@ open class OpusLayerBase {
             throw BadInsertPosition()
         }
 
-        val parent_position = position.subList(0, position.size - 1)
-        val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, parent_position)
-
-        val index = position.last()
-        tree.insert(index + 1)
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type).insert_after(beat_key.beat, position)
     }
 
     open fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()
         }
-
-        val parent_position = position.subList(0, position.size - 1)
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, parent_position)
-
-        val index = position.last()
-        tree.insert(index + 1)
+        this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).insert_after(beat, position)
     }
 
     open fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()
         }
-
-        val parent_position = position.subList(0, position.size - 1)
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, parent_position)
-
-        val index = position.last()
-        tree.insert(index + 1)
+        this.controllers.get_controller<OpusControlEvent>(type).insert_after(beat, position)
     }
 
     /**

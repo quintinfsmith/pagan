@@ -48,13 +48,13 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
         val blocked_amount = opus_manager.get_blocking_amount(beat_key, position)
 
-        this.button_split.isEnabled = current_event_tree == current_tree || blocked_amount!! < 1
+        this.button_split.isEnabled = true
         this.button_split.isClickable = this.button_split.isEnabled
 
         this.button_duration.isEnabled = current_event_tree.is_event()
         this.button_duration.isClickable = this.button_duration.isEnabled
 
-        this.button_remove.isEnabled = current_tree_position.second.isNotEmpty()
+        this.button_remove.isEnabled = position.isNotEmpty()
         this.button_remove.isClickable = this.button_remove.isEnabled
     }
 

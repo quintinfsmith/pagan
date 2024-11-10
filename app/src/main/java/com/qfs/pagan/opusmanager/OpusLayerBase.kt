@@ -825,7 +825,7 @@ open class OpusLayerBase {
 
                         working_channel.lines[j + 1].controllers.new_controller(type)
                         working_channel.lines[j + 1].controllers.get_controller<OpusControlEvent>(type).set_initial_event(
-                            controller.initial_event.copy()
+                            controller.initial_event.copy() as OpusControlEvent
                         )
                     }
                     if (i == this.channels.size) {
@@ -991,7 +991,7 @@ open class OpusLayerBase {
         val working_tree = this.get_tree(beat_key, position).copy()
         working_tree.traverse { tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
             if (event != null) {
-                tree.set_event(event.copy())
+                (tree as OpusTree<InstrumentEvent>).set_event(event.copy())
             }
         }
         return working_tree
@@ -1002,7 +1002,7 @@ open class OpusLayerBase {
         val working_tree = this.get_line_ctl_tree<T>(type, beat_key, position).copy()
         working_tree.traverse { tree: OpusTree<T>, event: T? ->
             if (event != null) {
-                val event_copy: T = event.copy()
+                val event_copy: T = event.copy() as T
                 tree.set_event(event_copy)
             }
         }

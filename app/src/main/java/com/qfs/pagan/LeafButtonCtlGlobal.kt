@@ -28,8 +28,9 @@ class LeafButtonCtlGlobal(
                 this.get_beat()
             )
         } else {
-            opus_manager.cursor_select_global_ctl_end_point(
+            opus_manager.cursor_select_global_ctl_range(
                 this.control_type,
+                this.get_beat(),
                 this.get_beat()
             )
         }

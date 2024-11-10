@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -76,24 +77,20 @@ class LeafButtonStd(
     override fun long_click(): Boolean {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val beat_key = this._get_beat_key()
+        val beat_key = this.get_beat_key()
         val current_link_mode = this.get_activity().configuration.link_mode
 
-
         if (cursor.is_linking_range() && cursor.ctl_level == null && current_link_mode != PaganConfiguration.LinkMode.MERGE) {
-            opus_manager.cursor_select_range(
-                opus_manager.cursor.range!!.first,
-                beat_key
-            )
+            opus_manager.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
         } else {
-            opus_manager.cursor_select_first_corner(beat_key)
+            opus_manager.cursor_select_range(beat_key, beat_key)
         }
 
         return true
     }
 
     override fun callback_click() {
-        val beat_key = this._get_beat_key()
+        val beat_key = this.get_beat_key()
         val position = this.position
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -257,7 +254,7 @@ class LeafButtonStd(
 
         val opus_manager = this.get_opus_manager()
         val beat_key = try {
-            this._get_beat_key()
+            this.get_beat_key()
         } catch (e: IndexOutOfBoundsException) {
             return drawableState
         }
@@ -342,4 +339,15 @@ class LeafButtonStd(
         mergeDrawableStates(drawableState, new_state.toIntArray())
         return drawableState
     }
+
+    fun get_beat_key(): BeatKey {
+        val opus_manager = this.get_opus_manager()
+        val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_row((this.parent as CellLayout).row)
+        )
+
+        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+        return BeatKey(channel, line_offset, this.get_beat())
+    }
+
 }

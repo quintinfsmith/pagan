@@ -1313,18 +1313,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun cursor_select_first_corner(beat_key: BeatKey) {
-        if (this._block_cursor_selection()) {
-            return
-        }
-        this.lock_ui_partial {
-            this.unset_temporary_blocker()
-            super.cursor_select_first_corner(beat_key)
-
-            this.queue_cursor_update(this.cursor, false)
-            this.ui_change_bill.queue_set_context_menu_linking()
-        }
-    }
 
     override fun cursor_select_global_ctl_range(type: ControlEventType, first: Int, second: Int) {
         if (this._block_cursor_selection()) {
@@ -1339,13 +1327,13 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
+    override fun cursor_select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
         if (this._block_cursor_selection()) {
             return
         }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
-            super.cursor_select_global_ctl_end_point(type, beat)
+            super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)
 
             this.queue_cursor_update(this.cursor, false)
             this.ui_change_bill.queue_set_context_menu_line_control_leaf_b()

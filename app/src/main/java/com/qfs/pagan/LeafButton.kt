@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.ColorMap.Palette
-import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 abstract class LeafButton(context: Context) : LinearLayout(context) {
@@ -230,10 +229,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
 
     internal fun get_coord(): EditorTable.Coordinate {
         return (this.parent as CellLayout).get_coord()
-    }
-
-    internal fun _get_beat_key(): BeatKey {
-        return (this.parent as CellLayout).get_beat_key()!!
     }
 
     internal fun get_beat(): Int {

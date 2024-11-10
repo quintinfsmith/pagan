@@ -34,9 +34,10 @@ class LeafButtonCtlChannel(
                 this.get_beat()
             )
         } else {
-            opus_manager.cursor_select_channel_ctl_end_point(
+            opus_manager.cursor_select_channel_ctl_range(
                 this.control_type,
                 this.channel,
+                this.get_beat(),
                 this.get_beat()
             )
         }

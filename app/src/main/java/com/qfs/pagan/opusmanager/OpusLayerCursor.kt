@@ -528,10 +528,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.select_ctl_at_global(beat, position, ctl_type)
     }
 
-    open fun cursor_select_first_corner(beat_key: BeatKey) {
-        this.cursor.select_first_corner(beat_key)
-    }
-
     open fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.cursor.select_range(beat_key_a, beat_key_b)
     }
@@ -539,21 +535,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
     open fun cursor_select_global_ctl_range(type:ControlEventType, first: Int, second: Int) {
         this.cursor.select_global_ctl_range(type, first, second)
     }
-    open fun cursor_select_global_ctl_end_point(type: ControlEventType, beat: Int) {
-        this.cursor.select_global_ctl_end_point(type, beat)
-    }
-
     open fun cursor_select_channel_ctl_range(type:ControlEventType, channel: Int, first: Int, second: Int) {
         this.cursor.select_channel_ctl_range(type, channel, first, second)
     }
-    open fun cursor_select_channel_ctl_end_point(type: ControlEventType, channel: Int, beat: Int) {
-        this.cursor.select_channel_ctl_end_point(type, channel, beat)
-    }
-
-    open fun cursor_select_line_ctl_first_corner(type: ControlEventType, beat_key: BeatKey) {
-        this.cursor.select_line_ctl_first_corner(type, beat_key)
-    }
-
     open fun cursor_select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.cursor.select_line_ctl_range(type, beat_key_a, beat_key_b)
     }
@@ -1029,6 +1013,29 @@ open class OpusLayerCursor: OpusLayerHistory() {
         } else {
             throw InvalidCursorState()
         }
+    }
+
+    fun copy_line_ctl_to_beat(beat_key: BeatKey) {
+
+        if (this.cursor.is_linking_range()) {
+            val (first, second) = this.cursor.range!!
+            if (first != second) {
+                this.overwrite_line_ctl_range(this.cursor.ctl_type!!, beat_key, first, second)
+            } else {
+                if (this.is_percussion(first.channel) != this.is_percussion(beat_key.channel)) {
+                    throw MixedInstrumentException(first, beat_key)
+                }
+                this.replace_line_ctl_tree(
+                    this.cursor.ctl_type!!,
+                    beat_key,
+                    listOf(),
+                    this.get_line_ctl_tree_copy(first, listOf())
+                )
+            }
+        } else {
+            throw InvalidCursorState()
+        }
+
     }
 
     fun copy_global_ctl_to_beat(beat: Int) {

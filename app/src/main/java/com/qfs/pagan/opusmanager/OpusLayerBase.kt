@@ -998,6 +998,17 @@ open class OpusLayerBase {
         }
         return working_tree
     }
+    fun <T: OpusControlEvent> get_line_ctl_tree_copy(type: ControlEventType, beat_key: BeatKey, position: List<Int>? = null): OpusTree<T> {
+        // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
+        // Instead just copy the events here
+        val working_tree = this.get_line_ctl_tree<T>(type, beat_key, position).copy()
+        working_tree.traverse { tree: OpusTree<T>, event: T? ->
+            if (event != null) {
+                tree.set_event(event.copy())
+            }
+        }
+        return working_tree
+    }
 
     fun <T: OpusControlEvent> get_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<T> {
         if (channel > this.channels.size) {
@@ -2567,7 +2578,7 @@ open class OpusLayerBase {
             return null
         }
 
-        return event.copy() as T
+        return event
     }
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {

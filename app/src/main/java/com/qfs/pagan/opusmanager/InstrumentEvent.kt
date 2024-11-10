@@ -4,7 +4,7 @@ abstract class InstrumentEvent(duration: Int = 1): OpusEvent(duration) {
     override fun equals(other: Any?): Boolean {
         return other is InstrumentEvent && other.duration == this.duration
     }
-    abstract fun copy(): InstrumentEvent
+    abstract override fun copy(): InstrumentEvent
 }
 
 abstract class TunedInstrumentEvent(duration: Int): InstrumentEvent(duration)

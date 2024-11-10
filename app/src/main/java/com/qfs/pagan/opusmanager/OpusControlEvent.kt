@@ -1,7 +1,7 @@
 package com.qfs.pagan.opusmanager
 
 abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration) {
-    abstract fun copy(): OpusControlEvent
+    abstract override fun copy(): OpusControlEvent
 }
 
 enum class ControlEventType {

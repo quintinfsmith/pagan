@@ -471,7 +471,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         var current_tree = this.get_tree(beat)
         val adj_position = mutableListOf<Int>()
         for (p in position) {
-            if (current_tree.is_leaf()) {
+            // Allow invalid positions. we only need to event that *would* be here.
+            if (current_tree.is_leaf() || p >= current_tree.size) {
                 break
             }
             adj_position.add(p)

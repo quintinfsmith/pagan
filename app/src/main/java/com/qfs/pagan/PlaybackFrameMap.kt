@@ -233,6 +233,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 handle.set_release_frame(end_frame - start_frame)
 
                 if (this._simple_mode) {
+                    // Remove release phase. can get noisy on things like tubular bells with long fade outs
                     handle.volume_envelope.frames_release = 0
                     handle.volume_envelope.frames_delay = 0
                 }

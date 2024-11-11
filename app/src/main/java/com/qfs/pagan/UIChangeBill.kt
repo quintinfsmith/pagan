@@ -59,7 +59,7 @@ class UIChangeBill {
         ContextMenuSetLeafPercussion,
         ContextMenuSetControlLeaf,
         ContextMenuSetControlLeafB,
-        ContextMenuSetLinking,
+        ContextMenuSetRange,
         ContextMenuSetColumn,
         ContextMenuSetControlLine,
         ContextMenuClear,
@@ -385,7 +385,7 @@ class UIChangeBill {
                     BillableItem.ContextMenuSetLeafPercussion,
                     BillableItem.ContextMenuSetControlLeaf,
                     BillableItem.ContextMenuSetControlLeafB,
-                    BillableItem.ContextMenuSetLinking,
+                    BillableItem.ContextMenuSetRange,
                     BillableItem.ContextMenuSetColumn,
                     BillableItem.ContextMenuSetControlLine,
                     BillableItem.ContextMenuClear,
@@ -561,9 +561,9 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ContextMenuSetControlLeafB)
     }
 
-    fun queue_set_context_menu_linking() {
+    fun queue_set_context_menu_range() {
         val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetLinking)
+        working_tree.bill.add(BillableItem.ContextMenuSetRange)
     }
 
     fun queue_set_context_menu_column() {

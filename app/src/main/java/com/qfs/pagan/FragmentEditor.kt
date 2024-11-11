@@ -547,9 +547,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.show_context_menus()
     }
 
-    internal fun set_context_menu_linking() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLink>()) {
-            this.active_context_menu = ContextMenuLink(
+    internal fun set_context_menu_range() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuRange>()) {
+            this.active_context_menu = ContextMenuRange(
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )

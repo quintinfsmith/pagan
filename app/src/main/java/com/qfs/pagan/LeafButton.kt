@@ -43,124 +43,50 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
                 -R.attr.state_focused,
                 R.attr.state_focused_secondary
             ),
-            // Linkeds---------------------------------
-            intArrayOf(
-                R.attr.state_linked,
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_linked,
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_linked,
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                R.attr.state_spill
-            ),
-
-            intArrayOf(
-                R.attr.state_linked,
-                R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_linked,
-                R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_linked,
-                R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                R.attr.state_spill
-            ),
-
-            intArrayOf(
-                R.attr.state_linked,
-                -R.attr.state_focused,
-                R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_linked,
-                -R.attr.state_focused,
-                R.attr.state_focused_secondary,
-                R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_linked,
-                -R.attr.state_focused,
-                R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                R.attr.state_spill
-            ),
             // -------------------------------
             intArrayOf(
-                -R.attr.state_linked,
                 -R.attr.state_focused,
                 -R.attr.state_focused_secondary,
                 R.attr.state_active,
                 -R.attr.state_spill
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 -R.attr.state_focused,
                 -R.attr.state_focused_secondary,
                 -R.attr.state_active,
                 R.attr.state_spill
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 R.attr.state_focused,
                 -R.attr.state_focused_secondary,
                 -R.attr.state_active,
                 -R.attr.state_spill
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 R.attr.state_focused,
                 -R.attr.state_focused_secondary,
                 R.attr.state_active,
                 -R.attr.state_spill
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 R.attr.state_focused,
                 -R.attr.state_focused_secondary,
                 -R.attr.state_active,
                 R.attr.state_spill
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 -R.attr.state_focused,
                 R.attr.state_focused_secondary,
                 -R.attr.state_active,
                 -R.attr.state_spill
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 -R.attr.state_focused,
                 R.attr.state_focused_secondary,
                 R.attr.state_active,
                 -R.attr.state_spill
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 -R.attr.state_focused,
                 R.attr.state_focused_secondary,
                 -R.attr.state_active,
@@ -168,7 +94,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
             ),
             // -------------------
             intArrayOf(
-                -R.attr.state_linked,
                 -R.attr.state_focused,
                 -R.attr.state_focused_secondary,
                 -R.attr.state_active,
@@ -176,7 +101,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
                 -R.attr.state_alternate
             ),
             intArrayOf(
-                -R.attr.state_linked,
                 -R.attr.state_focused,
                 -R.attr.state_focused_secondary,
                 -R.attr.state_active,

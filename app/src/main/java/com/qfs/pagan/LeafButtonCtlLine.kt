@@ -27,7 +27,7 @@ class LeafButtonCtlLine(
         val cursor = opus_manager.cursor
         val beat_key = this.get_beat_key()
 
-        if (cursor.is_linking_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset) {
             opus_manager.cursor_select_line_ctl_range(
                 this.control_type,
                 opus_manager.cursor.range!!.first,
@@ -76,19 +76,18 @@ class LeafButtonCtlLine(
         val beat = this.get_beat()
         val beat_key = this.get_beat_key()
 
-        if (cursor.is_linking_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
             try {
-                when (this.get_activity().configuration.link_mode) {
-                    PaganConfiguration.LinkMode.COPY -> {
+                when (this.get_activity().configuration.move_mode) {
+                    PaganConfiguration.MoveMode.COPY -> {
                         opus_manager.copy_line_ctl_to_beat(beat_key)
                     }
 
-                    PaganConfiguration.LinkMode.MOVE -> {
+                    PaganConfiguration.MoveMode.MOVE -> {
                         opus_manager.move_line_ctl_to_beat(beat_key)
                     }
 
-                    PaganConfiguration.LinkMode.LINK -> { /* Unreachable */ }
-                    PaganConfiguration.LinkMode.MERGE -> { /* Unreachable */ }
+                    PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {
                 when (e) {

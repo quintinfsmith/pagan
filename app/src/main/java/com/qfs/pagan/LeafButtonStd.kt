@@ -12,7 +12,6 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerCursor
-import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
@@ -43,18 +42,6 @@ class LeafButtonStd(
             color_map[ColorMap.Palette.LeafInvalidSelected],
             color_map[ColorMap.Palette.SecondarySelectionInvalid],
 
-            color_map[ColorMap.Palette.LinkEmpty],
-            color_map[ColorMap.Palette.Link],
-            color_map[ColorMap.Palette.SpillLink],
-
-            color_map[ColorMap.Palette.LinkEmptySelected],
-            color_map[ColorMap.Palette.LinkSelected],
-            color_map[ColorMap.Palette.LinkSelected], // B
-
-            color_map[ColorMap.Palette.LinkEmptySelected], // B
-            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
-            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
-
             color_map[ColorMap.Palette.Leaf],
             color_map[ColorMap.Palette.Spill],
 
@@ -78,9 +65,9 @@ class LeafButtonStd(
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val beat_key = this.get_beat_key()
-        val current_link_mode = this.get_activity().configuration.link_mode
+        val current_move_mode = this.get_activity().configuration.move_mode
 
-        if (cursor.is_linking_range() && cursor.ctl_level == null && current_link_mode != PaganConfiguration.LinkMode.MERGE) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == null && current_move_mode != PaganConfiguration.MoveMode.MERGE) {
             opus_manager.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
         } else {
             opus_manager.cursor_select_range(beat_key, beat_key)
@@ -96,19 +83,16 @@ class LeafButtonStd(
         val cursor = opus_manager.cursor
 
         val editor_table = this._get_editor_table() // Will need if overflow exception is passed
-        if (cursor.is_linking_range() && cursor.ctl_level == null) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == null) {
             try {
-                when (this.get_activity().configuration.link_mode) {
-                    PaganConfiguration.LinkMode.LINK -> {
-                        opus_manager.link_beat(beat_key)
-                    }
-                    PaganConfiguration.LinkMode.COPY -> {
+                when (this.get_activity().configuration.move_mode) {
+                    PaganConfiguration.MoveMode.COPY -> {
                         opus_manager.copy_to_beat(beat_key)
                     }
-                    PaganConfiguration.LinkMode.MOVE -> {
+                    PaganConfiguration.MoveMode.MOVE -> {
                         opus_manager.move_to_beat(beat_key)
                     }
-                    PaganConfiguration.LinkMode.MERGE -> {
+                    PaganConfiguration.MoveMode.MERGE -> {
                         opus_manager.merge_into_beat(beat_key)
                     }
                 }
@@ -118,13 +102,11 @@ class LeafButtonStd(
                 }
             } catch (e: Exception) {
                 when (e) {
-                    is OpusLayerLinks.SelfLinkError -> { }
                     is OpusLayerBase.MixedInstrumentException -> {
                         editor_table.notify_cell_changes(listOf(this.get_coord()))
                         opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
                         (this.get_activity()).feedback_msg(context.getString(R.string.feedback_mixed_link))
                     }
-                    is OpusLayerLinks.LinkRangeOverlap,
                     is OpusLayerBase.RangeOverflow -> {
                         editor_table.notify_cell_changes(listOf(this.get_coord()))
                         opus_manager.cursor_select(beat_key, this.position)
@@ -320,10 +302,6 @@ class LeafButtonStd(
                 else -> {}
             }
             new_state.add(R.attr.state_spill)
-        }
-
-        if (opus_manager.is_networked(original_position.first)) {
-            new_state.add(R.attr.state_linked)
         }
 
         if (opus_manager.is_selected(beat_key, position)) {

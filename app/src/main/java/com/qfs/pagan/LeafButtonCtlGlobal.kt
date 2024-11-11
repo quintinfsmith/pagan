@@ -21,7 +21,7 @@ class LeafButtonCtlGlobal(
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        if (cursor.is_linking_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == this.control_type) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == this.control_type) {
             opus_manager.cursor_select_global_ctl_range(
                 this.control_type,
                 cursor.beat,
@@ -61,19 +61,18 @@ class LeafButtonCtlGlobal(
         val cursor = opus_manager.cursor
         val beat = this.get_beat()
 
-        if (cursor.is_linking_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
             try {
-                when (this.get_activity().configuration.link_mode) {
-                    PaganConfiguration.LinkMode.COPY -> {
+                when (this.get_activity().configuration.move_mode) {
+                    PaganConfiguration.MoveMode.COPY -> {
                         opus_manager.copy_global_ctl_to_beat(beat)
                     }
 
-                    PaganConfiguration.LinkMode.MOVE -> {
+                    PaganConfiguration.MoveMode.MOVE -> {
                         opus_manager.move_global_ctl_to_beat(beat)
                     }
 
-                    PaganConfiguration.LinkMode.LINK -> { /* Unreachable */ }
-                    PaganConfiguration.LinkMode.MERGE -> { /* Unreachable */ }
+                    PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {
                 when (e) {

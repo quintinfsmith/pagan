@@ -4,7 +4,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
-open class OpusLayerHistory : OpusLayerLinks() {
+open class OpusLayerHistory : OpusLayerBase() {
     var history_cache = HistoryCache()
 
     inline fun <reified T> checked_cast(value: Any): T {
@@ -28,34 +28,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
 
                 HistoryToken.UNSET_PROJECT_NAME -> {
                     this.set_project_name(null)
-                }
-
-                HistoryToken.UNLINK_BEAT -> {
-                    this.unlink_beat(current_node.args[0] as BeatKey)
-                }
-
-                HistoryToken.RESTORE_LINK_POOLS -> {
-                    val pools = this.checked_cast<List<Set<BeatKey>>>(current_node.args[0])
-                    this.set_link_pools(pools)
-                }
-
-                HistoryToken.LINK_BEATS -> {
-                    this.link_beats(
-                        current_node.args[0] as BeatKey,
-                        current_node.args[1] as BeatKey
-                    )
-                }
-
-                HistoryToken.LINK_BEAT_TO_POOL -> {
-                    // No need to overwrite in history
-                    val beat_key = current_node.args[0] as BeatKey
-                    val pool_index = current_node.args[1] as Int
-                    this.link_pool_map[beat_key] = pool_index
-                    this.link_pools[pool_index].add(beat_key)
-                }
-
-                HistoryToken.CREATE_LINK_POOL -> {
-                    this.create_link_pool(this.checked_cast<LinkedHashSet<BeatKey>>(current_node.args[0]).toList())
                 }
 
                 HistoryToken.SET_EVENT -> {
@@ -348,28 +320,24 @@ open class OpusLayerHistory : OpusLayerLinks() {
     }
 
     open fun apply_undo(repeat: Int = 1) {
-        this.lock_links {
-            this.history_cache.lock()
+        this.history_cache.lock()
 
-            for (i in 0 until repeat) {
-                val node = this.history_cache.pop()
-                if (node == null) {
-                    this.history_cache.unlock()
-                    return@lock_links
-                }
-
-                if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
-                    // If the node was an empty 'multi'  node, try the next one
-                    this.history_cache.unlock()
-                    this.apply_undo()
-                    return@lock_links
-                }
-
-                this.apply_history_node(node)
+        for (i in 0 until repeat) {
+            val node = this.history_cache.pop()
+            if (node == null) {
+                this.history_cache.unlock()
+                return
+            } else if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
+                // If the node was an empty 'multi'  node, try the next one
+                this.history_cache.unlock()
+                this.apply_undo()
+                return
             }
 
-            this.history_cache.unlock()
+            this.apply_history_node(node)
         }
+
+        this.history_cache.unlock()
     }
 
     override fun convert_events_in_line_to_absolute(channel: Int, line_offset: Int) {
@@ -1304,54 +1272,6 @@ open class OpusLayerHistory : OpusLayerLinks() {
         this.push_to_history_stack( HistoryToken.REMOVE_LINE, listOf(channel, index) )
     }
 
-    override fun link_beats(beat_key: BeatKey, target: BeatKey) {
-        this._remember {
-            super.link_beats(beat_key, target)
-        }
-    }
-
-    override fun merge_link_pools(index_first: Int, index_second: Int) {
-        this._remember {
-
-            val old_link_pool = mutableSetOf<BeatKey>()
-            for (beat_key in this.link_pools[index_first]) {
-                old_link_pool.add(beat_key.copy())
-            }
-            this.push_to_history_stack(HistoryToken.CREATE_LINK_POOL, listOf(old_link_pool))
-            for (beat_key in this.link_pools[index_first]) {
-                this.push_to_history_stack(HistoryToken.UNLINK_BEAT, listOf(beat_key))
-            }
-
-            super.merge_link_pools(index_first, index_second)
-        }
-    }
-
-    override fun link_beat_into_pool(beat_key: BeatKey, index: Int, overwrite_pool: Boolean) {
-        this._remember {
-            super.link_beat_into_pool(beat_key, index, overwrite_pool)
-            this.push_to_history_stack(HistoryToken.UNLINK_BEAT, listOf(beat_key))
-        }
-    }
-
-    override fun create_link_pool(beat_keys: List<BeatKey>) {
-        this._remember {
-            // Do not unlink last. it is automatically unlinked by the penultimate
-            beat_keys.forEachIndexed { i: Int, beat_key ->
-                if (i == beat_keys.size - 1) {
-                    return@forEachIndexed
-                }
-                this.push_to_history_stack(HistoryToken.UNLINK_BEAT, listOf(beat_key))
-            }
-            super.create_link_pool(beat_keys)
-        }
-    }
-
-    override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
-        this._remember {
-            super.batch_link_beats(beat_key_pairs)
-        }
-    }
-
     override fun remove_channel(channel: Int) {
         this.push_rebuild_channel(channel) {
             //this.history_cache.lock()
@@ -1406,89 +1326,11 @@ open class OpusLayerHistory : OpusLayerLinks() {
         }
     }
 
-    override fun unlink_beat(beat_key: BeatKey) {
-        val pool = this.link_pools[this.link_pool_map[beat_key]!!]
-        this._remember {
-            for (linked_key in pool) {
-                if (beat_key != linked_key) {
-                    this.push_to_history_stack(HistoryToken.LINK_BEATS, listOf(beat_key, linked_key))
-                    break
-                }
-            }
-            super.unlink_beat(beat_key)
-        }
-    }
-
-    override fun unlink_range(first_key: BeatKey, second_key: BeatKey) {
-        this._remember {
-            super.unlink_range(first_key, second_key)
-        }
-    }
-
-    override fun link_row(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        this._remember {
-            this.clear_link_pools_by_range(
-                BeatKey(channel, line_offset, 0),
-                BeatKey(channel, line_offset, this.beat_count - 1)
-            )
-            super.link_row(channel, line_offset, beat_key)
-        }
-    }
-
-    override fun remove_link_pool(index: Int): MutableSet<BeatKey> {
-        return this._remember {
-            this.push_to_history_stack(HistoryToken.CREATE_LINK_POOL, listOf(this.link_pools[index]))
-            super.remove_link_pool(index)
-        }
-    }
-
-    override fun link_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        this._remember {
-            val (from_key, _) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
-            if (from_key.channel != channel || from_key.line_offset != line_offset || from_key.beat != 0) {
-                throw BadRowLink(from_key, channel, line_offset)
-            }
-
-            val y_top = this.get_instrument_line_index(first_key.channel, first_key.line_offset)
-            val y_bottom = this.get_instrument_line_index(second_key.channel, second_key.line_offset)
-            val y_link_top = this.get_instrument_line_index(channel, line_offset)
-            val y_link_bottom = y_link_top + (y_bottom - y_top)
-
-
-            val (bottom_channel, bottom_line_offset) = try {
-                this.get_channel_and_line_offset(y_link_bottom)
-            } catch (e: IndexOutOfBoundsException) {
-                throw BadRowLink(first_key, channel, line_offset)
-            }
-
-            val clear_beat_key_top = BeatKey(channel, line_offset, 0)
-            val clear_beat_key_bottom = BeatKey(bottom_channel, bottom_line_offset, this.beat_count -1)
-
-            this.clear_link_pools_by_range(
-                clear_beat_key_top,
-                clear_beat_key_bottom
-            )
-            super.link_beat_range_horizontally(channel, line_offset, first_key, second_key)
-        }
-    }
-
     override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         this._remember {
             super.overwrite_beat_range(beat_key, first_corner, second_corner)
         }
 
-    }
-
-    override fun clear_link_pools_by_range(first_key: BeatKey, second_key: BeatKey) {
-        this._remember {
-            super.clear_link_pools_by_range(first_key, second_key)
-        }
-    }
-
-    override fun remap_links(remap_hook: (beat_key: BeatKey) -> BeatKey?): List<Pair<BeatKey, BeatKey>> {
-        val original_link_pools = this.link_pools.toList()
-        this.push_to_history_stack(HistoryToken.RESTORE_LINK_POOLS, listOf(original_link_pools))
-        return super.remap_links(remap_hook)
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {

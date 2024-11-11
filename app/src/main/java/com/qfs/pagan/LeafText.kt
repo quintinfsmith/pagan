@@ -39,26 +39,11 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
             //----------------------------
             intArrayOf(
                 -R.attr.state_invalid,
-                -R.attr.state_linked,
                 R.attr.state_active,
                 R.attr.state_focused
             ),
             intArrayOf(
                 -R.attr.state_invalid,
-                -R.attr.state_linked,
-                R.attr.state_active,
-                -R.attr.state_focused
-            ),
-            // ------------------------
-            intArrayOf(
-                -R.attr.state_invalid,
-                R.attr.state_linked,
-                R.attr.state_active,
-                R.attr.state_focused
-            ),
-            intArrayOf(
-                -R.attr.state_invalid,
-                R.attr.state_linked,
                 R.attr.state_active,
                 -R.attr.state_focused
             )
@@ -72,8 +57,6 @@ class LeafText(context: Context, attrs: AttributeSet? = null): androidx.appcompa
                     color_map[Palette.LeafInvalidText],
                     color_map[Palette.LeafSelectedText],
                     color_map[Palette.LeafText],
-                    color_map[Palette.LinkSelectedText],
-                    color_map[Palette.LinkText]
                 )
             )
         )

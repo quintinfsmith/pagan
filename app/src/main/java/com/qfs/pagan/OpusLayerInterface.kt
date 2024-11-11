@@ -112,9 +112,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         return output
     }
 
-    /*
-        Notify the editor table to update certain cells without following links
-     */
+    /* Notify the editor table to update cells */
     private fun _queue_cell_changes(beat_keys: List<BeatKey>) {
         if (this.ui_change_bill.is_full_locked()) {
             return
@@ -141,10 +139,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.ui_change_bill.queue_cell_changes(coord_list)
     }
 
-    /*
-        Notify the editor table to update a cell and all linked cells
-     */
-    private fun _queue_cell_change(beat_key: BeatKey, follow_links: Boolean) {
+    /* Notify the editor table to update a cell */
+    private fun _queue_cell_change(beat_key: BeatKey) {
         if (this.ui_change_bill.is_full_locked()) {
             return
         }
@@ -158,23 +154,19 @@ class OpusLayerInterface : OpusLayerCursor() {
         val new_weight = tree.get_total_child_weight()
 
         val coord_list = mutableListOf<EditorTable.Coordinate>()
-        if (follow_links) {
-            coord_list.addAll(this._get_all_linked_as_coords(beat_key))
-        } else {
-            coord_list.add(
-                EditorTable.Coordinate(
-                    y = this.get_visible_row_from_ctl_line(
-                        this.get_actual_line_index(
-                            this.get_instrument_line_index(
-                                beat_key.channel,
-                                beat_key.line_offset
-                            )
+        coord_list.add(
+            EditorTable.Coordinate(
+                y = this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
+                            beat_key.channel,
+                            beat_key.line_offset
                         )
-                    )!!,
-                    x = beat_key.beat
-                )
+                    )
+                )!!,
+                x = beat_key.beat
             )
-        }
+        )
 
         val editor_table = this.get_editor_table()
         val notify_columns = mutableSetOf<Int>()
@@ -361,30 +353,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    private fun _get_all_linked_as_coords(beat_key: BeatKey): List<EditorTable.Coordinate> {
-        val all_keys = this.get_all_linked(beat_key).toList()
-        return List(all_keys.size) { i: Int ->
-            val key = all_keys[i]
-
-            EditorTable.Coordinate(
-                this.get_visible_row_from_ctl_line(
-                    this.get_actual_line_index(
-                        this.get_instrument_line_index(
-                            key.channel,
-                            key.line_offset
-                        )
-                    )
-                )!!,
-                key.beat
-            )
-        }
-    }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.unset(beat_key, position)
 
-            this._queue_cell_change(beat_key, false)
+            this._queue_cell_change(beat_key)
         }
     }
 
@@ -417,7 +391,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     this.make_percussion_visible()
                 }
                 super.replace_tree(beat_key, position, tree)
-                this._queue_cell_change(beat_key, false)
+                this._queue_cell_change(beat_key)
             }
         }
     }
@@ -491,7 +465,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
 
                 if (!this.ui_change_bill.is_full_locked()) {
-                    this._queue_cell_change(beat_key, false)
+                    this._queue_cell_change(beat_key)
                     this.ui_change_bill.queue_refresh_context_menu()
                 }
             }
@@ -507,7 +481,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     this.make_percussion_visible()
                 }
 
-                this._queue_cell_change(beat_key, false)
+                this._queue_cell_change(beat_key)
             }
         }
     }
@@ -545,7 +519,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.split_tree(beat_key, position, splits, move_event_to_end)
 
             if ((this._activity != null && this._activity!!.view_model.show_percussion) || !this.is_percussion(beat_key.channel)) {
-                this._queue_cell_change(beat_key, false)
+                this._queue_cell_change(beat_key)
             }
         }
     }
@@ -580,7 +554,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.insert_after(beat_key, position)
-            this._queue_cell_change(beat_key, false)
+            this._queue_cell_change(beat_key)
         }
     }
 
@@ -608,7 +582,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.insert(beat_key, position)
-            this._queue_cell_change(beat_key, false)
+            this._queue_cell_change(beat_key)
         }
     }
 
@@ -642,7 +616,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.remove_standard(beat_key, position)
-            this._queue_cell_change(beat_key, false)
+            this._queue_cell_change(beat_key)
         }
     }
 
@@ -787,12 +761,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                 }
             }
-        }
-    }
-
-    override fun set_link_pools(pools: List<Set<BeatKey>>) {
-        this.lock_ui_partial {
-            super.set_link_pools(pools)
         }
     }
 
@@ -1004,35 +972,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun on_remap_link(old_beat_key: BeatKey, new_beat_key: BeatKey) {
-        this.lock_ui_partial {
-            this._queue_cell_change(new_beat_key, false)
-        }
-    }
-
-    override fun create_link_pool(beat_keys: List<BeatKey>) {
-        this.lock_ui_partial {
-            super.create_link_pool(beat_keys)
-            this._queue_cell_changes(beat_keys)
-        }
-    }
-
-    override fun unlink_beat(beat_key: BeatKey) {
-        this.lock_ui_partial {
-            if (this.ui_change_bill.is_full_locked()) {
-                super.unlink_beat(beat_key)
-            } else {
-                val update_keys = this.get_all_linked(beat_key).toMutableList()
-                update_keys.remove(beat_key)
-
-                super.unlink_beat(beat_key)
-
-                this._queue_cell_change(beat_key, false)
-                this._queue_cell_changes(update_keys)
-            }
-        }
-    }
-
     private fun <T> withFragment(callback: (FragmentEditor) -> T): T? {
         val fragment = this._activity?.get_active_fragment()
         return if (fragment is FragmentEditor) {
@@ -1084,7 +1023,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 super.set_duration(beat_key, position, duration)
 
                 // Needs to be set to trigger potentially queued cell changes from on_overlap()
-                this._queue_cell_change(beat_key, false)
+                this._queue_cell_change(beat_key)
                 // val btnDuration: TextView = main.findViewById(R.id.btnDuration) ?: return@runOnUiThread
                 // btnDuration.text = main.getString(R.string.label_duration, duration)
                 this.ui_change_bill.queue_refresh_context_menu()
@@ -1134,7 +1073,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                 }
                 OpusManagerCursor.CursorMode.Range -> {
-                    this.ui_change_bill.queue_set_context_menu_linking()
+                    this.ui_change_bill.queue_set_context_menu_range()
                 }
                 OpusManagerCursor.CursorMode.Unset -> {
                     this.ui_change_bill.queue_clear_context_menu()
@@ -1349,16 +1288,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.cursor_select_range(beat_key_a, beat_key_b)
 
             this.queue_cursor_update(this.cursor, false)
-            this.ui_change_bill.queue_set_context_menu_linking()
+            this.ui_change_bill.queue_set_context_menu_range()
         }
-    }
-
-   override fun clear_link_pool(beat_key: BeatKey) {
-       this.lock_ui_partial {
-           val update_keys = this.get_all_linked(beat_key).toList()
-           super.clear_link_pool(beat_key)
-           this._queue_cell_changes(update_keys)
-       }
     }
 
     fun set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
@@ -1406,7 +1337,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                         this._queue_global_ctl_cell_change(blocker.ctl_type!!, blocker.beat)
                     }
                     null -> {
-                        this._queue_cell_change(blocker.get_beatkey(), false)
+                        this._queue_cell_change(blocker.get_beatkey())
                     }
                 }
             }
@@ -1419,34 +1350,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.save(path)
             this.ui_change_bill.queue_enable_delete_and_copy_buttons()
-        }
-    }
-
-    override fun link_beats(beat_key: BeatKey, target: BeatKey) {
-        this._catch_blocked_action {
-            this.lock_ui_partial {
-                super.link_beats(beat_key, target)
-                this._queue_cell_change(beat_key, false)
-            }
-        }
-    }
-
-    override fun batch_link_beats(beat_key_pairs: List<Pair<BeatKey, BeatKey>>) {
-        this.lock_ui_partial {
-            super.batch_link_beats(beat_key_pairs)
-
-            val all_keys = mutableListOf<BeatKey>()
-            for ((from_key, _) in beat_key_pairs) {
-                if (all_keys.contains(from_key)) {
-                    continue
-                }
-
-                for (linked_key in this.get_all_linked(from_key)) {
-                    all_keys.add(linked_key)
-                }
-            }
-
-            this._queue_cell_changes(all_keys)
         }
     }
 
@@ -1733,7 +1636,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                             if (tree.is_eventless()) {
                                 continue
                             }
-                            this._queue_cell_change(beat_key, true)
+                            this._queue_cell_change(beat_key)
                         }
                     }
 
@@ -1845,36 +1748,31 @@ class OpusLayerInterface : OpusLayerCursor() {
                 when (cursor.ctl_level) {
                     null -> {
                         val beat_key = cursor.get_beatkey()
-                        val beat_keys = if (deep_update) {
-                            this.get_all_linked(beat_key)
-                        } else {
-                            listOf(beat_key)
+                        // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
+                        val y = try {
+                            this.get_visible_row_from_ctl_line(
+                                this.get_actual_line_index(
+                                    this.get_instrument_line_index(
+                                        beat_key.channel,
+                                        beat_key.line_offset
+                                    )
+                                )
+                            )
+                        } catch (e: IndexOutOfBoundsException) {
+                            return
                         }
 
-                        for (linked_key in beat_keys) {
-                            val line = this.get_all_channels()[linked_key.channel].lines[linked_key.line_offset]
+                        if (y != null) {
+                            val line = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset]
                             val shadow_beats = mutableSetOf<Int>()
-                            val event_head = line.get_blocking_position(linked_key.beat, cursor.position) ?: Pair(linked_key.beat, cursor.position)
+                            val event_head = line.get_blocking_position(beat_key.beat, cursor.position) ?: Pair(beat_key.beat, cursor.position)
                             for ((shadow_beat, _) in line.get_all_blocked_positions(event_head.first, event_head.second)) {
                                 shadow_beats.add(shadow_beat)
                             }
 
-                            // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
-                            val y = try {
-                                this.get_visible_row_from_ctl_line(
-                                    this.get_actual_line_index(
-                                        this.get_instrument_line_index(
-                                            linked_key.channel,
-                                            linked_key.line_offset
-                                        )
-                                    )
-                                ) ?: continue
-                            } catch (e: IndexOutOfBoundsException) {
-                                return
-                            }
                             for (shadow_beat in shadow_beats) {
 
-                                if (linked_key.channel == beat_key.channel && linked_key.line_offset == beat_key.line_offset && shadow_beat == beat_key.beat) {
+                                if (beat_key.channel == beat_key.channel && beat_key.line_offset == beat_key.line_offset && shadow_beat == beat_key.beat) {
                                     this.ui_change_bill.queue_line_label_refresh(y)
                                     this.ui_change_bill.queue_column_label_refresh(shadow_beat)
                                 }
@@ -1898,10 +1796,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                             CtlLineLevel.Channel -> {
                                 Pair(
-                                    this.get_visible_row_from_ctl_line_channel(
-                                        cursor.ctl_type!!,
-                                        cursor.channel
-                                    ),
+                                    this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
                                     this.get_all_channels()[cursor.channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
                                 )
                             }
@@ -2360,9 +2255,9 @@ class OpusLayerInterface : OpusLayerCursor() {
                         }
                     }
 
-                    BillableItem.ContextMenuSetLinking -> {
+                    BillableItem.ContextMenuSetRange -> {
                         this.withFragment {
-                            it.set_context_menu_linking()
+                            it.set_context_menu_range()
                         }
                     }
 
@@ -2495,16 +2390,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private fun _block_cursor_selection(): Boolean {
         return (this._blocked_action_catcher_active && this.temporary_blocker != null)
-    }
-
-    override fun on_link(beat_key: BeatKey) {
-        this._queue_cell_change(beat_key, false)
-        super.on_link(beat_key)
-    }
-
-    override fun on_unlink(beat_key: BeatKey) {
-        this._queue_cell_change(beat_key, false)
-        super.on_unlink(beat_key)
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {

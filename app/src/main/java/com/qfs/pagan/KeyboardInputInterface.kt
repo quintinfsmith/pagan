@@ -480,25 +480,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 }
             }
         },
-        Pair(KeyEvent.KEYCODE_N, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(opus_manager: OpusManager) {
-                when (opus_manager.cursor.ctl_level) {
-                    CtlLineLevel.Line -> TODO()
-                    CtlLineLevel.Channel -> TODO()
-                    CtlLineLevel.Global -> TODO()
-                    null -> {
-                        if (opus_manager.marked_range != null) {
-                            opus_manager.link_beat_range(
-                                opus_manager.cursor.get_beatkey(),
-                                opus_manager.marked_range!!.first,
-                                opus_manager.marked_range!!.second,
-                            )
-                            opus_manager.marked_range = null
-                        }
-                    }
-                }
-            }
-        },
 
         Pair(KeyEvent.KEYCODE_R, true) to object: CursorSpecificKeyStrokeNode(this) {
             private fun _set_relative_mode(opus_manager: OpusManager, force_mode: Int = 1) {

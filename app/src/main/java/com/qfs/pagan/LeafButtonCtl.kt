@@ -38,18 +38,6 @@ abstract class LeafButtonCtl(
             color_map[ColorMap.Palette.LeafInvalidSelected],
             color_map[ColorMap.Palette.SecondarySelectionInvalid], // B
 
-            color_map[ColorMap.Palette.LinkEmpty],
-            color_map[ColorMap.Palette.Link],
-            color_map[ColorMap.Palette.SpillLink], // B
-
-            color_map[ColorMap.Palette.LinkEmptySelected],
-            color_map[ColorMap.Palette.LinkSelected],
-            color_map[ColorMap.Palette.LinkSelected], // B
-
-            color_map[ColorMap.Palette.LinkEmptySelected], // B
-            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
-            color_map[ColorMap.Palette.SecondarySelectionLinkActive], // B
-
             color_map[ColorMap.Palette.CtlLeaf],
             color_map[ColorMap.Palette.CtlLeafSpill], // B
 

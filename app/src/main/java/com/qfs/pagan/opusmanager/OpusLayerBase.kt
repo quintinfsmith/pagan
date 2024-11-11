@@ -1571,8 +1571,10 @@ open class OpusLayerBase {
         }
     }
 
-    // remove_only, remove_one_of_two and remove_standard all exist so I could separate
-    // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
+    /*
+        remove_one_of_two and remove_standard all exist so I could separate
+        them and use the "forget" wrapper at the History layer
+     */
     open fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree_copy(beat_key, position)
         val to_replace_position = List(position.size) { i: Int ->
@@ -1601,12 +1603,7 @@ open class OpusLayerBase {
         val prev_position = position.toMutableList()
         prev_position.removeLast()
         val to_replace = parent_tree[0]
-        this.replace_line_ctl_tree(
-            type,
-            beat_key,
-            prev_position,
-            to_replace
-        )
+        this.replace_line_ctl_tree(type, beat_key, prev_position, to_replace)
     }
 
     open fun remove_channel_ctl_one_of_two(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
@@ -1616,13 +1613,7 @@ open class OpusLayerBase {
         val prev_position = position.toMutableList()
         prev_position.removeLast()
         val to_replace = parent_tree[0]
-        this.replace_channel_ctl_tree(
-            type,
-            channel,
-            beat,
-            prev_position,
-            to_replace
-        )
+        this.replace_channel_ctl_tree(type, channel, beat, prev_position, to_replace)
     }
 
     open fun remove_global_ctl_one_of_two(type: ControlEventType, beat: Int, position: List<Int>) {
@@ -1632,16 +1623,13 @@ open class OpusLayerBase {
         val prev_position = position.toMutableList()
         prev_position.removeLast()
         val to_replace = parent_tree[0]
-        this.replace_global_ctl_tree(
-            type,
-            beat,
-            prev_position,
-            to_replace
-        )
+        this.replace_global_ctl_tree(type, beat, prev_position, to_replace)
     }
 
-    // remove_only, remove_one_of_two and remove_standard all exist so I could separate
-    // them and use the "forget" wrapper at the History layer, while not breaking the LinksLayer
+    /*
+        remove_one_of_two and remove_standard all exist so I could separate
+        them and use the "forget" wrapper at the History layer
+     */
     open fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this.catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].remove(beat_key.line_offset, beat_key.beat, position)

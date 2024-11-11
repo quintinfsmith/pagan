@@ -8,7 +8,6 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -77,47 +76,22 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         val opus_manager = this.get_opus_manager()
 
         val cursor = opus_manager.cursor
-        if (cursor.is_linking_range()) {
+        if (cursor.is_selecting_range()) {
             val (first_key, second_key) = cursor.range!!
             if (first_key != second_key) {
                 try {
-                    when (this.get_activity().configuration.link_mode) {
-                        PaganConfiguration.LinkMode.LINK -> {
-                            opus_manager.link_beat_range_horizontally(
-                                    this.channel,
-                                    this.line_offset,
-                                    first_key,
-                                    cursor.range!!.second
-                                    )
-                        }
-
-                        else -> {
-                            opus_manager.overwrite_beat_range_horizontally(
-                                    this.channel,
-                                    this.line_offset,
-                                    first_key,
-                                    cursor.range!!.second
-                                    )
-                        }
-                    }
-                } catch (e: OpusLayerLinks.BadRowLink) {
-                    // No Feedback.  feels Redundant
+                    opus_manager.overwrite_beat_range_horizontally(
+                        this.channel,
+                        this.line_offset,
+                        first_key,
+                        cursor.range!!.second
+                    )
                 } catch (e: OpusLayerBase.InvalidOverwriteCall) {
                     // No Feedback.  feels Redundant
                 }
             } else {
                 try {
-                    when (this.get_activity().configuration.link_mode) {
-                        PaganConfiguration.LinkMode.LINK -> {
-                            opus_manager.link_row(this.channel, this.line_offset, first_key)
-                        }
-
-                        else -> {
-                            opus_manager.overwrite_line(this.channel, this.line_offset, first_key)
-                        }
-                    }
-                } catch (e: OpusLayerLinks.BadRowLink) {
-                    // No Feedback.  feels Redundant
+                    opus_manager.overwrite_line(this.channel, this.line_offset, first_key)
                 } catch (e: OpusLayerBase.InvalidOverwriteCall) {
                     // No Feedback.  feels Redundant
                 }

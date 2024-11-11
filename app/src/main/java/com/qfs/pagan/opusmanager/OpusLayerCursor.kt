@@ -714,41 +714,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
         )
     }
 
-    fun unlink_beat() {
-        if (this.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            this.unlink_beat(this.cursor.get_beatkey())
-            val beat_key = this.cursor.get_beatkey()
-            this.cursor_select(beat_key, this.get_first_position(beat_key))
-        } else if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            this.unlink_range(first, second)
-
-            this.cursor_select(first, this.get_first_position(first))
-        }
-    }
-
-    fun clear_link_pool() {
-        if (this.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            val beat_key = this.cursor.get_beatkey()
-            this.clear_link_pool(beat_key)
-        } else if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-            val (first_key, second_key) = this.cursor.get_ordered_range()!!
-            this.clear_link_pools_by_range(first_key, second_key)
-        }
-
-        when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Single -> {
-                val beat_key = this.cursor.get_beatkey()
-                this.cursor_select(beat_key, this.get_first_position(beat_key))
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first_key, second_key) = this.cursor.get_ordered_range()!!
-                this.cursor_select(first_key, this.get_first_position(first_key))
-            }
-            else -> {}
-        }
-    }
-
     fun set_percussion_instrument(instrument: Int) {
         this.set_percussion_instrument(
             this.cursor.line_offset,
@@ -946,22 +911,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.insert_beats(this.cursor.beat, count)
     }
 
-
-    fun link_beat(beat_key: BeatKey) {
-        if (this.cursor.is_linking_range()) {
-            val (first, second) = this.cursor.range!!
-            if (first != second) {
-                this.link_beat_range(beat_key, first, second)
-            } else {
-            this.link_beats(beat_key, first)
-            }
-        } else {
-            throw InvalidCursorState()
-        }
-    }
-
     fun merge_into_beat(beat_key: BeatKey) {
-        if (this.cursor.is_linking_range()) {
+        if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
                 TODO()
@@ -977,7 +928,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun move_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_linking_range()) {
+        if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
                 this.move_beat_range(beat_key, first, second)
@@ -993,7 +944,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun copy_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_linking_range()) {
+        if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
                 this.overwrite_beat_range(beat_key, first, second)
@@ -1016,7 +967,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun copy_line_ctl_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_linking_range()) {
+        if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
                 this.overwrite_line_ctl_range(this.cursor.ctl_type!!, beat_key, first, second)
@@ -1049,7 +1000,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_linking_range()) {
+        if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
                 this.move_line_ctl_range(this.cursor.ctl_type!!, beat_key, first, second)
@@ -1078,7 +1029,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             throw InvalidOverwriteCall()
         }
 
-        if (this.cursor.is_linking_range()) {
+        if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
                 this.overwrite_global_ctl_range(
@@ -1121,7 +1072,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             throw InvalidOverwriteCall()
         }
 
-        if (this.cursor.is_linking_range()) {
+        if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
                 this.move_global_ctl_range(
@@ -1533,14 +1484,4 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
         }
     }
-
-
-
-
-    /* Not Currently In Use. */
-    //fun link_alike() {
-    //    if (this.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-    //        this.link_alike(this.cursor.range!!.first, this.cursor.range!!.second)
-    //    }
-    //}
 }

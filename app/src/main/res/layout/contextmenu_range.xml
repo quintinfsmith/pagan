@@ -20,28 +20,10 @@
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
-            android:id="@+id/btnUnLink"
-            android:src="@drawable/unlink"
-            android:contentDescription="Remove Link" />
-
-        <com.qfs.pagan.ButtonIcon
-            android:theme="@style/icon_button"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:layout_marginStart="@dimen/number_selector_spacing"
-            android:src="@drawable/unlinkall"
-            android:id="@+id/btnUnLinkAll"
-            android:contentDescription="Remove All Links"/>
-
-        <com.qfs.pagan.ButtonIcon
-            android:theme="@style/icon_button"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unset"
             android:id="@+id/btnEraseSelection"
             android:contentDescription="Clear Selection"/>
-
 
     </LinearLayout>
 </LinearLayout>

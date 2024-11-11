@@ -5,13 +5,10 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
 import com.qfs.pagan.opusmanager.ActiveControlSetJSONInterface
-import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelJSONInterface
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.OpusPercussionChannel
-import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
 class OpusManagerJSONInterface {
     companion object {
@@ -36,25 +33,6 @@ class OpusManagerJSONInterface {
             output["transpose"] = JSONInteger(opus_manager.transpose)
             output["controllers"] = ActiveControlSetJSONInterface.to_json(opus_manager.controllers)
 
-            if (opus_manager is OpusManager) {
-                output["reflections"] = JSONList(
-                    MutableList(opus_manager.link_pools.size) { i: Int ->
-                        val pool = opus_manager.link_pools[i].toList()
-                        JSONList(
-                            MutableList(pool.size) { j: Int ->
-                                val beat_key = pool[j]
-                                JSONList(
-                                    mutableListOf(
-                                        JSONInteger(beat_key.channel),
-                                        JSONInteger(beat_key.line_offset),
-                                        JSONInteger(beat_key.beat)
-                                    )
-                                )
-                            }
-                        )
-                    }
-                )
-            }
             output["channels"] = JSONList(
                 MutableList(opus_manager.channels.size) { i: Int ->
                     OpusChannelJSONInterface.generalize(opus_manager.channels[i])
@@ -75,9 +53,9 @@ class OpusManagerJSONInterface {
             )
         }
 
-        fun interpret(input: JSONHashMap): OpusLayerLinks {
+        fun interpret(input: JSONHashMap): OpusLayerBase {
             val inner_map = input["d"] as JSONHashMap
-            val opus_manager = OpusLayerLinks()
+            val opus_manager = OpusLayerBase()
             opus_manager.set_project_name(inner_map.get_stringn("title"))
             opus_manager.transpose = inner_map.get_int("transpose", 0)
 
@@ -108,21 +86,6 @@ class OpusManagerJSONInterface {
             }
             opus_manager.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), opus_manager.beat_count)
 
-            val generalized_reflections = inner_map.get_list("reflections")
-            for (i in 0 until generalized_reflections.list.size) {
-                val pool = generalized_reflections.get_list(i)
-                opus_manager.link_pools.add(
-                    MutableList<BeatKey>(pool.list.size) { j: Int ->
-                        val generalized_beat_key = pool.get_list(j)
-                        BeatKey(
-                            generalized_beat_key.get_int(0),
-                            generalized_beat_key.get_int(1),
-                            generalized_beat_key.get_int(2)
-                        )
-                    }.toMutableSet()
-                )
-            }
-
             return opus_manager
         }
 
@@ -148,8 +111,7 @@ class OpusManagerJSONInterface {
                         MutableList(old_channels.list.size) { i: Int ->
                             OpusChannelJSONInterface.convert_v0_to_v1(old_channels.get_hashmap(i), radix)
                         }
-                    ),
-                    "reflections" to input.hash_map["reflections"]
+                    )
                 )
             )
         }
@@ -178,7 +140,6 @@ class OpusManagerJSONInterface {
             return JSONHashMap(
                 hashMapOf(
                     "tuning_map" to tuning_map,
-                    "reflections" to input["reflections"],
                     "transpose" to input["transpose"],
                     "name" to input["name"],
                     "controllers" to JSONList(
@@ -246,7 +207,6 @@ class OpusManagerJSONInterface {
             val input_tuning_map = input_map.get_list("tuning_map")
             val beat_count = input_channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("children").list.size
 
-            val input_reflections = input_map.get_list("reflections")
 
             return JSONHashMap(
                 hashMapOf(
@@ -263,23 +223,6 @@ class OpusManagerJSONInterface {
                                             JSONInteger(pair.get_int("first")),
                                             JSONInteger(pair.get_int("second"))
                                         )
-                                    )
-                                }
-                            ),
-                            "reflections" to JSONList(
-                                MutableList(input_reflections.list.size) { i: Int ->
-                                    val pool = input_reflections.get_list(i)
-                                    JSONList(
-                                        MutableList(pool.list.size) { j: Int ->
-                                            val generalized_beat_key = pool.get_hashmap(j)
-                                            JSONList(
-                                                mutableListOf(
-                                                    generalized_beat_key["channel"],
-                                                    generalized_beat_key["line_offset"],
-                                                    generalized_beat_key["beat"]
-                                                )
-                                            )
-                                        }
                                     )
                                 }
                             ),

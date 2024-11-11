@@ -31,7 +31,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
 class OpusLayerBaseUnitReTestAsOpusLayerLinks {
     @Test

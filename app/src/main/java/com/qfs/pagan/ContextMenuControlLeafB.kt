@@ -13,7 +13,7 @@ class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container:
 
     override fun init_properties() {
         this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
-        this.radio_mode = this.secondary!!.findViewById<RadioGroup>(R.id.rgLinkMode)
+        this.radio_mode = this.secondary!!.findViewById<RadioGroup>(R.id.rgMoveMode)
     }
 
 
@@ -23,10 +23,10 @@ class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container:
         }
         this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
             val main = this.get_main()
-            main.configuration.link_mode = when (button_id) {
-                R.id.rbLinkModeMove -> PaganConfiguration.LinkMode.MOVE
-                R.id.rbLinkModeCopy -> PaganConfiguration.LinkMode.COPY
-                else -> PaganConfiguration.LinkMode.COPY
+            main.configuration.move_mode = when (button_id) {
+                R.id.rbMoveModeMove -> PaganConfiguration.MoveMode.MOVE
+                R.id.rbMoveModeCopy -> PaganConfiguration.MoveMode.COPY
+                else -> PaganConfiguration.MoveMode.COPY
             }
             main.save_configuration()
             this.refresh()
@@ -36,14 +36,10 @@ class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container:
 
     override fun refresh() {
         val main = this.get_main()
-        if (main.configuration.link_mode == PaganConfiguration.LinkMode.LINK) {
-            main.configuration.link_mode = PaganConfiguration.LinkMode.COPY
-            main.save_configuration()
-        }
-        this.radio_mode.check(when (main.configuration.link_mode) {
-            PaganConfiguration.LinkMode.MOVE -> R.id.rbLinkModeMove
-            PaganConfiguration.LinkMode.COPY -> R.id.rbLinkModeCopy
-            else -> R.id.rbLinkModeCopy
+        this.radio_mode.check(when (main.configuration.move_mode) {
+            PaganConfiguration.MoveMode.MOVE -> R.id.rbMoveModeMove
+            PaganConfiguration.MoveMode.COPY -> R.id.rbMoveModeCopy
+            else -> R.id.rbMoveModeCopy
         })
     }
 

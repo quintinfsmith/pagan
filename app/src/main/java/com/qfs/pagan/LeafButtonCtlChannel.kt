@@ -21,7 +21,7 @@ class LeafButtonCtlChannel(
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        if (cursor.is_linking_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == this.control_type) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == this.control_type) {
             // Currently, can't select multiple channels in a range
             if (this.channel != cursor.range!!.first.channel) {
                 return true

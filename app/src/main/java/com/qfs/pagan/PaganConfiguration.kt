@@ -13,7 +13,7 @@ data class PaganConfiguration(
     var relative_mode: Boolean = false,
     var sample_rate: Int = 22050,
     var show_percussion: Boolean = true, // Deprecated, use variable in view_model
-    var link_mode: LinkMode = LinkMode.COPY,
+    var move_mode: MoveMode = MoveMode.COPY,
     var palette: HashMap<Palette, Int>? = null,
     var use_palette: Boolean = false,
     var visible_line_controls: MutableSet<Pair<CtlLineLevel, ControlEventType>> = mutableSetOf(
@@ -24,10 +24,9 @@ data class PaganConfiguration(
         this.visible_line_controls.add(Pair(CtlLineLevel.Global, ControlEventType.Tempo))
     }
 
-    enum class LinkMode {
+    enum class MoveMode {
         MOVE,
         COPY,
-        LINK,
         MERGE
     }
     companion object {
@@ -45,7 +44,7 @@ data class PaganConfiguration(
                         soundfont = content.get_stringn("soundfont"),
                         sample_rate = content.get_intn("sample_rate") ?: 22050,
                         relative_mode = content.get_booleann("relative_mode") ?: false,
-                        link_mode = LinkMode.valueOf(content.get_stringn("link_mode") ?: "COPY"),
+                        move_mode = MoveMode.valueOf(content.get_stringn("move_mode") ?: "COPY"),
                         use_palette = content.get_booleann("use_palette") ?: false,
                         palette = if (stored_palette != null) {
                             val new_palette = HashMap<Palette, Int>()
@@ -94,7 +93,7 @@ data class PaganConfiguration(
         output["soundfont"] = this.soundfont
         output["sample_rate"] = this.sample_rate
         output["relative_mode"] = this.relative_mode
-        output["link_mode"] = this.link_mode.name
+        output["move_mode"] = this.move_mode.name
         output["use_palette"] = this.use_palette
         output["palette"] = if (this.palette == null) {
             null

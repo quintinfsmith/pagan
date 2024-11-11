@@ -80,7 +80,7 @@ data class OpusManagerCursor(
         }
     }
 
-    fun is_linking_range(): Boolean {
+    fun is_selecting_range(): Boolean {
         return this.mode == CursorMode.Range
     }
 

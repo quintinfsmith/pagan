@@ -88,7 +88,7 @@ import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import com.qfs.pagan.opusmanager.OpusLayerLinks
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
@@ -1924,7 +1924,7 @@ class MainActivity : AppCompatActivity() {
             return !opus_manager.history_cache.isEmpty()
         }
 
-        val other = OpusLayerLinks()
+        val other = OpusLayerBase()
         other.load_path(opus_manager.path!!)
 
         return opus_manager != other
@@ -2355,12 +2355,6 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
             Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
             Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
-            Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
-            Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
-            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
-            Pair(Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
-            Pair(Palette.LinkEmpty, this.getColor(R.color.dark_empty_linked)),
-            Pair(Palette.LinkEmptySelected, this.getColor(R.color.dark_empty_linked_selected)),
             Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
             Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
             Pair(Palette.ChannelEven, this.getColor(R.color.dark_channel_even)),
@@ -2399,12 +2393,6 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
             Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
             Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
-            Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
-            Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
-            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
-            Pair(Palette.LinkEmpty, this.getColor(R.color.light_empty_linked)),
-            Pair(Palette.LinkEmptySelected, this.getColor(R.color.light_empty_linked_selected)),
-            Pair(Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text)),
             Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
             Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
             Pair(Palette.ChannelEven, this.getColor(R.color.light_channel_even)),

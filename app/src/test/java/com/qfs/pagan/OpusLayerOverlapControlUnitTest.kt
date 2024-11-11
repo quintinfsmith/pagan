@@ -4,7 +4,6 @@ import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerLinks
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals

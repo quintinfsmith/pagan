@@ -40,12 +40,6 @@ enum class HistoryToken {
     SET_TUNING_MAP,
     SWAP_LINES,
     UNSET,
-    // Links
-    CREATE_LINK_POOL,
-    LINK_BEATS,
-    LINK_BEAT_TO_POOL,
-    RESTORE_LINK_POOLS,
-    UNLINK_BEAT,
     // Interface
     CURSOR_SELECT,
     CURSOR_SELECT_COLUMN,

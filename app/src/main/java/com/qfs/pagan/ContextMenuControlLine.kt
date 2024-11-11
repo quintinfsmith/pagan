@@ -54,9 +54,14 @@ class ContextMenuControlLine<T: OpusControlEvent>(var widget: ControlWidget<T>, 
         val cursor = opus_manager.cursor
 
         this.button_toggle_line_control = this.primary!!.findViewById(R.id.btnToggleCtl)
-        this.button_toggle_line_control.setImageResource(R.drawable.volume_minus)
-        this.button_toggle_line_control.setOnClickListener {
-            opus_manager.toggle_control_line_visibility(cursor.ctl_level!!, cursor.ctl_type!!)
+        if (cursor.ctl_level == CtlLineLevel.Line) {
+            this.button_toggle_line_control.setImageResource(R.drawable.volume_minus)
+            this.button_toggle_line_control.setOnClickListener {
+                opus_manager.toggle_control_line_visibility(cursor.ctl_level!!, cursor.ctl_type!!)
+            }
+            this.button_toggle_line_control.visibility = View.VISIBLE
+        } else {
+            this.button_toggle_line_control.visibility = View.GONE
         }
 
         this.secondary!!.addView(this.widget as View)

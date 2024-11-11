@@ -2287,7 +2287,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 ControlEventType.Tempo -> {
                                     val controller = controller_set.get_controller<OpusTempoEvent>(this.cursor.ctl_type!!)
                                     it.set_context_menu_control_line(
-                                        ControlWidgetTempo(controller.initial_event, false, this.get_activity()!!) { event: OpusTempoEvent ->
+                                        ControlWidgetTempo(controller.initial_event, true, this.get_activity()!!) { event: OpusTempoEvent ->
                                             this.set_event_at_cursor(event)
                                         }
                                     )
@@ -2295,7 +2295,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 ControlEventType.Volume -> {
                                     val controller = controller_set.get_controller<OpusVolumeEvent>(this.cursor.ctl_type!!)
                                     it.set_context_menu_control_line(
-                                        ControlWidgetVolume(controller.initial_event, false, this.get_activity()!!) { event: OpusVolumeEvent ->
+                                        ControlWidgetVolume(controller.initial_event, true, this.get_activity()!!) { event: OpusVolumeEvent ->
                                             this.set_event_at_cursor(event)
                                         }
                                     )
@@ -2303,16 +2303,13 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 ControlEventType.Reverb -> {
                                     val controller = controller_set.get_controller<OpusReverbEvent>(this.cursor.ctl_type!!)
                                     it.set_context_menu_control_line(
-                                        ControlWidgetReverb(controller.initial_event, false, this.get_activity()!!) { event: OpusReverbEvent ->
+                                        ControlWidgetReverb(controller.initial_event, true, this.get_activity()!!) { event: OpusReverbEvent ->
                                             this.set_event_at_cursor(event)
                                         }
                                     )
                                 }
                                 null -> return@withFragment
                             }
-                        }
-                        this.withFragment {
-
                         }
                     }
 

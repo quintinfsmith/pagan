@@ -203,7 +203,11 @@
     <style name="volume_widget_button">
         <item name="android:textSize">20sp</item>
         <item name="android:fontFamily">monospace</item>
+    </style>
 
+    <style name="pan_widget">
+        <item name="android:paddingBottom">16dp</item>
+        <item name="android:paddingTop">16dp</item>
     </style>
 
 </resources>

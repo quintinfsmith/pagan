@@ -227,7 +227,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         if (this.widget_wrapper.isEmpty()) {
             this.init_widget()
         } else {
-            this.widget.set_event(current_event)
+            this.widget.set_event(current_event, true)
         }
 
         val ctl_tree = when (cursor.ctl_level!!) {
@@ -269,7 +269,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             this.button_duration.text = this.context.getString(R.string.label_duration, ctl_tree.get_event()!!.duration)
         }
 
-        this.widget.set_event(current_event)
+        this.widget.set_event(current_event, true)
     }
 
     fun <T: OpusControlEvent> get_control_event(): T {

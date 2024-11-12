@@ -6,8 +6,10 @@ import android.view.ViewGroup
 import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
@@ -77,9 +79,17 @@ abstract class LeafButtonCtl(
 
     private fun get_label_text(event: OpusControlEvent): String {
         return when (event) {
-            is OpusVolumeEvent -> (event.value).toString()
+            is OpusVolumeEvent -> {
+                when (event.transition) {
+                    ControlTransition.Linear -> "/"
+                    ControlTransition.Instant -> "|"
+                    ControlTransition.Concave -> "("
+                    ControlTransition.Convex -> ")"
+                } + (event.value).toString()
+            }
             is OpusTempoEvent -> event.value.roundToInt().toString()
             is OpusReverbEvent -> "TODO"
+            is OpusPanEvent -> (event.value * 100).toInt().toString()
             else -> "???"
         }
     }

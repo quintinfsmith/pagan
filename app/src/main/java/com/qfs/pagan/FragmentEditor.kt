@@ -16,9 +16,14 @@ import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusPanEvent
+import com.qfs.pagan.opusmanager.OpusReverbEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import java.io.File
 import java.io.FileInputStream
 import kotlin.concurrent.thread
@@ -333,8 +338,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
 
             thread {
+                this.load_from_bkp()
                 try {
-                    this.load_from_bkp()
                 } catch (e: Exception) {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up
@@ -515,22 +520,108 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
 
-    internal fun <T: OpusControlEvent> set_context_menu_control_line(control_widget: ControlWidget<T>) {
+    internal fun set_context_menu_control_line() {
         // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
         this.clear_context_menu()
-        this.active_context_menu = ContextMenuControlLine<T>(
-            control_widget,
+
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val channels = opus_manager.get_all_channels()
+
+        val cursor = opus_manager.cursor
+        val controller_set = when (cursor.ctl_level!!) {
+            CtlLineLevel.Line -> {
+                channels[cursor.channel].lines[cursor.line_offset].controllers
+            }
+            CtlLineLevel.Channel -> {
+                val channel = cursor.channel
+                channels[channel].controllers
+            }
+            CtlLineLevel.Global -> {
+                opus_manager.controllers
+            }
+        }
+
+        val widget = when (cursor.ctl_type!!) {
+            ControlEventType.Tempo -> {
+                val controller = controller_set.get_controller<OpusTempoEvent>(cursor.ctl_type!!)
+                ControlWidgetTempo(controller.initial_event, true, main) { event: OpusTempoEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+            ControlEventType.Volume -> {
+                val controller = controller_set.get_controller<OpusVolumeEvent>(cursor.ctl_type!!)
+                ControlWidgetVolume(controller.initial_event, true, main) { event: OpusVolumeEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+            ControlEventType.Reverb -> {
+                val controller = controller_set.get_controller<OpusReverbEvent>(cursor.ctl_type!!)
+                ControlWidgetReverb(controller.initial_event, true, main) { event: OpusReverbEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+
+            ControlEventType.Pan -> {
+                val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
+                ControlWidgetPan(controller.initial_event, true, main) { event: OpusPanEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+        }
+
+
+        this.active_context_menu = ContextMenuControlLine(
+            widget,
             this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
             this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         )
         this.show_context_menus()
     }
 
-    internal fun <T: OpusControlEvent> set_context_menu_line_control_leaf(control_widget: ControlWidget<T>) {
+    internal fun set_context_menu_line_control_leaf() {
         // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
         this.clear_context_menu()
+
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val controller_set = opus_manager.get_active_active_control_set() ?: return
+
+        val widget = when (cursor.ctl_type!!) {
+            ControlEventType.Tempo -> {
+                val controller = controller_set.get_controller<OpusTempoEvent>(cursor.ctl_type!!)
+                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
+                ControlWidgetTempo(default, false, main) { event: OpusTempoEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+            ControlEventType.Volume -> {
+                val controller = controller_set.get_controller<OpusVolumeEvent>(cursor.ctl_type!!)
+                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
+                ControlWidgetVolume(default, false, main) { event: OpusVolumeEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+            ControlEventType.Reverb -> {
+                val controller = controller_set.get_controller<OpusReverbEvent>(cursor.ctl_type!!)
+                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
+                ControlWidgetReverb(default, false, main) { event: OpusReverbEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+
+            ControlEventType.Pan -> {
+                val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
+                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
+                ControlWidgetPan(default, false, main) { event: OpusPanEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+        }
+
         this.active_context_menu = ContextMenuControlLeaf(
-            control_widget,
+            widget,
             this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
             this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         )

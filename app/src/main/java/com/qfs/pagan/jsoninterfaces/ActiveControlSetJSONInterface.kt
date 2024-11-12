@@ -19,12 +19,16 @@ class ActiveControlSetJSONInterface() {
                     "volume" -> {
                         ActiveControllerJSONInterface.from_json<OpusVolumeEvent>(json_controller, size)
                     }
+                    "pan" -> {
+                        ActiveControllerJSONInterface.from_json<OpusPanEvent>(json_controller, size)
+                    }
                     else -> throw UnknownControllerException(label)
                 }
 
                 val key = when (controller) {
                     is TempoController -> ControlEventType.Tempo
                     is VolumeController -> ControlEventType.Volume
+                    is PanController -> ControlEventType.Pan
                     //is ReverbController -> ControlEventType.Reverb
                     else -> throw UnknownControllerException()
                 }

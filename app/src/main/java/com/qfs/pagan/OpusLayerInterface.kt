@@ -20,9 +20,6 @@ import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusLinePercussion
 import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.OpusReverbEvent
-import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
@@ -888,9 +885,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-
     override fun on_project_changed() {
         super.on_project_changed()
+        for ((ctl_level, ctl_type) in this._activity!!.configuration.visible_line_controls) {
+
+        }
+
         this.recache_line_maps()
         this.ui_change_bill.queue_full_refresh()
         this.first_load_done = true
@@ -1404,6 +1404,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (this.is_ctl_line_visible(level, type)) {
             activity.configuration.visible_line_controls.remove(key)
         } else {
+            this.new_controller(level, type)
             activity.configuration.visible_line_controls.add(key)
         }
         activity.save_configuration()
@@ -1495,15 +1496,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         val percussion_visible = this.get_activity()!!.view_model.show_percussion
         var ctl_line = 0
         var visible_line = 0
-        val channels = List(this.channels.size + 1) { i: Int ->
-            if (i < this.channels.size) {
-                this.channels[i]
-            } else {
-                this.percussion_channel
-            }
-        }
 
-        channels.forEachIndexed { channel_index: Int, channel: OpusChannelAbstract<*,*> ->
+        this.get_all_channels().forEachIndexed { channel_index: Int, channel: OpusChannelAbstract<*,*> ->
             val hide_channel = this.is_percussion(channel_index) && !percussion_visible
             for (line_offset in channel.lines.indices) {
                 if (!hide_channel) {
@@ -2204,48 +2198,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ContextMenuSetControlLeaf -> {
                         this.withFragment {
-                            val channels = this.get_all_channels()
-                            val controller_set = when (this.cursor.ctl_level) {
-                                CtlLineLevel.Line -> {
-                                    channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
-                                }
-                                CtlLineLevel.Channel -> {
-                                    val channel = this.cursor.channel
-                                    channels[channel].controllers
-                                }
-                                CtlLineLevel.Global -> {
-                                    this.controllers
-                                }
-                                null -> return@withFragment
-                            }
-
-                            when (this.cursor.ctl_type) {
-                                ControlEventType.Tempo -> {
-                                    val controller = controller_set.get_controller<OpusTempoEvent>(this.cursor.ctl_type!!)
-                                    it.set_context_menu_line_control_leaf(
-                                        ControlWidgetTempo(controller.initial_event, false, this.get_activity()!!) { event: OpusTempoEvent ->
-                                            this.set_event_at_cursor(event)
-                                        }
-                                    )
-                                }
-                                ControlEventType.Volume -> {
-                                    val controller = controller_set.get_controller<OpusVolumeEvent>(this.cursor.ctl_type!!)
-                                    it.set_context_menu_line_control_leaf(
-                                        ControlWidgetVolume(controller.initial_event, false, this.get_activity()!!) { event: OpusVolumeEvent ->
-                                            this.set_event_at_cursor(event)
-                                        }
-                                    )
-                                }
-                                ControlEventType.Reverb -> {
-                                    val controller = controller_set.get_controller<OpusReverbEvent>(this.cursor.ctl_type!!)
-                                    it.set_context_menu_line_control_leaf(
-                                        ControlWidgetReverb(controller.initial_event, false, this.get_activity()!!) { event: OpusReverbEvent ->
-                                            this.set_event_at_cursor(event)
-                                        }
-                                    )
-                                }
-                                null -> return@withFragment
-                            }
+                            it.set_context_menu_line_control_leaf()
                         }
                     }
 
@@ -2269,47 +2222,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     BillableItem.ContextMenuSetControlLine -> {
                         this.withFragment {
-                            val channels = this.get_all_channels()
-                            val controller_set = when (this.cursor.ctl_level) {
-                                CtlLineLevel.Line -> {
-                                    channels[this.cursor.channel].lines[this.cursor.line_offset].controllers
-                                }
-                                CtlLineLevel.Channel -> {
-                                    val channel = this.cursor.channel
-                                    channels[channel].controllers
-                                }
-                                CtlLineLevel.Global -> {
-                                    this.controllers
-                                }
-                                null -> return@withFragment
-                            }
-                            when (this.cursor.ctl_type) {
-                                ControlEventType.Tempo -> {
-                                    val controller = controller_set.get_controller<OpusTempoEvent>(this.cursor.ctl_type!!)
-                                    it.set_context_menu_control_line(
-                                        ControlWidgetTempo(controller.initial_event, true, this.get_activity()!!) { event: OpusTempoEvent ->
-                                            this.set_event_at_cursor(event)
-                                        }
-                                    )
-                                }
-                                ControlEventType.Volume -> {
-                                    val controller = controller_set.get_controller<OpusVolumeEvent>(this.cursor.ctl_type!!)
-                                    it.set_context_menu_control_line(
-                                        ControlWidgetVolume(controller.initial_event, true, this.get_activity()!!) { event: OpusVolumeEvent ->
-                                            this.set_event_at_cursor(event)
-                                        }
-                                    )
-                                }
-                                ControlEventType.Reverb -> {
-                                    val controller = controller_set.get_controller<OpusReverbEvent>(this.cursor.ctl_type!!)
-                                    it.set_context_menu_control_line(
-                                        ControlWidgetReverb(controller.initial_event, true, this.get_activity()!!) { event: OpusReverbEvent ->
-                                            this.set_event_at_cursor(event)
-                                        }
-                                    )
-                                }
-                                null -> return@withFragment
-                            }
+                            it.set_context_menu_control_line()
                         }
                     }
 

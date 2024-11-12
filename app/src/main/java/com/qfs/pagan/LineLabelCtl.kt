@@ -55,7 +55,8 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
         return when (this.ctl_type) {
             ControlEventType.Tempo -> R.drawable.tempo
             ControlEventType.Volume -> R.drawable.volume
-            ControlEventType.Reverb -> R.drawable.volume // Placeholder
+            ControlEventType.Reverb -> R.drawable.volume // Placeholder TODO
+            ControlEventType.Pan -> R.drawable.volume // Placeholder TODO
         }
     }
 

@@ -27,6 +27,12 @@ class ActiveControllerJSONInterface {
                     this.populate_controller(obj, controller, OpusControlEventJSONInterface::volume_event)
                     controller
                 }
+                "pan" -> {
+                    val controller = PanController(size)
+                    controller.set_initial_event(OpusControlEventJSONInterface.pan_event(obj.get_hashmap("initial")))
+                    this.populate_controller(obj, controller, OpusControlEventJSONInterface::pan_event)
+                    controller
+                }
                 else -> throw UnknownControllerException(label)
             }
         }
@@ -76,6 +82,7 @@ class ActiveControllerJSONInterface {
                         when (input.get_string("type")) {
                             "Tempo" -> "tempo"
                             "Volume" -> "volume"
+                            "Pan" -> "pan"
                             else -> throw Exception() // Nothing else was implemented
                         }
                     ),
@@ -110,6 +117,7 @@ class ActiveControllerJSONInterface {
             map["type"] = when (controller) {
                 is TempoController -> "tempo"
                 is VolumeController -> "volume"
+                is PanController -> "pan"
                 else -> throw Exception()
             }
 

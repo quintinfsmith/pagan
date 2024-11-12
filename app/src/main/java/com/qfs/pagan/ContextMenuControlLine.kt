@@ -5,11 +5,10 @@ import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 
-class ContextMenuControlLine<T: OpusControlEvent>(var widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent) {
+class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent) {
     lateinit var button_toggle_line_control: ButtonIcon
-
-
     init {
+
         this.init_widget()
         this.refresh()
     }
@@ -84,6 +83,6 @@ class ContextMenuControlLine<T: OpusControlEvent>(var widget: ControlWidget<T>, 
     override fun setup_interactions() { }
 
     override fun refresh() {
-        this.widget.set_event(this.get_control_event())
+        this.widget.set_event(this.get_control_event(), true)
     }
 }

@@ -1,11 +1,10 @@
 package com.qfs.pagan.opusmanager
 
-abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration)
-
 enum class ControlEventType {
     Tempo,
     Volume,
     Reverb,
+    Pan
 }
 
 enum class ControlTransition {
@@ -14,6 +13,11 @@ enum class ControlTransition {
     Concave,
     Convex
 }
+
+abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration) {
+    abstract override fun copy(): OpusControlEvent
+}
+
 
 class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
     override fun equals(other: Any?): Boolean {
@@ -44,11 +48,11 @@ class OpusReverbEvent(var value: Float, duration: Int = 1): OpusControlEvent(dur
     }
 }
 
-class OpusBendEvent(var numerator: Int, var denominator: Int, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
-    override fun copy(): OpusBendEvent {
-        return OpusBendEvent(this.numerator, this.denominator, this.transition, this.duration)
+class OpusPanEvent(var value: Float, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
+    override fun copy(): OpusPanEvent {
+        return OpusPanEvent(this.value, this.transition, this.duration)
     }
     override fun equals(other: Any?): Boolean {
-        return other is OpusBendEvent && this.numerator == other.numerator && this.denominator == other.denominator && this.transition == other.transition && super.equals(other)
+        return other is OpusPanEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
     }
 }

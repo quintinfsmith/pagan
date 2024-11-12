@@ -1852,73 +1852,53 @@ open class OpusLayerBase {
             for (line in 0 until this.channels[channel].lines.size) {
                 val beat_key = BeatKey(channel, line, beat_index)
                 this.replace_tree(beat_key, listOf(), beats_in_column[y++] as OpusTree<TunedInstrumentEvent>)
-                for ((type, controller) in this.channels[channel].lines[line].controllers.get_all()) {
+                for ((type, _) in this.channels[channel].lines[line].controllers.get_all()) {
                     this.replace_line_ctl_tree(
                         type,
                         beat_key,
                         listOf(),
-                        when (type) {
-                            ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
-                            ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
-                            ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
-                        }
+                        beats_in_column[y++] as OpusTree<OpusControlEvent>
                     )
                 }
             }
-            for ((type, controller) in this.channels[channel].controllers.get_all()) {
+            for ((type, _) in this.channels[channel].controllers.get_all()) {
                 this.replace_channel_ctl_tree(
                     type,
                     channel,
                     beat_index,
                     listOf(),
-                    when (type) {
-                        ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
-                        ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
-                        ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
-                    }
+                    beats_in_column[y++] as OpusTree<OpusControlEvent>
                 )
             }
         }
         for (line in 0 until this.percussion_channel.lines.size) {
             this.replace_tree(BeatKey(this.channels.size, line, beat_index), listOf(), beats_in_column[y++] as OpusTree<PercussionEvent>)
-            for ((type, controller) in this.percussion_channel.lines[line].controllers.get_all()) {
+            for ((type, _) in this.percussion_channel.lines[line].controllers.get_all()) {
                 this.replace_line_ctl_tree(
                     type,
                     BeatKey(this.channels.size, line, beat_index),
                     listOf(),
-                    when (type) {
-                        ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
-                        ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
-                        ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
-                    }
+                    beats_in_column[y++] as OpusTree<OpusControlEvent>
                 )
             }
         }
 
-        for ((type, controller) in this.percussion_channel.controllers.get_all()) {
+        for ((type, _) in this.percussion_channel.controllers.get_all()) {
             this.replace_channel_ctl_tree(
                 type,
                 this.channels.size,
                 beat_index,
                 listOf(),
-                when (type) {
-                    ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
-                    ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
-                    ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
-                }
+                beats_in_column[y++] as OpusTree<OpusControlEvent>
             )
         }
 
-        for ((type, controller) in this.controllers.get_all()) {
+        for ((type, _) in this.controllers.get_all()) {
             this.replace_global_ctl_tree(
                 type,
                 beat_index,
                 listOf(),
-                when (type) {
-                    ControlEventType.Tempo -> beats_in_column[y++] as OpusTree<OpusTempoEvent>
-                    ControlEventType.Volume -> beats_in_column[y++] as OpusTree<OpusVolumeEvent>
-                    ControlEventType.Reverb -> beats_in_column[y++] as OpusTree<OpusReverbEvent>
-                }
+                beats_in_column[y++] as OpusTree<OpusControlEvent>
             )
         }
     }
@@ -2491,27 +2471,19 @@ open class OpusLayerBase {
     }
 
     private fun _setup_default_controllers() {
-        for (channel in this.channels) {
+        for (channel in this.get_all_channels()) {
             for (line in channel.lines) {
-                if (line.controllers.size() == 0) {
+                if (!line.controllers.has_controller(ControlEventType.Volume)) {
                     line.controllers.new_controller(ControlEventType.Volume)
+
+                }
+                if (!line.controllers.has_controller(ControlEventType.Pan)) {
+                    line.controllers.new_controller(ControlEventType.Pan)
                 }
             }
-            if (channel.controllers.size() == 0) {
-                channel.controllers.new_controller(ControlEventType.Volume)
-            }
         }
 
-        for (line in this.percussion_channel.lines) {
-            if (line.controllers.size() == 0) {
-                line.controllers.new_controller(ControlEventType.Volume)
-            }
-        }
-        if (this.percussion_channel.controllers.size() == 0) {
-            this.percussion_channel.controllers.new_controller(ControlEventType.Volume)
-        }
-
-        if (this.controllers.size() == 0) {
+        if (!this.controllers.has_controller(ControlEventType.Tempo)) {
             this.controllers.new_controller(ControlEventType.Tempo)
         }
         this.recache_line_maps()
@@ -2565,7 +2537,7 @@ open class OpusLayerBase {
             return null
         }
 
-        return event
+        return event.copy() as T
     }
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
@@ -3604,6 +3576,26 @@ open class OpusLayerBase {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
             throw OpusLineAbstract.BlockedCtlTreeException(type, e)
+        }
+    }
+
+    fun new_controller(level: CtlLineLevel, type: ControlEventType) {
+        when (level) {
+            CtlLineLevel.Line -> {
+                for (channel in this.get_all_channels()) {
+                    for (line in channel.lines) {
+                        line.controllers.new_controller(type)
+                    }
+                }
+            }
+            CtlLineLevel.Channel -> {
+                for (channel in this.get_all_channels()) {
+                    channel.controllers.new_controller(type)
+                }
+            }
+            CtlLineLevel.Global -> {
+                this.controllers.new_controller(type)
+            }
         }
     }
 

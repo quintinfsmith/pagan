@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt
 
@@ -21,7 +20,6 @@ class ControlWidgetTempo(default: OpusTempoEvent, is_initial_event: Boolean, con
             this.input.get_main().dialog_float_input(context.getString(R.string.dlg_set_tempo), this.min, this.max, event.value) { new_value: Float ->
                 val new_event = OpusTempoEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
                 this.set_event(new_event)
-                this.callback(new_event)
             }
         }
 

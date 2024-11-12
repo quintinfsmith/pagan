@@ -31,6 +31,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
                 ControlEventType.Tempo -> TempoController(this.beat_count)
                 ControlEventType.Volume -> VolumeController(this.beat_count)
                 ControlEventType.Reverb -> ReverbController(this.beat_count)
+                ControlEventType.Pan -> PanController(this.beat_count)
             }
         } else {
             this.controllers[type] = controller

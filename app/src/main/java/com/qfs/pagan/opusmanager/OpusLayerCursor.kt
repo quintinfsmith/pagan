@@ -8,14 +8,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
     var cursor = OpusManagerCursor()
     private var _queued_cursor_selection: OpusManagerCursor? = null
 
-    override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
-        super.insert_line(channel, line_offset, line)
-    }
-
-    override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
-        return super.new_line(channel, line_offset)
-    }
-
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
         this.cursor_select_line(channel_b, line_b)
@@ -1482,6 +1474,34 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     new_position
                 )
             }
+        }
+    }
+
+    fun <T: OpusControlEvent> set_initial_event(event: T) {
+        when (this.cursor.ctl_level) {
+            null -> return
+            CtlLineLevel.Line -> this.set_line_controller_initial_event(this.cursor.ctl_type!!, this.cursor.channel, this.cursor.line_offset, event)
+            CtlLineLevel.Channel -> this.set_channel_controller_initial_event(this.cursor.ctl_type!!, this.cursor.channel, event)
+            CtlLineLevel.Global -> this.set_global_controller_initial_event(this.cursor.ctl_type!!, event)
+        }
+    }
+
+    fun get_active_active_control_set(): ActiveControlSet? {
+        val channels = this.get_all_channels()
+
+        val cursor = this.cursor
+        return when (cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                channels[cursor.channel].lines[cursor.line_offset].controllers
+            }
+            CtlLineLevel.Channel -> {
+                val channel = cursor.channel
+                channels[channel].controllers
+            }
+            CtlLineLevel.Global -> {
+                this.controllers
+            }
+            else -> null
         }
     }
 }

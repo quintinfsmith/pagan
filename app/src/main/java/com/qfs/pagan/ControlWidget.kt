@@ -10,9 +10,12 @@ abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_
     fun get_event(): T {
         return this.working_event
     }
-    fun set_event(event: T) {
+    fun set_event(event: T, surpress_callback: Boolean = false) {
         this.working_event = event
         this.on_set(event)
+        if (!surpress_callback) {
+            this.callback(event)
+        }
     }
 
 }

@@ -12,12 +12,17 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context) {
     init {
+        val activity = this.get_activity()
+        val color_map = activity.view_model.color_map
+        this.setBackgroundColor(color_map[ColorMap.Palette.Lines])
+
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
             val adapter = (view.parent.parent as LineLabelColumnLayout)
             val opus_manager = this.get_opus_manager()
             val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
                 opus_manager.get_ctl_line_from_row( this.row )
             )
+
             if (ctl_level != null) {
                 return@setOnDragListener true
             }
@@ -63,6 +68,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         this.set_inner_label()
         this.layoutParams.width = WRAP_CONTENT
         this.layoutParams.height = WRAP_CONTENT
+
     }
 
     private fun set_inner_label() {
@@ -97,6 +103,23 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
 
     fun reset_row(new_row: Int) {
         this.row = new_row
+
+        val opus_manager = this.get_opus_manager()
+        val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_row( this.row )
+        )
+        if (ctl_level == null) {
+            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+            if (channel != 0 && line_offset == 0) {
+                this.setPadding(0, 20, 0, 0)
+            }
+            // Kludge: Only works because Only one global control is in use (Tempo)
+        } else if (ctl_level == CtlLineLevel.Global) {
+            this.setPadding(0, 20, 0, 0)
+        } else {
+            this.setPadding(0, 0, 0, 0)
+        }
+
         this.set_inner_label()
     }
 

@@ -89,6 +89,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     private fun _notify_item_range_changed(y: Int, count: Int) {
+        println("ITEM RANGE CHANGE: $y $count")
         if (y >= this._inner_wrapper.childCount) {
             // Nothing to change
             return

@@ -21,7 +21,6 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         this.layoutParams.width = WRAP_CONTENT
         this.overScrollMode = View.OVER_SCROLL_NEVER
         this.column_width_factor = this._get_editor_table().get_column_width(this._view_holder.bindingAdapterPosition)
-
         this._populate()
     }
 

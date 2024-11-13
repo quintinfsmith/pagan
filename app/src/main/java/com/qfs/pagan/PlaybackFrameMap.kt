@@ -203,7 +203,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: HashMap<Int, Float>? = null) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: HashMap<Int, Float>? = null, pan_profile: HashMap<Int, Float>? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -242,6 +242,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
                 if (volume_profile != null) {
                     handle.volume_profile = volume_profile
+                }
+                if (pan_profile != null) {
+                    handle.pan_profile = pan_profile
                 }
 
                 handle_uuid_set.add(handle.uuid)
@@ -607,11 +610,27 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         } else {
             null
         }
+        val new_pan_profile = if (this._pan_map.containsKey(line_pair)) {
+            val tmp = HashMap<Int, Float>()
+            val sorted_keys = this._pan_map[line_pair]!!.keys.toMutableList()
+            sorted_keys.sort()
+
+            for (key_frame in sorted_keys) {
+                if (key_frame < start_frame) {
+                    tmp[0] = this._pan_map[line_pair]!![key_frame]!!
+                } else if (key_frame in start_frame .. end_frame) {
+                    tmp[key_frame - start_frame] = this._pan_map[line_pair]!![key_frame]!!
+                }
+            }
+            tmp
+        } else {
+            null
+        }
 
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up
         if (start_event != null) {
-            this._add_handles(start_frame, end_frame, start_event, new_volume_profile)
+            this._add_handles(start_frame, end_frame, start_event, new_volume_profile, new_pan_profile)
         }
 
         return when (event) {

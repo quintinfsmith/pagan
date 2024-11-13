@@ -651,7 +651,7 @@ class MainActivity : AppCompatActivity() {
                     this._midi_playback_device = PlaybackDevice(
                         this,
                         this._sample_handle_manager!!,
-                        WaveGenerator.StereoMode.Mono
+                        WaveGenerator.StereoMode.Stereo
                     )
 
                     if (!this._midi_interface.output_devices_connected()) {
@@ -2062,7 +2062,7 @@ class MainActivity : AppCompatActivity() {
             this._midi_playback_device = PlaybackDevice(
                 this,
                 this._sample_handle_manager!!,
-                WaveGenerator.StereoMode.Mono
+                WaveGenerator.StereoMode.Stereo
             )
         } else {
             this._midi_playback_device = null

@@ -89,7 +89,6 @@ class SampleHandle(
         //    }
         //}
 
-        println("${this.pan_profile}")
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)
         this.repitch(1F)

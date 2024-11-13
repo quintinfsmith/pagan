@@ -220,8 +220,16 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
             }
 
-            working_int_array[(f * 2)] += right_value
-            working_int_array[(f * 2) + 1] += left_value
+            working_int_array[(f * 2)] += right_value * if (sample_handle._current_pan >= 0f) {
+                1F
+            }  else {
+                1F + sample_handle._current_pan
+            }
+            working_int_array[(f * 2) + 1] += left_value * if (sample_handle._current_pan <= 0f) {
+                1F
+            }  else {
+                1F - sample_handle._current_pan
+            }
         }
 
         for (f in range) {

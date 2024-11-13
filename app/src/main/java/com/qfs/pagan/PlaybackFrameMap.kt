@@ -15,6 +15,7 @@ import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLineAbstract
+import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
@@ -42,6 +43,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
     private val _volume_map = HashMap<Pair<Int, Int>, HashMap<Int, Float>>() // (channel, line_offset)::[frame::volume]
+    private val _pan_map = HashMap<Pair<Int, Int>, HashMap<Int, Float>>() // (channel, line_offset)::[frame::pan]
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -191,6 +193,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._handle_range_map.clear()
         this._tempo_ratio_map.clear()
         this._volume_map.clear()
+        this._pan_map.clear()
         this._cached_beat_frames = null
 
         this._setter_id_gen = 0
@@ -261,6 +264,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.map_tempo_changes()
         this.get_marked_frames()
         this.map_volume_changes()
+        this.map_pan_changes()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             for (l in channel.lines.indices) {
@@ -392,6 +396,94 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                             }
                             working_volume = working_event.value
+                        } else if (!working_tree.is_leaf()) {
+                            val new_width = working_item.relative_width / working_tree.size.toFloat()
+                            for (i in 0 until working_tree.size) {
+                                val new_position = working_item.position.toMutableList()
+                                new_position.add(i)
+                                stack.add(StackItem(new_position, working_tree[i], new_width, working_item.relative_offset + (new_width * i)))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun map_pan_changes() {
+        data class StackItem(val position: List<Int>, val tree: OpusTree<OpusPanEvent>?, val relative_width: Float, val relative_offset: Float)
+
+        this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
+            for (l in channel.lines.indices) {
+                val controller = channel.lines[l].get_controller<OpusPanEvent>(ControlEventType.Pan)
+                var working_pan = controller.initial_event.value
+                this._pan_map[Pair(c, l)] = hashMapOf(0 to working_pan)
+
+                for (b in 0 until this.opus_manager.beat_count) {
+                    val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
+                    while (stack.isNotEmpty()) {
+                        val working_item = stack.removeFirst()
+                        val working_tree = working_item.tree ?: continue
+
+                        if (working_tree.is_event()) {
+                            val working_event = working_tree.get_event()!! as OpusPanEvent
+                            val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
+                            val diff = working_event.value - working_pan
+
+                            if (diff == 0f) {
+                                continue
+                            }
+
+                            when (working_event.transition) {
+                                ControlTransition.Instant -> {
+                                    this._pan_map[Pair(c, l)]!![start_frame] = working_event.value
+                                }
+
+                                ControlTransition.Linear -> {
+                                    val negative_modifier = diff / abs(diff)
+                                    val int_diff = abs(diff * 100F).toInt()
+                                    val frame_step_size = (end_frame - start_frame) / abs(int_diff)
+
+                                    for (i in 0 .. abs(int_diff)) {
+                                        val intermediate_frame = (frame_step_size * i) + start_frame
+                                        this._pan_map[Pair(c, l)]!![intermediate_frame] = working_pan + ((i.toFloat() / 100F) * negative_modifier)
+                                    }
+                                }
+
+                                ControlTransition.Convex -> {
+                                    val negative_modifier = diff / abs(diff)
+
+                                    val float_count = abs(diff * 100F)
+                                    val count = float_count.toInt()
+                                    val frame_step_size = (end_frame - start_frame) / abs(count)
+
+                                    val half_pi = PI.toFloat() / 2F
+                                    for (i in 0 .. abs(count)) {
+                                        val intermediate_frame = (frame_step_size * i) + start_frame
+                                        val y: Float = sin(((i + 1).toFloat() / float_count) * half_pi) * diff
+
+                                        this._pan_map[Pair(c, l)]!![intermediate_frame] = working_pan + y
+                                    }
+                                }
+
+                                ControlTransition.Concave -> {
+                                    TODO()
+                                    //
+                                    // val count = abs(diff)
+                                    //// val frame_step_size = (end_frame - start_frame) / abs(diff)
+                                    //// val float_count = count.toFloat()
+                                    //// val float_value = working_pan.toFloat()
+
+                                    //// val half_pi = PI.toFloat() / 2F
+                                    //// for (i in 0 until count) {
+                                    ////     val intermediate_frame = (frame_step_size * i) + start_frame
+                                    ////     val y: Float = (i.toFloat() / float_count).pow(2)
+                                    ////     this._pan_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
+                                    //// }
+                                }
+
+                            }
+                            working_pan = working_event.value
                         } else if (!working_tree.is_leaf()) {
                             val new_width = working_item.relative_width / working_tree.size.toFloat()
                             for (i in 0 until working_tree.size) {

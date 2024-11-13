@@ -23,6 +23,7 @@ class SampleHandle(
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
     var volume_profile: HashMap<Int, Float> = hashMapOf(0 to 1F),
+    var pan_profile: HashMap<Int, Float> = hashMapOf(0 to 0F),
     data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
@@ -39,6 +40,7 @@ class SampleHandle(
 
     var working_frame: Int = 0
     var _current_volume: Float = 1F
+    var _current_pan: Float = 0F
 
     var release_frame: Int? = null
     var kill_frame: Int? = null
@@ -87,6 +89,7 @@ class SampleHandle(
         //    }
         //}
 
+        println("${this.pan_profile}")
         val dt =  (1f / this.sample_rate.toFloat())
         this.smoothing_factor = dt / (this.RC + dt)
         this.repitch(1F)
@@ -195,6 +198,7 @@ class SampleHandle(
                 filter_cutoff = original.filter_cutoff,
                 pan = original.pan,
                 volume_profile = original.volume_profile,
+                pan_profile = original.pan_profile,
                 data_buffers = Array(original._data_buffers.size) { i: Int ->
                     var buffer = original._data_buffers[i]
                     // constructing this way allows us to skip calculating max
@@ -263,6 +267,23 @@ class SampleHandle(
             working_volume
         }
 
+        // Set pan
+        this._current_pan = if (this.pan_profile.containsKey(frame)) {
+            this.pan_profile[frame]!!
+        } else {
+            val sorted_keys = this.pan_profile.keys.toMutableList()
+            sorted_keys.sort()
+            var working_pan = 1F
+            for (key_frame in sorted_keys) {
+                if (key_frame < frame) {
+                    working_pan = this.pan_profile[key_frame]!!
+                } else {
+                    break
+                }
+            }
+            working_pan
+        }
+
 
         val loop_points = this.loop_points
         val release_frame = this.release_frame
@@ -322,6 +343,11 @@ class SampleHandle(
         // Set Volume
         if (this.volume_profile.containsKey(this.working_frame)) {
             this._current_volume = this.volume_profile[this.working_frame]!!
+        }
+
+        // Set Pan
+        if (this.pan_profile.containsKey(this.working_frame)) {
+            this._current_pan = this.pan_profile[this.working_frame]!!
         }
 
         if (this.working_frame < this.volume_envelope.frames_delay) {

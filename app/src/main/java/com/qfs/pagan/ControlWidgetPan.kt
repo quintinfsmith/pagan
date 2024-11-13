@@ -3,10 +3,12 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import kotlin.math.max
 import kotlin.math.min
@@ -16,6 +18,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
     private val _slider = PaganSeekBar(context)
     private val label_left = PaganTextView(context)
     private val label_right = PaganTextView(context)
+    private val _transition_button = ButtonIcon(context)
 
     private val _min = -100
     private val _max = 100
@@ -24,6 +27,25 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         this.orientation = HORIZONTAL
 
         this.set_text(default.value)
+
+        if (this.is_initial_event) {
+            this._transition_button.visibility = View.GONE
+        } else {
+            this._transition_button.setImageResource(R.drawable.volume) // TODO transition icons
+            this._transition_button.setOnClickListener {
+                val main = (this.context as ContextThemeWrapper).baseContext as MainActivity
+                val control_transitions = ControlTransition.values()
+                val options = List(control_transitions.size) { i: Int ->
+                    Pair(control_transitions[i], control_transitions[i].name)
+                }
+
+                val event = this.get_event()
+                main.dialog_popup_menu("Transition", options, default = event.transition) { i: Int, transition: ControlTransition ->
+                    event.transition = transition
+                    this.set_event(event)
+                }
+            }
+        }
 
         this.label_left.text = "L"
         this.label_right.text = "R"
@@ -51,6 +73,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         this.addView(this.label_left)
         this.addView(this._slider)
         this.addView(this.label_right)
+        this.addView(this._transition_button)
 
         this.label_left.layoutParams.width = WRAP_CONTENT
         this.label_left.layoutParams.height = WRAP_CONTENT

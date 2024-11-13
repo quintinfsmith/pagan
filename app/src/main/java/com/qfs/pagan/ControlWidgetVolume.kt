@@ -40,7 +40,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
                 val event = this.get_event()
                 main.dialog_popup_menu("Transition", options, default = event.transition) { i: Int, transition: ControlTransition ->
                     event.transition = transition
-                    this.callback(event)
+                    this.set_event(event)
                 }
             }
         }

@@ -1173,7 +1173,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Single -> {
                 if (this.cursor.ctl_level == CtlLineLevel.Global && control_type == this.cursor.ctl_type) {
                     val cposition = this.cursor.get_position()
-                    println("$beat. ${this.cursor.beat} || $position, $cposition")
                     beat == this.cursor.beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
                 } else {
                     false

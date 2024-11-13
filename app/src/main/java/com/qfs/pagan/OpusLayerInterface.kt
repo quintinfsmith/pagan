@@ -1518,7 +1518,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
             }
 
-            for (type in channel.controllers.controllers.keys) {
+            for ((type, _) in channel.controllers.get_all()) {
                 if (this.is_ctl_line_visible(CtlLineLevel.Channel, type) && !hide_channel) {
                     this._cached_inv_visible_line_map[ctl_line] = visible_line
                     this._cached_row_map[visible_line] = ctl_line
@@ -1529,7 +1529,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
         }
 
-        for (type in this.controllers.controllers.keys) {
+        for ((type, _) in this.controllers.get_all()) {
             if (this.is_ctl_line_visible(CtlLineLevel.Global, type)) {
                 this._cached_inv_visible_line_map[ctl_line] = visible_line
                 this._cached_row_map[visible_line] = ctl_line
@@ -1802,6 +1802,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 )
                             }
                         }
+
 
 
                         val shadow_beats = mutableSetOf<Int>()

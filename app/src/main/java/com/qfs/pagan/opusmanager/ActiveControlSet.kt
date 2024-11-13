@@ -22,7 +22,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         var keys = this.controllers.keys.toList().sorted()
         return Array(this.controllers.size) {
             Pair(keys[it], this.controllers[keys[it]]!!)
-        }
+        }.reversedArray()
     }
 
     fun new_controller(type: ControlEventType, controller: ActiveController<*>? = null) {

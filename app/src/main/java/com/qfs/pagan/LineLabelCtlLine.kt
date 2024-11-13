@@ -21,7 +21,6 @@ class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel
         } catch (e: OpusLayerBase.InvalidOverwriteCall) {
             // pass
         }
-
         opus_manager.cursor_select_line_ctl_line(
             this.ctl_type,
             this.channel,

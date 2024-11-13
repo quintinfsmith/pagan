@@ -68,7 +68,6 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
     private fun set_inner_label() {
         this.removeAllViews()
         val opus_manager = this.get_opus_manager()
-
         val ctl_line = opus_manager.get_ctl_line_from_row(this.row)
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(ctl_line)
 

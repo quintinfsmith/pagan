@@ -643,6 +643,7 @@ open class OpusLayerBase {
                 )
             }
             opus_manager.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), opus_manager.beat_count)
+            opus_manager._setup_default_controllers()
 
             return opus_manager
         }
@@ -1944,7 +1945,7 @@ open class OpusLayerBase {
         }
         this.percussion_channel.remove_beat(working_beat_index, count)
 
-        for (controller in this.controllers.controllers.values) {
+        for ((_, controller) in this.controllers.get_all()) {
             controller.remove_beat(working_beat_index, count)
         }
 
@@ -2467,7 +2468,6 @@ open class OpusLayerBase {
     open fun load_json(json_data: JSONHashMap) {
         val input_manager = OpusLayerBase.load(json_data)
         this.import_from_other(input_manager)
-        this._setup_default_controllers()
     }
 
     private fun _setup_default_controllers() {
@@ -2883,7 +2883,7 @@ open class OpusLayerBase {
                 this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
                 this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
 
-                for ((type, _) in channel.lines[line_offset].controllers.controllers) {
+                for ((type, _) in channel.lines[line_offset].controllers.get_all()) {
                     this._cached_abs_line_map_map.add(
                         Triple(
                             this._cached_std_line_map[keypair]!!,
@@ -2893,7 +2893,7 @@ open class OpusLayerBase {
                     )
                 }
             }
-            for (type in channel.controllers.controllers.keys) {
+            for ((type, _) in channel.controllers.get_all()) {
                 this._cached_abs_line_map_map.add(
                     Triple(
                         channel_index,
@@ -2910,7 +2910,7 @@ open class OpusLayerBase {
             this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
             this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
 
-            for ((type, _) in this.percussion_channel.lines[line_offset].controllers.controllers) {
+            for ((type, _) in this.percussion_channel.lines[line_offset].controllers.get_all()) {
                 this._cached_abs_line_map_map.add(
                     Triple(
                         this._cached_std_line_map[keypair]!!,
@@ -2920,7 +2920,7 @@ open class OpusLayerBase {
                 )
             }
         }
-        for (type in this.percussion_channel.controllers.controllers.keys) {
+        for ((type, _) in this.percussion_channel.controllers.get_all()) {
             this._cached_abs_line_map_map.add(
                 Triple(
                     this.channels.size,
@@ -2930,7 +2930,7 @@ open class OpusLayerBase {
             )
         }
         // ------------------------------------------------------
-        for (type in this.controllers.controllers.keys) {
+        for ((type, _) in this.controllers.get_all()) {
             this._cached_abs_line_map_map.add(
                 Triple(
                     -1,

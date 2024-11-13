@@ -96,7 +96,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         for (beat in 0 until width) {
             column_label_adapter.add_column(beat)
         }
-
         this._line_label_layout.insert_labels(0, height)
 
         main_adapter.add_columns(0, width)

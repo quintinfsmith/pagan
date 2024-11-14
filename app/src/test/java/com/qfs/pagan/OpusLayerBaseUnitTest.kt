@@ -486,17 +486,17 @@ class OpusLayerBaseUnitTest {
             manager.insert_beat(manager.beat_count + 1)
         }
 
-        //assertThrows(IndexOutOfBoundsException::class.java) {
-        //    manager.remove_beat(manager.beat_count + 1)
-        //}
+        assertThrows(IndexOutOfBoundsException::class.java) {
+            manager.remove_beat(manager.beat_count + 1)
+        }
 
         while (manager.beat_count > 1) {
             manager.remove_beat(0)
         }
 
-        //assertThrows(OpusLayerBase.RemovingLastBeatException::class.java) {
-        //    manager.remove_beat(0)
-        //}
+        assertThrows(OpusLayerBase.RemovingLastBeatException::class.java) {
+            manager.remove_beat(0)
+        }
 
 
     }

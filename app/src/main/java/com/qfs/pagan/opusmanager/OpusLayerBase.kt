@@ -1789,7 +1789,6 @@ open class OpusLayerBase {
         }
         val working_beat_index = min(beat_index, this.beat_count - 1 - count)
         if (working_beat_index < 0 || working_beat_index + count > this.beat_count) {
-
             throw IndexOutOfBoundsException()
         }
 

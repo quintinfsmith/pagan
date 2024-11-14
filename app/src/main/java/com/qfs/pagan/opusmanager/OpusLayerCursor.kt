@@ -484,7 +484,6 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.select_channel(channel)
     }
 
-
     open fun cursor_select_line(channel: Int, line_offset: Int) {
         this.cursor.select_line(channel, line_offset)
     }

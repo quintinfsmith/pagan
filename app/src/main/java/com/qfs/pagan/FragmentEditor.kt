@@ -18,7 +18,6 @@ import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
@@ -485,10 +484,20 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> null
 
-            OpusManagerCursor.CursorMode.Channel -> TODO("CHANNEL")
+            OpusManagerCursor.CursorMode.Channel -> {
+                opus_manager.get_visible_row_from_ctl_line(
+                    opus_manager.get_actual_line_index(
+                        opus_manager.get_instrument_line_index(
+                            opus_manager.cursor.channel,
+                            0
+                        )
+                    )
+                )
+            }
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
             OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
             OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
             OpusManagerCursor.CursorMode.Single -> {
@@ -509,7 +518,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 Triple(cursor.beat, offset, width)
             }
             OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
-            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
         }
 
@@ -676,6 +684,17 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.show_context_menus()
     }
 
+    internal fun set_context_menu_channel() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuChannel>()) {
+            this.active_context_menu = ContextMenuChannel(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+
     internal fun set_context_menu_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
             this.active_context_menu = ContextMenuLeaf(
@@ -695,10 +714,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
         this.show_context_menus()
     }
-    internal fun set_context_menu_channel() {
-        TODO("CHANNEL")
-    }
-
 
 
     fun shortcut_dialog() {

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/llContextRow"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+        <com.qfs.pagan.ButtonIcon
+            android:id="@+id/btnToggleVolCtl"
+            android:theme="@style/icon_button"
+            app:srcCompat="@drawable/volume_plus"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:contentDescription="Toggle Volume Control"/>
+
+        <com.qfs.pagan.ButtonStd
+            android:layout_gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:theme="@style/button"
+            android:id="@+id/btnChooseInstrument"
+            android:textSize="18sp"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/icon_button_height"
+            android:textAlignment="center"
+            android:text="" />
+
+        <com.qfs.pagan.ButtonIcon
+            android:id="@+id/btnRemoveLine"
+            android:theme="@style/icon_button"
+            app:srcCompat="@drawable/remove_line"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:contentDescription="Remove Line"/>
+
+        <com.qfs.pagan.ButtonIcon
+            android:theme="@style/icon_button"
+            android:id="@+id/btnInsertLine"
+            app:srcCompat="@drawable/insert_line"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:contentDescription="Insert Line"/>
+
+</LinearLayout>

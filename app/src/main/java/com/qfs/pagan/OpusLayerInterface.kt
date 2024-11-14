@@ -1115,6 +1115,24 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun cursor_select_channel(channel: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
+        this.lock_ui_partial {
+            super.cursor_select_channel(channel)
+            this.temporary_blocker = null
+
+            val activity = this.get_activity()
+            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+                this.make_percussion_visible()
+            }
+
+            this.queue_cursor_update(this.cursor)
+            this.ui_change_bill.queue_set_context_menu_channel()
+        }
+    }
+
     override fun cursor_select_channel_ctl_line(ctl_type: ControlEventType, channel: Int) {
         if (this._block_cursor_selection()) {
             return
@@ -1936,7 +1954,17 @@ class OpusLayerInterface : OpusLayerCursor() {
                     else -> return // TODO: Throw Exception?
                 }
 
-                this.ui_change_bill.queue_row_change(y, true)
+                val channels = this.get_all_channels()
+                var x = 0
+                for (line in channels[cursor.channel].lines) {
+                    this.ui_change_bill.queue_row_change(y + x++, true)
+                    for (j in 0 until line.controllers.get_all().size) {
+                        this.ui_change_bill.queue_row_change(y + x++, true)
+                    }
+                }
+                for (j in 0 until channels[cursor.channel].controllers.get_all().size) {
+                    this.ui_change_bill.queue_row_change(y + x++, true)
+                }
             }
         }
 

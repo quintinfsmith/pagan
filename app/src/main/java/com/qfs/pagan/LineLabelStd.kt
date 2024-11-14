@@ -24,7 +24,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             this.on_click()
         }
 
-        // TODO: Need to set up long click ( within the touch_callback ) to select_channel
         this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
             this.touch_callback(view, touchEvent)
         }
@@ -66,6 +65,12 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                     new_state.add(R.attr.state_focused)
                 }
             }
+            OpusManagerCursor.CursorMode.Channel -> {
+                if (opus_manager.cursor.ctl_level == null && opus_manager.cursor.channel == this.channel) {
+                    new_state.add(R.attr.state_focused)
+                }
+
+            }
             else -> { }
         }
 
@@ -99,7 +104,11 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             }
         }
 
-        opus_manager.cursor_select_line(this.channel, this.line_offset)
+        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == this.channel && cursor.line_offset == this.line_offset && cursor.ctl_level == null) {
+            opus_manager.cursor_select_channel(this.channel)
+        } else {
+            opus_manager.cursor_select_line(this.channel, this.line_offset)
+        }
     }
 
     private fun _set_colors() {
@@ -172,7 +181,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             this.press_position = Pair(touchEvent.x, touchEvent.y)
             true
         } else if (touchEvent.action == MotionEvent.ACTION_UP) {
-            if (System.currentTimeMillis() - this.press_timestamp < this.click_threshold_millis && !column_layout.is_dragging()) {
+            val hold_time = System.currentTimeMillis() - this.press_timestamp
+            if (hold_time < this.click_threshold_millis && !column_layout.is_dragging()) {
                 performClick()
                 true
             } else {

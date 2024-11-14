@@ -49,7 +49,7 @@ data class OpusManagerCursor(
             }
 
             CursorMode.Channel -> {
-                other.channel == this.channel && this.ctl_level != other.ctl_level && this.ctl_type != other.ctl_type
+                other.channel == this.channel && this.ctl_level == other.ctl_level && this.ctl_type == other.ctl_type
             }
 
             CursorMode.Column -> {

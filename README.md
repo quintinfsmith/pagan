@@ -5,6 +5,12 @@ A music sequencer
 
 [![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/)
 
+ <div align="center">
+  
+[![fdroid](https://burnsomni.net/content/bmc-button-s.svg)](https://buymeacoffee.com/qfsmith/)
+
+ </div>
+
 
 ## What is it?
 Pagan is a music sequencer built around 2 main features:

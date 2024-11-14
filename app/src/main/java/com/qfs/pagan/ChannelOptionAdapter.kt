@@ -11,7 +11,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.ColorMap.Palette
 import kotlin.math.roundToInt
 
@@ -37,7 +36,6 @@ class ChannelOptionAdapter(
     }
 
     private var _channel_count = 0
-    private var _supported_instruments = HashMap<Pair<Int, Int>, String>()
     init {
         this._recycler.adapter = this
         this.registerAdapterDataObserver(
@@ -49,12 +47,7 @@ class ChannelOptionAdapter(
                 override fun onItemRangeInserted(start: Int, count: Int) { }
             }
         )
-        if (this.get_activity().is_connected_to_physical_device()) {
-            this.set_soundfont(null)
-        } else {
-            val soundfont = this.get_activity().get_soundfont()
-            this.set_soundfont(soundfont)
-        }
+        this.notify_soundfont_changed()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
@@ -91,7 +84,8 @@ class ChannelOptionAdapter(
 
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
         val key = Pair(curChannel.get_midi_bank(), curChannel.midi_program)
-        val label = this._supported_instruments[key] ?: if (this._opus_manager.is_percussion(position)) {
+        val supported_instruments = activity.get_supported_instrument_names()
+        val label = supported_instruments[key] ?: if (this._opus_manager.is_percussion(position)) {
             "${curChannel.midi_program}"
         } else {
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
@@ -168,71 +162,17 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnChooseInstrument(view: BackLinkView) {
+        println("AAA")
         val channel = view.view_holder?.bindingAdapterPosition ?: return
-
-        val sorted_keys = this._supported_instruments.keys.toList().sortedBy {
-            it.first + (it.second * 128)
-        }
-
-        val opus_manager = this._opus_manager
-        val is_percussion = opus_manager.is_percussion(channel)
-        val default_position = opus_manager.get_channel_instrument(channel)
-
-        val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
-        var current_instrument_supported = sorted_keys.contains(default_position)
-
-        for (key in sorted_keys) {
-            val name = this._supported_instruments[key]
-            if (is_percussion && key.first == 128) {
-                options.add(Pair(key, "[${key.second}] $name"))
-            } else if (key.first != 128 && !is_percussion) {
-                val pairstring = "${key.first}/${key.second}"
-                options.add(Pair(key, "[$pairstring] $name"))
-            }
-        }
-
-        val activity = this.get_activity()
-        if (is_percussion) {
-            val use_menu_dialog = options.isNotEmpty() && (!current_instrument_supported || options.size > 1)
-
-            if (use_menu_dialog) {
-                activity.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
-                    this.set_channel_instrument(channel, bank, program)
-                }
-            } else {
-                activity.dialog_number_input(activity.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second) { program: Int ->
-                    this.set_channel_instrument(channel, 1, program)
-                }
-            }
-        } else if (options.size > 1 || !current_instrument_supported) {
-            activity.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, (bank, program): Pair<Int, Int> ->
-                this.set_channel_instrument(channel, bank, program)
-            }
-        }
-    }
-
-    private fun set_channel_instrument(channel: Int, bank: Int, program: Int) {
-        this._opus_manager.set_channel_instrument(channel, Pair(bank, program))
+        println("AAABB $channel  B")
+        this.get_activity().dialog_set_channel_instrument(channel)
     }
 
     override fun getItemCount(): Int {
         return this._channel_count
     }
 
-    fun set_soundfont(soundfont: SoundFont?) {
-        this._supported_instruments.clear()
-
-        if (soundfont != null) {
-            for ((name, program, bank) in soundfont.get_available_presets()) {
-                this._supported_instruments[Pair(bank, program)] = name
-            }
-        } else {
-            var program = 0
-            for (name in this.get_activity().resources.getStringArray(R.array.midi_instruments)) {
-                this._supported_instruments[Pair(0, program++)] = name
-            }
-        }
-
+    fun notify_soundfont_changed() {
         this.notifyItemRangeChanged(0, this._opus_manager.channels.size + 1)
     }
 

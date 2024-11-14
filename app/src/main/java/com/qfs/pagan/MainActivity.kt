@@ -159,6 +159,7 @@ class MainActivity : AppCompatActivity() {
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
+    private var _soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
     private var _sample_handle_manager: SampleHandleManager? = null
     private var _feedback_sample_manager: SampleHandleManager? = null
     private var _midi_playback_device: PlaybackDevice? = null
@@ -519,7 +520,7 @@ class MainActivity : AppCompatActivity() {
                     // Should always be null since this can only be changed from a different menu
                     if (channel_recycler.adapter != null) {
                         val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                        channel_adapter.set_soundfont(null)
+                        channel_adapter.notify_soundfont_changed()
                     }
                     this@MainActivity.populate_active_percussion_names(true)
                 }
@@ -551,7 +552,7 @@ class MainActivity : AppCompatActivity() {
                         // Should always be null since this can only be changed from a different menu
                         if (channel_recycler.adapter != null) {
                             val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                            channel_adapter.set_soundfont(this@MainActivity._soundfont)
+                            channel_adapter.notify_soundfont_changed()
                         }
 
                         this@MainActivity.populate_active_percussion_names(true)
@@ -641,6 +642,7 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 try {
                     this._soundfont = SoundFont(path)
+                    this.populate_supported_soundfont_instrument_names()
                     this._sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         this.configuration.sample_rate,
@@ -1567,6 +1569,69 @@ class MainActivity : AppCompatActivity() {
         return soundfont_dir.listFiles()?.isNotEmpty() ?: false
     }
 
+    fun dialog_set_channel_instrument(channel: Int) {
+        val sorted_keys = this._soundfont_supported_instrument_names.keys.toList().sortedBy {
+            it.first + (it.second * 128)
+        }
+
+        val opus_manager = this.get_opus_manager()
+        val is_percussion = opus_manager.is_percussion(channel)
+        val default_position = opus_manager.get_channel_instrument(channel)
+
+        val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
+        var current_instrument_supported = sorted_keys.contains(default_position)
+        println("${this._soundfont_supported_instrument_names}")
+        for (key in sorted_keys) {
+            val name = this._soundfont_supported_instrument_names[key]
+            if (is_percussion && key.first == 128) {
+                options.add(Pair(key, "[${key.second}] $name"))
+            } else if (key.first != 128 && !is_percussion) {
+                val pairstring = "${key.first}/${key.second}"
+                options.add(Pair(key, "[$pairstring] $name"))
+            }
+        }
+
+        if (is_percussion) {
+            val use_menu_dialog = options.isNotEmpty() && (!current_instrument_supported || options.size > 1)
+
+            if (use_menu_dialog) {
+                this.dialog_popup_menu(this.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, instrument: Pair<Int, Int> ->
+                    opus_manager.set_channel_instrument(channel, instrument)
+                }
+            } else {
+                this.dialog_number_input(this.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second) { program: Int ->
+                    opus_manager.set_channel_instrument(channel, Pair(1, program))
+                }
+            }
+        } else if (options.size > 1 || !current_instrument_supported) {
+            this.dialog_popup_menu(this.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, instrument: Pair<Int, Int> ->
+                opus_manager.set_channel_instrument(channel, instrument)
+            }
+        }
+    }
+
+    fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {
+        return this._soundfont_supported_instrument_names
+    }
+    private fun populate_supported_soundfont_instrument_names() {
+        // populate a cache of available soundfont names so se don't have to open up the soundfont data
+        // every time
+        this._soundfont_supported_instrument_names.clear()
+        val soundfont = this._soundfont
+        println("POPULATING...")
+        if (soundfont != null) {
+            println("OK")
+            for ((name, program, bank) in soundfont.get_available_presets()) {
+                this._soundfont_supported_instrument_names[Pair(bank, program)] = name
+            }
+        } else {
+            var program = 0
+            for (name in this.resources.getStringArray(R.array.midi_instruments)) {
+                this._soundfont_supported_instrument_names[Pair(0, program++)] = name
+            }
+        }
+    }
+
     fun set_soundfont(filename: String?) {
         if (filename == null) {
             this.disable_soundfont()
@@ -1588,6 +1653,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         this.configuration.soundfont = filename
+        this.populate_supported_soundfont_instrument_names()
 
         this.reinit_playback_device()
         this.connect_feedback_device()
@@ -1601,7 +1667,7 @@ class MainActivity : AppCompatActivity() {
             // Should always be null since this can only be changed from a different menu
             if (channel_recycler.adapter != null) {
                 val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                channel_adapter.set_soundfont(this._soundfont!!)
+                channel_adapter.notify_soundfont_changed()
             }
         }
     }

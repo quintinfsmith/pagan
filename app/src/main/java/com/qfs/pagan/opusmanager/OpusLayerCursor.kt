@@ -191,7 +191,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
 
 
-            OpusManagerCursor.CursorMode.Unset -> { }
+            else -> { }
         }
     }
 
@@ -480,6 +480,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor.clear()
     }
 
+    open fun cursor_select_channel(channel: Int) {
+        this.cursor.select_channel(channel)
+    }
+
+
     open fun cursor_select_line(channel: Int, line_offset: Int) {
         this.cursor.select_line(channel, line_offset)
     }
@@ -626,6 +631,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         this.unset_line_ctl_line(this.cursor.ctl_type!!, this.cursor.channel, this.cursor.line_offset)
                     }
                 }
+            }
+            OpusManagerCursor.CursorMode.Channel -> {
+                TODO()
             }
             OpusManagerCursor.CursorMode.Unset -> {}
         }
@@ -1119,6 +1127,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Unset -> {
                 false
             }
+
+            OpusManagerCursor.CursorMode.Channel -> {
+                false
+            }
         }
     }
 
@@ -1161,6 +1173,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Line -> {
                 this.cursor.line_offset == beat_key.line_offset && this.cursor.channel == beat_key.channel
             }
+            OpusManagerCursor.CursorMode.Channel -> {
+                beat_key.channel == this.cursor.channel
+            }
             else -> {
                 false
             }
@@ -1186,9 +1201,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Line -> {
                 false
             }
+
         }
     }
 
@@ -1252,9 +1269,11 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Unset -> {
                 false
             }
+
         }
     }
 
@@ -1295,6 +1314,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val (first, second) = this.cursor.get_ordered_range()!!
                 beat in first.beat + 1 until second.beat && this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type
             }
+
+            OpusManagerCursor.CursorMode.Channel -> {
+                this.cursor.ctl_level != CtlLineLevel.Global && this.cursor.channel == channel
+            }
             OpusManagerCursor.CursorMode.Unset -> {
                 false
             }
@@ -1316,6 +1339,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Range -> {
                 (beat_key == this.cursor.range!!.first || beat_key == this.cursor.range!!.second) && control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line
             }
+            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Line -> {
@@ -1368,6 +1392,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Unset -> {
                 false
             }
+
+            OpusManagerCursor.CursorMode.Channel -> {
+                this.cursor.channel == beat_key.channel
+            }
         }
     }
 
@@ -1388,6 +1416,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> false
+            OpusManagerCursor.CursorMode.Channel -> {
+                channel == this.cursor.channel
+            }
+
         }
     }
 
@@ -1398,6 +1430,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Channel
                         && this.cursor.channel == channel
+            }
+            OpusManagerCursor.CursorMode.Channel -> {
+                channel == this.cursor.channel
             }
             OpusManagerCursor.CursorMode.Range,
             OpusManagerCursor.CursorMode.Unset,
@@ -1413,8 +1448,10 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Global
             }
+            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column -> false
+
         }
 
     }

@@ -24,6 +24,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             this.on_click()
         }
 
+        // TODO: Need to set up long click ( within the touch_callback ) to select_channel
         this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
             this.touch_callback(view, touchEvent)
         }

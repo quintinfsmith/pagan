@@ -484,6 +484,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> null
+
+            OpusManagerCursor.CursorMode.Channel -> TODO("CHANNEL")
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
@@ -507,6 +509,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 Triple(cursor.beat, offset, width)
             }
             OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
+            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
         }
 
@@ -692,6 +695,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
         this.show_context_menus()
     }
+    internal fun set_context_menu_channel() {
+        TODO("CHANNEL")
+    }
+
+
 
     fun shortcut_dialog() {
         val view = LayoutInflater.from(this.context)

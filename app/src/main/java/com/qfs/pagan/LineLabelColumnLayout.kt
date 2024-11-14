@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import androidx.core.view.children
+import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.context) {
@@ -48,8 +49,10 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     fun remove_labels(y: Int, count: Int) {
-        this._inner_wrapper.removeViews(y, count)
-        this._notify_item_range_changed(y, this._inner_wrapper.childCount - y)
+        val original_child_count = this._inner_wrapper.childCount
+        val adj_count = min(count, original_child_count - y)
+        this._inner_wrapper.removeViews(y, adj_count)
+        this._notify_item_range_changed(y, adj_count)
     }
 
     fun set_dragging_line(channel: Int, line_offset:Int) {
@@ -89,7 +92,6 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     private fun _notify_item_range_changed(y: Int, count: Int) {
-        println("ITEM RANGE CHANGE: $y $count")
         if (y >= this._inner_wrapper.childCount) {
             // Nothing to change
             return

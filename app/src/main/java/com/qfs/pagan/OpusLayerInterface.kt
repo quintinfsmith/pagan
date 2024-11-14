@@ -1078,6 +1078,8 @@ class OpusLayerInterface : OpusLayerCursor() {
                 OpusManagerCursor.CursorMode.Unset -> {
                     this.ui_change_bill.queue_clear_context_menu()
                 }
+
+                OpusManagerCursor.CursorMode.Channel -> this.ui_change_bill.queue_set_context_menu_channel()
             }
         }
     }
@@ -1915,6 +1917,27 @@ class OpusLayerInterface : OpusLayerCursor() {
                 this.ui_change_bill.queue_column_change(cursor.beat, false)
             }
             OpusManagerCursor.CursorMode.Unset -> { }
+            OpusManagerCursor.CursorMode.Channel -> {
+                val y = when (cursor.ctl_level) {
+                    null -> {
+                        try {
+                            this.get_visible_row_from_ctl_line(
+                                this.get_actual_line_index(
+                                    this.get_instrument_line_index(
+                                        cursor.channel,
+                                        0
+                                    )
+                                )
+                            ) ?: return
+                        } catch (e: IndexOutOfBoundsException) {
+                            return
+                        }
+                    }
+                    else -> return // TODO: Throw Exception?
+                }
+
+                this.ui_change_bill.queue_row_change(y, true)
+            }
         }
 
         this.ui_change_bill.queue_cell_changes(coordinates_to_update.toList(), true)
@@ -2227,6 +2250,12 @@ class OpusLayerInterface : OpusLayerCursor() {
                         }
                     }
 
+                    BillableItem.ContextMenuSetChannel -> {
+                        this.withFragment {
+                            it.set_context_menu_channel()
+                        }
+                    }
+
                     BillableItem.ContextMenuClear -> {
                         this.withFragment {
                             it.clear_context_menu()
@@ -2320,6 +2349,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     fun get_nth_next_channel_at_cursor(n: Int): Int? {
         return when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Single -> {
                 val start_channel = when (cursor.ctl_level) {

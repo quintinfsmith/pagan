@@ -16,6 +16,7 @@ data class OpusManagerCursor(
         Column,
         Single,
         Range,
+        Channel,
         Unset
     }
 
@@ -45,6 +46,10 @@ data class OpusManagerCursor(
                         CtlLineLevel.Global -> true
                     }
                 }
+            }
+
+            CursorMode.Channel -> {
+                other.channel == this.channel && this.ctl_level != other.ctl_level && this.ctl_type != other.ctl_type
             }
 
             CursorMode.Column -> {
@@ -129,6 +134,14 @@ data class OpusManagerCursor(
         this.mode = CursorMode.Line
         this.channel = channel
         this.line_offset = line_offset
+        this.ctl_type = null
+        this.ctl_level = null
+    }
+
+    fun select_channel(channel: Int) {
+        this.mode = CursorMode.Channel
+        this.channel = channel
+        this.line_offset = 0
         this.ctl_type = null
         this.ctl_level = null
     }

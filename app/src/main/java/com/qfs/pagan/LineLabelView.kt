@@ -112,6 +112,8 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
             val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
             if (channel != 0 && line_offset == 0) {
                 this.setPadding(0, 20, 0, 0)
+            } else {
+                this.setPadding(0, 0, 0, 0)
             }
             // Kludge: Only works because Only one global control is in use (Tempo)
         } else if (ctl_level == CtlLineLevel.Global) {

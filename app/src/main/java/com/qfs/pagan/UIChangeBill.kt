@@ -55,6 +55,7 @@ class UIChangeBill {
         ProjectNameChange,
         ContextMenuRefresh,
         ContextMenuSetLine,
+        ContextMenuSetChannel,
         ContextMenuSetLeaf,
         ContextMenuSetLeafPercussion,
         ContextMenuSetControlLeaf,
@@ -375,9 +376,9 @@ class UIChangeBill {
                                 )
                             )
                         }
-
                     }
 
+                    BillableItem.ContextMenuSetChannel,
                     BillableItem.ProjectNameChange,
                     BillableItem.ContextMenuRefresh,
                     BillableItem.ContextMenuSetLine,
@@ -391,6 +392,7 @@ class UIChangeBill {
                     BillableItem.ContextMenuClear,
                     BillableItem.ConfigDrawerEnableCopyAndDelete,
                     BillableItem.ConfigDrawerRefreshExportButton -> { }
+
                 }
             }
 
@@ -576,11 +578,16 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ContextMenuSetControlLine)
     }
 
+    fun queue_set_context_menu_channel() {
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetChannel)
+    }
+
     fun queue_clear_context_menu() {
         val working_tree = this.get_working_tree() ?: return
         working_tree.bill.add(BillableItem.ContextMenuClear)
     }
-    
+
     fun queue_enable_delete_and_copy_buttons() {
         val working_tree = this.get_working_tree() ?: return
         working_tree.bill.add(BillableItem.ConfigDrawerEnableCopyAndDelete)

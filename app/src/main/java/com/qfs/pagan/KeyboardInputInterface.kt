@@ -35,6 +35,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 OpusManagerCursor.CursorMode.Single -> this.single(opus_manager)
                 OpusManagerCursor.CursorMode.Range -> this.range(opus_manager)
                 OpusManagerCursor.CursorMode.Unset -> this.unset(opus_manager)
+                OpusManagerCursor.CursorMode.Channel -> this.channel(opus_manager)
             }
 
             val output = this._no_function_called
@@ -42,6 +43,9 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             this._no_function_called = false
 
             return output
+        }
+        open fun channel(opus_manager: OpusManager) {
+            this._no_function_called = true
         }
 
         open fun column(opus_manager: OpusManager) {

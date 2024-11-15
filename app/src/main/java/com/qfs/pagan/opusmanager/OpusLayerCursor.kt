@@ -38,59 +38,58 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        val bkp_cursor = this.cursor.copy()
-        this.cursor_clear()
-
         super.new_channel(channel, lines, uuid)
-
-        //val compare_channel = channel ?: (this.get_channel_count() - 1)
-        // when (bkp_cursor.mode) {
-        //     OpusManagerCursor.CursorMode.Column -> {
-        //         this.cursor_select_column(bkp_cursor.beat)
-        //     }
-        //     OpusManagerCursor.CursorMode.Line -> {
-        //         val new_channel = if (compare_channel <= bkp_cursor.channel) {
-        //             bkp_cursor.channel + 1
-        //         } else {
-        //             bkp_cursor.channel
-        //         }
-        //         this.cursor_select_line(new_channel, bkp_cursor.line_offset)
-        //     }
-        //     OpusManagerCursor.CursorMode.Range -> {
-        //         val new_first = if (bkp_cursor.range!!.first.channel >= compare_channel) {
-        //             bkp_cursor.range!!.first.channel + 1
-        //         } else {
-        //             bkp_cursor.range!!.first.channel
-        //         }
-
-        //         val new_second = if (bkp_cursor.range!!.second.channel >= compare_channel) {
-        //             bkp_cursor.range!!.second.channel + 1
-        //         } else {
-        //             bkp_cursor.range!!.second.channel
-        //         }
-
-        //         this.cursor_select_range(
-        //             BeatKey(
-        //                 new_first,
-        //                 bkp_cursor.range!!.first.line_offset,
-        //                 bkp_cursor.range!!.first.beat
-        //             ),
-        //             BeatKey(
-        //                 new_second,
-        //                 bkp_cursor.range!!.second.line_offset,
-        //                 bkp_cursor.range!!.second.beat
-        //             )
-        //         )
-        //     }
-        //     OpusManagerCursor.CursorMode.Single -> {
-        //     }
-        //     else -> {}
-        // }
+        val working_channel = channel ?: this.channels.size - 1
+        when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Channel -> {
+                if (this.cursor.channel >= working_channel) {
+                    this.cursor.channel += 1
+                }
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = this.cursor.range!!
+                if (first.channel >= working_channel) {
+                    first.channel += 1
+                }
+                if (second.channel >= working_channel) {
+                    second.channel += 1
+                }
+            }
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> {
+                // Nothing
+            }
+        }
     }
 
     override fun remove_channel(channel: Int) {
-        this.cursor_clear()
         super.remove_channel(channel)
+        when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Channel -> {
+                if (channel < this.cursor.channel) {
+                    this.cursor.channel -= 1
+                } else if (channel == this.cursor.channel) {
+                    this.cursor.channel = min(this.channels.size, this.cursor.channel)
+                }
+            }
+            OpusManagerCursor.CursorMode.Single -> {
+                if (channel < this.cursor.channel) {
+                    this.cursor.channel -= 1
+                } else if (channel == this.cursor.channel) {
+                    this.cursor.channel = min(this.channels.size, this.cursor.channel)
+                    this.cursor.line_offset = 0
+                    this.cursor.position = this.get_first_position(this.cursor.get_beatkey(), listOf())
+                }
+            }
+            OpusManagerCursor.CursorMode.Range -> this.cursor_clear()
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> {
+                // Nothing
+            }
+        }
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {

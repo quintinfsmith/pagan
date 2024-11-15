@@ -14,19 +14,10 @@
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
             android:contentDescription="Toggle Volume Control"/>
-
-        <com.qfs.pagan.ButtonStd
-            android:layout_gravity="center"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:theme="@style/button"
-            android:id="@+id/btnChooseInstrument"
-            android:textSize="18sp"
+        <Space
             android:layout_weight="1"
             android:layout_width="0dp"
-            android:layout_height="@dimen/icon_button_height"
-            android:textAlignment="center"
-            android:text="" />
+            android:layout_height="match_parent"/>
 
         <com.qfs.pagan.ButtonIcon
             android:id="@+id/btnRemoveLine"

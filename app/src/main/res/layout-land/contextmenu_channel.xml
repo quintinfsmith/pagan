@@ -24,15 +24,6 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="Remove Line" />
 
-    <com.qfs.pagan.ButtonStd
-        android:id="@+id/btnChooseInstrument"
-        android:theme="@style/choose_percussion_button"
-        android:paddingTop="@dimen/number_selector_spacing"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_marginTop="@dimen/number_selector_spacing"
-        android:text="Instrument..." />
-
     <com.qfs.pagan.ButtonIcon
         android:id="@+id/btnToggleVolCtl"
         android:theme="@style/icon_button"

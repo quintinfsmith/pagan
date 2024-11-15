@@ -162,9 +162,7 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnChooseInstrument(view: BackLinkView) {
-        println("AAA")
         val channel = view.view_holder?.bindingAdapterPosition ?: return
-        println("AAABB $channel  B")
         this.get_activity().dialog_set_channel_instrument(channel)
     }
 

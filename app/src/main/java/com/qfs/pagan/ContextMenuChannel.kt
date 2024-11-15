@@ -24,7 +24,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
-        this.button_choose_instrument = primary.findViewById(R.id.btnChooseInstrument)
+        this.button_choose_instrument = this.secondary!!.findViewById(R.id.btnChooseInstrument)
 
     }
 
@@ -35,25 +35,24 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
         }
 
-        val channel = opus_manager.cursor.channel
-
         this.button_choose_instrument.visibility = View.VISIBLE
-        val instrument = opus_manager.get_channel_instrument(channel)
-       // this.button_choose_instrument.text = if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-       //     this.context.getString(
-       //         R.string.label_short_percussion,
-       //         instrument
-       //     )
-       // } else {
-       //     this.context.getString(
-       //         R.string.label_choose_percussion,
-       //         instrument,
-       //         main.get_drum_name(instrument) ?: this.context.getString(R.string.drum_not_found)
-       //     )
-       // }
+
+        val channel_index = opus_manager.cursor.channel
+        val channel = opus_manager.get_channel(channel_index)
+        val instrument = opus_manager.get_channel_instrument(channel_index)
+        val midi_program = channel.midi_program
+
+        val defaults = main.resources.getStringArray(R.array.midi_instruments)
+        val supported_instruments = main.get_supported_instrument_names()
+        val label = supported_instruments[instrument] ?: if (opus_manager.is_percussion(channel_index)) {
+            "$midi_program"
+        } else {
+            main.resources.getString(R.string.unknown_instrument, defaults[midi_program])
+        }
+        this.button_choose_instrument.text = label
 
 
-        val is_percussion = opus_manager.is_percussion(channel)
+        val is_percussion = opus_manager.is_percussion(channel_index)
         this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.percussion_channel.is_empty())
 
         var show_control_toggle = false
@@ -202,26 +201,8 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         val main = this.get_main()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val channel = opus_manager.get_all_channels()[cursor.channel]
-        val default_instrument = channel.get_instrument()
+        main.dialog_set_channel_instrument(cursor.channel)
 
-       // val options = mutableListOf<Pair<Int, String>>()
-       // val sorted_keys = main.active_percussion_names.keys.toMutableList()
-       // sorted_keys.sort()
-       // for (note in sorted_keys) {
-       //     val name = main.active_percussion_names[note]
-       //     options.add(Pair(note - 27, "${note - 27}: $name"))
-       // }
-
-
-       // main.dialog_popup_menu(this.context.getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
-       //     opus_manager.set_percussion_instrument(value)
-       //     main.play_event(
-       //         opus_manager.channels.size,
-       //         value,
-       //         80
-       //     )
-       // }
     }
 
 }

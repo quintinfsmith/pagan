@@ -1580,7 +1580,6 @@ class MainActivity : AppCompatActivity() {
 
         val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
         var current_instrument_supported = sorted_keys.contains(default_position)
-        println("${this._soundfont_supported_instrument_names}")
         for (key in sorted_keys) {
             val name = this._soundfont_supported_instrument_names[key]
             if (is_percussion && key.first == 128) {
@@ -1618,9 +1617,7 @@ class MainActivity : AppCompatActivity() {
         // every time
         this._soundfont_supported_instrument_names.clear()
         val soundfont = this._soundfont
-        println("POPULATING...")
         if (soundfont != null) {
-            println("OK")
             for ((name, program, bank) in soundfont.get_available_presets()) {
                 this._soundfont_supported_instrument_names[Pair(bank, program)] = name
             }

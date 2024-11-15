@@ -3,14 +3,7 @@ A music sequencer
 
 [Manual](https://burnsomni.net/manual/pagan) [Issue Tracker](https://burnsomni.net/issues/pagan)
 
-[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/)
-
- <div align="center">
-  
-[![fdroid](https://burnsomni.net/content/bmc-button-s.svg)](https://buymeacoffee.com/qfsmith/)
-
- </div>
-
+[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L5163ZB8)
 
 ## What is it?
 Pagan is a music sequencer built around 2 main features:

@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.view.View
 import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuChannel(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_channel, R.layout.contextmenu_channel_secondary, primary_container, secondary_container) {
@@ -11,9 +10,9 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_instrument: ButtonStd
     lateinit var button_toggle_volume_control: ButtonIcon
-    val _visible_line_controls_domain = listOf(
-        Pair(CtlLineLevel.Channel, ControlEventType.Volume),
-        Pair(CtlLineLevel.Channel, ControlEventType.Pan)
+    val _visible_controls_domain = listOf(
+        ControlEventType.Volume,
+        ControlEventType.Pan
     )
 
     init {
@@ -56,8 +55,8 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.percussion_channel.is_empty())
 
         var show_control_toggle = false
-        for ((ctl_level, ctl_type) in this._visible_line_controls_domain) {
-            if (opus_manager.is_ctl_line_visible(ctl_level, ctl_type)) {
+        for (ctl_type in this._visible_controls_domain) {
+            if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
                 continue
             }
             show_control_toggle = true
@@ -74,25 +73,19 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
     fun dialog_popup_hidden_lines() {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<Pair<CtlLineLevel, ControlEventType>, String>>( )
+        val cursor = opus_manager.cursor
+        val options = mutableListOf<Pair<ControlEventType, String>>( )
 
-        for ((ctl_level, ctl_type) in this._visible_line_controls_domain) {
-            if (opus_manager.is_ctl_line_visible(ctl_level, ctl_type)) {
+        for (ctl_type in this._visible_controls_domain) {
+            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
                 continue
             }
 
-            options.add(
-                Pair(
-                    Pair(ctl_level, ctl_type),
-                    ctl_type.name
-                )
-            )
+            options.add(Pair(ctl_type, ctl_type.name))
         }
 
-        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, (ctl_level, ctl_type): Pair<CtlLineLevel, ControlEventType> ->
-            val cursor = opus_manager.cursor
-            opus_manager.get_all_channels()[cursor.channel].controllers.new_controller(ctl_type)
-            opus_manager.toggle_control_line_visibility(ctl_level, ctl_type)
+        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
+            opus_manager.toggle_channel_control_visibility(ctl_type, cursor.channel)
         }
     }
 

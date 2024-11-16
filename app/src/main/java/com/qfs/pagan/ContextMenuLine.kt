@@ -59,12 +59,13 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     override fun refresh() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Line) {
-            throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
+        val cursor = opus_manager.cursor
+        if (cursor.mode != OpusManagerCursor.CursorMode.Line) {
+            throw OpusManagerCursor.InvalidModeException(cursor.mode, OpusManagerCursor.CursorMode.Line)
         }
 
-        val channel = opus_manager.cursor.channel
-        val line_offset = opus_manager.cursor.line_offset
+        val channel = cursor.channel
+        val line_offset = cursor.line_offset
 
         if (!opus_manager.is_percussion(channel)) {
             this.spacer.visibility = View.VISIBLE
@@ -94,7 +95,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
 
         var show_control_toggle = false
         for ((ctl_level, ctl_type) in this._visible_line_controls_domain) {
-            if (opus_manager.is_ctl_line_visible(ctl_level, ctl_type)) {
+            if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }
             show_control_toggle = true
@@ -116,25 +117,19 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
 
     fun dialog_popup_hidden_lines() {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<Pair<CtlLineLevel, ControlEventType>, String>>( )
+        val options = mutableListOf<Pair<ControlEventType, String>>( )
+        val cursor = opus_manager.cursor
 
         for ((ctl_level, ctl_type) in this._visible_line_controls_domain) {
-            if (opus_manager.is_ctl_line_visible(ctl_level, ctl_type)) {
+            if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }
 
-            options.add(
-                Pair(
-                    Pair(ctl_level, ctl_type),
-                    ctl_type.name
-                )
-            )
+            options.add(Pair(ctl_type, ctl_type.name))
         }
 
-        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, (ctl_level, ctl_type): Pair<CtlLineLevel, ControlEventType> ->
-            val cursor = opus_manager.cursor
-            opus_manager.get_all_channels()[cursor.channel].controllers.new_controller(ctl_type)
-            opus_manager.toggle_control_line_visibility(ctl_level, ctl_type)
+        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
+            opus_manager.toggle_line_control_visibility(ctl_type, cursor.channel, cursor.line_offset)
         }
     }
 
@@ -182,11 +177,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             this.dialog_popup_hidden_lines()
             //this.click_button_toggle_volume_control()
         }
-    }
-
-    fun click_button_toggle_volume_control() {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.toggle_control_line_visibility(CtlLineLevel.Line, ControlEventType.Volume)
     }
 
     fun click_button_insert_line() {

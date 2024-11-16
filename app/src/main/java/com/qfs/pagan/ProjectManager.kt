@@ -2,7 +2,6 @@ package com.qfs.pagan
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -18,6 +17,21 @@ class ProjectManager(data_dir: String) {
 
     private fun _convert_project_path_to_cfg_path(input_path: String): String {
         return input_path.replace(this.path, this.cfgs_path)
+    }
+
+    fun get_project_specific_cfg(project_path: String): JSONHashMap? {
+        val cfg_path = this._convert_project_path_to_cfg_path(project_path)
+        val file = File(cfg_path)
+        if (!file.exists()) {
+            return null
+        }
+        val content = file.readText()
+        val json_obj = JSONParser.parse(content)
+        return if (json_obj is JSONHashMap) {
+            json_obj
+        } else {
+            null
+        }
     }
 
     fun get_directory(): File {
@@ -47,6 +61,7 @@ class ProjectManager(data_dir: String) {
         if (file.isFile) {
             file.delete()
         }
+
         val cfg_file = File(this._convert_project_path_to_cfg_path(path))
         if (cfg_file.isFile) {
             cfg_file.delete()
@@ -75,12 +90,11 @@ class ProjectManager(data_dir: String) {
         this.get_cfg_directory()
 
         opus_manager.save()
+
         val config_path = this._convert_project_path_to_cfg_path(opus_manager.path!!)
-
         val config = opus_manager.gen_project_config()
-        val file = File(path)
+        val file = File(config_path)
         file.writeText(config.to_string())
-
 
         // Untrack then track in order to update the project title in the cache
         this._untrack_path(opus_manager.path!!)

@@ -2471,14 +2471,14 @@ open class OpusLayerBase {
     }
 
     private fun _setup_default_controllers() {
+        // Every Line needs its own Volume Controller and the Entire Project needs a Tempo Controller in order to function,
+        // Any other Controllers can be added manually by the user
+
         for (channel in this.get_all_channels()) {
             for (line in channel.lines) {
                 if (!line.controllers.has_controller(ControlEventType.Volume)) {
                     line.controllers.new_controller(ControlEventType.Volume)
 
-                }
-                if (!line.controllers.has_controller(ControlEventType.Pan)) {
-                    line.controllers.new_controller(ControlEventType.Pan)
                 }
             }
         }

@@ -88,6 +88,7 @@ import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.BufferedOutputStream
@@ -822,7 +823,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun project_save() {
-        this._project_manager.save(this.get_opus_manager())
+        this._project_manager.save(this.get_opus_manager(), this.configuration)
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }

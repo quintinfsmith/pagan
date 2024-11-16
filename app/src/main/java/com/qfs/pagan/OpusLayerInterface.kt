@@ -4,6 +4,9 @@ import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONString
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
@@ -52,6 +55,41 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private val ui_change_bill = UIChangeBill()
     var temporary_blocker: OpusManagerCursor? = null
+
+    var visible_ctls_global: MutableList<ControlEventType> = mutableListOf()
+    var visible_ctls_channel: MutableList<Pair<ControlEventType, Int>> = mutableListOf()
+    var visible_ctls_line: MutableList<Triple<ControlEventType, Int, Int>> = mutableListOf()
+
+    fun gen_project_config(): JSONHashMap {
+        val output = JSONHashMap()
+        val a = JSONList()
+        for (item in this.visible_ctls_global) {
+            a.add(item.name)
+        }
+        output["visible_ctls_global"] = a
+
+        val b = JSONList()
+        for (item in this.visible_ctls_channel) {
+            b.add(JSONList(mutableListOf(JSONString(item.first.name), JSONInteger(item.second))))
+        }
+        output["visible_ctls_channel"] = b
+
+        val c = JSONList()
+        for (item in this.visible_ctls_line) {
+            c.add(
+                JSONList(
+                    mutableListOf(
+                        JSONString(item.first.name),
+                        JSONInteger(item.second),
+                        JSONInteger(item.third),
+                    )
+                )
+            )
+        }
+        output["visible_ctls_line"] = c
+
+        return output
+    }
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity

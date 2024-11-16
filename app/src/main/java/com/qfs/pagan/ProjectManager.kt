@@ -8,18 +8,33 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ProjectManager(data_dir: String) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     val path = "$data_dir/projects/"
+    val cfgs_path = "$data_dir/cfgs/"
     private val _cache_path = "$data_dir/project_list.json"
+
+    private fun _convert_project_path_to_cfg_path(input_path: String): String {
+        return input_path.replace(this.path, this.cfgs_path)
+    }
 
     fun get_directory(): File {
         val directory = File(this.path)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
                 throw MKDirFailedException(this.path)
+            }
+        }
+        return directory
+    }
+
+    fun get_cfg_directory(): File {
+        val directory = File(this.cfgs_path)
+        if (!directory.isDirectory) {
+            if (! directory.mkdirs()) {
+                throw MKDirFailedException(this.cfgs_path)
             }
         }
         return directory
@@ -32,6 +47,11 @@ class ProjectManager(data_dir: String) {
         if (file.isFile) {
             file.delete()
         }
+        val cfg_file = File(this._convert_project_path_to_cfg_path(path))
+        if (cfg_file.isFile) {
+            cfg_file.delete()
+        }
+
         this._untrack_path(opus_manager.path!!)
     }
 
@@ -52,7 +72,16 @@ class ProjectManager(data_dir: String) {
 
     fun save(opus_manager: OpusManager) {
         this.get_directory()
+        this.get_cfg_directory()
+
         opus_manager.save()
+        val config_path = this._convert_project_path_to_cfg_path(opus_manager.path!!)
+
+        val config = opus_manager.gen_project_config()
+        val file = File(path)
+        file.writeText(config.to_string())
+
+
         // Untrack then track in order to update the project title in the cache
         this._untrack_path(opus_manager.path!!)
         this._track_path(opus_manager.path!!)

@@ -15,14 +15,9 @@ data class PaganConfiguration(
     var show_percussion: Boolean = true, // Deprecated, use variable in view_model
     var move_mode: MoveMode = MoveMode.COPY,
     var palette: HashMap<Palette, Int>? = null,
-    var use_palette: Boolean = false,
-    var visible_line_controls: MutableSet<Pair<CtlLineLevel, ControlEventType>> = mutableSetOf(
-        Pair(CtlLineLevel.Global, ControlEventType.Tempo)
-    )
+    var use_palette: Boolean = false
 ) {
-    init {
-        this.visible_line_controls.add(Pair(CtlLineLevel.Global, ControlEventType.Tempo))
-    }
+    init { }
 
     enum class MoveMode {
         MOVE,
@@ -89,6 +84,12 @@ data class PaganConfiguration(
     }
 
     fun save(path: String) {
+        val json_map = this.to_json()
+        val file = File(path)
+        file.writeText(json_map.to_string())
+    }
+
+    fun to_json(): JSONHashMap {
         val output = JSONHashMap()
         output["soundfont"] = this.soundfont
         output["sample_rate"] = this.sample_rate
@@ -113,7 +114,6 @@ data class PaganConfiguration(
         }
         output["visible_line_controls"] = vlc
 
-       val file = File(path)
-       file.writeText(output.to_string())
+        return output
     }
 }

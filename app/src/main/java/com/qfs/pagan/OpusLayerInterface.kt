@@ -939,9 +939,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun _project_change_json(json_data: JSONHashMap) {
-        println("ICALL_A")
         super._project_change_json(json_data)
-        println("ICALL_B")
 
         val inner_map = json_data.get_hashmapn("d") ?: JSONHashMap()
         val ui_config = inner_map.get_hashmapn("ui_config") ?: JSONHashMap()
@@ -981,7 +979,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (! this._in_reload) {
             this._activity?.view_model?.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
         }
-        println("ICALL_C")
     }
 
     fun reload(bytes: ByteArray, path: String) {
@@ -1532,6 +1529,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         // TODO: Save Configurationa
         this._tmp_ctl_visibility_callback()
     }
+
     fun toggle_global_control_visibility(type: ControlEventType) {
         val was_visible = this.is_global_ctl_visible(type)
         if (was_visible) {
@@ -1905,17 +1903,46 @@ class OpusLayerInterface : OpusLayerCursor() {
                     else -> {
                         val (y, controller) = when (cursor.ctl_level!!) {
                             CtlLineLevel.Line -> {
+                                // Update Standard Line label attached to controller
+                                val line_y = this.get_visible_row_from_ctl_line(
+                                    this.get_actual_line_index(
+                                        this.get_instrument_line_index(
+                                            cursor.channel,
+                                            cursor.line_offset
+                                        )
+                                    )
+                                )
+
+                                if (line_y != null) {
+                                    this.ui_change_bill.queue_line_label_refresh(line_y)
+                                }
+
+                                val channel = this.get_all_channels()[cursor.channel]
                                 Pair(
                                     this.get_visible_row_from_ctl_line_line(
                                         cursor.ctl_type!!,
                                         cursor.channel,
                                         cursor.line_offset
                                     ),
-                                    this.get_all_channels()[cursor.channel].lines[cursor.line_offset].get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                                    channel.lines[cursor.line_offset].get_controller<OpusControlEvent>(cursor.ctl_type!!)
                                 )
                             }
 
                             CtlLineLevel.Channel -> {
+                                val channel = this.get_all_channels()[cursor.channel]
+                                // Update All Standard Line labels attached to controller
+                                for (line_offset in channel.lines.indices) {
+                                    val line_y = this.get_visible_row_from_ctl_line(
+                                        this.get_actual_line_index(
+                                            this.get_instrument_line_index(
+                                                cursor.channel,
+                                                cursor.line_offset
+                                            )
+                                        )
+                                    ) ?: continue
+                                    this.ui_change_bill.queue_line_label_refresh(line_y)
+                                }
+
                                 Pair(
                                     this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
                                     this.get_all_channels()[cursor.channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
@@ -2018,6 +2045,20 @@ class OpusLayerInterface : OpusLayerCursor() {
                         }
                     }
                     CtlLineLevel.Line -> {
+                        // Update Standard Line label attached to controller
+                        val line_y = this.get_visible_row_from_ctl_line(
+                            this.get_actual_line_index(
+                                this.get_instrument_line_index(
+                                    cursor.channel,
+                                    cursor.line_offset
+                                )
+                            )
+                        )
+
+                        if (line_y != null) {
+                            this.ui_change_bill.queue_line_label_refresh(line_y)
+                        }
+
                         this.get_visible_row_from_ctl_line_line(
                             cursor.ctl_type!!,
                             cursor.channel,
@@ -2025,6 +2066,20 @@ class OpusLayerInterface : OpusLayerCursor() {
                         )
                     }
                     CtlLineLevel.Channel -> {
+                        val channel = this.get_all_channels()[cursor.channel]
+                        // Update All Standard Line labels attached to controller
+                        for (line_offset in channel.lines.indices) {
+                            val line_y = this.get_visible_row_from_ctl_line(
+                                this.get_actual_line_index(
+                                    this.get_instrument_line_index(
+                                        cursor.channel,
+                                        cursor.line_offset
+                                    )
+                                )
+                            ) ?: continue
+                            this.ui_change_bill.queue_line_label_refresh(line_y)
+                        }
+
                         this.get_visible_row_from_ctl_line_channel(
                             cursor.ctl_type!!,
                             cursor.channel

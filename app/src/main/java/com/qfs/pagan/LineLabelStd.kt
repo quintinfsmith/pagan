@@ -7,6 +7,7 @@ import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.pow
@@ -51,25 +52,24 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         if (this.channel % 2 == 0) {
             new_state.add(R.attr.state_channel_even)
         }
-
-        when (opus_manager.cursor.mode) {
+        val cursor = opus_manager.cursor
+        when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Line -> {
-                if (opus_manager.cursor.ctl_level == null && opus_manager.cursor.channel == this.channel && opus_manager.cursor.line_offset == this.line_offset) {
+                if ((cursor.ctl_level == CtlLineLevel.Line || cursor.ctl_level == null) && cursor.channel == this.channel && cursor.line_offset == this.line_offset) {
                     new_state.add(R.attr.state_focused)
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = opus_manager.cursor.get_ordered_range()!!
+                val (first, second) = cursor.get_ordered_range()!!
                 if ((this.channel > first.channel && this.channel < second.channel) || (this.channel == first.channel && this.line_offset >= first.line_offset) || (this.channel == second.channel && this.line_offset <= second.line_offset)) {
                     new_state.add(R.attr.state_focused)
                 }
             }
             OpusManagerCursor.CursorMode.Channel -> {
-                if (opus_manager.cursor.ctl_level == null && opus_manager.cursor.channel == this.channel) {
+                if (cursor.channel == this.channel) {
                     new_state.add(R.attr.state_focused)
                 }
-
             }
             else -> { }
         }

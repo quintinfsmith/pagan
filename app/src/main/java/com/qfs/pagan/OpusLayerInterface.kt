@@ -57,7 +57,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     private val ui_change_bill = UIChangeBill()
     var temporary_blocker: OpusManagerCursor? = null
 
-    var visible_ctls_global: MutableList<ControlEventType> = mutableListOf()
+    var visible_ctls_global: MutableList<ControlEventType> = mutableListOf(ControlEventType.Tempo)
     var visible_ctls_channel: MutableList<Pair<ControlEventType, Int>> = mutableListOf()
     var visible_ctls_line: MutableList<Triple<ControlEventType, Int, Int>> = mutableListOf()
 
@@ -994,6 +994,8 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.clear()
 
         this.visible_ctls_global.clear()
+        this.visible_ctls_global.add(ControlEventType.Tempo) // force Tempo Visibility
+
         this.visible_ctls_channel.clear()
         this.visible_ctls_line.clear()
 
@@ -3185,12 +3187,9 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun <T: OpusLayerBase> import_from_other(other: T) {
         super.import_from_other(other)
         if (other is OpusLayerInterface) {
-            println("WOOOP ${other.visible_ctls_line}")
             this.visible_ctls_line = other.visible_ctls_line
             this.visible_ctls_channel = other.visible_ctls_channel
             this.visible_ctls_global = other.visible_ctls_global
-        } else {
-            println("NOOOOP")
         }
     }
 }

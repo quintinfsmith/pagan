@@ -10,7 +10,6 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.qfs.pagan.opusmanager.CtlLineLevel
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -377,8 +376,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         var count = 0
         var working_row_height = row_height
         val opus_manager = this.get_opus_manager()
-        for (channel in opus_manager.get_visible_channels()) {
-            for (line in channel.lines) {
+        val channels = opus_manager.get_all_channels()
+        for (i in channels.indices) {
+            val channel = channels[i]
+            for (j in channel.lines.indices) {
+                val line = channel.lines[j]
                 if (count >= y) {
                     break
                 }
@@ -387,7 +389,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 working_row_height = row_height
                 count += 1
                 for ((type, _) in line.controllers.get_all()) {
-                    if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Line, type)) {
+                    if (!opus_manager.is_line_ctl_visible(type, i, j)) {
                         continue
                     }
                     if (count >= y) {
@@ -400,7 +402,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 }
             }
             for ((type, _) in channel.controllers.get_all()) {
-                if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Channel, type)) {
+                if (!opus_manager.is_channel_ctl_visible(type, i)) {
                     continue
                 }
                 if (count >= y) {
@@ -414,7 +416,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         for ((type, _) in this.get_opus_manager().controllers.get_all()) {
-            if (!opus_manager.is_ctl_line_visible(CtlLineLevel.Global, type)) {
+            if (!opus_manager.is_global_ctl_visible(type)) {
                 continue
             }
             if (count >= y) {

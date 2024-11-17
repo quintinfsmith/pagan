@@ -196,8 +196,8 @@ class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
     }
 }
 
-class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
-    val list = input_list ?: mutableListOf<JSONObject?>()
+class JSONList(input_list: List<JSONObject?>? = null): JSONObject {
+    val list = input_list?.toMutableList() ?: mutableListOf<JSONObject?>()
 
     override fun to_string(): String {
         var output = "["

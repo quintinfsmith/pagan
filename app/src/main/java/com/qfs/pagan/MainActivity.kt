@@ -85,11 +85,8 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.json.JSONHashMap
 import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
-import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.BufferedOutputStream
@@ -185,6 +182,7 @@ class MainActivity : AppCompatActivity() {
     private var _notification_channel: NotificationChannel? = null
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
+
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
@@ -332,7 +330,7 @@ class MainActivity : AppCompatActivity() {
             val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                    val json_string = OpusManagerJSONInterface.generalize(opus_manager).to_string()
+                    val json_string = opus_manager.to_json().to_string()
                     FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
                     this.feedback_msg(getString(R.string.feedback_exported))
                 }
@@ -455,13 +453,6 @@ class MainActivity : AppCompatActivity() {
             path_file.writeText(path)
         }
         opus_manager.save("${applicationInfo.dataDir}/.bkp.json")
-
-
-        // val config = opus_manager.gen_project_config()
-        // val file = File("${applicationInfo.dataDir}/.bkp.cfg")
-        // file.writeText(config.to_string())
-
-
 
         // saving changes the path, need to change it back
         opus_manager.path = path
@@ -1474,6 +1465,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun set_opus_manager(opus_manager: OpusManager) {
+        this.view_model.opus_manager = opus_manager
+        opus_manager.attach_activity(this)
+    }
+
     fun get_opus_manager(): OpusManager {
         return this.view_model.opus_manager
     }
@@ -1560,7 +1556,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val opus_manager = this.get_opus_manager()
-        opus_manager.import_midi(midi)
+        opus_manager.project_change_midi(midi)
         val filename = this.parse_file_name(Uri.parse(path))
         val new_path = this._project_manager.get_new_path()
 
@@ -2499,13 +2495,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.EFFECT_TICK))
-    }
-
-    fun get_project_specific_cfg(): JSONHashMap? {
-        val opus_manager = this.get_opus_manager()
-        val project_path = opus_manager.path ?: return null
-
-        return this._project_manager.get_project_specific_cfg(project_path)
     }
 
 }

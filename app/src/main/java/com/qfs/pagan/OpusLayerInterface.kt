@@ -36,6 +36,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     class HidingLastChannelException: Exception()
     class MissingEditorTableException: Exception()
 
+
     var relative_mode: Int = 0
     var first_load_done = false
     private var _in_reload = false
@@ -59,37 +60,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     var visible_ctls_global: MutableList<ControlEventType> = mutableListOf()
     var visible_ctls_channel: MutableList<Pair<ControlEventType, Int>> = mutableListOf()
     var visible_ctls_line: MutableList<Triple<ControlEventType, Int, Int>> = mutableListOf()
-
-    fun gen_project_config(): JSONHashMap {
-        val output = JSONHashMap()
-        val a = JSONList()
-        for (item in this.visible_ctls_global) {
-            a.add(item.name)
-        }
-        output["visible_ctls_global"] = a
-
-        val b = JSONList()
-        for (item in this.visible_ctls_channel) {
-            b.add(JSONList(mutableListOf(JSONString(item.first.name), JSONInteger(item.second))))
-        }
-        output["visible_ctls_channel"] = b
-
-        val c = JSONList()
-        for (item in this.visible_ctls_line) {
-            c.add(
-                JSONList(
-                    mutableListOf(
-                        JSONString(item.first.name),
-                        JSONInteger(item.second),
-                        JSONInteger(item.third),
-                    )
-                )
-            )
-        }
-        output["visible_ctls_line"] = c
-
-        return output
-    }
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -876,7 +846,8 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun remove_channel(channel: Int) {
         this.lock_ui_partial {
-            if (!this.ui_change_bill.is_full_locked()) {
+
+        if (!this.ui_change_bill.is_full_locked()) {
                 val y = try {
                     this.get_instrument_line_index(channel, 0)
                 } catch (e: IndexOutOfBoundsException) {
@@ -927,62 +898,22 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    fun load_project_specific_cfg() {
-        val activity = this.get_activity() ?: return
-        val cfg = activity.get_project_specific_cfg() ?: return
-
-        val global_ctls = cfg.get_listn("visible_ctls_global")
-        if (global_ctls != null) {
-            this.visible_ctls_global.clear()
-            for (i in 0 until global_ctls.list.size) {
-                this.visible_ctls_global.add(
-                    ControlEventType.valueOf(
-                        global_ctls.get_string(i)
-                    )
-                )
-            }
-        }
-
-        val channel_ctls = cfg.get_listn("visible_ctls_channel")
-        if (channel_ctls != null) {
-            this.visible_ctls_channel.clear()
-            for (i in 0 until channel_ctls.list.size) {
-                val entry = channel_ctls.get_list(i)
-                val type = ControlEventType.valueOf(entry.get_string(0))
-                val channel = entry.get_int(1)
-                this.visible_ctls_channel.add(Pair(type, channel))
-            }
-        }
-
-        val line_ctls = cfg.get_listn("visible_ctls_line")
-        if (line_ctls != null) {
-            this.visible_ctls_line.clear()
-            for (i in 0 until line_ctls.list.size) {
-                val entry = line_ctls.get_list(i)
-                val type = ControlEventType.valueOf(entry.get_string(0))
-                val channel = entry.get_int(1)
-                val line_offset = entry.get_int(2)
-                this.visible_ctls_line.add(Triple(type, channel, line_offset))
-            }
-        }
-    }
 
     override fun on_project_changed() {
         super.on_project_changed()
-        this.load_project_specific_cfg()
 
         this.recache_line_maps()
         this.ui_change_bill.queue_full_refresh()
         this.first_load_done = true
     }
 
-    override fun new() {
+    override fun project_change_new() {
         this.lock_ui_full {
             this._ui_clear()
             val activity = this.get_activity()!!
             activity.view_model.show_percussion = true
 
-            super.new()
+            super.project_change_new()
             this.on_project_changed()
 
             val new_path = activity.get_new_project_path()
@@ -990,11 +921,11 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun import_midi(midi: Midi) {
+    override fun project_change_midi(midi: Midi) {
         this.lock_ui_full {
             this._ui_clear()
 
-            super.import_midi(midi)
+            super.project_change_midi(midi)
             this.on_project_changed()
 
             val activity = this.get_activity()
@@ -1003,17 +934,48 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun load_json(json_data: JSONHashMap) {
+    override fun project_change_json(json_data: JSONHashMap) {
         this.lock_ui_full {
             val activity = this.get_activity()!!
             this._ui_clear()
 
-            super.load_json(json_data)
-            this.on_project_changed()
+            super.project_change_json(json_data)
+            val data = json_data.get_hashmapn("d") ?: JSONHashMap()
+            val ui_config = data.get_hashmapn("ui_config") ?: JSONHashMap()
+            val global_ctls = ui_config.get_listn("visible_ctls_global")
+            if (global_ctls != null) {
+                for (i in 0 until global_ctls.list.size) {
+                    this.visible_ctls_global.add(
+                        ControlEventType.valueOf(
+                            global_ctls.get_string(i)
+                        )
+                    )
+                }
+            }
+
+            val channel_ctls = ui_config.get_listn("visible_ctls_channel")
+            if (channel_ctls != null) {
+                for (i in 0 until channel_ctls.list.size) {
+                    val entry = channel_ctls.get_list(i)
+                    val type = ControlEventType.valueOf(entry.get_string(0))
+                    val channel = entry.get_int(1)
+                    this.visible_ctls_channel.add(Pair(type, channel))
+                }
+            }
+
+            val line_ctls = ui_config.get_listn("visible_ctls_line")
+            if (line_ctls != null) {
+                for (i in 0 until line_ctls.list.size) {
+                    val entry = line_ctls.get_list(i)
+                    val type = ControlEventType.valueOf(entry.get_string(0))
+                    val channel = entry.get_int(1)
+                    val line_offset = entry.get_int(2)
+                    this.visible_ctls_line.add(Triple(type, channel, line_offset))
+                }
+            }
 
             if (! this._in_reload) {
                 activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
-                this.recache_line_maps()
             }
         }
     }
@@ -1024,9 +986,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._in_reload = false
     }
 
-
     override fun clear() {
         super.clear()
+
+        this.visible_ctls_global.clear()
+        this.visible_ctls_channel.clear()
+        this.visible_ctls_line.clear()
 
         this._cached_row_map.clear()
         this._cached_inv_visible_line_map.clear()
@@ -1641,6 +1606,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._cached_ctl_map_line.clear()
         this._cached_ctl_map_channel.clear()
         this._cached_ctl_map_global.clear()
+        println("${this.visible_ctls_line}")
 
         val percussion_visible = this.get_activity()!!.view_model.show_percussion
         var ctl_line = 0
@@ -3179,4 +3145,48 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     // END UI FUNCS -----------------------
+    override fun to_json(): JSONHashMap {
+        val ui_config = JSONHashMap()
+        val visible_ctls_global = JSONList()
+        for (item in this.visible_ctls_global) {
+            visible_ctls_global.add(item.name)
+        }
+        ui_config["visible_ctls_global"] = visible_ctls_global
+
+        val visible_ctls_channel = JSONList()
+        for (item in this.visible_ctls_channel) {
+            visible_ctls_channel.add(JSONList(listOf(JSONString(item.first.name), JSONInteger(item.second))))
+        }
+        ui_config["visible_ctls_channel"] = visible_ctls_channel
+
+        val visible_ctls_line = JSONList()
+        for (item in this.visible_ctls_line) {
+            visible_ctls_line.add(
+                JSONList(
+                    mutableListOf(
+                        JSONString(item.first.name),
+                        JSONInteger(item.second),
+                        JSONInteger(item.third),
+                    )
+                )
+            )
+        }
+        ui_config["visible_ctls_line"] = visible_ctls_line
+
+        val working_json = super.to_json()
+        working_json.get_hashmap("d")["ui_config"] = ui_config
+        return working_json
+    }
+
+    override fun <T: OpusLayerBase> import_from_other(other: T) {
+        super.import_from_other(other)
+        if (other is OpusLayerInterface) {
+            println("WOOOP ${other.visible_ctls_line}")
+            this.visible_ctls_line = other.visible_ctls_line
+            this.visible_ctls_channel = other.visible_ctls_channel
+            this.visible_ctls_global = other.visible_ctls_global
+        } else {
+            println("NOOOOP")
+        }
+    }
 }

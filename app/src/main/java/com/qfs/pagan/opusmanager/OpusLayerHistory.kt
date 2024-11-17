@@ -4,7 +4,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
-open class OpusLayerHistory : OpusLayerBase() {
+open class OpusLayerHistory: OpusLayerBase() {
     var history_cache = HistoryCache()
 
     inline fun <reified T> checked_cast(value: Any): T {
@@ -1066,21 +1066,21 @@ open class OpusLayerHistory : OpusLayerBase() {
         }
     }
 
-    override fun load_json(json_data: JSONHashMap) {
+    override fun project_change_json(json_data: JSONHashMap) {
         this.history_cache.forget {
-            super.load_json(json_data)
+            super.project_change_json(json_data)
         }
     }
 
-    override fun new() {
+    override fun project_change_new() {
         this.history_cache.forget {
-            super.new()
+            super.project_change_new()
         }
     }
 
-    override fun import_midi(midi: Midi) {
+    override fun project_change_midi(midi: Midi) {
         this.history_cache.forget {
-            super.import_midi(midi)
+            super.project_change_midi(midi)
         }
     }
 
@@ -1498,5 +1498,4 @@ open class OpusLayerHistory : OpusLayerBase() {
             this.set_transpose(transpose)
         }
     }
-
 }

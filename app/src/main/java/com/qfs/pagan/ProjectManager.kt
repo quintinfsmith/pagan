@@ -12,27 +12,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class ProjectManager(data_dir: String) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     val path = "$data_dir/projects/"
-    val cfgs_path = "$data_dir/cfgs/"
     private val _cache_path = "$data_dir/project_list.json"
-
-    private fun _convert_project_path_to_cfg_path(input_path: String): String {
-        return input_path.replace(this.path, this.cfgs_path)
-    }
-
-    fun get_project_specific_cfg(project_path: String): JSONHashMap? {
-        val cfg_path = this._convert_project_path_to_cfg_path(project_path)
-        val file = File(cfg_path)
-        if (!file.exists()) {
-            return null
-        }
-        val content = file.readText()
-        val json_obj = JSONParser.parse(content)
-        return if (json_obj is JSONHashMap) {
-            json_obj
-        } else {
-            null
-        }
-    }
 
     fun get_directory(): File {
         val directory = File(this.path)
@@ -44,27 +24,12 @@ class ProjectManager(data_dir: String) {
         return directory
     }
 
-    fun get_cfg_directory(): File {
-        val directory = File(this.cfgs_path)
-        if (!directory.isDirectory) {
-            if (! directory.mkdirs()) {
-                throw MKDirFailedException(this.cfgs_path)
-            }
-        }
-        return directory
-    }
-
     fun delete(opus_manager: OpusManager) {
         val path = opus_manager.path!!
 
         val file = File(path)
         if (file.isFile) {
             file.delete()
-        }
-
-        val cfg_file = File(this._convert_project_path_to_cfg_path(path))
-        if (cfg_file.isFile) {
-            cfg_file.delete()
         }
 
         this._untrack_path(opus_manager.path!!)
@@ -87,14 +52,8 @@ class ProjectManager(data_dir: String) {
 
     fun save(opus_manager: OpusManager) {
         this.get_directory()
-        this.get_cfg_directory()
 
         opus_manager.save()
-
-        val config_path = this._convert_project_path_to_cfg_path(opus_manager.path!!)
-        val config = opus_manager.gen_project_config()
-        val file = File(config_path)
-        file.writeText(config.to_string())
 
         // Untrack then track in order to update the project title in the cache
         this._untrack_path(opus_manager.path!!)
@@ -154,10 +113,7 @@ class ProjectManager(data_dir: String) {
 
     private fun get_file_project_name(file: File): String? {
         val content = file.readText(Charsets.UTF_8)
-        val json_obj = JSONParser.parse(content)
-        if (json_obj !is JSONHashMap) {
-            return null
-        }
+        val json_obj = JSONParser.parse<JSONHashMap>(content) ?: return null
 
         val version = OpusManagerJSONInterface.detect_version(json_obj)
         return when (version) {

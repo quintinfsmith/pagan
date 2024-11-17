@@ -137,7 +137,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
         val bytes = FileInputStream(bkp_json_path).readBytes()
         val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
-
         opus_manager.load(bytes, backup_path)
     }
 
@@ -267,7 +266,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     } catch (e: Exception) {
                         val opus_manager = main.get_opus_manager()
                         if (!opus_manager.first_load_done) {
-                            main.get_opus_manager().project_change_new()
+                            main.get_opus_manager()._project_change_new()
                         } else {
                             main.runOnUiThread {
                                 this.reload_from_bkp()
@@ -306,7 +305,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up
                     if (!opus_manager.first_load_done) {
-                        opus_manager.project_change_new()
+                        opus_manager._project_change_new()
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()
@@ -343,7 +342,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up
                     if (!opus_manager.first_load_done) {
-                        opus_manager.project_change_new()
+                        opus_manager._project_change_new()
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()

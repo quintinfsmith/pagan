@@ -907,77 +907,81 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.first_load_done = true
     }
 
-    override fun project_change_new() {
-        this.lock_ui_full {
+    override fun <T> project_change_wrapper(callback: () -> T): T {
+        println("PCW INTERFACELAYER")
+        return this.lock_ui_full {
             this._ui_clear()
-            val activity = this.get_activity()!!
-            activity.view_model.show_percussion = true
-
-            super.project_change_new()
-            this.on_project_changed()
-
-            val new_path = activity.get_new_project_path()
-            this.path = new_path
+            super.project_change_wrapper(callback)
         }
     }
 
-    override fun project_change_midi(midi: Midi) {
-        this.lock_ui_full {
-            this._ui_clear()
+    // This function is called from the Base Layer within th project_change_wrapper.
+    // It's implicitly wrapped in a lock_ui_full call
+    override fun _project_change_new() {
+        val activity = this.get_activity()!!
+        activity.view_model.show_percussion = true
 
-            super.project_change_midi(midi)
-            this.on_project_changed()
+        super._project_change_new()
+        this.on_project_changed()
 
-            val activity = this.get_activity()
-            activity!!.view_model.show_percussion = this.has_percussion()
-            this.recache_line_maps()
-        }
+        val new_path = activity.get_new_project_path()
+        this.path = new_path
     }
 
-    override fun project_change_json(json_data: JSONHashMap) {
-        this.lock_ui_full {
-            val activity = this.get_activity()!!
-            this._ui_clear()
+    // This function is called from the Base Layer within th project_change_wrapper.
+    // It's implicitly wrapped in a lock_ui_full call
+    override fun _project_change_midi(midi: Midi) {
+        super._project_change_midi(midi)
+        this.on_project_changed()
 
-            super.project_change_json(json_data)
-            val data = json_data.get_hashmapn("d") ?: JSONHashMap()
-            val ui_config = data.get_hashmapn("ui_config") ?: JSONHashMap()
-            val global_ctls = ui_config.get_listn("visible_ctls_global")
-            if (global_ctls != null) {
-                for (i in 0 until global_ctls.list.size) {
-                    this.visible_ctls_global.add(
-                        ControlEventType.valueOf(
-                            global_ctls.get_string(i)
-                        )
+        val activity = this.get_activity()
+        activity!!.view_model.show_percussion = this.has_percussion()
+    }
+
+    override fun _project_change_json(json_data: JSONHashMap) {
+        println("ICALL_A")
+        super._project_change_json(json_data)
+        println("ICALL_B")
+
+        val inner_map = json_data.get_hashmapn("d") ?: JSONHashMap()
+        val ui_config = inner_map.get_hashmapn("ui_config") ?: JSONHashMap()
+        val global_ctls = ui_config.get_listn("visible_ctls_global")
+        if (global_ctls != null) {
+            for (i in 0 until global_ctls.list.size) {
+                this.visible_ctls_global.add(
+                    ControlEventType.valueOf(
+                        global_ctls.get_string(i)
                     )
-                }
-            }
-
-            val channel_ctls = ui_config.get_listn("visible_ctls_channel")
-            if (channel_ctls != null) {
-                for (i in 0 until channel_ctls.list.size) {
-                    val entry = channel_ctls.get_list(i)
-                    val type = ControlEventType.valueOf(entry.get_string(0))
-                    val channel = entry.get_int(1)
-                    this.visible_ctls_channel.add(Pair(type, channel))
-                }
-            }
-
-            val line_ctls = ui_config.get_listn("visible_ctls_line")
-            if (line_ctls != null) {
-                for (i in 0 until line_ctls.list.size) {
-                    val entry = line_ctls.get_list(i)
-                    val type = ControlEventType.valueOf(entry.get_string(0))
-                    val channel = entry.get_int(1)
-                    val line_offset = entry.get_int(2)
-                    this.visible_ctls_line.add(Triple(type, channel, line_offset))
-                }
-            }
-
-            if (! this._in_reload) {
-                activity.view_model.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
+                )
             }
         }
+
+        val channel_ctls = ui_config.get_listn("visible_ctls_channel")
+        if (channel_ctls != null) {
+            for (i in 0 until channel_ctls.list.size) {
+                val entry = channel_ctls.get_list(i)
+                val type = ControlEventType.valueOf(entry.get_string(0))
+                val channel = entry.get_int(1)
+                this.visible_ctls_channel.add(Pair(type, channel))
+            }
+        }
+
+        val line_ctls = ui_config.get_listn("visible_ctls_line")
+        if (line_ctls != null) {
+            for (i in 0 until line_ctls.list.size) {
+                val entry = line_ctls.get_list(i)
+                val type = ControlEventType.valueOf(entry.get_string(0))
+                val channel = entry.get_int(1)
+                val line_offset = entry.get_int(2)
+                this.visible_ctls_line.add(Triple(type, channel, line_offset))
+            }
+        }
+
+
+        if (! this._in_reload) {
+            this._activity?.view_model?.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
+        }
+        println("ICALL_C")
     }
 
     fun reload(bytes: ByteArray, path: String) {
@@ -1606,7 +1610,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._cached_ctl_map_line.clear()
         this._cached_ctl_map_channel.clear()
         this._cached_ctl_map_global.clear()
-        println("${this.visible_ctls_line}")
+        println("VCL: ${this.visible_ctls_line}")
 
         val percussion_visible = this.get_activity()!!.view_model.show_percussion
         var ctl_line = 0
@@ -1653,7 +1657,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             ctl_line += 1
         }
-
+        println("VCL@: ${this.visible_ctls_line}")
         this.set_overlap_callbacks()
     }
 

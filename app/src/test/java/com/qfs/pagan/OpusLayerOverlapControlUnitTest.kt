@@ -20,7 +20,7 @@ class OpusLayerOverlapControlUnitTest {
     @Test
     fun test_get_leaf_offset_and_width() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.split_tree(BeatKey(0,0,0), listOf(0), 3)
         manager.split_tree(BeatKey(0,0,0), listOf(1), 2)
@@ -55,7 +55,7 @@ class OpusLayerOverlapControlUnitTest {
 
     fun test_set_event() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.split_tree(BeatKey(0,0,1), listOf(), 2)
@@ -76,7 +76,7 @@ class OpusLayerOverlapControlUnitTest {
     
     fun test_replace_tree() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.split_tree(BeatKey(0,0,1), listOf(), 2)
@@ -101,7 +101,7 @@ class OpusLayerOverlapControlUnitTest {
 
     fun test_remove_beat() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
@@ -114,7 +114,7 @@ class OpusLayerOverlapControlUnitTest {
 
     fun test_remove() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 3)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 2))

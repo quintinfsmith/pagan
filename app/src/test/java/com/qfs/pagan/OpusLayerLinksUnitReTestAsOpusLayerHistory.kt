@@ -35,7 +35,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
 
     private fun setup_linked_manager(): Pair<OpusManager, BeatKey> {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
         return Pair(manager, BeatKey(0,0,0))
     }
@@ -54,7 +54,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_link_beats() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.new_line(0)
         val first_key = BeatKey(0, 0, 0)
         val second_key = BeatKey(0, 0, 1)
@@ -126,7 +126,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_insert_beats() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
         manager.insert_beat(1)
         assertEquals(
@@ -145,7 +145,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_remove_beat() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
         manager.remove_beat(1)
         assertEquals(
@@ -164,7 +164,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_new_line() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
         manager.new_line(0,0)
         assertEquals(
@@ -204,7 +204,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_new_channel() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
         manager.new_channel(0)
         assertEquals(
@@ -217,7 +217,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_remove_channel() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.new_channel()
         manager.new_channel()
         manager.link_beats(BeatKey(2,0,0), BeatKey(2,0,1))
@@ -232,7 +232,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_remove_line() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
         manager.link_beats(BeatKey(0,2,0), BeatKey(0,2,1))
@@ -353,7 +353,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_set_percussion_event() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.link_beats(BeatKey(1,0,0), BeatKey(1,0,1))
         manager.set_percussion_event(BeatKey(1,0,0), listOf())
         this.batch_link_test(manager, BeatKey(1,0,0)) {
@@ -397,7 +397,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_link_beat_range() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.new_line(0)
         val first_key = BeatKey(0,0,0)
         val second_key = BeatKey(0,1,1)
@@ -434,7 +434,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_link_row() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.new_line(0)
 
         assertThrows(OpusLayerLinks.BadRowLink::class.java) {
@@ -458,7 +458,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_link_beat_range_horizontally() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.set_beat_count(12)
         val first_key = BeatKey(0,0,0)
@@ -489,7 +489,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_swap_lines() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,1,1))
@@ -516,7 +516,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_move_leaf() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
 
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
         manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(12))
@@ -543,7 +543,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_move_beat_range() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
         manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
@@ -576,7 +576,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
     @Test
     fun test_clear_links() {
         val manager = OpusManager()
-        manager.project_change_new()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
         for (i in 1 until 4) {

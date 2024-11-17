@@ -1066,21 +1066,21 @@ open class OpusLayerHistory: OpusLayerBase() {
         }
     }
 
-    override fun project_change_json(json_data: JSONHashMap) {
+    override fun _project_change_json(json_data: JSONHashMap) {
         this.history_cache.forget {
-            super.project_change_json(json_data)
+            super._project_change_json(json_data)
         }
     }
 
-    override fun project_change_new() {
+    override fun _project_change_new() {
         this.history_cache.forget {
-            super.project_change_new()
+            super._project_change_new()
         }
     }
 
-    override fun project_change_midi(midi: Midi) {
+    override fun _project_change_midi(midi: Midi) {
         this.history_cache.forget {
-            super.project_change_midi(midi)
+            super._project_change_midi(midi)
         }
     }
 

@@ -973,8 +973,13 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
 abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<T>>): OpusTreeArray<T>(beats) {
     class BlockedCtlTreeException(var type: ControlEventType, var e: BlockedTreeException): Exception(e.message)
-    var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume, ControlEventType.Pan))
-
+    var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
+    init {
+        // Default volume to hidden
+        for ((_, controller) in controllers.get_all()) {
+            controller.visible = false
+        }
+    }
 
     override fun insert_beat(index: Int) {
         super.insert_beat(index)

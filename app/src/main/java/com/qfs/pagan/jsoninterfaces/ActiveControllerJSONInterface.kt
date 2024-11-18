@@ -14,7 +14,7 @@ class ActiveControllerJSONInterface {
         fun <T: OpusControlEvent> from_json(obj: JSONHashMap, size: Int): ActiveController<out OpusControlEvent> {
             val label = obj.get_string("type")
 
-            return when (label) {
+            val output = when (label) {
                 "tempo" -> {
                     val controller = TempoController(size)
                     controller.set_initial_event(OpusControlEventJSONInterface.tempo_event(obj.get_hashmap("initial")))
@@ -35,6 +35,10 @@ class ActiveControllerJSONInterface {
                 }
                 else -> throw UnknownControllerException(label)
             }
+
+            output.visible = obj.get_booleann("visible") ?: true
+
+            return output
         }
         private fun <T: OpusControlEvent> populate_controller(obj: JSONHashMap, controller: ActiveController<T>, converter: (JSONHashMap) -> T) {
             for (pair in obj.get_list("events").list) {
@@ -120,6 +124,7 @@ class ActiveControllerJSONInterface {
                 is PanController -> "pan"
                 else -> throw Exception()
             }
+            map["visible"] = controller.visible
 
             return map
         }

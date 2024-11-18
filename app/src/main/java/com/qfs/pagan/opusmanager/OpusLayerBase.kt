@@ -288,7 +288,6 @@ open class OpusLayerBase {
             new_manager.new_channel()
             new_manager.set_beat_count(4)
             new_manager.set_project_name(null)
-            new_manager._setup_default_controllers()
             return new_manager
         }
 
@@ -2150,14 +2149,8 @@ open class OpusLayerBase {
 
     open fun <T> project_change_wrapper(callback: () -> T): T {
         this.clear()
-        println("CALLBACK_A")
         val output = callback()
-        println("CALLBACK_B")
-
-        this._setup_default_controllers()
-        println("CALLBACK_C")
         this.on_project_changed()
-        println("CALLBACK_D")
         return output
     }
 
@@ -2208,25 +2201,6 @@ open class OpusLayerBase {
             )
         }
         this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.beat_count)
-    }
-
-    private fun _setup_default_controllers() {
-        // Every Line needs its own Volume Controller and the Entire Project needs a Tempo Controller in order to function,
-        // Any other Controllers can be added manually by the user
-
-        for (channel in this.get_all_channels()) {
-            for (line in channel.lines) {
-                if (!line.controllers.has_controller(ControlEventType.Volume)) {
-                    line.controllers.new_controller(ControlEventType.Volume)
-
-                }
-            }
-        }
-
-        if (!this.controllers.has_controller(ControlEventType.Tempo)) {
-            this.controllers.new_controller(ControlEventType.Tempo)
-        }
-        this.recache_line_maps()
     }
 
     fun project_change_midi(midi: Midi) {
@@ -2490,8 +2464,6 @@ open class OpusLayerBase {
         for ((line_offset, instrument) in percussion_instrument_map) {
             this.set_percussion_instrument(line_offset, instrument)
         }
-
-        this._setup_default_controllers()
 
         val tempo_controller = this.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
         tempo_line.forEachIndexed { i: Int, tempo_tree: OpusTree<OpusTempoEvent> ->
@@ -3225,21 +3197,21 @@ open class OpusLayerBase {
     }
 
     fun has_channel_controller(type: ControlEventType, channel: Int): Boolean {
-        return this.channels[channel].controllers.has_controller(type)
+        return this.get_all_channels()[channel].controllers.has_controller(type)
     }
 
     fun add_channel_ctl_line(type: ControlEventType, channel: Int) {
-        this.channels[channel].controllers.new_controller(type)
+        this.get_all_channels()[channel].controllers.new_controller(type)
         this.recache_line_maps()
     }
 
     fun remove_channel_ctl_line(type: ControlEventType, channel: Int) {
-        this.channels[channel].controllers.remove_controller(type)
+        this.get_all_channels()[channel].controllers.remove_controller(type)
         this.recache_line_maps()
     }
 
     fun has_line_controller(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
-        return this.channels[channel].lines[line_offset].controllers.has_controller(type)
+        return this.get_all_channels()[channel].lines[line_offset].controllers.has_controller(type)
     }
 
     fun add_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
@@ -3336,11 +3308,6 @@ open class OpusLayerBase {
         this._cached_std_line_map = other._cached_std_line_map
         this.controllers = other.controllers
         this.percussion_channel = other.percussion_channel
-    }
-
-    open fun new_global_controller(type: ControlEventType) {
-        this.controllers.new_controller(type)
-        this.recache_line_maps()
     }
 
 
@@ -3633,23 +3600,107 @@ open class OpusLayerBase {
         }
     }
 
-    fun new_controller(level: CtlLineLevel, type: ControlEventType) {
-        when (level) {
-            CtlLineLevel.Line -> {
-                for (channel in this.get_all_channels()) {
-                    for (line in channel.lines) {
-                        line.controllers.new_controller(type)
-                    }
-                }
-            }
-            CtlLineLevel.Channel -> {
-                for (channel in this.get_all_channels()) {
-                    channel.controllers.new_controller(type)
-                }
-            }
-            CtlLineLevel.Global -> {
-                this.controllers.new_controller(type)
-            }
+    fun is_line_ctl_visible(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
+        val line = this.get_all_channels()[channel].lines[line_offset]
+        return line.controllers.has_controller(type) && line.controllers.get_controller<OpusControlEvent>(type).visible
+    }
+
+    fun is_channel_ctl_visible(type: ControlEventType, channel_index: Int): Boolean {
+        val channel = this.get_all_channels()[channel_index]
+        return channel.controllers.has_controller(type) && channel.controllers.get_controller<OpusControlEvent>(type).visible
+    }
+
+    fun is_global_ctl_visible(type: ControlEventType): Boolean {
+        return this.controllers.has_controller(type) && this.controllers.get_controller<OpusControlEvent>(type).visible
+    }
+
+    open fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        line.controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    open fun new_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        line.controllers.get_controller<OpusControlEvent>(type)
+        this.recache_line_maps()
+    }
+
+    open fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        val controller = line.controllers.get_controller<OpusControlEvent>(type)
+        controller.visible = visibility
+        this.recache_line_maps()
+    }
+
+    open fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        val exists = line.controllers.has_controller(type)
+        if (!exists) {
+            this.new_line_controller(type, channel_index, line_offset)
+        } else {
+            val controller = line.controllers.get_controller<OpusControlEvent>(type)
+            this.set_line_controller_visibility(type, channel_index, line_offset, !controller.visible)
+        }
+    }
+
+    open fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        channel.controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    open fun new_channel_controller(type: ControlEventType, channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        channel.controllers.get_controller<OpusControlEvent>(type)
+        this.recache_line_maps()
+    }
+
+    open fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
+        val channel = this.get_all_channels()[channel_index]
+        val controller = channel.controllers.get_controller<OpusControlEvent>(type)
+        controller.visible = visibility
+        this.recache_line_maps()
+    }
+
+    open fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val exists = channel.controllers.has_controller(type)
+        if (!exists) {
+            this.new_channel_controller(type, channel_index)
+        } else {
+            val controller = channel.controllers.get_controller<OpusControlEvent>(type)
+            this.set_channel_controller_visibility(type, channel_index, !controller.visible)
+        }
+    }
+
+    open fun remove_global_controller(type: ControlEventType) {
+        this.controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    open fun new_global_controller(type: ControlEventType) {
+        this.controllers.new_controller(type)
+        this.recache_line_maps()
+    }
+
+    open fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
+        val controller = this.controllers.get_controller<OpusControlEvent>(type)
+        controller.visible = visibility
+        this.recache_line_maps()
+    }
+
+    open fun toggle_global_control_visibility(type: ControlEventType) {
+        val exists = this.controllers.has_controller(type)
+        if (exists) {
+            val controller = this.controllers.get_controller<OpusControlEvent>(type)
+            this.set_global_controller_visibility(type, !controller.visible)
+        } else {
+            this.new_global_controller(type)
         }
     }
 }

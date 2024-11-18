@@ -85,7 +85,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
 
         this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
-            opus_manager.toggle_channel_control_visibility(ctl_type, cursor.channel)
+            opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
         }
     }
 

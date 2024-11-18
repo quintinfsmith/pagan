@@ -147,6 +147,7 @@ open class OpusLayerHistory: OpusLayerBase() {
                         channel = channel,
                         uuid = current_node.args[1] as Int
                     )
+
                     this.set_channel_instrument(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
                 }
 
@@ -306,6 +307,77 @@ open class OpusLayerHistory: OpusLayerBase() {
                     )
                 }
 
+                HistoryToken.SET_GLOBAL_CTL_VISIBILITY -> {
+                    this.set_global_controller_visibility(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Boolean
+                    )
+                }
+                HistoryToken.SET_CHANNEL_CTL_VISIBILITY -> {
+                    this.set_channel_controller_visibility(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Boolean
+                    )
+                }
+                HistoryToken.SET_LINE_CTL_VISIBILITY -> {
+                    this.set_line_controller_visibility(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int,
+                        current_node.args[3] as Boolean
+                    )
+                }
+                HistoryToken.REMOVE_LINE_CONTROLLER -> {
+                    this.remove_line_controller(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int
+                    )
+                }
+                HistoryToken.REMOVE_GLOBAL_CONTROLLER -> {
+                    this.remove_global_controller(
+                        current_node.args[0] as ControlEventType
+                    )
+                }
+                HistoryToken.REMOVE_CHANNEL_CONTROLLER -> {
+                    this.remove_channel_controller(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int
+                    )
+                }
+                HistoryToken.NEW_LINE_CONTROLLER -> {
+                    this.new_line_controller(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int
+                    )
+                }
+                HistoryToken.NEW_GLOBAL_CONTROLLER -> {
+                    this.new_global_controller(
+                        current_node.args[0] as ControlEventType
+                    )
+                }
+                HistoryToken.NEW_CHANNEL_CONTROLLER -> {
+                    this.new_channel_controller(
+                        current_node.args[0] as ControlEventType,
+                        current_node.args[1] as Int
+                    )
+                }
+                HistoryToken.MULTI -> { /* Nothing */ }
+                HistoryToken.SAVE_POINT -> TODO()
+                HistoryToken.INSERT_TREE -> TODO()
+                HistoryToken.MOVE_LINE -> TODO()
+                //HistoryToken.CURSOR_SELECT -> TODO()
+                //HistoryToken.CURSOR_SELECT_COLUMN -> TODO()
+                //HistoryToken.CURSOR_SELECT_LINE -> TODO()
+                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL -> TODO()
+                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL -> TODO()
+                //HistoryToken.CURSOR_SELECT_LINE_CTL -> TODO()
+                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW -> TODO()
+                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW -> TODO()
+                //HistoryToken.CURSOR_SELECT_LINE_CTL_ROW -> TODO()
+                //HistoryToken.CURSOR_SELECT_RANGE -> TODO()
                 else -> {}
             }
         } catch (e: ClassCastException) {
@@ -454,7 +526,6 @@ open class OpusLayerHistory: OpusLayerBase() {
                     HistoryToken.INSERT_LINE_PERCUSSION,
                     listOf(channel, line_offset, line)
                 )
-
             } else {
                 this.push_to_history_stack(
                     HistoryToken.INSERT_LINE,
@@ -1171,8 +1242,10 @@ open class OpusLayerHistory: OpusLayerBase() {
             }
 
             val line_count = working_channel.lines.size
+
             // Will be an extra empty line that needs to be removed
-            tmp_history_nodes.add(Pair( HistoryToken.REMOVE_LINE, listOf(channel, line_count) ))
+            tmp_history_nodes.add(Pair(HistoryToken.REMOVE_LINE, listOf(channel, line_count)))
+
             for (i in line_count - 1 downTo 0) {
                 tmp_history_nodes.add(
                     Pair(
@@ -1181,6 +1254,8 @@ open class OpusLayerHistory: OpusLayerBase() {
                     )
                 )
             }
+
+
 
             tmp_history_nodes.add(
                 Pair(
@@ -1433,7 +1508,6 @@ open class OpusLayerHistory: OpusLayerBase() {
         }
     }
 
-
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
         this._remember {
             val original_map = this.tuning_map.clone()
@@ -1490,6 +1564,115 @@ open class OpusLayerHistory: OpusLayerBase() {
         }
     }
 
+    override fun remove_global_controller(type: ControlEventType) {
+        this._remember {
+            if (this.has_global_controller(type)) {
+                this.push_to_history_stack(
+                    HistoryToken.NEW_GLOBAL_CONTROLLER,
+                    listOf(type)
+                )
+            }
+            super.remove_global_controller(type)
+        }
+    }
+
+    override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        this._remember {
+            if (this.has_line_controller(type, channel_index, line_offset)) {
+                this.push_to_history_stack(
+                    HistoryToken.NEW_LINE_CONTROLLER,
+                    listOf(type, channel_index, line_offset)
+                )
+            }
+            super.remove_line_controller(type, channel_index, line_offset)
+        }
+    }
+
+    override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
+        this._remember {
+            if (this.has_channel_controller(type, channel_index)) {
+                this.push_to_history_stack(
+                    HistoryToken.NEW_CHANNEL_CONTROLLER,
+                    listOf(type, channel_index)
+                )
+            }
+            super.remove_channel_controller(type, channel_index)
+        }
+    }
+
+    override fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
+        this._remember {
+            val controller = this.controllers.get_controller<OpusControlEvent>(type)
+            this.push_to_history_stack(
+                HistoryToken.SET_GLOBAL_CTL_VISIBILITY,
+                listOf(type, controller.visible)
+            )
+
+            super.set_global_controller_visibility(type, visibility)
+        }
+    }
+
+    override fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
+        this._remember {
+            val controller = this.get_all_channels()[channel_index].controllers.get_controller<OpusControlEvent>(type)
+            this.push_to_history_stack(
+                HistoryToken.SET_CHANNEL_CTL_VISIBILITY,
+                listOf(type, channel_index, controller.visible)
+            )
+
+            super.set_channel_controller_visibility(type, channel_index, visibility)
+        }
+    }
+
+    override fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
+        this._remember {
+            val controller = this.get_all_channels()[channel_index].lines[line_offset].controllers.get_controller<OpusControlEvent>(type)
+
+            this.push_to_history_stack(
+                HistoryToken.SET_LINE_CTL_VISIBILITY,
+                listOf(type, channel_index, line_offset, controller.visible)
+            )
+
+            super.set_line_controller_visibility(type, channel_index, line_offset, visibility)
+        }
+    }
+
+    override fun new_channel_controller(type: ControlEventType, channel_index: Int) {
+        this._remember {
+            if (!this.has_channel_controller(type, channel_index)) {
+                this.push_to_history_stack(
+                    HistoryToken.REMOVE_CHANNEL_CONTROLLER,
+                    listOf(type, channel_index)
+                )
+
+            }
+            super.new_channel_controller(type, channel_index)
+        }
+    }
+
+    override fun new_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        this._remember {
+            if (!this.has_line_controller(type, channel_index, line_offset)) {
+                this.push_to_history_stack(
+                    HistoryToken.REMOVE_LINE_CONTROLLER,
+                    listOf(type, channel_index, line_offset)
+                )
+            }
+            super.new_line_controller(type, channel_index, line_offset)
+        }
+    }
+
+    override fun new_global_controller(type: ControlEventType) {
+        this._remember {
+            if (!this.has_global_controller(type)) {
+                this.push_to_history_stack(
+                    HistoryToken.REMOVE_GLOBAL_CONTROLLER,
+                    listOf(type)
+                )
+            }
+            super.new_global_controller(type)
+        }
+    }
 
     // Need a compound function so history can manage both at the same time
     open fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Int) {

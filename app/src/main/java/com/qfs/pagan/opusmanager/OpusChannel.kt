@@ -26,9 +26,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     var midi_program = 0
     private var _beat_count: Int = 0
     var size: Int = 0
-    init {
-        this.controllers.new_controller(ControlEventType.Volume)
-    }
 
     abstract fun gen_line(): T
     open fun clear() {

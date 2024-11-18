@@ -4,9 +4,6 @@ import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONInteger
-import com.qfs.json.JSONList
-import com.qfs.json.JSONString
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
@@ -56,10 +53,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private val ui_change_bill = UIChangeBill()
     var temporary_blocker: OpusManagerCursor? = null
-
-    var visible_ctls_global: MutableList<ControlEventType> = mutableListOf(ControlEventType.Tempo)
-    var visible_ctls_channel: MutableList<Pair<ControlEventType, Int>> = mutableListOf()
-    var visible_ctls_line: MutableList<Triple<ControlEventType, Int, Int>> = mutableListOf()
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
@@ -194,9 +187,11 @@ class OpusLayerInterface : OpusLayerCursor() {
 
 
     private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {
-        if (! this.is_global_ctl_visible(type)) {
+        val controller = this.controllers.get_controller<OpusControlEvent>(type)
+        if (!controller.visible) {
             return
         }
+
         if (this.ui_change_bill.is_full_locked()) {
             return
         }
@@ -206,7 +201,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             x = beat
         )
 
-        val tree = this.controllers.get_controller<OpusControlEvent>(type).get_tree(beat)
+        val tree = controller.get_tree(beat)
         val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table()
@@ -218,7 +213,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _queue_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
-        if (! this.is_channel_ctl_visible(type, channel)) {
+        val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
+        if (!controller.visible) {
             return
         }
         if (this.ui_change_bill.is_full_locked()) {
@@ -230,7 +226,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             x = beat
         )
 
-        val tree = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).get_tree(beat)
+        val tree = controller.get_tree(beat)
         val new_weight = tree.get_total_child_weight()
 
         val editor_table = this.get_editor_table()
@@ -243,7 +239,8 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _queue_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
-        if (!this.is_line_ctl_visible(type, beat_key.channel, beat_key.line_offset)) {
+        val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type)
+        if (!controller.visible) {
            return
         }
 
@@ -650,6 +647,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
         return this.lock_ui_partial {
             val output = super.new_line(channel, line_offset)
+
             this._update_after_new_line(channel, line_offset)
             output
         }
@@ -707,8 +705,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             val output = super.remove_line(channel, line_offset)
 
             var row_count = 1
-            for ((type, _) in output.controllers.get_all()) {
-                if (this.is_line_ctl_visible(type, channel, line_offset)) {
+            for ((type, controller) in output.controllers.get_all()) {
+                if (controller.visible) {
                     row_count += 1
                 }
             }
@@ -754,7 +752,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                         val line = line_list[j]
                         this._add_line_to_column_width_map(ctl_row++, line)
                         for ((type, controller) in line.controllers.get_all()) {
-                            if (this.is_line_ctl_visible(type, notify_index, j)) {
+                            if (controller.visible) {
                                 this._add_controller_to_column_width_map(ctl_row++, controller)
                             }
                         }
@@ -762,7 +760,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                     val controllers = this.channels[notify_index].controllers.get_all()
                     for ((type, controller) in controllers) {
-                        if (this.is_channel_ctl_visible(type, notify_index)) {
+                        if (controller.visible) {
                             this._add_controller_to_column_width_map(ctl_row++, controller)
                         }
                     }
@@ -846,8 +844,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun remove_channel(channel: Int) {
         this.lock_ui_partial {
-
-        if (!this.ui_change_bill.is_full_locked()) {
+            if (!this.ui_change_bill.is_full_locked()) {
                 val y = try {
                     this.get_instrument_line_index(channel, 0)
                 } catch (e: IndexOutOfBoundsException) {
@@ -865,16 +862,16 @@ class OpusLayerInterface : OpusLayerCursor() {
                         && this.channels.size == 1
 
                 // NOTE: Accessing this.channels instead of this.get_all_channels since it's not possible to remove percussion channel
-                for ((type, _) in this.channels[channel].controllers.get_all()) {
-                    if (this.is_channel_ctl_visible(type, channel)) {
+                for ((type, controller) in this.channels[channel].controllers.get_all()) {
+                    if (controller.visible) {
                         removed_row_count += 1
                     }
                 }
 
                 for (j in 0 until this.channels[channel].lines.size) {
                     val line = this.channels[channel].lines[j]
-                    for ((type, _) in line.controllers.get_all()) {
-                        if (this.is_line_ctl_visible(type, channel, j)) {
+                    for ((type, controller) in line.controllers.get_all()) {
+                        if (controller.visible) {
                             removed_row_count += 1
                         }
                     }
@@ -908,7 +905,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun <T> project_change_wrapper(callback: () -> T): T {
-        println("PCW INTERFACELAYER")
         return this.lock_ui_full {
             this._ui_clear()
             super.project_change_wrapper(callback)
@@ -941,41 +937,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun _project_change_json(json_data: JSONHashMap) {
         super._project_change_json(json_data)
 
-        val inner_map = json_data.get_hashmapn("d") ?: JSONHashMap()
-        val ui_config = inner_map.get_hashmapn("ui_config") ?: JSONHashMap()
-        val global_ctls = ui_config.get_listn("visible_ctls_global")
-        if (global_ctls != null) {
-            for (i in 0 until global_ctls.list.size) {
-                this.visible_ctls_global.add(
-                    ControlEventType.valueOf(
-                        global_ctls.get_string(i)
-                    )
-                )
-            }
-        }
-
-        val channel_ctls = ui_config.get_listn("visible_ctls_channel")
-        if (channel_ctls != null) {
-            for (i in 0 until channel_ctls.list.size) {
-                val entry = channel_ctls.get_list(i)
-                val type = ControlEventType.valueOf(entry.get_string(0))
-                val channel = entry.get_int(1)
-                this.visible_ctls_channel.add(Pair(type, channel))
-            }
-        }
-
-        val line_ctls = ui_config.get_listn("visible_ctls_line")
-        if (line_ctls != null) {
-            for (i in 0 until line_ctls.list.size) {
-                val entry = line_ctls.get_list(i)
-                val type = ControlEventType.valueOf(entry.get_string(0))
-                val channel = entry.get_int(1)
-                val line_offset = entry.get_int(2)
-                this.visible_ctls_line.add(Triple(type, channel, line_offset))
-            }
-        }
-
-
         if (! this._in_reload) {
             this._activity?.view_model?.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
         }
@@ -989,12 +950,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun clear() {
         super.clear()
-
-        this.visible_ctls_global.clear()
-        this.visible_ctls_global.add(ControlEventType.Tempo) // force Tempo Visibility
-
-        this.visible_ctls_channel.clear()
-        this.visible_ctls_line.clear()
 
         this._cached_row_map.clear()
         this._cached_inv_visible_line_map.clear()
@@ -1468,83 +1423,59 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     // This is just a basic  clear so the UI works while I build the new logic for handling active control visibilities
     // TODO: create per-level logic so it's not just a cursor_clear
-    private fun _tmp_ctl_visibility_callback() {
+    private fun _controller_visibility_toggle_callback() {
         val editor_table = this.get_editor_table() ?: return
         this.withFragment {
             it.backup_position()
         }
         editor_table.clear()
 
-        val cursor = this.cursor
-        if (cursor.ctl_level != null) {
-            this.cursor_clear()
-        }
-
-        this.recache_line_maps()
         this._init_editor_table_width_map()
         editor_table.setup(this.get_row_count(), this.beat_count)
         this.withFragment {
             it.restore_view_model_position()
-            it.refresh_context_menu()
+            try {
+                it.refresh_context_menu()
+            } catch (e: Exception) {
+                it.clear_context_menu()
+            }
         }
     }
 
-    fun toggle_line_control_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        val entry = Triple(type, channel_index, line_offset)
-        val was_visible = this.is_line_ctl_visible(type, channel_index, line_offset)
-
-        if (was_visible) {
-            this.visible_ctls_line.remove(entry)
-        } else {
-            this.visible_ctls_line.add(entry)
-
-            // Create the controller if it doesn't exist
-            val channel = this.get_all_channels()[channel_index]
-            val line = channel.lines[line_offset]
-            if (!line.controllers.has_controller(type)) {
-                line.controllers.new_controller(type)
+    override fun toggle_global_control_visibility(type: ControlEventType) {
+        this.lock_ui_partial {
+            val cursor = this.cursor
+            if (cursor.ctl_level != null) {
+                this.cursor_clear()
             }
+
+            super.toggle_global_control_visibility(type)
+            this._controller_visibility_toggle_callback()
         }
-
-
-        // TODO: Save Configurationa
-        this._tmp_ctl_visibility_callback()
     }
 
-    fun toggle_channel_control_visibility(type: ControlEventType, channel_index: Int) {
-        val entry = Pair(type, channel_index)
-        val was_visible = this.is_channel_ctl_visible(type, channel_index)
-        if (was_visible) {
-            this.visible_ctls_channel.remove(entry)
-        } else {
-            this.visible_ctls_channel.add(entry)
-
-            // Create the controller if it doesn't exist
-            val channel = this.get_all_channels()[channel_index]
-            if (!channel.controllers.has_controller(type)) {
-                channel.controllers.new_controller(type)
+    override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        this.lock_ui_partial {
+            val cursor = this.cursor
+            if (cursor.ctl_level != null) {
+                this.cursor_select_line(channel_index, line_offset)
             }
-        }
 
-        // TODO: Save Configurationa
-        this._tmp_ctl_visibility_callback()
+            super.toggle_line_controller_visibility(type, channel_index, line_offset)
+            this._controller_visibility_toggle_callback()
+        }
     }
 
-    fun toggle_global_control_visibility(type: ControlEventType) {
-        val was_visible = this.is_global_ctl_visible(type)
-        if (was_visible) {
-            this.visible_ctls_global.remove(type)
-        } else {
-            this.visible_ctls_global.add(type)
-
-            // Create the controller if it doesn't exist
-            if (!this.controllers.has_controller(type)) {
-                this.controllers.new_controller(type)
+    override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
+        this.lock_ui_partial {
+            val cursor = this.cursor
+            if (cursor.ctl_level != null) {
+                this.cursor_select_channel(channel_index)
             }
-        }
 
-        // TODO: Save Configurationa
-        this._tmp_ctl_visibility_callback()
+            super.toggle_channel_controller_visibility(type, channel_index)
+            this._controller_visibility_toggle_callback()
+        }
     }
 
     // Deprecated function but i'll use it to build functions to toggle specific control lines
@@ -1610,7 +1541,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._cached_ctl_map_line.clear()
         this._cached_ctl_map_channel.clear()
         this._cached_ctl_map_global.clear()
-        println("VCL: ${this.visible_ctls_line}")
 
         val percussion_visible = this.get_activity()!!.view_model.show_percussion
         var ctl_line = 0
@@ -1626,8 +1556,8 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
                 ctl_line += 1
 
-                for ((type, _) in channel.lines[line_offset].controllers.get_all()) {
-                    if (this.is_line_ctl_visible(type, channel_index, line_offset) && ! hide_channel) {
+                for ((type, controller) in channel.lines[line_offset].controllers.get_all()) {
+                    if (controller.visible && ! hide_channel) {
                         this._cached_inv_visible_line_map[ctl_line] = visible_line
                         this._cached_row_map[visible_line] = ctl_line
                         this._cached_ctl_map_line[Triple(channel_index, line_offset, type)] = visible_line
@@ -1637,8 +1567,8 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
             }
 
-            for ((type, _) in channel.controllers.get_all()) {
-                if (this.is_channel_ctl_visible(type, channel_index) && ! hide_channel) {
+            for ((type, controller) in channel.controllers.get_all()) {
+                if (controller.visible && ! hide_channel) {
                     this._cached_inv_visible_line_map[ctl_line] = visible_line
                     this._cached_row_map[visible_line] = ctl_line
                     this._cached_ctl_map_channel[Pair(channel_index, type)] = visible_line
@@ -1648,8 +1578,8 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
         }
 
-        for ((type, _) in this.controllers.get_all()) {
-            if (this.is_global_ctl_visible(type)) {
+        for ((type, controller) in this.controllers.get_all()) {
+            if (controller.visible) {
                 this._cached_inv_visible_line_map[ctl_line] = visible_line
                 this._cached_row_map[visible_line] = ctl_line
                 this._cached_ctl_map_global[type] = visible_line
@@ -1657,7 +1587,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
             ctl_line += 1
         }
-        println("VCL@: ${this.visible_ctls_line}")
+
         this.set_overlap_callbacks()
     }
 
@@ -1706,18 +1636,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
         }
 
-    }
-
-    fun is_line_ctl_visible(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
-        return this.visible_ctls_line.contains(Triple(type, channel, line_offset))
-    }
-
-    fun is_channel_ctl_visible(type: ControlEventType, channel: Int): Boolean {
-        return this.visible_ctls_channel.contains(Pair(type, channel))
-    }
-
-    fun is_global_ctl_visible(type: ControlEventType): Boolean {
-        return this.visible_ctls_global.contains(type)
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
@@ -1785,14 +1703,14 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.percussion_channel.lines.forEachIndexed { i: Int, line: OpusLinePercussion ->
                 this._add_line_to_column_width_map(ctl_line++, line)
                 for ((type, controller) in line.controllers.get_all()) {
-                    if (this.is_line_ctl_visible(type, this.channels.size, i)) {
+                    if (controller.visible) {
                         this._add_controller_to_column_width_map(ctl_line++, controller)
                     }
                 }
             }
 
             for ((type, controller) in this.percussion_channel.controllers.get_all()) {
-                if (this.is_channel_ctl_visible(type, this.channels.size)) {
+                if (controller.visible) {
                     this._add_controller_to_column_width_map(ctl_line++, controller)
                 }
             }
@@ -2149,7 +2067,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                     column.add(tree.get_total_child_weight())
 
                     for ((type, controller) in channel.lines[j].controllers.get_all()) {
-                        if (! this.is_line_ctl_visible(type, i, j)) {
+                        if (!controller.visible) {
                             continue
                         }
                         val ctl_tree = controller.get_tree(beat)
@@ -2158,7 +2076,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 }
 
                 for ((type, controller) in channel.controllers.get_all()) {
-                    if (! this.is_channel_ctl_visible(type, i)) {
+                    if (!controller.visible) {
                         continue
                     }
                     val ctl_tree = controller.get_tree(beat)
@@ -2167,7 +2085,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             for ((type, controller) in this.controllers.get_all()) {
-                if (! this.is_global_ctl_visible(type)) {
+                if (!controller.visible) {
                     continue
                 }
 
@@ -2213,12 +2131,15 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun _update_after_new_line(channel: Int, line_offset: Int?) {
+        val working_channel = this.get_channel(channel)
+        val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
+
+
         if (this.ui_change_bill.is_full_locked() || this.get_activity() == null) {
             return
         }
 
-        val working_channel = this.get_channel(channel)
-        val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
+
         val abs_offset = this.get_instrument_line_index(channel, adj_line_offset)
         val row_index = this.get_actual_line_index(abs_offset)
         val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
@@ -2233,7 +2154,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
         controllers.forEachIndexed { i: Int, (type, controller): Pair<ControlEventType, ActiveController<*>> ->
-            if (this.is_line_ctl_visible(type, channel, adj_line_offset)) {
+            if (controller.visible) {
                 this._add_controller_to_column_width_map(visible_row + i, controller)
             }
         }
@@ -2250,7 +2171,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 val tree = this.get_tree(BeatKey(i, j, index))
                 column.add(tree.get_total_child_weight())
                 for ((type, controller) in channel.lines[j].controllers.get_all()) {
-                    if (! this.is_line_ctl_visible(type, i, j)) {
+                    if (!controller.visible) {
                         continue
                     }
                     val ctl_tree = controller.get_tree(index)
@@ -2259,7 +2180,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             for ((type, controller) in channel.controllers.get_all()) {
-                if (! this.is_channel_ctl_visible(type, i)) {
+                if (!controller.visible) {
                     continue
                 }
                 val ctl_tree = controller.get_tree(index)
@@ -2267,7 +2188,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
         }
         for ((type, controller) in this.controllers.get_all()) {
-            if (! this.is_global_ctl_visible(type)) {
+            if (!controller.visible) {
                 continue
             }
             val ctl_tree = controller.get_tree(index)
@@ -2989,7 +2910,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             1
         }
 
-
         val radix = this.tuning_map.size
         val current_event = current_tree.get_event()
         var convert_to_rel_flag = false
@@ -3206,45 +3126,41 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     // END UI FUNCS -----------------------
-    override fun to_json(): JSONHashMap {
-        val ui_config = JSONHashMap()
-        val visible_ctls_global = JSONList()
-        for (item in this.visible_ctls_global) {
-            visible_ctls_global.add(item.name)
-        }
-        ui_config["visible_ctls_global"] = visible_ctls_global
 
-        val visible_ctls_channel = JSONList()
-        for (item in this.visible_ctls_channel) {
-            visible_ctls_channel.add(JSONList(listOf(JSONString(item.first.name), JSONInteger(item.second))))
-        }
-        ui_config["visible_ctls_channel"] = visible_ctls_channel
-
-        val visible_ctls_line = JSONList()
-        for (item in this.visible_ctls_line) {
-            visible_ctls_line.add(
-                JSONList(
-                    mutableListOf(
-                        JSONString(item.first.name),
-                        JSONInteger(item.second),
-                        JSONInteger(item.third),
-                    )
-                )
-            )
-        }
-        ui_config["visible_ctls_line"] = visible_ctls_line
-
-        val working_json = super.to_json()
-        working_json.get_hashmap("d")["ui_config"] = ui_config
-        return working_json
+    override fun remove_global_controller(type: ControlEventType) {
+        super.remove_global_controller(type)
     }
 
-    override fun <T: OpusLayerBase> import_from_other(other: T) {
-        super.import_from_other(other)
-        if (other is OpusLayerInterface) {
-            this.visible_ctls_line = other.visible_ctls_line
-            this.visible_ctls_channel = other.visible_ctls_channel
-            this.visible_ctls_global = other.visible_ctls_global
-        }
+    override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        super.remove_line_controller(type, channel_index, line_offset)
+    }
+
+    override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
+        super.remove_channel_controller(type, channel_index)
+    }
+
+    override fun new_global_controller(type: ControlEventType) {
+        super.new_global_controller(type)
+    }
+
+    override fun new_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        super.new_line_controller(type, channel_index, line_offset)
+    }
+
+    override fun new_channel_controller(type: ControlEventType, channel_index: Int) {
+        super.new_channel_controller(type, channel_index)
+    }
+
+    override fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
+        super.set_line_controller_visibility(type, channel_index, line_offset, visibility)
+        this._controller_visibility_toggle_callback()
+    }
+
+    override fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
+        super.set_channel_controller_visibility(type, channel_index, visibility)
+    }
+
+    override fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
+        super.set_global_controller_visibility(type, visibility)
     }
 }

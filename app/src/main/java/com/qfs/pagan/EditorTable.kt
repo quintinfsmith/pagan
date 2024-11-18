@@ -388,8 +388,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 target_y += row_height
                 working_row_height = row_height
                 count += 1
-                for ((type, _) in line.controllers.get_all()) {
-                    if (!opus_manager.is_line_ctl_visible(type, i, j)) {
+                for ((type, controller) in line.controllers.get_all()) {
+                    if (!controller.visible) {
                         continue
                     }
                     if (count >= y) {
@@ -401,8 +401,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     count += 1
                 }
             }
-            for ((type, _) in channel.controllers.get_all()) {
-                if (!opus_manager.is_channel_ctl_visible(type, i)) {
+            for ((type, controller) in channel.controllers.get_all()) {
+                if (!controller.visible) {
                     continue
                 }
                 if (count >= y) {
@@ -415,8 +415,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
 
-        for ((type, _) in this.get_opus_manager().controllers.get_all()) {
-            if (!opus_manager.is_global_ctl_visible(type)) {
+        for ((type, controller) in this.get_opus_manager().controllers.get_all()) {
+            if (!controller.visible) {
                 continue
             }
             if (count >= y) {

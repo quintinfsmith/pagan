@@ -56,7 +56,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         if (cursor.ctl_level == CtlLineLevel.Line) {
             this.button_toggle_line_control.setImageResource(R.drawable.volume_minus)
             this.button_toggle_line_control.setOnClickListener {
-                opus_manager.toggle_line_control_visibility(
+                opus_manager.toggle_line_controller_visibility(
                     cursor.ctl_type!!,
                     cursor.channel,
                     cursor.line_offset

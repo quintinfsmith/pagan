@@ -129,7 +129,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
-            opus_manager.toggle_line_control_visibility(ctl_type, cursor.channel, cursor.line_offset)
+            opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
         }
     }
 

@@ -105,9 +105,10 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         this.row = new_row
 
         val opus_manager = this.get_opus_manager()
-        val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_row( this.row )
+        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+            opus_manager.get_ctl_line_from_row(this.row)
         )
+
         if (ctl_level == null) {
             val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
             if (channel != 0 && line_offset == 0) {

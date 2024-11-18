@@ -116,7 +116,6 @@ class MainActivity : AppCompatActivity() {
         var export_handle: WavConverter? = null
         var color_map = ColorMap()
         var opus_manager = OpusManager()
-        var show_percussion = true
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, handler: WavConverter.ExporterEventHandler) {
             val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
@@ -2134,13 +2133,6 @@ class MainActivity : AppCompatActivity() {
             )
         } else {
             this._midi_playback_device = null
-        }
-    }
-
-    fun validate_percussion_visibility() {
-        val opus_manager = this.get_opus_manager()
-        if (!this.view_model.show_percussion && opus_manager.has_percussion()) {
-            this.view_model.show_percussion = true
         }
     }
 

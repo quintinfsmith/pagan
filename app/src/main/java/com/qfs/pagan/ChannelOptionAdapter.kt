@@ -134,7 +134,8 @@ class ChannelOptionAdapter(
 
     private fun get_percussion_visibility_button_text(): String {
         val main = this.get_activity()
-        return if (main.view_model.show_percussion) {
+        val opus_manager = main.get_opus_manager()
+        return if (opus_manager.percussion_channel.visible) {
             main.getString(R.string.btn_percussion_visible)
         } else {
             main.getString(R.string.btn_percussion_hidden)
@@ -145,7 +146,7 @@ class ChannelOptionAdapter(
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         try {
-            opus_manager.toggle_percussion_visibility()
+            opus_manager.toggle_channel_visibility(opus_manager.channels.size)
         } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
             return
         } catch (e: OpusLayerInterface.HidingLastChannelException) {

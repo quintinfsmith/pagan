@@ -27,6 +27,8 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     private var _beat_count: Int = 0
     var size: Int = 0
 
+    var visible = true // Would rather have this in the Interface Layer but the code is much cleaner with it here
+
     abstract fun gen_line(): T
     open fun clear() {
         this.lines.clear()
@@ -308,9 +310,11 @@ class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, Opus
 }
 
 class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePercussion>() {
+
     companion object {
         const val DEFAULT_INSTRUMENT = 0
     }
+
 
     override fun gen_line(): OpusLinePercussion {
         return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())

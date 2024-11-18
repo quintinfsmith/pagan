@@ -364,7 +364,14 @@ open class OpusLayerHistory: OpusLayerBase() {
                         current_node.args[1] as Int
                     )
                 }
+                HistoryToken.SET_CHANNEL_VISIBILITY -> {
+                    this.set_channel_visibility(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Boolean
+                    )
+                }
                 HistoryToken.MULTI -> { /* Nothing */ }
+
                 HistoryToken.SAVE_POINT -> TODO()
                 HistoryToken.INSERT_TREE -> TODO()
                 HistoryToken.MOVE_LINE -> TODO()
@@ -378,6 +385,7 @@ open class OpusLayerHistory: OpusLayerBase() {
                 //HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW -> TODO()
                 //HistoryToken.CURSOR_SELECT_LINE_CTL_ROW -> TODO()
                 //HistoryToken.CURSOR_SELECT_RANGE -> TODO()
+
                 else -> {}
             }
         } catch (e: ClassCastException) {
@@ -1680,5 +1688,15 @@ open class OpusLayerHistory: OpusLayerBase() {
             this.set_tuning_map(tuning_map)
             this.set_transpose(transpose)
         }
+    }
+
+    override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
+        if (this.get_all_channels()[channel_index].visible != visibility) {
+            this.push_to_history_stack(
+                HistoryToken.SET_CHANNEL_VISIBILITY,
+                listOf(channel_index, !visibility)
+            )
+        }
+        super.set_channel_visibility(channel_index, visibility)
     }
 }

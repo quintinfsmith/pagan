@@ -164,7 +164,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         val opus_manager = main.get_opus_manager()
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             try {
-                opus_manager.toggle_percussion_visibility()
+                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
             } catch (e: OpusLayerInterface.HidingLastChannelException) {
                 // pass
             }

@@ -104,7 +104,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_GRAVE, false) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusManager): Boolean {
                 try {
-                    opus_manager.toggle_percussion_visibility()
+                    opus_manager.toggle_channel_visibility(opus_manager.channels.size)
                 } catch (e: OpusManager.HidingNonEmptyPercussionException) {
                     // pass
                 }

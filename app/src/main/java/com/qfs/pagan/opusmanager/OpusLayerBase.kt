@@ -3703,4 +3703,15 @@ open class OpusLayerBase {
             this.new_global_controller(type)
         }
     }
+
+    open fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
+        val channel = this.get_all_channels()[channel_index]
+        channel.visible = visibility
+        this.recache_line_maps()
+    }
+
+    open fun toggle_channel_visibility(channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        this.set_channel_visibility(channel_index, !channel.visible)
+    }
 }

@@ -16,7 +16,6 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerCursor
-import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusLinePercussion
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -33,6 +32,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     class HidingLastChannelException: Exception()
     class MissingEditorTableException: Exception()
 
+    var show_percussion: Boolean = true
 
     var relative_mode: Int = 0
     var first_load_done = false
@@ -143,8 +143,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        val activity = this.get_activity()
-        if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+        if (this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
             return
         }
 
@@ -389,8 +388,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         this._catch_blocked_action {
             this.lock_ui_partial {
-                val activity = this.get_activity()
-                if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                if (!show_percussion && this.is_percussion(beat_key.channel)) {
                     this.make_percussion_visible()
                 }
                 super.replace_tree(beat_key, position, tree)
@@ -455,9 +453,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         this._catch_blocked_action {
             this.lock_ui_partial {
-                val activity = this.get_activity()
-
-                if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+                if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
                     this.make_percussion_visible()
                 }
 
@@ -479,8 +475,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._catch_blocked_action {
             this.lock_ui_partial {
                 super.set_percussion_event(beat_key, position)
-                val activity = this.get_activity()
-                if (activity != null && !activity.view_model.show_percussion) {
+                if (!this.percussion_channel.visible) {
                     this.make_percussion_visible()
                 }
 
@@ -521,7 +516,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.split_tree(beat_key, position, splits, move_event_to_end)
 
-            if ((this._activity != null && this._activity!!.view_model.show_percussion) || !this.is_percussion(beat_key.channel)) {
+            if (this.percussion_channel.visible || !this.is_percussion(beat_key.channel)) {
                 this._queue_cell_change(beat_key)
             }
         }
@@ -538,7 +533,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.split_channel_ctl_tree(type, channel, beat, position, splits, move_event_to_end)
 
-            if ((this._activity != null && this._activity!!.view_model.show_percussion) || !this.is_percussion(channel)) {
+            if (this.percussion_channel.visible || !this.is_percussion(channel)) {
                 this._queue_channel_ctl_cell_change(type, channel, beat)
             }
         }
@@ -548,7 +543,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.lock_ui_partial {
             super.split_line_ctl_tree(type, beat_key, position, splits, move_event_to_end)
 
-            if ((this._activity != null && this._activity!!.view_model.show_percussion) || !this.is_percussion(beat_key.channel)) {
+            if (this.percussion_channel.visible || !this.is_percussion(beat_key.channel)) {
                 this._queue_line_ctl_cell_change(type, beat_key)
             }
         }
@@ -656,7 +651,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         this.lock_ui_partial {
             val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }
 
@@ -691,8 +686,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
         return this.lock_ui_partial {
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }
 
@@ -727,45 +721,47 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        this.lock_ui_partial {
-            val notify_index = channel ?: this.channels.size
+    /* Used to update the ui after new_channel and set_channel_visibility(n, true) */
+    private fun _post_new_channel(channel: Int, lines: Int) {
+        if (!this.ui_change_bill.is_full_locked()) {
+            val channels = this.get_all_channels()
+            val line_list = mutableListOf<OpusLineAbstract<*>>()
+            for (i in 0 until lines) {
+                line_list.add(channels[channel].lines[i])
+            }
+            val y = this.get_instrument_line_index(channel, 0)
 
-            super.new_channel(channel, lines, uuid)
 
-            if (!this.ui_change_bill.is_full_locked()) {
-                val line_list = mutableListOf<OpusLine>()
-                for (i in 0 until lines) {
-                    line_list.add(this.channels[notify_index].lines[i])
-                }
-                val y = this.get_instrument_line_index(notify_index, 0)
+            if (!this.is_percussion(channel) || this.percussion_channel.visible) {
+                var ctl_row = this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(y)
+                )!!
 
-                this.ui_change_bill.queue_add_channel(notify_index)
-
-                val activity = this.get_activity()
-                if (activity == null || !this.is_percussion(notify_index) || activity.view_model.show_percussion) {
-                    var ctl_row = this.get_visible_row_from_ctl_line(
-                        this.get_actual_line_index(y)
-                    )!!
-
-                    for (j in 0 until line_list.size) {
-                        val line = line_list[j]
-                        this._add_line_to_column_width_map(ctl_row++, line)
-                        for ((type, controller) in line.controllers.get_all()) {
-                            if (controller.visible) {
-                                this._add_controller_to_column_width_map(ctl_row++, controller)
-                            }
-                        }
-                    }
-
-                    val controllers = this.channels[notify_index].controllers.get_all()
-                    for ((type, controller) in controllers) {
+                for (j in 0 until line_list.size) {
+                    val line = line_list[j]
+                    this._add_line_to_column_width_map(ctl_row++, line)
+                    for ((type, controller) in line.controllers.get_all()) {
                         if (controller.visible) {
                             this._add_controller_to_column_width_map(ctl_row++, controller)
                         }
                     }
                 }
+
+                val controllers = channels[channel].controllers.get_all()
+                for ((type, controller) in controllers) {
+                    if (controller.visible) {
+                        this._add_controller_to_column_width_map(ctl_row++, controller)
+                    }
+                }
             }
+        }
+    }
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
+        this.lock_ui_partial {
+            val notify_index = channel ?: this.channels.size
+            super.new_channel(channel, lines, uuid)
+            this.ui_change_bill.queue_add_channel(notify_index)
+            this._post_new_channel(notify_index, lines)
         }
     }
 
@@ -842,44 +838,49 @@ class OpusLayerInterface : OpusLayerCursor() {
         super.insert_beats(beat_index, count)
     }
 
+
+    private fun _pre_remove_channel(channel: Int): Triple<Int, Int, List<Int>> {
+        val y = try {
+            this.get_instrument_line_index(channel, 0)
+        } catch (e: IndexOutOfBoundsException) {
+            this.get_total_line_count()
+        }
+
+        val ctl_row = this.get_visible_row_from_ctl_line(this.get_actual_line_index(y))!!
+        val channels = this.get_all_channels()
+        var removed_row_count = channels[channel].size
+
+        // NOTE: Accessing this.channels instead of this.get_all_channels since it's not possible to remove percussion channel
+        for ((type, controller) in channels[channel].controllers.get_all()) {
+            if (controller.visible) {
+                removed_row_count += 1
+            }
+        }
+
+        for (j in 0 until channels[channel].lines.size) {
+            val line = channels[channel].lines[j]
+            for ((type, controller) in line.controllers.get_all()) {
+                if (controller.visible) {
+                    removed_row_count += 1
+                }
+            }
+        }
+
+
+        val changed_columns = this.get_editor_table()?.remove_mapped_lines(ctl_row, removed_row_count) ?: listOf()
+
+        return Triple(ctl_row, removed_row_count, changed_columns)
+    }
+
     override fun remove_channel(channel: Int) {
         this.lock_ui_partial {
             if (!this.ui_change_bill.is_full_locked()) {
-                val y = try {
-                    this.get_instrument_line_index(channel, 0)
-                } catch (e: IndexOutOfBoundsException) {
-                    this.get_total_line_count()
-                }
 
-                val ctl_row = this.get_visible_row_from_ctl_line(this.get_actual_line_index(y))!!
-                var removed_row_count = this.channels[channel].size
+                val force_show_percussion = !this.percussion_channel.visible
+                    && !this.is_percussion(channel)
+                    && this.channels.size == 1
 
-                val activity = this.get_activity()
-
-                val force_show_percussion = activity != null
-                        && !activity.view_model.show_percussion
-                        && !this.is_percussion(channel)
-                        && this.channels.size == 1
-
-                // NOTE: Accessing this.channels instead of this.get_all_channels since it's not possible to remove percussion channel
-                for ((type, controller) in this.channels[channel].controllers.get_all()) {
-                    if (controller.visible) {
-                        removed_row_count += 1
-                    }
-                }
-
-                for (j in 0 until this.channels[channel].lines.size) {
-                    val line = this.channels[channel].lines[j]
-                    for ((type, controller) in line.controllers.get_all()) {
-                        if (controller.visible) {
-                            removed_row_count += 1
-                        }
-                    }
-                }
-
-
-                val changed_columns = this.get_editor_table()?.remove_mapped_lines(ctl_row, removed_row_count) ?: listOf()
-
+                val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
                 super.remove_channel(channel)
 
                 this.ui_change_bill.queue_remove_channel(channel)
@@ -887,7 +888,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 this.ui_change_bill.queue_column_changes(changed_columns, false)
 
                 if (force_show_percussion) {
-                    this.make_percussion_visible()
+                    this.set_channel_visibility(this.channels.size, true)
                 }
             } else {
                 super.remove_channel(channel)
@@ -915,7 +916,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_new() {
         val activity = this.get_activity()!!
-        activity.view_model.show_percussion = true
+        this.percussion_channel.visible = true
 
         super._project_change_new()
         this.on_project_changed()
@@ -929,16 +930,14 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
         this.on_project_changed()
-
-        val activity = this.get_activity()
-        activity!!.view_model.show_percussion = this.has_percussion()
+        this.percussion_channel.visible = this.has_percussion()
     }
 
     override fun _project_change_json(json_data: JSONHashMap) {
         super._project_change_json(json_data)
 
         if (! this._in_reload) {
-            this._activity?.view_model?.show_percussion = !(!this.has_percussion() && this.channels.size > 1)
+            this.percussion_channel.visible = !(!this.has_percussion() && this.channels.size > 1)
         }
     }
 
@@ -1108,8 +1107,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.cursor_select_line(channel, line_offset)
             this.temporary_blocker = null
 
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            if (!show_percussion && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }
 
@@ -1126,8 +1124,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.cursor_select_channel(channel)
             this.temporary_blocker = null
 
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            if (!show_percussion && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }
 
@@ -1144,8 +1141,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.cursor_select_channel_ctl_line(ctl_type, channel)
             this.temporary_blocker = null
 
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }
 
@@ -1162,8 +1158,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
             this.temporary_blocker = null
 
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }
 
@@ -1204,8 +1199,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
         this.lock_ui_partial {
             this.temporary_blocker = null
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+            if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
                 this.make_percussion_visible()
             }
 
@@ -1232,8 +1226,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(beat_key.channel)) {
+            if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
                 this.make_percussion_visible()
             }
 
@@ -1250,8 +1243,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
         this.lock_ui_partial {
             this.unset_temporary_blocker()
-            val activity = this.get_activity()
-            if (activity != null && !activity.view_model.show_percussion && this.is_percussion(channel)) {
+            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }
 
@@ -1377,8 +1369,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun get_visible_channels(): List<OpusChannelAbstract<*,*>> {
-        val activity = this.get_activity()
-        return if (activity == null || activity.view_model.show_percussion) {
+        return if (this.percussion_channel.visible) {
             List(this.channels.size + 1) { i: Int ->
                 if (i < this.channels.size) {
                     this.channels[i]
@@ -1503,37 +1494,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     //    }
     //}
 
-    fun toggle_percussion_visibility() {
-        val activity = this.get_activity() ?: return
-
-        if (this.channels.isEmpty()) {
-            throw HidingLastChannelException()
-        }
-
-        if (activity.view_model.show_percussion && !this.percussion_channel.is_empty()) {
-            throw HidingNonEmptyPercussionException()
-        }
-
-        activity.view_model.show_percussion = !activity.view_model.show_percussion
-
-        val editor_table = this.get_editor_table() ?: return
-        this.withFragment {
-            it.backup_position()
-        }
-        editor_table.clear()
-
-        if (!activity.view_model.show_percussion) {
-            this.cursor_clear()
-        }
-
-        this.recache_line_maps()
-        this._init_editor_table_width_map()
-        editor_table.setup(this.get_row_count(), this.beat_count)
-        this.withFragment {
-            it.restore_view_model_position()
-        }
-    }
-
     override fun recache_line_maps() {
         super.recache_line_maps()
         this._cached_row_map.clear()
@@ -1542,14 +1502,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         this._cached_ctl_map_channel.clear()
         this._cached_ctl_map_global.clear()
 
-        val percussion_visible = this.get_activity()!!.view_model.show_percussion
         var ctl_line = 0
         var visible_line = 0
 
         this.get_all_channels().forEachIndexed { channel_index: Int, channel: OpusChannelAbstract<*,*> ->
-            val hide_channel = this.is_percussion(channel_index) && !percussion_visible
             for (line_offset in channel.lines.indices) {
-                if (!hide_channel) {
+                if (channel.visible) {
                     this._cached_inv_visible_line_map[ctl_line] = visible_line
                     this._cached_row_map[visible_line] = ctl_line
                     visible_line += 1
@@ -1557,7 +1515,7 @@ class OpusLayerInterface : OpusLayerCursor() {
                 ctl_line += 1
 
                 for ((type, controller) in channel.lines[line_offset].controllers.get_all()) {
-                    if (controller.visible && ! hide_channel) {
+                    if (controller.visible && channel.visible) {
                         this._cached_inv_visible_line_map[ctl_line] = visible_line
                         this._cached_row_map[visible_line] = ctl_line
                         this._cached_ctl_map_line[Triple(channel_index, line_offset, type)] = visible_line
@@ -1568,7 +1526,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             for ((type, controller) in channel.controllers.get_all()) {
-                if (controller.visible && ! hide_channel) {
+                if (controller.visible && channel.visible) {
                     this._cached_inv_visible_line_map[ctl_line] = visible_line
                     this._cached_row_map[visible_line] = ctl_line
                     this._cached_ctl_map_channel[Pair(channel_index, type)] = visible_line
@@ -1686,8 +1644,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     private fun make_percussion_visible() {
         this.lock_ui_partial {
-            val main = this._activity
-            main?.view_model?.show_percussion = true
+            this.percussion_channel.visible = true
 
             this.recache_line_maps()
 
@@ -2213,7 +2170,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                 when (entry) {
                     BillableItem.FullRefresh -> {
                         activity.setup_project_config_drawer()
-                        activity.validate_percussion_visibility()
                         activity.update_menu_options()
 
                         this._init_editor_table_width_map()
@@ -2450,8 +2406,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     fun get_visible_channel_count(): Int {
-        val activity = this.get_activity()
-        return if (activity != null && !activity.view_model.show_percussion) {
+        return if (!this.percussion_channel.visible) {
             this.channels.size
         } else {
             this.channels.size + 1
@@ -3162,5 +3117,27 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
         super.set_global_controller_visibility(type, visibility)
+    }
+
+    override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
+        this.lock_ui_partial {
+            //if (this.channels.isEmpty()) {
+            //    throw HidingLastChannelException()
+            //}
+
+            //if (this.percussion_channel.visible && !this.percussion_channel.is_empty()) {
+            //    throw HidingNonEmptyPercussionException()
+            //}
+            if (visibility) {
+                super.set_channel_visibility(channel_index, visibility)
+                this._post_new_channel(channel_index, this.get_all_channels()[channel_index].lines.size)
+            } else {
+                val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel_index)
+                super.set_channel_visibility(channel_index, visibility)
+
+                this.ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
+                this.ui_change_bill.queue_column_changes(changed_columns, false)
+            }
+        }
     }
 }

@@ -711,4 +711,5 @@ class UIChangeBill {
     fun cancel_most_recent() {
         this._tree.remove_last()
     }
+
 }

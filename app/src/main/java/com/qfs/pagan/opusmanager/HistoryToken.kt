@@ -42,6 +42,7 @@ enum class HistoryToken {
     UNSET,
     // Interface
     CURSOR_SELECT,
+    CURSOR_SELECT_CHANNEL,
     CURSOR_SELECT_COLUMN,
     CURSOR_SELECT_LINE,
     CURSOR_SELECT_GLOBAL_CTL,

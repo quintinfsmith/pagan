@@ -62,10 +62,12 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 // Nothing
             }
         }
+        this.cursor_apply(this.cursor.copy())
     }
 
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
+
         when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Channel -> {
@@ -90,6 +92,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 // Nothing
             }
         }
+        this.cursor_apply(this.cursor.copy())
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
@@ -130,6 +133,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
         }
 
         super.remove_beat(beat_index, count)
+        this.cursor_apply(this.cursor.copy())
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
@@ -192,6 +196,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
             else -> { }
         }
+        this.cursor_apply(bkp_cursor)
     }
 
     override fun clear() {
@@ -352,6 +357,16 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     )
                 )
             }
+            HistoryToken.CURSOR_SELECT_CHANNEL -> {
+                this.queue_cursor_select(
+                    OpusManagerCursor(
+                        mode = OpusManagerCursor.CursorMode.Channel,
+                        channel = current_node.args[0] as Int,
+                        ctl_level = null,
+                        ctl_type = null
+                    )
+                )
+            }
             else -> { }
         }
         super.apply_history_node(current_node, depth)
@@ -459,6 +474,13 @@ open class OpusLayerCursor: OpusLayerHistory() {
                         )
                     }
                 }
+            }
+            OpusManagerCursor.CursorMode.Channel -> {
+                this.push_to_history_stack(
+                    HistoryToken.CURSOR_SELECT_CHANNEL,
+                    listOf(this.cursor.channel)
+                )
+
             }
             else -> {}
         }
@@ -879,6 +901,47 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.remove(beat_key, position, count)
 
         this.cursor_select(beat_key, this.get_first_position(beat_key, cursor_position))
+    }
+
+    private fun _post_new_line(channel: Int, line_offset: Int) {
+        when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Single -> {
+                if (this.cursor.channel == channel) {
+                    if (this.cursor.line_offset >= line_offset) {
+                        this.cursor.line_offset += 1
+                    }
+                }
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = this.cursor.range!!
+                if (first.channel == channel) {
+                    if (first.line_offset >= line_offset) {
+                        first.line_offset += 1
+                    }
+                }
+                if (second.channel == channel) {
+                    if (second.line_offset >= line_offset) {
+                        second.line_offset += 1
+                    }
+                }
+                this.cursor.range = Pair(first, second)
+            }
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Channel,
+            OpusManagerCursor.CursorMode.Unset -> {}
+        }
+        this.cursor_apply(this.cursor.copy())
+    }
+
+    override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
+        val output = super.new_line(channel, line_offset)
+        this._post_new_line(channel, line_offset ?: (this.get_all_channels()[channel].lines.size - 1))
+        return output
+    }
+    override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
+        super.insert_line(channel, line_offset, line)
+        this._post_new_line(channel, line_offset)
     }
 
     fun insert_line(count: Int) {

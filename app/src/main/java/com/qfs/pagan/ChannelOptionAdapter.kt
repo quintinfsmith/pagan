@@ -146,7 +146,11 @@ class ChannelOptionAdapter(
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         try {
-            opus_manager.toggle_channel_visibility(opus_manager.channels.size)
+            if (!opus_manager.percussion_channel.visible || opus_manager.channels.isNotEmpty()) {
+                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
+            } else {
+                return
+            }
         } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
             return
         } catch (e: OpusLayerInterface.HidingLastChannelException) {

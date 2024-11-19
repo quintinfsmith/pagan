@@ -52,7 +52,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
 
         val is_percussion = opus_manager.is_percussion(channel_index)
-        this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.percussion_channel.is_empty())
+        this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.percussion_channel.is_empty() && opus_manager.channels.isNotEmpty())
 
         var show_control_toggle = false
         for (ctl_type in this._visible_controls_domain) {
@@ -101,21 +101,21 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
-            this.long_click_button_insert_line()
+            this.long_click_button_insert_channel()
         }
 
         this.button_insert.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-            this.click_button_insert_line()
+            this.click_button_insert_channel()
         }
 
         this.button_remove.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-            this.click_button_remove_line()
+            this.click_button_remove_channel()
         }
 
         this.button_remove.setOnLongClickListener {
@@ -123,7 +123,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
                 return@setOnLongClickListener false
             }
 
-            this.long_click_button_remove_line()
+            this.long_click_button_remove_channel()
         }
 
         this.button_toggle_volume_control.setOnClickListener {
@@ -135,7 +135,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
     }
 
-    fun click_button_insert_line() {
+    fun click_button_insert_channel() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
@@ -145,7 +145,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
     }
 
-    fun long_click_button_insert_line(): Boolean {
+    fun long_click_button_insert_channel(): Boolean {
         TODO()
         //val main = this.get_main()
         //val opus_manager = main.get_opus_manager()
@@ -159,7 +159,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         return true
     }
 
-    fun click_button_remove_line() {
+    fun click_button_remove_channel() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
@@ -173,7 +173,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
     }
 
-    fun long_click_button_remove_line(): Boolean {
+    fun long_click_button_remove_channel(): Boolean {
         TODO()
        // val main = this.get_main()
        // val opus_manager = main.get_opus_manager()

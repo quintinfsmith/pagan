@@ -3,7 +3,7 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
 
 abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): OpusTreeArray<T>(MutableList(beat_count) { OpusTree() }) {
-    var visible = true // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
+    var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
     fun set_initial_event(value: T) {
         this.initial_event = value
     }

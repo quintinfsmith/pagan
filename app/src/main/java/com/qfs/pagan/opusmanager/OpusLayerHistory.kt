@@ -1145,21 +1145,9 @@ open class OpusLayerHistory: OpusLayerBase() {
         }
     }
 
-    override fun _project_change_json(json_data: JSONHashMap) {
-        this.history_cache.forget {
-            super._project_change_json(json_data)
-        }
-    }
-
-    override fun _project_change_new() {
-        this.history_cache.forget {
-            super._project_change_new()
-        }
-    }
-
-    override fun _project_change_midi(midi: Midi) {
-        this.history_cache.forget {
-            super._project_change_midi(midi)
+    override fun <T> project_change_wrapper(callback: () -> T): T {
+        return this.history_cache.forget {
+            super.project_change_wrapper(callback)
         }
     }
 

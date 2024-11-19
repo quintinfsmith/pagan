@@ -2100,6 +2100,7 @@ open class OpusLayerBase {
 
     /* Needs to be called by interface after new()/load()/import_midi() */
     open fun on_project_changed() {
+        this.set_global_controller_visibility(ControlEventType.Tempo, true)
         this._reshape_lines_from_blocked_trees()
         this.recache_line_maps()
     }
@@ -2344,9 +2345,9 @@ open class OpusLayerBase {
                 for (j in 0 until channel_sizes[channel]) {
                     this.percussion_channel.new_line()
                 }
-                return@forEachIndexed
+            } else {
+                this.new_channel(lines = channel_sizes[channel])
             }
-            this.new_channel(lines = channel_sizes[channel])
         }
 
         this.set_beat_count(settree.size)

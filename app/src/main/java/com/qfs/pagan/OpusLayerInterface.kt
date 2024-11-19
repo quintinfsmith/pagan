@@ -3122,13 +3122,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
         this.lock_ui_partial {
-            //if (this.channels.isEmpty()) {
-            //    throw HidingLastChannelException()
-            //}
-
-            //if (this.percussion_channel.visible && !this.percussion_channel.is_empty()) {
-            //    throw HidingNonEmptyPercussionException()
-            //}
             if (visibility) {
                 super.set_channel_visibility(channel_index, visibility)
                 this._post_new_channel(channel_index, this.get_all_channels()[channel_index].lines.size)

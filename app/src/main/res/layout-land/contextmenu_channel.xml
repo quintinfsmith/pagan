@@ -25,6 +25,7 @@
         android:contentDescription="Remove Line" />
 
     <com.qfs.pagan.ButtonIcon
+        android:visibility="gone"
         android:id="@+id/btnToggleVolCtl"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/volume_plus"

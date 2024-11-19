@@ -107,7 +107,6 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
             if (i + y < this._inner_wrapper.childCount) {
                 val label = this._inner_wrapper.getChildAt(i + y) as LineLabelView
                 try {
-                    println("RESETTING ${i + y}")
                     label.reset_row(i + y)
                     view_stack.add(label)
                 } catch (_: NullPointerException) {

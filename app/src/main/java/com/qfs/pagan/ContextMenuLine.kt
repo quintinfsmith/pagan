@@ -23,10 +23,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var button_toggle_volume_control: ButtonIcon
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
-    val _visible_line_controls_domain = listOf(
-        Pair(CtlLineLevel.Line, ControlEventType.Volume),
-        Pair(CtlLineLevel.Line, ControlEventType.Pan)
-    )
+    val _visible_line_controls_domain = listOf(ControlEventType.Volume, ControlEventType.Pan)
 
     init {
         this.refresh()
@@ -94,7 +91,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
 
 
         var show_control_toggle = false
-        for ((ctl_level, ctl_type) in this._visible_line_controls_domain) {
+        for (ctl_type in this._visible_line_controls_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }
@@ -103,6 +100,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         if (!show_control_toggle) {
+            this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
             this.button_toggle_volume_control.visibility = View.GONE
             this.widget_volume.visibility = View.GONE
         }
@@ -111,8 +109,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.widget_volume.set_event(controller.initial_event, true)
         this.widget_volume.visibility = View.VISIBLE
 
-        this.button_toggle_volume_control.visibility = View.VISIBLE
-        this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
     }
 
     fun dialog_popup_hidden_lines() {
@@ -120,7 +116,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val options = mutableListOf<Pair<ControlEventType, String>>( )
         val cursor = opus_manager.cursor
 
-        for ((ctl_level, ctl_type) in this._visible_line_controls_domain) {
+        for (ctl_type in this._visible_line_controls_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }

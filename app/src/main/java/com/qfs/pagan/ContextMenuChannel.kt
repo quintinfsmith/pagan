@@ -5,22 +5,28 @@ import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
+/*
+    CHANNEL_CTLS. Channel controls are not currently considered in playback, so I'll comment out the controls for a future release
+*/
+
 class ContextMenuChannel(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_channel, R.layout.contextmenu_channel_secondary, primary_container, secondary_container) {
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_instrument: ButtonStd
-    lateinit var button_toggle_volume_control: ButtonIcon
-    val _visible_controls_domain = listOf(
-        ControlEventType.Volume,
-        ControlEventType.Pan
-    )
+    // (CHANNEL_CTLS)
+    // lateinit var button_toggle_volume_control: ButtonIcon
+    // val _visible_controls_domain = listOf(
+    //     ControlEventType.Volume,
+    //     ControlEventType.Pan
+    // )
 
     init {
         this.refresh()
     }
     override fun init_properties() {
         val primary = this.primary!!
-        this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
+        // (CHANNEL_CTLS)
+        // this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_instrument = this.secondary!!.findViewById(R.id.btnChooseInstrument)
@@ -34,7 +40,8 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
         }
 
-        this.button_choose_instrument.visibility = View.VISIBLE
+        // (CHANNEL_CTLS)
+        // this.button_choose_instrument.visibility = View.VISIBLE
 
         val channel_index = opus_manager.cursor.channel
         val channel = opus_manager.get_channel(channel_index)
@@ -52,42 +59,42 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
 
         val is_percussion = opus_manager.is_percussion(channel_index)
-        this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.percussion_channel.is_empty() && opus_manager.channels.isNotEmpty())
+        this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.channels.isNotEmpty())
 
-        var show_control_toggle = false
-        for (ctl_type in this._visible_controls_domain) {
-            if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
-                continue
-            }
-            show_control_toggle = true
-            break
-        }
-
-        if (!show_control_toggle) {
-            this.button_toggle_volume_control.visibility = View.GONE
-        }
-
-        this.button_toggle_volume_control.visibility = View.VISIBLE
-        this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
+        // (CHANNEL_CTLS)
+        // var show_control_toggle = false
+        // for (ctl_type in this._visible_controls_domain) {
+        //     if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
+        //         continue
+        //     }
+        //     show_control_toggle = true
+        //     break
+        // }
+        // if (!show_control_toggle) {
+        //     this.button_toggle_volume_control.visibility = View.GONE
+        // }
+        // this.button_toggle_volume_control.visibility = View.VISIBLE
+        // this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
     }
 
-    fun dialog_popup_hidden_lines() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val options = mutableListOf<Pair<ControlEventType, String>>( )
+    // (CHANNEL_CTLS)
+    // fun dialog_popup_hidden_lines() {
+    //     val opus_manager = this.get_opus_manager()
+    //     val cursor = opus_manager.cursor
+    //     val options = mutableListOf<Pair<ControlEventType, String>>( )
 
-        for (ctl_type in this._visible_controls_domain) {
-            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
-                continue
-            }
+    //     for (ctl_type in this._visible_controls_domain) {
+    //         if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
+    //             continue
+    //         }
 
-            options.add(Pair(ctl_type, ctl_type.name))
-        }
+    //         options.add(Pair(ctl_type, ctl_type.name))
+    //     }
 
-        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
-            opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
-        }
-    }
+    //     this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
+    //         opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
+    //     }
+    // }
 
     override fun setup_interactions() {
         this.button_choose_instrument.setOnClickListener {
@@ -126,13 +133,14 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             this.long_click_button_remove_channel()
         }
 
-        this.button_toggle_volume_control.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
-            this.dialog_popup_hidden_lines()
-            //this.click_button_toggle_volume_control()
-        }
+        // (CHANNEL_CTLS)
+        // this.button_toggle_volume_control.setOnClickListener {
+        //     if (!it.isEnabled) {
+        //         return@setOnClickListener
+        //     }
+        //     this.dialog_popup_hidden_lines()
+        //     //this.click_button_toggle_volume_control()
+        // }
     }
 
     fun click_button_insert_channel() {

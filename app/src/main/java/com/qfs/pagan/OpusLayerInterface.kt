@@ -650,7 +650,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         this.lock_ui_partial {
-            val activity = this.get_activity()
             if (!this.percussion_channel.visible && this.is_percussion(channel)) {
                 this.make_percussion_visible()
             }

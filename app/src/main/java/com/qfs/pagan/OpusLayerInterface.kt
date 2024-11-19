@@ -1435,6 +1435,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun toggle_global_control_visibility(type: ControlEventType) {
         this.lock_ui_partial {
+            // TODO: Move this logic to Cursor Layer
             val cursor = this.cursor
             if (cursor.ctl_level != null) {
                 this.cursor_clear()
@@ -1447,6 +1448,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
         this.lock_ui_partial {
+            // TODO: Move this logic to Cursor Layer
             val cursor = this.cursor
             if (cursor.ctl_level != null) {
                 this.cursor_select_line(channel_index, line_offset)
@@ -1459,6 +1461,8 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
         this.lock_ui_partial {
+
+            // TODO: Move this logic to Cursor Layer
             val cursor = this.cursor
             if (cursor.ctl_level != null) {
                 this.cursor_select_channel(channel_index)

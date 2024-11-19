@@ -3643,6 +3643,8 @@ open class OpusLayerBase {
         val exists = line.controllers.has_controller(type)
         if (!exists) {
             this.new_line_controller(type, channel_index, line_offset)
+            line.controllers.get_controller<OpusControlEvent>(type).visible = true
+            this.recache_line_maps()
         } else {
             val controller = line.controllers.get_controller<OpusControlEvent>(type)
             this.set_line_controller_visibility(type, channel_index, line_offset, !controller.visible)

@@ -643,6 +643,17 @@ class OpusLayerInterface : OpusLayerCursor() {
         return this.lock_ui_partial {
             val output = super.new_line(channel, line_offset)
 
+            // set the default instrument to the first available in the soundfont (if applicable)
+            if (output is OpusLinePercussion) {
+                val activity = this.get_activity()
+                if (activity != null) {
+                    val percussion_keys = activity.active_percussion_names.keys.sorted()
+                    if (percussion_keys.isNotEmpty()) {
+                        output.instrument = percussion_keys.first() - 27
+                    }
+                }
+            }
+
             this._update_after_new_line(channel, line_offset)
             output
         }
@@ -917,7 +928,12 @@ class OpusLayerInterface : OpusLayerCursor() {
         this.percussion_channel.visible = true
 
         super._project_change_new()
-        this.on_project_changed()
+
+        // set the default instrument to the first available in the soundfont (if applicable)
+        val percussion_keys = activity.active_percussion_names.keys.sorted()
+        if (percussion_keys.isNotEmpty()) {
+            this.set_percussion_instrument(0, percussion_keys.first() - 27)
+        }
 
         val new_path = activity.get_new_project_path()
         this.path = new_path

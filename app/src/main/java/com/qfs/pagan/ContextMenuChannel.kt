@@ -1,8 +1,6 @@
 package com.qfs.pagan
 
-import android.view.View
 import android.view.ViewGroup
-import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 /*
@@ -60,6 +58,13 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
         val is_percussion = opus_manager.is_percussion(channel_index)
         this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.channels.isNotEmpty())
+        this.button_remove.setImageResource(
+            if (is_percussion) {
+                R.drawable.hide
+            } else {
+                R.drawable.remove_line
+            }
+        )
 
         // (CHANNEL_CTLS)
         // var show_control_toggle = false

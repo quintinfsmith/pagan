@@ -1,6 +1,4 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.Midi
-import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
@@ -872,6 +870,7 @@ open class OpusLayerHistory: OpusLayerBase() {
                         working_channel_controller_list.add(Triple(c, type, controller.get_tree(working_beat_index + i)))
                     }
                 }
+
                 val controllers = this.controllers
                 for ((type, controller) in controllers.get_all()) {
                     working_global_controller_list.add(Pair(type, controller.get_tree(working_beat_index + i)))
@@ -1679,12 +1678,20 @@ open class OpusLayerHistory: OpusLayerBase() {
     }
 
     override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
-        if (this.get_all_channels()[channel_index].visible != visibility) {
-            this.push_to_history_stack(
-                HistoryToken.SET_CHANNEL_VISIBILITY,
-                listOf(channel_index, !visibility)
-            )
+        this._remember {
+            if (this.get_all_channels()[channel_index].visible != visibility) {
+                this.push_to_history_stack(
+                    HistoryToken.SET_CHANNEL_VISIBILITY,
+                    listOf(channel_index, !visibility)
+                )
+            }
+            super.set_channel_visibility(channel_index, visibility)
         }
-        super.set_channel_visibility(channel_index, visibility)
+    }
+
+    override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        this._remember {
+            super.toggle_line_controller_visibility(type, channel_index, line_offset)
+        }
     }
 }

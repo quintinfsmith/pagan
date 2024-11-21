@@ -32,19 +32,24 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         }
     }
 
+    fun get_item_count(): Int {
+        return this.childCount
+    }
+
+
     fun insert_cells(y: Int, count: Int) {
         for (i in y until y + count) {
             this.addView(CellLayout(this, i), i)
         }
 
         this.notifyItemRangeChanged(0, y)
-        this.notifyItemRangeChanged(y + count, this.childCount - (y + count))
+        this.notifyItemRangeChanged(y + count, this.get_item_count() - (y + count))
     }
 
     fun remove_cells(y: Int, count: Int) {
         this.removeViews(y, count)
         this.notifyItemRangeChanged(0, y)
-        this.notifyItemRangeChanged(y, this.childCount - y)
+        this.notifyItemRangeChanged(y, this.get_item_count() - y)
     }
 
     fun notifyItemChanged(y: Int, state_only: Boolean = false) {
@@ -53,16 +58,16 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
 
     fun notifyItemRangeChanged(y: Int, count: Int, state_only: Boolean = false) {
         for (i in 0 until count) {
-            if (state_only && this.childCount > y + i) {
+            if (state_only && this.get_item_count() > y + i) {
                 (this.getChildAt(y + i) as CellLayout).invalidate_all()
-            } else if (this.childCount > y + i) {
+            } else if (this.get_item_count() > y + i) {
                 this.rebind(i + y)
             }
         }
     }
 
     private fun rebind(index: Int) {
-        if (index >= this.childCount) {
+        if (index >= this.get_item_count()) {
             return
         }
 

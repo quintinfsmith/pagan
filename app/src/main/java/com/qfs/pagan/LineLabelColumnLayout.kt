@@ -25,11 +25,11 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     fun insert_label(y: Int? = null) {
-        val adj_y = y ?: this._inner_wrapper.childCount
+        val adj_y = y ?: this.get_count()
         val label_view = LineLabelView(this.context, adj_y)
         this._inner_wrapper.addView(label_view, adj_y)
 
-        this._notify_item_range_changed(adj_y, this._inner_wrapper.childCount - adj_y)
+        this._notify_item_range_changed(adj_y, this.get_count() - adj_y)
     }
 
     fun insert_labels(y: Int, count: Int) {
@@ -38,17 +38,17 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
             this._inner_wrapper.addView(label_view, y + i)
         }
 
-        this._notify_item_range_changed(y , this._inner_wrapper.childCount - y)
+        this._notify_item_range_changed(y , this.get_count() - y)
 
     }
 
     fun remove_label(y: Int) {
         this._inner_wrapper.removeViewAt(y)
-        this._notify_item_range_changed(y, this._inner_wrapper.childCount - y)
+        this._notify_item_range_changed(y, this.get_count() - y)
     }
 
     fun remove_labels(y: Int, count: Int) {
-        val original_child_count = this._inner_wrapper.childCount
+        val original_child_count = this.get_count()
         val adj_count = if (y + count < original_child_count) {
             count
         } else {
@@ -96,7 +96,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
     }
 
     private fun _notify_item_range_changed(y: Int, count: Int) {
-        if (y >= this._inner_wrapper.childCount) {
+        if (y >= this.get_count()) {
             // Nothing to change
             return
         }
@@ -104,7 +104,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         val view_stack = mutableListOf<View>()
 
         for (i in 0 until count) {
-            if (i + y < this._inner_wrapper.childCount) {
+            if (i + y < this.get_count()) {
                 val label = this._inner_wrapper.getChildAt(i + y) as LineLabelView
                 try {
                     label.reset_row(i + y)

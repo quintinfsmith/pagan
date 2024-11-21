@@ -20,8 +20,8 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
     private val label_right = PaganTextView(context)
     private val _transition_button = ButtonIcon(context)
 
-    private val _min = -100
-    private val _max = 100
+    private val _min = -5
+    private val _max = 5
     private var _lockout_ui: Boolean = false
     init {
         this.orientation = HORIZONTAL
@@ -59,13 +59,13 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
                 if (this@ControlWidgetPan._lockout_ui) {
                     return
                 }
-                this@ControlWidgetPan.set_text((p1.toFloat() / 100F))
+                this@ControlWidgetPan.set_text((p1.toFloat() / this@ControlWidgetPan._max.toFloat()))
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
                 val new_event = this@ControlWidgetPan.working_event.copy()
-                new_event.value = (seekbar.progress.toFloat() / 100F)
+                new_event.value = (seekbar.progress.toFloat() / this@ControlWidgetPan._max.toFloat())
                 this@ControlWidgetPan.set_event(new_event)
             }
         })
@@ -88,8 +88,8 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
 
     fun set_text(value: Float) {
         this@ControlWidgetPan._lockout_ui = true
-        val value_left = ((1F - max(value, 0F)) * 100F).toInt()
-        val value_right = ((1F + min(value, 0F)) * 100F).toInt()
+        val value_left = ((1F - max(value, 0F)) * 100F).roundToInt()
+        val value_right = ((1F + min(value, 0F)) * 100F).roundToInt()
         // TODO: Make MonoSpace
         this@ControlWidgetPan.label_right.text = "% 3d%%".format(value_right)
         this@ControlWidgetPan.label_left.text = "% 3d%%".format(value_left)
@@ -98,7 +98,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
 
     override fun on_set(event: OpusPanEvent) {
         this.set_text(event.value)
-        val value = (event.value * 100F).toInt()
+        val value = (event.value * this._max.toFloat()).toInt()
         this._slider.progress = value
     }
 }

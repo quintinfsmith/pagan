@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.View
-import android.widget.SeekBar
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import kotlin.math.max
@@ -11,7 +10,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context: Context, callback: (OpusPanEvent) -> Unit): ControlWidget<OpusPanEvent>(ContextThemeWrapper(context, R.style.pan_widget), default, is_initial_event, R.layout.control_widget_pan, callback) {
-    private lateinit var _slider: PaganSeekBar
+    private lateinit var _slider: PanSliderWidget
     private lateinit var label_left: PaganTextView
     private lateinit var label_right: PaganTextView
     private lateinit var _transition_button: ButtonIcon
@@ -49,22 +48,25 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         }
 
         this._slider.progress = this.working_event.value.roundToInt()
+        this._slider.on_change_listener = object: PanSliderWidget.OnSeekBarChangeListener() {
+            override fun on_touch_start(slider: PanSliderWidget) {
+                // Nothing to do
+            }
 
-        this._slider.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+            override fun on_touch_stop(slider: PanSliderWidget) {
+                val new_event = this@ControlWidgetPan.working_event.copy()
+                new_event.value = (slider.progress.toFloat() / this@ControlWidgetPan._max.toFloat())
+                this@ControlWidgetPan.set_event(new_event)
+            }
+
+            override fun on_progress_change(slider: PanSliderWidget, value: Int) {
                 if (this@ControlWidgetPan._lockout_ui) {
                     return
                 }
-                this@ControlWidgetPan.set_text((p1.toFloat() / this@ControlWidgetPan._max.toFloat()))
+                this@ControlWidgetPan.set_text((value.toFloat() / this@ControlWidgetPan._max.toFloat()))
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(seekbar: SeekBar) {
-                val new_event = this@ControlWidgetPan.working_event.copy()
-                new_event.value = (seekbar.progress.toFloat() / this@ControlWidgetPan._max.toFloat())
-                this@ControlWidgetPan.set_event(new_event)
-            }
-        })
+        }
     }
 
 
@@ -84,6 +86,6 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
     override fun on_set(event: OpusPanEvent) {
         this.set_text(event.value)
         val value = (event.value * this._max.toFloat()).toInt()
-        this._slider.progress = value
+       // this._slider.progress = value
     }
 }

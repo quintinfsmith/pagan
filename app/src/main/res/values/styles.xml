@@ -207,6 +207,7 @@
         <item name="android:paddingEnd">16dp</item>
     </style>
     <style name="tempo_widget_button.text">
+        <item name="android:fontFamily">monospace</item>
         <item name="android:textSize">24sp</item>
     </style>
 

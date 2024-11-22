@@ -37,7 +37,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <com.qfs.pagan.PaganSeekBar
+    <com.qfs.pagan.PanSliderWidget
         android:id="@+id/pan_slider"
         android:layout_width="0dp"
         andorid:layout_weight="1"

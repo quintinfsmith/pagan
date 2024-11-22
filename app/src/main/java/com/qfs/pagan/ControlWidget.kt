@@ -1,11 +1,29 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.qfs.pagan.opusmanager.OpusControlEvent
 
-abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_event: T, var is_initial_event: Boolean, val callback: (T) -> Unit): LinearLayoutCompat(context, null) {
+abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_event: T, var is_initial_event: Boolean, val layout_id: Int, val callback: (T) -> Unit): LinearLayoutCompat(context, null) {
     abstract fun on_set(event: T)
+    abstract fun on_inflated()
+    internal lateinit var inner: View
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        this.inner = LayoutInflater.from(context)
+            .inflate(
+                this.layout_id,
+                this.parent as ViewGroup?,
+                false
+            )
+        this.addView(this.inner)
+
+        this.on_inflated()
+    }
 
     fun get_event(): T {
         return this.working_event
@@ -17,5 +35,4 @@ abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_
             this.callback(event)
         }
     }
-
 }

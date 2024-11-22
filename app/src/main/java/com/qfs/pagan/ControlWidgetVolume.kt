@@ -2,27 +2,25 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.view.ContextThemeWrapper
-import android.view.Gravity.CENTER
 import android.view.View
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.LinearLayout
 import android.widget.SeekBar
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, callback) {
-    private val _slider = PaganSeekBar(context)
-    private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
-    private val _transition_button = ButtonIcon(context)
+class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, R.layout.control_widget_volume, callback) {
+    private lateinit var _slider: PaganSeekBar
+    private lateinit var _button: ButtonLabelledIcon
+    private lateinit var _transition_button: ButtonIcon
     private val _min = 0
     private val _max = 127
     private var _lockout_ui: Boolean = false
 
-    init {
-        this.orientation = HORIZONTAL
+    override fun on_inflated() {
+        this._slider = this.inner.findViewById(R.id.volume_slider)
+        this._button = this.inner.findViewById(R.id.volume_button)
+        this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
 
-        this._button.set_text(default.value.toString())
+        this._button.set_text(this.working_event.value.toString())
         this._button.set_icon(R.drawable.volume)
         this._button.label.minEms = 2
 
@@ -47,7 +45,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
 
         this._slider.max = this._max
         this._slider.min = this._min
-        this._slider.progress = default.value
+        this._slider.progress = this.working_event.value
 
         this._button.setOnClickListener {
             var context = this.context
@@ -78,26 +76,15 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
                 this@ControlWidgetVolume.set_event(OpusVolumeEvent(seekbar.progress, this@ControlWidgetVolume.get_event().transition))
             }
         })
+    }
 
-
-        this.addView(this._button)
-        this.addView(this._slider)
-        this.addView(this._transition_button)
-
-        this._button.layoutParams.width = WRAP_CONTENT
-        this._button.layoutParams.height = WRAP_CONTENT
-
-        this._transition_button.layoutParams.width = WRAP_CONTENT
-        this._transition_button.layoutParams.height = WRAP_CONTENT
-
-        this._slider.layoutParams.width = 0
-        this._slider.layoutParams.height = MATCH_PARENT
-        (this._slider.layoutParams as LinearLayout.LayoutParams).weight = 1f
-        (this._slider.layoutParams as LinearLayout.LayoutParams).gravity = CENTER
+    init {
+        this.orientation = HORIZONTAL
     }
 
     override fun on_set(event: OpusVolumeEvent) {
         this._slider.progress = event.value
         this._button.set_text(event.value.toString())
     }
+
 }

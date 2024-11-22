@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:andorid="http://schemas.android.com/tools"
+    android:theme="@style/pan_widget"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.qfs.pagan.PaganTextView
+        android:id="@+id/pan_value_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:theme="@style/pan_value"
+        android:textAlignment="viewStart"
+        android:text="TextView"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/pan_slider"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.qfs.pagan.PaganTextView
+        android:id="@+id/pan_value_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:theme="@style/pan_value"
+        android:text="TextView"
+        android:textAlignment="viewEnd"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/pan_slider"
+        app:layout_constraintEnd_toStartOf="@+id/pan_transition_type" />
+
+    <com.qfs.pagan.ButtonIcon
+        android:id="@+id/pan_transition_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/volume"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <com.qfs.pagan.PaganSeekBar
+        android:id="@+id/pan_slider"
+        android:layout_width="0dp"
+        andorid:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/pan_transition_type"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

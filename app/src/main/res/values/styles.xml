@@ -200,14 +200,30 @@
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
     </style>
 
+    <style name="control_widget">
+    </style>
+    <style name="tempo_widget_button">
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+    </style>
+    <style name="tempo_widget_button.text">
+        <item name="android:textSize">24sp</item>
+    </style>
+
+    <style name="volume_widget" parent="control_widget">
+    </style>
     <style name="volume_widget_button">
         <item name="android:textSize">20sp</item>
         <item name="android:fontFamily">monospace</item>
     </style>
 
-    <style name="pan_widget">
-        <item name="android:paddingBottom">16dp</item>
-        <item name="android:paddingTop">16dp</item>
+    <style name="pan_widget" parent="control_widget">
+    </style>
+    <style name="pan_value">
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:fontFamily">monospace</item>
     </style>
 
 </resources>

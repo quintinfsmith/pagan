@@ -10,7 +10,7 @@ import android.widget.SeekBar
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, context: Context, callback: (OpusReverbEvent) -> Unit): ControlWidget<OpusReverbEvent>(context, default, is_initial_event, callback) {
+class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, context: Context, callback: (OpusReverbEvent) -> Unit): ControlWidget<OpusReverbEvent>(context, default, is_initial_event, R.layout.control_widget_reverb, callback) {
     private val _slider = PaganSeekBar(context)
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _min = 0f
@@ -75,5 +75,9 @@ class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, c
         val value = event.value
         this._slider.progress = value.roundToInt()
         this._button.set_text(value.toString())
+    }
+
+    override fun on_inflated() {
+        TODO("Not yet implemented")
     }
 }

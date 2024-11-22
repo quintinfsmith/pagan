@@ -5,15 +5,18 @@ import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
-import android.view.Gravity.CENTER
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.LinearLayout
+import android.widget.Space
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.view.children
 
 class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearLayoutCompat(context, attrs) {
-    class LabelView(context: Context): AppCompatTextView(context) {
+    class LabelView(context: Context, attrs: AttributeSet? = null): AppCompatTextView(context, attrs) {
         override fun drawableStateChanged() {
             super.drawableStateChanged()
             var context = this.context
@@ -25,7 +28,7 @@ class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearL
         }
     }
 
-    class IconView(context: Context): AppCompatImageView(context) {
+    class IconView(context: Context, attrs: AttributeSet? = null): AppCompatImageView(context, attrs) {
         // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed
         // to exist on init()
         override fun drawableStateChanged() {
@@ -40,23 +43,46 @@ class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearL
         }
     }
 
-    val label = LabelView(context)
-    val icon = IconView(context)
+    val label = LabelView(ContextThemeWrapper((context as ContextThemeWrapper).baseContext, R.style.tempo_widget_button_text))
+    val icon = IconView((context as ContextThemeWrapper).baseContext)
 
     init {
+        this.orientation = HORIZONTAL
         this.background = AppCompatResources.getDrawable(context, R.drawable.button_icon)
-        this.addView(this.icon)
-        this.addView(this.label)
 
-        (this.icon.layoutParams as LinearLayoutCompat.LayoutParams).gravity = CENTER
+        val first_layout = LinearLayoutCompat((context as ContextThemeWrapper).baseContext)
+        val second_layout = LinearLayoutCompat((context as ContextThemeWrapper).baseContext)
+
+        this.addView(first_layout)
+        this.addView(second_layout)
+
+        first_layout.addView(Space(context))
+        first_layout.addView(this.icon)
+        first_layout.addView(Space(context))
+        second_layout.addView(Space(context))
+        second_layout.addView(this.label)
+        second_layout.addView(Space(context))
+
+        first_layout.orientation = VERTICAL
+        first_layout.layoutParams.height = MATCH_PARENT
+        first_layout.children.first().layoutParams.height = 0
+        (first_layout.children.first().layoutParams as LinearLayout.LayoutParams).weight = 1f
+        first_layout.children.last().layoutParams.height = 0
+        (first_layout.children.last().layoutParams as LinearLayout.LayoutParams).weight = 1f
+        second_layout.orientation = VERTICAL
+        second_layout.layoutParams.height = MATCH_PARENT
+        second_layout.children.first().layoutParams.height = 0
+        (second_layout.children.first().layoutParams as LinearLayout.LayoutParams).weight = 1f
+        second_layout.children.last().layoutParams.height = 0
+        (second_layout.children.last().layoutParams as LinearLayout.LayoutParams).weight = 1f
+
+
         this.icon.layoutParams.width = WRAP_CONTENT
         this.icon.layoutParams.height = WRAP_CONTENT
 
-        (this.label.layoutParams as LinearLayoutCompat.LayoutParams).gravity = CENTER
         this.label.layoutParams.height = WRAP_CONTENT
-        this.label.layoutParams.width = 0
+        this.label.layoutParams.width = WRAP_CONTENT
         this.label.textAlignment = TEXT_ALIGNMENT_CENTER
-        (this.label.layoutParams as LinearLayoutCompat.LayoutParams).weight = 1f
     }
 
     fun set_text(text: String) {

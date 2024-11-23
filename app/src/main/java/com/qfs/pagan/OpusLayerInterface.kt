@@ -143,7 +143,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             return
         }
 
-        if (this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
+        if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
             return
         }
 

@@ -62,15 +62,31 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
 
             val main_path = Path()
             main_path.moveTo(offset / 2F, (canvas.height - left_height))
+            main_path.lineTo(canvas.width.toFloat() / 2F, 0F)
             main_path.lineTo(canvas.width.toFloat() - (offset / 2F), (canvas.height - right_height))
             main_path.lineTo(canvas.width.toFloat() - (offset / 2F), canvas.height.toFloat())
+            main_path.lineTo(canvas.width.toFloat() / 2F, canvas.height.toFloat())
             main_path.lineTo(offset / 2F, canvas.height.toFloat())
             main_path.lineTo(offset / 2F, (canvas.height - left_height))
             canvas.drawPath(main_path, paint)
 
-
             val canvsx = (canvas.width * relative_n)
             val nob_width = offset
+
+            paint.strokeWidth = 6f
+            paint.setColor(
+                 color_map.get(ColorMap.Palette.LeafText)
+            )
+
+            canvas.drawLine(
+                canvas.width / 2F,
+                0F,
+                canvas.width / 2F,
+                canvas.height.toFloat(),
+                paint
+            )
+
+            paint.strokeWidth = 3f
 
             val position_path = Path()
             position_path.moveTo(
@@ -88,14 +104,6 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             position_path.lineTo(
                 canvsx - ((nob_width - offset) / 2F),
                 canvas.height.toFloat()
-            )
-            paint.strokeWidth = 3f
-            paint.setColor(
-                if (that.in_transition) {
-                    color_map.get(ColorMap.Palette.LeafSelected)
-                } else {
-                    color_map.get(ColorMap.Palette.Button)
-                }
             )
             canvas.drawPath(position_path, paint)
 

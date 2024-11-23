@@ -208,7 +208,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         main.dialog_set_channel_instrument(cursor.channel)
-
     }
 
 }

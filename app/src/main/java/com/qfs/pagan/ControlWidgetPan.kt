@@ -5,29 +5,22 @@ import android.view.ContextThemeWrapper
 import android.view.View
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusPanEvent
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context: Context, callback: (OpusPanEvent) -> Unit): ControlWidget<OpusPanEvent>(ContextThemeWrapper(context, R.style.pan_widget), default, is_initial_event, R.layout.control_widget_pan, callback) {
     private lateinit var _slider: PanSliderWidget
-    private lateinit var label_left: PaganTextView
-    private lateinit var label_right: PaganTextView
     private lateinit var _transition_button: ButtonIcon
 
     private val _min = -10
     private val _max = 10
-    private var _lockout_ui: Boolean = false
 
     override fun on_inflated() {
         this._slider = this.inner.findViewById(R.id.pan_slider)
         this._slider.max = this._max
         this._slider.min = this._min
-         this.label_left = this.inner.findViewById(R.id.pan_value_left)
-        this.label_right = this.inner.findViewById(R.id.pan_value_right)
+        val progress = this.working_event.value * this._max.toFloat()
+        this._slider.set_progress(progress.toInt(), true)
         this._transition_button = this.inner.findViewById(R.id.pan_transition_type)
 
-        this.set_text(this.working_event.value)
         if (this.is_initial_event) {
             this._transition_button.visibility = View.GONE
         } else {
@@ -47,23 +40,14 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
             }
         }
 
-        this._slider.progress = this.working_event.value.roundToInt()
-        this._slider.on_change_listener = object: PanSliderWidget.OnSeekBarChangeListener() {
-            override fun on_touch_start(slider: PanSliderWidget) {
-                // Nothing to do
-            }
 
-            override fun on_touch_stop(slider: PanSliderWidget) {
+        this._slider.on_change_listener = object: PanSliderWidget.OnSeekBarChangeListener() {
+            override fun on_touch_start(slider: PanSliderWidget) { }
+            override fun on_touch_stop(slider: PanSliderWidget) { }
+            override fun on_progress_change(slider: PanSliderWidget, value: Int) {
                 val new_event = this@ControlWidgetPan.working_event.copy()
                 new_event.value = (slider.progress.toFloat() / this@ControlWidgetPan._max.toFloat())
                 this@ControlWidgetPan.set_event(new_event)
-            }
-
-            override fun on_progress_change(slider: PanSliderWidget, value: Int) {
-                if (this@ControlWidgetPan._lockout_ui) {
-                    return
-                }
-                this@ControlWidgetPan.set_text((value.toFloat() / this@ControlWidgetPan._max.toFloat()))
             }
 
         }
@@ -74,17 +58,8 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         this.orientation = VERTICAL
     }
 
-    fun set_text(value: Float) {
-        this@ControlWidgetPan._lockout_ui = true
-        val value_left = ((1F - max(value, 0F)) * 100F).roundToInt()
-        val value_right = ((1F + min(value, 0F)) * 100F).roundToInt()
-        this@ControlWidgetPan.label_right.text = "$value_right%"
-        this@ControlWidgetPan.label_left.text = "$value_left%"
-        this@ControlWidgetPan._lockout_ui = false
-    }
 
     override fun on_set(event: OpusPanEvent) {
-        this.set_text(event.value)
         val value = (event.value * this._max.toFloat()).toInt()
        // this._slider.progress = value
     }

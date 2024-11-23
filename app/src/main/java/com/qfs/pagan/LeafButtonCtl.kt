@@ -89,7 +89,17 @@ abstract class LeafButtonCtl(
             }
             is OpusTempoEvent -> event.value.roundToInt().toString()
             is OpusReverbEvent -> "TODO"
-            is OpusPanEvent -> (event.value * 100).toInt().toString()
+            is OpusPanEvent -> {
+                if (event.value > 0F) {
+                    val n = (event.value * 10).roundToInt()
+                    "$n"
+                } else if (event.value < 0F) {
+                    val n = (event.value * 10).roundToInt()
+                    "$n"
+                } else {
+                    "0"
+                }
+            }
             else -> "???"
         }
     }

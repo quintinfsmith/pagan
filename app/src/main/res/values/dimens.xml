@@ -46,4 +46,5 @@
     <dimen name="secondary_contextmenu_padding_start">4dp</dimen>
     <dimen name="secondary_contextmenu_padding_end">2dp</dimen>
     <dimen name="secondary_contextmenu_padding_bottom">2dp</dimen>
+    <dimen name="secondary_contextmenu_height">50dp</dimen>
 </resources>

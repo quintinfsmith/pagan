@@ -11,7 +11,6 @@ import android.widget.SeekBar
 import android.widget.Space
 import android.widget.TextView
 import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
@@ -89,7 +88,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val working_channel = opus_manager.get_channel(channel)
         this.button_remove.isEnabled = working_channel.size > 1
 
-
         var show_control_toggle = false
         for (ctl_type in this._visible_line_controls_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
@@ -100,10 +98,11 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         if (!show_control_toggle) {
-            this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
             this.button_toggle_volume_control.visibility = View.GONE
-            this.widget_volume.visibility = View.GONE
+        } else {
+            this.button_toggle_volume_control.visibility = View.VISIBLE
         }
+
         // Show the volume control regardless of if line control is visible. redundancy is probably better.
         val controller = working_channel.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
         this.widget_volume.set_event(controller.initial_event, true)

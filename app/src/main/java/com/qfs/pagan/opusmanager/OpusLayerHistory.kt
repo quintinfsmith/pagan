@@ -345,11 +345,11 @@ open class OpusLayerHistory: OpusLayerBase() {
                     )
                 }
                 HistoryToken.NEW_LINE_CONTROLLER -> {
-                    this.new_line_controller(
-                        current_node.args[0] as ControlEventType,
-                        current_node.args[1] as Int,
-                        current_node.args[2] as Int
-                    )
+                    val type = current_node.args[0] as ControlEventType
+                    val channel = current_node.args[1] as Int
+                    val line_offset = current_node.args[2] as Int
+                    this.new_line_controller(type, channel, line_offset)
+                    this.set_line_controller_visibility(type, channel, line_offset, current_node.args[3] as Boolean)
                 }
                 HistoryToken.NEW_GLOBAL_CONTROLLER -> {
                     this.new_global_controller(
@@ -1574,9 +1574,20 @@ open class OpusLayerHistory: OpusLayerBase() {
     override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
         this._remember {
             if (this.has_line_controller(type, channel_index, line_offset)) {
+                val controller = this.get_all_channels()[channel_index].lines[line_offset].get_controller<OpusControlEvent>(type)
+                for (beat in controller.beats.indices) {
+                    if (controller.beats[beat].is_leaf() && !controller.beats[beat].is_event()) {
+                        continue
+                    }
+
+                    this.push_to_history_stack(
+                        HistoryToken.REPLACE_LINE_CTL_TREE,
+                        listOf(type, BeatKey(channel_index, line_offset, beat), listOf<Int>(), controller.beats[beat])
+                    )
+                }
                 this.push_to_history_stack(
                     HistoryToken.NEW_LINE_CONTROLLER,
-                    listOf(type, channel_index, line_offset)
+                    listOf(type, channel_index, line_offset, controller.visible)
                 )
             }
             super.remove_line_controller(type, channel_index, line_offset)

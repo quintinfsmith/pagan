@@ -1,15 +1,11 @@
 package com.qfs.pagan
 
-import android.app.AlertDialog
 import android.content.res.Configuration
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.SeekBar
 import android.widget.Space
-import android.widget.TextView
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -215,37 +211,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         return true
     }
 
-    private fun _line_volume_dialog(channel: Int, line_offset: Int) {
-        val view = LayoutInflater.from(this.context)
-            .inflate(
-                R.layout.dialog_line_volume,
-                this as ViewGroup,
-                false
-            )
-        val opus_manager = this.get_main().get_opus_manager()
-        val line_volume = opus_manager.get_line_volume(channel, line_offset)
-
-        val scroll_bar = view.findViewById<SeekBar>(R.id.line_volume_scrollbar)!!
-        scroll_bar.progress = line_volume
-        val title_text = view.findViewById<TextView>(R.id.line_volume_title)!!
-        title_text.text = resources.getString(R.string.label_volume_scrollbar, line_volume)
-        title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, line_volume)
-
-        scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                title_text.text = resources.getString(R.string.label_volume_scrollbar, p1)
-                title_text.contentDescription = resources.getString(R.string.label_volume_scrollbar, p1)
-                opus_manager.set_line_controller_initial_event(ControlEventType.Volume, channel, line_offset, OpusVolumeEvent(p1))
-            }
-            override fun onStartTrackingTouch(p0: SeekBar?) { }
-            override fun onStopTrackingTouch(seekbar: SeekBar?) { }
-        })
-
-        val dialog = AlertDialog.Builder(this.get_main())
-        dialog.setView(view)
-        dialog.show()
-    }
-
     private fun interact_btnChoosePercussion() {
         val main = this.get_main()
         val opus_manager = this.get_opus_manager()
@@ -259,7 +224,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             val name = main.active_percussion_names[note]
             options.add(Pair(note - 27, "${note - 27}: $name"))
         }
-
 
         main.dialog_popup_menu(this.context.getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
             opus_manager.set_percussion_instrument(value)

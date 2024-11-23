@@ -7,6 +7,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 
 class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent) {
     lateinit var button_toggle_line_control: ButtonIcon
+    lateinit var button_remove_line_control: ButtonIcon
     init {
 
         this.init_widget()
@@ -53,6 +54,10 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val cursor = opus_manager.cursor
 
         this.button_toggle_line_control = this.primary!!.findViewById(R.id.btnToggleCtl)
+        this.button_remove_line_control = this.primary!!.findViewById(R.id.btnRemoveCtl)
+
+        this.button_remove_line_control.visibility = View.GONE
+
         if (cursor.ctl_level == CtlLineLevel.Line) {
             this.button_toggle_line_control.setOnClickListener {
                 opus_manager.toggle_line_controller_visibility(
@@ -62,9 +67,18 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
                 )
             }
             this.button_toggle_line_control.visibility = View.VISIBLE
+
+            this.button_remove_line_control.setOnClickListener {
+                opus_manager.remove_line_controller(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.line_offset
+                )
+            }
         } else {
             this.button_toggle_line_control.visibility = View.GONE
         }
+
 
         this.secondary!!.addView(this.widget as View)
         (this.widget as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT

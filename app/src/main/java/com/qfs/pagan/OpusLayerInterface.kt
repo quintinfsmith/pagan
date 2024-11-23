@@ -1119,6 +1119,7 @@ class OpusLayerInterface : OpusLayerCursor() {
         if (this._block_cursor_selection()) {
             return
         }
+
         this.lock_ui_partial {
             super.cursor_select_line(channel, line_offset)
             this.temporary_blocker = null
@@ -3107,7 +3108,11 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        super.remove_line_controller(type, channel_index, line_offset)
+        this.lock_ui_partial {
+            val abs_line = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
+            super.remove_line_controller(type, channel_index, line_offset)
+            this._queue_remove_rows(abs_line, 1)
+        }
     }
 
     override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {

@@ -1709,4 +1709,30 @@ open class OpusLayerCursor: OpusLayerHistory() {
             this.cursor_apply(this.cursor.copy())
         }
     }
+
+    override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        if (type == this.cursor.ctl_type) {
+            when (this.cursor.mode) {
+                OpusManagerCursor.CursorMode.Line -> {
+                    if (this.cursor.channel == channel_index && this.cursor.line_offset == line_offset) {
+                        this.cursor_select_line(channel_index, line_offset)
+                    }
+                }
+                OpusManagerCursor.CursorMode.Single -> {
+                    if (this.cursor.channel == channel_index && this.cursor.line_offset == line_offset) {
+                        this.cursor_select(
+                            this.cursor.get_beatkey(),
+                            this.get_first_position(this.cursor.get_beatkey(), listOf())
+                        )
+                    }
+                }
+                OpusManagerCursor.CursorMode.Column,
+                OpusManagerCursor.CursorMode.Range,
+                OpusManagerCursor.CursorMode.Channel,
+                OpusManagerCursor.CursorMode.Unset -> {}
+            }
+        }
+
+        super.remove_line_controller(type, channel_index, line_offset)
+    }
 }

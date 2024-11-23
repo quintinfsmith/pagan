@@ -69,7 +69,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         val output = try {
             callback()
         } catch (e: OpusLayerBase.BlockedActionException) {
-            this.ui_change_bill.unlock()
             this.ui_change_bill.cancel_most_recent()
             null
         } catch (e: Exception) {
@@ -94,7 +93,6 @@ class OpusLayerInterface : OpusLayerCursor() {
         val output = try {
             callback()
         } catch (e: OpusLayerBase.BlockedActionException) {
-            this.ui_change_bill.unlock()
             this.ui_change_bill.cancel_most_recent()
             null
         } catch (e: Exception) {

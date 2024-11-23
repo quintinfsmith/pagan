@@ -904,6 +904,64 @@ open class OpusLayerBase {
     fun is_percussion(channel: Int): Boolean {
         return channel == this.channels.size
     }
+
+    fun ctl_line_level(y: Int): CtlLineLevel? {
+        return this._cached_abs_line_map_map[y].second
+    }
+
+    fun get_ctl_line_type(y: Int): ControlEventType? {
+        return this._cached_abs_line_map_map[y].third
+    }
+
+    fun get_ctl_line_info(y: Int): Triple<Int, CtlLineLevel?, ControlEventType?> {
+        return this._cached_abs_line_map_map[y]
+    }
+
+    fun get_actual_line_index(abs: Int): Int {
+        return this._cached_inv_abs_line_map_map[abs]!!
+    }
+
+    fun get_channel(channel: Int): OpusChannelAbstract<*, *> {
+        return if (this.is_percussion(channel)) {
+            this.percussion_channel
+        } else {
+            this.channels[channel]
+        }
+    }
+    fun <T: OpusControlEvent> get_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int): T {
+        val controller = this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type)
+        return controller.initial_event
+    }
+
+    fun <T: OpusControlEvent> get_channel_controller_initial_event(type: ControlEventType, channel: Int): T {
+        val controller = this.get_channel(channel).controllers.get_controller<T>(type)
+        return controller.initial_event
+    }
+
+    fun <T: OpusControlEvent> get_global_controller_initial_event(type: ControlEventType): T {
+        val controller = this.controllers.get_controller<T>(type)
+        return controller.initial_event
+    }
+
+    fun has_percussion(): Boolean {
+        return !this.percussion_channel.is_empty()
+    }
+
+    fun <T: OpusControlEvent> get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T {
+        val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<T>(type)
+        return controller.get_latest_event(beat_key.beat, position) ?: controller.get_initial_event()
+    }
+
+    fun <T: OpusControlEvent> get_current_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): T {
+        val controller = this.get_channel(channel).controllers.get_controller<T>(type)
+        return controller.get_latest_event(beat, position) ?: controller.get_initial_event()
+    }
+
+    fun <T: OpusControlEvent> get_current_global_controller_event(type: ControlEventType, beat: Int, position: List<Int>): T {
+        val controller = this.controllers.get_controller<T>(type)
+        return controller.get_latest_event(beat, position) ?: controller.get_initial_event()
+    }
+
     //// END RO Functions ////
 
     fun get_relative_value(beat_key: BeatKey, position: List<Int>): Int? {
@@ -1530,7 +1588,6 @@ open class OpusLayerBase {
         val output = working_channel.new_line(line_offset ?: working_channel.lines.size)
         this.recache_line_maps()
     }
-
 
     open fun remove_beat(beat_index: Int, count: Int = 1) {
         if (this.beat_count <= count) {
@@ -2831,7 +2888,7 @@ open class OpusLayerBase {
             if (!tree.is_event()) {
                 throw EventlessTreeException()
             }
-            val new_event = tree.event!!
+            val new_event = tree.event!!.copy()
             new_event.duration = duration
             this.set_event(beat_key, position, new_event)
         }
@@ -3023,7 +3080,6 @@ open class OpusLayerBase {
         }
     }
 
-
     open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
         if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
             throw InvalidOverwriteCall()
@@ -3034,6 +3090,7 @@ open class OpusLayerBase {
             this.replace_tree(working_key, null, this.get_tree_copy(beat_key))
         }
     }
+
     open fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
         val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
         return List<BeatKey>(this.beat_count - beat_key.beat) { i: Int ->
@@ -3184,37 +3241,6 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
-    fun ctl_line_level(y: Int): CtlLineLevel? {
-        return this._cached_abs_line_map_map[y].second
-    }
-
-    fun get_ctl_line_type(y: Int): ControlEventType? {
-        return this._cached_abs_line_map_map[y].third
-    }
-
-    fun get_ctl_line_info(y: Int): Triple<Int, CtlLineLevel?, ControlEventType?> {
-        return this._cached_abs_line_map_map[y]
-    }
-
-    fun get_actual_line_index(abs: Int): Int {
-        return this._cached_inv_abs_line_map_map[abs]!!
-    }
-
-    fun <T: OpusControlEvent> get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T {
-        val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<T>(type)
-        return controller.get_latest_event(beat_key.beat, position) ?: controller.get_initial_event()
-    }
-
-    fun <T: OpusControlEvent> get_current_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): T {
-        val controller = this.get_channel(channel).controllers.get_controller<T>(type)
-        return controller.get_latest_event(beat, position) ?: controller.get_initial_event()
-    }
-
-    fun <T: OpusControlEvent> get_current_global_controller_event(type: ControlEventType, beat: Int, position: List<Int>): T {
-        val controller = this.controllers.get_controller<T>(type)
-        return controller.get_latest_event(beat, position) ?: controller.get_initial_event()
-    }
-
     open fun <T: OpusControlEvent> set_global_controller_initial_event(type: ControlEventType, event: T) {
         val controller = this.controllers.get_controller<T>(type)
         controller.initial_event = event
@@ -3230,32 +3256,6 @@ open class OpusLayerBase {
         controller.initial_event = event
     }
 
-    fun get_channel(channel: Int): OpusChannelAbstract<*, *> {
-        return if (this.is_percussion(channel)) {
-            this.percussion_channel
-        } else {
-            this.channels[channel]
-        }
-    }
-    fun <T: OpusControlEvent> get_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int): T {
-        val controller = this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type)
-        return controller.initial_event
-    }
-
-    fun <T: OpusControlEvent> get_channel_controller_initial_event(type: ControlEventType, channel: Int): T {
-        val controller = this.get_channel(channel).controllers.get_controller<T>(type)
-        return controller.initial_event
-    }
-
-    fun <T: OpusControlEvent> get_global_controller_initial_event(type: ControlEventType): T {
-        val controller = this.controllers.get_controller<T>(type)
-        return controller.initial_event
-    }
-
-    fun has_percussion(): Boolean {
-        return !this.percussion_channel.is_empty()
-    }
-
     open fun <T: OpusLayerBase> import_from_other(other: T) {
         this.clear()
         this.beat_count = other.beat_count
@@ -3269,7 +3269,6 @@ open class OpusLayerBase {
         this.controllers = other.controllers
         this.percussion_channel = other.percussion_channel
     }
-
 
     override fun equals(other: Any?): Boolean {
         if (other !is OpusLayerBase

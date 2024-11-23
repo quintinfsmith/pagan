@@ -50,6 +50,7 @@ open class OpusLayerBase {
     class BlockedTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedTreeException): Exception()
     class BlockedLineCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedLineCtlTreeException): Exception()
     class BlockedChannelCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedCtlTreeException): Exception()
+    class BlockedActionException(msg: String? = null): Exception(msg) // Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
 
     companion object {
         private var _channel_uuid_generator: Int = 0x00
@@ -322,6 +323,8 @@ open class OpusLayerBase {
     // Value: first is always a pointer to cached_abs_line_map, second and third are pointers to the relative ctl lines
     private var _cached_abs_line_map_map = mutableListOf<Triple<Int, CtlLineLevel?, ControlEventType?>>()
     private var _cached_inv_abs_line_map_map = HashMap<Int, Int>()
+
+    internal var _blocked_action_catcher_active = false
 
     //// RO Functions ////
     /**
@@ -1498,54 +1501,10 @@ open class OpusLayerBase {
             for (line in 0 until this.channels[channel].lines.size) {
                 val beat_key = BeatKey(channel, line, beat_index)
                 this.replace_tree(beat_key, listOf(), beats_in_column[y++] as OpusTree<TunedInstrumentEvent>)
-                for ((type, _) in this.channels[channel].lines[line].controllers.get_all()) {
-                    this.replace_line_ctl_tree(
-                        type,
-                        beat_key,
-                        listOf(),
-                        beats_in_column[y++] as OpusTree<OpusControlEvent>
-                    )
-                }
-            }
-            for ((type, _) in this.channels[channel].controllers.get_all()) {
-                this.replace_channel_ctl_tree(
-                    type,
-                    channel,
-                    beat_index,
-                    listOf(),
-                    beats_in_column[y++] as OpusTree<OpusControlEvent>
-                )
             }
         }
         for (line in 0 until this.percussion_channel.lines.size) {
             this.replace_tree(BeatKey(this.channels.size, line, beat_index), listOf(), beats_in_column[y++] as OpusTree<PercussionEvent>)
-            for ((type, _) in this.percussion_channel.lines[line].controllers.get_all()) {
-                this.replace_line_ctl_tree(
-                    type,
-                    BeatKey(this.channels.size, line, beat_index),
-                    listOf(),
-                    beats_in_column[y++] as OpusTree<OpusControlEvent>
-                )
-            }
-        }
-
-        for ((type, _) in this.percussion_channel.controllers.get_all()) {
-            this.replace_channel_ctl_tree(
-                type,
-                this.channels.size,
-                beat_index,
-                listOf(),
-                beats_in_column[y++] as OpusTree<OpusControlEvent>
-            )
-        }
-
-        for ((type, _) in this.controllers.get_all()) {
-            this.replace_global_ctl_tree(
-                type,
-                beat_index,
-                listOf(),
-                beats_in_column[y++] as OpusTree<OpusControlEvent>
-            )
         }
     }
 
@@ -1566,11 +1525,10 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
-    open fun new_line(channel: Int, line_offset: Int? = null): OpusLineAbstract<*> {
+    open fun new_line(channel: Int, line_offset: Int? = null) {
         val working_channel = this.get_channel(channel)
         val output = working_channel.new_line(line_offset ?: working_channel.lines.size)
         this.recache_line_maps()
-        return output
     }
 
 
@@ -2148,11 +2106,10 @@ open class OpusLayerBase {
         this.path = new_path
     }
 
-    open fun <T> project_change_wrapper(callback: () -> T): T {
+    open fun project_change_wrapper(callback: () -> Unit) {
         this.clear()
-        val output = callback()
+        callback()
         this.on_project_changed()
-        return output
     }
 
     fun project_change_new() {
@@ -2869,13 +2826,15 @@ open class OpusLayerBase {
     }
 
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        val tree = this.get_tree(beat_key, position)
-        if (!tree.is_event()) {
-            throw EventlessTreeException()
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            val tree = this.get_tree(beat_key, position)
+            if (!tree.is_event()) {
+                throw EventlessTreeException()
+            }
+            val new_event = tree.event!!
+            new_event.duration = duration
+            this.set_event(beat_key, position, new_event)
         }
-        val new_event = tree.event!!
-        new_event.duration = duration
-        this.set_event(beat_key, position, new_event)
     }
 
 
@@ -3584,35 +3543,45 @@ open class OpusLayerBase {
         return try {
             callback()
         } catch (e: OpusChannelAbstract.BlockedTreeException) {
-            throw OpusLayerBase.BlockedTreeException(channel, e) // Standard leaf
+             this.on_action_blocked(
+                 BeatKey(
+                     channel,
+                     e.line_offset,
+                     e.e.blocker_beat
+                 ),
+                 e.e.blocker_position
+             )
+             throw BlockedActionException()
         } catch (e: OpusChannelAbstract.BlockedLineCtlTreeException) {
-            throw OpusLayerBase.BlockedLineCtlTreeException(channel, e) // line control leaf
+             this.on_action_blocked_line_ctl(
+                 e.e.type,
+                 BeatKey(
+                     channel,
+                     e.line_offset,
+                     e.e.e.blocker_beat,
+                 ),
+                 e.e.e.blocker_position
+             )
+             throw BlockedActionException()
         } catch (e: OpusChannelAbstract.BlockedCtlTreeException) {
-            throw OpusLayerBase.BlockedChannelCtlTreeException(channel, e) // channel control leaf
+            this.on_action_blocked_channel_ctl(
+                e.e.type,
+                channel,
+                e.e.e.blocker_beat,
+                e.e.e.blocker_position
+            )
+            throw BlockedActionException()
         }
-        // global is just a OpusTreeArray.BlockedTree at this layer
+        // global is just a OpusTreeArray.BlockedTree at this layer and is caught with catch_global_ctl_blocked_tree_exception
     }
 
     fun <T> catch_global_ctl_blocked_tree_exception(type: ControlEventType, callback: () -> T): T {
         return try {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
-            throw OpusLineAbstract.BlockedCtlTreeException(type, e)
+            this.on_action_blocked_global_ctl(type, e.blocker_beat, e.blocker_position)
+            throw BlockedActionException()
         }
-    }
-
-    fun is_line_ctl_visible(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
-        val line = this.get_all_channels()[channel].lines[line_offset]
-        return line.controllers.has_controller(type) && line.controllers.get_controller<OpusControlEvent>(type).visible
-    }
-
-    fun is_channel_ctl_visible(type: ControlEventType, channel_index: Int): Boolean {
-        val channel = this.get_all_channels()[channel_index]
-        return channel.controllers.has_controller(type) && channel.controllers.get_controller<OpusControlEvent>(type).visible
-    }
-
-    fun is_global_ctl_visible(type: ControlEventType): Boolean {
-        return this.controllers.has_controller(type) && this.controllers.get_controller<OpusControlEvent>(type).visible
     }
 
     open fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
@@ -3717,4 +3686,27 @@ open class OpusLayerBase {
         val channel = this.get_all_channels()[channel_index]
         this.set_channel_visibility(channel_index, !channel.visible)
     }
+
+    fun is_channel_visible(channel_index: Int): Boolean {
+        return this.get_all_channels()[channel_index].visible
+    }
+
+    fun is_line_ctl_visible(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
+        val line = this.get_all_channels()[channel].lines[line_offset]
+        return line.controllers.has_controller(type) && line.controllers.get_controller<OpusControlEvent>(type).visible
+    }
+
+    fun is_channel_ctl_visible(type: ControlEventType, channel_index: Int): Boolean {
+        val channel = this.get_all_channels()[channel_index]
+        return channel.controllers.has_controller(type) && channel.controllers.get_controller<OpusControlEvent>(type).visible
+    }
+
+    fun is_global_ctl_visible(type: ControlEventType): Boolean {
+        return this.controllers.has_controller(type) && this.controllers.get_controller<OpusControlEvent>(type).visible
+    }
+
+    open fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) { }
+    open fun on_action_blocked_global_ctl(type: ControlEventType, blocker_beat: Int, blocker_position: List<Int>) {}
+    open fun on_action_blocked_channel_ctl(type: ControlEventType, blocker_channel: Int, blocker_beat: Int, blocker_position: List<Int>) {}
+    open fun on_action_blocked_line_ctl(type: ControlEventType, blocker_key: BeatKey, blocker_position: List<Int>) {}
 }

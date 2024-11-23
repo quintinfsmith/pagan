@@ -59,7 +59,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
     open fun insert_beat(index: Int) {
-        this.beats.add(OpusTree())
+        this.beats.add(index, OpusTree())
     }
 
 

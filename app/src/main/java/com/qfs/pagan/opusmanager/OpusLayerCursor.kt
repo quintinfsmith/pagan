@@ -975,10 +975,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
         this.cursor_apply(this.cursor.copy())
     }
 
-    override fun new_line(channel: Int, line_offset: Int?): OpusLineAbstract<*> {
-        val output = super.new_line(channel, line_offset)
+    override fun new_line(channel: Int, line_offset: Int?) {
+        super.new_line(channel, line_offset)
         this._post_new_line(channel, line_offset ?: (this.get_all_channels()[channel].lines.size - 1))
-        return output
     }
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         super.insert_line(channel, line_offset, line)
@@ -1711,6 +1710,8 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        super.remove_line_controller(type, channel_index, line_offset)
+
         if (type == this.cursor.ctl_type) {
             when (this.cursor.mode) {
                 OpusManagerCursor.CursorMode.Line -> {
@@ -1732,7 +1733,5 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 OpusManagerCursor.CursorMode.Unset -> {}
             }
         }
-
-        super.remove_line_controller(type, channel_index, line_offset)
     }
 }

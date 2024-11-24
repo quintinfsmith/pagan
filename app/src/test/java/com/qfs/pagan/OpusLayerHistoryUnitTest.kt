@@ -228,9 +228,9 @@ class HistoryCacheUnitTest {
         manager.new_line(0,0)
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
-        manager.new_line(0,0,4)
+        manager.new_lines(0,0,4)
         this.undo_and_check(manager) {
-            it.remove_line(0,0,4)
+            it.remove_lines(0,0,4)
         }
 
     }
@@ -241,7 +241,7 @@ class HistoryCacheUnitTest {
         manager._project_change_new()
 
         this.undo_and_check(manager) {
-            it.new_line(0, 0, 10)
+            it.new_lines(0, 0, 10)
         }
 
     }

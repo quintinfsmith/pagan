@@ -173,7 +173,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
             manager.get_all_linked(BeatKey(0,1,0)).size
         )
 
-        manager.remove_line(0,0)
+        manager.remove_lines(0,0)
         manager.new_line(0,1)
 
         assertEquals(
@@ -183,7 +183,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
         )
 
 
-        val test_line = manager.remove_line(0,1)
+        val test_line = manager.remove_lines(0,1)
 
         manager.insert_line(0,0,test_line)
         assertEquals(
@@ -191,7 +191,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
             2,
             manager.get_all_linked(BeatKey(0,1,0)).size
         )
-        val test_line_2 = manager.remove_line(0,0)
+        val test_line_2 = manager.remove_lines(0,0)
         manager.insert_line(0,1,test_line_2)
 
         assertEquals(
@@ -236,7 +236,7 @@ class OpusLayerLinksUnitReTestAsOpusLayerHistory {
         manager.new_line(0)
         manager.new_line(0)
         manager.link_beats(BeatKey(0,2,0), BeatKey(0,2,1))
-        manager.remove_line(0, 0)
+        manager.remove_lines(0, 0)
         assertEquals(
             "Failed to adjust links when removing Line",
             2,

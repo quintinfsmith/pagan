@@ -150,7 +150,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val bytes = FileInputStream(bkp_json_path).readBytes()
         val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
 
-        opus_manager.reload(bytes, backup_path)
+        opus_manager.load(bytes, backup_path)
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {

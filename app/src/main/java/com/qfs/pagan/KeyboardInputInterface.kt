@@ -148,7 +148,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     val tree = opus_manager.get_tree()
                     if (tree.parent == null) {
                         try {
-                            opus_manager.split_tree(repeat + 1)
+                            opus_manager.split_tree_at_cursor(repeat + 1)
                         } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
                             // pass
                         }
@@ -294,7 +294,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_I, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=9999, minimum=0)
-                opus_manager.new_line(opus_manager.cursor.channel, opus_manager.cursor.line_offset, repeat)
+                opus_manager.new_lines(opus_manager.cursor.channel, opus_manager.cursor.line_offset, repeat)
             }
 
             override fun column(opus_manager: OpusLayerInterface) {
@@ -308,7 +308,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     val tree = opus_manager.get_tree()
                     if (tree.parent == null) {
                         try {
-                            opus_manager.split_tree(repeat + 1, true)
+                            opus_manager.split_tree_at_cursor(repeat + 1, true)
                         } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
                             // pass
                         }
@@ -589,7 +589,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 when (cursor.ctl_level) {
                     null -> {
                         try {
-                            opus_manager.split_tree(splits)
+                            opus_manager.split_tree_at_cursor(splits)
                         } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
                             // ignore
                         }

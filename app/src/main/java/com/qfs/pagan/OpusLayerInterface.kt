@@ -3,7 +3,6 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
-import com.qfs.json.JSONHashMap
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
@@ -266,22 +265,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             this._queue_remove_rows(abs_line, 1)
             super.remove_line_controller(type, channel_index, line_offset)
         }
-    }
-
-    override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
-        super.remove_channel_controller(type, channel_index)
-    }
-
-    override fun new_global_controller(type: ControlEventType) {
-        super.new_global_controller(type)
-    }
-
-    override fun new_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        super.new_line_controller(type, channel_index, line_offset)
-    }
-
-    override fun new_channel_controller(type: ControlEventType, channel_index: Int) {
-        super.new_channel_controller(type, channel_index)
     }
 
     // This is just a basic  clear so the UI works while I build the new logic for handling active control visibilities
@@ -942,12 +925,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
         this.lock_ui_partial {
-            // TODO: #CURSOR_ORDER
-            val cursor = this.cursor
-            if (cursor.ctl_level != null) {
-                this.cursor_select_channel(channel_index)
-            }
-
             super.toggle_channel_controller_visibility(type, channel_index)
             this._controller_visibility_toggle_callback()
         }
@@ -1050,12 +1027,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun toggle_global_control_visibility(type: ControlEventType) {
         this.lock_ui_partial {
-            // TODO: #CURSOR_ORDER
-            val cursor = this.cursor
-            if (cursor.ctl_level != null) {
-                this.cursor_clear()
-            }
-
             super.toggle_global_control_visibility(type)
             this._controller_visibility_toggle_callback()
         }
@@ -1063,12 +1034,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
     override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
         this.lock_ui_partial {
-            // TODO: #CURSOR_ORDER
-            val cursor = this.cursor
-            if (cursor.ctl_level != null) {
-                this.cursor_select_line(channel_index, line_offset)
-            }
-
             super.toggle_line_controller_visibility(type, channel_index, line_offset)
             this._controller_visibility_toggle_callback()
         }

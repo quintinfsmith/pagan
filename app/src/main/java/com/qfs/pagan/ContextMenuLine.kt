@@ -173,7 +173,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     fun click_button_insert_line() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        opus_manager.insert_line(1)
+        opus_manager.insert_line_at_cursor(1)
     }
 
     fun long_click_button_insert_line(): Boolean {
@@ -184,7 +184,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             1,
             9,
         ) { count: Int ->
-            opus_manager.insert_line(count)
+            opus_manager.insert_line_at_cursor(count)
         }
         return true
     }
@@ -192,7 +192,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     fun click_button_remove_line() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        opus_manager.remove_line(1)
+        opus_manager.remove_line_at_cursor(1)
     }
 
     fun long_click_button_remove_line(): Boolean {
@@ -205,7 +205,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             1,
             max_lines
         ) { count: Int ->
-            opus_manager.remove_line(count)
+            opus_manager.remove_line_at_cursor(count)
         }
 
         return true

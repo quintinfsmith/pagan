@@ -950,23 +950,21 @@ open class OpusLayerBase {
         return controller.initial_event
     }
 
-    fun has_percussion(): Boolean {
-        return !this.percussion_channel.is_empty()
-    }
-
     fun <T: OpusControlEvent> get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T {
         val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<T>(type)
         return controller.get_latest_event(beat_key.beat, position) ?: controller.get_initial_event()
     }
-
     fun <T: OpusControlEvent> get_current_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): T {
         val controller = this.get_channel(channel).controllers.get_controller<T>(type)
         return controller.get_latest_event(beat, position) ?: controller.get_initial_event()
     }
-
     fun <T: OpusControlEvent> get_current_global_controller_event(type: ControlEventType, beat: Int, position: List<Int>): T {
         val controller = this.controllers.get_controller<T>(type)
         return controller.get_latest_event(beat, position) ?: controller.get_initial_event()
+    }
+
+    fun has_percussion(): Boolean {
+        return !this.percussion_channel.is_empty()
     }
 
     //// END RO Functions ////

@@ -1,7 +1,5 @@
-# Pagan
-A music sequencer
-
-# NOTICE: As of 2024-11-24, this is a backup repository for Pagan's Source code. The Primary can be found at on at [Github](https://github.com/quintinfsmith/pagan)
+# Pagan, a Music Sequencer
+NOTICE: As of 2024-11-24, this is a backup repository for Pagan's Source code. The Primary can be found at on at [Github](https://github.com/quintinfsmith/pagan)
 
 [Manual](https://burnsomni.net/manual/pagan) [Issue Tracker](https://burnsomni.net/issues/pagan)
 

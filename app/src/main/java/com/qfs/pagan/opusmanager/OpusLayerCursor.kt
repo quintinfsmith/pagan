@@ -1265,6 +1265,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             CtlLineLevel.Global -> this.cursor_select_global_ctl_line(control_type!!)
         }
     }
+
     fun select_next_leaf(repeat: Int) {
         val cursor = this.cursor
         when (cursor.ctl_level) {

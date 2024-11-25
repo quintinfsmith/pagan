@@ -2,8 +2,8 @@ package com.qfs.pagan
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
@@ -30,6 +30,11 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
     var progress: Int = ((this.max - this.min) / 2) + this.min
     var on_change_listener: OnSeekBarChangeListener? = null
     val image_view: ImageView = object: androidx.appcompat.widget.AppCompatImageView(context, attrs) {
+        val paint = Paint()
+        val bar_path = Path()
+        init {
+        }
+
         fun get_main_activity(): MainActivity {
             var context = this@PanSliderWidget.context
             while (context !is MainActivity) {
@@ -40,98 +45,72 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
 
         override fun onDraw(canvas: Canvas) {
             val that = this@PanSliderWidget
-            val relative_n = (that.progress - that.min).toFloat() / ((that.max + 1) - that.min).toFloat()
-            val paint = Paint()
+            val div_size = 1F / ((that.max + 1) - that.min).toFloat()
+            val relative_n = (that.progress - that.min).toFloat() * div_size
+            val width = this.width.toFloat()
+            val height = this.height.toFloat()
+
             val color_map = this.get_main_activity().view_model.color_map
+            val offset = width * div_size
+            val offset_half = offset / 2f
+            val handle_center = relative_n + (.5F / ((that.max + 1) - that.min).toFloat())
+            val purple = color_map.get(ColorMap.Palette.Leaf)
 
-            paint.setColor(color_map.get(ColorMap.Palette.Leaf))
-            paint.strokeWidth = 1f
-            val left_height = canvas.height * if (relative_n <= .5F) {
-                1F
-            } else {
-                (1F - relative_n) / .5f
-            }
-
-            val right_height = canvas.height * if (relative_n >= .5f ) {
-                1F
-            } else {
-                relative_n / .5F
-            }
-
-            val offset = canvas.width / ((that.max + 1) - that.min).toFloat()
+            this.paint.strokeWidth = 1f
+            this.paint.color = purple
+            this.paint.setShadowLayer(5F, 2F, 2F, Color.BLACK)
 
             val main_path = Path()
-            main_path.moveTo(offset / 2F, (canvas.height - left_height))
-            main_path.lineTo(canvas.width.toFloat() / 2F, 0F)
-            main_path.lineTo(canvas.width.toFloat() - (offset / 2F), (canvas.height - right_height))
-            main_path.lineTo(canvas.width.toFloat() - (offset / 2F), canvas.height.toFloat())
-            main_path.lineTo(canvas.width.toFloat() / 2F, canvas.height.toFloat())
-            main_path.lineTo(offset / 2F, canvas.height.toFloat())
-            main_path.lineTo(offset / 2F, (canvas.height - left_height))
-            canvas.drawPath(main_path, paint)
+            val bar_start = max(0F, (handle_center - .5F)) * width
+            val bar_end = min(1F, handle_center + .5f) * width
+            main_path.moveTo(bar_start, 0f)
+            main_path.lineTo(bar_end, 0F)
+            main_path.lineTo(bar_end, height)
+            main_path.lineTo(bar_start, height)
+            canvas.drawPath(main_path, this.paint)
 
-            val canvsx = (canvas.width * relative_n)
-            val nob_width = offset
+            val handle_point = width * relative_n
 
-            paint.strokeWidth = 6f
-            paint.setColor(
-                 color_map.get(ColorMap.Palette.LeafText)
-            )
+            this.paint.strokeWidth = 1F
+            this.paint.color = Color.WHITE
+            canvas.drawLine(0f, 0F, width, 0F, this.paint)
+            canvas.drawLine(0f, height - 1F, width, height - 1F, this.paint)
+            canvas.drawLine(0F, 0F, 0F, height, this.paint)
+            canvas.drawLine(width - 1F, 0F, width - 1F, height, this.paint)
 
-            canvas.drawLine(
-                canvas.width / 2F,
-                0F,
-                canvas.width / 2F,
-                canvas.height.toFloat(),
-                paint
-            )
-
-            paint.strokeWidth = 3f
+            this.paint.setColor(color_map.get(ColorMap.Palette.LeafSelected))
+            this.paint.strokeWidth = 3f
 
             val position_path = Path()
-            position_path.moveTo(
-                 canvsx - ((nob_width - offset) / 2F),
-                canvas.height.toFloat()
-            )
-            position_path.lineTo(
-                canvsx + (offset / 2F),
-                canvas.height.toFloat() / 2F
-            )
-            position_path.lineTo(
-                canvsx + offset + ((nob_width - offset) / 2F),
-                canvas.height.toFloat()
-            )
-            position_path.lineTo(
-                canvsx - ((nob_width - offset) / 2F),
-                canvas.height.toFloat()
-            )
-            canvas.drawPath(position_path, paint)
+            when (that.progress) {
+                that.max -> {
+                    position_path.moveTo(handle_point + offset, height * .9F)
+                    position_path.lineTo(handle_point + offset_half, height / 2)
+                    position_path.lineTo(handle_point + offset, height * .1F)
+                }
+                that.min -> {
+                    position_path.moveTo(handle_point, height * .9F)
+                    position_path.lineTo(handle_point + offset_half, height / 2)
+                    position_path.lineTo(handle_point, height * .1F)
+                }
+                else -> {
+                    position_path.moveTo(handle_point + offset_half, height * .9F)
+                    position_path.lineTo(handle_point, height / 2F)
+                    position_path.lineTo(handle_point + offset_half, height * .1F)
+                    position_path.lineTo(handle_point + offset, height / 2F)
+                    position_path.lineTo(handle_point + offset_half, height * .9F)
+                }
+            }
 
-
-            //paint.setColor(color_map.get(ColorMap.Palette.LeafText))
-
-            // paint.setColor(color_map.get(ColorMap.Palette.LeafSelected))
-
-            // paint.strokeWidth = 1f
-            // paint.strokeWidth = 10f
-            // canvas.drawOval(
-            //     canvsx - ((nob_width - offset) / 2F),
-            //     0f,
-            //     canvsx + offset + ((nob_width - offset) / 2F),
-            //     canvas.height.toFloat(),
-            //     paint
-            // )
+            canvas.drawPath(position_path, this.paint)
 
             super.onDraw(canvas)
         }
     }
-    var bitmap: Bitmap? = null
-    var canvas: Canvas? = null
 
     init {
         this.orientation = HORIZONTAL
         this.addView(this.image_view)
-        //this.image_view.layoutParams.height = MATCH_PARENT
         this.image_view.layoutParams.width = MATCH_PARENT
         this.image_view.layoutParams.height = MATCH_PARENT
         this.image_view.setPadding(0,0,0,0)

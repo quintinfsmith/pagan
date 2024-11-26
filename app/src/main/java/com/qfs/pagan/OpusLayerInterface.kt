@@ -144,38 +144,26 @@ class OpusLayerInterface : OpusLayerCursor() {
         val tree = this.get_tree(beat_key)
         val new_weight = tree.get_total_child_weight()
 
-        val coord_list = mutableListOf<EditorTable.Coordinate>()
-        coord_list.add(
-            EditorTable.Coordinate(
-                y = this.get_visible_row_from_ctl_line(
-                    this.get_actual_line_index(
-                        this.get_instrument_line_index(
-                            beat_key.channel,
-                            beat_key.line_offset
-                        )
+        val coord = EditorTable.Coordinate(
+            y = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(
+                        beat_key.channel,
+                        beat_key.line_offset
                     )
-                )!!,
-                x = beat_key.beat
-            )
+                )
+            )!!,
+            x = beat_key.beat
         )
 
         val editor_table = this.get_editor_table()
-        val notify_columns = mutableSetOf<Int>()
-        for (coord in coord_list) {
-            if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-                notify_columns.add(coord.x)
-            }
-        }
-        val adj_coord_list = mutableListOf<EditorTable.Coordinate>()
-        for (coord in coord_list) {
-            if (notify_columns.contains(coord.x)) {
-                continue
-            }
-            adj_coord_list.add(coord)
+
+        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+            this.ui_change_bill.queue_cell_change(coord)
+        } else {
+            this.ui_change_bill.queue_column_change(coord.x)
         }
 
-        this.ui_change_bill.queue_cell_changes(adj_coord_list)
-        this.ui_change_bill.queue_column_changes(notify_columns.toList())
     }
 
     private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {

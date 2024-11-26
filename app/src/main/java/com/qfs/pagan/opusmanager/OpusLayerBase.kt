@@ -1735,16 +1735,16 @@ open class OpusLayerBase {
     }
 
     open fun <T: OpusControlEvent> replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
-        val tree_copy = tree.copy(this::copy_control_event)
         this.catch_blocked_tree_exception(beat_key.channel) {
-            this.get_all_channels()[beat_key.channel].replace_line_control_leaf(type, beat_key.line_offset, beat_key.beat, position ?: listOf(), tree)
+            val tree_copy = tree.copy(this::copy_control_event)
+            this.get_all_channels()[beat_key.channel].replace_line_control_leaf(type, beat_key.line_offset, beat_key.beat, position ?: listOf(), tree_copy)
         }
     }
 
     open fun <T: OpusControlEvent> replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
-        val tree_copy = tree.copy(this::copy_control_event)
         this.catch_blocked_tree_exception(channel) {
-            this.get_all_channels()[channel].replace_channel_control_leaf(type, beat, position ?: listOf(), tree)
+            val tree_copy = tree.copy(this::copy_control_event)
+            this.get_all_channels()[channel].replace_channel_control_leaf(type, beat, position ?: listOf(), tree_copy)
         }
     }
 

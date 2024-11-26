@@ -1417,6 +1417,10 @@ class OpusLayerInterface : OpusLayerCursor() {
                         this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocker.first))
                         this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocked.first))
                     }
+                    controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocker.first))
+                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocked.first))
+                    }
                 }
             }
             for ((type, controller) in channels[channel].controllers.get_all()) {

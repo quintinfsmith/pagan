@@ -282,6 +282,17 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
             this.controllers.get_controller<OpusControlEvent>(type).remove_standard(beat, position)
         }
     }
+
+    fun <K: OpusControlEvent> replace_line_control_leaf(type: ControlEventType, line_offset: Int, beat: Int, position: List<Int>, tree: OpusTree<K>) {
+        this.catch_blocked_tree_exception(line_offset) {
+            this.lines[line_offset].replace_control_leaf(type, beat, position, tree)
+        }
+    }
+    fun <K: OpusControlEvent> replace_channel_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: OpusTree<K>) {
+        this.catch_blocked_tree_exception_channel_controller(type) {
+            this.controllers.get_controller<K>(type).replace_tree(beat, position, tree)
+        }
+    }
 }
 
 class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {

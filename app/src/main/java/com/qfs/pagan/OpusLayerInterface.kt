@@ -441,6 +441,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             this._queue_cell_change(beat_key)
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 

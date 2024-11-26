@@ -1161,7 +1161,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
             if (first != second) {
                 this.move_line_ctl_range(this.cursor.ctl_type!!, beat_key, first, second)
             } else {
-                this.move_line_ctl_leaf(this.cursor.ctl_type!!, beat_key, listOf(), first, listOf())
+                this.move_line_ctl_leaf(this.cursor.ctl_type!!, first, listOf(), beat_key, listOf())
             }
         } else {
             throw InvalidCursorState()

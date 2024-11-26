@@ -60,13 +60,15 @@ class OpusControlEventJSONInterface {
         }
         fun reverb_event(map: JSONHashMap): OpusReverbEvent {
             return OpusReverbEvent(
-                map.get_float("wetness")
+                map.get_float("wetness"),
+                map.get_int("duration", 1)
             )
         }
         fun pan_event(map: JSONHashMap): OpusPanEvent {
             return OpusPanEvent(
                 map.get_float("value"),
-                ControlTransition.valueOf(map.get_string("transition", "Instant"))
+                ControlTransition.valueOf(map.get_string("transition", "Instant")),
+                map.get_int("duration", 1)
             )
         }
         // ------------------------

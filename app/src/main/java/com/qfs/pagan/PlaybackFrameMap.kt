@@ -21,12 +21,9 @@ import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
-import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.pow
-import kotlin.math.sin
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     private var _simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
@@ -369,33 +366,33 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                     }
                                 }
 
-                                ControlTransition.Convex -> {
-                                    val count = abs(diff)
-                                    val frame_step_size = (end_frame - start_frame) / abs(diff)
-                                    val float_count = count.toFloat()
-                                    val float_value = working_volume.toFloat()
+                                //ControlTransition.Convex -> {
+                                //    val count = abs(diff)
+                                //    val frame_step_size = (end_frame - start_frame) / abs(diff)
+                                //    val float_count = count.toFloat()
+                                //    val float_value = working_volume.toFloat()
 
-                                    val half_pi = PI.toFloat() / 2F
-                                    for (i in 0 until count) {
-                                        val intermediate_frame = (frame_step_size * i) + start_frame
-                                        val y: Float = sin(((i + 1).toFloat() / float_count) * half_pi) * diff
-                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
-                                    }
-                                }
+                                //    val half_pi = PI.toFloat() / 2F
+                                //    for (i in 0 until count) {
+                                //        val intermediate_frame = (frame_step_size * i) + start_frame
+                                //        val y: Float = sin(((i + 1).toFloat() / float_count) * half_pi) * diff
+                                //        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
+                                //    }
+                                //}
 
-                                ControlTransition.Concave -> {
-                                    val count = abs(diff)
-                                    val frame_step_size = (end_frame - start_frame) / abs(diff)
-                                    val float_count = count.toFloat()
-                                    val float_value = working_volume.toFloat()
+                                //ControlTransition.Concave -> {
+                                //    val count = abs(diff)
+                                //    val frame_step_size = (end_frame - start_frame) / abs(diff)
+                                //    val float_count = count.toFloat()
+                                //    val float_value = working_volume.toFloat()
 
-                                    val half_pi = PI.toFloat() / 2F
-                                    for (i in 0 until count) {
-                                        val intermediate_frame = (frame_step_size * i) + start_frame
-                                        val y: Float = (i.toFloat() / float_count).pow(2)
-                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
-                                    }
-                                }
+                                //    val half_pi = PI.toFloat() / 2F
+                                //    for (i in 0 until count) {
+                                //        val intermediate_frame = (frame_step_size * i) + start_frame
+                                //        val y: Float = (i.toFloat() / float_count).pow(2)
+                                //        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
+                                //    }
+                                //}
 
                             }
                             working_volume = working_event.value
@@ -453,37 +450,37 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                     }
                                 }
 
-                                ControlTransition.Convex -> {
-                                    val negative_modifier = diff / abs(diff)
+                                //ControlTransition.Convex -> {
+                                //    val negative_modifier = diff / abs(diff)
 
-                                    val float_count = abs(diff * 100F)
-                                    val count = float_count.toInt()
-                                    val frame_step_size = (end_frame - start_frame) / abs(count)
+                                //    val float_count = abs(diff * 100F)
+                                //    val count = float_count.toInt()
+                                //    val frame_step_size = (end_frame - start_frame) / abs(count)
 
-                                    val half_pi = PI.toFloat() / 2F
-                                    for (i in 0 .. abs(count)) {
-                                        val intermediate_frame = (frame_step_size * i) + start_frame
-                                        val y: Float = sin(((i + 1).toFloat() / float_count) * half_pi) * diff
+                                //    val half_pi = PI.toFloat() / 2F
+                                //    for (i in 0 .. abs(count)) {
+                                //        val intermediate_frame = (frame_step_size * i) + start_frame
+                                //        val y: Float = sin(((i + 1).toFloat() / float_count) * half_pi) * diff
 
-                                        this._pan_map[Pair(c, l)]!![intermediate_frame] = working_pan + y
-                                    }
-                                }
+                                //        this._pan_map[Pair(c, l)]!![intermediate_frame] = working_pan + y
+                                //    }
+                                //}
 
-                                ControlTransition.Concave -> {
-                                    TODO()
-                                    //
-                                    // val count = abs(diff)
-                                    //// val frame_step_size = (end_frame - start_frame) / abs(diff)
-                                    //// val float_count = count.toFloat()
-                                    //// val float_value = working_pan.toFloat()
+                                //ControlTransition.Concave -> {
+                                //    TODO()
+                                //    //
+                                //    // val count = abs(diff)
+                                //    //// val frame_step_size = (end_frame - start_frame) / abs(diff)
+                                //    //// val float_count = count.toFloat()
+                                //    //// val float_value = working_pan.toFloat()
 
-                                    //// val half_pi = PI.toFloat() / 2F
-                                    //// for (i in 0 until count) {
-                                    ////     val intermediate_frame = (frame_step_size * i) + start_frame
-                                    ////     val y: Float = (i.toFloat() / float_count).pow(2)
-                                    ////     this._pan_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
-                                    //// }
-                                }
+                                //    //// val half_pi = PI.toFloat() / 2F
+                                //    //// for (i in 0 until count) {
+                                //    ////     val intermediate_frame = (frame_step_size * i) + start_frame
+                                //    ////     val y: Float = (i.toFloat() / float_count).pow(2)
+                                //    ////     this._pan_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
+                                //    //// }
+                                //}
 
                             }
                             working_pan = working_event.value

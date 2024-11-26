@@ -85,24 +85,25 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
 
             this.paint.color = color_map[ColorMap.Palette.LeafSelected]
             this.paint.strokeWidth = 3f
-
+            val nob_width = height * .75F
+            val nob_width_half = nob_width / 2F
             this.path.reset()
             when (that.progress) {
                 that.max -> {
                     this.path.moveTo(handle_point + offset, height * .9F)
-                    this.path.lineTo(handle_point + offset_half, height / 2)
+                    this.path.lineTo(handle_point + offset - nob_width_half, height / 2)
                     this.path.lineTo(handle_point + offset, height * .1F)
                 }
                 that.min -> {
                     this.path.moveTo(handle_point, height * .9F)
-                    this.path.lineTo(handle_point + offset_half, height / 2)
+                    this.path.lineTo(handle_point + nob_width_half, height / 2)
                     this.path.lineTo(handle_point, height * .1F)
                 }
                 else -> {
                     this.path.moveTo(handle_point + offset_half, height * .9F)
-                    this.path.lineTo(handle_point, height / 2F)
+                    this.path.lineTo(handle_point + (offset_half - nob_width_half), height / 2F)
                     this.path.lineTo(handle_point + offset_half, height * .1F)
-                    this.path.lineTo(handle_point + offset, height / 2F)
+                    this.path.lineTo(handle_point + offset_half + nob_width_half, height / 2F)
                     this.path.lineTo(handle_point + offset_half, height * .9F)
                 }
             }

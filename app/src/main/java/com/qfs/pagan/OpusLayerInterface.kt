@@ -1690,15 +1690,23 @@ class OpusLayerInterface : OpusLayerCursor() {
                             )
                         )
 
+
+                        val row_index = try {
+                            this.get_visible_row_from_ctl_line_line(
+                                cursor.ctl_type!!,
+                                cursor.channel,
+                                cursor.line_offset
+                            )
+                        } catch (e: NullPointerException) {
+                            return
+                        }
+
                         if (line_y != null) {
                             this.ui_change_bill.queue_line_label_refresh(line_y)
                         }
 
-                        this.get_visible_row_from_ctl_line_line(
-                            cursor.ctl_type!!,
-                            cursor.channel,
-                            cursor.line_offset
-                        )
+                        row_index
+
                     }
                     CtlLineLevel.Channel -> {
                         val channel = this.get_all_channels()[cursor.channel]

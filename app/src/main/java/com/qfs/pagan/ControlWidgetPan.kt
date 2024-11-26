@@ -24,7 +24,12 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         if (this.is_initial_event) {
             this._transition_button.visibility = View.GONE
         } else {
-            this._transition_button.setImageResource(R.drawable.volume) // TODO transition icons
+            this._transition_button.setImageResource(when (this.working_event.transition) {
+                ControlTransition.Instant -> R.drawable.immediate
+                ControlTransition.Linear -> R.drawable.linear
+               // ControlTransition.Concave -> TODO()
+               // ControlTransition.Convex -> TODO()
+            })
             this._transition_button.setOnClickListener {
                 val main = (this.context as ContextThemeWrapper).baseContext as MainActivity
                 val control_transitions = ControlTransition.values()
@@ -61,7 +66,9 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
 
 
     override fun on_set(event: OpusPanEvent) {
-        val value = (event.value * this._max.toFloat()).toInt()
-       // this._slider.progress = value
+        this._transition_button.setImageResource(when (event.transition) {
+            ControlTransition.Instant -> R.drawable.immediate
+            ControlTransition.Linear -> R.drawable.linear
+        })
     }
 }

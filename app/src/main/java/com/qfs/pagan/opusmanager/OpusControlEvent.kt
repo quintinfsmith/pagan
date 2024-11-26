@@ -9,9 +9,9 @@ enum class ControlEventType {
 
 enum class ControlTransition {
     Instant,
-    Linear,
-    Concave,
-    Convex
+    Linear
+   // Concave,
+   // Convex
 }
 
 abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration) {

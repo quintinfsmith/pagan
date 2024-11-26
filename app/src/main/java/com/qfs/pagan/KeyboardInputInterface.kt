@@ -135,7 +135,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_A, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=9999)
-                opus_manager.insert_line(repeat)
+                opus_manager.insert_line_at_cursor(repeat)
             }
             override fun column(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=9999)
@@ -694,7 +694,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 val line_count = opus_manager.get_visible_channels()[cursor.channel].lines.size
                 val repeat = this.get_buffer_value(1, maximum=line_count - 1, minimum=0)
                 if (repeat > 0) {
-                    opus_manager.remove_line(repeat)
+                    opus_manager.remove_line_at_cursor(repeat)
                 }
             }
 

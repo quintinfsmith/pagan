@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationChannel
@@ -33,6 +34,7 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
@@ -174,6 +176,7 @@ class MainActivity : AppCompatActivity() {
         null
     }
     private var _current_feedback_device: Int = 0
+    private var _blocker_scroll_y: Float? = null
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
@@ -852,13 +855,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun _enable_blocker_view() {
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+
         if (blocker_view != null && blocker_view.visibility != View.VISIBLE) {
-            blocker_view.setOnClickListener {
-                this.playback_stop()
-                this.playback_stop_midi_output()
+            blocker_view.setOnTouchListener { _, motion_event ->
+                /* Allow Scrolling on the y axis when scrolling in the main_recycler */
+                if (motion_event == null) {
+                } else if (motion_event.action == 1) {
+                    this._blocker_scroll_y = null
+                } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
+                } else {
+                    val fragment = this.get_active_fragment()
+                    if (fragment !is FragmentEditor) {
+                        return@setOnTouchListener false
+                    }
+                    val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+                    val scroll_view = editor_table.get_scroll_view()
+
+                    if (this._blocker_scroll_y == null) {
+                        this._blocker_scroll_y = (motion_event.y - scroll_view.y) - scroll_view.scrollY.toFloat()
+                    }
+
+                    val rel_y = (motion_event.y - scroll_view.y) - scroll_view.scrollY
+                    val delta_y = this._blocker_scroll_y!! - rel_y
+
+                    scroll_view.scrollBy(0, delta_y.toInt())
+                    this._blocker_scroll_y = rel_y
+                }
+                true
             }
+            //blocker_view.setOnClickListener {
+            //    this.playback_stop()
+            //    this.playback_stop_midi_output()
+            //}
             blocker_view.visibility = View.VISIBLE
             this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }

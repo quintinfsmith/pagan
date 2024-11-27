@@ -79,6 +79,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         ColumnLabelAdapter(this)
     }
 
+    fun get_scroll_view(): CompoundScrollView {
+        return this._scroll_view
+    }
     fun clear() {
         this.get_activity().runOnUiThread {
             (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter).clear()

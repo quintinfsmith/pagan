@@ -3,8 +3,6 @@ package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Space
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusControlEvent
@@ -42,8 +40,8 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         this.secondary!!.addView(this.widget_volume)
-        this.widget_volume.layoutParams.width = MATCH_PARENT
-        this.widget_volume.layoutParams.height = WRAP_CONTENT
+        (this.widget_volume as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+        (this.widget_volume as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
 
         this.spacer = primary.findViewById(R.id.spacer)
     }

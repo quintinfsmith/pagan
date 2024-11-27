@@ -358,7 +358,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                 ControlTransition.Linear -> {
                                     val negative_modifier = diff / abs(diff)
                                     val frame_step_size = (end_frame - start_frame) / abs(diff)
-                                    println("$frame_step_size | ${end_frame - start_frame} | $diff")
 
                                     for (i in 0 .. abs(diff)) {
                                         val intermediate_frame = (frame_step_size * i) + start_frame

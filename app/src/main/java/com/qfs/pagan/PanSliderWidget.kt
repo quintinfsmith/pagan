@@ -139,7 +139,6 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
                     )
 
                     val value_x = floor((pos_x * ((this.max + 1) - this.min) / measured_max_width) + this.min)
-                    println("$value_x, ${motionEvent.x}")
                     this.set_progress(max(this.min, min(this.max, value_x.toInt())))
                 }
             }

@@ -140,7 +140,7 @@ class UIChangeBill {
         }
         val queued_line_labels = mutableSetOf<Int>()
         val queued_column_labels = mutableSetOf<Int>()
-
+        var queued_context_menu: BillableItem? = null
         var stack = mutableListOf<Node>(this._tree)
         while (stack.isNotEmpty()) {
             var node = stack.removeFirst()
@@ -154,7 +154,18 @@ class UIChangeBill {
                     BillableItem.ColumnChange,
                     BillableItem.ColumnStateChange,
                     BillableItem.LineLabelRefresh,
-                    BillableItem.ColumnLabelRefresh -> {}
+                    BillableItem.ColumnLabelRefresh,
+                    BillableItem.ContextMenuRefresh,
+                    BillableItem.ContextMenuSetLine,
+                    BillableItem.ContextMenuSetChannel,
+                    BillableItem.ContextMenuSetLeaf,
+                    BillableItem.ContextMenuSetLeafPercussion,
+                    BillableItem.ContextMenuSetControlLeaf,
+                    BillableItem.ContextMenuSetControlLeafB,
+                    BillableItem.ContextMenuSetRange,
+                    BillableItem.ContextMenuSetColumn,
+                    BillableItem.ContextMenuSetControlLine,
+                    BillableItem.ContextMenuClear -> {}
                     else -> {
                         this._tree.bill.add(bill_item)
                     }
@@ -375,8 +386,6 @@ class UIChangeBill {
                         }
                     }
 
-                    BillableItem.ContextMenuSetChannel,
-                    BillableItem.ProjectNameChange,
                     BillableItem.ContextMenuRefresh,
                     BillableItem.ContextMenuSetLine,
                     BillableItem.ContextMenuSetLeaf,
@@ -387,6 +396,11 @@ class UIChangeBill {
                     BillableItem.ContextMenuSetColumn,
                     BillableItem.ContextMenuSetControlLine,
                     BillableItem.ContextMenuClear,
+                    BillableItem.ContextMenuSetChannel -> {
+                        queued_context_menu = bill_item
+                    }
+
+                    BillableItem.ProjectNameChange,
                     BillableItem.ConfigDrawerEnableCopyAndDelete,
                     BillableItem.ConfigDrawerRefreshExportButton -> { }
 
@@ -445,6 +459,9 @@ class UIChangeBill {
         for (x in queued_column_labels) {
             this._tree.bill.add(BillableItem.ColumnLabelRefresh)
             this._tree.int_queue.add(x)
+        }
+        if (queued_context_menu != null) {
+            this._tree.bill.add(queued_context_menu)
         }
     }
 

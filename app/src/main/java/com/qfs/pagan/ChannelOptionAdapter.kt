@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.view.ContextThemeWrapper
@@ -8,6 +9,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -32,6 +34,7 @@ class ChannelOptionAdapter(
                 val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
                 background?.setTint(color_map[Palette.Button])
             }
+            this.gravity = Gravity.CENTER_VERTICAL
         }
     }
 
@@ -59,11 +62,14 @@ class ChannelOptionAdapter(
 
         val top_view = BackLinkView(ContextThemeWrapper(parent.context, R.style.recycler_option))
         val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
-        val btn_kill_channel = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
+        val btn_kill_channel = ImageView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
         top_view.addView(btn_choose_instrument)
         top_view.addView(btn_kill_channel)
         btn_choose_instrument.setTextColor(color_map[Palette.ButtonText])
-        btn_kill_channel.setTextColor(color_map[Palette.ButtonText])
+        btn_kill_channel.imageTintList = ColorStateList(
+            arrayOf(intArrayOf()),
+            intArrayOf(color_map[Palette.ButtonText])
+        )
 
         btn_choose_instrument.layoutParams.width = 0
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F
@@ -117,28 +123,25 @@ class ChannelOptionAdapter(
             this.interact_btnChooseInstrument(holder.itemView as BackLinkView)
         }
 
-        val remove_button = (holder.itemView as ViewGroup).getChildAt(1) as TextView
-
+        val remove_button = (holder.itemView as ViewGroup).getChildAt(1) as ImageView
+        val main = this.get_activity()
+        val opus_manager = main.get_opus_manager()
         if (this._opus_manager.is_percussion(position)) {
-            remove_button.text = this.get_percussion_visibility_button_text()
+            remove_button.setImageResource(
+                if (opus_manager.percussion_channel.visible) {
+                    R.drawable.show_percussion
+                } else {
+                    R.drawable.hide_percussion
+                }
+            )
             remove_button.setOnClickListener {
                 this.interact_btnTogglePercussionVisibility(holder.itemView as BackLinkView)
             }
         } else {
-            remove_button.text = holder.itemView.context.resources.getString(R.string.remove_channel)
+            remove_button.setImageResource(R.drawable.delete_channel)
             remove_button.setOnClickListener {
                 this.interact_btnRemoveChannel(holder.itemView as BackLinkView)
             }
-        }
-    }
-
-    private fun get_percussion_visibility_button_text(): String {
-        val main = this.get_activity()
-        val opus_manager = main.get_opus_manager()
-        return if (opus_manager.percussion_channel.visible) {
-            main.getString(R.string.btn_percussion_visible)
-        } else {
-            main.getString(R.string.btn_percussion_hidden)
         }
     }
 
@@ -157,8 +160,14 @@ class ChannelOptionAdapter(
             return
         }
 
-        val remove_button = (view as ViewGroup).getChildAt(1) as TextView
-        remove_button.text = this.get_percussion_visibility_button_text()
+        val remove_button = (view as ViewGroup).getChildAt(1) as ImageView
+        remove_button.setImageResource(
+            if (opus_manager.percussion_channel.visible) {
+                R.drawable.show_percussion
+            } else {
+                R.drawable.hide_percussion
+            }
+        )
     }
 
     private fun interact_btnRemoveChannel(view: BackLinkView) {

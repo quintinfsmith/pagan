@@ -960,7 +960,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     fun set_event(beat: Int, position: List<Int>, event: T) {
         val blocked_pair = this.is_blocked_set_event(beat, position, event.duration)
         if (blocked_pair != null) {
-            println("BLOCKED")
             throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
         }
 

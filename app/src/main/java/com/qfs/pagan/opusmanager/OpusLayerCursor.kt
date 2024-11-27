@@ -85,27 +85,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                     if (channel_index < this.cursor.channel) {
                         this.cursor.channel -= 1
                     } else if (channel_index == this.cursor.channel) {
-                        val channels = this.get_all_channels()
-                        var found_channel = false
-                        while (this.cursor.channel < this.channels.size + 1) {
-                            if (channels[this.cursor.channel].visible) {
-                                found_channel = true
-                                break
-                            }
-                            this.cursor.channel += 1
-                        }
-
-                        if (!found_channel) {
-                            while (this.cursor.channel > 0) {
-                                if (channels[this.cursor.channel].visible) {
-                                    found_channel = true
-                                    break
-                                }
-                                this.cursor.channel -= 1
-                            }
-                        }
-                        this.cursor.line_offset = 0
-                        this.cursor.position = this.get_first_position(this.cursor.get_beatkey(), listOf())
+                        this.cursor_clear()
                     }
                 }
                 OpusManagerCursor.CursorMode.Range -> this.cursor_clear()
@@ -272,31 +252,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 }
             }
             OpusManagerCursor.CursorMode.Single -> {
-                if (channel < this.cursor.channel) {
-                    this.cursor.channel -= 1
-                } else if (channel == this.cursor.channel) {
-                    val channels = this.get_all_channels()
-                    var found_channel = false
-                    while (this.cursor.channel < this.channels.size + 1) {
-                        if (channels[this.cursor.channel].visible) {
-                            found_channel = true
-                            break
-                        }
-                        this.cursor.channel += 1
-                    }
-
-                    if (!found_channel) {
-                        while (this.cursor.channel > 0) {
-                            if (channels[this.cursor.channel].visible) {
-                                found_channel = true
-                                break
-                            }
-                            this.cursor.channel -= 1
-                        }
-                    }
-                    this.cursor.line_offset = 0
-                    this.cursor.position = this.get_first_position(this.cursor.get_beatkey(), listOf())
-                }
+                this.cursor.clear()
             }
             OpusManagerCursor.CursorMode.Range -> this.cursor_clear()
             OpusManagerCursor.CursorMode.Column,

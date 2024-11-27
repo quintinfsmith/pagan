@@ -154,7 +154,7 @@ class UIChangeBill {
                     BillableItem.ColumnChange,
                     BillableItem.ColumnStateChange,
                     BillableItem.LineLabelRefresh,
-                    BillableItem.ColumnLabelRefresh -> { }
+                    BillableItem.ColumnLabelRefresh -> {}
                     else -> {
                         this._tree.bill.add(bill_item)
                     }
@@ -341,10 +341,7 @@ class UIChangeBill {
 
                     BillableItem.ColumnChange,
                     BillableItem.ColumnStateChange -> {
-                        val count = node.int_queue.removeFirst()
-                        val columns = Array<Int>(count) {
-                            node.int_queue.removeFirst()
-                        }
+                        val column = node.int_queue.removeFirst()
 
                         val i = if (bill_item == BillableItem.ColumnChange) {
                             1
@@ -353,10 +350,10 @@ class UIChangeBill {
                         }
 
                         queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
-                            columns.contains(coord.x)
+                            coord.x == column
                         }.toSet()
 
-                        queued_columns[i].addAll(columns)
+                        queued_columns[i].add(column)
                     }
 
                     BillableItem.CellChange,
@@ -506,9 +503,8 @@ class UIChangeBill {
             BillableItem.ColumnChange
         }
 
-        working_tree.bill.add(bill_item)
-        working_tree.int_queue.add(columns.size)
         for (column in columns) {
+            working_tree.bill.add(bill_item)
             working_tree.int_queue.add(column)
         }
     }
@@ -523,7 +519,6 @@ class UIChangeBill {
             }
         )
 
-        working_tree.int_queue.add(1)
         working_tree.int_queue.add(column)
     }
 

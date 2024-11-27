@@ -159,11 +159,10 @@ class OpusLayerInterface : OpusLayerCursor() {
         val editor_table = this.get_editor_table()
 
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            this.ui_change_bill.queue_cell_change(coord)
-        } else {
             this.ui_change_bill.queue_column_change(coord.x)
+        } else {
+            this.ui_change_bill.queue_cell_change(coord)
         }
-
     }
 
     private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {
@@ -211,7 +210,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table()
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            //editor_table.recalculate_column_max(coord.x)
             this.ui_change_bill.queue_column_change(coord.x)
         } else {
             this.ui_change_bill.queue_cell_change(coord)
@@ -234,7 +232,6 @@ class OpusLayerInterface : OpusLayerCursor() {
 
         val editor_table = this.get_editor_table()
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            //editor_table.recalculate_column_max(coord.x)
             this.ui_change_bill.queue_column_change(coord.x)
         } else {
             this.ui_change_bill.queue_cell_change(coord)
@@ -548,8 +545,6 @@ class OpusLayerInterface : OpusLayerCursor() {
     override fun remove(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.remove(beat_key, position)
-
-
         }
     }
 
@@ -560,23 +555,23 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
-    override fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+    override fun remove_global_ctl_standard(type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_global_ctl(type, beat, position)
+            super.remove_global_ctl_standard(type, beat, position)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+    override fun remove_channel_ctl_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_channel_ctl(type, channel, beat, position)
+            super.remove_channel_ctl_standard(type, channel, beat, position)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+    override fun remove_line_ctl_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_line_ctl(type, beat_key, position)
+            super.remove_line_ctl_standard(type, beat_key, position)
             this._queue_line_ctl_cell_change(type, beat_key)
         }
     }
@@ -1519,7 +1514,7 @@ class OpusLayerInterface : OpusLayerCursor() {
 
                             for (shadow_beat in shadow_beats) {
 
-                                if (beat_key.channel == beat_key.channel && beat_key.line_offset == beat_key.line_offset && shadow_beat == beat_key.beat) {
+                                if (shadow_beat == beat_key.beat) {
                                     this.ui_change_bill.queue_line_label_refresh(y)
                                     this.ui_change_bill.queue_column_label_refresh(shadow_beat)
                                 }

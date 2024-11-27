@@ -47,12 +47,11 @@
         app:srcCompat="@drawable/unset" />
 
     <com.qfs.pagan.ButtonStd
-        android:visibility="gone"
         android:theme="@style/icon_button"
         android:id="@+id/btnDuration"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:layout_marginTop="@dimen/number_selector_spacing"
-        android:text="T" />
+        android:text="" />
 
 </LinearLayout>

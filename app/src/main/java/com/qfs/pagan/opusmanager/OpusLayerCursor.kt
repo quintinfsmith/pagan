@@ -722,33 +722,37 @@ open class OpusLayerCursor: OpusLayerHistory() {
     }
 
     fun set_event_at_cursor(event: OpusControlEvent) {
-        when (this.cursor.ctl_level) {
+        val cursor = this.cursor
+        when (cursor.ctl_level) {
             null -> {
                 // TODO: SPECIFY Exception
                 throw Exception()
             }
             CtlLineLevel.Global -> {
+                val (actual_beat, actual_position) = this.get_actual_position_global_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.position)
                 this.set_global_ctl_event(
-                    this.cursor.ctl_type!!,
-                    this.cursor.beat,
-                    this.cursor.position,
+                    cursor.ctl_type!!,
+                    actual_beat,
+                    actual_position,
                     event
                 )
             }
             CtlLineLevel.Channel -> {
+                val (actual_beat, actual_position) = this.get_actual_position_channel_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
                 this.set_channel_ctl_event(
-                    this.cursor.ctl_type!!,
-                    this.cursor.channel,
-                    this.cursor.beat,
-                    this.cursor.position,
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    actual_beat,
+                    actual_position,
                     event
                 )
             }
             CtlLineLevel.Line -> {
+                val (actual_beat_key, actual_position) = this.get_actual_position_line_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
                 this.set_line_ctl_event(
-                    this.cursor.ctl_type!!,
-                    this.cursor.get_beatkey(),
-                    this.cursor.position,
+                    cursor.ctl_type!!,
+                    actual_beat_key,
+                    actual_position,
                     event
                 )
             }

@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
-import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import kotlin.math.max
@@ -232,31 +231,29 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
         val ctl_tree = when (cursor.ctl_level!!) {
             CtlLineLevel.Global -> {
+                val (actual_beat, actual_position) = opus_manager.get_actual_position_global_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.position)
                 opus_manager.get_global_ctl_tree<T>(
                     cursor.ctl_type!!,
-                    cursor.beat,
-                    cursor.position
+                    actual_beat,
+                    actual_position
                 )
             }
             CtlLineLevel.Channel -> {
+                val (actual_beat, actual_position) = opus_manager.get_actual_position_channel_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
                 opus_manager.get_channel_ctl_tree<T>(
                     cursor.ctl_type!!,
                     cursor.channel,
-                    cursor.beat,
-                    cursor.position
+                    actual_beat,
+                    actual_position
                 )
             }
             CtlLineLevel.Line -> {
-                val beat_key = BeatKey(
-                    cursor.channel,
-                    cursor.line_offset,
-                    cursor.beat
-                )
+                val (actual_beat_key, actual_position) = opus_manager.get_actual_position_line_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
 
                 opus_manager.get_line_ctl_tree<T>(
                     cursor.ctl_type!!,
-                    beat_key,
-                    cursor.position
+                    actual_beat_key,
+                    actual_position
                 )
             }
         }
@@ -264,9 +261,10 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.button_remove.isEnabled = cursor.position.isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
         this.button_duration.isEnabled = ctl_tree.is_event()
-
-        if (ctl_tree.is_event()) {
-            this.button_duration.text = this.context.getString(R.string.label_duration, ctl_tree.get_event()!!.duration)
+        this.button_duration.text = if (ctl_tree.is_event()) {
+           this.context.getString(R.string.label_duration, ctl_tree.get_event()!!.duration)
+        } else {
+            ""
         }
 
         this.widget.set_event(current_event, true)

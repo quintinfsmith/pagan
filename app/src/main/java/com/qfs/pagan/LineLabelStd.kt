@@ -56,7 +56,9 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Line -> {
-                if ((cursor.ctl_level == CtlLineLevel.Line || cursor.ctl_level == null) && cursor.channel == this.channel && cursor.line_offset == this.line_offset) {
+                val line_selected = ((cursor.ctl_level == CtlLineLevel.Line || cursor.ctl_level == null) && cursor.line_offset == this.line_offset)
+                val channel_ctl_selected = (cursor.ctl_level == CtlLineLevel.Channel)
+                if (cursor.channel == this.channel && (line_selected || channel_ctl_selected)) {
                     new_state.add(R.attr.state_focused)
                 }
             }

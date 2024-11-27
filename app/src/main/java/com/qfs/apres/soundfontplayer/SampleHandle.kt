@@ -23,7 +23,7 @@ class SampleHandle(
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
     var volume_profile: HashMap<Int, Float> = hashMapOf(0 to 1F),
-    var pan_profile: HashMap<Int, Float> = hashMapOf(0 to 0F),
+    var pan_profile: HashMap<Int, Pair<Float, Float>> = hashMapOf(0 to Pair(0F, 0F)),
     data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
@@ -40,7 +40,7 @@ class SampleHandle(
 
     var working_frame: Int = 0
     var _current_volume: Float = 1F
-    var _current_pan: Float = 0F
+    var _current_pan: FloatArray = floatArrayOf(0f, 0f)
 
     var release_frame: Int? = null
     var kill_frame: Int? = null
@@ -268,21 +268,29 @@ class SampleHandle(
 
         // Set pan
         this._current_pan = if (this.pan_profile.containsKey(frame)) {
-            this.pan_profile[frame]!!
+            floatArrayOf(
+                this.pan_profile[frame]!!.first,
+                this.pan_profile[frame]!!.second
+            )
         } else {
             val sorted_keys = this.pan_profile.keys.toMutableList()
             sorted_keys.sort()
-            var working_pan = 1F
+            var working_pan = Pair(0F, 0F)
+            var first_frame = 0
             for (key_frame in sorted_keys) {
                 if (key_frame < frame) {
+                    first_frame = key_frame
                     working_pan = this.pan_profile[key_frame]!!
                 } else {
                     break
                 }
             }
-            working_pan
-        }
 
+            floatArrayOf(
+                working_pan.first + ((frame - first_frame).toFloat() * working_pan.second),
+                working_pan.second
+            )
+        }
 
         val loop_points = this.loop_points
         val release_frame = this.release_frame
@@ -346,7 +354,12 @@ class SampleHandle(
 
         // Set Pan
         if (this.pan_profile.containsKey(this.working_frame)) {
-            this._current_pan = this.pan_profile[this.working_frame]!!
+            this._current_pan = floatArrayOf(
+                this.pan_profile[this.working_frame]!!.first,
+                this.pan_profile[this.working_frame]!!.second
+            )
+        } else {
+            this._current_pan[0] += this._current_pan[1]
         }
 
         if (this.working_frame < this.volume_envelope.frames_delay) {

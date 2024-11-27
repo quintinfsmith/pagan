@@ -1904,14 +1904,16 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
         }
     }
+
     fun is_line_control_line_selected(control_type: ControlEventType, channel: Int, line_offset: Int): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Single -> {
-                control_type == this.cursor.ctl_type
-                        && this.cursor.ctl_level == CtlLineLevel.Line
-                        && this.cursor.channel == channel
-                        && this.cursor.line_offset == line_offset
+                val on_ctl_line = (this.cursor.ctl_level == CtlLineLevel.Line && control_type == this.cursor.ctl_type && this.cursor.line_offset == line_offset)
+                val on_ctl_channel = this.cursor.ctl_level == CtlLineLevel.Channel
+                this.cursor.channel == channel && (on_ctl_line || on_ctl_channel)
+
+                        //&& !this.get_all_channels()[channel].lines[line_offset].controllers.has_controller(control_type)
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val target = this.get_instrument_line_index(channel, line_offset)
@@ -1927,6 +1929,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
 
         }
     }
+
     fun is_channel_control_line_selected(control_type: ControlEventType, channel: Int): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Line,

@@ -7,6 +7,7 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.ControlTransition
@@ -40,7 +41,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
     private val _volume_map = HashMap<Pair<Int, Int>, HashMap<Int, Float>>() // (channel, line_offset)::[frame::volume]
-    private val _pan_map = HashMap<Pair<Int, Int>, HashMap<Int, Float>>() // (channel, line_offset)::[frame::pan]
+    private val _pan_map = HashMap<Pair<Int, Int>, HashMap<Int, Pair<Float, Float>>>() // (channel, line_offset)::[frame::pan]
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -200,7 +201,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: HashMap<Int, Float>? = null, pan_profile: HashMap<Int, Float>? = null) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: HashMap<Int, Float>? = null, pan_profile: HashMap<Int, Pair<Float, Float>>? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -345,7 +346,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         if (working_tree.is_event()) {
                             val working_event = working_tree.get_event()!! as OpusVolumeEvent
                             val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
-                            val diff = ((working_event.value - working_volume) * 100F).toInt()
+                            val max_size = 50F
+                            val diff = ((working_event.value - working_volume) * max_size).toInt()
                             if (diff == 0) {
                                 continue
                             }
@@ -361,18 +363,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                                     for (i in 0 .. abs(diff)) {
                                         val intermediate_frame = (frame_step_size * i) + start_frame
-                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, ((working_volume * 100F) + (i * negative_modifier).toFloat())) / 100F
+                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, ((working_volume * max_size) + (i * negative_modifier).toFloat())) / max_size
                                     }
-//
-//                                    val steps = (abs(diff) * 100F).toInt()
-//
-//                                    for (i in 0 .. steps) {
-//                                        val intermediate_frame = ((frame_step_size * i) + start_frame).toInt()
-//                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(
-//                                            0F,
-//                                            (working_volume + (i * negative_modifier))
-//                                        )
-//                                    }
                                 }
 
                                 //ControlTransition.Convex -> {
@@ -421,12 +413,23 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private fun map_pan_changes() {
         data class StackItem(val position: List<Int>, val tree: OpusTree<OpusPanEvent>?, val relative_width: Float, val relative_offset: Float)
-
         this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
-            for (l in channel.lines.indices) {
-                val controller = channel.lines[l].get_controller<OpusPanEvent>(ControlEventType.Pan)
+            // Use -1 as Channel Controller index
+            val indices = listOf(-1) + channel.lines.indices
+            for (l in indices) {
+                val controller: ActiveController<OpusPanEvent> = if (l == -1) {
+                    if (channel.controllers.has_controller(ControlEventType.Pan)) {
+                        channel.controllers.get_controller(ControlEventType.Pan)
+                    } else {
+                        continue
+                    }
+                } else if (channel.lines[l].controllers.has_controller(ControlEventType.Pan)) {
+                    channel.lines[l].get_controller(ControlEventType.Pan)
+                } else {
+                    continue
+                }
                 var working_pan = controller.initial_event.value
-                this._pan_map[Pair(c, l)] = hashMapOf(0 to working_pan)
+                this._pan_map[Pair(c, l)] = hashMapOf(0 to Pair(working_pan, 0F))
 
                 for (b in 0 until this.opus_manager.beat_count) {
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
@@ -435,62 +438,22 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         val working_tree = working_item.tree ?: continue
 
                         if (working_tree.is_event()) {
-                            val working_event = working_tree.get_event()!! as OpusPanEvent
+                            val working_event = working_tree.get_event()!!
                             val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
                             val diff = working_event.value - working_pan
-
                             if (diff == 0f) {
                                 continue
                             }
 
                             when (working_event.transition) {
                                 ControlTransition.Instant -> {
-                                    this._pan_map[Pair(c, l)]!![start_frame] = working_event.value
+                                    this._pan_map[Pair(c, l)]!![start_frame] = Pair(working_event.value, 0F)
                                 }
 
                                 ControlTransition.Linear -> {
-                                    val negative_modifier = diff / abs(diff)
-                                    val int_diff = abs(diff * 100F).toInt()
-                                    val frame_step_size = (end_frame - start_frame) / abs(int_diff)
-
-                                    for (i in 0 .. abs(int_diff)) {
-                                        val intermediate_frame = (frame_step_size * i) + start_frame
-                                        this._pan_map[Pair(c, l)]!![intermediate_frame] = working_pan + ((i.toFloat() / 100F) * negative_modifier)
-                                    }
+                                    this._pan_map[Pair(c, l)]!![start_frame] = Pair(working_pan, (diff / (end_frame - start_frame)))
+                                    this._pan_map[Pair(c, l)]!![end_frame] = Pair(working_event.value, 0F)
                                 }
-
-                                //ControlTransition.Convex -> {
-                                //    val negative_modifier = diff / abs(diff)
-
-                                //    val float_count = abs(diff * 100F)
-                                //    val count = float_count.toInt()
-                                //    val frame_step_size = (end_frame - start_frame) / abs(count)
-
-                                //    val half_pi = PI.toFloat() / 2F
-                                //    for (i in 0 .. abs(count)) {
-                                //        val intermediate_frame = (frame_step_size * i) + start_frame
-                                //        val y: Float = sin(((i + 1).toFloat() / float_count) * half_pi) * diff
-
-                                //        this._pan_map[Pair(c, l)]!![intermediate_frame] = working_pan + y
-                                //    }
-                                //}
-
-                                //ControlTransition.Concave -> {
-                                //    TODO()
-                                //    //
-                                //    // val count = abs(diff)
-                                //    //// val frame_step_size = (end_frame - start_frame) / abs(diff)
-                                //    //// val float_count = count.toFloat()
-                                //    //// val float_value = working_pan.toFloat()
-
-                                //    //// val half_pi = PI.toFloat() / 2F
-                                //    //// for (i in 0 until count) {
-                                //    ////     val intermediate_frame = (frame_step_size * i) + start_frame
-                                //    ////     val y: Float = (i.toFloat() / float_count).pow(2)
-                                //    ////     this._pan_map[Pair(c, l)]!![intermediate_frame] = max(0F, float_value + y) / 128F
-                                //    //// }
-                                //}
-
                             }
                             working_pan = working_event.value
                         } else if (!working_tree.is_leaf()) {
@@ -602,8 +565,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val line_pair = Pair(beat_key.channel, beat_key.line_offset)
         val new_volume_profile = if (this._volume_map.containsKey(line_pair)) {
             val tmp = HashMap<Int, Float>()
-            val sorted_keys = this._volume_map[line_pair]!!.keys.toMutableList()
-            sorted_keys.sort()
+            val sorted_keys = this._volume_map[line_pair]!!.keys.sorted()
 
             for (key_frame in sorted_keys) {
                 if (key_frame < start_frame) {
@@ -616,18 +578,31 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         } else {
             null
         }
-        val new_pan_profile = if (this._pan_map.containsKey(line_pair)) {
-            val tmp = HashMap<Int, Float>()
-            val sorted_keys = this._pan_map[line_pair]!!.keys.toMutableList()
-            sorted_keys.sort()
+
+        // Prioritize line ctl, then use channel ctl
+        val pan_key = if (this._pan_map.containsKey(line_pair) || !this._pan_map.containsKey(Pair(beat_key.channel, -1))) {
+            line_pair
+        } else {
+            Pair(beat_key.channel, -1)
+        }
+
+        val new_pan_profile = if (this._pan_map.containsKey(pan_key)) {
+            var first = Pair(0, Pair(0F, 0F))
+            val sorted_keys = this._pan_map[pan_key]!!.keys.sorted()
+            val tmp = HashMap<Int, Pair<Float, Float>>()
 
             for (key_frame in sorted_keys) {
-                if (key_frame < start_frame) {
-                    tmp[0] = this._pan_map[line_pair]!![key_frame]!!
-                } else if (key_frame in start_frame .. end_frame) {
-                    tmp[key_frame - start_frame] = this._pan_map[line_pair]!![key_frame]!!
+                if (key_frame <= start_frame) {
+                    first = Pair(key_frame, this._pan_map[pan_key]!![key_frame]!!)
+                } else if (key_frame in start_frame + 1 .. end_frame) {
+                    tmp[key_frame - start_frame] = this._pan_map[pan_key]!![key_frame]!!
                 }
             }
+            tmp[0] = Pair(
+                first.second.first + (first.second.second * (start_frame - first.first).toFloat()),
+                first.second.second
+            )
+
             tmp
         } else {
             null

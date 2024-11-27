@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
+import android.view.View
 import android.view.ViewGroup
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 /*
@@ -11,20 +13,18 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_instrument: ButtonStd
-    // (CHANNEL_CTLS)
-    // lateinit var button_toggle_volume_control: ButtonIcon
-    // val _visible_controls_domain = listOf(
-    //     ControlEventType.Volume,
-    //     ControlEventType.Pan
-    // )
+    lateinit var button_toggle_volume_control: ButtonIcon
+    val _visible_controls_domain = listOf(
+        ControlEventType.Volume,
+        ControlEventType.Pan
+    )
 
     init {
         this.refresh()
     }
     override fun init_properties() {
         val primary = this.primary!!
-        // (CHANNEL_CTLS)
-        // this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
+        this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_instrument = this.secondary!!.findViewById(R.id.btnChooseInstrument)
@@ -38,8 +38,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
         }
 
-        // (CHANNEL_CTLS)
-        // this.button_choose_instrument.visibility = View.VISIBLE
+        this.button_choose_instrument.visibility = View.VISIBLE
 
         val channel_index = opus_manager.cursor.channel
         val channel = opus_manager.get_channel(channel_index)
@@ -66,40 +65,38 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             }
         )
 
-        // (CHANNEL_CTLS)
-        // var show_control_toggle = false
-        // for (ctl_type in this._visible_controls_domain) {
-        //     if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
-        //         continue
-        //     }
-        //     show_control_toggle = true
-        //     break
-        // }
-        // if (!show_control_toggle) {
-        //     this.button_toggle_volume_control.visibility = View.GONE
-        // }
-        // this.button_toggle_volume_control.visibility = View.VISIBLE
-        // this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
+        var show_control_toggle = false
+        for (ctl_type in this._visible_controls_domain) {
+            if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
+                continue
+            }
+            show_control_toggle = true
+            break
+        }
+        if (!show_control_toggle) {
+            this.button_toggle_volume_control.visibility = View.GONE
+        }
+        this.button_toggle_volume_control.visibility = View.VISIBLE
+        this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
     }
 
-    // (CHANNEL_CTLS)
-    // fun dialog_popup_hidden_lines() {
-    //     val opus_manager = this.get_opus_manager()
-    //     val cursor = opus_manager.cursor
-    //     val options = mutableListOf<Pair<ControlEventType, String>>( )
+    fun dialog_popup_hidden_lines() {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val options = mutableListOf<Pair<ControlEventType, String>>( )
 
-    //     for (ctl_type in this._visible_controls_domain) {
-    //         if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
-    //             continue
-    //         }
+        for (ctl_type in this._visible_controls_domain) {
+            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
+                continue
+            }
 
-    //         options.add(Pair(ctl_type, ctl_type.name))
-    //     }
+            options.add(Pair(ctl_type, ctl_type.name))
+        }
 
-    //     this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
-    //         opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
-    //     }
-    // }
+        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
+            opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
+        }
+    }
 
     override fun setup_interactions() {
         this.button_choose_instrument.setOnClickListener {
@@ -138,14 +135,13 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             this.long_click_button_remove_channel()
         }
 
-        // (CHANNEL_CTLS)
-        // this.button_toggle_volume_control.setOnClickListener {
-        //     if (!it.isEnabled) {
-        //         return@setOnClickListener
-        //     }
-        //     this.dialog_popup_hidden_lines()
-        //     //this.click_button_toggle_volume_control()
-        // }
+        this.button_toggle_volume_control.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+            this.dialog_popup_hidden_lines()
+            //this.click_button_toggle_volume_control()
+        }
     }
 
     fun click_button_insert_channel() {

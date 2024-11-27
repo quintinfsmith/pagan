@@ -1558,15 +1558,21 @@ class OpusLayerInterface : OpusLayerCursor() {
                                 val channel = this.get_all_channels()[cursor.channel]
                                 // Update All Standard Line labels attached to controller
                                 for (line_offset in channel.lines.indices) {
-                                    val line_y = this.get_visible_row_from_ctl_line(
+                                    var line_y = this.get_visible_row_from_ctl_line(
                                         this.get_actual_line_index(
                                             this.get_instrument_line_index(
                                                 cursor.channel,
-                                                cursor.line_offset
+                                                line_offset
                                             )
                                         )
                                     ) ?: continue
-                                    this.ui_change_bill.queue_line_label_refresh(line_y)
+                                    this.ui_change_bill.queue_line_label_refresh(line_y++)
+                                    for ((_, controller) in channel.lines[line_offset].controllers.get_all()) {
+                                        if (!controller.visible) {
+                                            continue
+                                        }
+                                        this.ui_change_bill.queue_line_label_refresh(line_y++)
+                                    }
                                 }
 
                                 Pair(
@@ -1671,11 +1677,11 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                     CtlLineLevel.Line -> {
                         // Update Standard Line label attached to controller
-                        val line_y = this.get_visible_row_from_ctl_line(
+                        var line_y = this.get_visible_row_from_ctl_line(
                             this.get_actual_line_index(
                                 this.get_instrument_line_index(
                                     cursor.channel,
-                                    cursor.line_offset
+                                    0
                                 )
                             )
                         )
@@ -1700,17 +1706,31 @@ class OpusLayerInterface : OpusLayerCursor() {
                     }
                     CtlLineLevel.Channel -> {
                         val channel = this.get_all_channels()[cursor.channel]
+
                         // Update All Standard Line labels attached to controller
-                        for (line_offset in channel.lines.indices) {
-                            val line_y = this.get_visible_row_from_ctl_line(
-                                this.get_actual_line_index(
-                                    this.get_instrument_line_index(
-                                        cursor.channel,
-                                        cursor.line_offset
-                                    )
+                        var line_y = this.get_visible_row_from_ctl_line(
+                            this.get_actual_line_index(
+                                this.get_instrument_line_index(
+                                    cursor.channel,
+                                    0
                                 )
-                            ) ?: continue
-                            this.ui_change_bill.queue_line_label_refresh(line_y)
+                            )
+                        ) ?: return
+
+                        for (line_offset in channel.lines.indices) {
+                            this.ui_change_bill.queue_line_label_refresh(line_y++)
+                            for ((_, controller) in channel.lines[line_offset].controllers.get_all()) {
+                                if (!controller.visible) {
+                                    continue
+                                }
+                                this.ui_change_bill.queue_line_label_refresh(line_y++)
+                            }
+                        }
+                        for ((_, controller) in channel.controllers.get_all()) {
+                            if (!controller.visible) {
+                                continue
+                            }
+                            this.ui_change_bill.queue_line_label_refresh(line_y++)
                         }
 
                         this.get_visible_row_from_ctl_line_channel(

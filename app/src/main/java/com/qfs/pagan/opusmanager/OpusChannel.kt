@@ -263,7 +263,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
 
     fun <K: OpusControlEvent> set_controller_event(type: ControlEventType, index: Int, position: List<Int>, event: K) {
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.set_controller_event(type, index, position, event)
+            this.controllers.get_controller<K>(type).set_event(index, position, event)
         }
     }
 

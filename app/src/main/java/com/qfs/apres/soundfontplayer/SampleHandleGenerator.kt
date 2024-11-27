@@ -51,7 +51,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
         val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
         output.volume_profile = hashMapOf(0 to event.get_velocity() / 128F)
-        output.pan_profile = hashMapOf(0 to 0F)
+        output.pan_profile = hashMapOf(0 to Pair(0F,0F))
         return output
     }
 
@@ -59,7 +59,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
         val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
         output.volume_profile = hashMapOf(0 to event.velocity / (128 shl 8).toFloat())
-        output.pan_profile = hashMapOf(0 to 0F)
+        output.pan_profile = hashMapOf(0 to Pair(0F,0F))
         return output
     }
 

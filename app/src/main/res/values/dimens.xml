@@ -42,9 +42,10 @@
     <dimen name="primary_contextmenu_padding_start">4dp</dimen>
     <dimen name="primary_contextmenu_padding_end">2dp</dimen>
     <dimen name="primary_contextmenu_padding_bottom">2dp</dimen>
-    <dimen name="secondary_contextmenu_padding_top">4dp</dimen>
+    <dimen name="secondary_contextmenu_padding_top">0dp</dimen>
     <dimen name="secondary_contextmenu_padding_start">4dp</dimen>
     <dimen name="secondary_contextmenu_padding_end">2dp</dimen>
     <dimen name="secondary_contextmenu_padding_bottom">2dp</dimen>
-    <dimen name="secondary_contextmenu_height">50dp</dimen>
+    <dimen name="secondary_contextmenu_height">52dp</dimen>
+    <dimen name="secondary_contextmenu_button_height">42dp</dimen>
 </resources>

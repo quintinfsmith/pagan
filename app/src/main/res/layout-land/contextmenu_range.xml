@@ -14,4 +14,10 @@
         android:id="@+id/btnEraseSelection"
         android:contentDescription="Clear Selection"/>
 
+    <com.qfs.pagan.PaganTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:id="@+id/tvMoveModeLabel"/>
+
 </LinearLayout>

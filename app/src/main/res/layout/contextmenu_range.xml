@@ -26,4 +26,11 @@
             android:contentDescription="Clear Selection"/>
 
     </LinearLayout>
+    <com.qfs.pagan.PaganTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:id="@+id/tvMoveModeLabel"
+        android:text="@string/label_link_beat"
+        android:paddingTop="8dp"/>
 </LinearLayout>

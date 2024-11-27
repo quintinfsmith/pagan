@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.content.res.Configuration
 import android.view.ViewGroup
 import android.widget.RadioGroup
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -15,7 +16,12 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
 
     override fun init_properties() {
         this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
-        this.label = this.secondary!!.findViewById(R.id.tvMoveModeLabel)
+        this.label = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            this.secondary!!.findViewById(R.id.tvMoveModeLabelB)
+        } else {
+            this.primary!!.findViewById(R.id.tvMoveModeLabel)
+        }
+
         this.radio_mode = this.secondary!!.findViewById<RadioGroup?>(R.id.rgMoveMode)
     }
 

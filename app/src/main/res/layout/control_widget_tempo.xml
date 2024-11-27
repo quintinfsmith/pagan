@@ -9,7 +9,7 @@
         android:id="@+id/tempo_value_button"
         android:theme="@style/tempo_widget_button"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/secondary_contextmenu_button_height"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -21,7 +21,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
         this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
 
         this.set_text((this.working_event.value * 100).toInt())
-        this._button.set_icon(R.drawable.volume)
+        this._button.set_icon(R.drawable.volume_widget)
         this._button.label.minEms = 2
 
         if (this.is_initial_event) {
@@ -33,6 +33,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
                     ControlTransition.Linear -> R.drawable.linear
                 }
             )
+
             this._transition_button.setOnClickListener {
                 val main = (this.context as MainActivity)
                 val control_transitions = ControlTransition.values()

@@ -27,7 +27,7 @@ class LeafButtonCtlLine(
         val cursor = opus_manager.cursor
         val beat_key = this.get_beat_key()
 
-        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && this.control_type == cursor.ctl_type) {
             opus_manager.cursor_select_line_ctl_range(
                 this.control_type,
                 opus_manager.cursor.range!!.first,

@@ -1315,7 +1315,7 @@ class OpusLayerInterface : OpusLayerCursor() {
             this.unset_temporary_blocker()
             super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)
 
-            this.queue_cursor_update(this.cursor, false)
+            this.queue_cursor_update(this.cursor.copy(), false)
             this.ui_change_bill.queue_set_context_menu_line_control_leaf_b()
         }
     }
@@ -1535,7 +1535,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                                         )
                                     )
                                 )
-
                                 if (line_y != null) {
                                     this.ui_change_bill.queue_line_label_refresh(line_y)
                                 }
@@ -1638,7 +1637,6 @@ class OpusLayerInterface : OpusLayerCursor() {
                             CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
                             CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                         }
-
                         val first_beat = min(top_left.beat, bottom_right.beat)
                         val last_beat = max(top_left.beat, bottom_right.beat)
 

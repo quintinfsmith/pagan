@@ -1961,7 +1961,7 @@ open class OpusLayerCursor: OpusLayerHistory() {
                 val target = this.get_instrument_line_index(channel, line_offset)
                 val first = this.get_instrument_line_index(this.cursor.range!!.first.channel, this.cursor.range!!.first.line_offset)
                 val second = this.get_instrument_line_index(this.cursor.range!!.second.channel, this.cursor.range!!.second.line_offset)
-                (first .. second).contains(target)
+                (this.cursor.ctl_type == null || (control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line)) && (first .. second).contains(target)
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> false
@@ -1982,7 +1982,9 @@ open class OpusLayerCursor: OpusLayerHistory() {
             OpusManagerCursor.CursorMode.Channel -> {
                 channel == this.cursor.channel
             }
-            OpusManagerCursor.CursorMode.Range,
+            OpusManagerCursor.CursorMode.Range -> {
+                control_type == this.cursor.ctl_type && this.cursor.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel
+            }
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column -> false
         }

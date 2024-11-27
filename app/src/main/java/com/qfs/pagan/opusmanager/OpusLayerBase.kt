@@ -3684,6 +3684,7 @@ open class OpusLayerBase {
     open fun new_channel_controller(type: ControlEventType, channel_index: Int) {
         val channel = this.get_all_channels()[channel_index]
         channel.controllers.get_controller<OpusControlEvent>(type)
+
         this.recache_line_maps()
     }
 
@@ -3699,6 +3700,8 @@ open class OpusLayerBase {
         val exists = channel.controllers.has_controller(type)
         if (!exists) {
             this.new_channel_controller(type, channel_index)
+            channel.controllers.get_controller<OpusControlEvent>(type).visible = true
+            this.recache_line_maps()
         } else {
             val controller = channel.controllers.get_controller<OpusControlEvent>(type)
             this.set_channel_controller_visibility(type, channel_index, !controller.visible)
@@ -3712,6 +3715,7 @@ open class OpusLayerBase {
 
     open fun new_global_controller(type: ControlEventType) {
         this.controllers.new_controller(type)
+        this.controllers.get_controller<OpusControlEvent>(type)
         this.recache_line_maps()
     }
 

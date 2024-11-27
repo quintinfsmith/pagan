@@ -278,6 +278,7 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
     override fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
         super.set_channel_controller_visibility(type, channel_index, visibility)
+        this._controller_visibility_toggle_callback()
     }
     override fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
         super.set_global_controller_visibility(type, visibility)
@@ -1733,10 +1734,14 @@ class OpusLayerInterface : OpusLayerCursor() {
                             this.ui_change_bill.queue_line_label_refresh(line_y++)
                         }
 
-                        this.get_visible_row_from_ctl_line_channel(
-                            cursor.ctl_type!!,
-                            cursor.channel
-                        )
+                        try {
+                            this.get_visible_row_from_ctl_line_channel(
+                                cursor.ctl_type!!,
+                                cursor.channel
+                            )
+                        } catch (e: NullPointerException) {
+                            return
+                        }
                     }
                     CtlLineLevel.Global -> {
                         this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)

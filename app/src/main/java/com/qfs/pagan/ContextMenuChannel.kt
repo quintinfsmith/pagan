@@ -77,7 +77,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             this.button_toggle_volume_control.visibility = View.GONE
         }
         this.button_toggle_volume_control.visibility = View.VISIBLE
-        this.button_toggle_volume_control.setImageResource(R.drawable.volume_plus)
+        this.button_toggle_volume_control.setImageResource(R.drawable.ctl)
     }
 
     fun dialog_popup_hidden_lines() {

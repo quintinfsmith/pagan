@@ -84,10 +84,10 @@ abstract class LeafButtonCtl(
             is OpusPanEvent -> {
                 if (event.value > 0F) {
                     val n = (event.value * 10).roundToInt()
-                    "$n"
+                    "<$n"
                 } else if (event.value < 0F) {
-                    val n = (event.value * 10).roundToInt()
-                    "$n"
+                    val n = 0 - (event.value * 10).roundToInt()
+                    "$n>"
                 } else {
                     "0"
                 }

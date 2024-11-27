@@ -17,7 +17,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         this._slider = this.inner.findViewById(R.id.pan_slider)
         this._slider.max = this._max
         this._slider.min = this._min
-        val progress = this.working_event.value * this._max.toFloat()
+        val progress = this.working_event.value * this._max.toFloat() * -1F
         this._slider.set_progress(progress.toInt(), true)
         this._transition_button = this.inner.findViewById(R.id.pan_transition_type)
 
@@ -50,7 +50,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
             override fun on_touch_start(slider: PanSliderWidget) { }
             override fun on_touch_stop(slider: PanSliderWidget) {
                 val new_event = this@ControlWidgetPan.working_event.copy()
-                new_event.value = (slider.progress.toFloat() / this@ControlWidgetPan._max.toFloat())
+                new_event.value = (slider.progress.toFloat() / this@ControlWidgetPan._max.toFloat()) * -1F
                 this@ControlWidgetPan.set_event(new_event)
             }
             override fun on_progress_change(slider: PanSliderWidget, value: Int) {

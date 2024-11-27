@@ -47,8 +47,13 @@ class OpusControlEventJSONInterface {
             return OpusTempoEvent(map.get_float("tempo"), map.get_int("duration", 1))
         }
         fun volume_event(map: JSONHashMap): OpusVolumeEvent {
+            val value = if (map.get("volume") is JSONInteger) {
+                map.get_int("volume").toFloat() / 128F
+            } else {
+                map.get_float("volume")
+            }
             return OpusVolumeEvent(
-                map.get_int("volume"),
+                value,
                 /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
                 try {
                     ControlTransition.valueOf(map.get_string("transition", "Instant"))

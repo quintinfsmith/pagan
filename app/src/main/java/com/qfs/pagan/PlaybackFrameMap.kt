@@ -334,7 +334,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             for (l in channel.lines.indices) {
                 val controller = channel.lines[l].get_controller<OpusVolumeEvent>(ControlEventType.Volume)
                 var working_volume = controller.initial_event.value
-                this._volume_map[Pair(c, l)] = hashMapOf(0 to working_volume.toFloat() / 128F)
+                this._volume_map[Pair(c, l)] = hashMapOf(0 to working_volume)
 
                 for (b in 0 until this.opus_manager.beat_count) {
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
@@ -345,25 +345,35 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         if (working_tree.is_event()) {
                             val working_event = working_tree.get_event()!! as OpusVolumeEvent
                             val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
-                            val diff = working_event.value - working_volume
+                            val diff = ((working_event.value - working_volume) * 100F).toInt()
                             if (diff == 0) {
                                 continue
                             }
 
                             when (working_event.transition) {
                                 ControlTransition.Instant -> {
-                                    this._volume_map[Pair(c, l)]!![start_frame] = working_event.value.toFloat() / 128F
+                                    this._volume_map[Pair(c, l)]!![start_frame] = working_event.value
                                 }
 
                                 ControlTransition.Linear -> {
                                     val negative_modifier = diff / abs(diff)
                                     val frame_step_size = (end_frame - start_frame) / abs(diff)
-                                    val float_value = working_volume.toFloat()
+                                    println("$frame_step_size | ${end_frame - start_frame} | $diff")
 
                                     for (i in 0 .. abs(diff)) {
                                         val intermediate_frame = (frame_step_size * i) + start_frame
-                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, (float_value + (i * negative_modifier).toFloat())) / 128F
+                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(0F, ((working_volume * 100F) + (i * negative_modifier).toFloat())) / 100F
                                     }
+//
+//                                    val steps = (abs(diff) * 100F).toInt()
+//
+//                                    for (i in 0 .. steps) {
+//                                        val intermediate_frame = ((frame_step_size * i) + start_frame).toInt()
+//                                        this._volume_map[Pair(c, l)]!![intermediate_frame] = max(
+//                                            0F,
+//                                            (working_volume + (i * negative_modifier))
+//                                        )
+//                                    }
                                 }
 
                                 //ControlTransition.Convex -> {
@@ -639,7 +649,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey): MIDIEvent? {
-        val velocity = this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
+        val velocity = (this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset) * 128F).toInt()
 
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called
         val (note, bend) = when (event) {

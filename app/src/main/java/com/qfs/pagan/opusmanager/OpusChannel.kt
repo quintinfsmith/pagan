@@ -216,7 +216,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
         return true
     }
 
-    fun set_line_volume(line_offset: Int, volume: Int) {
+    fun set_line_volume(line_offset: Int, volume: Float) {
         this.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event = OpusVolumeEvent(volume)
     }
 

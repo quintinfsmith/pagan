@@ -193,7 +193,7 @@
     <string name="config_label_sample_rate">%1$dHz</string>
     <string name="label_export_progress">%1$d%%</string>
     <string name="label_tuning_index">%1$02d:</string>
-    <string name="dlg_set_volume">Set Velocity</string>
+    <string name="dlg_set_volume">Set Volume(%)</string>
     <string name="untitled_opus">Untitled</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>

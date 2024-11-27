@@ -29,7 +29,7 @@ class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(dura
     }
 }
 
-class OpusVolumeEvent(var value: Int, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
+class OpusVolumeEvent(var value: Float, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
     override fun copy(): OpusVolumeEvent {
         return OpusVolumeEvent(this.value, this.transition, this.duration)
     }

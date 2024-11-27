@@ -1473,7 +1473,7 @@ class MainActivity : AppCompatActivity() {
         return this.view_model.opus_manager
     }
 
-    fun play_event(channel: Int, event_value: Int, velocity: Int) {
+    fun play_event(channel: Int, event_value: Int, velocity: Float) {
         if (!this._midi_interface.output_devices_connected()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()
@@ -1517,7 +1517,7 @@ class MainActivity : AppCompatActivity() {
                 channel=midi_channel,
                 note=note,
                 bend=bend,
-                velocity = velocity shl 8,
+                velocity = (velocity * 127F).toInt() shl 8,
             )
             this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
@@ -1527,7 +1527,7 @@ class MainActivity : AppCompatActivity() {
                     midi_channel,
                     note,
                     bend,
-                    velocity,
+                    (velocity * 127F).toInt(),
                     !opus_manager.is_tuning_standard() || !this.is_connected_to_physical_device()
                 )
             } catch (e: VirtualMidiInputDevice.DisconnectedException) {

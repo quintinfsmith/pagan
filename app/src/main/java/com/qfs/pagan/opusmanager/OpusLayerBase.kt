@@ -1838,7 +1838,7 @@ open class OpusLayerBase {
             )
             channel.lines.forEachIndexed inner@{ l: Int, line: OpusLine ->
                 // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
-                if (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value == 0) {
+                if (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value == 0F) {
                     return@inner
                 }
                 var current_tick = 0
@@ -1884,7 +1884,7 @@ open class OpusLayerBase {
                                     channel.midi_channel,
                                     note,
                                     bend,
-                                    line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value,
+                                    (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 128F).toInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -1926,7 +1926,7 @@ open class OpusLayerBase {
         midi.insert_event(0, 0, ProgramChange(9, channel.get_midi_program()))
         channel.lines.forEachIndexed inner@{ l: Int, line: OpusLinePercussion ->
             // This only makes sense when volume controls aren't enabled (VOLCTLTMP)
-            if (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value == 0) {
+            if (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value == 0F) {
                 return@inner
             }
 
@@ -1943,7 +1943,7 @@ open class OpusLayerBase {
                                 9,
                                 line.instrument + 27,
                                 0,
-                                line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value,
+                                (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 128F).toInt(),
                                 event_uuid_gen++
                             )
                             pseudo_midi_map.add(Triple(
@@ -2550,7 +2550,7 @@ open class OpusLayerBase {
         this.transpose = new_transpose
     }
 
-    fun get_line_volume(channel: Int, line_offset: Int): Int {
+    fun get_line_volume(channel: Int, line_offset: Int): Float {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
 

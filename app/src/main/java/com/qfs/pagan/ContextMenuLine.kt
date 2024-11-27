@@ -30,7 +30,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
 
-        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0), true, this.context) { event: OpusControlEvent ->
+        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0F), true, this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             opus_manager.set_line_controller_initial_event(
@@ -230,7 +230,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             main.play_event(
                 opus_manager.channels.size,
                 value,
-                80
+                .8F
             )
         }
     }

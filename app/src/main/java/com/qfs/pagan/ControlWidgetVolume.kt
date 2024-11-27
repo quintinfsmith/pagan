@@ -62,7 +62,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
             val dlg_default = (this.get_event().value * this._max.toFloat()).toInt()
             val dlg_title = context.getString(R.string.dlg_set_volume)
             context.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
-                val new_event = OpusVolumeEvent(new_value.toFloat() / this._max.toFloat(), this.get_event().transition)
+                val new_event = OpusVolumeEvent(new_value.toFloat() / this._max.toFloat(), this.get_event().transition, this.working_event.duration)
                 this.set_event(new_event)
             }
         }
@@ -81,7 +81,8 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
                 val that = this@ControlWidgetVolume
-                that.set_event(OpusVolumeEvent(seekbar.progress.toFloat() / that._max.toFloat(), that.get_event().transition))
+                val event = that.get_event()
+                that.set_event(OpusVolumeEvent(seekbar.progress.toFloat() / that._max.toFloat(), event.transition, event.duration))
             }
         })
     }

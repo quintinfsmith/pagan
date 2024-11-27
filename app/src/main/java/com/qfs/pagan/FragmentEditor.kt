@@ -18,6 +18,7 @@ import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
@@ -598,33 +599,32 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val cursor = opus_manager.cursor
         val controller_set = opus_manager.get_active_active_control_set() ?: return
 
+        val controller = controller_set.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+        val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
+        val tree = controller.get_tree(cursor.beat, cursor.get_position())
+        if (!tree.is_event()) {
+            default.duration = 1
+        }
+
         val widget = when (cursor.ctl_type!!) {
             ControlEventType.Tempo -> {
-                val controller = controller_set.get_controller<OpusTempoEvent>(cursor.ctl_type!!)
-                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
-                ControlWidgetTempo(default, false, main) { event: OpusTempoEvent ->
+                ControlWidgetTempo(default as OpusTempoEvent, false, main) { event: OpusTempoEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
             ControlEventType.Volume -> {
-                val controller = controller_set.get_controller<OpusVolumeEvent>(cursor.ctl_type!!)
-                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
-                ControlWidgetVolume(default, false, main) { event: OpusVolumeEvent ->
+                ControlWidgetVolume(default as OpusVolumeEvent, false, main) { event: OpusVolumeEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
             ControlEventType.Reverb -> {
-                val controller = controller_set.get_controller<OpusReverbEvent>(cursor.ctl_type!!)
-                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
-                ControlWidgetReverb(default, false, main) { event: OpusReverbEvent ->
+                ControlWidgetReverb(default as OpusReverbEvent, false, main) { event: OpusReverbEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
 
             ControlEventType.Pan -> {
-                val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
-                val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
-                ControlWidgetPan(default, false, main) { event: OpusPanEvent ->
+                ControlWidgetPan(default as OpusPanEvent, false, main) { event: OpusPanEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }

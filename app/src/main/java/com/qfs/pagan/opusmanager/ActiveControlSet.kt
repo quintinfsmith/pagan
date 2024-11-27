@@ -35,8 +35,8 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
             }
         } else {
             this.controllers[type] = controller
-            controller.set_beat_count(this.beat_count)
         }
+        this.controllers[type]!!.set_beat_count(this.beat_count)
     }
 
     fun remove_controller(type: ControlEventType) {

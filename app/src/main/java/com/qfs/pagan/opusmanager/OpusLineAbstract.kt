@@ -983,9 +983,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
 
     override fun insert_beat(index: Int) {
         super.insert_beat(index)
-        for ((_, controller) in this.controllers.get_all()) {
-            controller.insert_beat(index)
-        }
+        this.controllers.insert_beat(index)
     }
 
     override fun set_beat_count(new_beat_count: Int) {

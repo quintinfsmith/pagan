@@ -875,10 +875,10 @@ class MainActivity : AppCompatActivity() {
                     val scroll_view = editor_table.get_scroll_view()
 
                     if (this._blocker_scroll_y == null) {
-                        this._blocker_scroll_y = (motion_event.y - scroll_view.y) - scroll_view.scrollY.toFloat()
+                        this._blocker_scroll_y = (motion_event.y - scroll_view.y)
                     }
 
-                    val rel_y = (motion_event.y - scroll_view.y) - scroll_view.scrollY
+                    val rel_y = (motion_event.y - scroll_view.y)
                     val delta_y = this._blocker_scroll_y!! - rel_y
 
                     scroll_view.scrollBy(0, delta_y.toInt())
@@ -886,10 +886,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 true
             }
-            //blocker_view.setOnClickListener {
-            //    this.playback_stop()
-            //    this.playback_stop_midi_output()
-            //}
+
             blocker_view.visibility = View.VISIBLE
             this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }

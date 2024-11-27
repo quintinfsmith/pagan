@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import kotlin.math.max
@@ -261,10 +262,16 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.button_remove.isEnabled = cursor.position.isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
         this.button_duration.isEnabled = ctl_tree.is_event()
+
         this.button_duration.text = if (ctl_tree.is_event()) {
            this.context.getString(R.string.label_duration, ctl_tree.get_event()!!.duration)
         } else {
             ""
+        }
+        if (cursor.ctl_type != ControlEventType.Tempo) {
+            this.button_duration.visibility = View.VISIBLE
+        } else {
+            this.button_duration.visibility = View.GONE
         }
 
         this.widget.set_event(current_event, true)

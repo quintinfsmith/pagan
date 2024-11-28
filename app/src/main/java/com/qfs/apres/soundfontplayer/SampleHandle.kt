@@ -32,6 +32,10 @@ class SampleHandle(
     val smoothing_factor: Float
     var pitch_adjustment: Float = 1F
 
+    // Used in conjuction with the volume/pan profiles so we don't have to check if profile.containsKey on EVERY frame
+    private var _next_volume_profile_frame: Int = 0
+    private var _next_pan_profile_frame: Int = 0
+
     // Calculate here so it doesn't need to be on every frame
     private val _initial_frame_factor = 1F / 10F.pow(this.initial_attenuation)
 
@@ -249,13 +253,17 @@ class SampleHandle(
             return
         }
 
-        // Set volume
+        // Set volume-------------------------------------------------
+        var _current_frame: Int
+        val sorted_volume_keys = this.volume_profile.keys.sorted()
         this._current_volume = if (this.volume_profile.containsKey(frame)) {
+            _current_frame = frame
             this.volume_profile[frame]!!
         } else {
             val sorted_keys = this.volume_profile.keys.sorted()
             var first_frame = 0
             var working_volume = floatArrayOf(1F, 0F)
+
             for (key_frame in sorted_keys) {
                 if (key_frame < frame) {
                     first_frame = key_frame
@@ -265,25 +273,33 @@ class SampleHandle(
                 }
             }
 
+            _current_frame = first_frame
             floatArrayOf(
                 working_volume[0] + ((frame - first_frame).toFloat() * working_volume[1]),
                 working_volume[1]
             )
         }
+        var frame_index = sorted_volume_keys.indexOf(_current_frame)
+        this._next_volume_profile_frame = if (frame_index < sorted_volume_keys.size - 1) {
+            sorted_volume_keys[sorted_volume_keys.indexOf(_current_frame) + 1]
+        } else {
+            -1
+        }
+        // -------------------------------------------------------
 
-        // Set pan
+        // Set pan------------------------------------------------
+        val sorted_pan_keys = this.pan_profile.keys.sorted()
         this._current_pan = if (this.pan_profile.containsKey(frame)) {
+            _current_frame = frame
             floatArrayOf(
                 this.pan_profile[frame]!!.first,
                 this.pan_profile[frame]!!.second
             )
         } else {
-            val sorted_keys = this.pan_profile.keys.toMutableList()
-            sorted_keys.sort()
             var working_pan = Pair(0F, 0F)
             var first_frame = 0
 
-            for (key_frame in sorted_keys) {
+            for (key_frame in sorted_pan_keys) {
                 if (key_frame < frame) {
                     first_frame = key_frame
                     working_pan = this.pan_profile[key_frame]!!
@@ -292,11 +308,20 @@ class SampleHandle(
                 }
             }
 
+            _current_frame = first_frame
             floatArrayOf(
                 working_pan.first + ((frame - first_frame).toFloat() * working_pan.second),
                 working_pan.second
             )
         }
+        frame_index = sorted_pan_keys.indexOf(_current_frame)
+        this._next_pan_profile_frame = if (frame_index < sorted_pan_keys.size - 1) {
+            sorted_pan_keys[sorted_pan_keys.indexOf(_current_frame) + 1]
+        } else {
+            -1
+        }
+        //------------------------------------------------------
+
 
         val loop_points = this.loop_points
         val release_frame = this.release_frame
@@ -348,14 +373,14 @@ class SampleHandle(
 
     private fun update_pan_and_volume() {
         // Set Volume
-        if (this.volume_profile.containsKey(this.working_frame)) {
+        if (this.working_frame == this._next_volume_profile_frame) {
             this._current_volume = this.volume_profile[this.working_frame]!!
         } else {
             this._current_volume[0] += this._current_volume[1]
         }
 
         // Set Pan
-        if (this.pan_profile.containsKey(this.working_frame)) {
+        if (this.working_frame == this._next_pan_profile_frame) {
             this._current_pan = floatArrayOf(
                 this.pan_profile[this.working_frame]!!.first,
                 this.pan_profile[this.working_frame]!!.second

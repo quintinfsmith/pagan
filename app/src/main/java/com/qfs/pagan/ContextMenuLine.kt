@@ -23,7 +23,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     }
     override fun init_properties() {
         val primary = this.primary!!
-        this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
+        this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleChannelCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)

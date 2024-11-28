@@ -13,7 +13,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_insert: ButtonIcon
     lateinit var button_remove: ButtonIcon
     lateinit var button_choose_instrument: ButtonStd
-    lateinit var button_toggle_volume_control: ButtonIcon
+    lateinit var button_toggle_controllers: ButtonIcon
     val _visible_controls_domain = listOf(
  //       ControlEventType.Volume,
         ControlEventType.Pan
@@ -24,7 +24,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     }
     override fun init_properties() {
         val primary = this.primary!!
-        this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleVolCtl)
+        this.button_toggle_controllers = primary.findViewById(R.id.btnToggleChannelCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_instrument = this.secondary!!.findViewById(R.id.btnChooseInstrument)
@@ -74,10 +74,10 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             break
         }
         if (!show_control_toggle) {
-            this.button_toggle_volume_control.visibility = View.GONE
+            this.button_toggle_controllers.visibility = View.GONE
+        } else {
+            this.button_toggle_controllers.visibility = View.VISIBLE
         }
-        this.button_toggle_volume_control.visibility = View.VISIBLE
-        this.button_toggle_volume_control.setImageResource(R.drawable.ctl)
     }
 
     fun dialog_popup_hidden_lines() {
@@ -135,7 +135,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             this.long_click_button_remove_channel()
         }
 
-        this.button_toggle_volume_control.setOnClickListener {
+        this.button_toggle_controllers.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }

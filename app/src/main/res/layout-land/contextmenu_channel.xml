@@ -26,7 +26,7 @@
 
     <com.qfs.pagan.ButtonIcon
         android:visibility="gone"
-        android:id="@+id/btnToggleVolCtl"
+        android:id="@+id/btnToggleChannelCtl"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/volume_plus"
         android:layout_width="@dimen/icon_button_width"

@@ -252,6 +252,14 @@ class OpusLayerInterface : OpusLayerCursor() {
         }
     }
 
+    override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
+        this.lock_ui_partial {
+            val abs_line = this.get_visible_row_from_ctl_line_channel(type, channel_index)
+            this._queue_remove_rows(abs_line, 1)
+            super.remove_channel_controller(type, channel_index)
+        }
+    }
+
     // This is just a basic  clear so the UI works while I build the new logic for handling active control visibilities
     // TODO: create per-level logic so it's not just a cursor_clear
     private fun _controller_visibility_toggle_callback() {

@@ -56,8 +56,6 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.button_toggle_line_control = this.primary!!.findViewById(R.id.btnToggleCtl)
         this.button_remove_line_control = this.primary!!.findViewById(R.id.btnRemoveCtl)
 
-        this.button_remove_line_control.visibility = View.GONE
-
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 this.button_toggle_line_control.visibility = View.VISIBLE

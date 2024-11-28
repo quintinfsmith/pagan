@@ -123,6 +123,24 @@ open class OpusLayerCursor: OpusLayerHistory() {
             }
         }
     }
+
+    override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
+        super.remove_channel_controller(type, channel_index)
+        if (type == this.cursor.ctl_type) {
+            when (this.cursor.mode) {
+                OpusManagerCursor.CursorMode.Single,
+                OpusManagerCursor.CursorMode.Line -> {
+                    if (this.cursor.channel == channel_index && this.cursor.ctl_level == CtlLineLevel.Channel) {
+                        this.cursor_select_channel(channel_index)
+                    }
+                }
+                OpusManagerCursor.CursorMode.Column,
+                OpusManagerCursor.CursorMode.Range,
+                OpusManagerCursor.CursorMode.Channel,
+                OpusManagerCursor.CursorMode.Unset -> {}
+            }
+        }
+    }
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
         when (this.cursor.mode) {

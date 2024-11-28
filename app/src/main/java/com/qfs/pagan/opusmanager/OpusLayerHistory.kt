@@ -690,10 +690,10 @@ open class OpusLayerHistory: OpusLayerBase() {
                     )
                 }
                 HistoryToken.NEW_CHANNEL_CONTROLLER -> {
-                    this.new_channel_controller(
-                        current_node.args[0] as ControlEventType,
-                        current_node.args[1] as Int
-                    )
+                    val type = current_node.args[0] as ControlEventType
+                    val channel = current_node.args[1] as Int
+                    this.new_channel_controller(type, channel)
+                    this.set_channel_controller_visibility(type, channel, current_node.args[2] as Boolean)
                 }
                 HistoryToken.SET_CHANNEL_VISIBILITY -> {
                     this.set_channel_visibility(
@@ -1551,7 +1551,7 @@ open class OpusLayerHistory: OpusLayerBase() {
             if (this.has_channel_controller(type, channel_index)) {
                 this.push_to_history_stack(
                     HistoryToken.NEW_CHANNEL_CONTROLLER,
-                    listOf(type, channel_index)
+                    listOf(type, channel_index, this.get_all_channels()[channel_index].controllers.get_controller<OpusControlEvent>(type).visible)
                 )
             }
             super.remove_channel_controller(type, channel_index)

@@ -8,7 +8,7 @@
     android:layout_height="wrap_content">
 
         <com.qfs.pagan.ButtonIcon
-            android:id="@+id/btnToggleVolCtl"
+            android:id="@+id/btnToggleChannelCtl"
             android:theme="@style/icon_button"
             app:srcCompat="@drawable/ctl"
             android:layout_width="@dimen/icon_button_width"

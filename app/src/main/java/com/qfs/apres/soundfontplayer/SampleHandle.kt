@@ -39,7 +39,7 @@ class SampleHandle(
     var uuid: Int = SampleHandle.uuid_gen++
 
     var working_frame: Int = 0
-    var _current_volume: FloatArray = floatArrayOf(1F, 1F)
+    var _current_volume: FloatArray = floatArrayOf(1F, 0F)
     var _current_pan: FloatArray = floatArrayOf(0f, 0f)
 
     var release_frame: Int? = null
@@ -253,8 +253,7 @@ class SampleHandle(
         this._current_volume = if (this.volume_profile.containsKey(frame)) {
             this.volume_profile[frame]!!
         } else {
-            val sorted_keys = this.volume_profile.keys.toMutableList()
-            sorted_keys.sort()
+            val sorted_keys = this.volume_profile.keys.sorted()
             var first_frame = 0
             var working_volume = floatArrayOf(1F, 0F)
             for (key_frame in sorted_keys) {
@@ -265,6 +264,7 @@ class SampleHandle(
                     break
                 }
             }
+
             floatArrayOf(
                 working_volume[0] + ((frame - first_frame).toFloat() * working_volume[1]),
                 working_volume[1]
@@ -282,6 +282,7 @@ class SampleHandle(
             sorted_keys.sort()
             var working_pan = Pair(0F, 0F)
             var first_frame = 0
+
             for (key_frame in sorted_keys) {
                 if (key_frame < frame) {
                     first_frame = key_frame

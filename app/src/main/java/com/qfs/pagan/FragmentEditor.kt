@@ -600,8 +600,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val controller_set = opus_manager.get_active_active_control_set() ?: return
 
         val controller = controller_set.get_controller<OpusControlEvent>(cursor.ctl_type!!)
-        val default = controller.get_latest_event(cursor.beat, cursor.get_position()) ?: controller.initial_event
-        val tree = controller.get_tree(cursor.beat, cursor.get_position())
+        val default = controller.get_latest_event(cursor.beat, cursor.get_position())?.copy() ?: controller.initial_event.copy()
+
+
+        val (actual_beat, actual_position) = controller.get_blocking_position(cursor.beat, cursor.get_position()) ?: Pair(cursor.beat, cursor.get_position())
+        val tree = controller.get_tree(actual_beat, actual_position)
         if (!tree.is_event()) {
             default.duration = 1
         }

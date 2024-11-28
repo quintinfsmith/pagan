@@ -1884,7 +1884,7 @@ open class OpusLayerBase {
                                     channel.midi_channel,
                                     note,
                                     bend,
-                                    (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 128F).toInt(),
+                                    (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 127F).toInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -1943,7 +1943,7 @@ open class OpusLayerBase {
                                 9,
                                 line.instrument + 27,
                                 0,
-                                (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 128F).toInt(),
+                                (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 127F).toInt(),
                                 event_uuid_gen++
                             )
                             pseudo_midi_map.add(Triple(

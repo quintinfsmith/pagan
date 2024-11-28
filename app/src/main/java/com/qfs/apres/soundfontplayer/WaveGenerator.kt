@@ -151,14 +151,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 StereoMode.Stereo -> when (sample_handle.stereo_mode and 7) {
                     1 -> { // mono
                         if (pan != 0F) {
-                            if (pan > 0) {
+                            if (pan > 0f) {
                                 Pair(
                                     frame_value,
-                                    (frame_value * (100 - pan.toInt()) / 100)
+                                    frame_value * (1F - pan.toInt())
                                 )
                             } else {
                                 Pair(
-                                    frame_value * (100 + pan.toInt()) / 100,
+                                    frame_value * (1F + pan.toInt()),
                                     frame_value
                                 )
                             }
@@ -172,9 +172,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                     2 -> { // right
                         Pair(
-                            0,
+                            0f,
                             if (pan > 0F) {
-                                (frame_value * (100 - pan.toInt())) / 100
+                                frame_value * pan.toInt()
                             } else {
                                 frame_value
                             }
@@ -184,15 +184,15 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     4 -> { // left
                         Pair(
                             if (pan < 0F) {
-                                (frame_value * (100 + pan.toInt())) / 100
+                                frame_value * pan.toInt()
                             } else {
                                 frame_value
                             },
-                            0
+                            0f
                         )
                     }
 
-                    else -> Pair(0,0)
+                    else -> Pair(0f, 0f)
                 }
                 StereoMode.Mono -> {
                     Pair(frame_value, frame_value)

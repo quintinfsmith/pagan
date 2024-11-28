@@ -22,7 +22,7 @@ class SampleHandle(
     var pitch_shift: Float = 1F,
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
-    var volume_profile: HashMap<Int, Float> = hashMapOf(0 to 1F),
+    var volume_profile: HashMap<Int, FloatArray> = hashMapOf(0 to floatArrayOf(1F, 0F)),
     var pan_profile: HashMap<Int, Pair<Float, Float>> = hashMapOf(0 to Pair(0F, 0F)),
     data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
@@ -39,7 +39,7 @@ class SampleHandle(
     var uuid: Int = SampleHandle.uuid_gen++
 
     var working_frame: Int = 0
-    var _current_volume: Float = 1F
+    var _current_volume: FloatArray = floatArrayOf(1F, 1F)
     var _current_pan: FloatArray = floatArrayOf(0f, 0f)
 
     var release_frame: Int? = null
@@ -255,15 +255,20 @@ class SampleHandle(
         } else {
             val sorted_keys = this.volume_profile.keys.toMutableList()
             sorted_keys.sort()
-            var working_volume = 1F
+            var first_frame = 0
+            var working_volume = floatArrayOf(1F, 0F)
             for (key_frame in sorted_keys) {
                 if (key_frame < frame) {
+                    first_frame = key_frame
                     working_volume = this.volume_profile[key_frame]!!
                 } else {
                     break
                 }
             }
-            working_volume
+            floatArrayOf(
+                working_volume[0] + ((frame - first_frame).toFloat() * working_volume[1]),
+                working_volume[1]
+            )
         }
 
         // Set pan
@@ -340,16 +345,12 @@ class SampleHandle(
         return this._data_buffers[this._active_buffer]
     }
 
-    fun get_next_frame(): Int? {
-        if (this.is_dead) {
-            return null
-        }
-
-        val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
-
+    private fun update_pan_and_volume() {
         // Set Volume
         if (this.volume_profile.containsKey(this.working_frame)) {
             this._current_volume = this.volume_profile[this.working_frame]!!
+        } else {
+            this._current_volume[0] += this._current_volume[1]
         }
 
         // Set Pan
@@ -362,9 +363,18 @@ class SampleHandle(
             this._current_pan[0] += this._current_pan[1]
         }
 
+    }
+    fun get_next_frame(): Int? {
+        if (this.is_dead) {
+            return null
+        }
+
+        val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
+
         if (this.working_frame < this.volume_envelope.frames_delay) {
             this.working_frame += 1
             this.previous_frame = 0F
+            this.update_pan_and_volume()
             return 0
         }
 
@@ -436,6 +446,9 @@ class SampleHandle(
         //}
 
         this.working_frame += 1
+        val use_volume = this._current_volume[0]
+
+        this.update_pan_and_volume()
 
         var frame_value = try {
             this._get_active_data_buffer().get().toFloat()
@@ -451,7 +464,7 @@ class SampleHandle(
 
         this.previous_frame = frame_value
 
-        return (frame_value * frame_factor * this._current_volume * SampleHandle.MAX_VOLUME).toInt()
+        return (frame_value * frame_factor * use_volume * SampleHandle.MAX_VOLUME).toInt()
     }
 
     fun release_note() {

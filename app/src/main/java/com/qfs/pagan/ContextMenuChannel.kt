@@ -15,7 +15,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_choose_instrument: ButtonStd
     lateinit var button_toggle_volume_control: ButtonIcon
     val _visible_controls_domain = listOf(
-        ControlEventType.Volume,
+ //       ControlEventType.Volume,
         ControlEventType.Pan
     )
 

@@ -50,7 +50,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
         val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
-        output.volume_profile = hashMapOf(0 to event.get_velocity() / 128F)
+        output.volume_profile = hashMapOf(0 to floatArrayOf(event.get_velocity() / 128F, 0f))
         output.pan_profile = hashMapOf(0 to Pair(0F,0F))
         return output
     }
@@ -58,7 +58,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     fun get(event: NoteOn79, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
         val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
-        output.volume_profile = hashMapOf(0 to event.velocity / (128 shl 8).toFloat())
+        output.volume_profile = hashMapOf(0 to floatArrayOf(event.velocity / (128 shl 8).toFloat(), 0F))
         output.pan_profile = hashMapOf(0 to Pair(0F,0F))
         return output
     }

@@ -1,4 +1,6 @@
 package com.qfs.pagan
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,5 +30,13 @@ class FragmentLicense: FragmentPagan<FragmentLicenseBinding>() {
                 (this.activity as MainActivity).set_title_text(text)
             }
         }
+
+        val linkSource = view.findViewById<TextView>(R.id.linkSource)
+        linkSource.setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(getString(R.string.url_git))
+            startActivity(intent)
+        }
+
     }
 }

@@ -38,4 +38,9 @@
         android:id="@+id/itmSettings"
         android:title="Settings..."
         app:showAsAction="never"/>
+    <item
+        android:menuCategory="secondary"
+        android:id="@+id/itmAbout"
+        android:title="About..."
+        app:showAsAction="never"/>
 </menu>

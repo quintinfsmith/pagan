@@ -819,6 +819,9 @@ class MainActivity : AppCompatActivity() {
             R.id.itmSettings -> {
                 this.navigate(R.id.SettingsFragment)
             }
+            R.id.itmAbout -> {
+                this.navigate(R.id.LicenseFragment)
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -1158,6 +1161,7 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
                 options_menu.findItem(R.id.itmImportProject).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
+                options_menu.findItem(R.id.itmAbout).isVisible = true
             }
             else -> {
                 options_menu.findItem(R.id.itmLoadProject).isVisible = false
@@ -1168,6 +1172,7 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmImportMidi).isVisible = false
                 options_menu.findItem(R.id.itmImportProject).isVisible = false
                 options_menu.findItem(R.id.itmSettings).isVisible = false
+                options_menu.findItem(R.id.itmAbout).isVisible = false
             }
         }
     }

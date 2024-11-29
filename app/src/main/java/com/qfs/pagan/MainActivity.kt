@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
                 frame_map.check_frame(i)
             }
 
-            this.export_handle = WavConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
+            this.export_handle = WavConverter(sample_handle_manager)
 
             this.export_handle?.export_wav(frame_map, target_output_stream, tmp_file, handler)
             this.export_handle = null

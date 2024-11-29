@@ -51,7 +51,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
         val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
         output.volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
-        output.pan_profile = hashMapOf(0 to Pair(0F,0F))
+        output.pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
         return output
     }
 
@@ -60,7 +60,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
         val volume = event.velocity / (128 shl 8).toFloat()
         output.volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(volume, 0F))), 0)
-        output.pan_profile = hashMapOf(0 to Pair(0F,0F))
+        output.pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
         return output
     }
 

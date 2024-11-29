@@ -23,7 +23,7 @@ class SampleHandle(
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
     var volume_profile: ProfileBuffer? = null,
-    var pan_profile: HashMap<Int, Pair<Float, Float>> = hashMapOf(0 to Pair(0F, 0F)),
+    var pan_profile: ProfileBuffer? = null,
     data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
@@ -32,10 +32,6 @@ class SampleHandle(
     val smoothing_factor: Float
     var pitch_adjustment: Float = 1F
 
-    // Used in conjuction with the volume/pan profiles so we don't have to check if profile.containsKey on EVERY frame
-    private var _next_volume_profile_frame: Int = 0
-    private var _next_pan_profile_frame: Int = 0
-
     // Calculate here so it doesn't need to be on every frame
     private val _initial_frame_factor = 1F / 10F.pow(this.initial_attenuation)
 
@@ -43,8 +39,6 @@ class SampleHandle(
     var uuid: Int = SampleHandle.uuid_gen++
 
     var working_frame: Int = 0
-    var _current_volume: FloatArray = floatArrayOf(1F, 0F)
-    var _current_pan: FloatArray = floatArrayOf(0f, 0f)
 
     var release_frame: Int? = null
     var kill_frame: Int? = null
@@ -80,7 +74,7 @@ class SampleHandle(
         )
     }
 
-    class ProfileBuffer(val frames: Array<Pair<Int, Pair<Float, Float>>>, val start_frame: Int) {
+    class ProfileBuffer(val frames: Array<Pair<Int, Pair<Float, Float>>>, val start_frame: Int, skip_initial_set: Boolean = false) {
         var current_frame: Int = 0
         var current_index: Int = 0
         var current_value: Float = 0f
@@ -92,8 +86,9 @@ class SampleHandle(
             for (i in 1 until this.frames.size) {
                 this.index_map[this.frames[i - 1].first until this.frames[i].first] = i - 1
             }
-
-            //this.set_frame(0)
+            if (!skip_initial_set) {
+                this.set_frame(0)
+            }
         }
 
         fun get_next(): Float {
@@ -143,8 +138,11 @@ class SampleHandle(
             val working_frame = this.current_frame - 1
             this.current_index = index
             var frame_data = this.frames[index]
-            this.current_value = frame_data.second.first + (max(0,working_frame - frame_data.first).toFloat() * frame_data.second.second)
-            println("${this.current_value}")
+            this.current_value = frame_data.second.first
+            if (frame_data.second.second != 0F) {
+                this.current_value += (working_frame - frame_data.first).toFloat() * frame_data.second.second
+            }
+
             this.next_frame_trigger = if (this.current_index < this.frames.size - 1) {
                 this.frames[this.current_index + 1].first
             } else {
@@ -281,7 +279,7 @@ class SampleHandle(
                 filter_cutoff = original.filter_cutoff,
                 pan = original.pan,
                 volume_profile = original.volume_profile?.copy(),
-                pan_profile = original.pan_profile,
+                pan_profile = original.pan_profile?.copy(),
                 data_buffers = Array(original._data_buffers.size) { i: Int ->
                     var buffer = original._data_buffers[i]
                     // constructing this way allows us to skip calculating max
@@ -333,45 +331,8 @@ class SampleHandle(
             return
         }
 
-        // Set volume-------------------------------------------------
-        var _current_frame: Int
         this.volume_profile?.set_frame(frame)
-        // -------------------------------------------------------
-
-        // Set pan------------------------------------------------
-        val sorted_pan_keys = this.pan_profile.keys.sorted()
-        this._current_pan = if (this.pan_profile.containsKey(frame)) {
-            _current_frame = frame
-            floatArrayOf(
-                this.pan_profile[frame]!!.first,
-                this.pan_profile[frame]!!.second
-            )
-        } else {
-            var working_pan = Pair(0F, 0F)
-            var first_frame = 0
-
-            for (key_frame in sorted_pan_keys) {
-                if (key_frame < frame) {
-                    first_frame = key_frame
-                    working_pan = this.pan_profile[key_frame]!!
-                } else {
-                    break
-                }
-            }
-
-            _current_frame = first_frame
-            floatArrayOf(
-                working_pan.first + ((frame - first_frame).toFloat() * working_pan.second),
-                working_pan.second
-            )
-        }
-        var frame_index = sorted_pan_keys.indexOf(_current_frame)
-        this._next_pan_profile_frame = if (frame_index < sorted_pan_keys.size - 1) {
-            sorted_pan_keys[sorted_pan_keys.indexOf(_current_frame) + 1]
-        } else {
-            -1
-        }
-        //------------------------------------------------------
+        this.pan_profile?.set_frame(frame)
 
 
         val loop_points = this.loop_points
@@ -422,19 +383,6 @@ class SampleHandle(
         return this._data_buffers[this._active_buffer]
     }
 
-    private fun update_pan() {
-
-        // Set Pan
-        if (this.working_frame == this._next_pan_profile_frame) {
-            this._current_pan = floatArrayOf(
-                this.pan_profile[this.working_frame]!!.first,
-                this.pan_profile[this.working_frame]!!.second
-            )
-        } else {
-            this._current_pan[0] += this._current_pan[1]
-        }
-
-    }
     fun get_next_frame(): Int? {
         if (this.is_dead) {
             return null
@@ -445,7 +393,7 @@ class SampleHandle(
         if (this.working_frame < this.volume_envelope.frames_delay) {
             this.working_frame += 1
             this.previous_frame = 0F
-            this.update_pan()
+            this.volume_profile?.get_next()
             return 0
         }
 
@@ -518,8 +466,8 @@ class SampleHandle(
 
         val use_volume = this.volume_profile?.get_next() ?: 1F
 
+
         this.working_frame += 1
-        this.update_pan()
 
         var frame_value = try {
             this._get_active_data_buffer().get().toFloat()
@@ -531,7 +479,7 @@ class SampleHandle(
         }
 
         // Low Pass Filtering
-        //frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
+        frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
         this.previous_frame = frame_value
 

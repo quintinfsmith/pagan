@@ -39,7 +39,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
     private val _volume_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::volume]
-    private val _pan_map = HashMap<Pair<Int, Int>, HashMap<Int, Pair<Float, Float>>>() // (channel, line_offset)::[frame::pan]
+    private val _pan_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::pan]
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
@@ -66,7 +66,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return this._cached_beat_frames!!
         }
 
-        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
+        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate.toFloat()
 
         val beats = mutableListOf(0)
 
@@ -74,7 +74,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val working_tempo = this._tempo_ratio_map[0].second
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()
         var tempo_index = 0
-        val frames_to_add = mutableListOf<Int>()
+        val frames_to_add = mutableListOf<Float>()
         // First, just get the frame of each beat
         for (i in 1 until this.opus_manager.beat_count + 1) {
             val beat_position = i.toFloat() / this.opus_manager.beat_count.toFloat()
@@ -84,19 +84,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val tempo_change_position = (this._tempo_ratio_map[tempo_index].first)
 
                 if (tempo_change_position < beat_position) {
-                    frames_to_add.add((frames_per_beat * (tempo_change_position - working_position)).toInt())
+                    frames_to_add.add(frames_per_beat * (tempo_change_position - working_position))
 
                     working_position = tempo_change_position
                     frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
-
                     tempo_index += 1
                 } else {
                     break
                 }
             }
-
-            frames_to_add.add((frames_per_beat * (beat_position - working_position)).toInt())
-            working_frame += frames_to_add.sum() * this.opus_manager.beat_count
+            frames_to_add.add(frames_per_beat * (beat_position - working_position))
+            working_frame += (frames_to_add.sum() * this.opus_manager.beat_count).toInt()
             frames_to_add.clear()
 
             beats.add(working_frame)
@@ -199,7 +197,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: HashMap<Int, Pair<Float, Float>>? = null) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: SampleHandle.ProfileBuffer? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -236,11 +234,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     handle.volume_envelope.frames_release = 0
                     handle.volume_envelope.frames_delay = 0
                 }
+
                 if (volume_profile != null) {
                     handle.volume_profile = volume_profile.copy()
                 }
                 if (pan_profile != null) {
-                    handle.pan_profile = pan_profile
+                    handle.pan_profile = pan_profile.copy()
                 }
 
                 handle_uuid_set.add(handle.uuid)
@@ -289,7 +288,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     fun map_tempo_changes() {
         val controller = this.opus_manager.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
         var working_tempo = controller.initial_event.value
-
 
         this._tempo_ratio_map.add(Pair(0f, working_tempo))
 
@@ -396,7 +394,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     continue
                 }
                 var working_pan = controller.initial_event.value
-                this._pan_map[Pair(c, l)] = hashMapOf(0 to Pair(working_pan, 0F))
+                val working_map = hashMapOf(0 to Pair(working_pan, 0F))
 
                 for (b in 0 until this.opus_manager.beat_count) {
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
@@ -414,12 +412,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                             when (working_event.transition) {
                                 ControlTransition.Instant -> {
-                                    this._pan_map[Pair(c, l)]!![start_frame] = Pair(working_event.value, 0F)
+                                    working_map[start_frame] = Pair(working_event.value, 0F)
                                 }
 
                                 ControlTransition.Linear -> {
-                                    this._pan_map[Pair(c, l)]!![start_frame] = Pair(working_pan, (diff / (end_frame - start_frame)))
-                                    this._pan_map[Pair(c, l)]!![end_frame] = Pair(working_event.value, 0F)
+                                    working_map[start_frame] = Pair(working_pan, (diff / (end_frame - start_frame).toFloat()))
+                                    working_map[end_frame] = Pair(working_event.value, 0F)
                                 }
                             }
                             working_pan = working_event.value
@@ -432,6 +430,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                             }
                         }
                     }
+                }
+
+                val keys = working_map.keys.sorted()
+                this._pan_map[Pair(c, l)] = Array(keys.size) { i: Int ->
+                    Pair(keys[i], working_map[keys[i]]!!)
                 }
             }
         }
@@ -485,7 +488,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 working_position = tempo_change_position
                 frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
-
 
                 tempo_index += 1
             } else {
@@ -546,23 +548,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         val new_pan_profile = if (this._pan_map.containsKey(pan_key)) {
-            var first = Pair(0, Pair(0F, 0F))
-            val sorted_keys = this._pan_map[pan_key]!!.keys.sorted()
-            val tmp = HashMap<Int, Pair<Float, Float>>()
-
-            for (key_frame in sorted_keys) {
-                if (key_frame <= start_frame) {
-                    first = Pair(key_frame, this._pan_map[pan_key]!![key_frame]!!)
-                } else if (key_frame in start_frame + 1 .. end_frame) {
-                    tmp[key_frame - start_frame] = this._pan_map[pan_key]!![key_frame]!!
-                }
-            }
-            tmp[0] = Pair(
-                first.second.first + (first.second.second * (start_frame - first.first).toFloat()),
-                first.second.second
-            )
-
-            tmp
+            SampleHandle.ProfileBuffer(this._pan_map[pan_key]!!, start_frame)
         } else {
             null
         }

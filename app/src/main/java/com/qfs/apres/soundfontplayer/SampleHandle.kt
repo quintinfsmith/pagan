@@ -86,79 +86,78 @@ class SampleHandle(
         var current_value: Float = 0f
         var next_frame_trigger: Int = -1
 
+        private var index_map = HashMap<IntRange,Int>()
+
         init {
-            var found = false
-            for (i in 0 until this.frames.size) {
-                val (key_frame, frame_data) = this.frames[i]
-                if (key_frame == this.start_frame) {
-                    this.current_index = i
-                    this.current_value = frame_data.first
-                    found = true
-                    break
-                } else if (key_frame > this.start_frame) {
-                    this.current_index = i
-                    this.current_value = frame_data.first + ((key_frame - this.start_frame) * frame_data.second)
-                    found = true
-                    break
-                }
+            for (i in 1 until this.frames.size) {
+                this.index_map[this.frames[i - 1].first until this.frames[i].first] = i - 1
             }
 
-            if (!found) {
-                val (working_frame, pair) = this.frames.last()
-                this.current_index = this.frames.size - 1
-                this.current_value = pair.first + (pair.second * (this.start_frame - working_frame))
-            }
-
-            if (this.current_index + 1 < this.frames.size) {
-                this.next_frame_trigger = this.frames[this.current_index + 1].first
-            } else {
-                this.next_frame_trigger = -1
-            }
+            //this.set_frame(0)
         }
 
         fun get_next(): Float {
-            // TODO: This is sloppy af but it's 12:29. needs optimization.
-            if (this.current_index >= this.frames.size) {
-                return this.current_value
-            }
-            val (_, working_data) = this.frames[this.current_index]
+            val (frame, working_data) = this.frames[this.current_index]
 
-            this.current_value += working_data.second
+            if (frame == this.current_frame) {
+                this.current_value = working_data.first
+            } else {
+                this.current_value += working_data.second
+            }
 
             val output = this.current_value
 
-            if (this.current_frame++ == this.next_frame_trigger) {
-                println("TRIGGER NET: ${this.next_frame_trigger}")
-                if (this.current_index + 1 < this.frames.size) {
-                    this.next_frame_trigger = this.frames[this.current_index + 1].first
-                    this.current_value = this.frames[this.current_index + 1].second.second
-                    println("next value = ${this.current_value}")
-                } else {
-                    this.next_frame_trigger = -1
-                }
-                this.current_index += 1
-            }
+            this._move_to_next_frame()
 
             return output
         }
 
-        fun set_frame(frame: Int) {
-            this.current_frame = frame
-
-            for (i in 0 until this.frames.size) {
-                val (key_frame, frame_data) = this.frames[i]
-                if ((key_frame + frame) == this.start_frame) {
-                    this.current_index = i
-                    this.current_value = frame_data.first
-                    break
-                } else if ((key_frame + frame) > this.start_frame) {
-                    this.current_index = i
-                    this.current_value = frame_data.first + (((key_frame + frame) - this.start_frame) * frame_data.second)
-                    break
+        private fun _move_to_next_frame() {
+            this.current_frame += 1
+            val current_frame = this.current_frame
+            if (current_frame == this.next_frame_trigger) {
+                if (this.current_index == this.frames.size - 1) {
+                    this.next_frame_trigger = -1
+                } else {
+                    this.next_frame_trigger = this.frames[this.current_index++].first
                 }
             }
         }
 
+        fun set_frame(frame: Int) {
+            this.current_frame = frame + this.start_frame
+            for ((range, index) in this.index_map) {
+                if (range.contains(this.current_frame)) {
+                    this._set_index(index)
+                    return
+                }
+            }
+
+            // No Frame data found, use final entry
+            this._set_index(this.frames.size - 1)
+        }
+
+        private fun _set_index(index: Int) {
+            // Note: working frame is this current frame - 1 SO THAT:
+            // when get_next() is called, the value isn't incremented here AND there
+            val working_frame = this.current_frame - 1
+            this.current_index = index
+            var frame_data = this.frames[index]
+            this.current_value = frame_data.second.first + (max(0,working_frame - frame_data.first).toFloat() * frame_data.second.second)
+            println("${this.current_value}")
+            this.next_frame_trigger = if (this.current_index < this.frames.size - 1) {
+                this.frames[this.current_index + 1].first
+            } else {
+                -1
+            }
+        }
+
+        fun copy(): ProfileBuffer {
+            return ProfileBuffer(
+                this.frames,
+                this.start_frame
+            )
+        }
     }
 
     init {
@@ -281,7 +280,7 @@ class SampleHandle(
                 pitch_shift = original.pitch_shift,
                 filter_cutoff = original.filter_cutoff,
                 pan = original.pan,
-                volume_profile = original.volume_profile,
+                volume_profile = original.volume_profile?.copy(),
                 pan_profile = original.pan_profile,
                 data_buffers = Array(original._data_buffers.size) { i: Int ->
                     var buffer = original._data_buffers[i]
@@ -532,7 +531,7 @@ class SampleHandle(
         }
 
         // Low Pass Filtering
-        frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
+        //frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
         this.previous_frame = frame_value
 

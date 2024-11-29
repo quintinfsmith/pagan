@@ -237,7 +237,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     handle.volume_envelope.frames_delay = 0
                 }
                 if (volume_profile != null) {
-                    handle.volume_profile = volume_profile
+                    handle.volume_profile = volume_profile.copy()
                 }
                 if (pan_profile != null) {
                     handle.pan_profile = pan_profile
@@ -354,7 +354,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                     working_hashmap[start_frame] = Pair(working_event.value, 0F)
                                 }
                                 ControlTransition.Linear -> {
-                                    working_hashmap[start_frame] = Pair(working_volume, (diff / (end_frame - start_frame).toFloat()))
+                                    val d = diff / (end_frame - start_frame).toFloat()
+                                    working_hashmap[start_frame] = Pair(working_volume, d)
                                     working_hashmap[end_frame] =  Pair(working_event.value, 0F)
                                 }
                             }

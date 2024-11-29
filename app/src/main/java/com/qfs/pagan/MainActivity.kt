@@ -14,6 +14,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.VibrationEffect
 import android.database.Cursor
 import android.graphics.Color
@@ -28,7 +29,9 @@ import android.os.VibratorManager
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.AttributeSet
 import android.util.Log
+import android.view.ContextMenu
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -38,6 +41,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
+import android.view.ViewGroup.TEXT_ALIGNMENT_TEXT_END
+import android.view.ViewGroup.TEXT_ALIGNMENT_VIEW_END
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -58,6 +63,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
@@ -387,6 +393,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         this.recreate()
@@ -608,8 +615,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
-        setContentView(this._binding.root)
-        setSupportActionBar(this._binding.appBarMain.toolbar)
+        this.setContentView(this._binding.root)
+        this.setSupportActionBar(this._binding.appBarMain.toolbar)
 
         this.view_model.opus_manager.attach_activity(this)
 
@@ -628,6 +635,11 @@ class MainActivity : AppCompatActivity() {
 
         val color_map = this.view_model.color_map
         val toolbar = this._binding.appBarMain.toolbar
+        //toolbar.popupTheme = R.style.popup_theme
+        toolbar.backgroundTintList = ColorStateList(
+            arrayOf(),
+            intArrayOf(Color.BLUE)
+        )
 
         toolbar.background = null
         toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
@@ -726,8 +738,10 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
+
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        val navController = this.findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
     }
 
@@ -1105,6 +1119,7 @@ class MainActivity : AppCompatActivity() {
                     is FragmentGlobalSettings -> {
                         resources.getString(R.string.settings_fragment_label)
                     }
+                    is FragmentLicense,
                     is FragmentLandingPage -> {
                         "${getString(R.string.app_name)} ${getString(R.string.app_version)}"
                     }

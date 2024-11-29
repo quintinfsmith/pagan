@@ -1,30 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <com.qfs.pagan.PaganTextView
-        android:clickable="true"
-        android:id="@+id/linkLicense"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:text="@string/license_brief"
-        android:theme="@style/front_text" />
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            style="@style/about_link"
+            android:id="@+id/linkManual"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/label_manual" />
 
-    <com.qfs.pagan.PaganTextView
-        android:clickable="true"
-        android:id="@+id/linkSource"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:text="@string/source_code_location"
-        android:theme="@style/front_text" />
-    <TextView
-        android:id="@+id/tvLicenseText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""/>
-</LinearLayout>
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_url"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/url_manual" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            style="@style/about_link"
+            android:id="@+id/linkSource"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/label_source_code" />
+
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_url"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/url_git" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            style="@style/about_link"
+            android:id="@+id/linkIssues"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/label_issues_location" />
+
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_url"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/url_issues" />
+        </LinearLayout>
+
+        <Space
+            android:layout_height="20dp"
+            android:layout_width="match_parent"/>
+
+        <com.qfs.pagan.PaganTextView
+            android:id="@+id/tvLicenseText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""/>
+    </LinearLayout>
+</ScrollView>

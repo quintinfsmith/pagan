@@ -40,7 +40,9 @@
     <string name="warning_nosoundfont">A soundfont is needed for playback. The Fluid General Midi soundfont can be found here:</string>
     <string name="warning_nosoundfont_2">You can import and select soundfonts from the settings menu</string>
     <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
-    <string name="url_git">https://burnsomni.net/git/pagan</string>
+    <string name="url_git">https://github.com/quintinfsmith/pagan</string>
+    <string name="url_issues">https://github.com/quintinfsmith/pagan/issues</string>
+    <string name="url_manual">https://burnsomni.net/manual/pagan</string>
 
     <string name="btn_landing_new">New Project</string>
     <string name="btn_landing_import">Import Project</string>
@@ -69,9 +71,9 @@
     <string name="config_file_not_found">Configuration can\'t be accessed</string>
 
     <string name="line_volume">Line Volume:</string>
-    <string name="source_code_location">
-        Source code available at: https://burnsomni.net/git/pagan.
-    </string>
+    <string name="label_manual">Manual</string>
+    <string name="label_issues_location">Issues</string>
+    <string name="label_source_code">Source</string>
     <string name="apk_location">
         Alternative downloads available at: https://burnsomni.net/software/pagan.
     </string>

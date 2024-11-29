@@ -38,7 +38,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private var _cached_beat_frames: Array<Int>? = null
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
-    private val _volume_map = HashMap<Pair<Int, Int>, HashMap<Int, FloatArray>>() // (channel, line_offset)::[frame::volume]
+    private val _volume_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::volume]
     private val _pan_map = HashMap<Pair<Int, Int>, HashMap<Int, Pair<Float, Float>>>() // (channel, line_offset)::[frame::pan]
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
@@ -199,7 +199,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: HashMap<Int, FloatArray>? = null, pan_profile: HashMap<Int, Pair<Float, Float>>? = null) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: HashMap<Int, Pair<Float, Float>>? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -333,7 +333,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             for (l in channel.lines.indices) {
                 val controller = channel.lines[l].get_controller<OpusVolumeEvent>(ControlEventType.Volume)
                 var working_volume = controller.initial_event.value
-                this._volume_map[Pair(c, l)] = hashMapOf(0 to floatArrayOf(working_volume, 0F))
+                val working_hashmap = hashMapOf(0 to Pair(working_volume, 0F))
 
                 for (b in 0 until this.opus_manager.beat_count) {
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
@@ -351,11 +351,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                             when (working_event.transition) {
                                 ControlTransition.Instant -> {
-                                    this._volume_map[Pair(c, l)]!![start_frame] = floatArrayOf(working_event.value, 0F)
+                                    working_hashmap[start_frame] = Pair(working_event.value, 0F)
                                 }
                                 ControlTransition.Linear -> {
-                                    this._volume_map[Pair(c, l)]!![start_frame] = floatArrayOf(working_volume, (diff / (end_frame - start_frame).toFloat()))
-                                    this._volume_map[Pair(c, l)]!![end_frame] = floatArrayOf(working_event.value, 0F)
+                                    working_hashmap[start_frame] = Pair(working_volume, (diff / (end_frame - start_frame).toFloat()))
+                                    working_hashmap[end_frame] =  Pair(working_event.value, 0F)
                                 }
                             }
                             working_volume = working_event.value
@@ -369,9 +369,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         }
                     }
                 }
+                val keys = working_hashmap.keys.sorted()
+                this._volume_map[Pair(c, l)] = Array(keys.size) { i: Int ->
+                    Pair(keys[i], working_hashmap[keys[i]]!!)
+                }
             }
         }
-
     }
 
     private fun map_pan_changes() {
@@ -529,24 +532,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // Prioritize line ctl, then use channel ctl
         val volume_key = line_pair
         val new_volume_profile = if (this._volume_map.containsKey(volume_key)) {
-            var first = Pair(0, floatArrayOf(.5F, 0F))
-            val sorted_keys = this._volume_map[volume_key]!!.keys.sorted()
-            val tmp = HashMap<Int, FloatArray>()
-
-            for (key_frame in sorted_keys) {
-                if (key_frame <= start_frame) {
-                    first = Pair(key_frame, this._volume_map[volume_key]!![key_frame]!!)
-                } else if (key_frame in start_frame + 1 .. end_frame) {
-                    tmp[key_frame - start_frame] = this._volume_map[volume_key]!![key_frame]!!
-                }
-            }
-
-            tmp[0] = floatArrayOf(
-                first.second[0] + (first.second[1] * (start_frame - first.first).toFloat()),
-                first.second[1]
-            )
-
-            tmp
+            SampleHandle.ProfileBuffer(this._volume_map[volume_key]!!, start_frame)
         } else {
             null
         }

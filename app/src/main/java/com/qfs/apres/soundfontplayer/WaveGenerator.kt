@@ -154,11 +154,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                             if (pan > 0f) {
                                 Pair(
                                     frame_value,
-                                    frame_value * (1F - pan.toInt())
+                                    frame_value * (1F - pan)
                                 )
                             } else {
                                 Pair(
-                                    frame_value * (1F + pan.toInt()),
+                                    frame_value * (1F + pan),
                                     frame_value
                                 )
                             }
@@ -174,7 +174,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         Pair(
                             0f,
                             if (pan > 0F) {
-                                frame_value * pan.toInt()
+                                frame_value * pan
                             } else {
                                 frame_value
                             }
@@ -184,7 +184,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     4 -> { // left
                         Pair(
                             if (pan < 0F) {
-                                frame_value * pan.toInt()
+                                frame_value * pan
                             } else {
                                 frame_value
                             },

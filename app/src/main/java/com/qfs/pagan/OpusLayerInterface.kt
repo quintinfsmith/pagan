@@ -326,23 +326,23 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun unset_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+    override fun controller_global_unset(type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.unset_global_ctl(type, beat, position)
+            super.controller_global_unset(type, beat, position)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun unset_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+    override fun controller_channel_unset(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.unset_channel_ctl(type, channel, beat, position)
+            super.controller_channel_unset(type, channel, beat, position)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun unset_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+    override fun controller_line_unset(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.unset_line_ctl(type, beat_key, position)
+            super.controller_line_unset(type, beat_key, position)
             this._queue_line_ctl_cell_change(type, beat_key)
         }
     }
@@ -363,46 +363,46 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
     }
 
-    override fun <T: OpusControlEvent> replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+    override fun <T: OpusControlEvent> controller_global_replace_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
         this.lock_ui_partial {
-            super.replace_global_ctl_tree(type, beat, position, tree)
+            super.controller_global_replace_tree(type, beat, position, tree)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun <T: OpusControlEvent> replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+    override fun <T: OpusControlEvent> controller_channel_replace_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
         this.lock_ui_partial {
-            super.replace_channel_ctl_tree(type, channel, beat, position, tree)
+            super.controller_channel_replace_tree(type, channel, beat, position, tree)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun <T: OpusControlEvent> replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
+    override fun <T: OpusControlEvent> controller_line_replace_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
         this.lock_ui_partial {
-            super.replace_line_ctl_tree(type, beat_key, position, tree)
+            super.controller_line_replace_tree(type, beat_key, position, tree)
             this._queue_line_ctl_cell_change(type, beat_key)
         }
     }
 
-    override fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
+    override fun <T: OpusControlEvent> controller_global_set_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
         this.lock_ui_partial {
-            super.set_global_ctl_event(type, beat, position, event)
+            super.controller_global_set_event(type, beat, position, event)
             this._queue_global_ctl_cell_change(type, beat)
             this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
-    override fun <T: OpusControlEvent> set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
+    override fun <T: OpusControlEvent> controller_channel_set_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
         this.lock_ui_partial {
-            super.set_channel_ctl_event(type, channel, beat, position, event)
+            super.controller_channel_set_event(type, channel, beat, position, event)
             this._queue_channel_ctl_cell_change(type, channel, beat)
             this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
-    override fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
+    override fun <T: OpusControlEvent> controller_line_set_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
         this.lock_ui_partial {
-            super.set_line_ctl_event(type, beat_key, position, event)
+            super.controller_line_set_event(type, beat_key, position, event)
             this._queue_line_ctl_cell_change(type, beat_key)
             this.ui_change_bill.queue_refresh_context_menu()
         }
@@ -468,16 +468,16 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+    override fun controller_global_split_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
-            super.split_global_ctl_tree(type, beat, position, splits, move_event_to_end)
+            super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+    override fun controller_channel_split_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
-            super.split_channel_ctl_tree(type, channel, beat, position, splits, move_event_to_end)
+            super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
 
             if (this.percussion_channel.visible || !this.is_percussion(channel)) {
                 this._queue_channel_ctl_cell_change(type, channel, beat)
@@ -485,9 +485,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+    override fun controller_line_split_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
-            super.split_line_ctl_tree(type, beat_key, position, splits, move_event_to_end)
+            super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
 
             if (this.percussion_channel.visible || !this.is_percussion(beat_key.channel)) {
                 this._queue_line_ctl_cell_change(type, beat_key)
@@ -530,23 +530,23 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun insert_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+    override fun controller_global_insert(type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.insert_global_ctl(type, beat, position)
+            super.controller_global_insert(type, beat, position)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun insert_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+    override fun controller_channel_insert(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.insert_channel_ctl(type, channel, beat, position)
+            super.controller_channel_insert(type, channel, beat, position)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun insert_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+    override fun controller_line_insert(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.insert_line_ctl(type, beat_key, position)
+            super.controller_line_insert(type, beat_key, position)
             this._queue_line_ctl_cell_change(type, beat_key)
         }
     }

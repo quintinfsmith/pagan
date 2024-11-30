@@ -597,7 +597,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     CtlLineLevel.Line -> TODO()
                     CtlLineLevel.Channel -> TODO()
                     CtlLineLevel.Global -> {
-                        opus_manager.split_global_ctl_tree(
+                        opus_manager.controller_global_split_tree(
                             cursor.ctl_type!!,
                             cursor.beat,
                             cursor.position,

@@ -159,11 +159,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             }
             new_modulators[key] = new_modulators[key]!! + modulators
         }
-
+        val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 100F
         return SampleHandle(
             data = SampleData(data),
             sample_rate = sample_rate,
-            pan = (sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 500F,
+            pan = pan,
             pitch_shift = pitch_shift,
             initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
             stereo_mode = sample_directive.sample!!.sampleType,

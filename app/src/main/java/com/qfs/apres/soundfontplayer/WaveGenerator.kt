@@ -220,8 +220,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
             }
 
+            // Adjust manual pan
             val working_pan = sample_handle.pan_profile?.get_next() ?: 0F
-
             working_int_array[(f * 2)] += right_value * if (working_pan >= 0f) {
                 1F
             }  else {

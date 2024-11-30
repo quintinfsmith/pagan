@@ -39,11 +39,11 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun new_line(channel: Int, line_offset: Int?) {
         super.new_line(channel, line_offset)
-        this._post_new_line(channel, line_offset ?: (this.get_all_channels()[channel].lines.size - 1))
+        this.cursor_select_line(channel, line_offset ?: (this.get_all_channels()[channel].lines.size - 1))
     }
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         super.insert_line(channel, line_offset, line)
-        this._post_new_line(channel, line_offset)
+        this.cursor_select_line(channel, line_offset)
     }
 
     override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
@@ -91,7 +91,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
 
         val channels = this.get_all_channels()
-        val next_line = max(0, min(line_offset, channels[channel].size))
+        val next_line = max(0, min(line_offset, channels[channel].size - 1))
         this.cursor_select_line(channel, next_line)
 
         return output

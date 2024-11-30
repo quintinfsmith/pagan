@@ -1,4 +1,6 @@
 package com.qfs.pagan.opusmanager
+import com.qfs.apres.Midi
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -171,7 +173,73 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
+    override fun _apply_column_trees(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>) {
+        super._apply_column_trees(beat_index, beats_in_column)
+    }
 
+    override fun _project_change_json(json_data: JSONHashMap) {
+        super._project_change_json(json_data)
+    }
+
+    override fun _project_change_midi(midi: Midi) {
+        super._project_change_midi(midi)
+    }
+
+    override fun _project_change_new() {
+        super._project_change_new()
+    }
+
+    override fun convert_event_to_absolute(beat_key: BeatKey, position: List<Int>) {
+        super.convert_event_to_absolute(beat_key, position)
+    }
+
+    override fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
+        super.convert_event_to_relative(beat_key, position)
+    }
+
+    override fun convert_events_in_beat_to_absolute(beat: Int) {
+        super.convert_events_in_beat_to_absolute(beat)
+    }
+
+    override fun convert_events_in_beat_to_relative(beat: Int) {
+        super.convert_events_in_beat_to_relative(beat)
+    }
+
+    override fun convert_events_in_line_to_absolute(channel: Int, line_offset: Int) {
+        super.convert_events_in_line_to_absolute(channel, line_offset)
+    }
+
+    override fun convert_events_in_line_to_relative(channel: Int, line_offset: Int) {
+        super.convert_events_in_line_to_relative(channel, line_offset)
+    }
+
+    override fun convert_events_in_tree_to_absolute(beat_key: BeatKey, position: List<Int>) {
+        super.convert_events_in_tree_to_absolute(beat_key, position)
+    }
+
+    override fun convert_events_in_tree_to_relative(beat_key: BeatKey, position: List<Int>) {
+        super.convert_events_in_tree_to_relative(beat_key, position)
+    }
+
+    override fun insert(beat_key: BeatKey, position: List<Int>) {
+        super.insert(beat_key, position)
+    }
+
+    override fun insert_after(beat_key: BeatKey, position: List<Int>) {
+        super.insert_after(beat_key, position)
+    }
+
+    override fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        super.insert_after_channel_ctl(type, channel, beat, position)
+    }
+
+    override fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        super.insert_after_global_ctl(type, beat, position)
+    }
+
+    override fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        super.insert_after_line_ctl(type, beat_key, position)
+    }
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
@@ -570,7 +638,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         )
     }
     fun remove_line_at_cursor(count: Int) {
-        this.remove_lines(
+        this.remove_line_repeat(
             this.cursor.channel,
             this.cursor.line_offset,
             count

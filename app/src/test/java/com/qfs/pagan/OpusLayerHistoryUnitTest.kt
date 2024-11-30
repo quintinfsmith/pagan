@@ -230,7 +230,7 @@ class HistoryCacheUnitTest {
 
         manager.new_line_repeat(0,0,4)
         this.undo_and_check(manager) {
-            it.remove_lines(0,0,4)
+            it.remove_line_repeat(0,0,4)
         }
 
     }

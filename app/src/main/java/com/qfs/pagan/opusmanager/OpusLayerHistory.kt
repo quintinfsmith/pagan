@@ -853,9 +853,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
         this.history_cache.unlock()
     }
 
-    override fun remove_lines(channel: Int, line_offset: Int, count: Int) {
+    override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
         this._remember {
-            super.remove_lines(channel, line_offset, count)
+            super.remove_line_repeat(channel, line_offset, count)
         }
     }
 
@@ -1727,12 +1727,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 )
             }
             super.set_channel_visibility(channel_index, visibility)
-        }
-    }
-
-    override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        this._remember {
-            super.toggle_line_controller_visibility(type, channel_index, line_offset)
         }
     }
 

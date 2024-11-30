@@ -47,9 +47,6 @@ open class OpusLayerBase {
 
     class EmptyPath : Exception("Path Required but not given")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey): Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
-    class BlockedTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedTreeException): Exception()
-    class BlockedLineCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedLineCtlTreeException): Exception()
-    class BlockedChannelCtlTreeException(var channel: Int, var e: OpusChannelAbstract.BlockedCtlTreeException): Exception()
     class BlockedActionException(msg: String? = null): Exception(msg) // Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
 
     companion object {
@@ -303,7 +300,6 @@ open class OpusLayerBase {
             }
         }
     }
-
 
     private var _channel_uuid_map = HashMap<Int, OpusChannel>()
 
@@ -966,7 +962,6 @@ open class OpusLayerBase {
     fun has_percussion(): Boolean {
         return !this.percussion_channel.is_empty()
     }
-
     //// END RO Functions ////
 
     fun get_relative_value(beat_key: BeatKey, position: List<Int>): Int? {
@@ -1134,6 +1129,10 @@ open class OpusLayerBase {
         )
     }
 
+    /*
+     * ---------------------------- 1st Order Functions ---------------------------
+     * These are the base write functions. All of them need to be implimented at higher Layers for the Opus Editor to work correctly
+     */
     /**
      * Insert a new tree @ [beat_key]/[position]
      *
@@ -1185,7 +1184,6 @@ open class OpusLayerBase {
         tree.insert(index)
     }
 
-
     /**
      * Insert a new tree after [beat_key]/[position]
      *
@@ -1196,12 +1194,6 @@ open class OpusLayerBase {
             throw BadInsertPosition()
         }
         this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].insert_after(beat_key.beat, position)
-    }
-
-    open fun insert_after_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int = 1) {
-        for (i in 0 until repeat) {
-            this.insert_after(beat_key, position)
-        }
     }
 
     open fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -1226,132 +1218,384 @@ open class OpusLayerBase {
         this.controllers.get_controller<OpusControlEvent>(type).insert_after(beat, position)
     }
 
-    /**
-     * Remove tree @ [beat_key]/[position] if it's not a top-level tree
+    open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
+        if (!this.is_percussion(beat_key.channel)) {
+            throw PercussionEventSet()
+        }
+
+        val tree = this.get_percussion_tree(beat_key.line_offset, beat_key.beat, position)
+        if (tree.is_event()) {
+            tree.unset_event()
+        }
+
+        tree.set_event(PercussionEvent())
+    }
+
+    open fun set_percussion_instrument(line_offset: Int, instrument: Int) {
+        this.percussion_channel.set_instrument(line_offset, instrument)
+    }
+
+    open fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
+        if (!this.is_percussion(channel)) {
+            this.set_channel_bank(channel, instrument.first)
+        }
+        this.set_channel_program(channel, instrument.second)
+    }
+
+    open fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            if (this.is_percussion(beat_key.channel)) {
+                this.percussion_channel.set_event(beat_key.line_offset, beat_key.beat, position, event as PercussionEvent)
+            } else {
+                this.channels[beat_key.channel].set_event(beat_key.line_offset, beat_key.beat, position, event as TunedInstrumentEvent)
+            }
+        }
+    }
+
+    open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            if (this.is_percussion(beat_key.channel)) {
+                this.percussion_channel.replace_tree(
+                    beat_key.line_offset,
+                    beat_key.beat,
+                    position,
+                    (tree as OpusTree<PercussionEvent>)
+                )
+            } else {
+                this.channels[beat_key.channel].replace_tree(
+                    beat_key.line_offset,
+                    beat_key.beat,
+                    position,
+                    (tree as OpusTree<TunedInstrumentEvent>)
+                )
+            }
+        }
+    }
+
+    open fun <T: OpusControlEvent> replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            val tree_copy = tree.copy(this::copy_control_event)
+            this.get_all_channels()[beat_key.channel].replace_line_control_leaf(type, beat_key.line_offset, beat_key.beat, position ?: listOf(), tree_copy)
+        }
+    }
+
+    open fun <T: OpusControlEvent> replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+        this.catch_blocked_tree_exception(channel) {
+            val tree_copy = tree.copy(this::copy_control_event)
+            this.get_all_channels()[channel].replace_channel_control_leaf(type, beat, position ?: listOf(), tree_copy)
+        }
+    }
+
+    open fun <T: OpusControlEvent> replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+        this.catch_global_ctl_blocked_tree_exception(type) {
+            val tree_copy = tree.copy(this::copy_control_event)
+            val controller = this.controllers.get_controller<T>(type)
+            controller.replace_tree(
+                beat,
+                position ?: listOf(),
+                tree_copy
+            )
+        }
+    }
+
+    open fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            this.get_all_channels()[beat_key.channel].set_line_controller_event(type, beat_key.line_offset, beat_key.beat, position, event)
+        }
+    }
+
+    open fun <T: OpusControlEvent> set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
+        this.catch_blocked_tree_exception(channel) {
+            this.get_all_channels()[channel].set_controller_event(type, beat, position, event)
+        }
+    }
+
+    open fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
+        this.catch_global_ctl_blocked_tree_exception(type) {
+            this.controllers.get_controller<T>(type).set_event(beat, position, event)
+        }
+    }
+
+    open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].split_tree(beat_key.beat, position, splits, move_event_to_end)
+    }
+
+    open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type).split_tree(beat_key.beat, position, splits, move_event_to_end)
+    }
+
+    open fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).split_tree(beat, position, splits, move_event_to_end)
+    }
+
+    open fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
+        this.catch_global_ctl_blocked_tree_exception(type) {
+            this.controllers.get_controller<OpusControlEvent>(type).split_tree(beat, position, splits, move_event_to_end)
+        }
+    }
+
+    open fun unset(beat_key: BeatKey, position: List<Int>) {
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].unset(beat_key.beat, position)
+    }
+
+    open fun unset_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type).unset(beat_key.beat, position)
+    }
+
+    open fun unset_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).unset(beat, position)
+    }
+
+    open fun unset_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        this.controllers.get_controller<OpusControlEvent>(type).unset(beat, position)
+    }
+
+    open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null) {
+        val new_channel = OpusChannel(uuid ?: OpusLayerBase.gen_channel_uuid())
+        new_channel.set_beat_count(this.beat_count)
+
+        new_channel.midi_channel = this.get_next_available_midi_channel()
+
+        this._channel_uuid_map[new_channel.uuid] = new_channel
+        for (i in 0 until lines) {
+            new_channel.new_line(i)
+        }
+
+        val new_channel_index = channel ?: this.channels.size
+        this.channels.add(new_channel_index, new_channel)
+
+        this.recache_line_maps()
+    }
+
+    open fun remove_channel(channel: Int) {
+        val opus_channel = this.channels.removeAt(channel)
+        this._channel_uuid_map.remove(opus_channel.uuid)
+        this.recache_line_maps()
+    }
+
+    open fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        if (this.is_percussion(channel_a) != this.is_percussion(channel_b)) {
+            throw IncompatibleChannelException(channel_a, channel_b)
+        }
+        if (this.is_percussion(channel_a)) {
+            val tmp_value = this.percussion_channel.lines[line_a].instrument
+            this.percussion_channel.lines[line_a].instrument = this.percussion_channel.lines[line_b].instrument
+            this.percussion_channel.lines[line_b].instrument = tmp_value
+            val tmp_line = this.percussion_channel.lines[line_a]
+            this.percussion_channel.lines[line_a] = this.percussion_channel.lines[line_b]
+            this.percussion_channel.lines[line_b] = tmp_line
+        } else {
+            val tmp_line = this.channels[channel_a].lines[line_a]
+            this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]
+            this.channels[channel_b].lines[line_b] = tmp_line
+        }
+        this.recache_line_maps()
+    }
+
+    open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>? = null) {
+        if (beat_index > this.beat_count) {
+            throw IndexOutOfBoundsException()
+        }
+
+        this.beat_count += 1
+        for (channel in this.channels) {
+            channel.insert_beat(beat_index)
+        }
+
+        this.percussion_channel.insert_beat(beat_index)
+        this.controllers.insert_beat(beat_index)
+
+        if (beats_in_column != null) {
+            this._apply_column_trees(beat_index, beats_in_column)
+        }
+    }
+
+    open fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
+        if (line is OpusLine) {
+            if (this.is_percussion(channel)) {
+                // TODO: Specify Exception
+                throw Exception()
+            }
+            this.channels[channel].insert_line(line_offset, line)
+        } else if (line is OpusLinePercussion) {
+            if (!this.is_percussion(channel)) {
+                // TODO: SpecifyException
+                throw Exception()
+            }
+            this.percussion_channel.insert_line(line_offset, line)
+        }
+        this.recache_line_maps()
+    }
+
+    open fun new_line(channel: Int, line_offset: Int? = null) {
+        val working_channel = this.get_channel(channel)
+        working_channel.new_line(line_offset ?: working_channel.lines.size)
+        this.recache_line_maps()
+    }
+
+    open fun remove_beat(beat_index: Int, count: Int = 1) {
+        if (this.beat_count <= count) {
+            throw RemovingLastBeatException()
+        }
+        this.blocked_check_remove_beat(beat_index, count)
+        val working_beat_index = min(beat_index, this.beat_count - count)
+        if (working_beat_index < 0 || working_beat_index + count > this.beat_count) {
+
+            throw IndexOutOfBoundsException()
+        }
+
+        this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+            channel.remove_beat(working_beat_index, count)
+        }
+        this.percussion_channel.remove_beat(working_beat_index, count)
+
+        for ((_, controller) in this.controllers.get_all()) {
+            controller.remove_beat(working_beat_index, count)
+        }
+
+        this.beat_count -= count
+    }
+
+    open fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
+        val output = this.get_channel(channel).remove_line(line_offset)
+        this.recache_line_maps()
+        return output
+    }
+
+    open fun set_project_name(new_name: String?) {
+        this.project_name = new_name
+    }
+
+    open fun set_transpose(new_transpose: Int) {
+        this.transpose = new_transpose
+    }
+
+    open fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean = true) {
+        val previous_radix = this.tuning_map.size
+
+        val original = this.tuning_map
+        this.tuning_map = new_map.clone()
+
+        if (! mod_events || new_map.size == original.size) {
+            return
+        }
+
+        val radix = new_map.size
+
+        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
+            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
+                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
+                    beat_tree.traverse { tree: OpusTree<TunedInstrumentEvent>, event: TunedInstrumentEvent? ->
+                        if (event == null) {
+                            return@traverse
+                        }
+
+                        val position = tree.get_path()
+                        val new_event = when (event) {
+                            is AbsoluteNoteEvent -> {
+                                val new_event = event.copy()
+                                new_event.note = event.note * radix / previous_radix
+                                new_event
+
+                            }
+                            is RelativeNoteEvent -> {
+                                val new_event = event.copy()
+                                new_event.offset = event.offset * radix / previous_radix
+                                new_event
+                            }
+
+                            else -> {
+                                return@traverse
+                            }
+                        }
+
+
+                        this.set_event(
+                            BeatKey(i, j, k),
+                            position,
+                            new_event
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    open fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        line.controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    open fun new_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        line.controllers.get_controller<OpusControlEvent>(type)
+        this.recache_line_maps()
+    }
+
+    open fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        val controller = line.controllers.get_controller<OpusControlEvent>(type)
+        controller.visible = visibility
+        this.recache_line_maps()
+    }
+
+    open fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        channel.controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    open fun new_channel_controller(type: ControlEventType, channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        channel.controllers.get_controller<OpusControlEvent>(type)
+
+        this.recache_line_maps()
+    }
+
+    open fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
+        val channel = this.get_all_channels()[channel_index]
+        val controller = channel.controllers.get_controller<OpusControlEvent>(type)
+        controller.visible = visibility
+        this.recache_line_maps()
+    }
+
+    open fun remove_global_controller(type: ControlEventType) {
+        this.controllers.remove_controller(type)
+        this.recache_line_maps()
+    }
+
+    open fun new_global_controller(type: ControlEventType) {
+        this.controllers.new_controller(type)
+        this.controllers.get_controller<OpusControlEvent>(type)
+        this.recache_line_maps()
+    }
+
+    open fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
+        val controller = this.controllers.get_controller<OpusControlEvent>(type)
+        controller.visible = visibility
+        this.recache_line_maps()
+    }
+
+    open fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
+        val channel = this.get_all_channels()[channel_index]
+        channel.visible = visibility
+        this.recache_line_maps()
+    }
+
+    /*
+     * ---------------------------- 2nd Order Functions ---------------------------
+     * Convenience functions. These are functions to call 1st order functions (or other 2nd order functions). This could be
+     * in the case of needing to call them multiple times or needing to use the 1st order functions to
+     * achieve an ostensibly different function (eg, remove_one_of_two is actually a replace_tree where the parent is replaced by one of the children)
+     * Creating repeater functions here also allows the history layer to group actions together more easily.
      */
-    open fun remove(beat_key: BeatKey, position: List<Int>) {
-        // Can't remove beat
-        if (position.isEmpty()) {
-            throw RemovingRootException()
-        }
-
-        val tree = this.get_tree(beat_key, position)
-        val parent_tree = tree.parent!!
-
-        when (parent_tree.size) {
-            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
-            1 -> throw Exception("SINGLE")
-            2 -> this.remove_one_of_two(beat_key, position)
-            else -> this.remove_standard(beat_key, position)
-        }
-    }
-
-    open fun remove_repeat(beat_key: BeatKey, position: List<Int>, count: Int = 1) {
-        val adj_position = position.toMutableList()
-        for (i in 0 until count) {
-            val tree = this.get_tree(beat_key, adj_position)
-            val parent_size = tree.parent?.size ?: 0
-            this.remove(beat_key, adj_position)
-
-            if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
-            } else if (adj_position.last() == parent_size - 1) {
-                adj_position[adj_position.size - 1] -= 1
-            }
-        }
-    }
-
-
-    open fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw RemovingRootException()
-        }
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position)
-        val parent_tree = tree.parent!!
-
-        when (parent_tree.size) {
-            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
-            2 -> this.remove_channel_ctl_one_of_two(type, channel, beat, position)
-            else -> this.remove_channel_ctl_standard(type, channel, beat, position)
-        }
-    }
-
-    open fun remove_channel_ctl_repeat(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, repeat: Int = 1) {
-        val adj_position = position.toMutableList()
+    open fun insert_after_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int = 1) {
         for (i in 0 until repeat) {
-            val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, beat, channel, adj_position)
-            val parent_size = tree.parent?.size ?: 0
-
-            this.remove_channel_ctl(type, channel, beat, adj_position)
-
-            if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
-            } else if (adj_position.last() == parent_size - 1) {
-                adj_position[adj_position.size - 1] -= 1
-            }
-        }
-    }
-
-    open fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        // Can't remove beat
-        if (position.isEmpty()) {
-            throw RemovingRootException()
-        }
-
-        val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position)
-
-
-        val parent_tree = tree.parent!!
-
-        when (parent_tree.size) {
-            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
-            2 -> this.remove_line_ctl_one_of_two(type, beat_key, position)
-            else -> this.remove_line_ctl_standard(type, beat_key, position)
-        }
-    }
-
-    open fun remove_line_ctl_repeat(type: ControlEventType, beat_key: BeatKey, position: List<Int>, count: Int) {
-        val adj_position = position.toMutableList()
-        for (i in 0 until count) {
-            val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, adj_position)
-            val parent_size = tree.parent?.size ?: 0
-
-            this.remove_line_ctl(type, beat_key, adj_position)
-            if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
-            } else if (adj_position.last() == parent_size - 1) {
-                adj_position[adj_position.size - 1] -= 1
-            }
-        }
-    }
-
-    open fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw RemovingRootException()
-        }
-
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, position)
-
-        val parent_tree = tree.parent!!
-        when (parent_tree.size) {
-            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
-            2 -> this.remove_global_ctl_one_of_two(type, beat, position)
-            else -> this.remove_global_ctl_standard(type, beat, position)
-        }
-    }
-    open fun remove_global_ctl_repeat(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
-        val adj_position = position.toMutableList()
-        for (i in 0 until count) {
-            val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, adj_position)
-            val parent_size = tree.parent?.size ?: 0
-
-            this.remove_global_ctl(type, beat, adj_position)
-
-            if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
-            } else if (adj_position.last() == parent_size - 1) {
-                adj_position[adj_position.size - 1] -= 1
-            }
+            this.insert_after(beat_key, position)
         }
     }
 
@@ -1410,6 +1654,480 @@ open class OpusLayerBase {
         this.replace_global_ctl_tree(type, beat, prev_position, to_replace)
     }
 
+    open fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
+        // TODO: I don't think size == 0 needs to be checked here, maybe
+        //  AND should LastLineException be caught or allow to propagate here?
+        for (i in 0 until count) {
+            val working_channel = this.get_channel(channel)
+            if (working_channel.size == 0) {
+                break
+            }
+            try {
+                this.remove_line(
+                    channel,
+                    min(line_offset, working_channel.size - 1)
+                )
+            } catch (e: OpusChannelAbstract.LastLineException) {
+                break
+            }
+        }
+    }
+
+    open fun insert_beats(beat_index: Int, count: Int) {
+        for (i in 0 until count) {
+            this.insert_beat(beat_index)
+        }
+    }
+
+    open fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
+        for (i in 0 until count) {
+            this.new_line(channel, line_offset)
+        }
+    }
+
+    open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        val from_tree = this.get_tree_copy(beatkey_from, position_from)
+        this.unset(beatkey_from, position_from)
+        this.replace_tree(beatkey_to, position_to, from_tree)
+    }
+
+    open fun move_global_ctl_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
+        val from_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat_from, position_from).copy(this::copy_control_event)
+        this.unset_global_ctl(type, beat_from, position_from)
+        this.replace_global_ctl_tree(type, beat_to, position_to, from_tree)
+    }
+    open fun move_channel_ctl_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        val from_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel_from, beat_from, position_from).copy(this::copy_control_event)
+        this.unset_channel_ctl(type, channel_from, beat_from, position_from)
+        this.replace_channel_ctl_tree(type, channel_to, beat_to, position_to, from_tree)
+    }
+    open fun move_line_ctl_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        val from_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beatkey_from, position_from).copy(this::copy_control_event)
+        this.unset_line_ctl(type, beatkey_from, position_from)
+        this.replace_line_ctl_tree(type, beatkey_to, position_to, from_tree)
+    }
+
+    private fun _copy_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int, unset_original: Boolean = false) {
+        if (target + (end - start) >= this.beat_count) {
+            throw IndexOutOfBoundsException()
+        }
+
+        val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
+        val controller = this.controllers.get_controller<OpusControlEvent>(type)
+
+        for (i in start .. end) {
+            overwrite_map[target + (i - start)] = controller.get_tree(i).copy(this::copy_control_event)
+            if (unset_original) {
+                this.unset_global_ctl(type, i, listOf())
+            }
+        }
+
+        for ((beat, tree) in overwrite_map) {
+            this.replace_global_ctl_tree(type, beat, null, tree)
+        }
+    }
+
+    open fun overwrite_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
+        this._copy_global_ctl_range(type, target, start, end, false)
+    }
+
+    open fun move_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
+        this._copy_global_ctl_range(type, target, start, end, true)
+    }
+
+    private fun _copy_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int, unset_original: Boolean) {
+        if (target_beat + (end - start) >= this.beat_count) {
+            throw IndexOutOfBoundsException()
+        }
+
+        val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
+        val original_controller = this.channels[original_channel].controllers.get_controller<OpusControlEvent>(type)
+
+        for (i in start .. end) {
+            overwrite_map[target_beat + (i - start)] = original_controller.get_tree(i).copy(this::copy_control_event)
+            if (unset_original) {
+                this.unset_channel_ctl(type, original_channel, i, listOf())
+            }
+        }
+
+        for ((beat, tree) in overwrite_map) {
+            this.replace_channel_ctl_tree(type, target_channel, beat, null, tree)
+        }
+    }
+
+    open fun overwrite_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
+        this._copy_channel_ctl_range(
+            type,
+            target_channel,
+            target_beat,
+            original_channel,
+            start,
+            end,
+            false
+        )
+    }
+
+    open fun move_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
+        this._copy_channel_ctl_range(
+            type,
+            target_channel,
+            target_beat,
+            original_channel,
+            start,
+            end,
+            true
+        )
+    }
+
+    private fun _copy_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+
+        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
+        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
+
+        for (i in original_keys.indices) {
+            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
+                throw MixedInstrumentException(original_keys[i], target_keys[i])
+            }
+        }
+
+        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
+        val trees = mutableListOf<OpusTree<OpusControlEvent>>()
+        for (o_key in original_keys) {
+            trees.add(this.get_line_ctl_tree<OpusControlEvent>(type, o_key).copy(this::copy_control_event))
+        }
+
+        for (i in target_keys.indices) {
+            this.replace_line_ctl_tree(
+                type,
+                target_keys[i],
+                null,
+                trees[i]
+            )
+        }
+
+        if (unset_original) {
+            for (clear_key in (original_keys - target_keys)) {
+                this.unset_line_ctl(type, clear_key, listOf())
+            }
+        }
+    }
+
+    open fun overwrite_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this._copy_line_ctl_range(type, beat_key, first_corner, second_corner, false)
+    }
+
+    open fun move_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this._copy_line_ctl_range(type, beat_key, first_corner, second_corner, true)
+    }
+
+    open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+
+        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
+        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
+
+        for (i in original_keys.indices) {
+            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
+                throw MixedInstrumentException(original_keys[i], target_keys[i])
+            }
+        }
+
+        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
+        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
+        for (o_key in original_keys) {
+            trees.add(this.get_tree_copy(o_key))
+        }
+
+        for (i in trees.indices) {
+            this.replace_tree(
+                target_keys[i],
+                null,
+                trees[i]
+            )
+        }
+    }
+
+    open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+
+        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
+        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
+
+        for (i in original_keys.indices) {
+            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
+                throw MixedInstrumentException(original_keys[i], target_keys[i])
+            }
+        }
+
+        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
+        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
+        for (o_key in original_keys) {
+            trees.add(this.get_tree_copy(o_key))
+        }
+
+        for (clear_key in original_keys) {
+            this.unset(clear_key, listOf())
+        }
+
+        for (clear_key in target_keys) {
+            this.unset(clear_key, listOf())
+        }
+
+        for (i in target_keys.indices) {
+            this.replace_tree(
+                target_keys[i],
+                null,
+                trees[i]
+            )
+        }
+    }
+
+    open fun unset_line(channel: Int, line_offset: Int) {
+        val line = this.get_all_channels()[channel].lines[line_offset]
+        for (beat in 0 until this.beat_count) {
+            val tree = line.get_tree(beat)
+            if (tree.is_eventless()) {
+                continue
+            }
+            this.unset(BeatKey(channel, line_offset, beat), listOf())
+        }
+    }
+    open fun unset_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
+        val controller = this.get_all_channels()[channel].lines[line_offset].get_controller<OpusControlEvent>(type)
+        for (beat in 0 until this.beat_count) {
+            val line_ctl_tree = controller.get_tree(beat)
+            if (line_ctl_tree.is_eventless()) {
+                continue
+            }
+            this.unset_line_ctl(type, BeatKey(channel, line_offset, beat), listOf())
+        }
+    }
+    open fun unset_channel_ctl_line(type: ControlEventType, channel: Int) {
+        val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
+        for (beat in 0 until this.beat_count) {
+            val line_ctl_tree = controller.get_tree(beat)
+            if (line_ctl_tree.is_eventless()) {
+                continue
+            }
+            this.unset_channel_ctl(type, channel, beat, listOf())
+        }
+    }
+    open fun unset_global_ctl_line(type: ControlEventType) {
+        val controller = this.controllers.get_controller<OpusControlEvent>(type)
+        for (beat in 0 until this.beat_count) {
+            val line_ctl_tree = controller.get_tree(beat)
+            if (line_ctl_tree.is_eventless()) {
+                continue
+            }
+            this.unset_global_ctl(type, beat, listOf())
+        }
+    }
+
+    open fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {
+        for (selected_key in this.get_beatkeys_in_range(first_corner, second_corner)) {
+            this.unset(selected_key, listOf())
+        }
+    }
+
+    open fun unset_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        for (i in first_beat .. second_beat) {
+            this.unset_global_ctl(type, i, listOf())
+        }
+    }
+
+    open fun unset_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        for (i in first_beat .. second_beat) {
+            this.unset_channel_ctl(type, channel, i, listOf())
+        }
+    }
+
+    open fun unset_line_ctl_range(type: ControlEventType, first_corner: BeatKey, second_corner: BeatKey) {
+        for (selected_key in this.get_beatkeys_in_range(first_corner, second_corner)) {
+            this.unset_line_ctl(type, selected_key, listOf())
+        }
+    }
+
+    open fun unset_beat(beat: Int) {
+        /* Clear STD channels ----------------------------------*/
+        for (i in 0 until this.channels.size) {
+            val channel = this.channels[i]
+            for (j in 0 until channel.lines.size) {
+                val line = channel.lines[j]
+                this.unset(BeatKey(i, j, beat), listOf())
+                for ((type, controller) in line.controllers.get_all()) {
+                    this.unset_line_ctl(type, BeatKey(i, j, beat), listOf())
+                }
+
+            }
+            for ((type, controller) in channel.controllers.get_all()) {
+                this.unset_channel_ctl(type, i, beat, listOf())
+            }
+        }
+        /*-------------------------------------------------------*/
+
+        /* Clear percussion ------------------------------------*/
+        for (j in 0 until this.percussion_channel.lines.size) {
+            val beat_key = BeatKey(this.channels.size, j, beat)
+            val line = this.percussion_channel.lines[j]
+            this.unset(beat_key, listOf())
+            for ((type, controller) in line.controllers.get_all()) {
+                this.unset_line_ctl(type, beat_key, listOf())
+            }
+
+        }
+        for ((type, controller) in this.percussion_channel.controllers.get_all()) {
+            this.unset_channel_ctl(type, this.channels.size, beat, listOf())
+        }
+        /*-------------------------------------------------------*/
+
+        for ((type, controller) in this.controllers.get_all()) {
+            this.unset_global_ctl(type, beat, listOf())
+        }
+    }
+
+    open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this.catch_blocked_tree_exception(beat_key.channel) {
+            val tree = this.get_tree(beat_key, position)
+            if (!tree.is_event()) {
+                throw EventlessTreeException()
+            }
+            val new_event = tree.event!!.copy()
+            new_event.duration = duration
+            this.set_event(beat_key, position, new_event)
+        }
+    }
+
+    /**
+     * Remove tree @ [beat_key]/[position] if it's not a top-level tree
+     */
+    open fun remove(beat_key: BeatKey, position: List<Int>) {
+        // Can't remove beat
+        if (position.isEmpty()) {
+            throw RemovingRootException()
+        }
+
+        val tree = this.get_tree(beat_key, position)
+        val parent_tree = tree.parent!!
+
+        when (parent_tree.size) {
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
+            1 -> throw Exception("SINGLE")
+            2 -> this.remove_one_of_two(beat_key, position)
+            else -> this.remove_standard(beat_key, position)
+        }
+    }
+
+    open fun remove_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+
+        // Can't remove beat
+        if (position.isEmpty()) {
+            throw RemovingRootException()
+        }
+
+        val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position)
+
+
+        val parent_tree = tree.parent!!
+
+        when (parent_tree.size) {
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
+            2 -> this.remove_line_ctl_one_of_two(type, beat_key, position)
+            else -> this.remove_line_ctl_standard(type, beat_key, position)
+        }
+    }
+
+    open fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw RemovingRootException()
+        }
+        val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position)
+        val parent_tree = tree.parent!!
+
+        when (parent_tree.size) {
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
+            2 -> this.remove_channel_ctl_one_of_two(type, channel, beat, position)
+            else -> this.remove_channel_ctl_standard(type, channel, beat, position)
+        }
+    }
+
+    open fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+        if (position.isEmpty()) {
+            throw RemovingRootException()
+        }
+
+        val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, position)
+
+        val parent_tree = tree.parent!!
+        when (parent_tree.size) {
+            // 1 Shouldn't be able to happen and this isn't the place to check for that failure
+            2 -> this.remove_global_ctl_one_of_two(type, beat, position)
+            else -> this.remove_global_ctl_standard(type, beat, position)
+        }
+    }
+
+    open fun remove_repeat(beat_key: BeatKey, position: List<Int>, count: Int = 1) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until count) {
+            val tree = this.get_tree(beat_key, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+            this.remove(beat_key, adj_position)
+
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
+        }
+    }
+
+    open fun remove_line_ctl_repeat(type: ControlEventType, beat_key: BeatKey, position: List<Int>, count: Int) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until count) {
+            val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+
+            this.remove_line_ctl(type, beat_key, adj_position)
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
+        }
+    }
+
+    open fun remove_channel_ctl_repeat(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, repeat: Int = 1) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until repeat) {
+            val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, beat, channel, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+
+            this.remove_channel_ctl(type, channel, beat, adj_position)
+
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
+        }
+    }
+
+    open fun remove_global_ctl_repeat(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until count) {
+            val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+
+            this.remove_global_ctl(type, beat, adj_position)
+
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
+        }
+    }
+
     /*
         remove_one_of_two and remove_standard all exist so I could separate
         them and use the "forget" wrapper at the History layer
@@ -1438,34 +2156,166 @@ open class OpusLayerBase {
         }
     }
 
-    open fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
-        if (!this.is_percussion(beat_key.channel)) {
-            throw PercussionEventSet()
+    open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(first_key, second_key)
+        for (key_list in beat_keys) {
+            if (key_list.isEmpty()) {
+                continue
+            }
+            for (i in 1 until key_list.size) {
+                val overwrite_key = key_list[i]
+                this.replace_tree(
+                    overwrite_key,
+                    null,
+                    this.get_tree_copy(key_list[0])
+                )
+            }
         }
-
-        val tree = this.get_percussion_tree(beat_key.line_offset, beat_key.beat, position)
-        if (tree.is_event()) {
-            tree.unset_event()
-        }
-
-        tree.set_event(PercussionEvent())
     }
 
-    open fun set_percussion_instrument(line_offset: Int, instrument: Int) {
-        this.percussion_channel.set_instrument(line_offset, instrument)
-    }
+    open fun overwrite_global_ctl_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        val start = min(first_beat, second_beat)
+        val end = max(first_beat, second_beat)
 
-    open fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        if (!this.is_percussion(channel)) {
-            this.set_channel_bank(channel, instrument.first)
+        val width = (end - start) + 1
+        val count = ((this.beat_count - start) / width) - 1
+        for (i in 0 until width) {
+            for (j in 0 until count) {
+                this.replace_global_ctl_tree(
+                    type,
+                    ((j + 1) * width) + (i + start),
+                    null,
+                    this.get_global_ctl_tree<OpusControlEvent>(type, (i + start)).copy(this::copy_control_event)
+                )
+            }
         }
-        this.set_channel_program(channel, instrument.second)
     }
 
+    open fun overwrite_line_ctl_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
+
+        val width = (to_key.beat - from_key.beat) + 1
+        val count = ((this.beat_count - from_key.beat) / width) - 1
+        val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
+        for (beat_key in beat_keys) {
+            val working_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
+            for (i in 0 until count) {
+                val to_overwrite = BeatKey(
+                    beat_key.channel,
+                    beat_key.line_offset,
+                    beat_key.beat + ((i + 1) * width)
+                )
+                this.replace_line_ctl_tree(type, to_overwrite, null, working_tree.copy(this::copy_control_event))
+            }
+        }
+    }
+
+    open fun overwrite_channel_ctl_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        val start = min(first_beat, second_beat)
+        val end = max(first_beat, second_beat)
+
+        val width = (end - start) + 1
+        val count = ((this.beat_count - start) / width) - 1
+        for (i in 0 until width) {
+            for (j in 0 until count) {
+                this.replace_channel_ctl_tree(
+                    type,
+                    channel,
+                    ((j + 1) * width) + (i + start),
+                    null,
+                    this.get_channel_ctl_tree<OpusControlEvent>(type, channel, (i + start)).copy(this::copy_control_event)
+                )
+            }
+        }
+    }
+
+    open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
+            throw InvalidOverwriteCall()
+        }
+        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
+        for (x in beat_key.beat + 1 until this.beat_count) {
+            working_key.beat = x
+            this.replace_tree(working_key, null, this.get_tree_copy(beat_key))
+        }
+    }
+
+    open fun overwrite_global_ctl_line(type: ControlEventType, beat: Int) {
+        val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat)
+        for (i in beat + 1 until this.beat_count) {
+            this.replace_global_ctl_tree(type, i, null, original_tree.copy(this::copy_control_event))
+        }
+    }
+
+    open fun overwrite_channel_ctl_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
+        if (target_channel != original_channel) {
+            throw InvalidOverwriteCall()
+        }
+
+        val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, original_channel, original_beat)
+        for (i in original_beat + 1 until this.beat_count) {
+            this.replace_channel_ctl_tree(type, target_channel, i, null, original_tree.copy(this::copy_control_event))
+        }
+    }
+
+    open fun overwrite_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
+        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
+            throw InvalidOverwriteCall()
+        }
+        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
+        val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
+        for (x in beat_key.beat + 1 until this.beat_count) {
+            working_key.beat = x
+            this.replace_line_ctl_tree(type, working_key, null, original_tree.copy(this::copy_control_event))
+        }
+    }
+
+    fun toggle_channel_visibility(channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        this.set_channel_visibility(channel_index, !channel.visible)
+    }
+
+    fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val line = channel.lines[line_offset]
+        val exists = line.controllers.has_controller(type)
+        if (!exists) {
+            this.new_line_controller(type, channel_index, line_offset)
+            line.controllers.get_controller<OpusControlEvent>(type).visible = true
+            this.recache_line_maps()
+        } else {
+            val controller = line.controllers.get_controller<OpusControlEvent>(type)
+            this.set_line_controller_visibility(type, channel_index, line_offset, !controller.visible)
+        }
+    }
+
+    fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
+        val channel = this.get_all_channels()[channel_index]
+        val exists = channel.controllers.has_controller(type)
+        if (!exists) {
+            this.new_channel_controller(type, channel_index)
+            channel.controllers.get_controller<OpusControlEvent>(type).visible = true
+            this.recache_line_maps()
+        } else {
+            val controller = channel.controllers.get_controller<OpusControlEvent>(type)
+            this.set_channel_controller_visibility(type, channel_index, !controller.visible)
+        }
+    }
+
+    fun toggle_global_control_visibility(type: ControlEventType) {
+        val exists = this.controllers.has_controller(type)
+        if (exists) {
+            val controller = this.controllers.get_controller<OpusControlEvent>(type)
+            this.set_global_controller_visibility(type, !controller.visible)
+        } else {
+            this.new_global_controller(type)
+        }
+    }
+
+    /* -------------------------- End of Ordered functions ----------------------------------------- */
     private fun set_channel_program(channel: Int, program: Int) {
         this.get_channel(channel).set_midi_program(program)
     }
-
     private fun set_channel_bank(channel: Int, bank: Int) {
         if (this.is_percussion(channel)) {
             // TODO: Specify Exception
@@ -1473,87 +2323,6 @@ open class OpusLayerBase {
         } else {
             this.channels[channel].set_midi_bank(bank)
         }
-    }
-
-    open fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
-            if (this.is_percussion(beat_key.channel)) {
-                this.percussion_channel.set_event(beat_key.line_offset, beat_key.beat, position, event as PercussionEvent)
-            } else {
-                this.channels[beat_key.channel].set_event(beat_key.line_offset, beat_key.beat, position, event as TunedInstrumentEvent)
-            }
-        }
-    }
-
-    private fun _set_percussion_event(beat_key: BeatKey, position: List<Int>, event: PercussionEvent) {
-        if (this.is_percussion(beat_key.channel)) {
-            throw NonPercussionEventSet()
-        }
-
-        this.catch_blocked_tree_exception(beat_key.channel) {
-            this.percussion_channel.set_event(beat_key.line_offset, beat_key.beat, position, event)
-        }
-    }
-
-    private fun _set_event(beat_key: BeatKey, position: List<Int>, event: TunedInstrumentEvent) {
-        if (this.is_percussion(beat_key.channel)) {
-            throw NonPercussionEventSet()
-        }
-        this.catch_blocked_tree_exception(beat_key.channel) {
-            this.channels[beat_key.channel].set_event(beat_key.line_offset, beat_key.beat, position, event)
-        }
-    }
-
-    open fun <T: OpusControlEvent> set_line_ctl_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
-            this.get_all_channels()[beat_key.channel].set_line_controller_event(type, beat_key.line_offset, beat_key.beat, position, event)
-        }
-    }
-
-    open fun <T: OpusControlEvent> set_channel_ctl_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
-        this.catch_blocked_tree_exception(channel) {
-            this.get_all_channels()[channel].set_controller_event(type, beat, position, event)
-        }
-    }
-
-    open fun <T: OpusControlEvent> set_global_ctl_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
-        this.catch_global_ctl_blocked_tree_exception(type) {
-            this.controllers.get_controller<T>(type).set_event(beat, position, event)
-        }
-    }
-
-    open fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].split_tree(beat_key.beat, position, splits, move_event_to_end)
-    }
-
-    open fun split_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type).split_tree(beat_key.beat, position, splits, move_event_to_end)
-    }
-
-    open fun split_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).split_tree(beat, position, splits, move_event_to_end)
-    }
-
-    open fun split_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        this.catch_global_ctl_blocked_tree_exception(type) {
-            this.controllers.get_controller<OpusControlEvent>(type).split_tree(beat, position, splits, move_event_to_end)
-        }
-    }
-
-    open fun unset(beat_key: BeatKey, position: List<Int>) {
-        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].unset(beat_key.beat, position)
-    }
-    
-    open fun unset_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type).unset(beat_key.beat, position)
-    }
-
-    open fun unset_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type).unset(beat, position)
-    }
-
-    open fun unset_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
-        this.controllers.get_controller<OpusControlEvent>(type).unset(beat, position)
     }
 
     private fun get_next_available_midi_channel(): Int {
@@ -1571,66 +2340,6 @@ open class OpusLayerBase {
         return new_channel
     }
 
-    open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null) {
-        val new_channel = OpusChannel(uuid ?: OpusLayerBase.gen_channel_uuid())
-        new_channel.set_beat_count(this.beat_count)
-
-        new_channel.midi_channel = this.get_next_available_midi_channel()
-
-        this._channel_uuid_map[new_channel.uuid] = new_channel
-        for (i in 0 until lines) {
-            new_channel.new_line(i)
-        }
-
-        val new_channel_index = channel ?: this.channels.size
-        this.channels.add(new_channel_index, new_channel)
-
-        this.recache_line_maps()
-    }
-
-    open fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-        if (this.is_percussion(channel_a) != this.is_percussion(channel_b)) {
-            throw IncompatibleChannelException(channel_a, channel_b)
-        }
-        if (this.is_percussion(channel_a)) {
-            val tmp_value = this.percussion_channel.lines[line_a].instrument
-            this.percussion_channel.lines[line_a].instrument = this.percussion_channel.lines[line_b].instrument
-            this.percussion_channel.lines[line_b].instrument = tmp_value
-            val tmp_line = this.percussion_channel.lines[line_a]
-            this.percussion_channel.lines[line_a] = this.percussion_channel.lines[line_b]
-            this.percussion_channel.lines[line_b] = tmp_line
-        } else {
-            val tmp_line = this.channels[channel_a].lines[line_a]
-            this.channels[channel_a].lines[line_a] = this.channels[channel_b].lines[line_b]
-            this.channels[channel_b].lines[line_b] = tmp_line
-        }
-        this.recache_line_maps()
-    }
-
-    open fun insert_beats(beat_index: Int, count: Int) {
-        for (i in 0 until count) {
-            this.insert_beat(beat_index)
-        }
-    }
-
-    open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>? = null) {
-        if (beat_index > this.beat_count) {
-            throw IndexOutOfBoundsException()
-        }
-
-        this.beat_count += 1
-        for (channel in this.channels) {
-            channel.insert_beat(beat_index)
-        }
-
-        this.percussion_channel.insert_beat(beat_index)
-        this.controllers.insert_beat(beat_index)
-
-        if (beats_in_column != null) {
-            this._apply_column_trees(beat_index, beats_in_column)
-        }
-    }
-
     /* only used in insert_beat. NO WHERE ELSE */
     open fun _apply_column_trees(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>) {
         var y = 0
@@ -1644,59 +2353,6 @@ open class OpusLayerBase {
             this.replace_tree(BeatKey(this.channels.size, line, beat_index), listOf(), beats_in_column[y++] as OpusTree<PercussionEvent>)
         }
     }
-
-    open fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
-        if (line is OpusLine) {
-            if (this.is_percussion(channel)) {
-                // TODO: Specify Exception
-                throw Exception()
-            }
-            this.channels[channel].insert_line(line_offset, line)
-        } else if (line is OpusLinePercussion) {
-            if (!this.is_percussion(channel)) {
-                // TODO: SpecifyException
-                throw Exception()
-            }
-            this.percussion_channel.insert_line(line_offset, line)
-        }
-        this.recache_line_maps()
-    }
-
-    open fun new_line(channel: Int, line_offset: Int? = null) {
-        val working_channel = this.get_channel(channel)
-        working_channel.new_line(line_offset ?: working_channel.lines.size)
-        this.recache_line_maps()
-    }
-
-    open fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
-        for (i in 0 until count) {
-            this.new_line(channel, line_offset)
-        }
-    }
-
-    open fun remove_beat(beat_index: Int, count: Int = 1) {
-        if (this.beat_count <= count) {
-            throw RemovingLastBeatException()
-        }
-        this.blocked_check_remove_beat(beat_index, count)
-        val working_beat_index = min(beat_index, this.beat_count - count)
-        if (working_beat_index < 0 || working_beat_index + count > this.beat_count) {
-
-            throw IndexOutOfBoundsException()
-        }
-
-        this.channels.forEachIndexed { c: Int, channel: OpusChannel ->
-            channel.remove_beat(working_beat_index, count)
-        }
-        this.percussion_channel.remove_beat(working_beat_index, count)
-
-        for ((_, controller) in this.controllers.get_all()) {
-            controller.remove_beat(working_beat_index, count)
-        }
-
-        this.beat_count -= count
-    }
-
     fun remove_channel_by_uuid(uuid: Int) {
         val channel = this._channel_uuid_map[uuid] ?: throw OpusChannel.InvalidChannelUUID(uuid)
         var channel_index: Int? = null
@@ -1709,12 +2365,6 @@ open class OpusLayerBase {
         if (channel_index != null) {
             this.remove_channel(channel_index)
         }
-    }
-
-    open fun remove_channel(channel: Int) {
-        val opus_channel = this.channels.removeAt(channel)
-        this._channel_uuid_map.remove(opus_channel.uuid)
-        this.recache_line_maps()
     }
 
     open fun merge_leafs(beat_key_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
@@ -1766,98 +2416,6 @@ open class OpusLayerBase {
         //this.unset(beat_key_from, position_from)
     }
 
-    open fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
-        val from_tree = this.get_tree_copy(beatkey_from, position_from)
-        this.unset(beatkey_from, position_from)
-        this.replace_tree(beatkey_to, position_to, from_tree)
-    }
-
-    open fun move_global_ctl_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
-        val from_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat_from, position_from).copy(this::copy_control_event)
-        this.unset_global_ctl(type, beat_from, position_from)
-        this.replace_global_ctl_tree(type, beat_to, position_to, from_tree)
-    }
-    open fun move_channel_ctl_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
-        val from_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel_from, beat_from, position_from).copy(this::copy_control_event)
-        this.unset_channel_ctl(type, channel_from, beat_from, position_from)
-        this.replace_channel_ctl_tree(type, channel_to, beat_to, position_to, from_tree)
-    }
-    open fun move_line_ctl_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
-        val from_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beatkey_from, position_from).copy(this::copy_control_event)
-        this.unset_line_ctl(type, beatkey_from, position_from)
-        this.replace_line_ctl_tree(type, beatkey_to, position_to, from_tree)
-    }
-
-    open fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
-        val output = this.get_channel(channel).remove_line(line_offset)
-        this.recache_line_maps()
-        return output
-    }
-    open fun remove_lines(channel: Int, line_offset: Int, count: Int) {
-        // TODO: I don't think size == 0 needs to be checked here, maybe
-        //  AND should LastLineException be caught or allow to propagate here?
-        for (i in 0 until count) {
-            val working_channel = this.get_channel(channel)
-            if (working_channel.size == 0) {
-                break
-            }
-            try {
-                this.remove_line(
-                    channel,
-                    min(line_offset, working_channel.size - 1)
-                )
-            } catch (e: OpusChannelAbstract.LastLineException) {
-                break
-            }
-        }
-    }
-
-    open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
-            if (this.is_percussion(beat_key.channel)) {
-                this.percussion_channel.replace_tree(
-                    beat_key.line_offset,
-                    beat_key.beat,
-                    position,
-                    (tree as OpusTree<PercussionEvent>)
-                )
-            } else {
-                this.channels[beat_key.channel].replace_tree(
-                    beat_key.line_offset,
-                    beat_key.beat,
-                    position,
-                    (tree as OpusTree<TunedInstrumentEvent>)
-                )
-            }
-        }
-    }
-
-    open fun <T: OpusControlEvent> replace_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
-            val tree_copy = tree.copy(this::copy_control_event)
-            this.get_all_channels()[beat_key.channel].replace_line_control_leaf(type, beat_key.line_offset, beat_key.beat, position ?: listOf(), tree_copy)
-        }
-    }
-
-    open fun <T: OpusControlEvent> replace_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
-        this.catch_blocked_tree_exception(channel) {
-            val tree_copy = tree.copy(this::copy_control_event)
-            this.get_all_channels()[channel].replace_channel_control_leaf(type, beat, position ?: listOf(), tree_copy)
-        }
-    }
-
-    open fun <T: OpusControlEvent> replace_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
-        this.catch_global_ctl_blocked_tree_exception(type) {
-            val tree_copy = tree.copy(this::copy_control_event)
-            val controller = this.controllers.get_controller<T>(type)
-            controller.replace_tree(
-                beat,
-                position ?: listOf(),
-                tree_copy
-            )
-        }
-    }
-
     open fun set_beat_count(new_count: Int) {
         this.beat_count = new_count
         for (channel in this.channels) {
@@ -1867,7 +2425,7 @@ open class OpusLayerBase {
         this.controllers.set_beat_count(new_count)
     }
 
-    open fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
+    fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
         data class StackItem<T>(var tree: OpusTree<T>, var divisions: Int, var offset: Int, var size: Int)
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
@@ -2295,12 +2853,14 @@ open class OpusLayerBase {
 
         this.set_beat_count(inner_map.get_int("size"))
         for (generalized_channel in inner_map.get_list("channels").list) {
-            this.add_channel(
-                OpusChannelJSONInterface.interpret(
-                    generalized_channel as JSONHashMap,
-                    this.beat_count
-                ) as OpusChannel
-            )
+            val channel: OpusChannel = OpusChannelJSONInterface.interpret(
+                generalized_channel as JSONHashMap,
+                this.beat_count
+            ) as OpusChannel
+
+            channel.uuid = OpusLayerBase.gen_channel_uuid()
+            this.channels.add(channel)
+            this._channel_uuid_map[channel.uuid] = channel
         }
         this.percussion_channel = OpusChannelJSONInterface.interpret(
             inner_map.get_hashmap("percussion_channel"),
@@ -2640,14 +3200,6 @@ open class OpusLayerBase {
         }
     }
 
-    open fun set_project_name(new_name: String?) {
-        this.project_name = new_name
-    }
-
-    open fun set_transpose(new_transpose: Int) {
-        this.transpose = new_transpose
-    }
-
     fun get_line_volume(channel: Int, line_offset: Int): Float {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
@@ -2681,71 +3233,6 @@ open class OpusLayerBase {
 
         return event.copy() as T
     }
-
-    open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
-
-        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
-        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
-
-        for (i in original_keys.indices) {
-            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
-                throw MixedInstrumentException(original_keys[i], target_keys[i])
-            }
-        }
-
-        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
-        for (o_key in original_keys) {
-            trees.add(this.get_tree_copy(o_key))
-        }
-
-        for (i in trees.indices) {
-            this.replace_tree(
-                target_keys[i],
-                null,
-                trees[i]
-            )
-        }
-    }
-
-    open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
-
-        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
-        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
-
-        for (i in original_keys.indices) {
-            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
-                throw MixedInstrumentException(original_keys[i], target_keys[i])
-            }
-        }
-
-        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
-        for (o_key in original_keys) {
-            trees.add(this.get_tree_copy(o_key))
-        }
-
-        for (clear_key in original_keys) {
-            this.unset(clear_key, listOf())
-        }
-
-        for (clear_key in target_keys) {
-            this.unset(clear_key, listOf())
-        }
-
-        for (i in target_keys.indices) {
-            this.replace_tree(
-                target_keys[i],
-                null,
-                trees[i]
-            )
-        }
-
-
-    }
-
     fun is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
         return if (this.channels.size + 1 <= first_corner.channel) {
             false
@@ -2763,239 +3250,6 @@ open class OpusLayerBase {
             true
         }
     }
-
-    private fun _copy_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int, unset_original: Boolean = false) {
-        if (target + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
-        }
-
-        val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
-        val controller = this.controllers.get_controller<OpusControlEvent>(type)
-
-        for (i in start .. end) {
-            overwrite_map[target + (i - start)] = controller.get_tree(i).copy(this::copy_control_event)
-            if (unset_original) {
-                this.unset_global_ctl(type, i, listOf())
-            }
-        }
-
-        for ((beat, tree) in overwrite_map) {
-            this.replace_global_ctl_tree(type, beat, null, tree)
-        }
-    }
-
-    open fun overwrite_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
-        this._copy_global_ctl_range(type, target, start, end, false)
-    }
-
-    open fun move_global_ctl_range(type: ControlEventType, target: Int, start: Int, end: Int) {
-        this._copy_global_ctl_range(type, target, start, end, true)
-    }
-
-    private fun _copy_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int, unset_original: Boolean) {
-        if (target_beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
-        }
-
-        val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
-        val original_controller = this.channels[original_channel].controllers.get_controller<OpusControlEvent>(type)
-
-        for (i in start .. end) {
-            overwrite_map[target_beat + (i - start)] = original_controller.get_tree(i).copy(this::copy_control_event)
-            if (unset_original) {
-                this.unset_channel_ctl(type, original_channel, i, listOf())
-            }
-        }
-
-        for ((beat, tree) in overwrite_map) {
-            this.replace_channel_ctl_tree(type, target_channel, beat, null, tree)
-        }
-    }
-
-    open fun overwrite_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
-        this._copy_channel_ctl_range(
-            type,
-            target_channel,
-            target_beat,
-            original_channel,
-            start,
-            end,
-            false
-        )
-    }
-
-    open fun move_channel_ctl_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
-        this._copy_channel_ctl_range(
-            type,
-            target_channel,
-            target_beat,
-            original_channel,
-            start,
-            end,
-            true
-        )
-    }
-
-    private fun _copy_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
-
-        val original_keys = this.get_beatkeys_in_range(from_key, to_key)
-        val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
-
-        for (i in original_keys.indices) {
-            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
-                throw MixedInstrumentException(original_keys[i], target_keys[i])
-            }
-        }
-
-        // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<OpusControlEvent>>()
-        for (o_key in original_keys) {
-            trees.add(this.get_line_ctl_tree<OpusControlEvent>(type, o_key).copy(this::copy_control_event))
-        }
-
-        for (i in target_keys.indices) {
-            this.replace_line_ctl_tree(
-                type,
-                target_keys[i],
-                null,
-                trees[i]
-            )
-        }
-
-        if (unset_original) {
-            for (clear_key in (original_keys - target_keys)) {
-                this.unset_line_ctl(type, clear_key, listOf())
-            }
-        }
-    }
-
-    open fun overwrite_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this._copy_line_ctl_range(type, beat_key, first_corner, second_corner, false)
-    }
-
-    open fun move_line_ctl_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this._copy_line_ctl_range(type, beat_key, first_corner, second_corner, true)
-    }
-
-    open fun unset_beat(beat: Int) {
-        /* Clear STD channels ----------------------------------*/
-        for (i in 0 until this.channels.size) {
-            val channel = this.channels[i]
-            for (j in 0 until channel.lines.size) {
-                val line = channel.lines[j]
-                this.unset(BeatKey(i, j, beat), listOf())
-                for ((type, controller) in line.controllers.get_all()) {
-                    this.unset_line_ctl(type, BeatKey(i, j, beat), listOf())
-                }
-
-            }
-            for ((type, controller) in channel.controllers.get_all()) {
-                this.unset_channel_ctl(type, i, beat, listOf())
-            }
-        }
-        /*-------------------------------------------------------*/
-
-        /* Clear percussion ------------------------------------*/
-        for (j in 0 until this.percussion_channel.lines.size) {
-            val beat_key = BeatKey(this.channels.size, j, beat)
-            val line = this.percussion_channel.lines[j]
-            this.unset(beat_key, listOf())
-            for ((type, controller) in line.controllers.get_all()) {
-                this.unset_line_ctl(type, beat_key, listOf())
-            }
-
-        }
-        for ((type, controller) in this.percussion_channel.controllers.get_all()) {
-            this.unset_channel_ctl(type, this.channels.size, beat, listOf())
-        }
-        /*-------------------------------------------------------*/
-
-        for ((type, controller) in this.controllers.get_all()) {
-            this.unset_global_ctl(type, beat, listOf())
-        }
-    }
-
-    open fun unset_line(channel: Int, line_offset: Int) {
-        val line = this.get_all_channels()[channel].lines[line_offset]
-        for (beat in 0 until this.beat_count) {
-            val tree = line.get_tree(beat)
-            if (tree.is_eventless()) {
-                continue
-            }
-            this.unset(BeatKey(channel, line_offset, beat), listOf())
-        }
-    }
-
-
-    open fun unset_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
-        val controller = this.get_all_channels()[channel].lines[line_offset].get_controller<OpusControlEvent>(type)
-        for (beat in 0 until this.beat_count) {
-            val line_ctl_tree = controller.get_tree(beat)
-            if (line_ctl_tree.is_eventless()) {
-                continue
-            }
-            this.unset_line_ctl(type, BeatKey(channel, line_offset, beat), listOf())
-        }
-    }
-    open fun unset_channel_ctl_line(type: ControlEventType, channel: Int) {
-        val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
-        for (beat in 0 until this.beat_count) {
-            val line_ctl_tree = controller.get_tree(beat)
-            if (line_ctl_tree.is_eventless()) {
-                continue
-            }
-            this.unset_channel_ctl(type, channel, beat, listOf())
-        }
-    }
-    open fun unset_global_ctl_line(type: ControlEventType) {
-        val controller = this.controllers.get_controller<OpusControlEvent>(type)
-        for (beat in 0 until this.beat_count) {
-            val line_ctl_tree = controller.get_tree(beat)
-            if (line_ctl_tree.is_eventless()) {
-                continue
-            }
-            this.unset_global_ctl(type, beat, listOf())
-        }
-    }
-
-    open fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {
-        for (selected_key in this.get_beatkeys_in_range(first_corner, second_corner)) {
-            this.unset(selected_key, listOf())
-        }
-    }
-
-    open fun unset_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
-        for (i in first_beat .. second_beat) {
-            this.unset_global_ctl(type, i, listOf())
-        }
-    }
-
-    open fun unset_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
-        for (i in first_beat .. second_beat) {
-            this.unset_channel_ctl(type, channel, i, listOf())
-        }
-    }
-
-    open fun unset_line_ctl_range(type: ControlEventType, first_corner: BeatKey, second_corner: BeatKey) {
-        for (selected_key in this.get_beatkeys_in_range(first_corner, second_corner)) {
-            this.unset_line_ctl(type, selected_key, listOf())
-        }
-    }
-
-    open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
-            val tree = this.get_tree(beat_key, position)
-            if (!tree.is_event()) {
-                throw EventlessTreeException()
-            }
-            val new_event = tree.event!!.copy()
-            new_event.duration = duration
-            this.set_event(beat_key, position, new_event)
-        }
-    }
-
-
     // Calling this function every time a channel/line is modified should still be more efficient
     // than calculating offsets as needed
     open fun recache_line_maps() {
@@ -3138,24 +3392,16 @@ open class OpusLayerBase {
         }
     }
 
-    open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(first_key, second_key)
-        for (key_list in beat_keys) {
-            if (key_list.isEmpty()) {
-                continue
-            }
-            for (i in 1 until key_list.size) {
-                val overwrite_key = key_list[i]
-                this.replace_tree(
-                    overwrite_key,
-                    null,
-                    this.get_tree_copy(key_list[0])
-                )
-            }
+    private fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
+        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
+        return List<BeatKey>(this.beat_count - beat_key.beat) { i: Int ->
+            working_key.beat = i + beat_key.beat
+            working_key
         }
+
     }
 
-    open fun _get_beat_keys_for_overwrite_beat_range_horizontally(first_key: BeatKey, second_key: BeatKey): List<List<BeatKey>> {
+    private fun _get_beat_keys_for_overwrite_beat_range_horizontally(first_key: BeatKey, second_key: BeatKey): List<List<BeatKey>> {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         val width = (to_key.beat - from_key.beat) + 1
         val count = ((this.beat_count - from_key.beat) / width) - 1
@@ -3178,112 +3424,6 @@ open class OpusLayerBase {
         }
     }
 
-    open fun overwrite_global_ctl_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
-        val start = min(first_beat, second_beat)
-        val end = max(first_beat, second_beat)
-
-        val width = (end - start) + 1
-        val count = ((this.beat_count - start) / width) - 1
-        for (i in 0 until width) {
-            for (j in 0 until count) {
-                this.replace_global_ctl_tree(
-                    type,
-                    ((j + 1) * width) + (i + start),
-                    null,
-                    this.get_global_ctl_tree<OpusControlEvent>(type, (i + start)).copy(this::copy_control_event)
-                )
-            }
-        }
-    }
-
-    open fun overwrite_line_ctl_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
-
-        val width = (to_key.beat - from_key.beat) + 1
-        val count = ((this.beat_count - from_key.beat) / width) - 1
-        val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
-        for (beat_key in beat_keys) {
-            val working_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
-            for (i in 0 until count) {
-                val to_overwrite = BeatKey(
-                    beat_key.channel,
-                    beat_key.line_offset,
-                    beat_key.beat + ((i + 1) * width)
-                )
-                this.replace_line_ctl_tree(type, to_overwrite, null, working_tree.copy(this::copy_control_event))
-            }
-        }
-    }
-
-    open fun overwrite_channel_ctl_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
-        val start = min(first_beat, second_beat)
-        val end = max(first_beat, second_beat)
-
-        val width = (end - start) + 1
-        val count = ((this.beat_count - start) / width) - 1
-        for (i in 0 until width) {
-            for (j in 0 until count) {
-                this.replace_channel_ctl_tree(
-                    type,
-                    channel,
-                    ((j + 1) * width) + (i + start),
-                    null,
-                    this.get_channel_ctl_tree<OpusControlEvent>(type, channel, (i + start)).copy(this::copy_control_event)
-                )
-            }
-        }
-    }
-
-    open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
-            throw InvalidOverwriteCall()
-        }
-        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
-        for (x in beat_key.beat + 1 until this.beat_count) {
-            working_key.beat = x
-            this.replace_tree(working_key, null, this.get_tree_copy(beat_key))
-        }
-    }
-
-    open fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
-        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
-        return List<BeatKey>(this.beat_count - beat_key.beat) { i: Int ->
-            working_key.beat = i + beat_key.beat
-            working_key
-        }
-
-    }
-
-    open fun overwrite_global_ctl_line(type: ControlEventType, beat: Int) {
-        val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat)
-        for (i in beat + 1 until this.beat_count) {
-            this.replace_global_ctl_tree(type, i, null, original_tree.copy(this::copy_control_event))
-        }
-    }
-
-    open fun overwrite_channel_ctl_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
-        if (target_channel != original_channel) {
-            throw InvalidOverwriteCall()
-        }
-
-        val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, original_channel, original_beat)
-        for (i in original_beat + 1 until this.beat_count) {
-            this.replace_channel_ctl_tree(type, target_channel, i, null, original_tree.copy(this::copy_control_event))
-        }
-    }
-
-    open fun overwrite_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
-            throw InvalidOverwriteCall()
-        }
-        val working_key = BeatKey(channel, line_offset, beat_key.beat + 1)
-        val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
-        for (x in beat_key.beat + 1 until this.beat_count) {
-            working_key.beat = x
-            this.replace_line_ctl_tree(type, working_key, null, original_tree.copy(this::copy_control_event))
-        }
-    }
-
     /*
         Checks if the tuning falls within 12-tone equal-temper tuning.
         this means a tuning_map with less than 12 entries is still standard if
@@ -3302,78 +3442,12 @@ open class OpusLayerBase {
         return true
     }
 
-    open fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean = true) {
-        val previous_radix = this.tuning_map.size
-
-        val original = this.tuning_map
-        this.tuning_map = new_map.clone()
-
-        if (! mod_events || new_map.size == original.size) {
-            return
-        }
-
-        val radix = new_map.size
-
-        this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
-                line.beats.forEachIndexed { k: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
-                    beat_tree.traverse { tree: OpusTree<TunedInstrumentEvent>, event: TunedInstrumentEvent? ->
-                        if (event == null) {
-                            return@traverse
-                        }
-
-                        val position = tree.get_path()
-                        val new_event = when (event) {
-                            is AbsoluteNoteEvent -> {
-                                val new_event = event.copy()
-                                new_event.note = event.note * radix / previous_radix
-                                new_event
-
-                            }
-                            is RelativeNoteEvent -> {
-                                val new_event = event.copy()
-                                new_event.offset = event.offset * radix / previous_radix
-                                new_event
-                            }
-
-                            else -> {
-                                return@traverse
-                            }
-                        }
-
-
-                        this.set_event(
-                            BeatKey(i, j, k),
-                            position,
-                            new_event
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     fun has_global_controller(type: ControlEventType): Boolean {
         return this.controllers.has_controller(type)
     }
 
-    fun add_global_ctl_line(type: ControlEventType) {
-        this.controllers.new_controller(type)
-        this.recache_line_maps()
-    }
-
-    fun remove_global_ctl_line(type: ControlEventType) {
-        this.controllers.remove_controller(type)
-        this.recache_line_maps()
-    }
-
     fun has_channel_controller(type: ControlEventType, channel: Int): Boolean {
         return this.get_all_channels()[channel].controllers.has_controller(type)
-    }
-
-    fun add_channel_ctl_line(type: ControlEventType, channel: Int) {
-        this.get_all_channels()[channel].controllers.new_controller(type)
-        this.recache_line_maps()
     }
 
     fun remove_channel_ctl_line(type: ControlEventType, channel: Int) {
@@ -3383,16 +3457,6 @@ open class OpusLayerBase {
 
     fun has_line_controller(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
         return this.get_all_channels()[channel].lines[line_offset].controllers.has_controller(type)
-    }
-
-    fun add_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
-        this.get_channel(channel).lines[line_offset].controllers.new_controller(type)
-        this.recache_line_maps()
-    }
-
-    fun remove_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
-        this.get_channel(channel).lines[line_offset].controllers.remove_controller(type)
-        this.recache_line_maps()
     }
 
     open fun <T: OpusControlEvent> set_global_controller_initial_event(type: ControlEventType, event: T) {
@@ -3444,200 +3508,6 @@ open class OpusLayerBase {
         return this.percussion_channel == other.percussion_channel
     }
 
-    fun add_channel(channel: OpusChannel) {
-        channel.uuid = OpusLayerBase.gen_channel_uuid()
-        this.channels.add(channel)
-        this._channel_uuid_map[channel.uuid] = channel
-    }
-
-
-    // Experimental/ not in use -yet ----------vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // /*
-    //     Reduce the number of beats in a project without losing any information.
-    //  */
-    // fun squish(factor: Int) {
-    //     for (channel in this.channels) {
-    //         channel.squish(factor)
-    //     }
-
-    //     this.beat_count = ceil(this.beat_count.toDouble() / factor.toDouble()).toInt()
-    // }
-
-    // fun get_maximum_simultaneous_notes(): Int {
-    //     return (this.get_press_breakdown().sortedBy { it.second }).last().second
-    // }
-
-    // /*
-    //     Get the most usually active number of notes
-    //  */
-    // fun get_mode_simultaneous_notes(): Pair<Int, Double> {
-    //     val merged_counts = HashMap<Int, Double>()
-    //     for ((percentage, press_count) in this.get_press_breakdown()) {
-    //         merged_counts[press_count] = merged_counts.getOrDefault(press_count, 0.0) + percentage
-    //     }
-    //     var mode_press_count = 0
-    //     var mode_percentage = 0.0
-    //     for ((press_count, percentage) in merged_counts) {
-    //         if ((percentage == mode_percentage && mode_press_count < press_count) || percentage > mode_percentage) {
-    //             mode_press_count = press_count
-    //             mode_percentage = percentage
-    //         }
-    //     }
-    //     return Pair(mode_press_count, mode_percentage)
-    // }
-
-    // fun find_like_range(top_left: BeatKey, bottom_right: BeatKey): List<Pair<BeatKey, BeatKey>> {
-    //     val match_box = this.get_abs_difference(top_left, bottom_right)
-
-    //     val matched_keys = this.get_beatkeys_in_range(top_left, bottom_right).toMutableList()
-    //     val match_values = mutableListOf<OpusTree<InstrumentEvent>>()
-    //     for (key in matched_keys) {
-    //         match_values.add(this.get_tree(key))
-    //     }
-
-    //     val possible_corners = mutableListOf<BeatKey>()
-    //     val top_corner_value = this.get_tree(top_left)
-    //     // First get keys that *could* be matches of the top corner
-    //     this.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-    //         channel.lines.forEachIndexed { j: Int, line: OpusLine ->
-    //             for (k in line.beats.indices) {
-    //                 val working_key = BeatKey(i, j, k)
-    //                 if (working_key in matched_keys) {
-    //                     continue
-    //                 }
-
-    //                 if (top_corner_value == this.get_tree(working_key)) {
-    //                     try {
-    //                         this.get_std_offset(this.get_abs_offset(i, j) + match_box.first)
-    //                         if (k + match_box.second < this.beat_count) {
-    //                             possible_corners.add(working_key)
-    //                         }
-    //                     } catch (e: java.lang.IndexOutOfBoundsException) {
-    //                         continue
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     val output = mutableListOf<Pair<BeatKey, BeatKey>>()
-
-    //     for (working_top_corner in possible_corners) {
-    //         val bottom_corner_pair = this.get_std_offset(this.get_abs_offset(working_top_corner.channel, working_top_corner.line_offset) + match_box.first)
-    //         val working_bottom_corner = BeatKey(
-    //             bottom_corner_pair.first,
-    //             bottom_corner_pair.second,
-    //             working_top_corner.beat + match_box.second
-    //         )
-    //         val working_keys = this.get_beatkeys_in_range(working_top_corner, working_bottom_corner)
-    //         var is_match = true
-
-    //         working_keys.forEachIndexed { i: Int, key: BeatKey ->
-    //             is_match = (key !in matched_keys) && (this.get_tree(key) == match_values[i])
-    //             if (!is_match) {
-    //                 return@forEachIndexed
-    //             }
-    //         }
-
-    //         if (is_match) {
-    //             for (key in working_keys) {
-    //                 matched_keys.add(key)
-    //             }
-    //             output.add(Pair(working_top_corner, working_bottom_corner))
-    //         }
-    //     }
-
-    //     return output
-    // }
-    //
-    // private fun get_press_breakdown(): List<Pair<Double, Int>> {
-    //     val tick_map = mutableListOf<Pair<Double, Boolean>>()
-    //     for (channel in this.channels) {
-    //         for (line in channel.lines) {
-    //             line.beats.forEachIndexed { beat_index: Int, beat_tree: OpusTree<InstrumentEvent> ->
-    //                 beat_tree.traverse { tree: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
-    //                     if (event == null) {
-    //                         return@traverse
-    //                     }
-
-    //                     var tmp_tree = tree
-    //                     val position = mutableListOf<Int>()
-    //                     while (tmp_tree != beat_tree) {
-    //                         position.add(0, tmp_tree.get_index()!!)
-    //                         tmp_tree = tmp_tree.get_parent()!!
-    //                     }
-
-    //                     var position_scalar: Double = 0.0
-    //                     tmp_tree = beat_tree
-    //                     var running_size = 1
-
-    //                     for (p in position) {
-    //                         running_size *= tmp_tree.size
-    //                         position_scalar += p.toDouble() / running_size.toDouble()
-    //                         tmp_tree = tmp_tree[p]
-    //                     }
-
-    //                     tick_map.add(
-    //                         Pair(
-    //                             position_scalar + beat_index,
-    //                             true
-    //                         )
-    //                     )
-
-    //                     tick_map.add(
-    //                         Pair(
-    //                             position_scalar + beat_index + (event.duration.toDouble() / running_size.toDouble()),
-    //                             false
-    //                         )
-    //                     )
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     tick_map.sortBy { it.first }
-    //     val breakdown = mutableListOf<Pair<Double, Int>>()
-
-    //     var currently_on = 0
-    //     var last_position = 0.0
-    //     for ((position, state) in tick_map) {
-    //         if (position != last_position) {
-    //             breakdown.add(Pair((position - last_position) / (this.beat_count + 1).toDouble(), currently_on))
-    //         }
-
-    //         if (state) {
-    //             currently_on += 1
-    //         } else {
-    //             currently_on -= 1
-    //         }
-
-    //         last_position = position
-    //     }
-
-    //     return breakdown
-    // }
-    //
-    // fun convert_all_events_to_absolute() {
-    //     for (channel in this.channels) {
-    //         for (line in channel.lines) {
-    //             for (beat_tree in line.beats) {
-    //                 var previous_value = 0
-    //                 beat_tree.traverse { _: OpusTree<InstrumentEvent>, event: InstrumentEvent? ->
-    //                     if (event == null) {
-    //                         return@traverse
-    //                     }
-    //                     if (event.relative) {
-    //                         event.relative = false
-    //                         event.note += previous_value
-    //                     }
-
-    //                     previous_value = event.note
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
     fun get_all_channels(): List<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> {
         return List(this.channels.size + 1) { i: Int ->
             if (i < this.channels.size) {
@@ -3664,9 +3534,11 @@ open class OpusLayerBase {
     fun <T: OpusControlEvent> get_actual_position_global_ctl(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
         return this.controllers.get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
     }
+
     fun <T: OpusControlEvent> get_actual_position_channel_ctl(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
         return this.get_all_channels()[channel].controllers.get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
     }
+
     fun <T: OpusControlEvent> get_actual_position_line_ctl(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
         val output = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<T>(ctl_type).get_blocking_position(beat_key.beat, position)
         return if (output == null) {
@@ -3737,113 +3609,6 @@ open class OpusLayerBase {
         }
     }
 
-    open fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        val line = channel.lines[line_offset]
-        line.controllers.remove_controller(type)
-        this.recache_line_maps()
-    }
-
-    open fun new_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        val line = channel.lines[line_offset]
-        line.controllers.get_controller<OpusControlEvent>(type)
-        this.recache_line_maps()
-    }
-
-    open fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
-        val channel = this.get_all_channels()[channel_index]
-        val line = channel.lines[line_offset]
-        val controller = line.controllers.get_controller<OpusControlEvent>(type)
-        controller.visible = visibility
-        this.recache_line_maps()
-    }
-
-    open fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        val line = channel.lines[line_offset]
-        val exists = line.controllers.has_controller(type)
-        if (!exists) {
-            this.new_line_controller(type, channel_index, line_offset)
-            line.controllers.get_controller<OpusControlEvent>(type).visible = true
-            this.recache_line_maps()
-        } else {
-            val controller = line.controllers.get_controller<OpusControlEvent>(type)
-            this.set_line_controller_visibility(type, channel_index, line_offset, !controller.visible)
-        }
-    }
-
-    open fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        channel.controllers.remove_controller(type)
-        this.recache_line_maps()
-    }
-
-    open fun new_channel_controller(type: ControlEventType, channel_index: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        channel.controllers.get_controller<OpusControlEvent>(type)
-
-        this.recache_line_maps()
-    }
-
-    open fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
-        val channel = this.get_all_channels()[channel_index]
-        val controller = channel.controllers.get_controller<OpusControlEvent>(type)
-        controller.visible = visibility
-        this.recache_line_maps()
-    }
-
-    open fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        val exists = channel.controllers.has_controller(type)
-        if (!exists) {
-            this.new_channel_controller(type, channel_index)
-            channel.controllers.get_controller<OpusControlEvent>(type).visible = true
-            this.recache_line_maps()
-        } else {
-            val controller = channel.controllers.get_controller<OpusControlEvent>(type)
-            this.set_channel_controller_visibility(type, channel_index, !controller.visible)
-        }
-    }
-
-    open fun remove_global_controller(type: ControlEventType) {
-        this.controllers.remove_controller(type)
-        this.recache_line_maps()
-    }
-
-    open fun new_global_controller(type: ControlEventType) {
-        this.controllers.new_controller(type)
-        this.controllers.get_controller<OpusControlEvent>(type)
-        this.recache_line_maps()
-    }
-
-    open fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
-        val controller = this.controllers.get_controller<OpusControlEvent>(type)
-        controller.visible = visibility
-        this.recache_line_maps()
-    }
-
-    open fun toggle_global_control_visibility(type: ControlEventType) {
-        val exists = this.controllers.has_controller(type)
-        if (exists) {
-            val controller = this.controllers.get_controller<OpusControlEvent>(type)
-            this.set_global_controller_visibility(type, !controller.visible)
-        } else {
-            this.new_global_controller(type)
-        }
-    }
-
-    open fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
-        val channel = this.get_all_channels()[channel_index]
-        channel.visible = visibility
-        this.recache_line_maps()
-    }
-
-    open fun toggle_channel_visibility(channel_index: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        this.set_channel_visibility(channel_index, !channel.visible)
-    }
-
     fun is_channel_visible(channel_index: Int): Boolean {
         return this.get_all_channels()[channel_index].visible
     }
@@ -3866,7 +3631,6 @@ open class OpusLayerBase {
     open fun on_action_blocked_global_ctl(type: ControlEventType, blocker_beat: Int, blocker_position: List<Int>) {}
     open fun on_action_blocked_channel_ctl(type: ControlEventType, blocker_channel: Int, blocker_beat: Int, blocker_position: List<Int>) {}
     open fun on_action_blocked_line_ctl(type: ControlEventType, blocker_key: BeatKey, blocker_position: List<Int>) {}
-
 
     fun get_visible_channel_count(): Int {
         var count = 0
@@ -3920,5 +3684,4 @@ open class OpusLayerBase {
     fun get_visible_row_from_ctl_line_global(type: ControlEventType): Int {
         return this._cached_ctl_map_global[type]!!
     }
-
 }

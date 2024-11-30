@@ -522,11 +522,11 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         assertEquals("[Correctly] Threw exception, but still added channel", manager.channels[0].size, current_lines)
 
         // Removing
-        manager.remove_lines(0, 0)
+        manager.remove_line_repeat(0, 0)
         assertEquals("Didn't remove line", manager.channels[0].size, current_lines - 1)
         assertEquals("Didn't remove line from correct place", line, manager.channels[0].lines[0])
 
-        assertThrows(Exception::class.java) { manager.remove_lines(0, current_lines + 10) }
+        assertThrows(Exception::class.java) { manager.remove_line_repeat(0, current_lines + 10) }
         assertEquals(
             "[Correctly] Threw exception, but still removed line.\n",
             current_lines - 1,

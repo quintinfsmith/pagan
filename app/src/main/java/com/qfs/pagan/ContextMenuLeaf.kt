@@ -217,7 +217,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         if (position.isEmpty()) {
             opus_manager.split_tree_at_cursor(2)
         } else {
-            opus_manager.insert_after(1)
+            opus_manager.insert_after_cursor(1)
         }
     }
 
@@ -245,7 +245,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             if (position.isEmpty()) {
                 opus_manager.split_tree_at_cursor(count + 1)
             } else {
-                opus_manager.insert_after(count)
+                opus_manager.insert_after_cursor(count)
             }
         }
         return true

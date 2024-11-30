@@ -14,7 +14,7 @@ import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerCursor
+import com.qfs.pagan.opusmanager.OpusLayerHistory
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusLinePercussion
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -25,7 +25,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-class OpusLayerInterface : OpusLayerCursor() {
+class OpusLayerInterface : OpusLayerHistory() {
     class HidingNonEmptyPercussionException: Exception()
     class HidingLastChannelException: Exception()
     class MissingEditorTableException: Exception()
@@ -613,7 +613,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             super.insert_line(channel, line_offset, line)
             this._update_after_new_line(channel, line_offset)
         }
-        this.set_overlap_callbacks()
     }
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
@@ -775,10 +774,6 @@ class OpusLayerInterface : OpusLayerCursor() {
             }
 
             super.insert_beat(beat_index, beats_in_column)
-
-            if (!this.ui_change_bill.is_full_locked()) {
-                this.queue_cursor_update(this.cursor)
-            }
         }
     }
 
@@ -1453,6 +1448,11 @@ class OpusLayerInterface : OpusLayerCursor() {
     }
 
     private fun make_percussion_visible() {
+        // Don't force visibility if undo is being called
+        if (this.history_cache.isLocked()) {
+            return
+        }
+
         this.lock_ui_partial {
             this.set_channel_visibility(this.channels.size, true)
 
@@ -2217,6 +2217,9 @@ class OpusLayerInterface : OpusLayerCursor() {
         return (this._blocked_action_catcher_active && this.temporary_blocker != null)
     }
 
+    override fun _apply_column_trees(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>) {
+        super._apply_column_trees(beat_index, beats_in_column)
+    }
     // END UI FUNCS -----------------------
 
     private fun _ui_clear() {

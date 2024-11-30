@@ -2,7 +2,7 @@ package com.qfs.pagan.opusmanager
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
-open class OpusLayerHistory: OpusLayerBase() {
+open class OpusLayerHistory: OpusLayerCursor() {
     var history_cache = HistoryCache()
 
     inline fun <reified T> checked_cast(value: Any): T {
@@ -13,27 +13,21 @@ open class OpusLayerHistory: OpusLayerBase() {
         }
     }
 
-    fun new_lines(channel: Int, line_offset: Int, count: Int) {
+    override fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
         this._remember {
-            for (i in 0 until count) {
-                this.new_line(channel, line_offset)
-            }
+            super.new_line_repeat(channel, line_offset, count)
         }
     }
 
-    fun insert_after(beat_key: BeatKey, position: List<Int>, repeat: Int) {
+    override fun insert_after_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int) {
         this._remember {
-            for (i in 0 until repeat) {
-                this.insert_after(beat_key, position)
-            }
+            super.insert_after_repeat(beat_key, position, repeat)
         }
     }
 
-    fun insert(beat_key: BeatKey, position: List<Int>, repeat: Int) {
+    override fun insert_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int) {
         this._remember {
-            for (i in 0 until repeat) {
-                this.insert(beat_key, position)
-            }
+            super.insert_repeat(beat_key, position, repeat)
         }
     }
 
@@ -61,56 +55,27 @@ open class OpusLayerHistory: OpusLayerBase() {
         }
     }
 
-    fun remove(beat_key: BeatKey, position: List<Int>, count: Int) {
+    override fun remove_repeat(beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
-            val adj_position = position.toMutableList()
-            for (i in 0 until count) {
-                val tree = this.get_tree(beat_key, adj_position)
-                val parent_size = tree.parent?.size ?: 0
-                this.remove(beat_key, adj_position)
-
-                if (parent_size <= 2) { // Will be pruned
-                    adj_position.removeLast()
-                } else if (adj_position.last() == parent_size - 1) {
-                    adj_position[adj_position.size - 1] -= 1
-                }
-            }
+            super.remove_repeat(beat_key, position, count)
         }
     }
 
-    fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, count: Int) {
+    override fun remove_channel_ctl_repeat(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, repeat: Int) {
         this._remember {
-            val adj_position = position.toMutableList()
-            for (i in 0 until count) {
-                val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, beat, channel, adj_position)
-                val parent_size = tree.parent?.size ?: 0
-
-                this.remove_channel_ctl(type, channel, beat, adj_position)
-
-                if (parent_size <= 2) { // Will be pruned
-                    adj_position.removeLast()
-                } else if (adj_position.last() == parent_size - 1) {
-                    adj_position[adj_position.size - 1] -= 1
-                }
-            }
+            super.remove_channel_ctl_repeat(type, channel, beat, position, repeat)
         }
     }
 
-    fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
+    override fun remove_line_ctl_repeat(type: ControlEventType, beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
-            val adj_position = position.toMutableList()
-            for (i in 0 until count) {
-                val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, adj_position)
-                val parent_size = tree.parent?.size ?: 0
+            super.remove_line_ctl_repeat(type, beat_key, position, count)
+        }
+    }
 
-                this.remove_global_ctl(type, beat, adj_position)
-
-                if (parent_size <= 2) { // Will be pruned
-                    adj_position.removeLast()
-                } else if (adj_position.last() == parent_size - 1) {
-                    adj_position[adj_position.size - 1] -= 1
-                }
-            }
+    override fun remove_global_ctl_repeat(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
+        this._remember {
+            super.remove_global_ctl_repeat(type, beat, position, count)
         }
     }
 
@@ -701,8 +666,145 @@ open class OpusLayerHistory: OpusLayerBase() {
                         current_node.args[1] as Boolean
                     )
                 }
-                HistoryToken.MULTI -> { /* Nothing */ }
 
+                //HistoryToken.CURSOR_SELECT_RANGE -> {
+                //    var args = this.checked_cast<List<Int>>(current_node.args)
+                //    val beat_key_a = BeatKey(args[0], args[1], args[2])
+                //    val beat_key_b = BeatKey(args[3], args[4], args[5])
+                //    if (beat_key_a != beat_key_b) {
+                //        this.queue_cursor_select(
+                //            OpusManagerCursor(
+                //                mode = OpusManagerCursor.CursorMode.Range,
+                //                range = Pair(beat_key_a, beat_key_b)
+                //            )
+                //        )
+                //    } else {
+                //        this.queue_cursor_select(
+                //            OpusManagerCursor(
+                //                mode = OpusManagerCursor.CursorMode.Single,
+                //                channel = beat_key_a.channel,
+                //                line_offset = beat_key_a.line_offset,
+                //                beat = beat_key_a.beat
+                //            )
+                //        )
+                //    }
+                //}
+                //HistoryToken.CURSOR_SELECT_LINE -> {
+                //    var args = this.checked_cast<List<Int>>(current_node.args)
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Line,
+                //            channel = args[0],
+                //            line_offset =  args[1]
+                //        )
+                //    )
+                //}
+
+                //HistoryToken.CURSOR_SELECT -> {
+                //    val beat_key = current_node.args[0] as BeatKey
+                //    val args = mutableListOf<Int>(beat_key.channel, beat_key.line_offset, beat_key.beat)
+                //    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                //    args.addAll(position)
+
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Single,
+                //            channel = beat_key.channel,
+                //            line_offset = beat_key.line_offset,
+                //            beat = beat_key.beat,
+                //            position = position
+                //        )
+                //    )
+                //}
+
+                //HistoryToken.CURSOR_SELECT_COLUMN -> {
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Column,
+                //            beat = current_node.args[0] as Int
+                //        )
+                //    )
+                //}
+
+                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL -> {
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Single,
+                //            beat = current_node.args[1] as Int,
+                //            position = this.checked_cast<List<Int>>(current_node.args[2]),
+                //            ctl_level = CtlLineLevel.Global,
+                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //        )
+                //    )
+                //}
+                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL -> {
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Single,
+                //            channel = current_node.args[1] as Int,
+                //            beat = current_node.args[2] as Int,
+                //            position = this.checked_cast<List<Int>>(current_node.args[3]),
+                //            ctl_level = CtlLineLevel.Channel,
+                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //        )
+                //    )
+                //}
+                //HistoryToken.CURSOR_SELECT_LINE_CTL -> {
+                //    val beat_key = this.checked_cast<BeatKey>(current_node.args[1])
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Single,
+                //            channel = beat_key.channel,
+                //            line_offset = beat_key.line_offset,
+                //            beat = beat_key.beat,
+                //            position = this.checked_cast<List<Int>>(current_node.args[2]),
+                //            ctl_level = CtlLineLevel.Line,
+                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //        )
+                //    )
+                //}
+                //HistoryToken.CURSOR_SELECT_LINE_CTL_ROW -> {
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Single,
+                //            channel = current_node.args[1] as Int,
+                //            line_offset = current_node.args[2] as Int,
+                //            ctl_level = CtlLineLevel.Line,
+                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //        )
+                //    )
+                //}
+                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW -> {
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Line,
+                //            ctl_level = CtlLineLevel.Channel,
+                //            channel = current_node.args[1] as Int,
+                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //        )
+                //    )
+                //}
+                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW -> {
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Line,
+                //            ctl_level = CtlLineLevel.Global,
+                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //        )
+                //    )
+                //}
+                //HistoryToken.CURSOR_SELECT_CHANNEL -> {
+                //    this.queue_cursor_select(
+                //        OpusManagerCursor(
+                //            mode = OpusManagerCursor.CursorMode.Channel,
+                //            channel = current_node.args[0] as Int,
+                //            ctl_level = null,
+                //            ctl_type = null
+                //        )
+                //    )
+                //}
+
+                HistoryToken.MULTI -> { /* Nothing */ }
                 HistoryToken.SAVE_POINT -> TODO()
                 HistoryToken.INSERT_TREE -> TODO()
                 HistoryToken.MOVE_LINE -> TODO()
@@ -751,24 +853,9 @@ open class OpusLayerHistory: OpusLayerBase() {
         this.history_cache.unlock()
     }
 
-    open fun remove_lines(channel: Int, line_offset: Int, count: Int) {
-        // TODO: I don't think size == 0 needs to be checked here, maybe
-        //  AND should LastLineException be caught or allow to propagate here?
+    override fun remove_lines(channel: Int, line_offset: Int, count: Int) {
         this._remember {
-            for (i in 0 until count) {
-                val working_channel = this.get_channel(channel)
-                if (working_channel.size == 0) {
-                    break
-                }
-                try {
-                    this.remove_line(
-                        channel,
-                        min(line_offset, working_channel.size - 1)
-                    )
-                } catch (e: OpusChannelAbstract.LastLineException) {
-                    break
-                }
-            }
+            super.remove_lines(channel, line_offset, count)
         }
     }
 
@@ -1014,11 +1101,10 @@ open class OpusLayerHistory: OpusLayerBase() {
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
-        this._remember {
-            super.insert_beat(beat_index, beats_in_column)
-            this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )
-        }
+        super.insert_beat(beat_index, beats_in_column)
+        this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )
     }
+
 
     override fun remove_beat(beat_index: Int, count: Int) {
         this._remember {

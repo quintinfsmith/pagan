@@ -58,11 +58,11 @@ class HistoryCacheUnitTest {
         manager.set_event(key, listOf(1, 0), test_event)
 
         this.undo_and_check(manager) {
-            it.remove(key, listOf(1,2), 3)
+            it.remove_repeat(key, listOf(1,2), 3)
         }
 
         this.undo_and_check(manager) {
-            it.remove(key, listOf(1,0), 1)
+            it.remove_repeat(key, listOf(1,0), 1)
         }
     }
 
@@ -228,7 +228,7 @@ class HistoryCacheUnitTest {
         manager.new_line(0,0)
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
-        manager.new_lines(0,0,4)
+        manager.new_line_repeat(0,0,4)
         this.undo_and_check(manager) {
             it.remove_lines(0,0,4)
         }
@@ -241,7 +241,7 @@ class HistoryCacheUnitTest {
         manager._project_change_new()
 
         this.undo_and_check(manager) {
-            it.new_lines(0, 0, 10)
+            it.new_line_repeat(0, 0, 10)
         }
 
     }
@@ -329,7 +329,7 @@ class HistoryCacheUnitTest {
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
         this.undo_and_check(manager) {
-            it.insert(BeatKey(0,0,0), listOf(0), 1)
+            it.insert_at_cursor(BeatKey(0,0,0), listOf(0), 1)
         }
 
     }

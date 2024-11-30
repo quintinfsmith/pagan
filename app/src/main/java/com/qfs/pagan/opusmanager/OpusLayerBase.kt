@@ -481,7 +481,7 @@ open class OpusLayerBase {
 
                         working_channel.lines[j + 1].controllers.new_controller(type)
                         working_channel.lines[j + 1].controllers.get_controller<OpusControlEvent>(type).set_initial_event(
-                            controller.initial_event.copy() as OpusControlEvent
+                            controller.initial_event.copy()
                         )
                     }
                     if (i == this.channels.size) {
@@ -1143,6 +1143,12 @@ open class OpusLayerBase {
         this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].insert(beat_key.beat, position)
     }
 
+    open fun insert_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int = 1) {
+        for (i in 0 until repeat) {
+            this.insert(beat_key, position)
+        }
+    }
+
     open fun insert_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()
@@ -1190,7 +1196,12 @@ open class OpusLayerBase {
             throw BadInsertPosition()
         }
         this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].insert_after(beat_key.beat, position)
+    }
 
+    open fun insert_after_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int = 1) {
+        for (i in 0 until repeat) {
+            this.insert_after(beat_key, position)
+        }
     }
 
     open fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
@@ -1235,18 +1246,49 @@ open class OpusLayerBase {
         }
     }
 
+    open fun remove_repeat(beat_key: BeatKey, position: List<Int>, count: Int = 1) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until count) {
+            val tree = this.get_tree(beat_key, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+            this.remove(beat_key, adj_position)
+
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
+        }
+    }
+
+
     open fun remove_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         if (position.isEmpty()) {
             throw RemovingRootException()
         }
         val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position)
-
         val parent_tree = tree.parent!!
 
         when (parent_tree.size) {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             2 -> this.remove_channel_ctl_one_of_two(type, channel, beat, position)
             else -> this.remove_channel_ctl_standard(type, channel, beat, position)
+        }
+    }
+
+    open fun remove_channel_ctl_repeat(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, repeat: Int = 1) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until repeat) {
+            val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, beat, channel, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+
+            this.remove_channel_ctl(type, channel, beat, adj_position)
+
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
         }
     }
 
@@ -1268,6 +1310,21 @@ open class OpusLayerBase {
         }
     }
 
+    open fun remove_line_ctl_repeat(type: ControlEventType, beat_key: BeatKey, position: List<Int>, count: Int) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until count) {
+            val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+
+            this.remove_line_ctl(type, beat_key, adj_position)
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
+        }
+    }
+
     open fun remove_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         if (position.isEmpty()) {
             throw RemovingRootException()
@@ -1280,6 +1337,21 @@ open class OpusLayerBase {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             2 -> this.remove_global_ctl_one_of_two(type, beat, position)
             else -> this.remove_global_ctl_standard(type, beat, position)
+        }
+    }
+    open fun remove_global_ctl_repeat(type: ControlEventType, beat: Int, position: List<Int>, count: Int) {
+        val adj_position = position.toMutableList()
+        for (i in 0 until count) {
+            val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, adj_position)
+            val parent_size = tree.parent?.size ?: 0
+
+            this.remove_global_ctl(type, beat, adj_position)
+
+            if (parent_size <= 2) { // Will be pruned
+                adj_position.removeLast()
+            } else if (adj_position.last() == parent_size - 1) {
+                adj_position[adj_position.size - 1] -= 1
+            }
         }
     }
 
@@ -1517,7 +1589,6 @@ open class OpusLayerBase {
     }
 
     open fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-
         if (this.is_percussion(channel_a) != this.is_percussion(channel_b)) {
             throw IncompatibleChannelException(channel_a, channel_b)
         }
@@ -1546,19 +1617,22 @@ open class OpusLayerBase {
         if (beat_index > this.beat_count) {
             throw IndexOutOfBoundsException()
         }
+
         this.beat_count += 1
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
         }
 
         this.percussion_channel.insert_beat(beat_index)
-
         this.controllers.insert_beat(beat_index)
 
-        if (beats_in_column == null) {
-            return
+        if (beats_in_column != null) {
+            this._apply_column_trees(beat_index, beats_in_column)
         }
+    }
 
+    /* only used in insert_beat. NO WHERE ELSE */
+    open fun _apply_column_trees(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>) {
         var y = 0
         for (channel in 0 until this.channels.size) {
             for (line in 0 until this.channels[channel].lines.size) {
@@ -1590,8 +1664,14 @@ open class OpusLayerBase {
 
     open fun new_line(channel: Int, line_offset: Int? = null) {
         val working_channel = this.get_channel(channel)
-        val output = working_channel.new_line(line_offset ?: working_channel.lines.size)
+        working_channel.new_line(line_offset ?: working_channel.lines.size)
         this.recache_line_maps()
+    }
+
+    open fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
+        for (i in 0 until count) {
+            this.new_line(channel, line_offset)
+        }
     }
 
     open fun remove_beat(beat_index: Int, count: Int = 1) {
@@ -1712,6 +1792,24 @@ open class OpusLayerBase {
         val output = this.get_channel(channel).remove_line(line_offset)
         this.recache_line_maps()
         return output
+    }
+    open fun remove_lines(channel: Int, line_offset: Int, count: Int) {
+        // TODO: I don't think size == 0 needs to be checked here, maybe
+        //  AND should LastLineException be caught or allow to propagate here?
+        for (i in 0 until count) {
+            val working_channel = this.get_channel(channel)
+            if (working_channel.size == 0) {
+                break
+            }
+            try {
+                this.remove_line(
+                    channel,
+                    min(line_offset, working_channel.size - 1)
+                )
+            } catch (e: OpusChannelAbstract.LastLineException) {
+                break
+            }
+        }
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {

@@ -81,9 +81,6 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
     fun click_button_insert_beat() {
         val opus_manager = this.get_opus_manager()
         opus_manager.insert_beat_after_cursor(1)
-        opus_manager.cursor_select_column(
-            opus_manager.cursor.beat + 1
-        )
     }
 
     fun long_click_button_insert_beat(): Boolean {
@@ -92,9 +89,6 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
 
         main.dialog_number_input(this.context.getString(R.string.dlg_insert_beats), 1, 4096) { count: Int ->
             opus_manager.insert_beat_after_cursor(count)
-                opus_manager.cursor_select_column(
-                    opus_manager.cursor.beat + count
-                )
         }
         return true
     }

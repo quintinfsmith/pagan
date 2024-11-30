@@ -153,7 +153,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                             // pass
                         }
                     } else {
-                        opus_manager.insert_after(repeat)
+                        opus_manager.insert_after_cursor(repeat)
                     }
                 }
             }
@@ -294,7 +294,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_I, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusLayerInterface) {
                 val repeat = this.get_buffer_value(1, maximum=9999, minimum=0)
-                opus_manager.new_lines(opus_manager.cursor.channel, opus_manager.cursor.line_offset, repeat)
+                opus_manager.new_line_repeat(opus_manager.cursor.channel, opus_manager.cursor.line_offset, repeat)
             }
 
             override fun column(opus_manager: OpusLayerInterface) {
@@ -313,7 +313,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                             // pass
                         }
                     } else {
-                        opus_manager.insert(repeat)
+                        opus_manager.insert_at_cursor(repeat)
                     }
                 }
             }

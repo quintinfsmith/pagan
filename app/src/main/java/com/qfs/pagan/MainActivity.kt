@@ -620,7 +620,6 @@ class MainActivity : AppCompatActivity() {
 
         this.view_model.opus_manager.attach_activity(this)
 
-        this.view_model.color_map.use_palette = this.configuration.use_palette
         this.view_model.color_map.set_fallback_palette(
             if (this._is_night_mode()) {
                 this.get_night_palette()
@@ -629,9 +628,6 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
-        if (this.configuration.palette != null) {
-            this.view_model.color_map.set_palette(this.configuration.palette!!)
-        }
 
         val color_map = this.view_model.color_map
         val toolbar = this._binding.appBarMain.toolbar

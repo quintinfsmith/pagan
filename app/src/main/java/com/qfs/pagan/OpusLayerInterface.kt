@@ -427,9 +427,9 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
     }
 
-    override fun set_percussion_event(beat_key: BeatKey, position: List<Int>) {
+    override fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.set_percussion_event(beat_key, position)
+            super.percussion_set_event(beat_key, position)
             if (!this.percussion_channel.visible) {
                 this.make_percussion_visible()
             }
@@ -439,9 +439,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun set_percussion_instrument(line_offset: Int, instrument: Int) {
+    override fun percussion_set_instrument(line_offset: Int, instrument: Int) {
         this.lock_ui_partial {
-            super.set_percussion_instrument(line_offset, instrument)
+            super.percussion_set_instrument(line_offset, instrument)
             // Need to call get_drum name to repopulate instrument list if needed
             this.get_activity()?.get_drum_name(instrument)
 
@@ -502,23 +502,23 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun insert_after_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
+    override fun controller_global_insert_after(type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.insert_after_global_ctl(type, beat, position)
+            super.controller_global_insert_after(type, beat, position)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun insert_after_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+    override fun controller_channel_insert_after(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.insert_after_channel_ctl(type, channel, beat, position)
+            super.controller_channel_insert_after(type, channel, beat, position)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun insert_after_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+    override fun controller_line_insert_after(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.insert_after_line_ctl(type, beat_key, position)
+            super.controller_line_insert_after(type, beat_key, position)
             this._queue_line_ctl_cell_change(type, beat_key)
         }
     }
@@ -564,23 +564,23 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun remove_global_ctl_standard(type: ControlEventType, beat: Int, position: List<Int>) {
+    override fun controller_global_remove_standard(type: ControlEventType, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_global_ctl_standard(type, beat, position)
+            super.controller_global_remove_standard(type, beat, position)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun remove_channel_ctl_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+    override fun controller_channel_remove_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_channel_ctl_standard(type, channel, beat, position)
+            super.controller_channel_remove_standard(type, channel, beat, position)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun remove_line_ctl_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+    override fun controller_line_remove_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
-            super.remove_line_ctl_standard(type, beat_key, position)
+            super.controller_line_remove_standard(type, beat_key, position)
             this._queue_line_ctl_cell_change(type, beat_key)
         }
     }
@@ -868,7 +868,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         // set the default instrument to the first available in the soundfont (if applicable)
         val percussion_keys = activity.active_percussion_names.keys.sorted()
         if (percussion_keys.isNotEmpty()) {
-            this.set_percussion_instrument(0, percussion_keys.first() - 27)
+            this.percussion_set_instrument(0, percussion_keys.first() - 27)
         }
 
         val new_path = activity.get_new_project_path()
@@ -890,33 +890,33 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun <T: OpusControlEvent> set_global_controller_initial_event(type: ControlEventType, event: T) {
+    override fun <T: OpusControlEvent> controller_global_set_initial_event(type: ControlEventType, event: T) {
         this.lock_ui_partial {
-            super.set_global_controller_initial_event(type, event)
+            super.controller_global_set_initial_event(type, event)
             this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
-    override fun <T: OpusControlEvent> set_channel_controller_initial_event(type: ControlEventType, channel: Int, event: T) {
+    override fun <T: OpusControlEvent> controller_channel_set_initial_event(type: ControlEventType, channel: Int, event: T) {
         this.lock_ui_partial {
-            super.set_channel_controller_initial_event(type, channel, event)
+            super.controller_channel_set_initial_event(type, channel, event)
             this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
-    override fun <T: OpusControlEvent> set_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
+    override fun <T: OpusControlEvent> controller_line_set_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
         this.lock_ui_partial {
-            super.set_line_controller_initial_event(type, channel, line_offset, event)
+            super.controller_line_set_initial_event(type, channel, line_offset, event)
             this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
-    override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
-        this.lock_ui_partial {
-            super.toggle_channel_controller_visibility(type, channel_index)
-            this._controller_visibility_toggle_callback()
-        }
-    }
+    //override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
+    //    this.lock_ui_partial {
+    //        super.toggle_channel_controller_visibility(type, channel_index)
+    //        this._controller_visibility_toggle_callback()
+    //    }
+    //}
 
     override fun recache_line_maps() {
         super.recache_line_maps()
@@ -991,9 +991,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>) {
+    override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
         this.lock_ui_partial {
-            super.set_channel_instrument(channel, instrument)
+            super.channel_set_instrument(channel, instrument)
             if (!this.ui_change_bill.is_full_locked()) {
                 // Updating channel instruments doesn't strictly need to be gated behind the full lock,
                 // BUT this way these don't get called multiple times every setup
@@ -1013,19 +1013,19 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun toggle_global_control_visibility(type: ControlEventType) {
-        this.lock_ui_partial {
-            super.toggle_global_control_visibility(type)
-            this._controller_visibility_toggle_callback()
-        }
-    }
+   // override fun toggle_global_control_visibility(type: ControlEventType) {
+   //     this.lock_ui_partial {
+   //         super.toggle_global_control_visibility(type)
+   //         this._controller_visibility_toggle_callback()
+   //     }
+   // }
 
-    override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
-        this.lock_ui_partial {
-            super.toggle_line_controller_visibility(type, channel_index, line_offset)
-            this._controller_visibility_toggle_callback()
-        }
-    }
+   // override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
+   //     this.lock_ui_partial {
+   //         super.toggle_line_controller_visibility(type, channel_index, line_offset)
+   //         this._controller_visibility_toggle_callback()
+   //     }
+   // }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
         super.on_action_blocked(blocker_key, blocker_position)

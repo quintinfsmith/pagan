@@ -31,7 +31,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0F), true, this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
-            opus_manager.set_line_controller_initial_event(
+            opus_manager.controller_line_set_initial_event(
                 ControlEventType.Volume,
                 cursor.channel,
                 cursor.line_offset,

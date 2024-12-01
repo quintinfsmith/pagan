@@ -159,9 +159,9 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             }
         } else {
             when (cursor.ctl_level) {
-                CtlLineLevel.Global -> opus_manager.insert_after_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position)
-                CtlLineLevel.Channel -> opus_manager.insert_after_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-                CtlLineLevel.Line -> opus_manager.insert_after_line_ctl(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
+                CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, cursor.position)
+                CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
+                CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
                 null -> { }
             }
         }
@@ -175,9 +175,9 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             val position = opus_manager.cursor.get_position().toMutableList()
             if (position.isNotEmpty()) {
                 when (cursor.ctl_level) {
-                    CtlLineLevel.Global -> opus_manager.insert_after_global_ctl(cursor.ctl_type!!, cursor.beat, cursor.position, insert_count)
-                    CtlLineLevel.Channel -> opus_manager.insert_after_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, insert_count)
-                    CtlLineLevel.Line -> opus_manager.insert_after_line_ctl(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, insert_count)
+                    CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, cursor.position, insert_count)
+                    CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, insert_count)
+                    CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, insert_count)
                     null -> {}
                 }
             } else {
@@ -232,7 +232,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
         val ctl_tree = when (cursor.ctl_level!!) {
             CtlLineLevel.Global -> {
-                val (actual_beat, actual_position) = opus_manager.get_actual_position_global_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.position)
+                val (actual_beat, actual_position) = opus_manager.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.position)
                 opus_manager.get_global_ctl_tree<T>(
                     cursor.ctl_type!!,
                     actual_beat,
@@ -240,7 +240,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
                 )
             }
             CtlLineLevel.Channel -> {
-                val (actual_beat, actual_position) = opus_manager.get_actual_position_channel_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
+                val (actual_beat, actual_position) = opus_manager.controller_channel_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
                 opus_manager.get_channel_ctl_tree<T>(
                     cursor.ctl_type!!,
                     cursor.channel,
@@ -249,7 +249,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
                 )
             }
             CtlLineLevel.Line -> {
-                val (actual_beat_key, actual_position) = opus_manager.get_actual_position_line_ctl<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
+                val (actual_beat_key, actual_position) = opus_manager.controller_line_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
 
                 opus_manager.get_line_ctl_tree<T>(
                     cursor.ctl_type!!,

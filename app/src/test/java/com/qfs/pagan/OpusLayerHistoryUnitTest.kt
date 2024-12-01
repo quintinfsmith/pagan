@@ -67,7 +67,7 @@ class HistoryCacheUnitTest {
     }
 
     @Test
-    fun test_remove_global_ctl() {
+    fun test_controller_global_remove() {
         var key = 0
         var test_event = OpusTempoEvent(25F)
         val type = ControlEventType.Tempo
@@ -80,18 +80,18 @@ class HistoryCacheUnitTest {
         manager.controller_global_set_event(type, key, listOf(1, 0), test_event)
 
         this.undo_and_check(manager) {
-            it.remove_global_ctl(type, key, listOf(1,2), 3)
+            it.controller_global_remove(type, key, listOf(1,2))
         }
 
         this.undo_and_check(manager) {
-            it.remove_global_ctl(type, key, listOf(1,0), 1)
+            it.controller_global_remove(type, key, listOf(1,0))
         }
     }
 
     @Test
-    fun test_remove_channel_ctl() {
+    fun test_controller_channel_remove() {
         var key = 0
-        var test_event = OpusVolumeEvent(25)
+        var test_event = OpusVolumeEvent(.25f)
         val type = ControlEventType.Volume
 
         var manager = OpusManager()
@@ -102,18 +102,18 @@ class HistoryCacheUnitTest {
         manager.controller_channel_set_event(type, key, 0, listOf(1, 0), test_event)
 
         this.undo_and_check(manager) {
-            it.remove_channel_ctl(type, key, 0, listOf(1,2), 3)
+            it.controller_channel_remove(type, key, 0, listOf(1,2))
         }
 
         this.undo_and_check(manager) {
-            it.remove_channel_ctl(type, key, 0, listOf(1,0), 1)
+            it.controller_channel_remove(type, key, 0, listOf(1,0))
         }
     }
 
     @Test
-    fun test_remove_line_ctl() {
+    fun test_controller_line_remove() {
         var key = BeatKey(0,0,0)
-        var test_event = OpusVolumeEvent(25)
+        var test_event = OpusVolumeEvent(.25f)
         val type = ControlEventType.Volume
 
         var manager = OpusManager()
@@ -124,11 +124,11 @@ class HistoryCacheUnitTest {
         manager.controller_line_set_event(type, key, listOf(1, 0), test_event)
 
         this.undo_and_check(manager) {
-            it.remove_line_ctl(type, key, listOf(1,2), 3)
+            it.controller_line_remove(type, key, listOf(1,2), 3)
         }
 
         this.undo_and_check(manager) {
-            it.remove_line_ctl(type, key, listOf(1,0), 1)
+            it.controller_line_remove(type, key, listOf(1,0), 1)
         }
     }
 
@@ -155,9 +155,9 @@ class HistoryCacheUnitTest {
 
         println("CHANNELs: ${manager.get_channel_count()}")
         this.undo_and_check(manager) {
-            it.set_percussion_event(BeatKey(1,0,0), listOf())
+            it.percussion_set_event(BeatKey(1,0,0), listOf())
         }
-        manager.set_percussion_event(BeatKey(1,0,0), listOf())
+        manager.percussion_set_event(BeatKey(1,0,0), listOf())
         this.undo_and_check(manager) {
             it.unset(BeatKey(1,0,0), listOf())
         }
@@ -279,7 +279,7 @@ class HistoryCacheUnitTest {
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
         this.undo_and_check(manager) { om: OpusManager ->
-            om.insert_after(BeatKey(0,0,0), listOf(0), 1)
+            om.insert_after(BeatKey(0,0,0), listOf(0))
         }
     }
 
@@ -329,7 +329,7 @@ class HistoryCacheUnitTest {
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
         this.undo_and_check(manager) {
-            it.insert_at_cursor(BeatKey(0,0,0), listOf(0), 1)
+            it.insert_at_cursor(1)
         }
 
     }
@@ -373,39 +373,39 @@ class HistoryCacheUnitTest {
     fun test_set_initial_events() {
         val manager = OpusManager()
         manager._project_change_new()
-        val initial_line_event = manager.get_line_controller_initial_event(ControlEventType.Volume, 0, 0)
-        val initial_channel_event = manager.get_channel_controller_initial_event(ControlEventType.Volume, 0)
-        val initial_global_event = manager.get_global_controller_initial_event(ControlEventType.Tempo)
+        val initial_line_event = manager.get_line_controller_initial_event<OpusVolumeEvent>(ControlEventType.Volume, 0, 0)
+        val initial_channel_event = manager.get_channel_controller_initial_event<OpusVolumeEvent>(ControlEventType.Volume, 0)
+        val initial_global_event = manager.get_global_controller_initial_event<OpusTempoEvent>(ControlEventType.Tempo)
 
         this.undo_and_check(manager) {
-            it.set_line_controller_initial_event(ControlEventType.Volume, 0, 0, OpusVolumeEvent(25))
+            it.controller_line_set_initial_event(ControlEventType.Volume, 0, 0, OpusVolumeEvent(.25f))
         }
 
         this.undo_and_check(manager) {
-            it.set_channel_controller_initial_event(ControlEventType.Volume, 0, OpusVolumeEvent(25))
+            it.controller_channel_set_initial_event(ControlEventType.Volume, 0, OpusVolumeEvent(.25f))
         }
 
         this.undo_and_check(manager) {
-            it.set_global_controller_initial_event(ControlEventType.Tempo, OpusTempoEvent(60F))
+            it.controller_global_set_initial_event(ControlEventType.Tempo, OpusTempoEvent(60F))
         }
     }
 
     @Test
-    fun test_overwrite_channel_ctl_range_horizontally() {
+    fun test_controller_channel_overwrite_range_horizontally() {
         val manager = OpusManager()
         manager._project_change_new()
         manager.set_beat_count(12)
         val type = ControlEventType.Volume
-        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(24))
-        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(24))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(.24f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(.24f))
 
         this.undo_and_check(manager) {
-            it.overwrite_channel_ctl_range_horizontally(type, 0, 0, 1)
+            it.controller_channel_overwrite_range_horizontally(type, 0, 0, 1)
         }
     }
 
     @Test
-    fun test_overwrite_global_ctl_range_horizontally() {
+    fun test_controller_global_overwrite_range_horizontally() {
         val manager = OpusManager()
         manager._project_change_new()
         manager.set_beat_count(12)
@@ -414,21 +414,21 @@ class HistoryCacheUnitTest {
         manager.controller_global_set_event(type, 1, listOf(), OpusTempoEvent(24f))
 
         this.undo_and_check(manager) {
-            it.overwrite_global_ctl_range_horizontally(type, 0, 1)
+            it.controller_global_overwrite_range_horizontally(type, 0, 1)
         }
     }
 
     @Test
-    fun test_overwrite_line_ctl_range_horizontally() {
+    fun test_controller_line_overwrite_range_horizontally() {
         val manager = OpusManager()
         manager._project_change_new()
         manager.set_beat_count(12)
         val type = ControlEventType.Volume
-        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(24))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(24))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.24f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.24f))
 
         this.undo_and_check(manager) {
-            it.overwrite_line_ctl_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(0,0,1))
+            it.controller_line_overwrite_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
     }
 
@@ -463,10 +463,10 @@ class HistoryCacheUnitTest {
         manager._project_change_new()
         manager.set_beat_count(12)
         val type = ControlEventType.Volume
-        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(24))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(.24f))
 
         this.undo_and_check(manager) {
-            it.overwrite_channel_ctl_line(type, 0, 0, 1)
+            it.controller_channel_overwrite_line(type, 0, 0, 1)
         }
     }
 
@@ -479,7 +479,7 @@ class HistoryCacheUnitTest {
         manager.controller_global_set_event(type, 0, listOf(), OpusTempoEvent(24f))
 
         this.undo_and_check(manager) {
-            it.overwrite_global_ctl_line(type, 0)
+            it.controller_global_overwrite_line(type, 0)
         }
     }
 
@@ -489,9 +489,9 @@ class HistoryCacheUnitTest {
         manager._project_change_new()
         manager.set_beat_count(12)
         val type = ControlEventType.Volume
-        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(24))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.24f))
         this.undo_and_check(manager) {
-            it.overwrite_line_ctl_line(type, 0, 0, BeatKey(0, 0, 0))
+            it.controller_line_overwrite_line(type, 0, 0, BeatKey(0, 0, 0))
         }
     }
 
@@ -506,32 +506,32 @@ class HistoryCacheUnitTest {
     }
 
     @Test
-    fun test_insert_after_global_ctl() {
+    fun test_controller_global_insert_after() {
         val manager = OpusManager()
         manager._project_change_new()
         manager.controller_global_split_tree(ControlEventType.Tempo, 0, listOf(), 2)
         this.undo_and_check(manager) {
-            it.insert_after_global_ctl(ControlEventType.Tempo, 0, listOf(0), 3)
+            it.controller_global_insert_after(ControlEventType.Tempo, 0, listOf(0), 3)
         }
     }
 
     @Test
-    fun test_insert_after_channel_ctl() {
+    fun test_controller_channel_insert_after() {
         val manager = OpusManager()
         manager._project_change_new()
         manager.controller_channel_split_tree(ControlEventType.Volume, 0, 0, listOf(), 2)
         this.undo_and_check(manager) {
-            it.insert_after_channel_ctl(ControlEventType.Volume, 0, 0, listOf(0), 3)
+            it.controller_channel_insert_after(ControlEventType.Volume, 0, 0, listOf(0), 3)
         }
     }
 
     @Test
-    fun test_insert_after_line_ctl() {
+    fun test_controller_line_insert_after() {
         val manager = OpusManager()
         manager._project_change_new()
         manager.controller_line_split_tree(ControlEventType.Volume, BeatKey(0, 0, 0), listOf(), 2)
         this.undo_and_check(manager) {
-            it.insert_after_line_ctl(ControlEventType.Volume, BeatKey(0, 0, 0), listOf(0), 3)
+            it.controller_line_insert_after(ControlEventType.Volume, BeatKey(0, 0, 0), listOf(0), 3)
         }
     }
 
@@ -565,37 +565,37 @@ class HistoryCacheUnitTest {
     }
 
     @Test
-    fun test_move_line_ctl_leaf() {
+    fun test_controller_line_move_leaf() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
 
-        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(15))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(16))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(17))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.15f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.16f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(.17f))
 
         this.undo_and_check(manager) {
-            it.move_line_ctl_leaf(type, BeatKey(0, 0, 0), listOf(), BeatKey(0, 0, 1), listOf())
+            it.controller_line_move_leaf(type, BeatKey(0, 0, 0), listOf(), BeatKey(0, 0, 1), listOf())
         }
     }
 
     @Test
-    fun test_move_channel_ctl_leaf() {
+    fun test_controller_channel_move_leaf() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
 
-        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(15))
-        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(16))
-        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(17))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(.15f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(.16f))
+        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(.17f))
 
         this.undo_and_check(manager) {
-            it.move_channel_ctl_leaf(type, 0, 0, listOf(), 0, 1, listOf())
+            it.controller_channel_move_leaf(type, 0, 0, listOf(), 0, 1, listOf())
         }
     }
 
     @Test
-    fun test_move_global_ctl_leaf() {
+    fun test_controller_global_move_leaf() {
         val manager = OpusManager()
         val type = ControlEventType.Tempo
         manager._project_change_new()
@@ -605,7 +605,7 @@ class HistoryCacheUnitTest {
         manager.controller_global_set_event(type, 2, listOf(), OpusTempoEvent(17f))
 
         this.undo_and_check(manager) {
-            it.move_global_ctl_leaf(type, 0, listOf(), 1, listOf())
+            it.controller_global_move_leaf(type, 0, listOf(), 1, listOf())
         }
     }
 
@@ -624,37 +624,37 @@ class HistoryCacheUnitTest {
     }
 
     @Test
-    fun test_move_line_ctl_range() {
+    fun test_controller_line_move_range() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
-        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(.13f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(.14f))
 
         this.undo_and_check(manager) {
-            it.move_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
+            it.controller_line_move_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
     }
 
     @Test
-    fun test_overwrite_line_ctl_range() {
+    fun test_controller_line_overwrite_range() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
-        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(.13f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(.14f))
 
         this.undo_and_check(manager) {
-            it.overwrite_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
+            it.controller_line_overwrite_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
     }
 
     @Test
-    fun test_move_global_ctl_range() {
+    fun test_controller_global_move_range() {
         val manager = OpusManager()
         val type = ControlEventType.Tempo
         manager._project_change_new()
@@ -664,11 +664,11 @@ class HistoryCacheUnitTest {
         manager.controller_global_set_event(type, 3, listOf(), OpusTempoEvent(14F))
 
         this.undo_and_check(manager) {
-            it.move_global_ctl_range(type, 2, 0, 1)
+            it.controller_global_move_range(type, 2, 0, 1)
         }
     }
     @Test
-    fun test_overwrite_global_ctl_range() {
+    fun test_controller_global_overwrite_range() {
         val manager = OpusManager()
         val type = ControlEventType.Tempo
         manager._project_change_new()
@@ -678,37 +678,37 @@ class HistoryCacheUnitTest {
         manager.controller_global_set_event(type, 3, listOf(), OpusTempoEvent(14F))
 
         this.undo_and_check(manager) {
-            it.overwrite_global_ctl_range(type, 2, 0, 1)
+            it.controller_global_overwrite_range(type, 2, 0, 1)
         }
     }
 
     @Test
-    fun test_move_channel_ctl_range() {
+    fun test_controller_channel_move_range() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
-        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
-        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
-        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
-        manager.controller_channel_set_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(.10f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(.11f))
+        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(.13f))
+        manager.controller_channel_set_event(type, 0, 3, listOf(), OpusVolumeEvent(.14f))
 
         this.undo_and_check(manager) {
-            it.move_channel_ctl_range(type, 0, 2, 0, 0, 1)
+            it.controller_channel_move_range(type, 0, 2, 0, 0, 1)
         }
     }
 
     @Test
-    fun test_overwrite_channel_ctl_range() {
+    fun test_controller_channel_overwrite_range() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
-        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
-        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
-        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
-        manager.controller_channel_set_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(.10f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(.11f))
+        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(.13f))
+        manager.controller_channel_set_event(type, 0, 3, listOf(), OpusVolumeEvent(.14f))
 
         this.undo_and_check(manager) {
-            it.overwrite_channel_ctl_range(type, 0, 0, 0, 2, 3)
+            it.controller_channel_overwrite_range(type, 0, 0, 0, 2, 3)
         }
     }
 
@@ -726,21 +726,21 @@ class HistoryCacheUnitTest {
     }
 
     @Test
-    fun test_unset_line_ctl_range() {
+    fun test_controller_line_unset_range() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
-        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(13))
-        manager.controller_line_set_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(14))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 2), listOf(), OpusVolumeEvent(.13f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 3), listOf(), OpusVolumeEvent(.14f))
         this.undo_and_check(manager) {
-            it.unset_line_ctl_range(type, BeatKey(0, 0, 0), BeatKey(0,0,1))
+            it.controller_line_unset_range(type, BeatKey(0, 0, 0), BeatKey(0,0,1))
         }
     }
 
     @Test
-    fun test_unset_global_ctl_range() {
+    fun test_controller_global_unset_range() {
         val manager = OpusManager()
         val type = ControlEventType.Tempo
         manager._project_change_new()
@@ -749,21 +749,21 @@ class HistoryCacheUnitTest {
         manager.controller_global_set_event(type, 2, listOf(), OpusTempoEvent(13F))
         manager.controller_global_set_event(type, 3, listOf(), OpusTempoEvent(14F))
         this.undo_and_check(manager) {
-            it.unset_global_ctl_range(type, 1, 2)
+            it.controller_global_unset_range(type, 1, 2)
         }
     }
 
     @Test
-    fun test_unset_channel_ctl_range() {
+    fun test_controller_channel_unset_range() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
         manager._project_change_new()
-        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
-        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
-        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(13))
-        manager.controller_channel_set_event(type, 0, 3, listOf(), OpusVolumeEvent(14))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(.10f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(.11f))
+        manager.controller_channel_set_event(type, 0, 2, listOf(), OpusVolumeEvent(.13f))
+        manager.controller_channel_set_event(type, 0, 3, listOf(), OpusVolumeEvent(.14f))
         this.undo_and_check(manager) {
-            it.unset_channel_ctl_range(type, 0, 1, 2)
+            it.controller_channel_unset_range(type, 0, 1, 2)
         }
     }
 
@@ -772,87 +772,10 @@ class HistoryCacheUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         manager.new_line(1)
-        manager.set_percussion_instrument(0, 8)
-        manager.set_percussion_instrument(1, 15)
+        manager.percussion_set_instrument(0, 8)
+        manager.percussion_set_instrument(1, 15)
         this.undo_and_check(manager) {
-            it.set_percussion_instrument(1, 21)
-        }
-    }
-
-    @Test
-    fun test_link_beat() {
-        val manager = OpusManager()
-        manager._project_change_new()
-
-        this.undo_and_check(manager) {
-            it.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
-        }
-
-        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
-
-        this.undo_and_check(manager) {
-            it.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
-        }
-        this.undo_and_check(manager) {
-            it.link_beats(BeatKey(0,0,2), BeatKey(0,0,0))
-        }
-
-        manager.link_beats(BeatKey(0,0,2), BeatKey(0,0,3))
-
-        this.undo_and_check(manager) {
-            it.link_beats(BeatKey(0,0,0), BeatKey(0,0,2))
-        }
-    }
-
-    @Test
-    fun test_link_beat_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
-        this.undo_and_check(manager) {
-            it.link_beat_range(BeatKey(0,0,2), BeatKey(0,0,0), BeatKey(0,0,1))
-        }
-    }
-
-    @Test
-    fun test_unlink_beat() {
-        val manager = OpusManager()
-        manager._project_change_new()
-        manager.link_beats(BeatKey(0,0,0), BeatKey(0,0,1))
-        this.undo_and_check(manager) {
-            it.unlink_beat(BeatKey(0,0,0))
-        }
-    }
-
-    @Test
-    fun test_unlink_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
-        manager.link_beat_range(BeatKey(0,0,2), BeatKey(0,0,0), BeatKey(0,0,1))
-        this.undo_and_check(manager) {
-            it.unlink_range(BeatKey(0,0,2), BeatKey(0,0,3))
-        }
-    }
-
-    @Test
-    fun test_link_row() {
-        val manager = OpusManager()
-        manager._project_change_new()
-        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(20))
-        this.undo_and_check(manager) {
-            it.link_row(0, 0, BeatKey(0,0,0))
-        }
-    }
-
-    @Test
-    fun test_link_beat_range_horizontally() {
-        val manager = OpusManager()
-        manager._project_change_new()
-        manager.set_beat_count(12)
-        manager.new_channel()
-        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(20))
-        manager.set_event(BeatKey(1,0,1), listOf(), AbsoluteNoteEvent(21))
-        this.undo_and_check(manager) {
-            it.link_beat_range_horizontally(0, 0, BeatKey(0,0,0), BeatKey(1,0,1))
+            it.percussion_set_instrument(1, 21)
         }
     }
 
@@ -861,7 +784,7 @@ class HistoryCacheUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         this.undo_and_check(manager) {
-            manager.set_channel_instrument(0, Pair(0, 12))
+            manager.channel_set_instrument(0, Pair(0, 12))
         }
     }
 

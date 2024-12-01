@@ -20,7 +20,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val cursor = opus_manager.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                opus_manager.set_line_controller_initial_event(
+                opus_manager.controller_line_set_initial_event(
                     cursor.ctl_type!!,
                     cursor.channel,
                     cursor.line_offset,
@@ -29,7 +29,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             }
 
             CtlLineLevel.Channel -> {
-                opus_manager.set_channel_controller_initial_event(
+                opus_manager.controller_channel_set_initial_event(
                     cursor.ctl_type!!,
                     cursor.channel,
                     value
@@ -37,7 +37,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             }
 
             CtlLineLevel.Global -> {
-                opus_manager.set_global_controller_initial_event(
+                opus_manager.controller_global_set_initial_event(
                     cursor.ctl_type!!,
                     value
                 )
@@ -92,6 +92,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             CtlLineLevel.Global,
             null -> {
                 this.button_toggle_line_control.visibility = View.GONE
+                this.button_remove_line_control.visibility = View.GONE
             }
         }
 
@@ -111,7 +112,6 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     }
 
     override fun init_properties() {
-
     }
 
     override fun setup_interactions() { }

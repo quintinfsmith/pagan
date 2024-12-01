@@ -14,7 +14,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.os.VibrationEffect
 import android.database.Cursor
 import android.graphics.Color
@@ -29,9 +28,7 @@ import android.os.VibratorManager
 import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.AttributeSet
 import android.util.Log
-import android.view.ContextMenu
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -41,8 +38,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
-import android.view.ViewGroup.TEXT_ALIGNMENT_TEXT_END
-import android.view.ViewGroup.TEXT_ALIGNMENT_VIEW_END
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -63,7 +58,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
@@ -1643,16 +1637,16 @@ class MainActivity : AppCompatActivity() {
 
             if (use_menu_dialog) {
                 this.dialog_popup_menu(this.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, instrument: Pair<Int, Int> ->
-                    opus_manager.set_channel_instrument(channel, instrument)
+                    opus_manager.channel_set_instrument(channel, instrument)
                 }
             } else {
                 this.dialog_number_input(this.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second) { program: Int ->
-                    opus_manager.set_channel_instrument(channel, Pair(1, program))
+                    opus_manager.channel_set_instrument(channel, Pair(1, program))
                 }
             }
         } else if (options.size > 1 || !current_instrument_supported) {
             this.dialog_popup_menu(this.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, instrument: Pair<Int, Int> ->
-                opus_manager.set_channel_instrument(channel, instrument)
+                opus_manager.channel_set_instrument(channel, instrument)
             }
         }
     }

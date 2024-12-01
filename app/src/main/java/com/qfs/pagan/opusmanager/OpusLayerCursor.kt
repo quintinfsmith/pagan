@@ -57,7 +57,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun percussion_set_instrument(line_offset: Int, instrument: Int) {
         super.percussion_set_instrument(line_offset, instrument)
-        this.cursor_select_line(this.channels.size, line_offset)
+        //this.cursor_select_line(this.channels.size, line_offset)
     }
 
     override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
@@ -73,7 +73,9 @@ open class OpusLayerCursor: OpusLayerBase() {
     override fun <T : OpusControlEvent> controller_line_replace_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
         super.controller_line_replace_tree(type, beat_key, position, tree)
         val new_position = this.get_first_position_line_ctl(type, beat_key, position ?: listOf())
-        this.cursor_select_ctl_at_line(type, beat_key, new_position)
+        if (this.is_line_ctl_visible(type, beat_key.channel, beat_key.line_offset)) {
+            this.cursor_select_ctl_at_line(type, beat_key, new_position)
+        }
     }
 
     override fun <T : OpusControlEvent> controller_channel_replace_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
@@ -91,17 +93,23 @@ open class OpusLayerCursor: OpusLayerBase() {
     override fun <T : OpusControlEvent> controller_line_set_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
         super.controller_line_set_event(type, beat_key, position, event)
 
-        this.cursor_select_ctl_at_line(type, beat_key, position)
+        if (this.is_line_ctl_visible(type, beat_key.channel, beat_key.line_offset)) {
+            this.cursor_select_ctl_at_line(type, beat_key, position)
+        }
     }
 
     override fun <T : OpusControlEvent> controller_channel_set_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
         super.controller_channel_set_event(type, channel, beat, position, event)
-        this.cursor_select_ctl_at_channel(type, channel, beat, position)
+        if (this.is_channel_ctl_visible(type, channel)) {
+            this.cursor_select_ctl_at_channel(type, channel, beat, position)
+        }
     }
 
     override fun <T : OpusControlEvent> controller_global_set_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
         super.controller_global_set_event(type, beat, position, event)
-        this.cursor_select_ctl_at_global(type, beat, position)
+        if (this.is_global_ctl_visible(type)) {
+            this.cursor_select_ctl_at_global(type, beat, position)
+        }
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
@@ -190,7 +198,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun new_channel_controller(type: ControlEventType, channel_index: Int) {
         super.new_channel_controller(type, channel_index)
-        this.cursor_select_channel_ctl_line(type, channel_index)
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
@@ -240,7 +247,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun new_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
         super.new_line_controller(type, channel_index, line_offset)
-        this.cursor_select_line_ctl_line(type, channel_index, line_offset)
     }
 
     override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
@@ -594,7 +600,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun new_global_controller(type: ControlEventType) {
         super.new_global_controller(type)
-        this.cursor_select_global_ctl_line(type)
     }
 
     override fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
@@ -640,17 +645,29 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun <T : OpusControlEvent> controller_global_set_initial_event(type: ControlEventType, event: T) {
         super.controller_global_set_initial_event(type, event)
-        this.cursor_select_global_ctl_line(type)
+        if (this.is_global_ctl_visible(type)) {
+            this.cursor_select_global_ctl_line(type)
+        } else {
+            this.cursor_clear()
+        }
     }
 
     override fun <T : OpusControlEvent> controller_channel_set_initial_event(type: ControlEventType, channel: Int, event: T) {
         super.controller_channel_set_initial_event(type, channel, event)
-        this.cursor_select_channel_ctl_line(type, channel)
+        if (this.is_channel_ctl_visible(type, channel)) {
+            this.cursor_select_channel_ctl_line(type, channel)
+        } else {
+            this.cursor_select_channel(channel)
+        }
     }
 
     override fun <T : OpusControlEvent> controller_line_set_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
         super.controller_line_set_initial_event(type, channel, line_offset, event)
-        this.cursor_select_line_ctl_line(type, channel, line_offset)
+        if (this.is_line_ctl_visible(type, channel, line_offset)) {
+            this.cursor_select_line_ctl_line(type, channel, line_offset)
+        } else {
+            this.cursor_select_line(channel, line_offset)
+        }
     }
 
     override fun <T : OpusLayerBase> import_from_other(other: T) {

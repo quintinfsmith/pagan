@@ -241,21 +241,31 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     // BASE FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     override fun remove_global_controller(type: ControlEventType) {
-        super.remove_global_controller(type)
+        this.lock_ui_partial {
+            if (this.is_global_ctl_visible(type)) {
+                val abs_line = this.get_visible_row_from_ctl_line_global(type)
+                this._queue_remove_rows(abs_line, 1)
+            }
+            super.remove_global_controller(type)
+        }
     }
 
     override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
         this.lock_ui_partial {
-            val abs_line = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
-            this._queue_remove_rows(abs_line, 1)
+            if (this.is_line_ctl_visible(type, channel_index, line_offset )) {
+                val abs_line = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
+                this._queue_remove_rows(abs_line, 1)
+            }
             super.remove_line_controller(type, channel_index, line_offset)
         }
     }
 
     override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
         this.lock_ui_partial {
-            val abs_line = this.get_visible_row_from_ctl_line_channel(type, channel_index)
-            this._queue_remove_rows(abs_line, 1)
+            if (this.is_channel_ctl_visible(type, channel_index)) {
+                val abs_line = this.get_visible_row_from_ctl_line_channel(type, channel_index)
+                this._queue_remove_rows(abs_line, 1)
+            }
             super.remove_channel_controller(type, channel_index)
         }
     }

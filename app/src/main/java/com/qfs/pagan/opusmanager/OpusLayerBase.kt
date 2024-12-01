@@ -2141,41 +2141,35 @@ open class OpusLayerBase {
         this.set_channel_visibility(channel_index, !channel.visible)
     }
 
-    fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
+    open fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
         val channel = this.get_all_channels()[channel_index]
         val line = channel.lines[line_offset]
         val exists = line.controllers.has_controller(type)
         if (!exists) {
             this.new_line_controller(type, channel_index, line_offset)
-            line.controllers.get_controller<OpusControlEvent>(type).visible = true
-            this.recache_line_maps()
-        } else {
-            val controller = line.controllers.get_controller<OpusControlEvent>(type)
-            this.set_line_controller_visibility(type, channel_index, line_offset, !controller.visible)
         }
+
+        val controller = line.controllers.get_controller<OpusControlEvent>(type)
+        this.set_line_controller_visibility(type, channel_index, line_offset, !controller.visible)
     }
 
-    fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
+    open fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
         val channel = this.get_all_channels()[channel_index]
         val exists = channel.controllers.has_controller(type)
         if (!exists) {
             this.new_channel_controller(type, channel_index)
-            channel.controllers.get_controller<OpusControlEvent>(type).visible = true
-            this.recache_line_maps()
-        } else {
-            val controller = channel.controllers.get_controller<OpusControlEvent>(type)
-            this.set_channel_controller_visibility(type, channel_index, !controller.visible)
         }
+        val controller = channel.controllers.get_controller<OpusControlEvent>(type)
+        this.set_channel_controller_visibility(type, channel_index, !controller.visible)
     }
 
-    fun toggle_global_control_visibility(type: ControlEventType) {
+    open fun toggle_global_control_visibility(type: ControlEventType) {
         val exists = this.controllers.has_controller(type)
-        if (exists) {
-            val controller = this.controllers.get_controller<OpusControlEvent>(type)
-            this.set_global_controller_visibility(type, !controller.visible)
-        } else {
+        if (!exists) {
             this.new_global_controller(type)
         }
+        val controller = this.controllers.get_controller<OpusControlEvent>(type)
+        this.set_global_controller_visibility(type, !controller.visible)
     }
 
     open fun convert_events_in_tree_to_relative(beat_key: BeatKey, position: List<Int>) {

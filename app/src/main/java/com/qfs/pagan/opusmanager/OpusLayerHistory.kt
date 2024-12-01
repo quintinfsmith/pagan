@@ -1940,6 +1940,24 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
+    override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
+        this._remember {
+            super.toggle_line_controller_visibility(type, channel_index, line_offset)
+        }
+    }
+
+    override fun toggle_global_control_visibility(type: ControlEventType) {
+        this._remember {
+            super.toggle_global_control_visibility(type)
+        }
+    }
+
+    override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
+        this._remember {
+            super.toggle_channel_controller_visibility(type, channel_index)
+        }
+    }
+
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

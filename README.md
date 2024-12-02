@@ -1,9 +1,51 @@
 # Pagan
 A music sequencer
 
-[Manual](https://burnsomni.net/manual/pagan) [Issue Tracker](https://burnsomni.net/issues/pagan)
+[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
 
-[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L5163ZB8)
+<table>
+ <tr>
+  <th>
+   Free Download
+  </th>
+  <th>
+   Donate
+  </th>
+  <th>
+   User Guides
+  </th>
+ </tr>
+ <tr>
+  <td>
+   <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/">
+    <img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; height: 4em;" />
+   </a>
+  </td>
+  <td>
+   <a style="text-decoration: none important!;" href="https://ko-fi.com/L4L5163ZB8">
+    <img alt="Buy Me a Coffee" src="https://ko-fi.com/img/githubbutton_sm.svg"/>
+   </a>
+  </td>
+  <td style="text-align: center;">
+   <a style="display: inline-block;" href="https://burnsomni.net/manual/pagan">Manual</a>
+  </td>
+ </tr>
+ <tr>
+   <td>
+   <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'>
+    <img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; height: 4em;"/>
+   </a>
+  </td>
+  <td>
+   
+  </td>
+  <td>
+   Videos coming soon...
+  </td>
+ </tr>
+ 
+</table>
+
 
 ## What is it?
 Pagan is a music sequencer built around 2 main features:
@@ -16,21 +58,6 @@ It may be for you, it may not. You do you.
 
 ## Usage
 Pagan requires Android version >= 11
-
-### Download
-
- <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/">
-    <img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; height: 4em;" />
- </a>
-
-<a style="display: inline-block; text-decoration: none important!;" href="https://burnsomni.net/releases/pagan.atom">
-     <img alt="Get it over RSS" src="https://burnsomni.net/content/get-it-on-rss.png" style="display: block; height: 4em;" />
-</a>
-
-<a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'>
-    <img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; height: 4em;"/>
-</a>
-
 
 
 ### Manual Build

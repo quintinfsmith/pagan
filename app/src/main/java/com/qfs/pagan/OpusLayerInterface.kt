@@ -16,7 +16,6 @@ import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerHistory
 import com.qfs.pagan.opusmanager.OpusLineAbstract
-import com.qfs.pagan.opusmanager.OpusLinePercussion
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
@@ -291,15 +290,50 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
     override fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
-        super.set_line_controller_visibility(type, channel_index, line_offset, visibility)
-        this._controller_visibility_toggle_callback()
+        this.lock_ui_partial {
+            if (visibility) {
+                super.set_line_controller_visibility(type, channel_index, line_offset, visibility)
+                val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
+                val working_channel = this.get_channel(channel_index)
+                val controller = working_channel.lines[line_offset].get_controller<OpusControlEvent>(type)
+                this._add_controller_to_column_width_map(visible_row, controller)
+            } else {
+                val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
+                super.set_line_controller_visibility(type, channel_index, line_offset, visibility)
+                this._queue_remove_rows(visible_row, 1)
+            }
+        }
     }
     override fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
-        super.set_channel_controller_visibility(type, channel_index, visibility)
-        this._controller_visibility_toggle_callback()
+        this.lock_ui_partial {
+            if (visibility) {
+                super.set_channel_controller_visibility(type, channel_index, visibility)
+
+                val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
+                val working_channel = this.get_channel(channel_index)
+                val controller = working_channel.controllers.get_controller<OpusControlEvent>(type)
+                this._add_controller_to_column_width_map(visible_row, controller)
+            } else {
+                val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
+                super.set_channel_controller_visibility(type, channel_index, visibility)
+                this._queue_remove_rows(visible_row, 1)
+            }
+        }
     }
+
     override fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
-        super.set_global_controller_visibility(type, visibility)
+        this.lock_ui_partial {
+            if (visibility) {
+                super.set_global_controller_visibility(type, visibility)
+                val visible_row = this.get_visible_row_from_ctl_line_global(type)
+                val controller = this.controllers.get_controller<OpusControlEvent>(type)
+                this._add_controller_to_column_width_map(visible_row, controller)
+            } else {
+                val visible_row = this.get_visible_row_from_ctl_line_global(type)
+                super.set_global_controller_visibility(type, visibility)
+                this._queue_remove_rows(visible_row, 1)
+            }
+        }
     }
 
     override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
@@ -834,13 +868,14 @@ class OpusLayerInterface : OpusLayerHistory() {
                         && !this.is_percussion(channel)
                         && this.channels.size == 1
 
+                if (force_show_percussion) {
+                    this.make_percussion_visible()
+                }
+
                 val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
 
                 super.remove_channel(channel)
 
-                if (force_show_percussion) {
-                    this.set_channel_visibility(this.channels.size, true)
-                }
 
                 this.ui_change_bill.queue_remove_channel(channel)
                 this.ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
@@ -1462,34 +1497,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (this.history_cache.isLocked()) {
             return
         }
-
-        this.lock_ui_partial {
-            this.set_channel_visibility(this.channels.size, true)
-
-            this.ui_change_bill.queue_refresh_channel(this.channels.size)
-
-            var ctl_line = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(this.channels.size, 0)
-                )
-            )!!
-
-            this.percussion_channel.lines.forEachIndexed { i: Int, line: OpusLinePercussion ->
-                this._add_line_to_column_width_map(ctl_line++, line)
-                for ((type, controller) in line.controllers.get_all()) {
-                    if (controller.visible) {
-                        this._add_controller_to_column_width_map(ctl_line++, controller)
-                    }
-                }
-            }
-
-            for ((type, controller) in this.percussion_channel.controllers.get_all()) {
-                if (controller.visible) {
-                    this._add_controller_to_column_width_map(ctl_line++, controller)
-                }
-            }
-
-        }
+        this.set_channel_visibility(this.channels.size, true)
     }
 
     fun queue_cursor_update(cursor: OpusManagerCursor, deep_update: Boolean = true) {

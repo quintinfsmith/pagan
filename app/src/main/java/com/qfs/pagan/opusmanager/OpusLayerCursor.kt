@@ -783,12 +783,21 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor.select(beat_key, position)
     }
     open fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        if (!this.is_line_ctl_visible(ctl_type, beat_key.channel, beat_key.line_offset)) {
+            return
+        }
         this.cursor.select_ctl_at_line(beat_key, position, ctl_type)
     }
     open fun cursor_select_ctl_at_channel(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (!this.is_channel_ctl_visible(ctl_type, channel)) {
+            return
+        }
         this.cursor.select_ctl_at_channel(channel, beat, position, ctl_type)
     }
     open fun cursor_select_ctl_at_global(ctl_type: ControlEventType, beat: Int, position: List<Int>) {
+        if (!this.is_global_ctl_visible(ctl_type)) {
+            return
+        }
         this.cursor.select_ctl_at_global(beat, position, ctl_type)
     }
     open fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {

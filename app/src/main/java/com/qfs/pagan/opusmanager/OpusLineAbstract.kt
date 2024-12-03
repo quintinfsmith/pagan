@@ -244,42 +244,14 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             }
         }
 
-        // No need to check here. blocked_check_remove_beat should always be called on all lines before actually attempting
-        //if (index < this.beats.size - count) {
-        //    for (before in needs_recache) {
-        //        //var working_beat = before.first
-        //        //var working_position = this.get_first_position(working_beat)
-
-        //        //if (!this.get_tree(working_beat, working_position).is_event()) {
-        //        //    val next = this.get_proceding_event_position(working_beat, working_position) ?: continue
-        //        //    working_beat = next.first
-        //        //    working_position = next.second
-        //        //}
-
-        //        //val (before_offset, before_width) = this.get_leaf_offset_and_width(before.first, before.second)
-        //        //var duration = this.get_tree(before.first, before.second).get_event()?.duration ?: 1
-
-        //        //var (after_offset, _) = this.get_leaf_offset_and_width(working_beat, working_position)
-        //        //after_offset -= count
-
-        //        //if (after_offset >= before_offset && after_offset < before_offset + Rational(duration, before_width)) {
-        //        //    throw BlockedTreeException(working_beat, working_position, before.first, before.second)
-        //        //}
-
-        //        for (after in needs_decrement) {
-        //            if (before.first != after.first) {
-        //                continue
-        //            }
-        //        }
-        //    }
-        //}
-
         for (cache_key in decache) {
             this.decache_overlapping_leaf(cache_key.first, cache_key.second)
         }
 
         decache.clear()
-        this.beats.removeAt(index)
+        for (i in 0 until count) {
+            this.beats.removeAt(index)
+        }
 
         val new_cache = Array(needs_decrement.size) { i: Int ->
             val original_blocked = this._cache_blocked_tree_map.remove(needs_decrement[i])!!

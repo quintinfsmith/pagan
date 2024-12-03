@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.view.ViewGroup
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import kotlin.math.min
 
 class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_column, null, primary_parent, secondary_parent) {
     lateinit var button_insert: ButtonIcon
@@ -72,8 +71,7 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         main.dialog_number_input(this.context.getString(R.string.dlg_remove_beats), 1, opus_manager.beat_count - 1) { count: Int ->
-            val maximum = opus_manager.beat_count - opus_manager.cursor.beat 
-            opus_manager.remove_beat_at_cursor(min(maximum, count))
+            opus_manager.remove_beat_at_cursor(count)
         }
         return true
     }

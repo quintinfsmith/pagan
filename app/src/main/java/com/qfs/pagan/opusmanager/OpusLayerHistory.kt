@@ -1180,7 +1180,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun remove_beat(beat_index: Int, count: Int) {
         this._remember {
-            val working_beat_index = min(beat_index, this.beat_count - count)
+            val working_beat_index = min(beat_index + (count - 1), this.beat_count - 1)
             val beat_cells = List(count) { i: Int ->
                 val working_list = mutableListOf<OpusTree<out InstrumentEvent>>()
                 val working_line_controller_list = mutableListOf<Triple<Pair<Int, Int>, ControlEventType, OpusTree<out OpusControlEvent>>>()
@@ -1190,7 +1190,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     val line_count = channel.size
                     for (j in 0 until line_count) {
                         working_list.add(
-                            this.get_tree_copy(BeatKey(c, j, working_beat_index + i))
+                            this.get_tree_copy(BeatKey(c, j, working_beat_index - i))
                         )
                         val controllers = channel.lines[j].controllers
                         for ((type, controller) in controllers.get_all()) {
@@ -1198,20 +1198,20 @@ open class OpusLayerHistory: OpusLayerCursor() {
                                 Triple(
                                     Pair(c, j),
                                     type,
-                                    controller.get_tree(working_beat_index + i)
+                                    controller.get_tree(working_beat_index - i)
                                 )
                             )
                         }
                     }
                     val controllers = channel.controllers
                     for ((type, controller) in controllers.get_all()) {
-                        working_channel_controller_list.add(Triple(c, type, controller.get_tree(working_beat_index + i)))
+                        working_channel_controller_list.add(Triple(c, type, controller.get_tree(working_beat_index - i)))
                     }
                 }
 
                 val controllers = this.controllers
                 for ((type, controller) in controllers.get_all()) {
-                    working_global_controller_list.add(Pair(type, controller.get_tree(working_beat_index + i)))
+                    working_global_controller_list.add(Pair(type, controller.get_tree(working_beat_index - i)))
                 }
 
                 Pair(working_list, Triple(working_line_controller_list, working_channel_controller_list, working_global_controller_list))
@@ -1222,7 +1222,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
             for (i in beat_cells.indices.reversed()) {
                 this.push_to_history_stack(
                     HistoryToken.INSERT_BEAT,
-                    listOf(working_beat_index, beat_cells[i].first, beat_cells[i].second)
+                    listOf(working_beat_index - (count - 1), beat_cells[i].first, beat_cells[i].second)
                 )
             }
         }

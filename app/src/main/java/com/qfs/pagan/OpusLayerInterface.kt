@@ -1002,6 +1002,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
+        println("GF? $count")
         this.lock_ui_partial {
             if (!this.ui_change_bill.is_full_locked()) {
                 this.queue_cursor_update(this.cursor)

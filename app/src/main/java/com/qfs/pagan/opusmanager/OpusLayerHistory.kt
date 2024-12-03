@@ -563,6 +563,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         this.controller_global_replace_tree(type, beat_index, listOf(), tree)
                     }
 
+                    println("$beat_index INSERTED")
                     // Need to manually set the column
                     this.cursor_select_column(beat_index)
                 }

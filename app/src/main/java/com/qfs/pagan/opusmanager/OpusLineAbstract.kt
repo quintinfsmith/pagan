@@ -62,6 +62,56 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
     open fun insert_beat(index: Int) {
         this.beats.add(index, OpusTree())
+        val new_cache_pairs = mutableListOf<Pair<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>>()
+        val need_recache = mutableListOf<Pair<Int, List<Int>>>()
+        for ((overlapper, overlapped) in this._cache_blocked_tree_map) {
+            if (overlapper.first >= index) {
+                val adj_overlapped = mutableListOf<Triple<Int, List<Int>, Rational>>()
+                for ((beat, position, amount) in overlapped) {
+                    adj_overlapped.add(
+                        Triple(
+                            beat + 1,
+                            position,
+                            amount
+                        )
+                    )
+                }
+
+                new_cache_pairs.add(
+                    Pair(
+                        Pair(
+                            overlapper.first + 1,
+                            overlapper.second
+                        ),
+                        adj_overlapped
+                    )
+                )
+            } else {
+                val adj_overlapped = mutableListOf<Triple<Int, List<Int>, Rational>>()
+                var crossed_index = false
+                for ((beat, position, amount) in overlapped) {
+                    if (beat >= overlapper.first) {
+                        crossed_index = true
+                        break
+                    }
+                }
+                if (crossed_index) {
+                    need_recache.add(overlapper)
+                } else {
+                    new_cache_pairs.add(Pair(overlapper, overlapped))
+                }
+            }
+        }
+        this.clear_block_caches()
+        for ((key, value) in new_cache_pairs) {
+            this._cache_blocked_tree_map[key] = value
+            for ((beat, position, amount) in value) {
+                this._cache_inv_blocked_tree_map[Pair(beat, position.toList())] = Triple(key.first, key.second.toList(), amount)
+            }
+        }
+        for (key in need_recache) {
+            this.cache_tree_overlaps(key.first, key.second)
+        }
     }
 
 
@@ -227,7 +277,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
     open fun remove_beat(index: Int, count: Int = 1) {
-        this.blocked_check_remove_beat_throw(index)
+        //this.blocked_check_remove_beat_throw(index, count)
 
         val decache = mutableSetOf<Pair<Int, List<Int>>>()
         val needs_recache = mutableSetOf<Pair<Int, List<Int>>>()
@@ -736,6 +786,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             }
         }
 
+        println("CHECK-----------------")
         if (beat_index < this.beats.size - 1) {
             for (before in needs_recache) {
                 var working_beat = beat_index + 1
@@ -747,6 +798,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                     working_position = next.second
                 }
 
+                println("$before")
                 val (before_offset, before_width) = this.get_leaf_offset_and_width(before.first, before.second)
                 var duration = this.get_tree(before.first, before.second).get_event()?.duration ?: 1
 

@@ -1289,6 +1289,7 @@ open class OpusLayerBase {
         if (this.beat_count <= count) {
             throw RemovingLastBeatException()
         }
+
         this.blocked_check_remove_beat(beat_index, count)
 
         val working_beat_index = min(beat_index + count - 1, this.beat_count - 1) - (count - 1)
@@ -1304,7 +1305,6 @@ open class OpusLayerBase {
         for ((_, controller) in this.controllers.get_all()) {
             controller.remove_beat(working_beat_index, count)
         }
-        println("REMOV $count")
         this.beat_count -= count
     }
 

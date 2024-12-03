@@ -1002,23 +1002,19 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
-        println("GF? $count")
         this.lock_ui_partial {
-            if (!this.ui_change_bill.is_full_locked()) {
-                this.queue_cursor_update(this.cursor)
-                val x = min(beat_index, this.beat_count - count)
-                for (i in 0 until count) {
-                    this.get_editor_table()?.remove_mapped_column(x)
-                    this.ui_change_bill.queue_remove_column(x)
-                }
-            }
+            this.queue_cursor_update(this.cursor.copy())
 
             super.remove_beat(beat_index, count)
 
-            if (!this.ui_change_bill.is_full_locked()) {
-                this.queue_cursor_update(this.cursor)
-                this.ui_change_bill.queue_refresh_context_menu()
+            val x = min(beat_index + count - 1, this.beat_count - 1) - (count - 1)
+            for (i in 0 until count) {
+                this.get_editor_table()?.remove_mapped_column(x)
+                this.ui_change_bill.queue_remove_column(x)
             }
+
+            this.queue_cursor_update(this.cursor.copy())
+            this.ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -1337,7 +1333,6 @@ class OpusLayerInterface : OpusLayerHistory() {
    // }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
-        println("BLOCKED: $blocker_key, $blocker_position")
         //super.on_action_blocked(blocker_key, blocker_position)
         if (!this.project_changing) {
             this.set_temporary_blocker(blocker_key, blocker_position)
@@ -1566,7 +1561,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
             }
 
-            this.queue_cursor_update(this.cursor, true)
+            this.queue_cursor_update(this.cursor, false)
             if (this.is_percussion(beat_key.channel)) {
                 this.ui_change_bill.queue_set_context_menu_leaf_percussion()
             } else {
@@ -1797,7 +1792,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
             this._cache_cursor = cursor.copy()
         }
-
+        println("UPDATING ${cursor.mode}")
         val coordinates_to_update = mutableSetOf<EditorTable.Coordinate>()
 
         when (cursor.mode) {

@@ -1273,6 +1273,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
+    override fun controller_channel_to_line_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        this._remember {
+            super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
+        }
+    }
+
     override fun controller_global_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
         this._remember {
             super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
@@ -1282,6 +1288,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
     override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         this._remember {
             super.controller_line_move_leaf(type, beatkey_from, position_from, beatkey_to, position_to)
+        }
+    }
+
+    override fun controller_line_to_channel_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this._remember {
+            super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
         }
     }
 

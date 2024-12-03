@@ -529,9 +529,9 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line_ctl_line(type, channel, line_offset)
     }
 
-    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
-        super.controller_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat)
-        this.cursor_select_channel_ctl_line(type, channel)
+    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+        super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat)
+        this.cursor_select_channel_ctl_line(type, target_channel)
     }
 
     override fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
@@ -1304,6 +1304,75 @@ open class OpusLayerCursor: OpusLayerBase() {
             tree.get_first_event_tree_position() ?: listOf()
         )
     }
+
+    fun copy_channel_ctl_to_beat(channel: Int, beat: Int) {
+        if (this.cursor.is_selecting_range()) {
+            val (first, second) = this.cursor.range!!
+            if (first != second) {
+                this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, this.cursor.channel, first.beat, second.beat)
+            } else {
+                this.controller_channel_replace_tree(
+                    this.cursor.ctl_type!!,
+                    channel,
+                    beat,
+                    listOf(),
+                    this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, this.cursor.channel, first.beat, listOf())
+                )
+            }
+        } else {
+            throw InvalidCursorState()
+        }
+
+        val tree = this.get_channel_ctl_tree<OpusControlEvent>(
+            this.cursor.ctl_type!!,
+            channel,
+            beat,
+            listOf()
+        )
+
+        this.cursor_select_ctl_at_channel(
+            this.cursor.ctl_type!!,
+            channel,
+            beat,
+            tree.get_first_event_tree_position() ?: listOf()
+        )
+    }
+
+    fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
+        if (this.cursor.is_selecting_range()) {
+            val (first, second) = this.cursor.range!!
+            if (first != second) {
+                this.controller_channel_move_range(this.cursor.ctl_type!!, channel, beat, this.cursor.channel, first.beat, second.beat)
+            } else {
+                this.controller_channel_move_leaf(
+                    this.cursor.ctl_type!!,
+                    first.channel,
+                    first.beat,
+                    listOf(),
+                    channel,
+                    beat,
+                    listOf()
+                )
+            }
+        } else {
+            throw InvalidCursorState()
+        }
+
+        val tree = this.get_channel_ctl_tree<OpusControlEvent>(
+            this.cursor.ctl_type!!,
+            channel,
+            beat,
+            listOf()
+        )
+
+        this.cursor_select_ctl_at_channel(
+            this.cursor.ctl_type!!,
+            channel,
+            beat,
+            tree.get_first_event_tree_position() ?: listOf()
+        )
+    }
+
     fun copy_global_ctl_to_beat(beat: Int) {
         if (this.cursor.ctl_level != CtlLineLevel.Global) {
             throw InvalidOverwriteCall()

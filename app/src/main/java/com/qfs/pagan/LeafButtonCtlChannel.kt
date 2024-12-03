@@ -5,6 +5,7 @@ import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusLayerBase
 
 class LeafButtonCtlChannel(
     context: Context,
@@ -65,7 +66,32 @@ class LeafButtonCtlChannel(
 
     override fun callback_click() {
         val opus_manager = this.get_opus_manager()
-        opus_manager.cursor_select_ctl_at_channel(this.control_type, this.channel, this.get_beat(), this.position)
+        val cursor = opus_manager.cursor
+        if (cursor.is_selecting_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
+            try {
+                when (this.get_activity().configuration.move_mode) {
+                    PaganConfiguration.MoveMode.COPY -> {
+                        opus_manager.copy_channel_ctl_to_beat(this.channel, this.get_beat())
+                    }
+
+                    PaganConfiguration.MoveMode.MOVE -> {
+                        opus_manager.move_channel_ctl_to_beat(this.channel, this.get_beat())
+                    }
+
+                    PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
+                }
+            } catch (e: Exception) {
+                when (e) {
+                    is IndexOutOfBoundsException,
+                    is OpusLayerBase.InvalidOverwriteCall -> {
+                        opus_manager.cursor_select_ctl_at_channel(this.control_type, this.channel, this.get_beat(), this.position)
+                    }
+                    else -> throw e
+                }
+            }
+        } else {
+            opus_manager.cursor_select_ctl_at_channel(this.control_type, this.channel, this.get_beat(), this.position)
+        }
     }
 }
 

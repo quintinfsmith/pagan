@@ -24,7 +24,7 @@ class LeafButtonCtlGlobal(
         if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == this.control_type) {
             opus_manager.cursor_select_global_ctl_range(
                 this.control_type,
-                cursor.beat,
+                cursor.range!!.first.beat,
                 this.get_beat()
             )
         } else {

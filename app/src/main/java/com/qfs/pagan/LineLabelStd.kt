@@ -83,6 +83,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     private fun on_click() {
         val opus_manager = this.get_opus_manager()
 
+
         val cursor = opus_manager.cursor
         if (cursor.is_selecting_range()) {
             val (first_key, second_key) = cursor.range!!

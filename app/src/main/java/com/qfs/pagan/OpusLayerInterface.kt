@@ -843,8 +843,8 @@ class OpusLayerInterface : OpusLayerHistory() {
         super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key)
     }
 
-    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
-        super.controller_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat)
+    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+        super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat)
     }
 
     override fun controller_global_remove_standard(type: ControlEventType, beat: Int, position: List<Int>) {
@@ -1632,7 +1632,15 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun cursor_select_channel_ctl_range(type: ControlEventType, channel: Int, first: Int, second: Int) {
-        super.cursor_select_channel_ctl_range(type, channel, first, second)
+        if (this._block_cursor_selection()) {
+            return
+        }
+        this.lock_ui_partial {
+            this.unset_temporary_blocker()
+            super.cursor_select_channel_ctl_range(type, channel, first, second)
+            this.queue_cursor_update(this.cursor.copy(), false)
+            this.ui_change_bill.queue_set_context_menu_line_control_leaf_b()
+        }
     }
 
     override fun cursor_select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {

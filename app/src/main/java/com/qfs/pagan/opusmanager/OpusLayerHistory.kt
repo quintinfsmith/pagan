@@ -1632,9 +1632,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
         this._remember {
-            super.controller_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat)
+            super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat)
         }
     }
 

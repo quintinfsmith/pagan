@@ -1505,7 +1505,7 @@ open class OpusLayerBase {
 
     open fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
         val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, original_channel, original_beat)
-        for (i in original_beat + 1 until this.beat_count) {
+        for (i in original_beat until this.beat_count) {
             this.controller_channel_replace_tree(type, target_channel, i, null, original_tree.copy(this::copy_control_event))
         }
     }
@@ -1518,13 +1518,14 @@ open class OpusLayerBase {
         var count = ((this.beat_count - start) / width)
 
         for (i in 0 until width) {
+            val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, (i + start))
             for (j in 0 until count) {
                 this.controller_channel_replace_tree(
                     type,
                     target_channel,
                     (j * width) + (i + start),
                     null,
-                    this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, (i + start)).copy(this::copy_control_event)
+                    working_tree.copy(this::copy_control_event)
                 )
             }
         }
@@ -1689,8 +1690,7 @@ open class OpusLayerBase {
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
-        val original_controller = this.channels[original_channel].controllers.get_controller<OpusControlEvent>(type)
-
+        val original_controller = this.get_all_channels()[original_channel].controllers.get_controller<OpusControlEvent>(type)
         for (i in start .. end) {
             overwrite_map[target_beat + (i - start)] = original_controller.get_tree(i).copy(this::copy_control_event)
             if (unset_original) {
@@ -1732,12 +1732,6 @@ open class OpusLayerBase {
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
-
-        for (i in original_keys.indices) {
-            if (this.is_percussion(original_keys[i].channel) != this.is_percussion(target_keys[i].channel)) {
-                throw MixedInstrumentException(original_keys[i], target_keys[i])
-            }
-        }
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
         val trees = mutableListOf<OpusTree<OpusControlEvent>>()
@@ -2135,8 +2129,8 @@ open class OpusLayerBase {
             val working_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
             for (i in 0 until count) {
                 val to_overwrite = BeatKey(
-                    beat_key.channel,
-                    beat_key.line_offset,
+                    channel,
+                    line_offset,
                     beat_key.beat + (i * width)
                 )
                 this.controller_line_replace_tree(type, to_overwrite, null, working_tree.copy(this::copy_control_event))
@@ -3063,7 +3057,6 @@ open class OpusLayerBase {
                 }
             }
         }
-        println("A ${System.currentTimeMillis() - ts_start}")
 
         for ((channel, blocks) in blocked_ranges) {
             while (channel >= channel_sizes.size) {
@@ -3099,7 +3092,6 @@ open class OpusLayerBase {
             midi_channel_map[9] = channel_sizes.size
             channel_sizes.add(1)
         }
-        println("B ${System.currentTimeMillis() - ts_start}")
 
         val sorted_channels = midi_channel_map.values.sortedBy { it }
         sorted_channels.forEachIndexed { i: Int, channel: Int ->
@@ -3167,7 +3159,6 @@ open class OpusLayerBase {
                 }
             }
         }
-        println("C ($split_dur) ${System.currentTimeMillis() - ts_start}")
 
         for ((beatkey, position, event) in events_to_set) {
             if (event[0] == 9) {
@@ -3296,7 +3287,6 @@ open class OpusLayerBase {
             controller._init_blocked_tree_caches()
         }
         // ----------------------------------------------
-        println("MIDI: ${System.currentTimeMillis() - ts_start} ")
     }
 
     fun get_line_volume(channel: Int, line_offset: Int): Float {

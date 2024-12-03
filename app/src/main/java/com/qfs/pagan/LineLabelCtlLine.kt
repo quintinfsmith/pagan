@@ -13,9 +13,9 @@ class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel
             if (cursor.is_selecting_range()) {
                 val (first, second) = cursor.range!!
                 if (first != second) {
-                    opus_manager.controller_line_overwrite_range_horizontally(this.ctl_type, first.channel, first.line_offset, first, second)
+                    opus_manager.controller_line_overwrite_range_horizontally(this.ctl_type, this.channel, this.line_offset, first, second)
                 } else {
-                    opus_manager.controller_line_overwrite_line(this.ctl_type, first.channel, first.line_offset, first)
+                    opus_manager.controller_line_overwrite_line(this.ctl_type, this.channel, this.line_offset, first)
                 }
             }
         } catch (e: OpusLayerBase.InvalidOverwriteCall) {

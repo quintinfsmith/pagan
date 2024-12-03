@@ -1342,7 +1342,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
             if (first != second) {
-                this.controller_channel_move_range(this.cursor.ctl_type!!, channel, beat, this.cursor.channel, first.beat, second.beat)
+                this.controller_channel_move_range(this.cursor.ctl_type!!, channel, beat, first.channel, first.beat, second.beat)
             } else {
                 this.controller_channel_move_leaf(
                     this.cursor.ctl_type!!,

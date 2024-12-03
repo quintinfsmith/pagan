@@ -1800,7 +1800,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
             this._cache_cursor = cursor.copy()
         }
-        println("UPDATING ${cursor.mode}")
         val coordinates_to_update = mutableSetOf<EditorTable.Coordinate>()
 
         when (cursor.mode) {

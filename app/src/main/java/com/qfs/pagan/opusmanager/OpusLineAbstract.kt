@@ -10,6 +10,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     private val _cache_blocked_tree_map = HashMap<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<Int, List<Int>>, Triple<Int, List<Int>, Rational>>()
 
+    var flag_ignore_blocking = false
+
     var overlap_callback: ((Pair<Int, List<Int>>, Pair<Int, List<Int>>) -> Unit)? = null
     var overlap_removed_callback: ((Pair<Int, List<Int>>, Pair<Int, List<Int>>) -> Unit)? = null
 
@@ -372,9 +374,9 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         if (current_tree_position != null) {
             val current_event_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
             val blocked_amount = this.get_blocking_amount(beat, position)
-            //if (current_event_tree != this.get_tree(beat, position) && blocked_amount!! >= 1) {
-            //    throw BlockedTreeException(beat, position, current_tree_position.first, current_tree_position.second)
-            //}
+            if (current_event_tree != this.get_tree(beat, position) && blocked_amount!! >= 1) {
+                throw BlockedTreeException(beat, position, current_tree_position.first, current_tree_position.second)
+            }
         }
 
         this.recache_blocked_tree_wrapper(beat, position) {
@@ -532,6 +534,10 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
     fun <T> recache_blocked_tree_wrapper(beat: Int, position: List<Int>, callback: () -> T): T {
+        if (this.flag_ignore_blocking) {
+            return callback()
+        }
+
         val need_recache = mutableSetOf(beat)
 
         val tree = try {

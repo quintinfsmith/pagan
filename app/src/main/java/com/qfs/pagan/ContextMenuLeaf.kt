@@ -123,7 +123,6 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         } else {
             this.ros_relative_option.visibility = View.GONE
         }
-
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
 

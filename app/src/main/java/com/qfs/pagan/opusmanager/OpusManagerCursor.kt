@@ -125,7 +125,7 @@ data class OpusManagerCursor(
         this.channel = beat_key.channel
         this.line_offset = beat_key.line_offset
         this.beat = beat_key.beat
-        this.position = position
+        this.position = position.toList()
         this.ctl_type = null
         this.ctl_level = null
     }
@@ -158,7 +158,7 @@ data class OpusManagerCursor(
         this.channel = beat_key.channel
         this.line_offset = beat_key.line_offset
         this.beat = beat_key.beat
-        this.position = position
+        this.position = position.toList()
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Line
     }
@@ -168,7 +168,7 @@ data class OpusManagerCursor(
         this.channel = channel
         this.line_offset = 0
         this.beat = beat
-        this.position = position
+        this.position = position.toList()
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Channel
     }
@@ -178,7 +178,7 @@ data class OpusManagerCursor(
         this.channel = 0
         this.line_offset = 0
         this.beat = beat
-        this.position = position
+        this.position = position.toList()
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Global
     }
@@ -392,4 +392,5 @@ data class OpusManagerCursor(
     //    }
     //    this.position = working_position
     //}
+
 }

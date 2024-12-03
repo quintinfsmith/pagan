@@ -134,6 +134,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         super.split_tree(beat_key, position, splits, move_event_to_end)
+
         val new_position = position.toMutableList()
         new_position.add(0)
         this.cursor_select(beat_key, new_position)
@@ -448,22 +449,22 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
         super.remove_one_of_two(beat_key, position)
-        this.cursor_select(beat_key, position.subList(0, position.size - 1))
+        // Cursor Handled in replace_tree()
     }
 
     override fun controller_line_remove_one_of_two(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         super.controller_line_remove_one_of_two(type, beat_key, position)
-        this.cursor_select_ctl_at_line(type, beat_key, position.subList(0, position.size - 1))
+        // Cursor Handled in replace_tree()
     }
 
     override fun controller_channel_remove_one_of_two(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         super.controller_channel_remove_one_of_two(type, channel, beat, position)
-        this.cursor_select_ctl_at_channel(type, channel, beat, position.subList(0, position.size - 1))
+        // Cursor Handled in replace_tree()
     }
 
     override fun controller_global_remove_one_of_two(type: ControlEventType, beat: Int, position: List<Int>) {
         super.controller_global_remove_one_of_two(type, beat, position)
-        this.cursor_select_ctl_at_global(type, beat, position.subList(0, position.size - 1))
+        // Cursor Handled in replace_tree()
     }
 
     override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
@@ -676,6 +677,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
         super.on_action_blocked(blocker_key, blocker_position)
+
         this.cursor_select(blocker_key, blocker_position)
     }
 
@@ -751,10 +753,17 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
     open fun cursor_apply(cursor: OpusManagerCursor) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.cursor.clear()
         this.cursor = cursor
     }
     open fun cursor_clear() {
+        if (this._block_cursor_selection()) {
+            return
+        }
+
         this.cursor.clear()
     }
     open fun cursor_select_channel(channel: Int) {
@@ -780,36 +789,60 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor.select_column(beat)
     }
     open fun cursor_select(beat_key: BeatKey, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.cursor.select(beat_key, position)
     }
     open fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         if (!this.is_line_ctl_visible(ctl_type, beat_key.channel, beat_key.line_offset)) {
             return
         }
         this.cursor.select_ctl_at_line(beat_key, position, ctl_type)
     }
     open fun cursor_select_ctl_at_channel(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         if (!this.is_channel_ctl_visible(ctl_type, channel)) {
             return
         }
         this.cursor.select_ctl_at_channel(channel, beat, position, ctl_type)
     }
     open fun cursor_select_ctl_at_global(ctl_type: ControlEventType, beat: Int, position: List<Int>) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         if (!this.is_global_ctl_visible(ctl_type)) {
             return
         }
         this.cursor.select_ctl_at_global(beat, position, ctl_type)
     }
     open fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.cursor.select_range(beat_key_a, beat_key_b)
     }
     open fun cursor_select_global_ctl_range(type:ControlEventType, first: Int, second: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.cursor.select_global_ctl_range(type, first, second)
     }
     open fun cursor_select_channel_ctl_range(type:ControlEventType, channel: Int, first: Int, second: Int) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.cursor.select_channel_ctl_range(type, channel, first, second)
     }
     open fun cursor_select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
+        if (this._block_cursor_selection()) {
+            return
+        }
         this.cursor.select_line_ctl_range(type, beat_key_a, beat_key_b)
     }
 
@@ -821,7 +854,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 throw Exception()
             }
             CtlLineLevel.Global -> {
-                val (actual_beat, actual_position) = this.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.position)
+                val (actual_beat, actual_position) = this.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
                 this.controller_global_set_event(
                     cursor.ctl_type!!,
                     actual_beat,
@@ -830,7 +863,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 )
             }
             CtlLineLevel.Channel -> {
-                val (actual_beat, actual_position) = this.controller_channel_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
+                val (actual_beat, actual_position) = this.controller_channel_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
                 this.controller_channel_set_event(
                     cursor.ctl_type!!,
                     cursor.channel,
@@ -840,7 +873,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 )
             }
             CtlLineLevel.Line -> {
-                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
+                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
                 this.controller_line_set_event(
                     cursor.ctl_type!!,
                     actual_beat_key,
@@ -886,18 +919,13 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, position, count)
 
                 this.remove_repeat(beat_key, position, real_count)
-
-                this.cursor_select(
-                    beat_key,
-                    this.get_first_position(beat_key, cursor_position)
-                )
             }
 
             CtlLineLevel.Global -> {
                 val working_tree = this.get_global_ctl_tree<OpusControlEvent>(cursor.ctl_type!!, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                this.repeat_controller_global_remove(cursor.ctl_type!!, cursor.beat, cursor.position, real_count)
+                this.repeat_controller_global_remove(cursor.ctl_type!!, cursor.beat, cursor.get_position(), real_count)
 
                 this.cursor_select_ctl_at_global(
                     cursor.ctl_type!!,
@@ -910,7 +938,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                this.repeat_controller_channel_remove(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, real_count)
+                this.repeat_controller_channel_remove(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), real_count)
 
                 this.cursor_select_ctl_at_channel(
                     cursor.ctl_type!!,
@@ -925,7 +953,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val working_tree = this.get_line_ctl_tree<OpusControlEvent>(cursor.ctl_type!!, beat_key).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
 
-                this.repeat_controller_line_remove(cursor.ctl_type!!, beat_key, cursor.position, real_count)
+                this.repeat_controller_line_remove(cursor.ctl_type!!, beat_key, cursor.get_position(), real_count)
 
                 this.cursor_select_ctl_at_line(
                     cursor.ctl_type!!,
@@ -1510,7 +1538,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Channel -> {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
-                var working_position = cursor.position
+                var working_position = cursor.get_position()
                 val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
@@ -1526,7 +1554,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
-                var working_position = cursor.position
+                var working_position = cursor.get_position()
                 for (i in 0 until repeat) {
                     val next_pair = this.get_global_ctl_proceding_leaf_position(
                         cursor.ctl_type!!,
@@ -1579,7 +1607,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Channel -> {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
-                var working_position = cursor.position
+                var working_position = cursor.get_position()
                 val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
@@ -1595,7 +1623,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
-                var working_position = cursor.position
+                var working_position = cursor.get_position()
                 val controller = this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -1628,7 +1656,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         when (this.cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 var working_beat = this.cursor.beat
-                var working_position = this.cursor.position
+                var working_position = this.cursor.get_position()
                 val controller = this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
@@ -1645,7 +1673,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Channel -> {
                 var working_beat = this.cursor.beat
                 val channel = this.cursor.channel
-                var working_position = this.cursor.position
+                var working_position = this.cursor.get_position()
                 val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
@@ -1660,7 +1688,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
             CtlLineLevel.Global -> {
                 var working_beat = this.cursor.beat
-                var working_position = this.cursor.position
+                var working_position = this.cursor.get_position()
                 val controller = this.controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
@@ -1713,7 +1741,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Channel -> {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
-                var working_position = cursor.position
+                var working_position = cursor.get_position()
                 val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
@@ -1728,7 +1756,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
-                var working_position = cursor.position
+                var working_position = cursor.get_position()
                 for (i in 0 until repeat) {
                     val next_pair = this.get_global_ctl_proceding_leaf_position(
                         cursor.ctl_type!!,
@@ -2205,4 +2233,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
+    internal fun _block_cursor_selection(): Boolean {
+        return (this._blocked_action_catcher > 0)
+    }
 }

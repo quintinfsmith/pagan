@@ -320,7 +320,7 @@ open class OpusLayerBase {
     private var _cached_abs_line_map_map = mutableListOf<Triple<Int, CtlLineLevel?, ControlEventType?>>()
     private var _cached_inv_abs_line_map_map = HashMap<Int, Int>()
 
-    internal var _blocked_action_catcher_active = false
+    internal var _blocked_action_catcher = 0
 
     private val _cached_row_map = HashMap<Int, Int>() // Key: visible line, Value: control_line
     private val _cached_inv_visible_line_map = HashMap<Int, Int>()
@@ -328,6 +328,7 @@ open class OpusLayerBase {
     private val _cached_ctl_map_channel = HashMap<Pair<Int, ControlEventType>, Int>()
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
 
+    internal var project_changing = false
 
     //// RO Functions ////
     /**
@@ -1535,7 +1536,6 @@ open class OpusLayerBase {
         them and use the "forget" wrapper at the History layer
      */
     open fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_tree_copy(beat_key, position)
         val to_replace_position = List(position.size) { i: Int ->
             if (i < position.size - 1) {
                 position[i]
@@ -1547,7 +1547,6 @@ open class OpusLayerBase {
         }
 
         val replacer_tree = this.get_tree(beat_key, to_replace_position)
-
         this.replace_tree(
             beat_key,
             position.subList(0, position.size - 1),
@@ -2865,7 +2864,13 @@ open class OpusLayerBase {
 
     open fun project_change_wrapper(callback: () -> Unit) {
         this.clear()
-        callback()
+        this.project_changing = true
+        try {
+            callback()
+        } finally {
+            this.project_changing = false
+        }
+
         this.on_project_changed()
     }
 
@@ -2927,8 +2932,8 @@ open class OpusLayerBase {
     }
 
     open fun _project_change_midi(midi: Midi) {
+        val ts_start = System.currentTimeMillis()
         val (settree, tempo_line, instrument_map) = OpusLayerBase._tree_from_midi(midi)
-
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
         val channel_sizes = mutableListOf<Int>()
@@ -3019,6 +3024,7 @@ open class OpusLayerBase {
                 }
             }
         }
+        println("A ${System.currentTimeMillis() - ts_start}")
 
         for ((channel, blocks) in blocked_ranges) {
             while (channel >= channel_sizes.size) {
@@ -3054,6 +3060,7 @@ open class OpusLayerBase {
             midi_channel_map[9] = channel_sizes.size
             channel_sizes.add(1)
         }
+        println("B ${System.currentTimeMillis() - ts_start}")
 
         val sorted_channels = midi_channel_map.values.sortedBy { it }
         sorted_channels.forEachIndexed { i: Int, channel: Int ->
@@ -3065,11 +3072,18 @@ open class OpusLayerBase {
                 this.new_channel(lines = channel_sizes[channel])
             }
         }
+        // Flag ignore blocking so we don't keep rechecking
+        for (channel in this.get_all_channels()) {
+            for (line in channel.lines) {
+                line.flag_ignore_blocking = true
+            }
+        }
 
         this.set_beat_count(settree.size)
 
-        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, Array<Int>>>()
+        var split_dur: Long = 0
 
+        val events_to_set = mutableSetOf<Triple<BeatKey, List<Int>, Array<Int>>>()
         for ((position, event_set) in remapped_events) {
             val event_list = event_set.toMutableList()
             event_list.sortWith(compareBy { 127 - it.first[1] })
@@ -3101,7 +3115,9 @@ open class OpusLayerBase {
                         working_beatkey = BeatKey(channel_index, adj_line_offset, x)
                     } else {
                         if (this.get_tree(working_beatkey!!, working_position).size != size) {
+                            val c = System.currentTimeMillis()
                             this.split_tree(working_beatkey!!, working_position, size)
+                            split_dur += System.currentTimeMillis() - c
                         }
                         working_position.add(x)
                     }
@@ -3112,7 +3128,7 @@ open class OpusLayerBase {
                 }
             }
         }
-
+        println("C ($split_dur) ${System.currentTimeMillis() - ts_start}")
 
         for ((beatkey, position, event) in events_to_set) {
             if (event[0] == 9) {
@@ -3224,6 +3240,7 @@ open class OpusLayerBase {
             first_tempo_leaf.unset_event()
         }
 
+        // setup block/overlap caches ------------------
         for (channel in this.get_all_channels()) {
             for (line in channel.lines) {
                 line._init_blocked_tree_caches()
@@ -3239,6 +3256,8 @@ open class OpusLayerBase {
         for ((_, controller) in this.controllers.get_all()) {
             controller._init_blocked_tree_caches()
         }
+        // ----------------------------------------------
+        println("MIDI: ${System.currentTimeMillis() - ts_start} ")
     }
 
     fun get_line_volume(channel: Int, line_offset: Int): Float {
@@ -3566,9 +3585,13 @@ open class OpusLayerBase {
     }
 
     fun <T> catch_blocked_tree_exception(channel: Int, callback: () -> T): T {
+        this._blocked_action_catcher += 1
         return try {
-            callback()
+            val output = callback()
+            this._blocked_action_catcher -= 1
+            output
         } catch (e: OpusChannelAbstract.BlockedTreeException) {
+            this._blocked_action_catcher -= 1
              this.on_action_blocked(
                  BeatKey(
                      channel,
@@ -3579,17 +3602,19 @@ open class OpusLayerBase {
              )
              throw BlockedActionException()
         } catch (e: OpusChannelAbstract.BlockedLineCtlTreeException) {
-             this.on_action_blocked_line_ctl(
-                 e.e.type,
-                 BeatKey(
-                     channel,
-                     e.line_offset,
-                     e.e.e.blocker_beat,
-                 ),
-                 e.e.e.blocker_position
-             )
-             throw BlockedActionException()
+            this._blocked_action_catcher -= 1
+            this.on_action_blocked_line_ctl(
+                e.e.type,
+                BeatKey(
+                    channel,
+                    e.line_offset,
+                    e.e.e.blocker_beat,
+                ),
+                e.e.e.blocker_position
+            )
+            throw BlockedActionException()
         } catch (e: OpusChannelAbstract.BlockedCtlTreeException) {
+            this._blocked_action_catcher -= 1
             this.on_action_blocked_channel_ctl(
                 e.e.type,
                 channel,
@@ -3597,7 +3622,11 @@ open class OpusLayerBase {
                 e.e.e.blocker_position
             )
             throw BlockedActionException()
+        } catch (e: Exception) {
+            this._blocked_action_catcher -= 1
+            throw e
         }
+
         // global is just a OpusTreeArray.BlockedTree at this layer and is caught with catch_global_ctl_blocked_tree_exception
     }
 

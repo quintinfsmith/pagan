@@ -127,7 +127,7 @@ class UIChangeBill {
         }
     }
 
-    private val ui_lock = UILock()
+    val ui_lock = UILock()
     private val _tree: Node = Node()
     private val working_path = mutableListOf<Int>()
     

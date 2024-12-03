@@ -152,16 +152,16 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val position = opus_manager.cursor.get_position().toMutableList()
         if (position.isEmpty()) {
             when (cursor.ctl_level) {
-                CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.position, 2)
-                CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, 2)
-                CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, 2)
+                CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.get_position(), 2)
+                CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), 2)
+                CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position(), 2)
                 null -> { }
             }
         } else {
             when (cursor.ctl_level) {
-                CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, cursor.position)
-                CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
-                CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
+                CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, cursor.get_position())
+                CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
+                CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
                 null -> { }
             }
         }
@@ -175,16 +175,16 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             val position = opus_manager.cursor.get_position().toMutableList()
             if (position.isNotEmpty()) {
                 when (cursor.ctl_level) {
-                    CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, cursor.position, insert_count)
-                    CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, insert_count)
-                    CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, insert_count)
+                    CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, cursor.get_position(), insert_count)
+                    CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), insert_count)
+                    CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position(), insert_count)
                     null -> {}
                 }
             } else {
                 when (cursor.ctl_level) {
-                    CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.position, insert_count)
-                    CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, insert_count)
-                    CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, insert_count)
+                    CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.get_position(), insert_count)
+                    CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), insert_count)
+                    CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position(), insert_count)
                     null -> {}
                 }
             }
@@ -197,9 +197,9 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         when (cursor.ctl_level) {
-            CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.position, 2)
-            CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, 2)
-            CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, 2)
+            CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.get_position(), 2)
+            CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), 2)
+            CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position(), 2)
             null -> { }
         }
     }
@@ -210,9 +210,9 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             when (cursor.ctl_level) {
-                CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.position, split_count)
-                CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position, split_count)
-                CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position, split_count)
+                CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.get_position(), split_count)
+                CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), split_count)
+                CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position(), split_count)
                 null -> { }
             }
         }
@@ -232,7 +232,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
         val ctl_tree = when (cursor.ctl_level!!) {
             CtlLineLevel.Global -> {
-                val (actual_beat, actual_position) = opus_manager.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.position)
+                val (actual_beat, actual_position) = opus_manager.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
                 opus_manager.get_global_ctl_tree<T>(
                     cursor.ctl_type!!,
                     actual_beat,
@@ -240,7 +240,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
                 )
             }
             CtlLineLevel.Channel -> {
-                val (actual_beat, actual_position) = opus_manager.controller_channel_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.position)
+                val (actual_beat, actual_position) = opus_manager.controller_channel_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
                 opus_manager.get_channel_ctl_tree<T>(
                     cursor.ctl_type!!,
                     cursor.channel,
@@ -249,7 +249,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
                 )
             }
             CtlLineLevel.Line -> {
-                val (actual_beat_key, actual_position) = opus_manager.controller_line_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.position)
+                val (actual_beat_key, actual_position) = opus_manager.controller_line_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
 
                 opus_manager.get_line_ctl_tree<T>(
                     cursor.ctl_type!!,
@@ -259,7 +259,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             }
         }
 
-        this.button_remove.isEnabled = cursor.position.isNotEmpty()
+        this.button_remove.isEnabled = cursor.get_position().isNotEmpty()
         this.button_unset.isEnabled = ctl_tree.is_event()
         this.button_duration.isEnabled = ctl_tree.is_event()
 
@@ -284,21 +284,21 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             CtlLineLevel.Global -> opus_manager.get_current_global_controller_event(
                 cursor.ctl_type!!,
                 cursor.beat,
-                cursor.position
+                cursor.get_position()
             )
             CtlLineLevel.Channel ->
                 opus_manager.get_current_channel_controller_event(
                     cursor.ctl_type!!,
                     cursor.channel,
                     cursor.beat,
-                    cursor.position
+                    cursor.get_position()
                 )
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
                 opus_manager.get_current_line_controller_event(
                     cursor.ctl_type!!,
                     beat_key,
-                    cursor.position
+                    cursor.get_position()
                 )
             }
         }

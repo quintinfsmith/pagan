@@ -1078,20 +1078,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        val parent_position = position.subList(0, position.size - 1)
-        val use_tree = this.get_tree_copy(beat_key, parent_position)
-
-        this._forget {
-            super.remove_one_of_two(beat_key, position)
-        }
-
-        this.push_to_history_stack(
-            HistoryToken.REPLACE_TREE,
-            listOf(beat_key.copy(), parent_position.toList(), use_tree)
-        )
-    }
-
     override fun controller_global_remove_one_of_two(type: ControlEventType, beat: Int, position: List<Int>) {
         val parent_position = position.subList(0, position.size - 1)
         val use_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, parent_position).copy()

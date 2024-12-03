@@ -510,7 +510,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
                 var width = 1f
                 var offset = 0f
-                for (p in cursor.position) {
+                for (p in cursor.get_position()) {
                     width /= tree.size
                     offset += p * width
                     tree = tree[p]

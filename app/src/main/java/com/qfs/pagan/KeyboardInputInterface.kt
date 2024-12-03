@@ -600,7 +600,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                         opus_manager.controller_global_split_tree(
                             cursor.ctl_type!!,
                             cursor.beat,
-                            cursor.position,
+                            cursor.get_position(),
                             splits
                         )
                     }

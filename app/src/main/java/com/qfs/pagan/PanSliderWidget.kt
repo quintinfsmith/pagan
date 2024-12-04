@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
@@ -53,9 +52,9 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             val div_size = 1F / (that.max - that.min).toFloat()
             val relative_n = (that.progress - that.min).toFloat() * div_size
 
-            this.paint.clearShadowLayer()
             this.paint.strokeWidth = 1f
             this.paint.color = purple
+            this.path.reset()
 
             canvas.drawRect(
                 padding,
@@ -64,11 +63,6 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
                 height,
                 this.paint
             )
-
-            this.paint.strokeWidth = 1F
-            this.paint.color = Color.WHITE
-
-            this.path.reset()
 
             this.paint.color = color_map[ColorMap.Palette.Lines]
             this.paint.strokeWidth = 1F
@@ -96,37 +90,17 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             val handle_point = padding + ((width - (2 * padding)) * relative_n)
 
             this.paint.color = color_map[ColorMap.Palette.Lines]
-            this.paint.strokeWidth = that.stroke_width
-            canvas.drawLine(width / 2F, 0F, width / 2F, height, paint)
-
             this.paint.strokeWidth = 1F
-            if (that.progress > that.min) {
-                canvas.drawRoundRect(
-                    padding,
-                    4F * that.stroke_width,
-                    handle_point - (padding / 2f) - that.stroke_width,
-                    height - (4F * that.stroke_width),
-                    that.stroke_width,
-                    that.stroke_width,
-                    this.paint
-                )
-            }
-            if (that.progress < that.max) {
-                canvas.drawRoundRect(
-                    handle_point + (padding / 2F) + that.stroke_width,
-                    4F * that.stroke_width,
-                    width - padding,
-                    height - (4F * that.stroke_width),
-                    that.stroke_width,
-                    that.stroke_width,
-                    this.paint
-                )
-            }
-
-
+            canvas.drawOval(
+                (width / 2F) - (padding / 4f),
+                (height / 2F) - (padding / 4f),
+                (width / 2F) + (padding / 4f),
+                (height / 2F) + (padding / 4f),
+                this.paint
+            )
+            canvas.drawLine(width / 2F, that.stroke_width * 4f, width / 2F, height - (that.stroke_width * 4f), paint)
 
             this.paint.color = color_map[ColorMap.Palette.Leaf]
-            this.paint.setShadowLayer(5F, 2F, 2F, Color.BLACK)
             this.paint.strokeWidth = 1F
             this.path.addOval(
                 handle_point - (padding / 2F),

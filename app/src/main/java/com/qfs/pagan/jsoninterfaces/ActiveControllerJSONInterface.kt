@@ -36,7 +36,7 @@ class ActiveControllerJSONInterface {
                 else -> throw UnknownControllerException(label)
             }
 
-            output.visible = obj.get_booleann("visible") ?: true
+            output.visible = obj.get_booleann("visible") ?: false
 
             return output
         }

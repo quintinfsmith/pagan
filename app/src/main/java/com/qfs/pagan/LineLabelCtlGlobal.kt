@@ -40,7 +40,7 @@ class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabe
                         return
                     }
 
-                    null -> TODO()
+                    null -> {}
                 }
 
             }

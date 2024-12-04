@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="primary">#171717</color>
+    <color name="primary_text">#e1e1e1</color>
+    <color name="main_bg">#2d2d2d</color>
+    <color name="main_fg">#e1e1e1</color>
+    <color name="table_lines">#808080</color>
+    <color name="channel_odd">#3d3d3d</color>
+    <color name="channel_even">#232323</color>
+    <color name="channel_odd_text">@color/main_fg</color>
+    <color name="channel_even_text">@color/main_fg</color>
+    <color name="button">#acacac</color>
+    <color name="button_text">#000000</color>
+    <color name="button_alt">#4D5058</color>
+    <color name="button_alt_text">#e1e1e1</color>
+    <color name="button_selected">@color/leaf</color>
+    <color name="button_selected_text">@color/leaf_text</color>
+    <color name="empty_linked">#657169</color>
+    <color name="empty_linked_selected">#4a87b2</color>
+    <color name="ctl_line">#000000</color>
+    <color name="ctl_line_text">#e1e1e1</color>
+</resources>

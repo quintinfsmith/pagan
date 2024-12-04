@@ -12,7 +12,6 @@ import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.ImageView
 import android.widget.LinearLayout
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -22,8 +21,9 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
         abstract fun on_touch_start(slider: PanSliderWidget)
         abstract fun on_touch_stop(slider: PanSliderWidget)
         abstract fun on_progress_change(slider: PanSliderWidget, value: Int)
-
     }
+    val stroke_width = 10F
+
     var in_transition = false
     var max = 1
     var min = -1
@@ -43,72 +43,100 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
 
         override fun onDraw(canvas: Canvas) {
             val that = this@PanSliderWidget
-            val div_size = 1F / ((that.max + 1) - that.min).toFloat()
-            val relative_n = (that.progress - that.min).toFloat() * div_size
             val width = this.width.toFloat()
             val height = this.height.toFloat()
+            val padding = (height / 2f) + (2F * that.stroke_width)
 
             val color_map = this.get_main_activity().view_model.color_map
-            val offset = width * div_size
-            val offset_half = offset / 2f
-            val handle_center = relative_n + (.5F / ((that.max + 1) - that.min).toFloat())
             val purple = color_map[ColorMap.Palette.Leaf]
 
+            val div_size = 1F / (that.max - that.min).toFloat()
+            val relative_n = (that.progress - that.min).toFloat() * div_size
+
+            this.paint.clearShadowLayer()
             this.paint.strokeWidth = 1f
             this.paint.color = purple
-            this.paint.setShadowLayer(5F, 2F, 2F, Color.BLACK)
-            val end_clip = if (that.progress == that.min || that.progress == that.max) {
-                (div_size / 2F)
-            } else {
-                0F
-            }
-            val bar_start = max(0F, handle_center - .5F + end_clip) * width
-            val bar_end = min(1F, handle_center + .5f - end_clip) * width
 
-            this.path.reset()
-            this.path.moveTo(bar_start, 0f)
-            this.path.lineTo(bar_end, 0F)
-            this.path.lineTo(bar_end, height)
-            this.path.lineTo(bar_start, height)
-
-            canvas.drawPath(this.path, this.paint)
-
-            val handle_point = width * relative_n
+            canvas.drawRect(
+                padding,
+                0f,
+                width - padding,
+                height,
+                this.paint
+            )
 
             this.paint.strokeWidth = 1F
             this.paint.color = Color.WHITE
 
-            canvas.drawLine(0f, 0F, width, 0F, this.paint)
-            canvas.drawLine(0f, height - 1F, width, height - 1F, this.paint)
-            canvas.drawLine(0F, 0F, 0F, height, this.paint)
-            canvas.drawLine(width - 1F, 0F, width - 1F, height, this.paint)
-
-            this.paint.color = color_map[ColorMap.Palette.LeafSelected]
-            this.paint.strokeWidth = 3f
-            val nob_width = height * .75F
-            val nob_width_half = nob_width / 2F
             this.path.reset()
-            when (that.progress) {
-                that.max -> {
-                    this.path.moveTo(handle_point + offset, height * .9F)
-                    this.path.lineTo(handle_point + offset - nob_width_half, height / 2)
-                    this.path.lineTo(handle_point + offset, height * .1F)
-                }
-                that.min -> {
-                    this.path.moveTo(handle_point, height * .9F)
-                    this.path.lineTo(handle_point + nob_width_half, height / 2)
-                    this.path.lineTo(handle_point, height * .1F)
-                }
-                else -> {
-                    this.path.moveTo(handle_point + offset_half, height * .9F)
-                    this.path.lineTo(handle_point + (offset_half - nob_width_half), height / 2F)
-                    this.path.lineTo(handle_point + offset_half, height * .1F)
-                    this.path.lineTo(handle_point + offset_half + nob_width_half, height / 2F)
-                    this.path.lineTo(handle_point + offset_half, height * .9F)
-                }
+
+            this.paint.color = color_map[ColorMap.Palette.Lines]
+            this.paint.strokeWidth = 1F
+            canvas.drawRoundRect(
+                that.stroke_width,
+                0F,
+                width - that.stroke_width,
+                height,
+                padding,
+                padding,
+                this.paint
+            )
+
+            this.paint.color = color_map[ColorMap.Palette.Background]
+            canvas.drawRoundRect(
+                that.stroke_width * 2F,
+                that.stroke_width,
+                width - (that.stroke_width * 2F),
+                height - that.stroke_width,
+                padding,
+                padding,
+                this.paint
+            )
+
+            val handle_point = padding + ((width - (2 * padding)) * relative_n)
+
+            this.paint.color = color_map[ColorMap.Palette.Lines]
+            this.paint.strokeWidth = that.stroke_width
+            canvas.drawLine(width / 2F, 0F, width / 2F, height, paint)
+
+            this.paint.strokeWidth = 1F
+            if (that.progress > that.min) {
+                canvas.drawRoundRect(
+                    padding,
+                    4F * that.stroke_width,
+                    handle_point - (padding / 2f) - that.stroke_width,
+                    height - (4F * that.stroke_width),
+                    that.stroke_width,
+                    that.stroke_width,
+                    this.paint
+                )
+            }
+            if (that.progress < that.max) {
+                canvas.drawRoundRect(
+                    handle_point + (padding / 2F) + that.stroke_width,
+                    4F * that.stroke_width,
+                    width - padding,
+                    height - (4F * that.stroke_width),
+                    that.stroke_width,
+                    that.stroke_width,
+                    this.paint
+                )
             }
 
+
+
+            this.paint.color = color_map[ColorMap.Palette.Leaf]
+            this.paint.setShadowLayer(5F, 2F, 2F, Color.BLACK)
+            this.paint.strokeWidth = 1F
+            this.path.addOval(
+                handle_point - (padding / 2F),
+                (height / 2F) - (padding / 2F),
+                handle_point + (padding / 2F),
+                (height / 2F) + (padding / 2F),
+                Path.Direction.CW
+            )
             canvas.drawPath(this.path, this.paint)
+
 
             super.onDraw(canvas)
         }
@@ -133,13 +161,13 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_UP -> {
                     val measured_max_width = this.image_view.measuredWidth.toFloat()
-                    val pos_x = min(
-                        measured_max_width,
-                        max(0F, motionEvent.x)
-                    )
+                    val padding = ((this.image_view.measuredHeight.toFloat()) / 2F) + (2F * this.stroke_width)
+                    val pos_x = (max(padding, min(measured_max_width - padding, motionEvent.x)) - padding)
+                    val use_width = (measured_max_width - (2F * padding))
+                    val rel_x = (pos_x / use_width) + (.5F / (this.max - this.min).toFloat())
 
-                    val value_x = floor((pos_x * ((this.max + 1) - this.min) / measured_max_width) + this.min)
-                    this.set_progress(max(this.min, min(this.max, value_x.toInt())))
+                    val value_x = max(this.min, min(this.max,((this.max - this.min).toFloat() * rel_x).toInt() + this.min))
+                    this.set_progress(value_x)
                 }
             }
             when (motionEvent.action) {

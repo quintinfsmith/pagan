@@ -428,13 +428,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
-        this.view_model.color_map.set_fallback_palette(
-            if (this._is_night_mode()) {
-                this.get_night_palette()
-            } else {
-                this.get_day_palette()
-            }
-        )
+        this.view_model.color_map.set_fallback_palette(this.get_palette())
 
         if (this._midi_playback_device != null) {
             this.playback_state_soundfont = PlaybackState.Ready
@@ -614,13 +608,7 @@ class MainActivity : AppCompatActivity() {
 
         this.view_model.opus_manager.attach_activity(this)
 
-        this.view_model.color_map.set_fallback_palette(
-            if (this._is_night_mode()) {
-                this.get_night_palette()
-            } else {
-                this.get_day_palette()
-            }
-        )
+        this.view_model.color_map.set_fallback_palette(this.get_palette())
 
 
         val color_map = this.view_model.color_map
@@ -2440,49 +2428,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun get_night_palette(): HashMap<Palette, Int> {
-        return hashMapOf<Palette, Int>(
-            Pair(Palette.Background, this.getColor(R.color.dark_main_bg)),
-            Pair(Palette.Foreground, this.getColor(R.color.dark_main_fg)),
-            Pair(Palette.Lines, this.getColor(R.color.dark_table_lines)),
-            Pair(Palette.Leaf, this.getColor(R.color.leaf)),
-            Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
-            Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
-            Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
-            Pair(Palette.LeafInvalidSelected, this.getColor(R.color.leaf_invalid_selected)),
-            Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
-            Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
-            Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
-            Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
-            Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
-            Pair(Palette.ChannelEven, this.getColor(R.color.dark_channel_even)),
-            Pair(Palette.ChannelEvenText, this.getColor(R.color.dark_channel_even_text)),
-            Pair(Palette.ChannelOdd, this.getColor(R.color.dark_channel_odd)),
-            Pair(Palette.ChannelOddText, this.getColor(R.color.dark_channel_odd_text)),
-            Pair(Palette.ColumnLabel, this.getColor(R.color.dark_main_bg)),
-            Pair(Palette.ColumnLabelText, this.getColor(R.color.dark_main_fg)),
-            Pair(Palette.Button, this.getColor(R.color.dark_button)),
-            Pair(Palette.ButtonText, this.getColor(R.color.dark_button_text)),
-            Pair(Palette.ButtonAlt, this.getColor(R.color.dark_button_alt)),
-            Pair(Palette.ButtonAltText, this.getColor(R.color.dark_button_alt_text)),
-            Pair(Palette.TitleBar, this.getColor(R.color.dark_primary)),
-            Pair(Palette.TitleBarText, this.getColor(R.color.dark_primary_text)),
-            Pair(Palette.CtlLine, this.getColor(R.color.dark_ctl_line)),
-            Pair(Palette.CtlLineText, this.getColor(R.color.dark_ctl_line_text)),
-            Pair(Palette.CtlLineSelection, this.getColor(R.color.ctl_line_selected)),
-            Pair(Palette.CtlLineSelectionText, this.getColor(R.color.ctl_line_selected_text)),
-            Pair(Palette.CtlLeaf, this.getColor(R.color.ctl_leaf)),
-            Pair(Palette.CtlLeafText, this.getColor(R.color.ctl_leaf_text)),
-            //Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
-            //Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
-        )
-    }
 
-    private fun get_day_palette(): HashMap<Palette, Int> {
+    private fun get_palette(): HashMap<Palette, Int> {
         return hashMapOf<Palette, Int>(
-            Pair(Palette.Background, this.getColor(R.color.light_main_bg)),
-            Pair(Palette.Foreground, this.getColor(R.color.light_main_fg)),
-            Pair(Palette.Lines, this.getColor(R.color.light_table_lines)),
+            Pair(Palette.Background, this.getColor(R.color.main_bg)),
+            Pair(Palette.Foreground, this.getColor(R.color.main_fg)),
+            Pair(Palette.Lines, this.getColor(R.color.table_lines)),
             Pair(Palette.Leaf, this.getColor(R.color.leaf)),
             Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
             Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
@@ -2493,20 +2444,20 @@ class MainActivity : AppCompatActivity() {
             Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
             Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
             Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
-            Pair(Palette.ChannelEven, this.getColor(R.color.light_channel_even)),
-            Pair(Palette.ChannelEvenText, this.getColor(R.color.light_channel_even_text)),
-            Pair(Palette.ChannelOdd, this.getColor(R.color.light_channel_odd)),
-            Pair(Palette.ChannelOddText, this.getColor(R.color.light_channel_odd_text)),
-            Pair(Palette.ColumnLabel, this.getColor(R.color.light_main_bg)),
-            Pair(Palette.ColumnLabelText, this.getColor(R.color.light_main_fg)),
-            Pair(Palette.Button, this.getColor(R.color.light_button)),
-            Pair(Palette.ButtonText, this.getColor(R.color.light_button_text)),
-            Pair(Palette.ButtonAlt, this.getColor(R.color.light_button_alt)),
-            Pair(Palette.ButtonAltText, this.getColor(R.color.light_button_alt_text)),
-            Pair(Palette.TitleBar, this.getColor(R.color.light_primary)),
-            Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text)),
-            Pair(Palette.CtlLine, this.getColor(R.color.light_ctl_line)),
-            Pair(Palette.CtlLineText, this.getColor(R.color.light_ctl_line_text)),
+            Pair(Palette.ChannelEven, this.getColor(R.color.channel_even)),
+            Pair(Palette.ChannelEvenText, this.getColor(R.color.channel_even_text)),
+            Pair(Palette.ChannelOdd, this.getColor(R.color.channel_odd)),
+            Pair(Palette.ChannelOddText, this.getColor(R.color.channel_odd_text)),
+            Pair(Palette.ColumnLabel, this.getColor(R.color.main_bg)),
+            Pair(Palette.ColumnLabelText, this.getColor(R.color.main_fg)),
+            Pair(Palette.Button, this.getColor(R.color.button)),
+            Pair(Palette.ButtonText, this.getColor(R.color.button_text)),
+            Pair(Palette.ButtonAlt, this.getColor(R.color.button_alt)),
+            Pair(Palette.ButtonAltText, this.getColor(R.color.button_alt_text)),
+            Pair(Palette.TitleBar, this.getColor(R.color.primary)),
+            Pair(Palette.TitleBarText, this.getColor(R.color.primary_text)),
+            Pair(Palette.CtlLine, this.getColor(R.color.ctl_line)),
+            Pair(Palette.CtlLineText, this.getColor(R.color.ctl_line_text)),
             Pair(Palette.CtlLineSelection, this.getColor(R.color.ctl_line_selected)),
             Pair(Palette.CtlLineSelectionText, this.getColor(R.color.ctl_line_selected_text)),
             Pair(Palette.CtlLeaf, this.getColor(R.color.ctl_leaf)),

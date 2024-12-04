@@ -983,31 +983,46 @@ open class OpusLayerBase {
 
     fun <T : OpusControlEvent> get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T {
         val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<T>(type)
-        val output = controller.get_latest_event(beat_key.beat, position) ?: controller.get_initial_event()
-        val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<T>(type, beat_key, position)
-        if (!this.get_line_ctl_tree<T>(type, actual_beat_key, actual_position).is_event()) {
-            output.duration = 1
+        var output = controller.get_latest_event(beat_key.beat, position)
+        if (output != null) {
+            val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<T>(type, beat_key, position)
+            if (!this.get_line_ctl_tree<T>(type, actual_beat_key, actual_position).is_event()) {
+                output.duration = 1
+            }
+        } else {
+            output = controller.get_initial_event()
         }
         return output
     }
 
     fun <T : OpusControlEvent> get_current_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): T {
         val controller = this.get_channel(channel).controllers.get_controller<T>(type)
-        val output = controller.get_latest_event(beat, position) ?: controller.get_initial_event()
-        val (actual_beat, actual_position) = this.controller_channel_get_actual_position<T>(type, channel, beat, position)
-        if (!this.get_channel_ctl_tree<T>(type, channel, actual_beat, actual_position).is_event()) {
-            output.duration = 1
+        var output = controller.get_latest_event(beat, position)
+        if (output != null) {
+            val (actual_beat, actual_position) = this.controller_channel_get_actual_position<T>(type, channel, beat, position)
+            if (!this.get_channel_ctl_tree<T>(type, channel, actual_beat, actual_position).is_event()) {
+                output.duration = 1
+            }
+        } else {
+            output = controller.get_initial_event()
         }
+
         return output
     }
 
     fun <T : OpusControlEvent> get_current_global_controller_event(type: ControlEventType, beat: Int, position: List<Int>): T {
         val controller = this.controllers.get_controller<T>(type)
-        val output = controller.get_latest_event(beat, position) ?: controller.get_initial_event()
-        val (actual_beat, actual_position) = this.controller_global_get_actual_position<T>(type, beat, position)
-        if (!this.get_global_ctl_tree<T>(type, actual_beat, actual_position).is_event()) {
-            output.duration = 1
+        var output = controller.get_latest_event(beat, position)
+
+        if (output != null) {
+            val (actual_beat, actual_position) = this.controller_global_get_actual_position<T>(type, beat, position)
+            if (!this.get_global_ctl_tree<T>(type, actual_beat, actual_position).is_event()) {
+                output.duration = 1
+            }
+        } else {
+            output = controller.get_initial_event()
         }
+
         return output
     }
 

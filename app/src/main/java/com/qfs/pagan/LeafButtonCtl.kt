@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.ViewGroup
 import androidx.appcompat.view.ContextThemeWrapper
@@ -69,6 +70,35 @@ abstract class LeafButtonCtl(
         val value_text = LeafText(
             ContextThemeWrapper(this.context, R.style.ctl_leaf_value)
         )
+        val activity = this.get_activity()
+        val color_map = activity.view_model.color_map
+        value_text.setTextColor(
+            ColorStateList(
+                this.get_states(),
+                intArrayOf(
+                    color_map[ColorMap.Palette.CtlLeafText],
+                    color_map[ColorMap.Palette.CtlLeafText],
+                    color_map[ColorMap.Palette.CtlLeafText],
+
+                    color_map[ColorMap.Palette.CtlLeafText],
+                    color_map[ColorMap.Palette.CtlLeafText],
+
+                    // Primary
+                    color_map[ColorMap.Palette.CtlLeafText],
+                    color_map[ColorMap.Palette.CtlLeafText],
+                    color_map[ColorMap.Palette.CtlLeafText],
+
+                    // Secondary
+                    color_map[ColorMap.Palette.LeafText],
+                    color_map[ColorMap.Palette.LeafText],
+                    color_map[ColorMap.Palette.LeafText],
+
+                    color_map[ColorMap.Palette.CtlLeafText],
+                    color_map[ColorMap.Palette.CtlLeafText],
+                )
+            )
+        )
+
         value_text.text = this.get_label_text(event)
         this.addView(value_text)
 

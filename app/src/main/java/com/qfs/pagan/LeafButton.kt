@@ -25,7 +25,7 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
         }
     }
 
-    private fun get_states(): Array<IntArray> {
+    internal fun get_states(): Array<IntArray> {
         return arrayOf(
             // Invalids---------------------------------
             intArrayOf(

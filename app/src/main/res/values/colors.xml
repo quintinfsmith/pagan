@@ -23,9 +23,9 @@
     <color name="leaf_invalid_selected">#890E21</color>
     <color name="leaf_invalid_selected_text">#A27E7E</color>
 
-    <color name="ctl_leaf">#DF5CAF</color>
-    <color name="ctl_leaf_text">#000000</color>
-    <color name="ctl_leaf_selected">#ac45a7</color>
+    <color name="ctl_leaf">#453a25</color>
+    <color name="ctl_leaf_text">#FFFFFF</color>
+    <color name="ctl_leaf_selected">#004f73</color>
     <color name="ctl_leaf_selected_text">#FFFFFF</color>
 
     <color name="empty_selected">@color/blue_sky</color>

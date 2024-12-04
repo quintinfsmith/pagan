@@ -64,14 +64,8 @@ class LeafButtonCtlGlobal(
         if (cursor.is_selecting_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
             try {
                 when (this.get_activity().configuration.move_mode) {
-                    PaganConfiguration.MoveMode.COPY -> {
-                        opus_manager.copy_global_ctl_to_beat(beat)
-                    }
-
-                    PaganConfiguration.MoveMode.MOVE -> {
-                        opus_manager.move_global_ctl_to_beat(beat)
-                    }
-
+                    PaganConfiguration.MoveMode.COPY -> opus_manager.copy_global_ctl_to_beat(beat)
+                    PaganConfiguration.MoveMode.MOVE -> opus_manager.move_global_ctl_to_beat(beat)
                     PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {

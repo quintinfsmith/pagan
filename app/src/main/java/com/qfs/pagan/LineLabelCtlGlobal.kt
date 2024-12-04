@@ -12,11 +12,37 @@ class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabe
         try {
             if (cursor.is_selecting_range()) {
                 val (first, second) = cursor.range!!
-                if (first != second) {
-                    opus_manager.controller_global_overwrite_range_horizontally(this.ctl_type, first.beat, second.beat)
-                } else {
-                    opus_manager.controller_global_overwrite_line(this.ctl_type, first.beat)
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> {
+                        if (first != second) {
+                            opus_manager.controller_line_to_global_overwrite_range_horizontally(this.ctl_type, first.channel, first.line_offset, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_line_to_global_overwrite_line(this.ctl_type, first)
+                        }
+                        return
+                    }
+
+                    CtlLineLevel.Channel -> {
+                        if (first != second) {
+                            opus_manager.controller_channel_to_global_overwrite_range_horizontally(this.ctl_type, first.channel, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_channel_to_global_overwrite_line(this.ctl_type, first.channel, first.beat)
+                        }
+                        return
+                    }
+
+                    CtlLineLevel.Global -> {
+                        if (first != second) {
+                            opus_manager.controller_global_overwrite_range_horizontally(this.ctl_type, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_global_overwrite_line(this.ctl_type, first.beat)
+                        }
+                        return
+                    }
+
+                    null -> TODO()
                 }
+
             }
         } catch (e: OpusLayerBase.InvalidOverwriteCall) {
             // pass

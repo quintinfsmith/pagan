@@ -12,10 +12,34 @@ class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel
         try {
             if (cursor.is_selecting_range()) {
                 val (first, second) = cursor.range!!
-                if (first != second) {
-                    opus_manager.controller_line_overwrite_range_horizontally(this.ctl_type, this.channel, this.line_offset, first, second)
-                } else {
-                    opus_manager.controller_line_overwrite_line(this.ctl_type, this.channel, this.line_offset, first)
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> {
+                        if (first != second) {
+                            opus_manager.controller_line_overwrite_range_horizontally(this.ctl_type, this.channel, this.line_offset, first, second)
+                        } else {
+                            opus_manager.controller_line_overwrite_line(this.ctl_type, this.channel, this.line_offset, first)
+                        }
+                        return
+                    }
+
+                    CtlLineLevel.Channel -> {
+                        if (first != second) {
+                            opus_manager.controller_channel_to_line_overwrite_range_horizontally(this.ctl_type, this.channel, this.line_offset, first.channel, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_channel_to_line_overwrite_line(this.ctl_type, this.channel, this.line_offset, first.channel, first.beat)
+                        }
+                        return
+                    }
+
+                    CtlLineLevel.Global -> {
+                        if (first != second) {
+                            opus_manager.controller_global_to_line_overwrite_range_horizontally(this.ctl_type, this.channel, this.line_offset, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_global_to_line_overwrite_line(this.ctl_type, first.beat, this.channel, this.line_offset)
+                        }
+                        return
+                    }
+                    null -> { }
                 }
             }
         } catch (e: OpusLayerBase.InvalidOverwriteCall) {

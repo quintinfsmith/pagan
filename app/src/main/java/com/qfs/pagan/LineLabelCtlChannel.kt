@@ -16,27 +16,35 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
                 when (cursor.ctl_level) {
                     CtlLineLevel.Line -> {
                         if (first != second) {
+                            opus_manager.controller_line_to_channel_overwrite_range_horizontally(this.ctl_type, this.channel, first, second)
+                        } else {
+                            opus_manager.controller_line_to_channel_overwrite_line(this.ctl_type, this.channel, first)
+                        }
+                        return
+                    }
+                    CtlLineLevel.Channel -> {
+                        if (first != second) {
                             opus_manager.controller_channel_overwrite_range_horizontally(this.ctl_type, this.channel, first.channel, first.beat, second.beat)
                         } else {
                             opus_manager.controller_channel_overwrite_line(this.ctl_type, this.channel, first.channel, first.beat)
                         }
+                        return
                     }
-                    CtlLineLevel.Channel -> {
+                    CtlLineLevel.Global -> {
                         if (first != second) {
-                            opus_manager.controller_channel_to_line_overwrite_range_horizontally(this.ctl_type, this.channel, first.channel, first.beat, second.beat)
+                            opus_manager.controller_global_to_channel_overwrite_range_horizontally(this.ctl_type, first.channel, first.beat, second.beat)
                         } else {
-                            opus_manager.controller_channel_to_line_overwrite_line(this.ctl_type, this.channel, first.channel, first.beat)
+                            opus_manager.controller_global_to_channel_overwrite_line(this.ctl_type, this.channel, first.beat)
                         }
-
+                        return
                     }
-                    CtlLineLevel.Global,
                     null -> {}
                 }
             }
         } catch (e: OpusLayerBase.InvalidOverwriteCall) {
             // pass
         }
-
+        opus_manager.cursor_select_channel_ctl_line(this.ctl_type, this.channel)
     }
 
     override fun is_selected(): Boolean {

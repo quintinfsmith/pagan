@@ -333,6 +333,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         // Cursor Handled in replace_tree
     }
 
+    // ----- Cursor handled in lower order functions VVVVVVVVVVVV //
     override fun controller_global_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
         super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
         // Cursor Handled in replace_tree
@@ -348,53 +349,83 @@ open class OpusLayerCursor: OpusLayerBase() {
         // Cursor Handled in replace_tree
     }
 
-    override fun controller_global_overwrite_range(type: ControlEventType, target: Int, start: Int, end: Int) {
-        super.controller_global_overwrite_range(type, target, start, end)
+    override fun controller_global_to_channel_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
+        // Cursor Handled in replace_tree
+    }
+
+    override fun controller_global_to_line_move_leaf(type: ControlEventType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
+        super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
+        // Cursor Handled in replace_tree
+    }
+
+    override fun controller_channel_to_global_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
+        // Cursor handled in replace_tree()
+    }
+
+    override fun controller_channel_to_line_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
+        // Cursor Handled in replace_tree
+    }
+
+    override fun controller_line_to_global_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
+        // Cursor Handled in replace_tree
+    }
+
+    override fun controller_line_to_channel_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
+        // Cursor Handled in replace_tree
+    }
+
+    // ----- Cursor handled in lower order functions ^^^^^^^^^^^^ //
+
+    override fun _controller_global_copy_range(type: ControlEventType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_global_copy_range(type, target, point_a, point_b, unset_original)
         val position = this.get_first_position_global_ctl(type, target)
         this.cursor_select_ctl_at_global(type, target, position)
     }
 
-    override fun controller_global_move_range(type: ControlEventType, target: Int, start: Int, end: Int) {
-        super.controller_global_move_range(type, target, start, end)
-        val position = this.get_first_position_global_ctl(type, target)
-        this.cursor_select_ctl_at_global(type, target, position)
+    override fun _controller_global_to_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_global_to_channel_copy_range(type, target_channel, target_beat, point_a, point_b, unset_original)
+        this.cursor_select_ctl_at_channel(type, target_channel, target_beat, this.get_first_position_channel_ctl(type, target_channel, target_beat, listOf()))
     }
 
-    override fun controller_channel_overwrite_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
-        super.controller_channel_overwrite_range(type, target_channel, target_beat, original_channel, start, end)
+    override fun _controller_global_to_line_copy_range(type: ControlEventType, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        super._controller_global_to_line_copy_range(type, beat_a, beat_b, target_key, unset_original)
+        this.cursor_select_ctl_at_line(type, target_key, this.get_first_position_line_ctl(type, target_key))
+    }
+
+    override fun _controller_channel_to_global_copy_range(type: ControlEventType, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_channel_to_global_copy_range(type, target_beat, original_channel, point_a, point_b, unset_original)
+        this.cursor_select_ctl_at_global(type, target_beat, this.get_first_position_global_ctl(type, target_beat, listOf()))
+    }
+
+    override fun _controller_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_channel_copy_range(type, target_channel, target_beat, original_channel, point_a, point_b, unset_original)
         val position = this.get_first_position_channel_ctl(type, target_channel, target_beat)
         this.cursor_select_ctl_at_channel(type, target_channel, target_beat, position)
     }
 
-    override fun controller_channel_move_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
-        super.controller_channel_move_range(type, target_channel, target_beat, original_channel, start, end)
-        val position = this.get_first_position_channel_ctl(type, target_channel, target_beat)
-        this.cursor_select_ctl_at_channel(type, target_channel, target_beat, position)
+    override fun _controller_channel_to_line_copy_range(type: ControlEventType, channel_from: Int, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        super._controller_channel_to_line_copy_range(type, channel_from, beat_a, beat_b, target_key, unset_original)
+        this.cursor_select_ctl_at_line(type, target_key, this.get_first_position_line_ctl(type, target_key))
     }
 
-    override fun controller_line_overwrite_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.controller_line_overwrite_range(type, beat_key, first_corner, second_corner)
+    override fun _controller_line_to_global_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_beat: Int, unset_original: Boolean) {
+        super._controller_line_to_global_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_beat, unset_original)
+        this.cursor_select_ctl_at_global(type, target_beat, this.get_first_position_global_ctl(type, target_beat, listOf()))
+    }
+
+    override fun _controller_line_to_channel_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_channel: Int, target_beat: Int, unset_original: Boolean) {
+        super._controller_line_to_channel_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_channel, target_beat, unset_original)
+        this.cursor_select_ctl_at_channel(type, target_channel, target_beat, this.get_first_position_channel_ctl(type, target_channel, target_beat, listOf()))
+    }
+
+    override fun _controller_line_copy_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        super._controller_line_copy_range(type, beat_key, first_corner, second_corner, unset_original)
         this.cursor_select_ctl_at_line(type, beat_key, this.get_first_position_line_ctl(type, beat_key))
-    }
-
-    override fun controller_line_move_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.controller_line_move_range(type, beat_key, first_corner, second_corner)
-        this.cursor_select_ctl_at_line(type, beat_key, this.get_first_position_line_ctl(type, beat_key))
-    }
-
-    override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.overwrite_beat_range(beat_key, first_corner, second_corner)
-        this.cursor_select(beat_key, this.get_first_position(beat_key))
-    }
-
-    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.move_beat_range(beat_key, first_corner, second_corner)
-        this.cursor_select(beat_key, this.get_first_position(beat_key))
-    }
-
-    override fun unset_line(channel: Int, line_offset: Int) {
-        super.unset_line(channel, line_offset)
-        this.cursor_select_line(channel, line_offset)
     }
 
     override fun controller_line_unset_line(type: ControlEventType, channel: Int, line_offset: Int) {
@@ -410,12 +441,6 @@ open class OpusLayerCursor: OpusLayerBase() {
     override fun controller_global_unset_line(type: ControlEventType) {
         super.controller_global_unset_line(type)
         this.cursor_select_global_ctl_line(type)
-    }
-
-    override fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {
-        super.unset_range(first_corner, second_corner)
-        val new_position = this.get_first_position(first_corner)
-        this.cursor_select(first_corner, new_position)
     }
 
     override fun controller_global_unset_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
@@ -436,21 +461,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_ctl_at_line(type, first_corner, new_position)
     }
 
-    override fun unset_beat(beat: Int) {
-        super.unset_beat(beat)
-        this.cursor_select_column(beat)
-    }
-
-    override fun insert_after_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int) {
-        super.insert_after_repeat(beat_key, position, repeat)
-        // Cursor handled in insert_after()
-    }
-
-    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        super.remove_one_of_two(beat_key, position)
-        // Cursor Handled in replace_tree()
-    }
-
     override fun controller_line_remove_one_of_two(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         super.controller_line_remove_one_of_two(type, beat_key, position)
         // Cursor Handled in replace_tree()
@@ -466,19 +476,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         // Cursor Handled in replace_tree()
     }
 
-    override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
-        super.remove_line_repeat(channel, line_offset, count)
-    }
-
-    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        super.set_duration(beat_key, position, duration)
-    }
-
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
-        super.remove(beat_key, position)
-        // Cursor handled in remove_one_of_two or remove_standard
-    }
-
     override fun controller_line_remove(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         super.controller_line_remove(type, beat_key, position)
         // Cursor handled in remove_one_of_two or remove_standard
@@ -491,6 +488,172 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun controller_global_remove(type: ControlEventType, beat: Int, position: List<Int>) {
         super.controller_global_remove(type, beat, position)
+        // Cursor handled in remove_one_of_two or remove_standard
+    }
+
+    override fun controller_global_overwrite_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        super.controller_global_overwrite_range_horizontally(type, first_beat, second_beat)
+        this.cursor_select_global_ctl_line(type)
+    }
+
+    override fun controller_global_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, first_beat: Int, second_beat: Int) {
+        super.controller_global_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, first_beat, second_beat)
+        this.cursor_select_line_ctl_line(type, target_channel, target_line_offset)
+    }
+
+    override fun controller_line_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_key: BeatKey, second_key: BeatKey) {
+        super.controller_line_to_channel_overwrite_range_horizontally(type, channel, first_key, second_key)
+        this.cursor_select_channel_ctl_line(type, channel)
+    }
+
+    override fun controller_global_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        super.controller_global_to_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat)
+        this.cursor_select_channel_ctl_line(type, channel)
+    }
+
+    override fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key)
+        this.cursor_select_line_ctl_line(type, channel, line_offset)
+    }
+
+    override fun controller_line_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_beat: Int, second_beat: Int) {
+        super.controller_line_to_global_overwrite_range_horizontally(type, channel, line_offset, first_beat, second_beat)
+        this.cursor_select_global_ctl_line(type)
+    }
+
+    override fun controller_channel_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        super.controller_channel_to_global_overwrite_range_horizontally(type, channel, first_beat, second_beat)
+        this.cursor_select_global_ctl_line(type)
+    }
+
+    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+        super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat)
+        this.cursor_select_channel_ctl_line(type, target_channel)
+    }
+
+    override fun controller_channel_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+        super.controller_channel_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, from_channel, first_beat, second_beat)
+        this.cursor_select_line_ctl_line(type, target_channel, target_line_offset)
+    }
+
+    override fun controller_global_overwrite_line(type: ControlEventType, beat: Int) {
+        super.controller_global_overwrite_line(type, beat)
+        this.cursor_select_global_ctl_line(type)
+    }
+
+    override fun controller_channel_to_global_overwrite_line(type: ControlEventType, channel: Int, beat: Int) {
+        super.controller_channel_to_global_overwrite_line(type, channel, beat)
+        this.cursor_select_global_ctl_line(type)
+    }
+
+    override fun controller_line_to_global_overwrite_line(type: ControlEventType, beat_key: BeatKey) {
+        super.controller_line_to_global_overwrite_line(type, beat_key)
+        this.cursor_select_global_ctl_line(type)
+    }
+
+    override fun controller_global_to_line_overwrite_line(type: ControlEventType, from_beat: Int, target_channel: Int, target_line_offset: Int) {
+        super.controller_global_to_line_overwrite_line(type, from_beat, target_channel, target_line_offset)
+        this.cursor_select_line_ctl_line(type, target_channel, target_line_offset)
+    }
+
+    override fun controller_channel_to_line_overwrite_line(type: ControlEventType, target_channel: Int, target_line_offset: Int, original_channel: Int, original_beat: Int) {
+        super.controller_channel_to_line_overwrite_line(type, target_channel, target_line_offset, original_channel, original_beat)
+        this.cursor_select_line_ctl_line(type, target_channel, target_line_offset)
+    }
+
+    override fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
+        super.controller_channel_overwrite_line(type, target_channel, original_channel, original_beat)
+        this.cursor_select_channel_ctl_line(type, target_channel)
+    }
+
+    override fun controller_line_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_key: BeatKey) {
+        super.controller_line_to_channel_overwrite_line(type, target_channel, original_key)
+        this.cursor_select_channel_ctl_line(type, target_channel)
+    }
+
+    override fun controller_global_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, beat: Int) {
+        super.controller_global_to_channel_overwrite_line(type, target_channel, beat)
+        this.cursor_select_channel_ctl_line(type, target_channel)
+    }
+
+    override fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
+        super.controller_line_overwrite_line(type, channel, line_offset, beat_key)
+        this.cursor_select_line_ctl_line(type, channel, line_offset)
+    }
+
+    override fun <T : OpusControlEvent> controller_global_set_initial_event(type: ControlEventType, event: T) {
+        super.controller_global_set_initial_event(type, event)
+        if (this.is_global_ctl_visible(type)) {
+            this.cursor_select_global_ctl_line(type)
+        } else {
+            this.cursor_clear()
+        }
+    }
+
+    override fun <T : OpusControlEvent> controller_channel_set_initial_event(type: ControlEventType, channel: Int, event: T) {
+        super.controller_channel_set_initial_event(type, channel, event)
+        if (this.is_channel_ctl_visible(type, channel)) {
+            this.cursor_select_channel_ctl_line(type, channel)
+        } else {
+            this.cursor_select_channel(channel)
+        }
+    }
+
+    override fun <T : OpusControlEvent> controller_line_set_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
+        super.controller_line_set_initial_event(type, channel, line_offset, event)
+        if (this.is_line_ctl_visible(type, channel, line_offset)) {
+            this.cursor_select_line_ctl_line(type, channel, line_offset)
+        } else {
+            this.cursor_select_line(channel, line_offset)
+        }
+    }
+
+    override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        super.overwrite_beat_range(beat_key, first_corner, second_corner)
+        this.cursor_select(beat_key, this.get_first_position(beat_key))
+    }
+
+    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        super.move_beat_range(beat_key, first_corner, second_corner)
+        this.cursor_select(beat_key, this.get_first_position(beat_key))
+    }
+
+    override fun unset_line(channel: Int, line_offset: Int) {
+        super.unset_line(channel, line_offset)
+        this.cursor_select_line(channel, line_offset)
+    }
+
+    override fun unset_range(first_corner: BeatKey, second_corner: BeatKey) {
+        super.unset_range(first_corner, second_corner)
+        val new_position = this.get_first_position(first_corner)
+        this.cursor_select(first_corner, new_position)
+    }
+
+    override fun unset_beat(beat: Int) {
+        super.unset_beat(beat)
+        this.cursor_select_column(beat)
+    }
+
+    override fun insert_after_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int) {
+        super.insert_after_repeat(beat_key, position, repeat)
+        // Cursor handled in insert_after()
+    }
+
+    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+        super.remove_one_of_two(beat_key, position)
+        // Cursor Handled in replace_tree()
+    }
+
+    override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
+        super.remove_line_repeat(channel, line_offset, count)
+    }
+
+    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        super.set_duration(beat_key, position, duration)
+    }
+
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
+        super.remove(beat_key, position)
         // Cursor handled in remove_one_of_two or remove_standard
     }
 
@@ -519,49 +682,21 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(channel, line_offset)
     }
 
-    override fun controller_global_overwrite_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
-        super.controller_global_overwrite_range_horizontally(type, first_beat, second_beat)
-        this.cursor_select_global_ctl_line(type)
-    }
-
-    override fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
-        super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key)
-        this.cursor_select_line_ctl_line(type, channel, line_offset)
-    }
-
-    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
-        super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat)
-        this.cursor_select_channel_ctl_line(type, target_channel)
-    }
-
     override fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
         super.overwrite_line(channel, line_offset, beat_key)
         this.cursor_select_line(channel, line_offset)
-    }
-
-    override fun controller_global_overwrite_line(type: ControlEventType, beat: Int) {
-        super.controller_global_overwrite_line(type, beat)
-        this.cursor_select_global_ctl_line(type)
-    }
-
-    override fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
-        super.controller_channel_overwrite_line(type, target_channel, original_channel, original_beat)
-        this.cursor_select_channel_ctl_line(type, target_channel)
-    }
-
-    override fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
-        super.controller_line_overwrite_line(type, channel, line_offset, beat_key)
-        this.cursor_select_line_ctl_line(type, channel, line_offset)
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
         super.insert_beat(beat_index, beats_in_column)
         this.cursor_select_column(beat_index)
     }
+
     override fun clear() {
         this.cursor_clear()
         super.clear()
     }
+
     override fun on_project_changed() {
         super.on_project_changed()
         this.cursor_clear()
@@ -643,33 +778,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         super.recache_line_maps()
     }
 
-    override fun <T : OpusControlEvent> controller_global_set_initial_event(type: ControlEventType, event: T) {
-        super.controller_global_set_initial_event(type, event)
-        if (this.is_global_ctl_visible(type)) {
-            this.cursor_select_global_ctl_line(type)
-        } else {
-            this.cursor_clear()
-        }
-    }
-
-    override fun <T : OpusControlEvent> controller_channel_set_initial_event(type: ControlEventType, channel: Int, event: T) {
-        super.controller_channel_set_initial_event(type, channel, event)
-        if (this.is_channel_ctl_visible(type, channel)) {
-            this.cursor_select_channel_ctl_line(type, channel)
-        } else {
-            this.cursor_select_channel(channel)
-        }
-    }
-
-    override fun <T : OpusControlEvent> controller_line_set_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
-        super.controller_line_set_initial_event(type, channel, line_offset, event)
-        if (this.is_line_ctl_visible(type, channel, line_offset)) {
-            this.cursor_select_line_ctl_line(type, channel, line_offset)
-        } else {
-            this.cursor_select_line(channel, line_offset)
-        }
-    }
-
     override fun <T : OpusLayerBase> import_from_other(other: T) {
         super.import_from_other(other)
     }
@@ -743,6 +851,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         // Cursor handled in insert()
         super.insert_repeat(beat_key, position, repeat)
     }
+
     override fun controller_line_insert_after(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         // Cursor handled in controller_line_insert()
         super.controller_line_insert_after(type, beat_key, position)
@@ -1251,18 +1360,34 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun copy_line_ctl_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
-            if (first != second) {
-                this.controller_line_overwrite_range(this.cursor.ctl_type!!, beat_key, first, second)
-            } else {
-                if (this.is_percussion(first.channel) != this.is_percussion(beat_key.channel)) {
-                    throw MixedInstrumentException(first, beat_key)
+            when (this.cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    if (first != second) {
+                        this.controller_line_overwrite_range(this.cursor.ctl_type!!, beat_key, first, second)
+                    } else {
+                        this.controller_line_replace_tree(this.cursor.ctl_type!!, beat_key, listOf(), this.get_line_ctl_tree_copy(this.cursor.ctl_type!!, first, listOf()))
+                    }
                 }
-                this.controller_line_replace_tree(
-                    this.cursor.ctl_type!!,
-                    beat_key,
-                    listOf(),
-                    this.get_line_ctl_tree_copy(this.cursor.ctl_type!!, first, listOf())
-                )
+                CtlLineLevel.Channel -> {
+                    if (first != second) {
+                        this.controller_channel_to_line_overwrite_range(this.cursor.ctl_type!!, first.channel, first.beat, second.beat, beat_key)
+                    } else {
+                        this.controller_line_replace_tree(
+                            this.cursor.ctl_type!!,
+                            beat_key,
+                            listOf(),
+                            this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, first.channel, first.beat, listOf())
+                        )
+                    }
+                }
+                CtlLineLevel.Global -> {
+                    if (first != second) {
+                        this.controller_global_to_line_overwrite_range(this.cursor.ctl_type!!, first.beat, second.beat, beat_key)
+                    } else {
+                        this.controller_line_replace_tree(this.cursor.ctl_type!!, beat_key, listOf(), this.get_global_ctl_tree_copy(this.cursor.ctl_type!!, first.beat, listOf()))
+                    }
+                }
+                null -> TODO()
             }
         } else {
             throw InvalidCursorState()
@@ -1283,10 +1408,30 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
-            if (first != second) {
-                this.controller_line_move_range(this.cursor.ctl_type!!, beat_key, first, second)
-            } else {
-                this.controller_line_move_leaf(this.cursor.ctl_type!!, first, listOf(), beat_key, listOf())
+            when (this.cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    if (first != second) {
+                        this.controller_line_move_range(this.cursor.ctl_type!!, beat_key, first, second)
+                    } else {
+                        this.controller_line_move_leaf(this.cursor.ctl_type!!, first, listOf(), beat_key, listOf())
+                    }
+                }
+                CtlLineLevel.Channel -> {
+                    if (first != second) {
+                        this.controller_channel_to_line_move_range(this.cursor.ctl_type!!, first.channel, first.beat, second.beat, beat_key)
+                    } else {
+                        this.controller_channel_to_line_move_leaf(this.cursor.ctl_type!!, first.channel, first.beat, listOf(), beat_key, listOf())
+                    }
+                }
+
+                CtlLineLevel.Global -> {
+                    if (first != second) {
+                        this.controller_global_to_line_move_range(this.cursor.ctl_type!!, first.beat, second.beat, beat_key)
+                    } else {
+                        this.controller_global_to_line_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat_key, listOf())
+                    }
+                }
+                null -> TODO()
             }
         } else {
             throw InvalidCursorState()
@@ -1308,51 +1453,65 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun copy_channel_ctl_to_beat(channel: Int, beat: Int) {
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
-            if (first != second) {
-                this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, this.cursor.channel, first.beat, second.beat)
-            } else {
-                this.controller_channel_replace_tree(
-                    this.cursor.ctl_type!!,
-                    channel,
-                    beat,
-                    listOf(),
-                    this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, this.cursor.channel, first.beat, listOf())
-                )
+            when (this.cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    if (first != second) {
+                        this.controller_line_to_channel_overwrite_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, channel, beat)
+                    } else {
+                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_line_ctl_tree_copy(this.cursor.ctl_type!!, first))
+                    }
+                }
+                CtlLineLevel.Channel -> {
+                    if (first != second) {
+                        this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, this.cursor.channel, first.beat, second.beat)
+                    } else {
+                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, this.cursor.channel, first.beat, listOf()))
+                    }
+                }
+                CtlLineLevel.Global -> {
+                    if (first != second) {
+                        this.controller_global_to_channel_overwrite_range(this.cursor.ctl_type!!, first.beat, second.beat, channel, beat)
+                    } else {
+                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_global_ctl_tree_copy(this.cursor.ctl_type!!, first.beat, listOf()))
+                    }
+                }
+                null -> {}
             }
         } else {
             throw InvalidCursorState()
         }
 
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            channel,
-            beat,
-            listOf()
-        )
-
-        this.cursor_select_ctl_at_channel(
-            this.cursor.ctl_type!!,
-            channel,
-            beat,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
+        val tree = this.get_channel_ctl_tree<OpusControlEvent>(this.cursor.ctl_type!!, channel, beat, listOf())
+        this.cursor_select_ctl_at_channel(this.cursor.ctl_type!!, channel, beat, tree.get_first_event_tree_position() ?: listOf())
     }
 
     fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
-            if (first != second) {
-                this.controller_channel_move_range(this.cursor.ctl_type!!, channel, beat, first.channel, first.beat, second.beat)
-            } else {
-                this.controller_channel_move_leaf(
-                    this.cursor.ctl_type!!,
-                    first.channel,
-                    first.beat,
-                    listOf(),
-                    channel,
-                    beat,
-                    listOf()
-                )
+            when (this.cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    if (first != second) {
+                        this.controller_line_to_channel_move_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, channel, beat)
+                    } else {
+                        this.controller_line_to_channel_move_leaf(this.cursor.ctl_type!!, first, listOf(), channel, beat, listOf())
+                    }
+                }
+                CtlLineLevel.Channel -> {
+                    if (first != second) {
+                        this.controller_channel_move_range(this.cursor.ctl_type!!, channel, beat, first.channel, first.beat, second.beat)
+                    } else {
+                        this.controller_channel_move_leaf(this.cursor.ctl_type!!, first.channel, first.beat, listOf(), channel, beat, listOf())
+                    }
+                }
+                CtlLineLevel.Global -> {
+                    if (first != second) {
+                        this.controller_global_to_channel_move_range(this.cursor.ctl_type!!, beat, first.channel, first.beat, second.beat)
+                    } else {
+                        this.controller_global_to_channel_move_leaf(this.cursor.ctl_type!!, beat, listOf(), first.channel, first.beat, listOf())
+                    }
+
+                }
+                null -> TODO()
             }
         } else {
             throw InvalidCursorState()
@@ -1380,24 +1539,29 @@ open class OpusLayerCursor: OpusLayerBase() {
 
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
-            if (first != second) {
-                this.controller_global_overwrite_range(
-                    this.cursor.ctl_type!!,
-                    beat,
-                    min(first.beat, second.beat),
-                    max(first.beat, second.beat)
-                )
-            } else {
-                this.controller_global_replace_tree(
-                    this.cursor.ctl_type!!,
-                    beat,
-                    listOf(),
-                    this.get_global_ctl_tree(
-                        this.cursor.ctl_type!!,
-                        first.beat,
-                        listOf()
-                    )
-                )
+            when (this.cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    if (first != second) {
+                        this.controller_line_to_global_overwrite_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, beat)
+                    } else {
+                        this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_line_ctl_tree_copy(this.cursor.ctl_type!!, first, listOf()))
+                    }
+                }
+                CtlLineLevel.Channel -> {
+                    if (first != second) {
+                        this.controller_channel_to_global_overwrite_range(this.cursor.ctl_type!!, beat, first.channel, first.beat, second.beat)
+                    } else {
+                        this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, first.channel, first.beat, listOf()))
+                    }
+                }
+                CtlLineLevel.Global -> {
+                    if (first != second) {
+                        this.controller_global_overwrite_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
+                    } else {
+                        this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_global_ctl_tree(this.cursor.ctl_type!!, first.beat, listOf()))
+                    }
+                }
+                null -> {}
             }
         } else {
             throw InvalidCursorState()
@@ -1422,21 +1586,29 @@ open class OpusLayerCursor: OpusLayerBase() {
 
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
-            if (first != second) {
-                this.controller_global_move_range(
-                    this.cursor.ctl_type!!,
-                    beat,
-                    first.beat,
-                    second.beat
-                )
-            } else {
-                this.controller_global_move_leaf(
-                    this.cursor.ctl_type!!,
-                    first.beat,
-                    listOf(),
-                    beat,
-                    listOf()
-                )
+            when (this.cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    if (first != second) {
+                        this.controller_line_to_global_move_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, beat)
+                    } else {
+                        this.controller_line_to_global_move_leaf(this.cursor.ctl_type!!, first, listOf(), beat, listOf())
+                    }
+                }
+                CtlLineLevel.Channel -> {
+                    if (first != second) {
+                        this.controller_channel_to_global_move_range(this.cursor.ctl_type!!, beat, first.channel, first.beat, second.beat)
+                    } else {
+                        this.controller_channel_to_global_move_leaf(this.cursor.ctl_type!!, first.channel, first.beat, listOf(), beat, listOf())
+                    }
+                }
+                CtlLineLevel.Global -> {
+                    if (first != second) {
+                        this.controller_global_move_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
+                    } else {
+                        this.controller_global_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat, listOf())
+                    }
+                }
+                null -> TODO()
             }
         } else {
             throw InvalidCursorState()
@@ -1518,6 +1690,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Global -> this.cursor_select_global_ctl_line(control_type!!)
         }
     }
+
     fun move_to_next_visible_line(repeat: Int = 1) {
         val cursor = this.cursor
         if (cursor.mode != OpusManagerCursor.CursorMode.Line) {

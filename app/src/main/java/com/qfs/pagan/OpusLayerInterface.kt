@@ -456,48 +456,84 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         this.lock_ui_partial {
-                super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
-            }
+            super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+        }
     }
 
     override fun controller_channel_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
         super.controller_channel_move_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
     }
 
+    override fun controller_channel_to_line_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
+    }
+
+    override fun controller_line_to_global_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
+    }
+
+    override fun controller_global_to_line_move_leaf(type: ControlEventType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
+        super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
+    }
+
+    override fun controller_channel_to_global_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
+    }
+
     override fun controller_global_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
         super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
+    }
+
+    override fun controller_global_to_channel_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
     }
 
     override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         super.controller_line_move_leaf(type, beatkey_from, position_from, beatkey_to, position_to)
     }
 
+    override fun controller_line_to_channel_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
+    }
+
+    override fun _controller_global_copy_range(type: ControlEventType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_global_copy_range(type, target, point_a, point_b, unset_original)
+    }
+
+    override fun _controller_global_to_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_global_to_channel_copy_range(type, target_channel, target_beat, point_a, point_b, unset_original)
+    }
+
+    override fun _controller_global_to_line_copy_range(type: ControlEventType, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        super._controller_global_to_line_copy_range(type, beat_a, beat_b, target_key, unset_original)
+    }
+
+    override fun _controller_channel_to_global_copy_range(type: ControlEventType, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_channel_to_global_copy_range(type, target_beat, original_channel, point_a, point_b, unset_original)
+    }
+
+    override fun _controller_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        super._controller_channel_copy_range(type, target_channel, target_beat, original_channel, point_a, point_b, unset_original)
+    }
+
+    override fun _controller_channel_to_line_copy_range(type: ControlEventType, channel_from: Int, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        super._controller_channel_to_line_copy_range(type, channel_from, beat_a, beat_b, target_key, unset_original)
+    }
+
+    override fun _controller_line_to_global_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_beat: Int, unset_original: Boolean) {
+        super._controller_line_to_global_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_beat, unset_original)
+    }
+
+    override fun _controller_line_to_channel_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_channel: Int, target_beat: Int, unset_original: Boolean) {
+        super._controller_line_to_channel_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_channel, target_beat, unset_original)
+    }
+
+    override fun _controller_line_copy_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        super._controller_line_copy_range(type, beat_key, first_corner, second_corner, unset_original)
+    }
+
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         super.move_beat_range(beat_key, first_corner, second_corner)
-    }
-
-    override fun controller_global_move_range(type: ControlEventType, target: Int, start: Int, end: Int) {
-        super.controller_global_move_range(type, target, start, end)
-    }
-
-    override fun controller_global_overwrite_range(type: ControlEventType, target: Int, start: Int, end: Int) {
-        super.controller_global_overwrite_range(type, target, start, end)
-    }
-
-    override fun controller_channel_move_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
-        super.controller_channel_move_range(type, target_channel, target_beat, original_channel, start, end)
-    }
-
-    override fun controller_channel_overwrite_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, start: Int, end: Int) {
-        super.controller_channel_overwrite_range(type, target_channel, target_beat, original_channel, start, end)
-    }
-
-    override fun controller_line_move_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.controller_line_move_range(type, beat_key, first_corner, second_corner)
-    }
-
-    override fun controller_line_overwrite_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.controller_line_overwrite_range(type, beat_key, first_corner, second_corner)
     }
 
     override fun unset_line(channel: Int, line_offset: Int) {
@@ -677,13 +713,13 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._queue_cell_change(beat_key)
         }
     }
+
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.remove_standard(beat_key, position)
             this._queue_cell_change(beat_key)
         }
     }
-
 
     override fun controller_global_remove_one_of_two(type: ControlEventType, beat: Int, position: List<Int>) {
         super.controller_global_remove_one_of_two(type, beat, position)

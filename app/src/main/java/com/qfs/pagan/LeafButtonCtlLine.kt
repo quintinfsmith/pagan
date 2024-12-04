@@ -76,17 +76,11 @@ class LeafButtonCtlLine(
         val beat = this.get_beat()
         val beat_key = this.get_beat_key()
 
-        if (cursor.is_selecting_range() && cursor.ctl_level == this.control_level && cursor.ctl_type == this.control_type) {
+        if (cursor.is_selecting_range() && cursor.ctl_type == this.control_type) {
             try {
                 when (this.get_activity().configuration.move_mode) {
-                    PaganConfiguration.MoveMode.COPY -> {
-                        opus_manager.copy_line_ctl_to_beat(beat_key)
-                    }
-
-                    PaganConfiguration.MoveMode.MOVE -> {
-                        opus_manager.move_line_ctl_to_beat(beat_key)
-                    }
-
+                    PaganConfiguration.MoveMode.COPY -> opus_manager.copy_line_ctl_to_beat(beat_key)
+                    PaganConfiguration.MoveMode.MOVE -> opus_manager.move_line_ctl_to_beat(beat_key)
                     PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {

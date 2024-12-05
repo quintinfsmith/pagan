@@ -988,8 +988,7 @@ open class OpusLayerBase {
         var output = controller.get_latest_event(beat_key.beat, position)
         if (output != null) {
             try {
-                val (actual_beat_key, actual_position) =
-                this.controller_line_get_actual_position<T>(type, beat_key, position)
+                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<T>(type, beat_key, position)
                 if (!this.get_line_ctl_tree<T>(type, actual_beat_key, actual_position).is_event()) {
                     output.duration = 1
                 }

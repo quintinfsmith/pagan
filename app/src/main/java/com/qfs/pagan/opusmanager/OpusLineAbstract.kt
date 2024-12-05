@@ -520,7 +520,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             val working_tree = this.get_tree(working_beat, working_position).copy()
             if (working_tree.is_event()) {
                 val working_event = working_tree.get_event()!!
-                output = working_event
+                output = working_event.copy() as T
                 break
             }
         }

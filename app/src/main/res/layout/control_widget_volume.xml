@@ -14,11 +14,12 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.qfs.pagan.PaganSeekBar
+    <SeekBar
         android:id="@+id/volume_slider"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="@dimen/secondary_contextmenu_button_height"
+        android:theme="@style/Theme.Pagan.SeekBar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/volume_transition_button"

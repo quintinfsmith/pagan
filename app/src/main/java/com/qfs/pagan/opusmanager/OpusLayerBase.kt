@@ -1,7 +1,9 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.apres.Midi
+import com.qfs.apres.event.BalanceMSB
 import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
@@ -985,9 +987,14 @@ open class OpusLayerBase {
         val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<T>(type)
         var output = controller.get_latest_event(beat_key.beat, position)
         if (output != null) {
-            val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<T>(type, beat_key, position)
-            if (!this.get_line_ctl_tree<T>(type, actual_beat_key, actual_position).is_event()) {
-                output.duration = 1
+            try {
+                val (actual_beat_key, actual_position) =
+                this.controller_line_get_actual_position<T>(type, beat_key, position)
+                if (!this.get_line_ctl_tree<T>(type, actual_beat_key, actual_position).is_event()) {
+                    output.duration = 1
+                }
+            } catch (e: OpusTree.InvalidGetCall) {
+                // pass
             }
         } else {
             output = controller.get_initial_event()
@@ -999,9 +1006,13 @@ open class OpusLayerBase {
         val controller = this.get_channel(channel).controllers.get_controller<T>(type)
         var output = controller.get_latest_event(beat, position)
         if (output != null) {
-            val (actual_beat, actual_position) = this.controller_channel_get_actual_position<T>(type, channel, beat, position)
-            if (!this.get_channel_ctl_tree<T>(type, channel, actual_beat, actual_position).is_event()) {
-                output.duration = 1
+            try {
+                val (actual_beat, actual_position) = this.controller_channel_get_actual_position<T>(type, channel, beat, position)
+                if (!this.get_channel_ctl_tree<T>(type, channel, actual_beat, actual_position).is_event()) {
+                    output.duration = 1
+                }
+            } catch (e: OpusTree.InvalidGetCall) {
+                // pass
             }
         } else {
             output = controller.get_initial_event()
@@ -1015,9 +1026,13 @@ open class OpusLayerBase {
         var output = controller.get_latest_event(beat, position)
 
         if (output != null) {
-            val (actual_beat, actual_position) = this.controller_global_get_actual_position<T>(type, beat, position)
-            if (!this.get_global_ctl_tree<T>(type, actual_beat, actual_position).is_event()) {
-                output.duration = 1
+            try {
+                val (actual_beat, actual_position) = this.controller_global_get_actual_position<T>(type, beat, position)
+                if (!this.get_global_ctl_tree<T>(type, actual_beat, actual_position).is_event()) {
+                    output.duration = 1
+                }
+            } catch (e: OpusTree.InvalidGetCall) {
+                // pass
             }
         } else {
             output = controller.get_initial_event()
@@ -2907,48 +2922,83 @@ open class OpusLayerBase {
         val max_tick = midi.get_ppqn() * (this.beat_count + 1)
         val radix = this.tuning_map.size
 
-        val tempo_controller = this.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
+        fun <U: OpusControlEvent> apply_active_controller(controller: ActiveController<U>, gen_event_callback: (U, U?, Int) -> List<Pair<Int, MIDIEvent>>) {
+            var skip_initial_set = false
+            val initial_event = controller.get_initial_event()
+            var latest_event = initial_event
 
-        var skip_initial_tempo_set = false
-        for (i in start_beat until end_beat) {
-            val tempo_tree = tempo_controller.get_tree(i)
-            val stack: MutableList<StackItem<OpusTempoEvent>> = mutableListOf(StackItem(tempo_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn))
-            while (stack.isNotEmpty()) {
-                val current = stack.removeFirst()
-                if (current.tree.is_event()) {
-                    val event = current.tree.get_event()!!
-                    if (current.offset == 0) {
-                        skip_initial_tempo_set = true
-                    }
-                    midi.insert_event(
-                        0,
-                        current.offset,
-                        SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F)
-                    )
-                } else if (!current.tree.is_leaf()) {
-                    val working_subdiv_size = current.size / current.tree.size
-                    for ((j, subtree) in current.tree.divisions) {
-                        stack.add(
-                            StackItem(
-                                subtree,
-                                current.tree.size,
-                                current.offset + (working_subdiv_size * j),
-                                working_subdiv_size
+            for (i in start_beat until end_beat) {
+                val working_tree = controller.get_tree(i)
+                val stack: MutableList<StackItem<U>> = mutableListOf(StackItem(working_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn))
+                while (stack.isNotEmpty()) {
+                    val current = stack.removeFirst()
+                    if (current.tree.is_event()) {
+                        val event = current.tree.get_event()!!
+                        if (current.offset == 0) {
+                            skip_initial_set = true
+                        }
+
+                        for ((j, midi_event) in gen_event_callback(event, latest_event, current.size)) {
+                            midi.insert_event(0, current.offset + j, midi_event)
+                        }
+                        latest_event = event
+                    } else if (!current.tree.is_leaf()) {
+                        val working_subdiv_size = current.size / current.tree.size
+                        for ((j, subtree) in current.tree.divisions) {
+                            stack.add(
+                                StackItem(
+                                    subtree,
+                                    current.tree.size,
+                                    current.offset + (working_subdiv_size * j),
+                                    working_subdiv_size
+                                )
                             )
-                        )
+                        }
+                    }
+                }
+            }
+
+            if (!skip_initial_set) {
+                val (_, midi_event) = gen_event_callback(initial_event, null, 0).first()
+                midi.insert_event(0, 0, midi_event)
+            }
+        }
+
+        val tempo_controller = this.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
+        apply_active_controller(tempo_controller) { event: OpusTempoEvent, _: OpusTempoEvent?, _: Int ->
+            listOf(
+                Pair(0, SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F))
+            )
+        }
+
+        val channels = this.get_all_channels()
+        for (c in channels.indices) {
+            val channel_controller = channels[c].controllers.get_controller<OpusPanEvent>(ControlEventType.Pan)
+            apply_active_controller(channel_controller) { event: OpusPanEvent, previous_event: OpusPanEvent?, frames: Int ->
+                when (event.transition) {
+                    ControlTransition.Instant -> {
+                        val value = min(((event.value + 1F) * 64).toInt(), 127)
+                        listOf(Pair(0, BalanceMSB(c, value)))
+                    }
+                    ControlTransition.Linear -> {
+                        var working_value = previous_event?.value ?: 0F
+                        var diff = (event.value - working_value) / (frames * event.duration).toFloat()
+                        val working_list = mutableListOf<Pair<Int, MIDIEvent>>()
+                        var last_val: Int? = null
+                        for (x in 0 until frames * event.duration) {
+                            val mid_val = (working_value + (x * diff))
+                            val value = min(((mid_val + 1F) * 64).toInt(), 127)
+                            if (last_val != value) {
+                                working_list.add(Pair(x, BalanceMSB(c, value)))
+                            }
+                            last_val = value
+                        }
+                        working_list
                     }
                 }
             }
         }
 
-        if (!skip_initial_tempo_set) {
-            val first_tempo_event = this.get_current_global_controller_event(ControlEventType.Tempo, start_beat, listOf()) as OpusTempoEvent
-            midi.insert_event(
-                0,
-                0,
-                SetTempo.from_bpm((first_tempo_event.value * 1000f).roundToInt() / 1000F)
-            )
-        }
 
         this.channels.forEachIndexed outer@{ c: Int, channel: OpusChannel ->
             midi.insert_event(
@@ -3023,6 +3073,7 @@ open class OpusLayerBase {
                                     false
                                 ))
                             }
+
                         } else if (!current.tree.is_leaf()) {
                             val working_subdiv_size = current.size / current.tree.size
                             for ((i, subtree) in current.tree.divisions) {

@@ -8,7 +8,7 @@ import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, R.layout.control_widget_volume, callback) {
-    private lateinit var _slider: PaganSeekBar
+    private lateinit var _slider: SeekBar
     private lateinit var _button: ButtonLabelledIcon
     private lateinit var _transition_button: ButtonIcon
     private val _min = 0

@@ -14,10 +14,13 @@
     <color name="button_text">#000000</color>
     <color name="button_alt">#4D5058</color>
     <color name="button_alt_text">#e1e1e1</color>
-    <color name="button_selected">@color/leaf</color>
+    <color name="button_selected">@color/leaf_main</color>
     <color name="button_selected_text">@color/leaf_text</color>
     <color name="empty_linked">#657169</color>
     <color name="empty_linked_selected">#4a87b2</color>
     <color name="ctl_line">#000000</color>
     <color name="ctl_line_text">#e1e1e1</color>
+
+    <color name="leaf_spill">#796AAF</color>
+    <color name="ctl_leaf_spill">#E9D189</color>
 </resources>

@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -9,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.qfs.apres.soundfont.SoundFont
@@ -65,6 +67,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         return FragmentGlobalSettingsBinding.inflate(inflater, container, false)
     }
 
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val main = this.get_main()
@@ -107,14 +110,14 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             }
         }
 
-        val switch_relative_mode = view.findViewById<PaganSwitch>(R.id.sRelativeEnabled)
+        val switch_relative_mode = view.findViewById<Switch>(R.id.sRelativeEnabled)
         switch_relative_mode.isChecked = main.configuration.relative_mode
         switch_relative_mode.setOnCheckedChangeListener { _, enabled: Boolean ->
             main.configuration.relative_mode = enabled
             main.save_configuration()
         }
 
-        //val switch_stereo_playback = view.findViewById<PaganSwitch>(R.id.sPlaybackStereo)
+        //val switch_stereo_playback = view.findViewById<Switch>(R.id.sPlaybackStereo)
         //switch_stereo_playback.isChecked = main.configuration.playback_stereo_mode == WaveGenerator.StereoMode.Stereo
         //switch_stereo_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
         //    main.configuration.playback_stereo_mode = if (enabled) {
@@ -126,7 +129,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         //    main.reinit_playback_device()
         //}
 
-        //val switch_limit_samples = view.findViewById<PaganSwitch>(R.id.sLimitSamples)
+        //val switch_limit_samples = view.findViewById<Switch>(R.id.sLimitSamples)
         //switch_limit_samples.isChecked = main.configuration.playback_sample_limit != null
         //switch_limit_samples.setOnCheckedChangeListener { _, enabled: Boolean ->
         //    main.configuration.playback_sample_limit = if (enabled) {

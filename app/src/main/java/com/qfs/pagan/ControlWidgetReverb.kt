@@ -11,7 +11,7 @@ import com.qfs.pagan.opusmanager.OpusReverbEvent
 import kotlin.math.roundToInt
 
 class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, context: Context, callback: (OpusReverbEvent) -> Unit): ControlWidget<OpusReverbEvent>(context, default, is_initial_event, R.layout.control_widget_reverb, callback) {
-    private val _slider = PaganSeekBar(context)
+    private val _slider = SeekBar(ContextThemeWrapper(context, R.style.Theme_Pagan_SeekBar))
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _min = 0f
     private val _max = 100f

@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.ViewGroup
 import androidx.appcompat.view.ContextThemeWrapper
@@ -31,32 +30,6 @@ abstract class LeafButtonCtl(
     abstract fun is_secondary_selected(): Boolean
     abstract fun get_controller(): ActiveController<OpusControlEvent>
 
-    override fun get_tint_list(): IntArray {
-        val activity = this.get_activity()
-        val color_map = activity.view_model.color_map
-
-        return intArrayOf(
-            color_map[ColorMap.Palette.LeafInvalid],
-            color_map[ColorMap.Palette.LeafInvalidSelected],
-            color_map[ColorMap.Palette.SecondarySelectionInvalid], // B
-
-            color_map[ColorMap.Palette.CtlLeaf],
-            color_map[ColorMap.Palette.CtlLeafSpill], // B
-
-            // Primary
-            color_map[ColorMap.Palette.Selection],
-            color_map[ColorMap.Palette.LeafSelected],
-            color_map[ColorMap.Palette.LeafSelected], // spill
-
-            // Secondary
-            color_map[ColorMap.Palette.Selection],
-            color_map[ColorMap.Palette.SecondarySelection],
-            color_map[ColorMap.Palette.SecondarySelection],
-
-            color_map[ColorMap.Palette.CtlLine],
-            color_map[ColorMap.Palette.CtlLine]
-        )
-    }
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         (this.layoutParams as LayoutParams).gravity = Gravity.CENTER_VERTICAL
@@ -67,37 +40,12 @@ abstract class LeafButtonCtl(
         this.removeAllViews()
         val event = this._event ?: return
 
-        val value_text = LeafText(
-            ContextThemeWrapper(this.context, R.style.ctl_leaf_value)
-        )
-        val activity = this.get_activity()
-        val color_map = activity.view_model.color_map
-        value_text.setTextColor(
-            ColorStateList(
-                this.get_states(),
-                intArrayOf(
-                    color_map[ColorMap.Palette.CtlLeafText],
-                    color_map[ColorMap.Palette.CtlLeafText],
-                    color_map[ColorMap.Palette.CtlLeafText],
-
-                    color_map[ColorMap.Palette.CtlLeafText],
-                    color_map[ColorMap.Palette.CtlLeafText],
-
-                    // Primary
-                    color_map[ColorMap.Palette.CtlLeafText],
-                    color_map[ColorMap.Palette.CtlLeafText],
-                    color_map[ColorMap.Palette.CtlLeafText],
-
-                    // Secondary
-                    color_map[ColorMap.Palette.LeafText],
-                    color_map[ColorMap.Palette.LeafText],
-                    color_map[ColorMap.Palette.LeafText],
-
-                    color_map[ColorMap.Palette.CtlLeafText],
-                    color_map[ColorMap.Palette.CtlLeafText],
-                )
-            )
-        )
+        val value_text = object: androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(this.context, R.style.ctl_leaf_value)) {
+            override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+                val drawableState = super.onCreateDrawableState(extraSpace + 8)
+                return this@LeafButtonCtl._build_drawable_state(drawableState)
+            }
+        }
 
         value_text.text = this.get_label_text(event)
         this.addView(value_text)

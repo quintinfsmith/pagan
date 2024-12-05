@@ -33,34 +33,6 @@ class LeafButtonStd(
         this.set_text(initial_radix)
     }
 
-    override fun get_tint_list(): IntArray {
-        val activity = this.get_activity()
-        val color_map = activity.view_model.color_map
-
-        return intArrayOf(
-            color_map[ColorMap.Palette.LeafInvalid],
-            color_map[ColorMap.Palette.LeafInvalidSelected],
-            color_map[ColorMap.Palette.SecondarySelectionInvalid],
-
-            color_map[ColorMap.Palette.Leaf],
-            color_map[ColorMap.Palette.Spill],
-
-            // Primary
-            color_map[ColorMap.Palette.Selection],
-            color_map[ColorMap.Palette.LeafSelected],
-            color_map[ColorMap.Palette.LeafSelected], // spill
-
-            // Secondary
-            color_map[ColorMap.Palette.Selection],
-            color_map[ColorMap.Palette.SecondarySelection],
-            color_map[ColorMap.Palette.SecondarySelection],
-
-            color_map[ColorMap.Palette.ChannelOdd],
-            color_map[ColorMap.Palette.ChannelEven]
-        )
-
-    }
-
     override fun long_click(): Boolean {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor

@@ -8,12 +8,15 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="leaf">#765BD5</color>
+    <color name="leaf_main">#765BD5</color>
+    <color name="leaf_spill">#5944a3</color>
     <color name="leaf_text">#000000</color>
     <color name="leaf_pressed">#39025A</color>
     <color name="leaf_pressed_text">#000000</color>
     <color name="leaf_selected">#2636b2</color>
     <color name="leaf_selected_text">#FFFFFF</color>
+    <color name="leaf_secondary">#4F5BBC</color>
+    <color name="leaf_secondary_text">#000000</color>
     <color name="leaf_linked">#426f52</color>
     <color name="leaf_linked_text">#000000</color>
     <color name="leaf_linked_selected">#174336</color>
@@ -23,9 +26,11 @@
     <color name="leaf_invalid_selected">#890E21</color>
     <color name="leaf_invalid_selected_text">#A27E7E</color>
 
-    <color name="ctl_leaf">#453a25</color>
-    <color name="ctl_leaf_text">#FFFFFF</color>
-    <color name="ctl_leaf_selected">#004f73</color>
+    <color name="ctl_leaf">#CB9C10</color>
+    <color name="ctl_leaf_spill">#E9D189</color>
+    <color name="ctl_leaf_text">#FF000000</color>
+    <color name="ctl_leaf_selected">#095660</color>
+    <color name="ctl_leaf_secondary">#567B80</color>
     <color name="ctl_leaf_selected_text">#FFFFFF</color>
 
     <color name="empty_selected">@color/blue_sky</color>
@@ -55,7 +60,7 @@
     <color name="button_text">@color/main_fg</color>
     <color name="button_alt">@color/main_fg</color>
     <color name="button_alt_text">#FFFFFF</color>
-    <color name="button_selected">@color/leaf</color>
+    <color name="button_selected">@color/leaf_main</color>
     <color name="button_selected_text">@color/leaf_text</color>
     <color name="empty_linked">#929E96</color>
     <color name="empty_linked_selected">#4884ae</color>

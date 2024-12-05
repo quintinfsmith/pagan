@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.drawable.LayerDrawable
 import android.view.MotionEvent
 import android.widget.LinearLayout
@@ -25,92 +24,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
         }
     }
 
-    internal fun get_states(): Array<IntArray> {
-        return arrayOf(
-            // Invalids---------------------------------
-            intArrayOf(
-                R.attr.state_invalid,
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary
-            ),
-            intArrayOf(
-                R.attr.state_invalid,
-                R.attr.state_focused,
-                -R.attr.state_focused_secondary
-            ),
-            intArrayOf(
-                R.attr.state_invalid,
-                -R.attr.state_focused,
-                R.attr.state_focused_secondary
-            ),
-            // -------------------------------
-            intArrayOf(
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                R.attr.state_spill
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                R.attr.state_focused_secondary,
-                R.attr.state_active,
-                -R.attr.state_spill
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                R.attr.state_spill
-            ),
-            // -------------------
-            intArrayOf(
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                -R.attr.state_spill,
-                -R.attr.state_alternate
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                -R.attr.state_focused_secondary,
-                -R.attr.state_active,
-                -R.attr.state_spill,
-                R.attr.state_alternate
-            )
-        )
-    }
-
-    abstract fun get_tint_list(): IntArray
 
     private fun _setup_colors() {
         val activity = this.get_activity()
@@ -120,12 +33,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
             color_map[Palette.Lines]
         )
 
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.leaf_background).setTintList(
-            ColorStateList(
-                this.get_states(),
-                this.get_tint_list()
-            )
-        )
     }
 
     // Prevents the child labels from blocking the parent onTouchListener events

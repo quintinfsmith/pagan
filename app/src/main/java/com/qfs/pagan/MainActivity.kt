@@ -1042,7 +1042,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (this._progress_bar == null) {
-                this._progress_bar = PaganProgressBar(this)
+                this._progress_bar = ProgressBar(ContextThemeWrapper(this, R.style.progress_bar))
             }
 
             this._progress_bar!!.isClickable = true
@@ -2066,7 +2066,6 @@ class MainActivity : AppCompatActivity() {
 
     fun select_midi_file() {
         val intent = Intent()
-            //.setType(MimeTypes.AUDIO_MIDI)
             .setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
             .setAction(Intent.ACTION_GET_CONTENT)
         this._import_midi_intent_launcher.launch(intent)

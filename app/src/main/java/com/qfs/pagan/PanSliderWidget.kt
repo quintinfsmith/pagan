@@ -11,6 +11,7 @@ import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import kotlin.math.max
 import kotlin.math.min
 
@@ -46,9 +47,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             val height = this.height.toFloat()
             val padding = (height / 2f) + (2F * that.stroke_width)
 
-            val color_map = this.get_main_activity().view_model.color_map
-            val purple = color_map[ColorMap.Palette.Leaf]
-
+            val purple = ContextCompat.getColor(this.context, R.color.leaf_main)
             val div_size = 1F / (that.max - that.min).toFloat()
             val relative_n = (that.progress - that.min).toFloat() * div_size
 
@@ -64,8 +63,8 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
                 this.paint
             )
 
-            this.paint.color = color_map[ColorMap.Palette.Lines]
             this.paint.strokeWidth = 1F
+            this.paint.color = ContextCompat.getColor(this.context, R.color.button)
             canvas.drawRoundRect(
                 that.stroke_width,
                 0F,
@@ -76,32 +75,21 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
                 this.paint
             )
 
-            this.paint.color = color_map[ColorMap.Palette.Background]
-            canvas.drawRoundRect(
-                that.stroke_width * 2F,
-                that.stroke_width,
-                width - (that.stroke_width * 2F),
-                height - that.stroke_width,
-                padding,
-                padding,
-                this.paint
-            )
-
             val handle_point = padding + ((width - (2 * padding)) * relative_n)
 
-            this.paint.color = color_map[ColorMap.Palette.Lines]
             this.paint.strokeWidth = 1F
+            this.paint.color = ContextCompat.getColor(this.context, R.color.main_bg)
             canvas.drawOval(
-                (width / 2F) - (padding / 4f),
-                (height / 2F) - (padding / 4f),
-                (width / 2F) + (padding / 4f),
-                (height / 2F) + (padding / 4f),
+                (width / 2F) - (padding / 3f),
+                (height / 2F) - (padding / 3f),
+                (width / 2F) + (padding / 3f),
+                (height / 2F) + (padding / 3f),
                 this.paint
             )
             canvas.drawLine(width / 2F, that.stroke_width * 4f, width / 2F, height - (that.stroke_width * 4f), paint)
 
-            this.paint.color = color_map[ColorMap.Palette.Leaf]
             this.paint.strokeWidth = 1F
+            this.paint.color = purple
             this.path.addOval(
                 handle_point - (padding / 2F),
                 (height / 2F) - (padding / 2F),

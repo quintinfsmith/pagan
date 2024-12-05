@@ -17,7 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <com.qfs.pagan.PaganSeekBar
+    <SeekBar
         android:id="@+id/shortcut_scrollbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

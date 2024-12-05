@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"/>
         </LinearLayout>
 
-        <com.qfs.pagan.PaganSeekBar
+        <SeekBar
             android:id="@+id/sbRed"
             android:layout_width="match_parent"
             android:layout_height="21dp"
@@ -50,7 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
-        <com.qfs.pagan.PaganSeekBar
+        <SeekBar
             android:id="@+id/sbGreen"
             android:layout_width="match_parent"
             android:layout_height="21dp"
@@ -74,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
-        <com.qfs.pagan.PaganSeekBar
+        <SeekBar
             android:id="@+id/sbBlue"
             android:layout_width="match_parent"
             android:layout_height="21dp"

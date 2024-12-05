@@ -170,7 +170,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
         return try {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
-            throw OpusLineAbstract.BlockedCtlTreeException(type, e)
+            throw OpusChannelAbstract.BlockedCtlTreeException(OpusLineAbstract.BlockedCtlTreeException(type, e))
         }
     }
     /* Catch Blocked tree exceptions and upgrade them to exceptions with more context */

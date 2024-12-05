@@ -1134,7 +1134,6 @@ open class OpusLayerBase {
     }
 
     open fun <T: OpusControlEvent> controller_line_replace_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
-        println("COPYING TO $beat_key")
         this.catch_blocked_tree_exception(beat_key.channel) {
             val tree_copy = tree.copy(this::copy_control_event)
             this.get_all_channels()[beat_key.channel].replace_line_control_leaf(type, beat_key.line_offset, beat_key.beat, position ?: listOf(), tree_copy)
@@ -1529,13 +1528,18 @@ open class OpusLayerBase {
      * Creating repeater functions here also allows the history layer to group actions together more easily.
      */
     open fun controller_channel_remove_one_of_two(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position)
-        val parent_tree = tree.parent!!
-        tree.detach()
-        val prev_position = position.toMutableList()
-        prev_position.removeLast()
-        val to_replace = parent_tree[0]
-        this.controller_channel_replace_tree(type, channel, beat, prev_position, to_replace)
+        val to_replace_position = List(position.size) { i: Int ->
+            if (i < position.size - 1) {
+                position[i]
+            } else if (position.last() == 0) {
+                1
+            } else {
+                0
+            }
+        }
+
+        val replacer_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, to_replace_position)
+        this.controller_channel_replace_tree(type, channel, beat, position.subList(0, position.size - 1), replacer_tree)
     }
 
     open fun controller_channel_remove_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
@@ -1626,23 +1630,33 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_remove_one_of_two(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        val tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position)
-        val parent_tree = tree.parent!!
-        tree.detach()
-        val prev_position = position.toMutableList()
-        prev_position.removeLast()
-        val to_replace = parent_tree[0]
-        this.controller_line_replace_tree(type, beat_key, prev_position, to_replace)
+        val to_replace_position = List(position.size) { i: Int ->
+            if (i < position.size - 1) {
+                position[i]
+            } else if (position.last() == 0) {
+                1
+            } else {
+                0
+            }
+        }
+
+        val replacer_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, to_replace_position)
+        this.controller_line_replace_tree(type, beat_key, position.subList(0, position.size - 1), replacer_tree)
     }
 
     open fun controller_global_remove_one_of_two(type: ControlEventType, beat: Int, position: List<Int>) {
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, position)
-        val parent_tree = tree.parent!!
-        tree.detach()
-        val prev_position = position.toMutableList()
-        prev_position.removeLast()
-        val to_replace = parent_tree[0]
-        this.controller_global_replace_tree(type, beat, prev_position, to_replace)
+        val to_replace_position = List(position.size) { i: Int ->
+            if (i < position.size - 1) {
+                position[i]
+            } else if (position.last() == 0) {
+                1
+            } else {
+                0
+            }
+        }
+
+        val replacer_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, to_replace_position)
+        this.controller_global_replace_tree(type, beat, position.subList(0, position.size - 1), replacer_tree)
     }
 
     open fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
@@ -4064,6 +4078,7 @@ open class OpusLayerBase {
         this._blocked_action_catcher += 1
         return try {
             val output = callback()
+            println("GUH?")
             this._blocked_action_catcher -= 1
             output
         } catch (e: OpusChannelAbstract.BlockedTreeException) {
@@ -4111,6 +4126,7 @@ open class OpusLayerBase {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
             this.on_action_blocked_global_ctl(type, e.blocker_beat, e.blocker_position)
+            println("SHOULD BLC")
             throw BlockedActionException()
         }
     }

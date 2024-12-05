@@ -2034,7 +2034,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             this.get_actual_line_index(
                                 this.get_instrument_line_index(
                                     cursor.channel,
-                                    0
+                                    cursor.line_offset
                                 )
                             )
                         )

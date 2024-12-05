@@ -2263,7 +2263,7 @@ open class OpusLayerBase {
     open fun repeat_controller_channel_remove(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, repeat: Int = 1) {
         val adj_position = position.toMutableList()
         for (i in 0 until repeat) {
-            val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, beat, channel, adj_position)
+            val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, adj_position)
             val parent_size = tree.parent?.size ?: 0
 
             this.controller_channel_remove(type, channel, beat, adj_position)
@@ -4077,7 +4077,6 @@ open class OpusLayerBase {
         this._blocked_action_catcher += 1
         return try {
             val output = callback()
-            println("GUH?")
             this._blocked_action_catcher -= 1
             output
         } catch (e: OpusChannelAbstract.BlockedTreeException) {
@@ -4125,7 +4124,6 @@ open class OpusLayerBase {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
             this.on_action_blocked_global_ctl(type, e.blocker_beat, e.blocker_position)
-            println("SHOULD BLC")
             throw BlockedActionException()
         }
     }

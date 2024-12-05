@@ -364,7 +364,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
         val blocker_pair = this.is_blocked_replace_tree(beat, working_position, tree)
         if (blocker_pair != null && !tree_is_eventless) {
-            println("Blocked A")
             throw BlockedTreeException(beat, working_position, blocker_pair.first, blocker_pair.second)
         }
         this.decache_overlapping_leaf(beat, working_position)
@@ -542,15 +541,16 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             }
 
             val last_p = mod_position.last()
+            if (mod_position.subList(0, mod_position.size - 1) == position.subList(0, mod_position.size - 1)) {
+                if (last_p <= position[mod_position.size - 1]) {
+                    adj_position[mod_position.size - 1] += mod_amount
+                }
 
-            if (last_p <= position[mod_position.size - 1]) {
-                adj_position[mod_position.size - 1] += mod_amount
-            }
-
-            if (mod_amount == -1) {
-                working_tree[last_p].detach()
-            } else if (mod_amount == 1) {
-                working_tree.insert(last_p, OpusTree())
+                if (mod_amount == -1) {
+                    working_tree[last_p].detach()
+                } else if (mod_amount == 1) {
+                    working_tree.insert(last_p, OpusTree())
+                }
             }
 
             working_tree = beat_tree
@@ -801,7 +801,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             }
         }
 
-        println("CHECK-----------------")
         if (beat_index < this.beats.size - 1) {
             for (before in needs_recache) {
                 var working_beat = beat_index + 1
@@ -813,7 +812,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                     working_position = next.second
                 }
 
-                println("$before")
                 val (before_offset, before_width) = this.get_leaf_offset_and_width(before.first, before.second)
                 var duration = this.get_tree(before.first, before.second).get_event()?.duration ?: 1
 
@@ -855,9 +853,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
     /* Check if replacing a tree would cause overlap */
     private fun <T: OpusEvent> is_blocked_replace_tree(beat: Int, position: List<Int>, new_tree: OpusTree<T>): Pair<Int, List<Int>>? {
-        println("AAA, $beat $position")
         val (next_beat, next_position) = this.get_proceding_event_position(beat, position) ?: return null
-        println("BB, $next_beat $next_position")
 
         val original_position = this.get_blocking_position(beat, position) ?: Pair(beat, position)
 
@@ -893,14 +889,10 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
         val (direct_offset, direct_width) = this.get_leaf_offset_and_width(beat, position)
         val stack = mutableListOf<Triple<Rational, Int, OpusTree<T>>>(Triple(direct_offset, direct_width, new_tree))
-        println("-----")
         while (stack.isNotEmpty()) {
             val (working_offset, working_width, working_tree) = stack.removeFirst()
-            println("$working_offset/$working_width")
             if (working_tree.is_event()) {
-                println("$target_offset, $working_offset, ${working_offset + Rational(working_tree.get_event()!!.duration, working_width)}")
                 if (target_offset >= working_offset && target_offset < working_offset + Rational(working_tree.get_event()!!.duration, working_width)) {
-                    println("!!!")
                     return Pair(next_beat, next_position.toList())
                 }
                 // CHECK
@@ -935,10 +927,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             working_beat = next_position_pair.first
             working_position = next_position_pair.second
             while (working_beat == beat) {
-
                 val (offset, width) = this.get_leaf_offset_and_width(working_beat, working_position, position, -1)
                 val check_pair = this.get_proceding_event_position(working_beat, working_position) ?: break
-
                 val (check_offset, _) = if (check_pair.first == working_beat) {
                     this.get_leaf_offset_and_width(check_pair.first, check_pair.second, position, -1)
                 } else {

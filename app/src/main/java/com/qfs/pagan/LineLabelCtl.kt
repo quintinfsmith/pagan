@@ -78,6 +78,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
                 )
             )
         )
+
         this.imageTintList = ColorStateList(
             states,
             intArrayOf(

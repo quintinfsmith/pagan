@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
@@ -49,9 +48,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         val opus_manager = this.get_opus_manager()
 
         val new_state = mutableListOf<Int>()
-        if (this.channel % 2 == 0) {
-            new_state.add(R.attr.state_channel_even)
-        }
         val cursor = opus_manager.cursor
         when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
@@ -117,7 +113,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     private fun _set_colors() {
         val activity = this.get_activity()
         val color_map = activity.view_model.color_map
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[ColorMap.Palette.Lines])
         val states = arrayOf<IntArray>(
             intArrayOf(
                 R.attr.state_focused,
@@ -132,16 +127,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             )
         )
 
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTintList(
-            ColorStateList(
-                states,
-                intArrayOf(
-                    color_map[ColorMap.Palette.Selection],
-                    color_map[ColorMap.Palette.ChannelOdd],
-                    color_map[ColorMap.Palette.ChannelEven]
-                )
-            )
-        )
         this.setTextColor(
             ColorStateList(
                 states,

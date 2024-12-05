@@ -1147,29 +1147,28 @@ open class OpusLayerCursor: OpusLayerBase() {
                         val real_position = this.get_actual_position(beat_key, position)
 
                         this.unset(real_position.first, real_position.second)
-                        this.cursor_select(beat_key, position)
                     }
                     CtlLineLevel.Global -> {
                         val beat = this.cursor.beat
                         val position = this.cursor.get_position()
+                        val real_position = this.controller_global_get_actual_position<OpusControlEvent>(this.cursor.ctl_type!!, beat, position)
 
-                        this.controller_global_unset(this.cursor.ctl_type!!, beat, position)
-                        this.cursor_select_ctl_at_global(this.cursor.ctl_type!!, beat, position)
+                        this.controller_global_unset(this.cursor.ctl_type!!, real_position.first, real_position.second)
                     }
                     CtlLineLevel.Channel -> {
                         val channel = this.cursor.channel
                         val beat = this.cursor.beat
                         val position = this.cursor.get_position()
+                        val real_position = this.controller_channel_get_actual_position<OpusControlEvent>(this.cursor.ctl_type!!, channel, beat, position)
 
-                        this.controller_channel_unset(this.cursor.ctl_type!!, channel, beat, position)
-                        this.cursor_select_ctl_at_channel(this.cursor.ctl_type!!, channel, beat, position)
+                        this.controller_channel_unset(this.cursor.ctl_type!!, channel, real_position.first, real_position.second)
                     }
                     CtlLineLevel.Line -> {
                         val beat_key = this.cursor.get_beatkey()
                         val position = this.cursor.get_position()
+                        val real_position = this.controller_line_get_actual_position<OpusControlEvent>(this.cursor.ctl_type!!, beat_key, position)
 
-                        this.controller_line_unset(this.cursor.ctl_type!!, beat_key, position)
-                        this.cursor_select_ctl_at_line(this.cursor.ctl_type!!, beat_key, position)
+                        this.controller_line_unset(this.cursor.ctl_type!!, real_position.first, real_position.second)
                     }
                 }
 

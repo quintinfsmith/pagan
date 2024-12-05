@@ -27,7 +27,7 @@
     <color name="leaf_invalid_selected_text">#A27E7E</color>
 
     <color name="ctl_leaf">#CB9C10</color>
-    <color name="ctl_leaf_spill">#E9D189</color>
+    <color name="ctl_leaf_spill">#886E20</color>
     <color name="ctl_leaf_text">#FF000000</color>
     <color name="ctl_leaf_selected">#095660</color>
     <color name="ctl_leaf_secondary">#567B80</color>

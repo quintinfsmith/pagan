@@ -343,7 +343,8 @@ class SampleHandle(
                     this._data_buffers[0].position(frame)
                     this._active_buffer = 0
                 } else {
-                    this._data_buffers[1].position((frame - this._data_buffers[0].size))
+                    //this._data_buffers[1].position((frame - this._data_buffers[0].size))
+                    this._data_buffers[1].position_subtract_buffer(frame, this._data_buffers[0])
                     this._active_buffer = 1
                 }
             } else if (loop_points != null && loop_points.first < loop_points.second) {
@@ -384,6 +385,7 @@ class SampleHandle(
     }
 
     fun get_next_frame(): Int? {
+    
         if (this.is_dead) {
             return null
         }

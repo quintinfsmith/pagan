@@ -263,7 +263,7 @@ class SampleHandle(
 
     companion object {
         var uuid_gen = 0
-        const val MAX_VOLUME = .6F
+        const val MAX_VOLUME = 1F
 
         fun copy(original: SampleHandle): SampleHandle {
             val output = SampleHandle(

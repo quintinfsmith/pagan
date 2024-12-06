@@ -199,23 +199,24 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
             }
 
+            val half_max = (Short.MAX_VALUE / 2).toFloat()
             val (left_value, right_value) = when (this.stereo_mode) {
                 StereoMode.Stereo -> {
                     Pair(
                         when (sample_handle.stereo_mode and 7) {
-                            1, 4 -> left_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
+                            1, 4 -> left_frame.toFloat() / half_max
                             else -> 0f
                         },
                         when (sample_handle.stereo_mode and 7) {
-                            1, 2 -> right_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
+                            1, 2 -> right_frame.toFloat() / half_max
                             else -> 0f
                         }
                     )
                 }
                 StereoMode.Mono -> {
                     Pair(
-                        left_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat(),
-                        right_frame.toFloat() / (Short.MAX_VALUE + 1).toFloat()
+                        left_frame.toFloat() /  half_max,
+                        right_frame.toFloat() / half_max
                     )
                 }
             }
@@ -241,7 +242,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             val left_pos = (f * 2) + 1
             val left_value = working_int_array[left_pos]
-            working_int_array[left_pos] = tanh(left_value) 
+            working_int_array[left_pos] = tanh(left_value)
         }
 
         if (!sample_handle.is_dead) {

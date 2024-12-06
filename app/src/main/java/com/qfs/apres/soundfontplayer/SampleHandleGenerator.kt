@@ -27,15 +27,17 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var max: Float? = null,
         var avg: Float? = null
     ) {
-       //init {
-       //    if (this.max == null || this.avg == null) {
-       //        val tmp_array = FloatArray(this.data.size) { i: Int ->
-       //            abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
-       //        }
-       //        this.max = tmp_array.max()
-       //        this.avg = tmp_array.average().toFloat()
-       //    }
-       //}
+        var normal_factor: Float = 1F
+        init {
+            // if (this.max == null || this.avg == null) {
+            //     val tmp_array = FloatArray(this.data.size) { i: Int ->
+            //         abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
+            //     }
+            //     this.max = tmp_array.max()
+            //     this.avg = tmp_array.average().toFloat()
+            // }
+            // this.normal_factor = 1f / this.max!!
+        }
     }
 
 

@@ -23,6 +23,18 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val first_section: Int
     )
 
+    data class GeneratedSampleChunk(
+        var key: Int,
+        var smoothing_factor: Float,
+        var volume_array: FloatArray,
+        var chunk_data: FloatArray
+    )
+    data class CompoundFrame(
+        val value: Float = 0F,
+        val volume: Float = 0F,
+        val pan: Float = 0F
+    )
+
     var frame = 0
     var kill_frame: Int? = null
     private var _empty_chunks_count = 0
@@ -52,7 +64,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw EmptyException()
         }
 
-        val arrays: Array<FloatArray> = runBlocking {
+        val arrays: Array<HashMap<Int, Pair<Float, Array<CompoundFrame>>>> = runBlocking {
             val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
                 async(Dispatchers.Default) {
                     this@WaveGenerator.gen_partial_int_array(first_frame, i)
@@ -64,11 +76,64 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        var offset = 0
-        for (input_array in arrays) {
-            for (v in input_array) {
-                array[offset++] += v
+        val compiled_lines = HashMap<Int, MutableList<FloatArray>>()
+        val latest_weights = HashMap<Int, Float?>()
+        for (separated_lines_map in arrays) {
+            for ((key, pair) in separated_lines_map) {
+                // Apply the volume, pan and low-pass filter
+                val (smoothing_factor, uncompiled_array) = pair
+                var weight_value: Float? = latest_weights[key]
+                val compiled_line = FloatArray(uncompiled_array.size * 2) { 0F }
+                for (i in uncompiled_array.indices) {
+                    val frame = uncompiled_array[i]
+                    var compiled_frame = if (weight_value == null) {
+                        frame.value
+                    } else {
+                        weight_value + (smoothing_factor * (frame.value - weight_value))
+                    }
+                    weight_value = frame.value
+
+                    compiled_frame *= frame.volume
+
+                    // Adjust manual pan
+                    compiled_line[(i * 2)] = compiled_frame * if (frame.pan >= 0f) {
+                        1F
+                    }  else {
+                        1F + frame.pan
+                    }
+
+                    compiled_line[(i * 2) + 1] = compiled_frame * if (frame.pan <= 0f) {
+                        1F
+                    }  else {
+                        1F - frame.pan
+                    }
+                }
+
+                latest_weights[key] = weight_value
+
+                if (!compiled_lines.containsKey(key)) {
+                    compiled_lines[key] = mutableListOf()
+                }
+
+                compiled_lines[key]!!.add(compiled_line)
             }
+        }
+
+        val merged_lines = mutableListOf<FloatArray>()
+        for ((_, compiled_line_chunks) in compiled_lines) {
+            var merged_list = FloatArray(0)
+            for (line_chunk in compiled_line_chunks) {
+                merged_list += line_chunk
+            }
+            merged_lines.add(merged_list)
+        }
+
+        for (i in array.indices) {
+            var final_frame = 0f
+            for (j in merged_lines.indices) {
+                final_frame += merged_lines[j][i]
+            }
+            array[i] = tanh(final_frame)
         }
 
         this.frame += this.buffer_size
@@ -78,8 +143,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
     }
 
-    private fun gen_partial_int_array(first_frame: Int, sample_index: Int): FloatArray {
-        val sample_handles_to_use = mutableSetOf<Pair<SampleHandle, Int>>()
+    private fun gen_partial_int_array(first_frame: Int, sample_index: Int): HashMap<Int, Pair<Float, Array<CompoundFrame>>> {
+        val sample_handles_to_use = mutableSetOf<Triple<Int, SampleHandle, Int>>()
         runBlocking {
             this@WaveGenerator.active_sample_handle_mutex.withLock {
                 for ((_, item) in this@WaveGenerator._active_sample_handles) {
@@ -108,7 +173,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                     if (!sample_handle.is_dead) {
                         sample_handles_to_use.add(
-                            Pair(
+                            Triple(
+                                item.handle.uuid,
                                 sample_handle,
                                 if (real_index == 0 && (0 until this@WaveGenerator.buffer_size).contains(item.first_frame - first_frame)) {
                                     (item.first_frame - first_frame) - (this@WaveGenerator.buffer_size * sample_index / this@WaveGenerator.core_count)
@@ -122,132 +188,107 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        val output = FloatArray(this.buffer_size * 2 / this.core_count) {
-            0f
+
+        val output = HashMap<Int, Pair<Float, Array<CompoundFrame>>>()
+        for ((key, sample_handle, index) in sample_handles_to_use) {
+            output[key] = Pair(sample_handle.smoothing_factor, this.populate_partial_int_array(sample_handle, index))
         }
-
-        for ((sample_handle, index) in sample_handles_to_use) {
-            this.populate_partial_int_array(sample_handle, output, index)
-        }
-
-
         return output
     }
 
-    private fun populate_partial_int_array(sample_handle: SampleHandle, working_int_array: FloatArray, offset: Int) {
+    private fun populate_partial_int_array(sample_handle: SampleHandle, offset: Int): Array<CompoundFrame> {
+        val output = Array<CompoundFrame>(this.buffer_size / this.core_count) {
+            CompoundFrame()
+        }
         // Assume working_int_array.size % 2 == 0
         val range = if (offset < 0) {
-            0 until (working_int_array.size / 2)
+            0 until (output.size / 2)
         } else {
-            offset until working_int_array.size / 2
+            offset until output.size / 2
         }
 
         for (f in range) {
             var frame_value = sample_handle.get_next_frame() ?: break
 
             // TODO: Implement ROM stereo modes
-            val pan = sample_handle.pan
-            val (left_frame, right_frame) = when (this.stereo_mode) {
-                StereoMode.Stereo -> when (sample_handle.stereo_mode and 7) {
-                    1 -> { // mono
-                        if (pan != 0F) {
-                            if (pan > 0f) {
-                                Pair(
-                                    frame_value,
-                                    frame_value * (1F - pan)
-                                )
-                            } else {
-                                Pair(
-                                    frame_value * (1F + pan),
-                                    frame_value
-                                )
-                            }
-                        } else {
-                            Pair(
-                                frame_value,
-                                frame_value
-                            )
-                        }
-                    }
+            val _pan = sample_handle.pan
+            output[f] = CompoundFrame(
+                frame_value.first,
+                frame_value.second,
+                sample_handle.pan_profile?.get_next() ?: 0F
+            )
 
-                    2 -> { // right
-                        Pair(
-                            0f,
-                            if (pan > 0F) {
-                                frame_value * pan
-                            } else {
-                                frame_value
-                            }
-                        )
-                    }
+            //    when (this.stereo_mode) {
+            //        StereoMode.Stereo -> when (sample_handle.stereo_mode and 7) {
+            //            1 -> { // mono
+            //                pan
+            //                if (pan != 0F) {
+            //                    if (pan > 0f) {
+            //
+            //                        Pair(
+            //                            frame_value,
+            //                            frame_value * (1F - pan)
+            //                        )
+            //                    } else {
+            //                        Pair(
+            //                            frame_value * (1F + pan),
+            //                            frame_value
+            //                        )
+            //                    }
+            //                } else {
+            //                    Pair(
+            //                        frame_value,
+            //                        frame_value
+            //                    )
+            //                }
+            //            }
 
-                    4 -> { // left
-                        Pair(
-                            if (pan < 0F) {
-                                frame_value * pan
-                            } else {
-                                frame_value
-                            },
-                            0f
-                        )
-                    }
+            //            2 -> { // right
+            //                Pair(
+            //                    0f,
+            //                    if (pan > 0F) {
+            //                        frame_value * pan
+            //                    } else {
+            //                        frame_value
+            //                    }
+            //                )
+            //            }
 
-                    else -> Pair(0f, 0f)
-                }
-                StereoMode.Mono -> {
-                    Pair(frame_value, frame_value)
-                }
-            }
+            //            4 -> { // left
+            //                Pair(
+            //                    if (pan < 0F) {
+            //                        frame_value * pan
+            //                    } else {
+            //                        frame_value
+            //                    },
+            //                    0f
+            //                )
+            //            }
 
-            val half_max = (Short.MAX_VALUE / 2).toFloat()
-            val (left_value, right_value) = when (this.stereo_mode) {
-                StereoMode.Stereo -> {
-                    Pair(
-                        when (sample_handle.stereo_mode and 7) {
-                            1, 4 -> left_frame.toFloat() / half_max
-                            else -> 0f
-                        },
-                        when (sample_handle.stereo_mode and 7) {
-                            1, 2 -> right_frame.toFloat() / half_max
-                            else -> 0f
-                        }
-                    )
-                }
-                StereoMode.Mono -> {
-                    Pair(
-                        left_frame.toFloat() /  half_max,
-                        right_frame.toFloat() / half_max
-                    )
-                }
-            }
+            //            else -> Pair(0f, 0f)
+            //        }
 
-            // Adjust manual pan
-            val working_pan = sample_handle.pan_profile?.get_next() ?: 0F
-            working_int_array[(f * 2)] += right_value * if (working_pan >= 0f) {
-                1F
-            }  else {
-                1F + working_pan
-            }
-            working_int_array[(f * 2) + 1] += left_value * if (working_pan <= 0f) {
-                1F
-            }  else {
-                1F - working_pan
-            }
+            //        StereoMode.Mono -> {
+            //            Pair(frame_value, frame_value)
+            //        }
+            //    }
+
         }
 
-        for (f in range) {
-            val right_pos = f * 2
-            val right_value = working_int_array[right_pos]
-            working_int_array[right_pos] = tanh(right_value)
+        //for (f in range) {
+        //    val right_pos = f * 2
+        //    val right_value = working_int_array[right_pos]
+        //    working_int_array[right_pos] = tanh(right_value)
 
-            val left_pos = (f * 2) + 1
-            val left_value = working_int_array[left_pos]
-            working_int_array[left_pos] = tanh(left_value)
-        }
+        //    val left_pos = (f * 2) + 1
+        //    val left_value = working_int_array[left_pos]
+        //    working_int_array[left_pos] = tanh(left_value)
+        //}
 
         if (!sample_handle.is_dead) {
             sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
         }
+        return output
     }
 
     private fun update_active_sample_handles(initial_frame: Int) {

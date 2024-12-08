@@ -384,7 +384,7 @@ class SampleHandle(
         return this._data_buffers[this._active_buffer]
     }
 
-    fun get_next_frame(): Int? {
+    fun get_next_frame(): Pair<Float, Float>? {
     
         if (this.is_dead) {
             return null
@@ -396,7 +396,7 @@ class SampleHandle(
             this.working_frame += 1
             this.previous_frame = 0F
             this.volume_profile?.get_next()
-            return 0
+            return Pair(0F, 0F)
         }
 
         var frame_factor = this._initial_frame_factor
@@ -485,7 +485,7 @@ class SampleHandle(
 
         this.previous_frame = frame_value
 
-        return (frame_value * frame_factor * use_volume * SampleHandle.MAX_VOLUME).toInt()
+        return Pair(frame_value, frame_factor * use_volume * SampleHandle.MAX_VOLUME)
     }
 
     fun release_note() {

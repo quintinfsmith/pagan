@@ -343,8 +343,7 @@ class SampleHandle(
                     this._data_buffers[0].position(frame)
                     this._active_buffer = 0
                 } else {
-                    //this._data_buffers[1].position((frame - this._data_buffers[0].size))
-                    this._data_buffers[1].position_subtract_buffer(frame, this._data_buffers[0])
+                    this._data_buffers[1].position((frame - this._data_buffers[0].size))
                     this._active_buffer = 1
                 }
             } else if (loop_points != null && loop_points.first < loop_points.second) {
@@ -385,7 +384,6 @@ class SampleHandle(
     }
 
     fun get_next_frame(): Pair<Float, Float>? {
-    
         if (this.is_dead) {
             return null
         }
@@ -468,11 +466,10 @@ class SampleHandle(
 
         val use_volume = this.volume_profile?.get_next() ?: 1F
 
-
         this.working_frame += 1
 
         var frame_value = try {
-            this._get_active_data_buffer().get().toFloat()
+            this._get_active_data_buffer().get()
         } catch (e: PitchedBuffer.PitchedBufferOverflow) {
             return null
         } catch (e: ArrayIndexOutOfBoundsException) {
@@ -481,9 +478,8 @@ class SampleHandle(
         }
 
         // Low Pass Filtering
-        frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
+       // frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
-        this.previous_frame = frame_value
 
         return Pair(frame_value, frame_factor * use_volume * SampleHandle.MAX_VOLUME)
     }

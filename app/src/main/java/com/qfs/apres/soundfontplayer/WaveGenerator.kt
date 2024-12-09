@@ -29,6 +29,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         var volume_array: FloatArray,
         var chunk_data: FloatArray
     )
+
     data class CompoundFrame(
         val value: Float = 0F,
         val volume: Float = 0F,
@@ -91,8 +92,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     } else {
                         weight_value + (smoothing_factor * (frame.value - weight_value))
                     }
-                    weight_value = frame.value
 
+                    weight_value = frame.value
                     compiled_frame *= frame.volume
 
                     // Adjust manual pan
@@ -102,11 +103,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         1F + frame.pan
                     }
 
-                    compiled_line[(i * 2) + 1] = compiled_frame * if (frame.pan <= 0f) {
-                        1F
-                    }  else {
-                        1F - frame.pan
-                    }
+                    //compiled_line[(i * 2) + 1] = compiled_frame * if (frame.pan <= 0f) {
+                    //    1F
+                    //}  else {
+                    //    1F - frame.pan
+                    //}
                 }
 
                 latest_weights[key] = weight_value
@@ -131,7 +132,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (i in array.indices) {
             var final_frame = 0f
             for (j in merged_lines.indices) {
-                final_frame += merged_lines[j][i]
+                if (merged_lines[j].size > i) {
+                    final_frame += merged_lines[j][i]
+                }
             }
             array[i] = tanh(final_frame)
         }
@@ -202,76 +205,40 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
         // Assume working_int_array.size % 2 == 0
         val range = if (offset < 0) {
-            0 until (output.size / 2)
+            0 until output.size
         } else {
-            offset until output.size / 2
+            offset until output.size
         }
 
         for (f in range) {
             var frame_value = sample_handle.get_next_frame() ?: break
 
             // TODO: Implement ROM stereo modes
-            val _pan = sample_handle.pan
+            val _pan = when (this.stereo_mode) {
+                StereoMode.Stereo -> when (sample_handle.stereo_mode and 7) {
+                    // right
+                    2 -> 1F
+                    // left
+                    4 -> -1F
+                    else -> 0F
+                }
+
+                StereoMode.Mono -> 0F
+            }
+
             output[f] = CompoundFrame(
                 frame_value.first,
                 frame_value.second,
-                sample_handle.pan_profile?.get_next() ?: 0F
+                _pan
+                //if (_pan < 0f) {
+                //    max(sample_handle.pan_profile?.get_next() ?: 0F, _pan)
+                //} else if (_pan > 0F) {
+                //    min(sample_handle.pan_profile?.get_next() ?: 0F, _pan)
+                //} else {
+                //    sample_handle.pan_profile?.get_next() ?: 0F
+                //}
             )
 
-            //    when (this.stereo_mode) {
-            //        StereoMode.Stereo -> when (sample_handle.stereo_mode and 7) {
-            //            1 -> { // mono
-            //                pan
-            //                if (pan != 0F) {
-            //                    if (pan > 0f) {
-            //
-            //                        Pair(
-            //                            frame_value,
-            //                            frame_value * (1F - pan)
-            //                        )
-            //                    } else {
-            //                        Pair(
-            //                            frame_value * (1F + pan),
-            //                            frame_value
-            //                        )
-            //                    }
-            //                } else {
-            //                    Pair(
-            //                        frame_value,
-            //                        frame_value
-            //                    )
-            //                }
-            //            }
-
-            //            2 -> { // right
-            //                Pair(
-            //                    0f,
-            //                    if (pan > 0F) {
-            //                        frame_value * pan
-            //                    } else {
-            //                        frame_value
-            //                    }
-            //                )
-            //            }
-
-            //            4 -> { // left
-            //                Pair(
-            //                    if (pan < 0F) {
-            //                        frame_value * pan
-            //                    } else {
-            //                        frame_value
-            //                    },
-            //                    0f
-            //                )
-            //            }
-
-            //            else -> Pair(0f, 0f)
-            //        }
-
-            //        StereoMode.Mono -> {
-            //            Pair(frame_value, frame_value)
-            //        }
-            //    }
 
         }
 

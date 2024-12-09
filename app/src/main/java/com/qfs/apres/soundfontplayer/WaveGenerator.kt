@@ -5,6 +5,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.tanh
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
@@ -93,7 +95,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         weight_value + (smoothing_factor * (frame.value - weight_value))
                     }
 
-                    weight_value = frame.value
+                    weight_value = compiled_frame
                     compiled_frame *= frame.volume
 
                     // Adjust manual pan
@@ -103,11 +105,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         1F + frame.pan
                     }
 
-                    //compiled_line[(i * 2) + 1] = compiled_frame * if (frame.pan <= 0f) {
-                    //    1F
-                    //}  else {
-                    //    1F - frame.pan
-                    //}
+                    compiled_line[(i * 2) + 1] = compiled_frame * if (frame.pan <= 0f) {
+                        1F
+                    }  else {
+                        1F - frame.pan
+                    }
                 }
 
                 latest_weights[key] = weight_value
@@ -214,44 +216,46 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             var frame_value = sample_handle.get_next_frame() ?: break
 
             // TODO: Implement ROM stereo modes
-            val _pan = when (this.stereo_mode) {
+            val pan: Float = when (this.stereo_mode) {
                 StereoMode.Stereo -> when (sample_handle.stereo_mode and 7) {
                     // right
-                    2 -> 1F
+                    2 -> {
+                        if (sample_handle.pan > 0F) {
+                            sample_handle.pan
+                        } else {
+                            -1F // Mutes this sample_handle in the right side completely
+                        }
+                    }
                     // left
-                    4 -> -1F
-                    else -> 0F
+                    4 -> {
+                        if (sample_handle.pan < 0F) {
+                            sample_handle.pan
+                        } else {
+                            1F // Mutes this sample_handle in the left side completely
+                        }
+                    }
+                    else -> sample_handle.pan
                 }
 
                 StereoMode.Mono -> 0F
             }
 
+            // NOTE: It may be insufficient to limit the pan and I rather may need
+            // to modify the outgoing pan relatively to the sample_handle.pan
             output[f] = CompoundFrame(
                 frame_value.first,
                 frame_value.second,
-                _pan
-                //if (_pan < 0f) {
-                //    max(sample_handle.pan_profile?.get_next() ?: 0F, _pan)
-                //} else if (_pan > 0F) {
-                //    min(sample_handle.pan_profile?.get_next() ?: 0F, _pan)
-                //} else {
-                //    sample_handle.pan_profile?.get_next() ?: 0F
-                //}
+                if (pan < 0f) {
+                    max(sample_handle.pan_profile?.get_next() ?: 0F, pan)
+                } else if (pan > 0F) {
+                    min(sample_handle.pan_profile?.get_next() ?: 0F, pan)
+                } else {
+                    sample_handle.pan_profile?.get_next() ?: 0F
+                }
             )
 
 
         }
-
-        //for (f in range) {
-        //    val right_pos = f * 2
-        //    val right_value = working_int_array[right_pos]
-        //    working_int_array[right_pos] = tanh(right_value)
-
-        //    val left_pos = (f * 2) + 1
-        //    val left_value = working_int_array[left_pos]
-        //    working_int_array[left_pos] = tanh(left_value)
-        //}
-
         if (!sample_handle.is_dead) {
             sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
         }

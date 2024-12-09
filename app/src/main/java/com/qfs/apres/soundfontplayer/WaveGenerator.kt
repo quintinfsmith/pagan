@@ -80,14 +80,18 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        val compiled_lines = HashMap<Int, MutableList<FloatArray>>()
+        // NOTE: We can't separate the smoothing function between coroutines,
+        // smoothing is a function series.
         val latest_weights = HashMap<Int, Float?>()
-        for (separated_lines_map in arrays) {
+        for (x in arrays.indices) {
+            val separated_lines_map = arrays[x]
+            val initial_array_index = array.size * x / this.core_count
+
             for ((key, pair) in separated_lines_map) {
                 // Apply the volume, pan and low-pass filter
                 val (smoothing_factor, uncompiled_array) = pair
                 var weight_value: Float? = latest_weights[key] ?: this._cached_frame_weights[key]
-                val compiled_line = FloatArray(uncompiled_array.size * 2) { 0F }
+
                 for (i in uncompiled_array.indices) {
                     val frame = uncompiled_array[i]
                     var compiled_frame = if (weight_value == null) {
@@ -100,13 +104,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     compiled_frame *= frame.volume
 
                     // Adjust manual pan
-                    compiled_line[(i * 2)] = compiled_frame * if (frame.pan >= 0f) {
+                    array[initial_array_index + (i * 2)] += compiled_frame * if (frame.pan >= 0f) {
                         1F
                     }  else {
                         1F + frame.pan
                     }
 
-                    compiled_line[(i * 2) + 1] = compiled_frame * if (frame.pan <= 0f) {
+                    array[initial_array_index + (i * 2) + 1] += compiled_frame * if (frame.pan <= 0f) {
                         1F
                     }  else {
                         1F - frame.pan
@@ -114,12 +118,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
 
                 latest_weights[key] = weight_value
-
-                if (!compiled_lines.containsKey(key)) {
-                    compiled_lines[key] = mutableListOf()
-                }
-
-                compiled_lines[key]!!.add(compiled_line)
             }
         }
 
@@ -130,23 +128,21 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             this._cached_frame_weights.put(k, v)
         }
 
-        val merged_lines = mutableListOf<FloatArray>()
-        for ((_, compiled_line_chunks) in compiled_lines) {
-            var merged_list = FloatArray(0)
-            for (line_chunk in compiled_line_chunks) {
-                merged_list += line_chunk
-            }
-            merged_lines.add(merged_list)
-        }
-
-        for (i in array.indices) {
-            var final_frame = 0f
-            for (j in merged_lines.indices) {
-                if (merged_lines[j].size > i) {
-                    final_frame += merged_lines[j][i]
+        // Run the tanh() on all cores
+        runBlocking {
+            val chunk_size = array.size / this@WaveGenerator.core_count
+            val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
+                val start_index = i * chunk_size
+                async(Dispatchers.Default) {
+                    for (j in 0 until chunk_size) {
+                        array[start_index + j] = tanh(array[start_index + j])
+                    }
                 }
             }
-            array[i] = tanh(final_frame)
+
+            Array(tmp.size) { i: Int ->
+                tmp[i].await()
+            }
         }
 
         this.frame += this.buffer_size

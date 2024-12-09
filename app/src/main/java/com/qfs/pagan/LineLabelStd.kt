@@ -19,7 +19,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     var press_position: Pair<Float, Float>? = null
     var press_timestamp: Long = 0
     init {
-        this._set_colors()
         this.setOnClickListener {
             this.on_click()
         }
@@ -78,7 +77,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
     private fun on_click() {
         val opus_manager = this.get_opus_manager()
-
 
         val cursor = opus_manager.cursor
         if (cursor.is_selecting_range()) {

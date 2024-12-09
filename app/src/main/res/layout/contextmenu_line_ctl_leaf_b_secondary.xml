@@ -16,7 +16,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"/>
-                <com.qfs.pagan.PaganRadioButton
+                <RadioButton
                     android:id="@+id/rbMoveModeCopy"
                     android:layout_margin="0dp"
                     android:theme="@style/link_mode_button"
@@ -29,7 +29,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"/>
-                <com.qfs.pagan.PaganRadioButton
+                <RadioButton
                     android:id="@+id/rbMoveModeMove"
                     android:layout_margin="0dp"
                     android:theme="@style/link_mode_button"

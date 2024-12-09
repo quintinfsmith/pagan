@@ -46,6 +46,8 @@
 
     <color name="drop_down_bg">?attr/drop_down_bg</color>
 
+    <color name="radio_unchecked">@color/main_fg</color>
+    <color name="radio_checked">@color/leaf_main</color>
 
     <color name="primary">#302111</color>
     <color name="primary_text">#e1e1e1</color>

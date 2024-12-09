@@ -189,7 +189,7 @@
     <style name="link_mode_button">
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
-
+        <item name="android:buttonTint">@color/radio</item>
     </style>
     <style name="progress_bar">
         <item name="android:background">#33000000</item>

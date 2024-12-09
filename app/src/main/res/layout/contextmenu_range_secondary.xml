@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:minHeight="41dp"
         android:layout_width="match_parent">
-        <com.qfs.pagan.PaganRadioButton
+        <RadioButton
             android:id="@+id/rbMoveModeMerge"
             android:visibility="gone"
             android:layout_margin="0dp"
@@ -32,7 +32,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
-        <com.qfs.pagan.PaganRadioButton
+        <RadioButton
             android:id="@+id/rbMoveModeCopy"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"
@@ -44,7 +44,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"/>
-        <com.qfs.pagan.PaganRadioButton
+        <RadioButton
             android:id="@+id/rbMoveModeMove"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"

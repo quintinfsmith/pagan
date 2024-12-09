@@ -3955,11 +3955,9 @@ open class OpusLayerBase {
         val width = (to_key.beat - from_key.beat) + 1
         val count = ((this.beat_count - from_key.beat) / width)
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
-
         return List(beat_keys.size) { i: Int ->
             val beat_key = beat_keys[i]
-
-            List(count + 1) { j: Int ->
+            List(count) { j: Int ->
                 if (j == 0) {
                     beat_key
                 } else {

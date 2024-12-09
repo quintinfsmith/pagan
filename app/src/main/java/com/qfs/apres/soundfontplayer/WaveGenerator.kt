@@ -45,6 +45,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var timeout: Int? = null
     private val core_count = Runtime.getRuntime().availableProcessors()
     private val active_sample_handle_mutex = Mutex()
+    private val _cached_frame_weights = HashMap<Int, Float>() // Store 'previous frame's between chunks so smoothing can be accurately applied
 
 
     fun generate(): FloatArray {
@@ -85,7 +86,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             for ((key, pair) in separated_lines_map) {
                 // Apply the volume, pan and low-pass filter
                 val (smoothing_factor, uncompiled_array) = pair
-                var weight_value: Float? = latest_weights[key]
+                var weight_value: Float? = latest_weights[key] ?: this._cached_frame_weights[key]
                 val compiled_line = FloatArray(uncompiled_array.size * 2) { 0F }
                 for (i in uncompiled_array.indices) {
                     val frame = uncompiled_array[i]
@@ -120,6 +121,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                 compiled_lines[key]!!.add(compiled_line)
             }
+        }
+
+        for ((k, v) in latest_weights) {
+            if (v == null) {
+                continue
+            }
+            this._cached_frame_weights.put(k, v)
         }
 
         val merged_lines = mutableListOf<FloatArray>()
@@ -278,6 +286,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
             if (dead_count == item.sample_handles.size) {
                 remove_set.add(key)
+                this._cached_frame_weights.remove(item.handle.uuid)
             }
         }
 

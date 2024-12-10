@@ -3,11 +3,9 @@ package com.qfs.pagan
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.Notification.EXTRA_NOTIFICATION_ID
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -178,7 +176,7 @@ class MainActivity : AppCompatActivity() {
     }
     private var _current_feedback_device: Int = 0
     private var _blocker_scroll_y: Float? = null
-    private var broadcast_receiver = MyBroadcastReceiver()
+    private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
 
     // Notification shiz -------------------------------------------------

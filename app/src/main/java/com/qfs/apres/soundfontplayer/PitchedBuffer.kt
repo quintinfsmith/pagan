@@ -65,6 +65,6 @@ class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = nu
         val position = (this.virtual_position++).toFloat() * pitch
         var output = this._get_real_frame(position)
 
-        return output.toFloat() / (Short.MAX_VALUE.toFloat() / 2f)
+        return output.toFloat() / Short.MAX_VALUE.toFloat()
     }
 }

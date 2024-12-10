@@ -3425,7 +3425,6 @@ open class OpusLayerBase {
     }
 
     open fun _project_change_midi(midi: Midi) {
-        val ts_start = System.currentTimeMillis()
         val (settree, tempo_line, instrument_map) = OpusLayerBase._tree_from_midi(midi)
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
@@ -4013,6 +4012,15 @@ open class OpusLayerBase {
         this._cached_std_line_map = other._cached_std_line_map
         this.controllers = other.controllers
         this.percussion_channel = other.percussion_channel
+
+        // Saves having to recache_lines()
+        this._cached_row_map.putAll(other._cached_row_map)
+        this._cached_inv_visible_line_map.putAll(other._cached_inv_visible_line_map)
+        this._cached_ctl_map_line.putAll(other._cached_ctl_map_line)
+        this._cached_ctl_map_channel.putAll(other._cached_ctl_map_channel)
+        this._cached_ctl_map_global.putAll(other._cached_ctl_map_global)
+        this._cached_inv_abs_line_map_map.putAll(other._cached_inv_abs_line_map_map)
+        this._cached_abs_line_map_map.addAll(other._cached_abs_line_map_map)
     }
 
     override fun equals(other: Any?): Boolean {

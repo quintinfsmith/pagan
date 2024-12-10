@@ -26,12 +26,8 @@
         android:title="Load Project"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/itmImportProject"
-        android:title="Import Project"
-        app:showAsAction="never"/>
-    <item
         android:id="@+id/itmImportMidi"
-        android:title="Import MIDI"
+        android:title="Import"
         app:showAsAction="never"/>
     <item
         android:menuCategory="secondary"

@@ -341,21 +341,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var _import_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result?.data?.data?.also { uri ->
-                    val fragment = this.get_active_fragment()
-                    fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
-                    fragment?.setFragmentResult(
-                        IntentFragmentToken.ImportProject.name,
-                        bundleOf(Pair("URI", uri.toString()))
-                    )
-                    if (fragment !is FragmentEditor) {
-                        this.navigate(R.id.EditorFragment)
-                    }
+    private var _general_import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                val fragment = this.get_active_fragment()
+                fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
+                fragment?.setFragmentResult(
+                    IntentFragmentToken.ImportGeneral.name,
+                    bundleOf(Pair("URI", uri.toString()))
+                )
+                if (fragment !is FragmentEditor) {
+                    this.navigate(R.id.EditorFragment)
                 }
             }
         }
+    }
 
     private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -368,26 +368,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    private var _import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                val fragment = this.get_active_fragment()
-                if (fragment is FragmentEditor) {
-                    fragment.project_change_flagged = true
-                }
-                fragment?.setFragmentResult(
-                    IntentFragmentToken.ImportMidi.name,
-                    bundleOf(Pair("URI", uri.toString()))
-                )
-
-                if (fragment !is FragmentEditor) {
-                    this.navigate(R.id.EditorFragment)
-                }
-            }
-        }
-    }
-
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -765,7 +745,7 @@ class MainActivity : AppCompatActivity() {
 
             R.id.itmImportMidi -> {
                 this.dialog_save_project {
-                    this.select_midi_file()
+                    this.select_import_file()
                 }
             }
 
@@ -797,12 +777,6 @@ class MainActivity : AppCompatActivity() {
                         this.playback_stop_midi_output()
                     }
                     else -> { /* pass */ }
-                }
-            }
-
-            R.id.itmImportProject -> {
-                this.dialog_save_project {
-                    this.select_project_file()
                 }
             }
 
@@ -1150,7 +1124,6 @@ class MainActivity : AppCompatActivity() {
                 ))
 
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
-                options_menu.findItem(R.id.itmImportProject).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
                 options_menu.findItem(R.id.itmAbout).isVisible = true
             }
@@ -1161,7 +1134,6 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmPlay).isVisible = false
                 options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = false
                 options_menu.findItem(R.id.itmImportMidi).isVisible = false
-                options_menu.findItem(R.id.itmImportProject).isVisible = false
                 options_menu.findItem(R.id.itmSettings).isVisible = false
                 options_menu.findItem(R.id.itmAbout).isVisible = false
             }
@@ -2062,19 +2034,13 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    fun select_midi_file() {
+    fun select_import_file() {
         val intent = Intent()
             .setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
             .setAction(Intent.ACTION_GET_CONTENT)
-        this._import_midi_intent_launcher.launch(intent)
+        this._general_import_intent_launcher.launch(intent)
     }
 
-    fun select_project_file() {
-        val intent = Intent()
-            .setType("application/json")
-            .setAction(Intent.ACTION_GET_CONTENT)
-        this._import_project_intent_launcher.launch(intent)
-    }
 
     fun get_default_export_name(): String {
         val now = LocalDateTime.now()
@@ -2478,6 +2444,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.EFFECT_TICK))
+    }
+
+
+    fun get_file_type(path: String): CompatibleFileType {
+        return this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+            val test_bytes = ByteArray(4)
+            FileInputStream(it.fileDescriptor).read(test_bytes)
+            if (test_bytes.contentEquals("MThd".toByteArray())) {
+                CompatibleFileType.Midi1
+            } else {
+                CompatibleFileType.Pagan
+            }
+        } ?: throw FileNotFoundException(path)
     }
 
 }

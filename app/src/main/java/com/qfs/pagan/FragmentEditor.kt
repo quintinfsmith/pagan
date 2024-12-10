@@ -223,7 +223,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
     private fun _set_result_listeners() {
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
-            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
+            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.Load, bundle)
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
@@ -266,10 +266,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         main.import_midi(path)
                     } catch (e: Exception) {
                         val opus_manager = main.get_opus_manager()
-                        if (!opus_manager.first_load_done) {
-                            main.get_opus_manager()._project_change_new()
-                        } else {
-                            main.runOnUiThread {
+                        main.runOnUiThread {
+                            if (!opus_manager.first_load_done) {
+                                main.get_opus_manager().project_change_new()
+                            } else {
                                 this.reload_from_bkp()
                                 editor_table.visibility = View.VISIBLE
                                 this.restore_view_model_position()
@@ -289,6 +289,73 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
         }
 
+        setFragmentResultListener(IntentFragmentToken.ImportGeneral.name) { _, bundle: Bundle? ->
+            val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
+            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportGeneral, bundle)
+            val main = this.get_main()
+            main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
+            main.runOnUiThread {
+                editor_table?.visibility = View.INVISIBLE
+            }
+            thread {
+                val type: CompatibleFileType? = try {
+                    bundle!!.getString("URI")?.let { path ->
+                        main.get_file_type(path)
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+
+                var fallback_msg: String? = null
+                try {
+                    when (type) {
+                        CompatibleFileType.Midi1 ->{
+                            bundle!!.getString("URI")?.let { path ->
+                                main.import_midi(path)
+                            }
+                        }
+                        CompatibleFileType.Pagan -> {
+                            bundle!!.getString("URI")?.let { path ->
+                                main.import_project(path)
+                            }
+                        }
+                        null -> {
+                            fallback_msg = getString(R.string.feedback_file_not_found)
+                        }
+                    }
+                } catch (e: Exception) {
+                    fallback_msg = when (type!!) {
+                        CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
+                        CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
+                    }
+                }
+
+                if (fallback_msg != null) {
+                    val opus_manager = main.get_opus_manager()
+                    // if Not Loaded, just create new and throw a message up
+                    if (!opus_manager.first_load_done) {
+                        opus_manager.project_change_new()
+                    } else {
+                        main.runOnUiThread {
+                            this.reload_from_bkp()
+                            editor_table.visibility = View.VISIBLE
+                            this.restore_view_model_position()
+                        }
+                    }
+
+                    this.get_main().feedback_msg(fallback_msg)
+                }
+
+                main.runOnUiThread {
+                    editor_table?.visibility = View.VISIBLE
+                }
+                main.loading_reticle_hide()
+                this.project_change_flagged = false
+            }
+
+        }
+
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
@@ -306,7 +373,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up
                     if (!opus_manager.first_load_done) {
-                        opus_manager._project_change_new()
+                        opus_manager.project_change_new()
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()
@@ -343,7 +410,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up
                     if (!opus_manager.first_load_done) {
-                        opus_manager._project_change_new()
+                        opus_manager.project_change_new()
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()

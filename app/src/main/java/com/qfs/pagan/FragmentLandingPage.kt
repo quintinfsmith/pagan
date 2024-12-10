@@ -62,19 +62,13 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
                     lockout = false
                 }
             }
-
-            btn_loadProject.setOnLongClickListener {
-                this.get_main().select_project_file()
-                true
-            }
+            btn_loadProject.visibility = View.VISIBLE
         } else {
-            btn_loadProject.setOnClickListener {
-                this.get_main().select_project_file()
-            }
+            btn_loadProject.visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {
-            this.get_main().select_midi_file()
+            this.get_main().select_import_file()
         }
 
         val main = this.get_main()

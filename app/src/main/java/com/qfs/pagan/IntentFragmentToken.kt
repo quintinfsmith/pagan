@@ -5,6 +5,7 @@ enum class IntentFragmentToken {
     MostRecent,
     ImportMidi,
     ImportProject,
+    ImportGeneral,
     New,
     Resume
 }

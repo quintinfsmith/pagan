@@ -99,6 +99,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     }
 
                     weight_value = compiled_frame
+
                     compiled_frame *= frame.volume
 
                     // Adjust manual pan

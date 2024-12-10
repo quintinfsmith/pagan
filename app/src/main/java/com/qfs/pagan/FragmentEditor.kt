@@ -30,7 +30,6 @@ import kotlin.concurrent.thread
 
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
-    var project_change_flagged = false
     var active_context_menu: ContextMenuView? = null
     var keyboard_input_interface: KeyboardInputInterface? = null
 
@@ -40,7 +39,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
     override fun onResume() {
         super.onResume()
-
         val main = this.get_main()
         main.setup_project_config_drawer()
         val opus_manager = main.get_opus_manager()
@@ -158,9 +156,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         super.onViewStateRestored(savedInstanceState)
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        if (this.project_change_flagged) {
-            return
-        }
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
 
@@ -177,14 +172,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             return
         }
 
-        if (savedInstanceState != null) {
-            this.reload_from_bkp()
-        } else {
-            opus_manager.cursor_clear()
-            opus_manager._init_editor_table_width_map()
-            editor_table.clear()
-            editor_table.setup(opus_manager.get_row_count(), opus_manager.beat_count)
-        }
+        this.reload_from_bkp()
 
         editor_table.visibility = View.VISIBLE
         this.restore_view_model_position()
@@ -243,7 +231,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 }
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
 
@@ -285,7 +272,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
 
@@ -351,7 +337,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
 
         }
@@ -388,7 +373,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
 
@@ -425,7 +409,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
 
@@ -444,7 +427,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
     }

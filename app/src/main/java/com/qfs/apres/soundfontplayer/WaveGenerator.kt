@@ -5,6 +5,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.tanh
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
@@ -89,22 +91,31 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 // Apply the volume, pan and low-pass filter
                 val (smoothing_factor, uncompiled_array) = pair
                 var weight_value: Float? = latest_weights[key] ?: this._cached_frame_weights[key]
-
-                for (i in uncompiled_array.indices) {
+                var pre_smooth_max = 0F
+                var post_smooth_max = 0F
+                val smoothed_array = FloatArray(uncompiled_array.size) { i: Int ->
                     val frame = uncompiled_array[i]
-                    var compiled_frame = if (weight_value == null) {
+                    var smoothed_frame = if (weight_value == null) {
                         frame.value
                     } else {
-                        weight_value + (smoothing_factor * (frame.value - weight_value))
+                        weight_value!! + (smoothing_factor * (frame.value - weight_value!!))
                     }
+                    pre_smooth_max = max(abs(frame.value), pre_smooth_max)
+                    post_smooth_max = max(abs(smoothed_frame), post_smooth_max)
 
-                    weight_value = compiled_frame
+                    weight_value = smoothed_frame
 
-                    compiled_frame *= frame.volume
+                    smoothed_frame
+                }
+
+                val adj_factor = pre_smooth_max / post_smooth_max
+                for (i in smoothed_array.indices) {
+                    val frame = uncompiled_array[i]
+                    val smoothed_frame = smoothed_array[i] * frame.volume * adj_factor
 
                     // Adjust manual pan
-                    array[initial_array_index + (i * 2)] += compiled_frame * frame.balance.first
-                    array[initial_array_index + (i * 2) + 1] += compiled_frame * frame.balance.second
+                    array[initial_array_index + (i * 2)] += smoothed_frame * frame.balance.first
+                    array[initial_array_index + (i * 2) + 1] += smoothed_frame * frame.balance.second
                 }
 
                 latest_weights[key] = weight_value

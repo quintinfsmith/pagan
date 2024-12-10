@@ -411,8 +411,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         this.drawer_lock()
 
-        ContextCompat.registerReceiver(
-            this,
+        registerReceiver(
             this.broadcast_receiver,
             this.receiver_intent_filter,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

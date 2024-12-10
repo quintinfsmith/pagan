@@ -382,6 +382,58 @@ class SampleHandle(
     private fun _get_active_data_buffer(): PitchedBuffer {
         return this._data_buffers[this._active_buffer]
     }
+    fun get_next_balance(): Pair<Float, Float> {
+        val profile_pan = this.pan_profile?.get_next() ?: 0F
+        // TODO: Implement ROM stereo modes
+        var (left_value, right_value) = when (this.stereo_mode and 7) {
+            // right
+            2 -> {
+                Pair(
+                    0F,
+                    if (this.pan > 0F) {
+                        1f - this.pan
+                    } else {
+                        1F
+                    }
+                )
+            }
+            // left
+            4 -> {
+                Pair(
+                    if (this.pan < 0F) {
+                        1f + this.pan
+                    } else {
+                        1F // Mutes this this in the left side completely
+                    },
+                    0F
+                )
+            }
+            else -> Pair(
+                if (this.pan < 0F) {
+                    1f + this.pan
+                } else {
+                    1F // Mutes this this in the left side completely
+                },
+                if (this.pan > 0F) {
+                    1f - this.pan
+                } else {
+                    1F
+                }
+            )
+        }
+        left_value = if (profile_pan < 0F) {
+            (1F + profile_pan) * left_value
+        } else {
+            left_value
+        }
+        right_value = if (profile_pan > 0F) {
+            (1F - profile_pan) * right_value
+        } else {
+            right_value
+        }
+
+        return Pair(left_value, right_value)
+    }
 
     fun get_next_frame(): Pair<Float, Float>? {
         if (this.is_dead) {

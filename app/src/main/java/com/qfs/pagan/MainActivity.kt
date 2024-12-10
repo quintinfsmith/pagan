@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.Notification.EXTRA_NOTIFICATION_ID
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -14,7 +15,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.os.VibrationEffect
 import android.database.Cursor
 import android.graphics.Color
 import android.graphics.drawable.LayerDrawable
@@ -23,6 +23,7 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.OpenableColumns
@@ -177,6 +178,8 @@ class MainActivity : AppCompatActivity() {
     }
     private var _current_feedback_device: Int = 0
     private var _blocker_scroll_y: Float? = null
+    private var broadcast_receiver = MyBroadcastReceiver()
+    private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
@@ -395,6 +398,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         this.playback_stop()
+        this.unregisterReceiver(this.broadcast_receiver)
         this.playback_stop_midi_output()
         this._midi_interface.close_connected_devices()
         this._binding.appBarMain.toolbar.hideOverflowMenu()
@@ -428,6 +432,17 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
+
+        ContextCompat.registerReceiver(
+            this,
+            this.broadcast_receiver,
+            this.receiver_intent_filter,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                RECEIVER_NOT_EXPORTED
+            } else {
+                0
+            }
+        )
         this.view_model.color_map.set_fallback_palette(this.get_palette())
 
         if (this._midi_playback_device != null) {
@@ -464,6 +479,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
             this@MainActivity.save_to_backup()
@@ -476,23 +493,6 @@ class MainActivity : AppCompatActivity() {
             Runtime.getRuntime().exit(0)
 
         }
-
-        this.registerReceiver(
-            object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) {
-                    when (intent?.action) {
-                        "com.qfs.pagan.CANCEL_EXPORT_WAV" -> this@MainActivity.export_wav_cancel()
-                        else -> {}
-                    }
-                }
-            },
-            IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV"),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                RECEIVER_NOT_EXPORTED
-            } else {
-                0
-            }
-        )
 
         this._midi_interface = object : MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
@@ -2247,11 +2247,16 @@ class MainActivity : AppCompatActivity() {
 
         if (this._active_notification == null) {
             this.get_notification_channel()
+
             val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
+            val intent = Intent()
+            intent.setAction(cancel_export_flag)
+            intent.setPackage(this.packageName)
+
             val pending_cancel_intent = PendingIntent.getBroadcast(
                 this,
-                0,
-                Intent( cancel_export_flag),
+                1,
+                intent,
                 PendingIntent.FLAG_IMMUTABLE
             )
 

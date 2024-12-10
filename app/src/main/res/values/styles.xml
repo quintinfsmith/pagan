@@ -77,7 +77,7 @@
 
     <style name="leaf">
         <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:background">@drawable/leaf_selector</item>
+        <item name="android:background">@drawable/leaf</item>
     </style>
     <style name="ctl_leaf" parent="leaf">
         <item name="android:background">@drawable/ctl_leaf</item>

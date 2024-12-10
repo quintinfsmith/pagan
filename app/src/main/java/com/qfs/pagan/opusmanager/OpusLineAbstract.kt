@@ -392,14 +392,15 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
     fun split_tree(beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        val current_tree_position = this.get_blocking_position(beat, position)
-        if (current_tree_position != null) {
-            val current_event_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
-            val blocked_amount = this.get_blocking_amount(beat, position)
-            if (current_event_tree != this.get_tree(beat, position) && blocked_amount!! >= 1) {
-                throw BlockedTreeException(beat, position, current_tree_position.first, current_tree_position.second)
-            }
-        }
+        // Not sure why i put this here. a split tree can't possibly cause overlap. leaving commented for know in case i figure it out.
+        //val current_tree_position = this.get_blocking_position(beat, position)
+        //if (current_tree_position != null) {
+        //    val current_event_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
+        //    val blocked_amount = this.get_blocking_amount(beat, position)
+        //    if (current_event_tree != this.get_tree(beat, position) && blocked_amount!! >= 1) {
+        //        throw BlockedTreeException(beat, position, current_tree_position.first, current_tree_position.second)
+        //    }
+        //}
 
         this.recache_blocked_tree_wrapper(beat, position) {
             val tree = this.get_tree(beat, position)

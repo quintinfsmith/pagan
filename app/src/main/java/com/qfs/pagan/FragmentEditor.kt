@@ -55,7 +55,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
        if (channel_adapter.itemCount == 0) {
            channel_adapter.setup()
        }
-
     }
 
     override fun onStart() {
@@ -337,6 +336,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
+                this.view_model.backup_fragment_intent = null
             }
 
         }

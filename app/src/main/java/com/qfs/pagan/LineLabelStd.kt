@@ -59,7 +59,10 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = cursor.get_ordered_range()!!
-                if ((this.channel > first.channel && this.channel < second.channel) || (this.channel == first.channel && this.line_offset >= first.line_offset) || (this.channel == second.channel && this.line_offset <= second.line_offset)) {
+                val abs_y_start = opus_manager.get_instrument_line_index(first.channel, first.line_offset)
+                val abs_y_end = opus_manager.get_instrument_line_index(second.channel, second.line_offset)
+                val this_y = opus_manager.get_instrument_line_index(this.channel, this.line_offset)
+                if ((abs_y_start .. abs_y_end).contains(this_y)) {
                     new_state.add(R.attr.state_focused)
                 }
             }

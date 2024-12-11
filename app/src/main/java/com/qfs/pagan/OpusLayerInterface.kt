@@ -1704,7 +1704,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.unset_temporary_blocker()
             super.cursor_select_range(beat_key_a, beat_key_b)
 
-            this.queue_cursor_update(this.cursor, false)
+            this.queue_cursor_update(this.cursor.copy(), false)
             this.ui_change_bill.queue_set_context_menu_range()
         }
     }
@@ -1866,14 +1866,12 @@ class OpusLayerInterface : OpusLayerHistory() {
                             }
 
                             for (shadow_beat in shadow_beats) {
-
-                                if (shadow_beat == beat_key.beat) {
-                                    this.ui_change_bill.queue_line_label_refresh(y)
-                                    this.ui_change_bill.queue_column_label_refresh(shadow_beat)
-                                }
                                 coordinates_to_update.add(EditorTable.Coordinate(y, shadow_beat))
                             }
+
+                            this.ui_change_bill.queue_line_label_refresh(y)
                         }
+                        this.ui_change_bill.queue_column_label_refresh(beat_key.beat)
                     }
 
                     else -> {

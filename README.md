@@ -1,5 +1,4 @@
 # Pagan, a Music Sequencer
-NOTICE: As of 2024-11-24, this is a backup repository for Pagan's Source code. The Primary can be found at [Github](https://github.com/quintinfsmith/pagan)
 
 [![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
 

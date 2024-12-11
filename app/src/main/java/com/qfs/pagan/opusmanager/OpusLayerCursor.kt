@@ -662,7 +662,6 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-
         super.overwrite_beat_range(beat_key, first_corner, second_corner)
         this.cursor_select(beat_key, this.get_first_position(beat_key))
     }
@@ -673,7 +672,9 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     override fun unset_line(channel: Int, line_offset: Int) {
-        super.unset_line(channel, line_offset)
+        this.lock_cursor {
+            super.unset_line(channel, line_offset)
+        }
         this.cursor_select_line(channel, line_offset)
     }
 

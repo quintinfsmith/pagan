@@ -167,7 +167,7 @@
         <item name="android:layout_height">@dimen/ctl_line_height</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
-        <item name="android:tint">@color/line_label_text</item>
+        <item name="android:tint">@color/line_label_ctl_text</item>
     </style>
 
     <style name="column">

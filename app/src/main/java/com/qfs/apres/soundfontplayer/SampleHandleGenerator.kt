@@ -27,15 +27,17 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var max: Float? = null,
         var avg: Float? = null
     ) {
-       //init {
-       //    if (this.max == null || this.avg == null) {
-       //        val tmp_array = FloatArray(this.data.size) { i: Int ->
-       //            abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
-       //        }
-       //        this.max = tmp_array.max()
-       //        this.avg = tmp_array.average().toFloat()
-       //    }
-       //}
+        var normal_factor: Float = 1F
+        init {
+            // if (this.max == null || this.avg == null) {
+            //     val tmp_array = FloatArray(this.data.size) { i: Int ->
+            //         abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
+            //     }
+            //     this.max = tmp_array.max()
+            //     this.avg = tmp_array.average().toFloat()
+            // }
+            // this.normal_factor = 1f / this.max!!
+        }
     }
 
 
@@ -49,12 +51,19 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     fun get(event: NoteOn, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
-        return SampleHandle.copy(this.sample_data_map[map_key]!!)
+        val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
+        output.volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
+        output.pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
+        return output
     }
 
     fun get(event: NoteOn79, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
-        return SampleHandle.copy(this.sample_data_map[map_key]!!)
+        val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
+        val volume = event.velocity / (128 shl 8).toFloat()
+        output.volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(volume, 0F))), 0)
+        output.pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
+        return output
     }
 
     fun cache_or_create_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): MapKey {
@@ -152,11 +161,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             }
             new_modulators[key] = new_modulators[key]!! + modulators
         }
-
+        val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 100F
         return SampleHandle(
             data = SampleData(data),
             sample_rate = sample_rate,
-            pan = (sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) * 100F / 500F,
+            pan = pan,
             pitch_shift = pitch_shift,
             initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
             stereo_mode = sample_directive.sample!!.sampleType,

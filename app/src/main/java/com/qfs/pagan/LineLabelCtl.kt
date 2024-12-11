@@ -1,8 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
-import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -12,7 +10,6 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
     ContextThemeWrapper(context, R.style.ctl_line_label)
 ) {
     init {
-        this._set_colors()
         this.setOnClickListener {
             this.on_click()
         }
@@ -55,35 +52,9 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
         return when (this.ctl_type) {
             ControlEventType.Tempo -> R.drawable.tempo
             ControlEventType.Volume -> R.drawable.volume
-            ControlEventType.Reverb -> R.drawable.volume // Placeholder
+            ControlEventType.Reverb -> R.drawable.volume // Placeholder TODO
+            ControlEventType.Pan -> R.drawable.pan_icon
         }
-    }
-
-    private fun _set_colors() {
-        val activity = this.get_activity()
-        val color_map = activity.view_model.color_map
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[ColorMap.Palette.Lines])
-        val states = arrayOf<IntArray>(
-            intArrayOf(R.attr.state_focused),
-            intArrayOf(-R.attr.state_focused)
-        )
-
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTintList(
-            ColorStateList(
-                states,
-                intArrayOf(
-                    color_map[ColorMap.Palette.CtlLineSelection],
-                    color_map[ColorMap.Palette.CtlLine]
-                )
-            )
-        )
-        this.imageTintList = ColorStateList(
-            states,
-            intArrayOf(
-                color_map[ColorMap.Palette.CtlLineSelectionText],
-                color_map[ColorMap.Palette.CtlLineText],
-            )
-        )
     }
 
     fun get_opus_manager(): OpusLayerInterface {

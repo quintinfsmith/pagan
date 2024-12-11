@@ -8,9 +8,9 @@
     android:layout_height="wrap_content">
 
         <com.qfs.pagan.ButtonIcon
-            android:id="@+id/btnToggleVolCtl"
+            android:id="@+id/btnToggleChannelCtl"
             android:theme="@style/icon_button"
-            app:srcCompat="@drawable/volume_plus"
+            app:srcCompat="@drawable/ctl"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
             android:contentDescription="Toggle Volume Control"/>

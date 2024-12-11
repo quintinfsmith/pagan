@@ -3,13 +3,9 @@ package com.qfs.pagan
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.InstrumentEvent
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerLinks
-import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -24,7 +20,7 @@ class OpusLayerOverlapControlUnitTest {
     @Test
     fun test_get_leaf_offset_and_width() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.split_tree(BeatKey(0,0,0), listOf(0), 3)
         manager.split_tree(BeatKey(0,0,0), listOf(1), 2)
@@ -59,7 +55,7 @@ class OpusLayerOverlapControlUnitTest {
 
     fun test_set_event() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.split_tree(BeatKey(0,0,1), listOf(), 2)
@@ -80,7 +76,7 @@ class OpusLayerOverlapControlUnitTest {
     
     fun test_replace_tree() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.split_tree(BeatKey(0,0,1), listOf(), 2)
@@ -105,7 +101,7 @@ class OpusLayerOverlapControlUnitTest {
 
     fun test_remove_beat() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
@@ -118,7 +114,7 @@ class OpusLayerOverlapControlUnitTest {
 
     fun test_remove() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         manager.split_tree(BeatKey(0,0,0), listOf(), 3)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 2))

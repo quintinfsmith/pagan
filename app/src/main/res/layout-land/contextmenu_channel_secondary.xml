@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.qfs.pagan.ButtonStd
+        android:layout_gravity="center"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:theme="@style/button"
+        android:id="@+id/btnChooseInstrument"
+        android:textSize="18sp"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/icon_button_height"
+        android:textAlignment="center"
+        android:text="" />
+</LinearLayout>

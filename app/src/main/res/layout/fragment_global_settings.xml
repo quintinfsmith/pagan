@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    tools:context=".MainActivity"
     tools:ignore="MissingDefaultResource">
     <LinearLayout
         android:orientation="vertical"
@@ -73,14 +74,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
                 <com.qfs.pagan.PaganTextView
+
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_playback_quality"
                     android:paddingStart="15dp"
                     android:paddingEnd="15dp" />
 
-                <com.qfs.pagan.PaganSeekBar
+                <SeekBar
                     android:id="@+id/sbPlaybackQuality"
+                    android:theme="@style/Theme.Pagan.SeekBar"
                     android:text="@string/label_settings_playback_quality"
                     android:max="5"
                     android:min="0"
@@ -109,7 +112,8 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <com.qfs.pagan.PaganSwitch
+            <Switch
+                android:theme="@style/Theme.Pagan.SeekBar"
                 android:id="@+id/sPlaybackStereo"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
@@ -126,7 +130,8 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <com.qfs.pagan.PaganSwitch
+            <Switch
+                android:theme="@style/Theme.Pagan.SeekBar"
                 android:id="@+id/sLimitSamples"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
@@ -142,39 +147,11 @@
                     android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
-                <com.qfs.pagan.PaganSwitch
+                <Switch
+                    android:theme="@style/Theme.Pagan.SeekBar"
                     android:id="@+id/sRelativeEnabled"
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-                <com.qfs.pagan.PaganTextView
-                    android:text="Use Custom Colors"
-                    android:paddingStart="15dp"
-                    android:layout_weight="1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-                <com.qfs.pagan.PaganSwitch
-                    android:id="@+id/sCustomPalette"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"/>
-        </LinearLayout>
-        <com.qfs.pagan.ButtonStd
-            android:id="@+id/btnClearPalette"
-            android:visibility="gone"
-            android:text="Reset Custom Colors"
-            android:theme="@style/song_config_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <LinearLayout
-            android:id="@+id/llColorPalette"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -1,14 +1,13 @@
 package com.qfs.pagan
 
-import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.qfs.pagan.ColorMap.Palette
 
 class PopupMenuRecyclerAdapter<T>(
     private val _recycler: RecyclerView,
@@ -30,22 +29,23 @@ class PopupMenuRecyclerAdapter<T>(
     override fun onViewAttachedToWindow(holder: ViewHolder) { }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val text_view = holder.itemView.findViewById<TextView>(R.id.tvTextView)
-        text_view.text = this._options[position].second.trim()
+        val activity = (holder.itemView.context as MainActivity)
 
         if (this._options[position].first == this._default) {
-            text_view.setTypeface(text_view.typeface, Typeface.BOLD)
+            text_view.background.setTint(activity.getColor(R.color.empty_selected))
+            text_view.setTextColor(ContextCompat.getColor(activity, R.color.empty_selected_text))
         } else {
-            text_view.setTypeface(text_view.typeface, Typeface.NORMAL)
+            text_view.background.setTint(activity.getColor(R.color.main_bg))
+            text_view.setTextColor(activity.getColor(R.color.main_fg))
         }
+
+        text_view.text = this._options[position].second.trim()
 
         text_view.setOnClickListener {
-            this._callback( position, this._options[position].first)
+            this._callback(position, this._options[position].first)
         }
-
-        val color_map = (holder.itemView.context as MainActivity).view_model.color_map
-        holder.itemView.setBackgroundColor(color_map[Palette.Foreground])
-        text_view.background.setTint(color_map[Palette.Background])
     }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PopupMenuRecyclerViewHolder {
         val viewInflated: View = LayoutInflater.from(parent.context)

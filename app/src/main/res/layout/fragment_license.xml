@@ -1,15 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ScrollView
-        android:layout_height="match_parent"
-        android:layout_width="match_parent" >
-        <TextView
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            style="@style/about_link"
+            android:id="@+id/linkManual"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/label_manual" />
+
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_url"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/url_manual" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            style="@style/about_link"
+            android:id="@+id/linkSource"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/label_source_code" />
+
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_url"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/url_git" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            style="@style/about_link"
+            android:id="@+id/linkIssues"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/label_issues_location" />
+
+            <com.qfs.pagan.PaganTextView
+                style="@style/about_link_url"
+                android:clickable="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/url_issues" />
+        </LinearLayout>
+
+        <Space
+            android:layout_height="20dp"
+            android:layout_width="match_parent"/>
+
+        <com.qfs.pagan.PaganTextView
             android:id="@+id/tvLicenseText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""/>
-    </ScrollView>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</ScrollView>

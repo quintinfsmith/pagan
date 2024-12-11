@@ -27,11 +27,12 @@
     <LinearLayout
         android:id="@+id/llContextMenuSecondary"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/secondary_contextmenu_height"
         android:paddingBottom="@dimen/secondary_contextmenu_padding_bottom"
         android:paddingTop="@dimen/secondary_contextmenu_padding_top"
         android:paddingStart="@dimen/secondary_contextmenu_padding_start"
         android:paddingEnd="@dimen/secondary_contextmenu_padding_end"
         android:visibility="gone"
         android:orientation="vertical"/>
+
 </LinearLayout>

@@ -55,11 +55,12 @@ class UIChangeBill {
         ProjectNameChange,
         ContextMenuRefresh,
         ContextMenuSetLine,
+        ContextMenuSetChannel,
         ContextMenuSetLeaf,
         ContextMenuSetLeafPercussion,
         ContextMenuSetControlLeaf,
         ContextMenuSetControlLeafB,
-        ContextMenuSetLinking,
+        ContextMenuSetRange,
         ContextMenuSetColumn,
         ContextMenuSetControlLine,
         ContextMenuClear,
@@ -82,6 +83,8 @@ class UIChangeBill {
         fun get(path: List<Int>): Node {
             return if (path.isEmpty()) {
                 this
+            } else if (path == listOf(0)) {
+                this.sub_nodes[path[0]]
             } else {
                 this.sub_nodes[path[0]].get(path.subList(1, path.size))
             }
@@ -124,7 +127,7 @@ class UIChangeBill {
         }
     }
 
-    private val ui_lock = UILock()
+    val ui_lock = UILock()
     private val _tree: Node = Node()
     private val working_path = mutableListOf<Int>()
     
@@ -137,7 +140,7 @@ class UIChangeBill {
         }
         val queued_line_labels = mutableSetOf<Int>()
         val queued_column_labels = mutableSetOf<Int>()
-
+        var queued_context_menu: BillableItem? = null
         var stack = mutableListOf<Node>(this._tree)
         while (stack.isNotEmpty()) {
             var node = stack.removeFirst()
@@ -151,7 +154,18 @@ class UIChangeBill {
                     BillableItem.ColumnChange,
                     BillableItem.ColumnStateChange,
                     BillableItem.LineLabelRefresh,
-                    BillableItem.ColumnLabelRefresh -> { }
+                    BillableItem.ColumnLabelRefresh,
+                    BillableItem.ContextMenuRefresh,
+                    BillableItem.ContextMenuSetLine,
+                    BillableItem.ContextMenuSetChannel,
+                    BillableItem.ContextMenuSetLeaf,
+                    BillableItem.ContextMenuSetLeafPercussion,
+                    BillableItem.ContextMenuSetControlLeaf,
+                    BillableItem.ContextMenuSetControlLeafB,
+                    BillableItem.ContextMenuSetRange,
+                    BillableItem.ContextMenuSetColumn,
+                    BillableItem.ContextMenuSetControlLine,
+                    BillableItem.ContextMenuClear -> {}
                     else -> {
                         this._tree.bill.add(bill_item)
                     }
@@ -338,10 +352,7 @@ class UIChangeBill {
 
                     BillableItem.ColumnChange,
                     BillableItem.ColumnStateChange -> {
-                        val count = node.int_queue.removeFirst()
-                        val columns = Array<Int>(count) {
-                            node.int_queue.removeFirst()
-                        }
+                        val column = node.int_queue.removeFirst()
 
                         val i = if (bill_item == BillableItem.ColumnChange) {
                             1
@@ -350,10 +361,10 @@ class UIChangeBill {
                         }
 
                         queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
-                            columns.contains(coord.x)
+                            coord.x == column
                         }.toSet()
 
-                        queued_columns[i].addAll(columns)
+                        queued_columns[i].add(column)
                     }
 
                     BillableItem.CellChange,
@@ -373,22 +384,26 @@ class UIChangeBill {
                                 )
                             )
                         }
-
                     }
 
-                    BillableItem.ProjectNameChange,
                     BillableItem.ContextMenuRefresh,
                     BillableItem.ContextMenuSetLine,
                     BillableItem.ContextMenuSetLeaf,
                     BillableItem.ContextMenuSetLeafPercussion,
                     BillableItem.ContextMenuSetControlLeaf,
                     BillableItem.ContextMenuSetControlLeafB,
-                    BillableItem.ContextMenuSetLinking,
+                    BillableItem.ContextMenuSetRange,
                     BillableItem.ContextMenuSetColumn,
                     BillableItem.ContextMenuSetControlLine,
                     BillableItem.ContextMenuClear,
+                    BillableItem.ContextMenuSetChannel -> {
+                        queued_context_menu = bill_item
+                    }
+
+                    BillableItem.ProjectNameChange,
                     BillableItem.ConfigDrawerEnableCopyAndDelete,
                     BillableItem.ConfigDrawerRefreshExportButton -> { }
+
                 }
             }
 
@@ -445,6 +460,9 @@ class UIChangeBill {
             this._tree.bill.add(BillableItem.ColumnLabelRefresh)
             this._tree.int_queue.add(x)
         }
+        if (queued_context_menu != null) {
+            this._tree.bill.add(queued_context_menu)
+        }
     }
 
     fun get_next_entry(): BillableItem? {
@@ -465,7 +483,6 @@ class UIChangeBill {
 
     fun queue_cell_changes(cells: List<EditorTable.Coordinate>, state_only: Boolean = false) {
         val working_tree = this.get_working_tree() ?: return
-
         working_tree.bill.add(
             if (state_only) {
                 BillableItem.CellStateChange
@@ -503,9 +520,8 @@ class UIChangeBill {
             BillableItem.ColumnChange
         }
 
-        working_tree.bill.add(bill_item)
-        working_tree.int_queue.add(columns.size)
         for (column in columns) {
+            working_tree.bill.add(bill_item)
             working_tree.int_queue.add(column)
         }
     }
@@ -520,7 +536,6 @@ class UIChangeBill {
             }
         )
 
-        working_tree.int_queue.add(1)
         working_tree.int_queue.add(column)
     }
 
@@ -560,9 +575,9 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ContextMenuSetControlLeafB)
     }
 
-    fun queue_set_context_menu_linking() {
+    fun queue_set_context_menu_range() {
         val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetLinking)
+        working_tree.bill.add(BillableItem.ContextMenuSetRange)
     }
 
     fun queue_set_context_menu_column() {
@@ -575,11 +590,16 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ContextMenuSetControlLine)
     }
 
+    fun queue_set_context_menu_channel() {
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.bill.add(BillableItem.ContextMenuSetChannel)
+    }
+
     fun queue_clear_context_menu() {
         val working_tree = this.get_working_tree() ?: return
         working_tree.bill.add(BillableItem.ContextMenuClear)
     }
-    
+
     fun queue_enable_delete_and_copy_buttons() {
         val working_tree = this.get_working_tree() ?: return
         working_tree.bill.add(BillableItem.ConfigDrawerEnableCopyAndDelete)
@@ -608,7 +628,6 @@ class UIChangeBill {
 
     fun queue_row_change(y: Int, state_only: Boolean = false) {
         val working_tree = this.get_working_tree() ?: return
-
         working_tree.int_queue.add(y)
         working_tree.bill.add(
             if (state_only) {
@@ -704,4 +723,5 @@ class UIChangeBill {
     fun cancel_most_recent() {
         this._tree.remove_last()
     }
+
 }

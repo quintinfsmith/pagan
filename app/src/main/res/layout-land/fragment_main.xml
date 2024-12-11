@@ -27,7 +27,7 @@ tools:context=".FragmentEditor">
             android:paddingStart="@dimen/secondary_contextmenu_padding_start"
             android:paddingEnd="@dimen/secondary_contextmenu_padding_end"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/secondary_contextmenu_height"
             android:visibility="gone"
             android:orientation="vertical">
         </LinearLayout>

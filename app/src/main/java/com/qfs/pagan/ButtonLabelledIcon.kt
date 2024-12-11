@@ -5,15 +5,15 @@ import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
-import android.view.Gravity.CENTER
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.view.LayoutInflater
+import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 
 class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearLayoutCompat(context, attrs) {
-    class LabelView(context: Context): AppCompatTextView(context) {
+    class LabelView(context: Context, attrs: AttributeSet? = null): AppCompatTextView(context, attrs) {
         override fun drawableStateChanged() {
             super.drawableStateChanged()
             var context = this.context
@@ -25,7 +25,7 @@ class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearL
         }
     }
 
-    class IconView(context: Context): AppCompatImageView(context) {
+    class IconView(context: Context, attrs: AttributeSet? = null): AppCompatImageView(context, attrs) {
         // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed
         // to exist on init()
         override fun drawableStateChanged() {
@@ -40,23 +40,22 @@ class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearL
         }
     }
 
-    val label = LabelView(context)
-    val icon = IconView(context)
+    val label: LabelView
+    val icon: IconView
+    val inner: LinearLayoutCompat
 
     init {
+        this.orientation = HORIZONTAL
         this.background = AppCompatResources.getDrawable(context, R.drawable.button_icon)
-        this.addView(this.icon)
-        this.addView(this.label)
-
-        (this.icon.layoutParams as LinearLayoutCompat.LayoutParams).gravity = CENTER
-        this.icon.layoutParams.width = WRAP_CONTENT
-        this.icon.layoutParams.height = WRAP_CONTENT
-
-        (this.label.layoutParams as LinearLayoutCompat.LayoutParams).gravity = CENTER
-        this.label.layoutParams.height = WRAP_CONTENT
-        this.label.layoutParams.width = 0
-        this.label.textAlignment = TEXT_ALIGNMENT_CENTER
-        (this.label.layoutParams as LinearLayoutCompat.LayoutParams).weight = 1f
+        this.inner = LayoutInflater.from(context)
+            .inflate(
+                R.layout.button_labelled_icon,
+                this.parent as ViewGroup?,
+                false
+            ) as LinearLayoutCompat
+        this.addView(this.inner)
+        this.icon = this.findViewById(R.id.icon)
+        this.label = this.findViewById(R.id.label)
     }
 
     fun set_text(text: String) {

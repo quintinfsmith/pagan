@@ -11,6 +11,10 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     lateinit var button_remove: ButtonIcon
     lateinit var button_duration: ButtonStd
 
+    init {
+        this.refresh()
+    }
+
     override fun init_properties() {
         val primary = this.primary!!
         this.button_split = primary.findViewById(R.id.btnSplit)
@@ -29,7 +33,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
 
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
         val current_tree = opus_manager.get_tree(beat_key, position)
 
@@ -44,13 +48,13 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
         val blocked_amount = opus_manager.get_blocking_amount(beat_key, position)
 
-        this.button_split.isEnabled = current_event_tree == current_tree || blocked_amount!! < 1
+        this.button_split.isEnabled = true
         this.button_split.isClickable = this.button_split.isEnabled
 
         this.button_duration.isEnabled = current_event_tree.is_event()
         this.button_duration.isClickable = this.button_duration.isEnabled
 
-        this.button_remove.isEnabled = current_tree_position.second.isNotEmpty()
+        this.button_remove.isEnabled = position.isNotEmpty()
         this.button_remove.isClickable = this.button_remove.isEnabled
     }
 
@@ -126,7 +130,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
 
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
         val event_duration = current_event_tree.get_event()?.duration ?: return
@@ -140,7 +144,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     fun click_button_split() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        opus_manager.split_tree(2)
+        opus_manager.split_tree_at_cursor(2)
     }
 
     fun click_button_insert() {
@@ -149,9 +153,9 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
         val position = opus_manager.cursor.get_position().toMutableList()
         if (position.isEmpty()) {
-            opus_manager.split_tree(2)
+            opus_manager.split_tree_at_cursor(2)
         } else {
-            opus_manager.insert_after(1)
+            opus_manager.insert_after_cursor(1)
         }
     }
 
@@ -165,7 +169,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         main.dialog_number_input(this.context.getString(R.string.dlg_split), 2, 32) { splits: Int ->
-            opus_manager.split_tree(splits)
+            opus_manager.split_tree_at_cursor(splits)
         }
         return true
     }
@@ -177,9 +181,9 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         main.dialog_number_input(this.context.getString(R.string.dlg_insert), 1, 29) { count: Int ->
             val position = opus_manager.cursor.get_position().toMutableList()
             if (position.isEmpty()) {
-                opus_manager.split_tree(count + 1)
+                opus_manager.split_tree_at_cursor(count + 1)
             } else {
-                opus_manager.insert_after(count)
+                opus_manager.insert_after_cursor(count)
             }
         }
         return true
@@ -192,7 +196,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val cursor = opus_manager.cursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
 
         opus_manager.set_duration(current_tree_position.first, current_tree_position.second, 1)
         return true
@@ -221,7 +225,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val cursor = opus_manager.cursor
         val beat_key = cursor.get_beatkey()
         val position = cursor.get_position()
-        val current_tree_position = opus_manager.get_original_position(beat_key, position)
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
 
         if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).is_event()) {
             opus_manager.unset()

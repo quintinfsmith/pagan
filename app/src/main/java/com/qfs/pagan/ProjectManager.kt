@@ -2,13 +2,12 @@ package com.qfs.pagan
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ProjectManager(data_dir: String) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
@@ -32,6 +31,7 @@ class ProjectManager(data_dir: String) {
         if (file.isFile) {
             file.delete()
         }
+
         this._untrack_path(opus_manager.path!!)
     }
 
@@ -52,7 +52,9 @@ class ProjectManager(data_dir: String) {
 
     fun save(opus_manager: OpusManager) {
         this.get_directory()
+
         opus_manager.save()
+
         // Untrack then track in order to update the project title in the cache
         this._untrack_path(opus_manager.path!!)
         this._track_path(opus_manager.path!!)
@@ -111,10 +113,7 @@ class ProjectManager(data_dir: String) {
 
     private fun get_file_project_name(file: File): String? {
         val content = file.readText(Charsets.UTF_8)
-        val json_obj = JSONParser.parse(content)
-        if (json_obj !is JSONHashMap) {
-            return null
-        }
+        val json_obj = JSONParser.parse<JSONHashMap>(content) ?: return null
 
         val version = OpusManagerJSONInterface.detect_version(json_obj)
         return when (version) {

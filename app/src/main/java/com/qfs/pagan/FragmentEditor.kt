@@ -16,15 +16,20 @@ import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.databinding.FragmentMainBinding
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusPanEvent
+import com.qfs.pagan.opusmanager.OpusReverbEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import java.io.File
 import java.io.FileInputStream
 import kotlin.concurrent.thread
 
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
-    var project_change_flagged = false
     var active_context_menu: ContextMenuView? = null
     var keyboard_input_interface: KeyboardInputInterface? = null
 
@@ -34,7 +39,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
     override fun onResume() {
         super.onResume()
-
         val main = this.get_main()
         main.setup_project_config_drawer()
         val opus_manager = main.get_opus_manager()
@@ -132,7 +136,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
         val bytes = FileInputStream(bkp_json_path).readBytes()
         val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
-
         opus_manager.load(bytes, backup_path)
     }
 
@@ -146,16 +149,13 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val bytes = FileInputStream(bkp_json_path).readBytes()
         val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
 
-        opus_manager.reload(bytes, backup_path)
+        opus_manager.load(bytes, backup_path)
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
-        if (this.project_change_flagged) {
-            return
-        }
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
 
@@ -172,14 +172,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             return
         }
 
-        if (savedInstanceState != null) {
-            this.reload_from_bkp()
-        } else {
-            opus_manager.cursor_clear()
-            opus_manager._init_editor_table_width_map()
-            editor_table.clear()
-            editor_table.setup(opus_manager.get_row_count(), opus_manager.beat_count)
-        }
+        this.reload_from_bkp()
 
         editor_table.visibility = View.VISIBLE
         this.restore_view_model_position()
@@ -218,7 +211,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
     private fun _set_result_listeners() {
         setFragmentResultListener(IntentFragmentToken.Load.name) { _, bundle: Bundle? ->
-            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
+            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.Load, bundle)
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
@@ -238,7 +231,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 }
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
 
@@ -261,10 +253,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         main.import_midi(path)
                     } catch (e: Exception) {
                         val opus_manager = main.get_opus_manager()
-                        if (!opus_manager.first_load_done) {
-                            main.get_opus_manager().new()
-                        } else {
-                            main.runOnUiThread {
+                        main.runOnUiThread {
+                            if (!opus_manager.first_load_done) {
+                                main.get_opus_manager().project_change_new()
+                            } else {
                                 this.reload_from_bkp()
                                 editor_table.visibility = View.VISIBLE
                                 this.restore_view_model_position()
@@ -280,8 +272,73 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
+        }
+
+        setFragmentResultListener(IntentFragmentToken.ImportGeneral.name) { _, bundle: Bundle? ->
+            val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.clear()
+            this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportGeneral, bundle)
+            val main = this.get_main()
+            main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
+            main.runOnUiThread {
+                editor_table?.visibility = View.INVISIBLE
+            }
+            thread {
+                val type: CompatibleFileType? = try {
+                    bundle!!.getString("URI")?.let { path ->
+                        main.get_file_type(path)
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+
+                var fallback_msg: String? = null
+                try {
+                    when (type) {
+                        CompatibleFileType.Midi1 ->{
+                            bundle!!.getString("URI")?.let { path ->
+                                main.import_midi(path)
+                            }
+                        }
+                        CompatibleFileType.Pagan -> {
+                            bundle!!.getString("URI")?.let { path ->
+                                main.import_project(path)
+                            }
+                        }
+                        null -> {
+                            fallback_msg = getString(R.string.feedback_file_not_found)
+                        }
+                    }
+                } catch (e: Exception) {
+                    fallback_msg = when (type!!) {
+                        CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
+                        CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
+                    }
+                }
+
+                if (fallback_msg != null) {
+                    val opus_manager = main.get_opus_manager()
+                    // if Not Loaded, just create new and throw a message up
+                    if (!opus_manager.first_load_done) {
+                        opus_manager.project_change_new()
+                    } else {
+                        main.runOnUiThread {
+                            this.reload_from_bkp()
+                            editor_table.visibility = View.VISIBLE
+                            this.restore_view_model_position()
+                        }
+                    }
+
+                    this.get_main().feedback_msg(fallback_msg)
+                }
+
+                main.runOnUiThread {
+                    editor_table?.visibility = View.VISIBLE
+                }
+                main.loading_reticle_hide()
+            }
+
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
@@ -301,7 +358,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up
                     if (!opus_manager.first_load_done) {
-                        opus_manager.new()
+                        opus_manager.project_change_new()
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()
@@ -316,7 +373,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
 
@@ -332,13 +388,13 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
 
             thread {
+                this.load_from_bkp()
                 try {
-                    this.load_from_bkp()
                 } catch (e: Exception) {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up
                     if (!opus_manager.first_load_done) {
-                        opus_manager.new()
+                        opus_manager.project_change_new()
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()
@@ -353,7 +409,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
 
@@ -367,12 +422,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 editor_table?.visibility = View.INVISIBLE
             }
             thread {
-                main.get_opus_manager().new()
+                main.get_opus_manager().project_change_new()
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()
-                this.project_change_flagged = false
             }
         }
     }
@@ -478,9 +532,21 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> null
+
+            OpusManagerCursor.CursorMode.Channel -> {
+                opus_manager.get_visible_row_from_ctl_line(
+                    opus_manager.get_actual_line_index(
+                        opus_manager.get_instrument_line_index(
+                            opus_manager.cursor.channel,
+                            0
+                        )
+                    )
+                )
+            }
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
             OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
             OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
             OpusManagerCursor.CursorMode.Single -> {
@@ -493,7 +559,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
                 var width = 1f
                 var offset = 0f
-                for (p in cursor.position) {
+                for (p in cursor.get_position()) {
                     width /= tree.size
                     offset += p * width
                     tree = tree[p]
@@ -515,22 +581,112 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
 
     internal fun set_context_menu_control_line() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLine>()) {
-            this.active_context_menu = ContextMenuControlLine(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
+        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
+        this.clear_context_menu()
+
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val channels = opus_manager.get_all_channels()
+
+        val cursor = opus_manager.cursor
+        val controller_set = when (cursor.ctl_level!!) {
+            CtlLineLevel.Line -> {
+                channels[cursor.channel].lines[cursor.line_offset].controllers
+            }
+            CtlLineLevel.Channel -> {
+                val channel = cursor.channel
+                channels[channel].controllers
+            }
+            CtlLineLevel.Global -> {
+                opus_manager.controllers
+            }
         }
+
+        val widget = when (cursor.ctl_type!!) {
+            ControlEventType.Tempo -> {
+                val controller = controller_set.get_controller<OpusTempoEvent>(cursor.ctl_type!!)
+                ControlWidgetTempo(controller.initial_event, true, main) { event: OpusTempoEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+            ControlEventType.Volume -> {
+                val controller = controller_set.get_controller<OpusVolumeEvent>(cursor.ctl_type!!)
+                ControlWidgetVolume(controller.initial_event, true, main) { event: OpusVolumeEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+            ControlEventType.Reverb -> {
+                val controller = controller_set.get_controller<OpusReverbEvent>(cursor.ctl_type!!)
+                ControlWidgetReverb(controller.initial_event, true, main) { event: OpusReverbEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+
+            ControlEventType.Pan -> {
+                val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
+                ControlWidgetPan(controller.initial_event, true, main) { event: OpusPanEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+        }
+
+
+        this.active_context_menu = ContextMenuControlLine(
+            widget,
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        )
         this.show_context_menus()
     }
 
     internal fun set_context_menu_line_control_leaf() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeaf>()) {
-            this.active_context_menu = ContextMenuControlLeaf(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
+        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
+        this.clear_context_menu()
+
+        val main = this.get_main()
+        val opus_manager = main.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val controller_set = opus_manager.get_active_active_control_set() ?: return
+
+        val controller = controller_set.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+        val default = controller.get_latest_event(cursor.beat, cursor.get_position())?.copy() ?: controller.initial_event.copy()
+
+
+        val (actual_beat, actual_position) = controller.get_blocking_position(cursor.beat, cursor.get_position()) ?: Pair(cursor.beat, cursor.get_position())
+        val tree = controller.get_tree(actual_beat, actual_position)
+        if (!tree.is_event()) {
+            default.duration = 1
         }
+
+        val widget = when (cursor.ctl_type!!) {
+            ControlEventType.Tempo -> {
+                ControlWidgetTempo(default as OpusTempoEvent, false, main) { event: OpusTempoEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+            ControlEventType.Volume -> {
+                ControlWidgetVolume(default as OpusVolumeEvent, false, main) { event: OpusVolumeEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+            ControlEventType.Reverb -> {
+                ControlWidgetReverb(default as OpusReverbEvent, false, main) { event: OpusReverbEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+
+            ControlEventType.Pan -> {
+                ControlWidgetPan(default as OpusPanEvent, false, main) { event: OpusPanEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+        }
+
+        this.active_context_menu = ContextMenuControlLeaf(
+            widget,
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        )
         this.show_context_menus()
     }
 
@@ -544,9 +700,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.show_context_menus()
     }
 
-    internal fun set_context_menu_linking() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLink>()) {
-            this.active_context_menu = ContextMenuLink(
+    internal fun set_context_menu_range() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuRange>()) {
+            this.active_context_menu = ContextMenuRange(
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
@@ -579,6 +735,17 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.show_context_menus()
     }
 
+    internal fun set_context_menu_channel() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuChannel>()) {
+            this.active_context_menu = ContextMenuChannel(
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+
     internal fun set_context_menu_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
             this.active_context_menu = ContextMenuLeaf(
@@ -598,6 +765,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
         this.show_context_menus()
     }
+
 
     fun shortcut_dialog() {
         val view = LayoutInflater.from(this.context)

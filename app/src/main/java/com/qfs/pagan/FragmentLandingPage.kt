@@ -11,8 +11,8 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
-import kotlin.concurrent.thread
 import java.io.File
+import kotlin.concurrent.thread
 
 class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
     override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentLandingBinding {
@@ -27,27 +27,9 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
-        val linkSource = view.findViewById<TextView>(R.id.linkSource)
-        val btn_linkLicense = view.findViewById<TextView>(R.id.linkLicense)
 
         btn_settings.setOnClickListener {
             this.get_main().navigate(R.id.SettingsFragment)
-        }
-
-        btn_linkLicense.setOnClickListener {
-            val stream = this.activity!!.assets.open("LICENSE")
-            val bytes = ByteArray(stream.available())
-            stream.read(bytes)
-            stream.close()
-            val text_body = bytes.toString(charset = Charsets.UTF_8)
-            this.setFragmentResult(
-                "LICENSE",
-                bundleOf(
-                    Pair("TEXT", text_body),
-                    Pair("TITLE", "GPLv3")
-                )
-            )
-            this.get_main().navigate(R.id.LicenseFragment)
         }
 
         btn_newProject.setOnClickListener {
@@ -80,25 +62,13 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
                     lockout = false
                 }
             }
-
-            btn_loadProject.setOnLongClickListener {
-                this.get_main().select_project_file()
-                true
-            }
+            btn_loadProject.visibility = View.VISIBLE
         } else {
-            btn_loadProject.setOnClickListener {
-                this.get_main().select_project_file()
-            }
+            btn_loadProject.visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {
-            this.get_main().select_midi_file()
-        }
-
-        linkSource.setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(getString(R.string.url_git))
-            startActivity(intent)
+            this.get_main().select_import_file()
         }
 
         val main = this.get_main()

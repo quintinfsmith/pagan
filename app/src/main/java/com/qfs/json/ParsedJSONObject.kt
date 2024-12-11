@@ -196,8 +196,8 @@ class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
     }
 }
 
-class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
-    val list = input_list ?: mutableListOf<JSONObject?>()
+class JSONList(input_list: List<JSONObject?>? = null): JSONObject {
+    val list = input_list?.toMutableList() ?: mutableListOf<JSONObject?>()
 
     override fun to_string(): String {
         var output = "["
@@ -379,7 +379,7 @@ class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
 
 class JSONParser {
     companion object {
-        fun parse(json_content: String): JSONObject? {
+        fun <T: JSONObject> parse(json_content: String): T? {
             var working_number: String? = null
             var working_string: String? = null
             var string_escape_flagged = false
@@ -600,8 +600,12 @@ class JSONParser {
                 throw InvalidJSON(json_content, index)
             }
 
-
-            return object_stack.last()
+            val output = object_stack.last()
+            return if (output != null) {
+                output as T
+            } else {
+                null
+            }
         }
     }
 }

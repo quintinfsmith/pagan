@@ -33,6 +33,9 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         }
 
         this.layoutParams.height = WRAP_CONTENT
+        val activity = this.get_activity()
+        val color_map = activity.view_model.color_map
+        this.setBackgroundColor(color_map[ColorMap.Palette.Lines])
 
         val width = (this._column_layout.column_width_factor * resources.getDimension(R.dimen.base_leaf_width).roundToInt())
         this.layoutParams.width = width
@@ -56,6 +59,9 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
                 )
             }
             CtlLineLevel.Global -> {
+                // Kludge: Only works because Only one global control is in use (Tempo)
+                this.setPadding(0, 20, 0, 0)
+
                 opus_manager.get_global_ctl_tree(
                     control_type!!,
                     beat
@@ -63,6 +69,9 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
             }
             null -> {
                 val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                if (channel != 0 && line_offset == 0) {
+                    this.setPadding(0, 20, 0, 0)
+                }
                 this.get_beat_tree(BeatKey(channel, line_offset, beat))
             }
         }
@@ -193,30 +202,8 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         return (this.parent as ColumnLayout).get_beat()
     }
 
-    fun get_beat_key(): BeatKey? {
-        val opus_manager = this.get_opus_manager()
-        val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
-            opus_manager.get_ctl_line_from_row(this.row)
-        )
-        if (ctl_level != null) {
-            return null
-        }
-
-        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-        return BeatKey(channel, line_offset, this.get_beat())
-    }
-
-
     private fun get_beat_tree(beat_key: BeatKey): OpusTree<out InstrumentEvent> {
         val opus_manager = this.get_opus_manager()
         return opus_manager.get_tree(beat_key)
     }
-
-
-    fun is_percussion(): Boolean {
-        val opus_manager = this.get_opus_manager()
-        val beat_key = this.get_beat_key() ?: return false
-        return opus_manager.is_percussion(beat_key.channel)
-    }
-
 }

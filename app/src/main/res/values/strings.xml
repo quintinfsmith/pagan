@@ -40,12 +40,13 @@
     <string name="warning_nosoundfont">A soundfont is needed for playback. The Fluid General Midi soundfont can be found here:</string>
     <string name="warning_nosoundfont_2">You can import and select soundfonts from the settings menu</string>
     <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
-    <string name="url_git">https://burnsomni.net/git/pagan</string>
+    <string name="url_git">https://github.com/quintinfsmith/pagan</string>
+    <string name="url_issues">https://github.com/quintinfsmith/pagan/issues</string>
+    <string name="url_manual">https://burnsomni.net/manual/pagan</string>
 
     <string name="btn_landing_new">New Project</string>
-    <string name="btn_landing_import">Import Project</string>
+    <string name="btn_landing_import">Import</string>
     <string name="btn_landing_load">Load Project</string>
-    <string name="btn_landing_midi">Import Midi</string>
     <string name="btn_landing_settings">Settings</string>
 
     <string name="label_settings_playback_quality">Playback Quality</string>
@@ -69,9 +70,9 @@
     <string name="config_file_not_found">Configuration can\'t be accessed</string>
 
     <string name="line_volume">Line Volume:</string>
-    <string name="source_code_location">
-        Source code available at: https://burnsomni.net/git/pagan.
-    </string>
+    <string name="label_manual">Manual</string>
+    <string name="label_issues_location">Issues</string>
+    <string name="label_source_code">Source</string>
     <string name="apk_location">
         Alternative downloads available at: https://burnsomni.net/software/pagan.
     </string>
@@ -92,6 +93,7 @@
     <string name="dlg_transpose">Transpose</string>
     <string name="dlg_insert_beats">Insert Beats</string>
     <string name="feedback_import_fail">Corrupt Project File</string>
+    <string name="feedback_file_not_found">File not Found</string>
     <string name="feedback_midi_fail">Invalid MIDI</string>
     <string name="feedback_rm_lastbeat">Can\'t remove only beat</string>
     <string name="dlg_remove_beats">Remove Beats</string>
@@ -193,7 +195,7 @@
     <string name="config_label_sample_rate">%1$dHz</string>
     <string name="label_export_progress">%1$d%%</string>
     <string name="label_tuning_index">%1$02d:</string>
-    <string name="dlg_set_volume">Set Velocity</string>
+    <string name="dlg_set_volume">Set Volume(%)</string>
     <string name="untitled_opus">Untitled</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>

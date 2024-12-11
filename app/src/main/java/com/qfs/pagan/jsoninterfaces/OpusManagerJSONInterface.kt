@@ -5,126 +5,11 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
 import com.qfs.pagan.opusmanager.ActiveControlSetJSONInterface
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelJSONInterface
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerLinks
-import com.qfs.pagan.opusmanager.OpusPercussionChannel
-import com.qfs.pagan.opusmanager.OpusLayerLinks as OpusManager
 
 class OpusManagerJSONInterface {
     companion object {
         const val LATEST_VERSION = 3
-        fun <T: OpusLayerBase> generalize(opus_manager: T): JSONHashMap {
-            val output = JSONHashMap()
-
-            val channels: MutableList<JSONHashMap> = mutableListOf()
-            for (channel in opus_manager.channels) {
-                channels.add(OpusChannelJSONInterface.generalize(channel))
-            }
-            output["size"] = opus_manager.beat_count
-            output["tuning_map"] = JSONList(MutableList(opus_manager.tuning_map.size) { i: Int ->
-                JSONList(
-                    mutableListOf(
-                        JSONInteger(opus_manager.tuning_map[i].first),
-                        JSONInteger(opus_manager.tuning_map[i].second)
-                    )
-                )
-            })
-
-            output["transpose"] = JSONInteger(opus_manager.transpose)
-            output["controllers"] = ActiveControlSetJSONInterface.to_json(opus_manager.controllers)
-
-            if (opus_manager is OpusManager) {
-                output["reflections"] = JSONList(
-                    MutableList(opus_manager.link_pools.size) { i: Int ->
-                        val pool = opus_manager.link_pools[i].toList()
-                        JSONList(
-                            MutableList(pool.size) { j: Int ->
-                                val beat_key = pool[j]
-                                JSONList(
-                                    mutableListOf(
-                                        JSONInteger(beat_key.channel),
-                                        JSONInteger(beat_key.line_offset),
-                                        JSONInteger(beat_key.beat)
-                                    )
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-            output["channels"] = JSONList(
-                MutableList(opus_manager.channels.size) { i: Int ->
-                    OpusChannelJSONInterface.generalize(opus_manager.channels[i])
-                }
-            )
-            output["percussion_channel"] = OpusChannelJSONInterface.generalize(opus_manager.percussion_channel)
-            output["title"] = if (opus_manager.project_name == null) {
-                null
-            } else {
-                JSONString(opus_manager.project_name!!)
-            }
-
-            return JSONHashMap(
-                hashMapOf(
-                    "d" to output,
-                    "v" to JSONInteger(LATEST_VERSION)
-                )
-            )
-        }
-
-        fun interpret(input: JSONHashMap): OpusLayerLinks {
-            val inner_map = input["d"] as JSONHashMap
-            val opus_manager = OpusLayerLinks()
-            opus_manager.set_project_name(inner_map.get_stringn("title"))
-            opus_manager.transpose = inner_map.get_int("transpose", 0)
-
-            opus_manager.channels.clear()
-
-            opus_manager.set_beat_count(inner_map.get_int("size"))
-            for (generalized_channel in inner_map.get_list("channels").list) {
-                opus_manager.add_channel(
-                    OpusChannelJSONInterface.interpret(
-                        generalized_channel as JSONHashMap,
-                        opus_manager.beat_count
-                    ) as OpusChannel
-                )
-            }
-            opus_manager.percussion_channel = OpusChannelJSONInterface.interpret(
-                inner_map.get_hashmap("percussion_channel"),
-                opus_manager.beat_count
-            ) as OpusPercussionChannel
-
-
-            val generalized_tuning_map = inner_map.get_list("tuning_map")
-            opus_manager.tuning_map = Array(generalized_tuning_map.list.size) { i: Int ->
-                val g_pair = generalized_tuning_map.get_list(i)
-                Pair(
-                    g_pair.get_int(0),
-                    g_pair.get_int(1)
-                )
-            }
-            opus_manager.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), opus_manager.beat_count)
-
-            val generalized_reflections = inner_map.get_list("reflections")
-            for (i in 0 until generalized_reflections.list.size) {
-                val pool = generalized_reflections.get_list(i)
-                opus_manager.link_pools.add(
-                    MutableList<BeatKey>(pool.list.size) { j: Int ->
-                        val generalized_beat_key = pool.get_list(j)
-                        BeatKey(
-                            generalized_beat_key.get_int(0),
-                            generalized_beat_key.get_int(1),
-                            generalized_beat_key.get_int(2)
-                        )
-                    }.toMutableSet()
-                )
-            }
-
-            return opus_manager
-        }
 
         fun convert_v0_to_v1(input: JSONHashMap): JSONHashMap {
             val old_channels = input.get_list("channels")
@@ -148,8 +33,7 @@ class OpusManagerJSONInterface {
                         MutableList(old_channels.list.size) { i: Int ->
                             OpusChannelJSONInterface.convert_v0_to_v1(old_channels.get_hashmap(i), radix)
                         }
-                    ),
-                    "reflections" to input.hash_map["reflections"]
+                    )
                 )
             )
         }
@@ -178,7 +62,6 @@ class OpusManagerJSONInterface {
             return JSONHashMap(
                 hashMapOf(
                     "tuning_map" to tuning_map,
-                    "reflections" to input["reflections"],
                     "transpose" to input["transpose"],
                     "name" to input["name"],
                     "controllers" to JSONList(
@@ -246,7 +129,6 @@ class OpusManagerJSONInterface {
             val input_tuning_map = input_map.get_list("tuning_map")
             val beat_count = input_channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("children").list.size
 
-            val input_reflections = input_map.get_list("reflections")
 
             return JSONHashMap(
                 hashMapOf(
@@ -263,23 +145,6 @@ class OpusManagerJSONInterface {
                                             JSONInteger(pair.get_int("first")),
                                             JSONInteger(pair.get_int("second"))
                                         )
-                                    )
-                                }
-                            ),
-                            "reflections" to JSONList(
-                                MutableList(input_reflections.list.size) { i: Int ->
-                                    val pool = input_reflections.get_list(i)
-                                    JSONList(
-                                        MutableList(pool.list.size) { j: Int ->
-                                            val generalized_beat_key = pool.get_hashmap(j)
-                                            JSONList(
-                                                mutableListOf(
-                                                    generalized_beat_key["channel"],
-                                                    generalized_beat_key["line_offset"],
-                                                    generalized_beat_key["beat"]
-                                                )
-                                            )
-                                        }
                                     )
                                 }
                             ),

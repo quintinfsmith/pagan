@@ -22,7 +22,8 @@ class SampleHandle(
     var pitch_shift: Float = 1F,
     var filter_cutoff: Float = 13500F,
     var pan: Float = 0F,
-    var volume: Float = 1F,
+    var volume_profile: ProfileBuffer? = null,
+    var pan_profile: ProfileBuffer? = null,
     data_buffers: Array<PitchedBuffer>? = null,
     var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     //var note_on_event: MIDIEvent
@@ -38,6 +39,7 @@ class SampleHandle(
     var uuid: Int = SampleHandle.uuid_gen++
 
     var working_frame: Int = 0
+
     var release_frame: Int? = null
     var kill_frame: Int? = null
     var is_dead = false
@@ -70,6 +72,90 @@ class SampleHandle(
                 pitch = this.pitch_shift
             )
         )
+    }
+
+    class ProfileBuffer(val frames: Array<Pair<Int, Pair<Float, Float>>>, val start_frame: Int, skip_initial_set: Boolean = false) {
+        var current_frame: Int = 0
+        var current_index: Int = 0
+        var current_value: Float = 0f
+        var next_frame_trigger: Int = -1
+
+        private var index_map = HashMap<IntRange,Int>()
+
+        init {
+            for (i in 1 until this.frames.size) {
+                this.index_map[this.frames[i - 1].first until this.frames[i].first] = i - 1
+            }
+            if (!skip_initial_set) {
+                this.set_frame(0)
+            }
+        }
+
+        fun get_next(): Float {
+            val (frame, working_data) = this.frames[this.current_index]
+
+            if (frame == this.current_frame) {
+                this.current_value = working_data.first
+            } else {
+                this.current_value += working_data.second
+            }
+
+            val output = this.current_value
+
+            this._move_to_next_frame()
+
+            return output
+        }
+
+        private fun _move_to_next_frame() {
+            this.current_frame += 1
+            val current_frame = this.current_frame
+            if (current_frame == this.next_frame_trigger) {
+                if (this.current_index == this.frames.size - 1) {
+                    this.next_frame_trigger = -1
+                } else {
+                    this.next_frame_trigger = this.frames[this.current_index++].first
+                }
+            }
+        }
+
+        fun set_frame(frame: Int) {
+            this.current_frame = frame + this.start_frame
+            for ((range, index) in this.index_map) {
+                if (range.contains(this.current_frame)) {
+                    this._set_index(index)
+                    return
+                }
+            }
+
+            // No Frame data found, use final entry
+            this._set_index(this.frames.size - 1)
+        }
+
+        private fun _set_index(index: Int) {
+            // Note: working frame is this current frame - 1 SO THAT:
+            // when get_next() is called, the value isn't incremented here AND there
+            val working_frame = this.current_frame - 1
+            this.current_index = index
+            var frame_data = this.frames[index]
+            this.current_value = frame_data.second.first
+            if (frame_data.second.second != 0F) {
+                this.current_value += (working_frame - frame_data.first).toFloat() * frame_data.second.second
+            }
+
+            this.next_frame_trigger = if (this.current_index < this.frames.size - 1) {
+                this.frames[this.current_index + 1].first
+            } else {
+                -1
+            }
+        }
+
+        fun copy(): ProfileBuffer {
+            return ProfileBuffer(
+                this.frames,
+                this.start_frame
+            )
+        }
     }
 
     init {
@@ -177,6 +263,8 @@ class SampleHandle(
 
     companion object {
         var uuid_gen = 0
+        const val MAX_VOLUME = 1F
+
         fun copy(original: SampleHandle): SampleHandle {
             val output = SampleHandle(
                 data = original.data,
@@ -190,7 +278,8 @@ class SampleHandle(
                 pitch_shift = original.pitch_shift,
                 filter_cutoff = original.filter_cutoff,
                 pan = original.pan,
-                volume = original.volume,
+                volume_profile = original.volume_profile?.copy(),
+                pan_profile = original.pan_profile?.copy(),
                 data_buffers = Array(original._data_buffers.size) { i: Int ->
                     var buffer = original._data_buffers[i]
                     // constructing this way allows us to skip calculating max
@@ -242,6 +331,10 @@ class SampleHandle(
             return
         }
 
+        this.volume_profile?.set_frame(frame)
+        this.pan_profile?.set_frame(frame)
+
+
         val loop_points = this.loop_points
         val release_frame = this.release_frame
         this.is_dead = try {
@@ -289,8 +382,60 @@ class SampleHandle(
     private fun _get_active_data_buffer(): PitchedBuffer {
         return this._data_buffers[this._active_buffer]
     }
+    fun get_next_balance(): Pair<Float, Float> {
+        val profile_pan = this.pan_profile?.get_next() ?: 0F
+        // TODO: Implement ROM stereo modes
+        var (left_value, right_value) = when (this.stereo_mode and 7) {
+            // right
+            2 -> {
+                Pair(
+                    0F,
+                    if (this.pan > 0F) {
+                        1f - this.pan
+                    } else {
+                        1F
+                    }
+                )
+            }
+            // left
+            4 -> {
+                Pair(
+                    if (this.pan < 0F) {
+                        1f + this.pan
+                    } else {
+                        1F // Mutes this this in the left side completely
+                    },
+                    0F
+                )
+            }
+            else -> Pair(
+                if (this.pan < 0F) {
+                    1f + this.pan
+                } else {
+                    1F // Mutes this this in the left side completely
+                },
+                if (this.pan > 0F) {
+                    1f - this.pan
+                } else {
+                    1F
+                }
+            )
+        }
+        left_value = if (profile_pan < 0F) {
+            (1F + profile_pan) * left_value
+        } else {
+            left_value
+        }
+        right_value = if (profile_pan > 0F) {
+            (1F - profile_pan) * right_value
+        } else {
+            right_value
+        }
 
-    fun get_next_frame(): Int? {
+        return Pair(left_value, right_value)
+    }
+
+    fun get_next_frame(): Pair<Float, Float>? {
         if (this.is_dead) {
             return null
         }
@@ -300,7 +445,8 @@ class SampleHandle(
         if (this.working_frame < this.volume_envelope.frames_delay) {
             this.working_frame += 1
             this.previous_frame = 0F
-            return 0
+            this.volume_profile?.get_next()
+            return Pair(0F, 0F)
         }
 
         var frame_factor = this._initial_frame_factor
@@ -370,10 +516,12 @@ class SampleHandle(
         //    }
         //}
 
+        val use_volume = this.volume_profile?.get_next() ?: 1F
+
         this.working_frame += 1
 
         var frame_value = try {
-            this._get_active_data_buffer().get().toFloat()
+            this._get_active_data_buffer().get()
         } catch (e: PitchedBuffer.PitchedBufferOverflow) {
             return null
         } catch (e: ArrayIndexOutOfBoundsException) {
@@ -382,10 +530,10 @@ class SampleHandle(
         }
 
         // Low Pass Filtering
-        frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
+       // frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
 
-        this.previous_frame = frame_value
-        return (frame_value * frame_factor * this.volume).toInt()
+
+        return Pair(frame_value, frame_factor * use_volume * SampleHandle.MAX_VOLUME)
     }
 
     fun release_note() {

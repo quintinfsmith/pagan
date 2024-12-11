@@ -7,7 +7,6 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
 import kotlin.math.max
-import kotlin.math.min
 
 class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
     private val frames = HashMap<Int, MutableSet<SampleHandle>>()
@@ -117,7 +116,7 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
             if (this.percussion_handles.contains(handle.uuid)) {
                 // Do not equalize the percussion channel
             } else {
-                handle.volume *= min((1F / this.max_overlap.toFloat()) / max_volume, 1F)
+                //handle.volume_profile *= min((1F / this.max_overlap.toFloat()) / max_volume, 1F)
             }
             output.add(handle)
         }

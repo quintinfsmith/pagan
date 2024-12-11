@@ -89,6 +89,11 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
 
         for (handle in handles) {
             handle.set_release_frame(duration_millis * this.sample_rate / 1000)
+
+            // Remove release phase. can get noisy on things like tubular bells with long fade outs
+            handle.volume_envelope.frames_release = 0
+            handle.volume_envelope.release = 0F
+
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
 

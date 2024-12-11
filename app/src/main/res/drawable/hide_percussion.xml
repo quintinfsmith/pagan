@@ -1,0 +1,6 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="@dimen/channel_conf_icon_height" android:viewportHeight="64" android:viewportWidth="64" android:width="@dimen/channel_conf_icon_height">
+      
+    <path android:fillColor="#ffffff" android:pathData="M33.443,12.115C23.717,11.965 14.971,17.625 8.447,24.408C6.192,26.743 4.106,29.251 2.326,31.969C6.185,37.643 11.038,42.891 16.801,46.695L22.368,40.535A13.205,14 0,0 1,19.589 32A13.205,14 0,0 1,32.794 18A13.205,14 0,0 1,40.413 20.57L45.107,15.376C43.284,14.381 41.361,13.556 39.316,12.969C37.404,12.442 35.427,12.148 33.443,12.115zM49.356,18.132L43.805,24.273A13.205,14 0,0 1,46 32A13.205,14 0,0 1,32.794 46A13.205,14 0,0 1,25.998 43.976L21.244,49.236C22.835,50.01 24.481,50.681 26.19,51.213C33.127,53.235 40.871,51.966 46.823,47.873C52.995,43.888 57.693,38.056 61.674,31.969C58.302,26.873 54.267,21.869 49.356,18.132z" android:strokeColor="#00000000" android:strokeLineCap="round"/>
+    <path android:fillColor="#ffffff" android:pathData="M47,12l2.031,1.846l-33.635,36.706l-2.031,-1.846z" android:strokeColor="#ffffff" android:strokeLineCap="butt" android:strokeWidth="2.31368"/>
+
+</vector>

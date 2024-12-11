@@ -43,7 +43,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
     private var timeout: Int? = null
-    private val core_count = Runtime.getRuntime().availableProcessors()
+    // Using more processes than counters just in case 1 thread holds up the rest.
+    private val process_count = Runtime.getRuntime().availableProcessors() * 8
     private val active_sample_handle_mutex = Mutex()
     private val _cached_frame_weights = HashMap<Int, Float>() // Store 'previous frame's between chunks so smoothing can be accurately applied
 
@@ -69,7 +70,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         val arrays: Array<HashMap<Int, Pair<Float, Array<CompoundFrame>>>> = runBlocking {
-            val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
+            val tmp = Array(this@WaveGenerator.process_count) { i: Int ->
                 async(Dispatchers.Default) {
                     this@WaveGenerator.gen_partial_int_array(first_frame, i)
                 }
@@ -85,7 +86,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val latest_weights = HashMap<Int, Float?>()
         for (x in arrays.indices) {
             val separated_lines_map = arrays[x]
-            val initial_array_index = array.size * x / this.core_count
+            val initial_array_index = array.size * x / this.process_count
 
             for ((key, pair) in separated_lines_map) {
                 // Apply the volume, pan and low-pass filter
@@ -95,7 +96,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 var post_smooth_max = 0F
                 val smoothed_array = FloatArray(uncompiled_array.size) { i: Int ->
                     val frame = uncompiled_array[i]
-                    var smoothed_frame = if (weight_value == null) {
+                    var smoothed_frame = if (smoothing_factor == 1F || weight_value == null) {
                         frame.value
                     } else {
                         weight_value!! + (smoothing_factor * (frame.value - weight_value!!))
@@ -108,7 +109,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     smoothed_frame
                 }
 
-                val adj_factor = pre_smooth_max / post_smooth_max
+                val adj_factor = if (post_smooth_max == 0F) {
+                    1F
+                } else {
+                    pre_smooth_max / post_smooth_max
+                }
+
                 for (i in smoothed_array.indices) {
                     val frame = uncompiled_array[i]
                     val smoothed_frame = smoothed_array[i] * frame.volume * adj_factor
@@ -131,8 +137,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         // Run the tanh() on all cores
         runBlocking {
-            val chunk_size = array.size / this@WaveGenerator.core_count
-            val tmp = Array(this@WaveGenerator.core_count) { i: Int ->
+            val chunk_size = array.size / this@WaveGenerator.process_count
+            val tmp = Array(this@WaveGenerator.process_count) { i: Int ->
                 val start_index = i * chunk_size
                 async(Dispatchers.Default) {
                     for (j in 0 until chunk_size) {
@@ -163,7 +169,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     }
 
                     val real_index = if (item.first_section > 0) {
-                        if ((this@WaveGenerator.core_count - item.sample_handles.size) > sample_index) {
+                        if ((this@WaveGenerator.process_count - item.sample_handles.size) > sample_index) {
                             continue
                         }
                         sample_index - item.first_section
@@ -187,7 +193,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                                 item.handle.uuid,
                                 sample_handle,
                                 if (real_index == 0 && (0 until this@WaveGenerator.buffer_size).contains(item.first_frame - first_frame)) {
-                                    (item.first_frame - first_frame) - (this@WaveGenerator.buffer_size * sample_index / this@WaveGenerator.core_count)
+                                    (item.first_frame - first_frame) - (this@WaveGenerator.buffer_size * sample_index / this@WaveGenerator.process_count)
                                 } else {
                                     0
                                 }
@@ -207,7 +213,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     }
 
     private fun populate_partial_int_array(sample_handle: SampleHandle, offset: Int): Array<CompoundFrame> {
-        val output = Array<CompoundFrame>(this.buffer_size / this.core_count) {
+        val output = Array<CompoundFrame>(this.buffer_size / this.process_count) {
             CompoundFrame()
         }
         // Assume working_int_array.size % 2 == 0
@@ -230,7 +236,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             )
         }
         if (!sample_handle.is_dead) {
-            sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.core_count - 1) / this.core_count))
+            sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.process_count - 1) / this.process_count))
         }
         return output
     }
@@ -259,9 +265,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             this._active_sample_handles.remove(key)
         }
 
-        for (i in 0 until this.core_count) {
-            for (j in 0 until this.buffer_size / this.core_count) {
-                val working_frame = j + initial_frame + (i * this.buffer_size / this.core_count)
+        for (i in 0 until this.process_count) {
+            for (j in 0 until this.buffer_size / this.process_count) {
+                val working_frame = j + initial_frame + (i * this.buffer_size / this.process_count)
                 val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
                 this.activate_sample_handles(handles, i, j, initial_frame)
             }
@@ -288,16 +294,16 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     }
 
     fun activate_sample_handles(handles: Set<SampleHandle>, core: Int, frame_in_core_chunk: Int, initial_frame: Int) {
-        val base_butt_offset = (this.buffer_size / this.core_count) - frame_in_core_chunk
+        val base_butt_offset = (this.buffer_size / this.process_count) - frame_in_core_chunk
 
         // then populate the next active frames with upcoming sample handles
-        val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.core_count)
+        val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.process_count)
         for (handle in handles) {
-            val split_handles = Array<Pair<SampleHandle?, Int>>(this.core_count - core) { k: Int ->
+            val split_handles = Array<Pair<SampleHandle?, Int>>(this.process_count - core) { k: Int ->
                 Pair(
                     null,
                     if (k > 0) {
-                       handle.working_frame + base_butt_offset + (this.buffer_size * (k - 1) / this.core_count)
+                       handle.working_frame + base_butt_offset + (this.buffer_size * (k - 1) / this.process_count)
                     } else {
                        handle.working_frame
                     }
@@ -315,7 +321,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 val split_handles_b = Array<Pair<SampleHandle?, Int>>(core) { k: Int ->
                     Pair(
                         null,
-                        handle.working_frame + base_butt_offset + (this.buffer_size * ((k - 1) + (this.core_count - core)) / this.core_count)
+                        handle.working_frame + base_butt_offset + (this.buffer_size * ((k - 1) + (this.process_count - core)) / this.process_count)
                     )
                 }
 

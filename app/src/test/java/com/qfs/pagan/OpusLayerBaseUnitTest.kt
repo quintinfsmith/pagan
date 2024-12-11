@@ -3202,7 +3202,7 @@ class OpusLayerBaseUnitTest {
         for (c in 0 until 2) {
             for (l in 0 until manager.channels[c].lines.size) {
                 for (b in 0 until 12) {
-                    manager.controller_line_set_event(type, BeatKey(c, l, b), listOf(), OpusVolumeEvent(64f))
+                    manager.controller_line_set_event(type, BeatKey(c, l, b), listOf(), OpusVolumeEvent(.64f))
                 }
             }
         }
@@ -3227,14 +3227,14 @@ class OpusLayerBaseUnitTest {
         manager.new_channel()
         manager.set_beat_count(12)
         for (b in 0 until 12) {
-            manager.controller_channel_set_event(type, 0, b, listOf(), OpusVolumeEvent(64f))
+            manager.controller_channel_set_event(type, 0, b, listOf(), OpusVolumeEvent(.64f))
         }
 
         manager.controller_channel_unset_range(type, 0, 4, 10)
 
         for (i in 0 until 4) {
             assertEquals(
-                OpusVolumeEvent(64f),
+                OpusVolumeEvent(.64f),
                 manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, i).get_event()
             )
         }

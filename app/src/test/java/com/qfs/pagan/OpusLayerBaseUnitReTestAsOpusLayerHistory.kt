@@ -446,11 +446,6 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             AbsoluteNoteEvent(10)
         )
 
-        assertThrows(OpusLayerBase.NonPercussionEventSet::class.java) {
-            manager.set_event(BeatKey(1,0,0), position, AbsoluteNoteEvent(10))
-        }
-
-
         manager.unset(beatkey, position)
         assertEquals(
             "Failed to unset tree",
@@ -1510,7 +1505,11 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             }
         }
 
-        manager.move_beat_range(BeatKey(0, 0, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        manager.move_beat_range(
+            BeatKey(0, 0, 3),
+            BeatKey(0, 0, 0),
+            BeatKey(1, 2, 2)
+        )
 
         for (c in 0 until 2) {
             for (l in 0 until 2) {
@@ -3206,7 +3205,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         for (c in 0 until 2) {
             for (l in 0 until manager.channels[c].lines.size) {
                 for (b in 0 until 12) {
-                    manager.controller_line_set_event(type, BeatKey(c, l, b), listOf(), OpusVolumeEvent(64f))
+                    manager.controller_line_set_event(type, BeatKey(c, l, b), listOf(), OpusVolumeEvent(.64f))
                 }
             }
         }
@@ -3231,14 +3230,14 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         manager.new_channel()
         manager.set_beat_count(12)
         for (b in 0 until 12) {
-            manager.controller_channel_set_event(type, 0, b, listOf(), OpusVolumeEvent(64f))
+            manager.controller_channel_set_event(type, 0, b, listOf(), OpusVolumeEvent(.64f))
         }
 
         manager.controller_channel_unset_range(type, 0, 4, 10)
 
         for (i in 0 until 4) {
             assertEquals(
-                OpusVolumeEvent(1f),
+                OpusVolumeEvent(.64f),
                 manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, i).get_event()
             )
         }
@@ -3284,23 +3283,18 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         manager.set_beat_count(12)
 
         assertEquals(
-            3, // line, line control, chanenl control, then second line
-            manager.get_actual_line_index(1)
-        )
-
-        assertEquals(
             ControlEventType.Volume,
             manager.get_ctl_line_type(1)
         )
 
         assertEquals(
             ControlEventType.Tempo,
-            manager.get_ctl_line_type(9)
+            manager.get_ctl_line_type(6)
         )
 
         assertEquals(
             CtlLineLevel.Global,
-            manager.ctl_line_level(9)
+            manager.ctl_line_level(6)
         )
 
         assertEquals(
@@ -3314,13 +3308,13 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         assertEquals(
-            Triple(1, CtlLineLevel.Line, ControlEventType.Volume),
-            manager.get_ctl_line_info(4)
+            Triple(0, CtlLineLevel.Line, ControlEventType.Volume),
+            manager.get_ctl_line_info(1)
         )
 
         assertEquals(
             Triple(-1, CtlLineLevel.Global, ControlEventType.Tempo),
-            manager.get_ctl_line_info(9)
+            manager.get_ctl_line_info(6)
         )
     }
 

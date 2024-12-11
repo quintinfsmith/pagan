@@ -654,7 +654,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun <T : OpusControlEvent> controller_line_set_initial_event(type: ControlEventType, channel: Int, line_offset: Int, event: T) {
         super.controller_line_set_initial_event(type, channel, line_offset, event)
-        if (this.is_line_ctl_visible(type, channel, line_offset)) {
+        if (this.is_line_ctl_visible(type, channel, line_offset) && !this.is_line_selected(channel, line_offset)) {
             this.cursor_select_line_ctl_line(type, channel, line_offset)
         } else {
             this.cursor_select_line(channel, line_offset)
@@ -2128,6 +2128,16 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
         }
     }
+
+    fun is_line_selected(channel: Int, line_offset: Int): Boolean {
+        val check_cursor = OpusManagerCursor(
+            mode = OpusManagerCursor.CursorMode.Line,
+            channel = channel,
+            line_offset = line_offset
+        )
+        return check_cursor == this.cursor
+    }
+
     fun is_secondary_selection(beat_key: BeatKey, position: List<Int>): Boolean {
         if (this.cursor.ctl_level != null) {
             return false

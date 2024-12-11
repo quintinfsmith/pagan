@@ -102,12 +102,12 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                     // No Feedback.  feels Redundant
                 }
             }
-        }
-
-        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == this.channel && cursor.line_offset == this.line_offset && cursor.ctl_level == null) {
-            opus_manager.cursor_select_channel(this.channel)
         } else {
-            opus_manager.cursor_select_line(this.channel, this.line_offset)
+            if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == this.channel && cursor.line_offset == this.line_offset && cursor.ctl_level == null) {
+                opus_manager.cursor_select_channel(this.channel)
+            } else {
+                opus_manager.cursor_select_line(this.channel, this.line_offset)
+            }
         }
     }
 

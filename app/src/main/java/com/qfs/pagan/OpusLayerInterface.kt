@@ -34,7 +34,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     var relative_mode: Int = 0
     var first_load_done = false
-    private var _in_reload = false
     private var _activity: MainActivity? = null
 
     private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
@@ -868,6 +867,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+
         super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
     }
 

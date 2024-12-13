@@ -1,15 +1,6 @@
-N-tonal tuning
-    Pagan supports N-tone tuning. Change your radix to 24 for microtones or something else just to see what happens.
+Mobile music applications can be limited. Desktop sequencers and workstations can be impenetrable. By dropping certain limitations, Pagan attempts to be musically complete while still being approachable.
 
-A Divisive Interface
-    Pagan completely ignores measures like any other sequencer but instead of laying out notes based on absolute timing, uses beats. Each column represents one beat and can be split up easily to show rhythm.
-
-Midi Support
-    Import a midi file to resequence it. Export a midi to share it. Plug your midi instrument in to play your music through it. (not currently applicable with the N-tonal tuning)
-
-Repetition without Repetition
-    Single beats and full selections can be linked together to save copy/pasting
-
-Bigger than Midi
-    Pagan isn't only a midi sequencer. Use whatever (.sf2) soundfont you want and export the audio data.
-
+* Use your own soundfont (.sf2)
+* Import, reorchestrate and export .mid files
+* Connect to and playback through Midi devices
+* Export .wav files

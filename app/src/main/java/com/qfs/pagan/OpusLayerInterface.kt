@@ -1040,10 +1040,10 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun remove_beat(beat_index: Int, count: Int) {
         this.lock_ui_partial {
             this.queue_cursor_update(this.cursor.copy())
-
+            val original_beat_count = this.beat_count
             super.remove_beat(beat_index, count)
 
-            val x = min(beat_index + count - 1, this.beat_count - 1) - (count - 1)
+            val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
             for (i in 0 until count) {
                 this.get_editor_table()?.remove_mapped_column(x)
                 this.ui_change_bill.queue_remove_column(x)

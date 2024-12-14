@@ -33,7 +33,7 @@ Pagan dons its wax wings and dares to be both.
     <img alt="Buy Me a Coffee" style="display: block; height: 4em;" src="https://burnsomni.net/content/support_me_on_kofi_badge_beige.png"/>
    </a>
   </td>
-  <td style="text-align: center;">
+  <td align="center">
    <a style="display: inline-block;" href="https://burnsomni.net/manual/pagan">Manual</a>
   </td>
  </tr>

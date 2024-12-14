@@ -2186,7 +2186,7 @@ class MainActivity : AppCompatActivity() {
 
         this.disconnect_feedback_device()
 
-        val buffer_size = this.configuration.sample_rate / 4
+        val buffer_size = this.configuration.sample_rate / 2
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
             this.configuration.sample_rate,

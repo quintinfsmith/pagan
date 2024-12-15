@@ -3402,6 +3402,7 @@ open class OpusLayerBase {
             this.channels.add(channel)
             this._channel_uuid_map[channel.uuid] = channel
         }
+
         this.percussion_channel = OpusChannelJSONInterface.interpret(
             inner_map.get_hashmap("percussion_channel"),
             this.beat_count
@@ -3747,6 +3748,12 @@ open class OpusLayerBase {
             controller._init_blocked_tree_caches()
         }
         // ----------------------------------------------
+        // Unflag so blocking gets tracked
+        for (channel in this.get_all_channels()) {
+            for (line in channel.lines) {
+                line.flag_ignore_blocking = false
+            }
+        }
     }
 
     fun get_line_volume(channel: Int, line_offset: Int): Float {

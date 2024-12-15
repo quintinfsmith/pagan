@@ -23,7 +23,7 @@ class SampleHandleManager(
     val buffer_size: Int
 
     init {
-        val core_count = Runtime.getRuntime().availableProcessors()
+        val process_count = Runtime.getRuntime().availableProcessors() * 8
 
         val adj_target_buffer_size = max(
             target_buffer_size,
@@ -34,7 +34,7 @@ class SampleHandleManager(
             ) * 2 // too small causes clipping
         )
 
-        this.buffer_size = adj_target_buffer_size - (adj_target_buffer_size % core_count)
+        this.buffer_size = adj_target_buffer_size - (adj_target_buffer_size % process_count)
 
         this.sample_handle_generator = SampleHandleGenerator(
             this.sample_rate,

@@ -197,6 +197,7 @@
     <string name="label_tuning_index">%1$02d:</string>
     <string name="dlg_set_volume">Set Volume(%)</string>
     <string name="untitled_opus">Untitled</string>
+    <string name="error_caught_from_keyboard_input">Error caught from keyboard input: %1$s</string>
     <string-array name="relative">
         <item>@string/pfx_add</item>
         <item>@string/pfx_subtract</item>

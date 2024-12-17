@@ -4,8 +4,8 @@
         <item name="colorPrimary">#1d1d1d</item>
         <item name="colorPrimaryVariant">#000000</item>
         <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/blue_sky</item>
-        <item name="colorSecondaryVariant">@color/blue_dark</item>
+        <item name="colorSecondary">@color/leaf_main</item>
+        <item name="colorSecondaryVariant">@color/leaf_secondary</item>
         <item name="colorOnSecondary">#1A1a1a</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
 
@@ -25,5 +25,8 @@
         <item name="android:thumbTint">@color/leaf_main</item>
         <item name="android:progressTint">@color/leaf_main</item>
         <item name="android:colorControlActivated">@color/leaf_main</item>
+    </style>
+    <style name="Theme.Pagan.EditText">
+        <item name="android:textColorPrimary">@color/main_fg</item>
     </style>
 </resources>

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Typeface
 import android.text.InputType
 import android.util.AttributeSet
+import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.widget.TextView
 import kotlin.math.max
@@ -73,7 +74,7 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
     }
 }
 
-abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSet? = null): PaganEditText(context, attrs) {
+abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(ContextThemeWrapper(context, R.style.Theme_Pagan_EditText), attrs) {
     lateinit var max: T
     lateinit var min: T
     var value_set_callback: ((T?) -> Unit)? = null

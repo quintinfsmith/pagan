@@ -391,7 +391,7 @@ class MainActivity : AppCompatActivity() {
                     try {
                         active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
                     } catch (e: Exception) {
-                        println("Error caught from keyboard input: $e")
+                        println(getString(R.string.error_caught_from_keyboard_input, e))
                         true
                     }
                 else -> false
@@ -1078,7 +1078,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
-        this.refresh_toolbar()
+        this._refresh_toolbar()
     }
 
     fun set_title_text(new_text: String) {
@@ -1578,7 +1578,7 @@ class MainActivity : AppCompatActivity() {
         val default_position = opus_manager.get_channel_instrument(channel)
 
         val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
-        var current_instrument_supported = sorted_keys.contains(default_position)
+        val current_instrument_supported = sorted_keys.contains(default_position)
         for (key in sorted_keys) {
             val name = this._soundfont_supported_instrument_names[key]
             if (is_percussion && key.first == 128) {
@@ -2370,7 +2370,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun refresh_toolbar() {
+    private fun _refresh_toolbar() {
         val color_map = this.view_model.color_map
         val toolbar = this._binding.appBarMain.toolbar
         val text_color = color_map[Palette.TitleBarText]
@@ -2439,6 +2439,7 @@ class MainActivity : AppCompatActivity() {
             val vibratorManager = this.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator
         } else {
+            @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 

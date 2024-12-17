@@ -186,6 +186,8 @@ class MainActivity : AppCompatActivity() {
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
 
+    private var _popup_active: Boolean = false
+
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
@@ -1831,6 +1833,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {
+        if (this._popup_active) {
+            return
+        }
+        this._popup_active = true
+
         if (options.isEmpty()) {
             return
         }
@@ -1848,6 +1855,9 @@ class MainActivity : AppCompatActivity() {
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
+            .setOnDismissListener {
+                this._popup_active = false
+            }
             .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
                 dialog.dismiss()
             }

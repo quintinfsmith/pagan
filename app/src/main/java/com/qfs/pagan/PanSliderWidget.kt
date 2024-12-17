@@ -32,6 +32,13 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
     val image_view: ImageView = object: androidx.appcompat.widget.AppCompatImageView(context, attrs) {
         val paint = Paint()
         val path = Path()
+        val relative_handle_point: Float
+
+        init {
+            val that = this@PanSliderWidget
+            this.relative_handle_point = (that.progress - that.min).toFloat() / (that.max - that.min).toFloat()
+        }
+
 
         fun get_main_activity(): MainActivity {
             var context = this@PanSliderWidget.context

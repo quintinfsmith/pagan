@@ -885,8 +885,10 @@ class OpusLayerBaseUnitTest {
             event_map[position] = events
         }
 
+        println("${event_map[0]}")
+
         assertEquals(
-            8, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn
+            10, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
             event_map[0]!!.size
         )
 
@@ -3088,26 +3090,32 @@ class OpusLayerBaseUnitTest {
         for (c in 0 until 2) {
             for (l in 0 until 2) {
                 for (b in 0 until 3) {
+                    val beat_key = BeatKey(c, l, b)
+                    val value = ((c * 6) + (l * 3) + b)
                     manager.controller_line_set_event(
                         type,
-                        BeatKey(c, l, b),
+                        beat_key,
                         listOf(),
-                        OpusVolumeEvent(((c * 6) + (l * 3) + b).toFloat())
+                        OpusVolumeEvent(value.toFloat())
                     )
+                    println("$beat_key => $value")
                 }
             }
         }
 
         // -------------------------------------------------------
         manager.controller_line_overwrite_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-
+        println("--------------------------")
         for (k in 0 until 4) {
             for (c in 0 until 2) {
                 for (l in 0 until 2) {
                     for (b in 0 until 3) {
+                        val key_a = BeatKey(c, l, b)
+                        val key_b = BeatKey(c, l, (k * 3) + b)
                         assertEquals(
-                            manager.get_line_ctl_tree<OpusVolumeEvent>(type, BeatKey(c, l, b)),
-                            manager.get_line_ctl_tree<OpusVolumeEvent>(type, BeatKey(c, l, (k * 3) + b))
+                            "$key_a != $key_b",
+                            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_a).get_event(),
+                            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_b).get_event()
                         )
                     }
                 }
@@ -3149,7 +3157,7 @@ class OpusLayerBaseUnitTest {
         manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(5F))
         manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(6f))
 
-        manager.controller_channel_overwrite_range_horizontally(type, 0, 0, 1)
+        manager.controller_channel_overwrite_range_horizontally(type, 0, 0, 0, 1)
 
         for (i in 0 until 6) {
             assertEquals(

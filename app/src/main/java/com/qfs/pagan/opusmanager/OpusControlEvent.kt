@@ -16,6 +16,9 @@ enum class ControlTransition {
 
 abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration) {
     abstract override fun copy(): OpusControlEvent
+    override fun equals(other: Any?): Boolean {
+        return other is OpusControlEvent && other.duration == this.duration
+    }
 }
 
 

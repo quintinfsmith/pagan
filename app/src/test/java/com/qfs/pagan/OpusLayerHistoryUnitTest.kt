@@ -400,7 +400,7 @@ class HistoryCacheUnitTest {
         manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(.24f))
 
         this.undo_and_check(manager) {
-            it.controller_channel_overwrite_range_horizontally(type, 0, 0, 1)
+            it.controller_channel_overwrite_range_horizontally(type, 0, 0, 0, 1)
         }
     }
 

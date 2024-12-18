@@ -62,6 +62,10 @@ class OpusLayerInterface : OpusLayerHistory() {
             callback()
         } catch (e: OpusLayerBase.BlockedActionException) {
             this.ui_change_bill.cancel_most_recent()
+            if (this._blocked_action_catcher > 0) {
+                this.ui_change_bill.unlock()
+                throw e
+            }
             null
         } catch (e: Exception) {
             this.ui_change_bill.unlock()
@@ -86,6 +90,10 @@ class OpusLayerInterface : OpusLayerHistory() {
             callback()
         } catch (e: OpusLayerBase.BlockedActionException) {
             this.ui_change_bill.cancel_most_recent()
+            if (this._blocked_action_catcher > 0) {
+                this.ui_change_bill.unlock()
+                throw e
+            }
             null
         } catch (e: Exception) {
             this.ui_change_bill.unlock()

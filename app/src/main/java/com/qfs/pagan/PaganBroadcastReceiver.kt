@@ -6,7 +6,6 @@ import android.content.Intent
 
 class PaganBroadcastReceiver: BroadcastReceiver() {
     override fun onReceive(p0: Context?, intent: Intent?) {
-        println("!!! ${intent?.action}")
         when (intent?.action) {
             "com.qfs.pagan.CANCEL_EXPORT_WAV" -> {
                 (p0!! as MainActivity).export_wav_cancel()

@@ -104,7 +104,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>? = null, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
-            println("$beat_key, $position")
             val use_tree = tree ?: this.get_tree_copy(beat_key, position)
             val output = callback()
 

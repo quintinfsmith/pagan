@@ -359,7 +359,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
         val working_position = position ?: listOf()
         val overlapper = this.get_blocking_position(beat, working_position)
-
         val tree_is_eventless = tree.is_eventless()
 
         val blocker_pair = this.is_blocked_replace_tree(beat, working_position, tree)
@@ -854,17 +853,13 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
     /* Check if replacing a tree would cause overlap */
     private fun <T: OpusEvent> is_blocked_replace_tree(beat: Int, position: List<Int>, new_tree: OpusTree<T>): Pair<Int, List<Int>>? {
-        val (next_beat, next_position) = this.get_proceding_event_position(beat, position) ?: return null
-
         val original_position = this.get_blocking_position(beat, position) ?: Pair(beat, position)
-
         if (original_position != Pair(beat, position) && !new_tree.is_eventless()) {
             val (head_offset, head_width) = this.get_leaf_offset_and_width(original_position.first, original_position.second)
             val tail_end = head_offset + Rational(this.get_tree(original_position.first, original_position.second).get_event()!!.duration, head_width)
             val stack = mutableListOf(Triple(Rational(beat,1), 1, new_tree))
             while (stack.isNotEmpty()) {
                 val (working_position, working_width, working_tree) = stack.removeFirst()
-
                 if (working_tree.is_event()) {
                     if (head_offset <= working_position && working_position < tail_end) {
                         return original_position
@@ -885,6 +880,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                 }
             }
         }
+
+        val (next_beat, next_position) = this.get_proceding_event_position(beat, position) ?: return null
 
         val (target_offset, target_width) = this.get_leaf_offset_and_width(next_beat, next_position)
 

@@ -586,9 +586,9 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
         if (tree != null) {
             // Decache Existing overlap
-            val stack = mutableListOf<Pair<OpusTree<*>, List<Int>>>(Pair(tree, listOf()))
+            val stack = mutableListOf<Pair<OpusTree<*>, List<Int>>>(Pair(tree, position))
             while (stack.isNotEmpty()) {
-                var (working_tree, working_position) = stack.removeFirst()
+                val (working_tree, working_position) = stack.removeFirst()
                 if (working_tree.is_event()) {
                     for (pair in this.decache_overlapping_leaf(beat, working_position)) {
                         need_recache.add(pair.first)

@@ -1376,6 +1376,9 @@ open class OpusLayerBase {
         if (this.beat_count <= count) {
             throw RemovingLastBeatException()
         }
+        if (beat_index >= this.beat_count) {
+            throw IndexOutOfBoundsException()
+        }
 
         this.blocked_check_remove_beat(beat_index, count)
 

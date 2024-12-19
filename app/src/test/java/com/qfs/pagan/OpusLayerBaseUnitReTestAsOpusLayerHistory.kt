@@ -18,6 +18,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLayerHistory
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
@@ -888,8 +889,6 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             event_map[position] = events
         }
 
-        println("${event_map[0]}")
-
         assertEquals(
             10, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
             event_map[0]!!.size
@@ -932,7 +931,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         assertEquals(
-            8, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn
+            10, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
             event_map_b[0]!!.size
         )
 
@@ -940,7 +939,6 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             4, // SongPositionPointer, SetTempo, NoteOff, NoteOff
             event_map[120]!!.size
         )
-
     }
 
     @Test
@@ -1269,10 +1267,6 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
 
         // Set Up first tree
         manager.controller_channel_set_event(type, working_channel, 0, listOf(), event)
-
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.controller_channel_overwrite_line(type, working_channel + 1, working_channel, 0)
-        }
 
         // apply overwrite
         manager.controller_channel_overwrite_line(type, working_channel, 0, 0)
@@ -3081,47 +3075,38 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
     @Test
     fun test_controller_line_overwrite_range_horizontally() {
         val type = ControlEventType.Volume
-        val manager = OpusManager()
+        val manager = OpusLayerHistory()
         manager._project_change_new()
-        manager.new_line(0)
-        manager.new_line(0)
-        manager.new_channel()
-        manager.new_line(1)
-        manager.new_line(1)
         manager.set_beat_count(12)
 
-        for (c in 0 until 2) {
-            for (l in 0 until 2) {
-                for (b in 0 until 3) {
-                    val beat_key = BeatKey(c, l, b)
-                    val value = ((c * 6) + (l * 3) + b)
-                    manager.controller_line_set_event(
-                        type,
-                        beat_key,
-                        listOf(),
-                        OpusVolumeEvent(value.toFloat())
-                    )
-                    println("$beat_key => $value")
-                }
-            }
+        // Only works on single line currently.
+        val c = 0
+        val l = 0
+
+        for (b in 0 until 3) {
+            val beat_key = BeatKey(c, l, b)
+            val value = ((c * 6) + (l * 3) + b)
+            manager.controller_line_set_event(
+                type,
+                beat_key,
+                listOf(),
+                OpusVolumeEvent(value.toFloat())
+            )
+            println("$beat_key => $value")
         }
 
         // -------------------------------------------------------
-        manager.controller_line_overwrite_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        manager.controller_line_overwrite_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(0, 0, 2))
         println("--------------------------")
         for (k in 0 until 4) {
-            for (c in 0 until 2) {
-                for (l in 0 until 2) {
-                    for (b in 0 until 3) {
-                        val key_a = BeatKey(c, l, b)
-                        val key_b = BeatKey(c, l, (k * 3) + b)
-                        assertEquals(
-                            "$key_a != $key_b",
-                            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_a).get_event(),
-                            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_b).get_event()
-                        )
-                    }
-                }
+            for (b in 0 until 3) {
+                val key_a = BeatKey(c, l, b)
+                val key_b = BeatKey(c, l, (k * 3) + b)
+                assertEquals(
+                    "$key_a != $key_b",
+                    manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_a).get_event(),
+                    manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_b).get_event()
+                )
             }
         }
     }

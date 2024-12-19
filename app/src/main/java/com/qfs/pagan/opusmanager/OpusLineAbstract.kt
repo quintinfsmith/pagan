@@ -657,6 +657,12 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
     fun insert_after(beat: Int, position: List<Int>) {
+        val check_position = position.subList(0, position.size - 1) + listOf(position.last() + 1)
+        val blocked_pair = this.is_blocked_insert(beat, check_position)
+        if (blocked_pair != null) {
+            throw BlockedTreeException(beat, check_position, blocked_pair.first, blocked_pair.second)
+        }
+
         val parent_position = if (position.isNotEmpty()) {
             position.subList(0,  position.size - 1)
         } else {
@@ -673,6 +679,11 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     fun insert(beat: Int, position: List<Int>) {
         if (position.isEmpty()) {
             throw BadInsertPosition()
+        }
+
+        val blocked_pair = this.is_blocked_insert(beat, position)
+        if (blocked_pair != null) {
+            throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
         }
 
         val parent_position = position.subList(0, position.size - 1)
@@ -789,6 +800,28 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         } else {
             null
         }
+    }
+
+    private fun is_blocked_insert(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        // NOTE: No real need to check position isn't empty since insert() *shouldn't* ever be called at that position
+        val parent_position = position.subList(0, position.size - 1)
+        val blocker = this.get_blocking_position(beat, parent_position) ?: return null
+        val (blocker_beat, blocker_position) = blocker
+        val (next_beat, next_position) = this.get_proceding_event_position(blocker_beat, blocker_position) ?: return null
+        val blocker_tree = this.get_tree(blocker_beat, blocker_position)
+
+        val (head_offset, head_width) = this.get_leaf_offset_and_width(blocker.first, blocker.second)
+        val (target_offset) = if (next_beat == beat) {
+            this.get_leaf_offset_and_width(next_beat, next_position, position, 1)
+        } else {
+            this.get_leaf_offset_and_width(next_beat, next_position)
+        }
+        return if (target_offset >= head_offset && target_offset < head_offset + Rational(blocker_tree.get_event()!!.duration, head_width)) {
+            Pair(next_beat, next_position.toList())
+        } else {
+            null
+        }
+
     }
 
     /* Check if a beat can be removed without causing an overlap */
@@ -1032,6 +1065,22 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     fun remove_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
         try {
             this.get_controller<OpusControlEvent>(type).remove_standard(beat, position)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
+    }
+
+    fun insert_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
+        try {
+            this.get_controller<OpusControlEvent>(type).insert(beat, position)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
+    }
+
+    fun insert_control_leaf_after(type: ControlEventType, beat: Int, position: List<Int>) {
+        try {
+            this.get_controller<OpusControlEvent>(type).insert_after(beat, position)
         } catch (e: OpusTreeArray.BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }

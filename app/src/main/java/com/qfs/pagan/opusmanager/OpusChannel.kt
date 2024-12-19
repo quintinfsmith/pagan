@@ -283,6 +283,30 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
         }
     }
 
+    fun controller_channel_insert_leaf(type: ControlEventType, beat: Int, position: List<Int>){
+        this.catch_blocked_tree_exception_channel_controller(type) {
+            this.controllers.get_controller<OpusControlEvent>(type).insert(beat, position)
+        }
+    }
+
+    fun controller_channel_insert_leaf_after(type: ControlEventType, beat: Int, position: List<Int>){
+        this.catch_blocked_tree_exception_channel_controller(type) {
+            this.controllers.get_controller<OpusControlEvent>(type).insert_after(beat, position)
+        }
+    }
+
+    fun controller_line_insert_leaf(type: ControlEventType, line_offset: Int, beat: Int, position: List<Int>){
+        this.catch_blocked_tree_exception(line_offset) {
+            this.get_line(line_offset).insert_control_leaf(type, beat, position)
+        }
+    }
+
+    fun controller_line_insert_leaf_after(type: ControlEventType, line_offset: Int, beat: Int, position: List<Int>){
+        this.catch_blocked_tree_exception(line_offset) {
+            this.get_line(line_offset).insert_control_leaf_after(type, beat, position)
+        }
+    }
+
     fun <K: OpusControlEvent> replace_line_control_leaf(type: ControlEventType, line_offset: Int, beat: Int, position: List<Int>, tree: OpusTree<K>) {
         this.catch_blocked_tree_exception(line_offset) {
             this.lines[line_offset].replace_control_leaf(type, beat, position, tree)
@@ -291,6 +315,18 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     fun <K: OpusControlEvent> replace_channel_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: OpusTree<K>) {
         this.catch_blocked_tree_exception_channel_controller(type) {
             this.controllers.get_controller<K>(type).replace_tree(beat, position, tree)
+        }
+    }
+
+    fun insert_tree(line_offset: Int, beat: Int, position: List<Int>) {
+        this.catch_blocked_tree_exception(line_offset) {
+            this.lines[line_offset].insert(beat, position)
+        }
+    }
+
+    fun insert_after(line_offset: Int, beat: Int, position: List<Int>) {
+        this.catch_blocked_tree_exception(line_offset) {
+            this.lines[line_offset].insert_after(beat, position)
         }
     }
 }

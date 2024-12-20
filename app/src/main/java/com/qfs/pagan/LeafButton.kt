@@ -7,7 +7,6 @@ import androidx.appcompat.view.ContextThemeWrapper
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 abstract class LeafButton(context: Context) : LinearLayout(context) {
-    var initial_state: IntArray? = null
     init {
         this.isClickable = false
         this.minimumWidth = resources.getDimension(R.dimen.base_leaf_width).toInt()
@@ -29,9 +28,6 @@ abstract class LeafButton(context: Context) : LinearLayout(context) {
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
         val drawableState = super.onCreateDrawableState(extraSpace + 8)
         val working_state = this._build_drawable_state(drawableState)
-        if (this.initial_state == null) {
-            this.initial_state = working_state
-        }
         return working_state
     }
 

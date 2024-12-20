@@ -302,6 +302,15 @@ open class OpusLayerBase {
                 }
             }
         }
+
+        inline fun <reified T> checked_cast(value: Any): T {
+            if (value is T) {
+                return value
+            }  else {
+                throw ClassCastException()
+            }
+        }
+
     }
 
     private var _channel_uuid_map = HashMap<Int, OpusChannel>()
@@ -332,6 +341,8 @@ open class OpusLayerBase {
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
 
     internal var project_changing = false
+
+
 
     //// RO Functions ////
     /**
@@ -650,7 +661,7 @@ open class OpusLayerBase {
         val working_tree = this.get_tree(beat_key, position).copy()
         working_tree.traverse { tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
             if (event != null) {
-                (tree as OpusTree<InstrumentEvent>).set_event(event.copy())
+                checked_cast<OpusTree<InstrumentEvent>>(tree).set_event(event.copy())
             }
         }
         return working_tree

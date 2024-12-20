@@ -28,7 +28,6 @@
     <string name="license_fragment_label">License</string>
     <string name="license_brief">Licensed under GPLv3</string>
     <string name="percussion_label">\u2716</string>
-    <string name="remove_channel">X</string>
     <string name="cd_insert">Insert subdivision</string>
     <string name="cd_split">Split this beat or subdivision</string>
     <string name="cd_remove">Remove this subdivision</string>
@@ -57,7 +56,6 @@
     <string name="btn_settings_sfmute">Mute</string>
 
     <string name="btn_cfg_change_name">Change Project Name…</string>
-    <string name="btn_cfg_transpose">T:</string>
     <string name="label_tuning">Tuning</string>
     <string name="btn_cfg_add_channel">Add Channel</string>
     <string name="btn_cfg_save">Save</string>
@@ -135,8 +133,6 @@
     <string name="fluid_font_filename">FluidR3_GM_GS.sf2</string>
     <string name="drum_not_found">Drum Not Found</string>
     <string name="dlg_duration">Duration</string>
-    <string name="btn_percussion_visible">☑</string>
-    <string name="btn_percussion_hidden">☐</string>
     <string name="export_cancelled">Export Cancelled</string>
     <string name="export_wav_file_progress">Export Wav File Progress</string>
     <string name="export_wav_notification_description">Converting Pagan project to .wav</string>

@@ -12,7 +12,11 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event.TimeSignature
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.json.*
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONParser
+import com.qfs.json.JSONString
 import com.qfs.pagan.Rational
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface.Companion.LATEST_VERSION
@@ -3788,7 +3792,7 @@ open class OpusLayerBase {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
 
-    internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
+    private fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
         if (! this.is_valid_beat_range(from_key, to_key)) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }

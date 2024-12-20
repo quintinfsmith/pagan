@@ -23,12 +23,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     private val _spacer = CornerView(context)
 
     // Scroll Locks
-    var _label_scroll_locked = false
-    var _main_scroll_locked = false
+    private var _label_scroll_locked = false
+    private var _main_scroll_locked = false
 
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
-    private val _row_height_map = mutableListOf<Int>()
+    //private val _row_height_map = mutableListOf<Int>()
 
     init {
         this._top_row.addView(this._spacer)
@@ -192,7 +192,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         column_label_adapter.notifyItemChanged(x)
     }
 
-    fun align_column_labels() {
+    private fun _align_column_labels() {
         val layout_manager_columns = this.get_column_recycler().layoutManager!! as LinearLayoutManager
         val layout_manager_labels = this.column_label_recycler.layoutManager!! as LinearLayoutManager
 
@@ -217,18 +217,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             if (x >= this.get_opus_manager().beat_count) {
                 return
             } else if (! force) {
-                this.scroll_to_x(x, offset, offset_width)
+                this._scroll_to_x(x, offset, offset_width)
             } else {
-                this.forced_scroll_to_beat(x)
+                this._forced_scroll_to_beat(x)
             }
         }
 
         if (y != null) {
-            this.scroll_to_y(y)
+            this._scroll_to_y(y)
         }
     }
 
-    fun forced_scroll_to_beat(x: Int) {
+    private fun _forced_scroll_to_beat(x: Int) {
         val box_width = this.get_column_recycler().measuredWidth
 
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
@@ -250,7 +250,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._label_scroll_locked = false
     }
 
-    fun scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
+    private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
         val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
 
         val box_width = this.get_column_recycler().measuredWidth
@@ -350,7 +350,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
             0b0111,   // Overflowing,
             0b1001 -> { // No need to scroll
-                this.align_column_labels()
+                this._align_column_labels()
                 return
             }
             // 0b0000 -> { }   // Invalid
@@ -372,7 +372,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     // TODO: Create row_height_map so OpusManager isn't accessed here
-    fun scroll_to_y(y: Int) {
+    private fun _scroll_to_y(y: Int) {
         val row_height = (resources.getDimension(R.dimen.line_height)).toInt()
         val control_row_height = resources.getDimension(R.dimen.ctl_line_height).toInt()
         var target_y = 0
@@ -391,7 +391,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 target_y += row_height
                 working_row_height = row_height
                 count += 1
-                for ((type, controller) in line.controllers.get_all()) {
+                for ((_, controller) in line.controllers.get_all()) {
                     if (!controller.visible) {
                         continue
                     }
@@ -404,7 +404,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     count += 1
                 }
             }
-            for ((type, controller) in channel.controllers.get_all()) {
+            for ((_, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) {
                     continue
                 }
@@ -418,7 +418,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
         }
 
-        for ((type, controller) in this.get_opus_manager().controllers.get_all()) {
+        for ((_, controller) in this.get_opus_manager().controllers.get_all()) {
             if (!controller.visible) {
                 continue
             }
@@ -498,7 +498,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun remove_mapped_lines(y: Int, count: Int): List<Int> {
         val output = mutableListOf<Int>()
         for (j in 0 until this._column_width_map.size) {
-            this._column_width_map[j] = this._column_width_map[j].filterIndexed { i: Int, value: Int ->
+            this._column_width_map[j] = this._column_width_map[j].filterIndexed { i: Int, _: Int ->
                 !(i >= y && i < y + count)
             }.toMutableList()
 

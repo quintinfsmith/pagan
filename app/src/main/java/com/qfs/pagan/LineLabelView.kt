@@ -41,7 +41,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
                                     to_line
                                 )
                             } catch (e: OpusLayerBase.IncompatibleChannelException) {
-                                this.get_activity().feedback_msg("Can't swap percussion with other instruments")
+                                this.get_activity().feedback_msg(context.getString(R.string.std_percussion_swap))
                             }
                             //opus_manager.move_line(
                             //    from_channel,

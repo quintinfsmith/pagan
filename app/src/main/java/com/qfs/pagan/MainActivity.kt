@@ -873,7 +873,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun playback_start() {
         if (!this.update_playback_state_soundfont(PlaybackState.Queued)) {
-            this.feedback_msg("Playback Failed")
+            this.feedback_msg(getString(R.string.playback_failed))
             return
         }
 
@@ -903,7 +903,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun playback_start_midi_output() {
         if (!this.update_playback_state_midi(PlaybackState.Queued)) {
-            this.feedback_msg("Playback Failed")
+            this.feedback_msg(getString(R.string.playback_failed))
             return
         }
 
@@ -1647,7 +1647,7 @@ class MainActivity : AppCompatActivity() {
             this._soundfont = SoundFont(path)
         } catch (e: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
-            this.feedback_msg("Invalid Soundfont")
+            this.feedback_msg(getString(R.string.invalid_soundfont))
             return
         }
         this.configuration.soundfont = filename

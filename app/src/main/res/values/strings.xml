@@ -3,39 +3,24 @@
     <string name="app_version">v1.6.4</string>
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
-    <string name="label_bpm">%1$d BPM</string>
     <string name="label_choose_percussion">%1$d: %2$s</string>
     <string name="label_choose_instrument">%1$d: %2$s</string>
     <string name="label_choose_instrument_percussion">Kit: %1$s</string>
     <string name="label_shortcut_scrollbar">Jump to beat %1$d</string>
     <string name="label_shortcut">Jump to beat</string>
-    <string name="label_volume_scrollbar">Line Velocity: %1$d</string>
     <string name="dlg_tuning">Tuning</string>
     <string name="pfx_subtract">-</string>
     <string name="pfx_add">+</string>
-    <string name="pfx_log">\u2193</string>
-    <string name="pfx_pow">\u2191</string>
-    <string name="repeat_note">\u25C7</string>
-    <string name="empty_note">  </string>
     <string name="absolute_label">|n|</string>
-    <string name="msg_undo_none">Nothing to be done</string>
-    <string name="label_channels_button">Chn</string>
     <string name="main_fragment_label"></string>
-    <string name="load_fragment_label">Load Project</string>
     <string name="settings_fragment_label">Pagan Settings</string>
     <string name="front_fragment_label">@string/app_name</string>
-    <string name="config_fragment_label">Config</string>
     <string name="license_fragment_label">License</string>
-    <string name="license_brief">Licensed under GPLv3</string>
     <string name="percussion_label">\u2716</string>
     <string name="cd_insert">Insert subdivision</string>
     <string name="cd_split">Split this beat or subdivision</string>
     <string name="cd_remove">Remove this subdivision</string>
     <string name="cd_unset">Unset this subdivision</string>
-    <string name="download_fluidr3">Pagan will not have any audio feedback or playback without a soundfont. You can use one of your choice or download the Fluidr3 Soundfont.</string>
-    <string name="download_fluidr3_download">Download Fluid Soundfont</string>
-    <string name="download_fluidr3_import">Import Custom Soundfont</string>
-    <string name="download_fluidr3_mute">Use without sound</string>
     <string name="warning_nosoundfont">A soundfont is needed for playback. The Fluid General Midi soundfont can be found here:</string>
     <string name="warning_nosoundfont_2">You can import and select soundfonts from the settings menu</string>
     <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
@@ -67,16 +52,9 @@
     <string name="feedback_delete">Deleted %1s</string>
     <string name="config_file_not_found">Configuration can\'t be accessed</string>
 
-    <string name="line_volume">Line Volume:</string>
     <string name="label_manual">Manual</string>
     <string name="label_issues_location">Issues</string>
     <string name="label_source_code">Source</string>
-    <string name="apk_location">
-        Alternative downloads available at: https://burnsomni.net/software/pagan.
-    </string>
-    <string name="soundfont_disclaimer">
-        FluidR3_GM soundfont licensed under the MIT license.
-    </string>
     <string name="feedback_on_copy">Now working on copy</string>
     <string name="default_imported_midi_title">Imported Midi</string>
     <string name="feedback_exported_to_midi">Exported to midi</string>
@@ -103,17 +81,13 @@
     <string name="feedback_bad_range">Bad Range</string>
     <string name="feedback_exported">Exported</string>
     <string name="feedback_invalid_sf2_file">Invalid sf2 File</string>
-    <string name="feedback_unsupported_sf2_file">Unsupported sf2 File</string>
     <string name="no_soundfont">No Soundfont</string>
     <string name="option_import_soundfont">Import…</string>
-    <string name="unknown_percussion">Unknown Percussion</string>
-    <string name="percussion">Percussion</string>
     <string name="unknown_instrument">Unknown %1s</string>
     <string name="desc_column_label">Column %1d</string>
     <string name="dropdown_choose_percussion">Choose Percussion</string>
     <string name="dropdown_choose_instrument">Choose Instrument</string>
     <string name="label_link_beat">Tap a beat to link it. *Tap and hold* to group link.</string>
-    <string name="label_link_range">Tap top left corner of range to link</string>
     <string name="label_copy_beat">Tap a beat to copy it. *Tap and hold* to group copy.</string>
     <string name="label_copy_range">Tap top left corner of range to copy</string>
     <string name="label_move_beat">Tap a beat to move it. *Tap and hold* to group move.</string>
@@ -130,7 +104,6 @@
     <string name="dlg_export">Export Project to…</string>
     <string name="export_option_midi">Midi File</string>
     <string name="export_option_wav">Wav File</string>
-    <string name="fluid_font_filename">FluidR3_GM_GS.sf2</string>
     <string name="drum_not_found">Drum Not Found</string>
     <string name="dlg_duration">Duration</string>
     <string name="export_cancelled">Export Cancelled</string>
@@ -140,15 +113,12 @@
     <string name="export_wav_feedback">Exporting to wav</string>
     <string name="export_wav_feedback_complete">Done Export</string>
     <string name="export_wav_notification_complete">Done</string>
-    <string name="already_exporting">Already Exporting</string>
 
     <string name="dialog_remove_soundfont_title">Choose Soundfont to Remove</string>
     <string name="dialog_select_soundfont">Select Soundfont</string>
     <string name="dialog_remove_soundfont_text">Really Delete %1$s?</string>
-    <string name="dialog_reset_colors">Really Reset Custom Colors?</string>
     <string name="loading_new_soundfont">Loading New Soundfont…</string>
     <string name="title_msg_buffering">BUFFERING…</string>
-    <string name="label_default_duration">x1</string>
     <string name="label_duration">x%1$d</string>
     <string name="label_short_percussion">!%1$02d</string>
     <string name="config_label_sample_rate">%1$dHz</string>
@@ -160,12 +130,6 @@
     <string name="playback_failed">Playback Failed</string>
     <string name="invalid_soundfont">Invalid Soundfont</string>
     <string name="std_percussion_swap">Can\'t swap percussion with other instruments</string>
-    <string-array name="relative">
-        <item>@string/pfx_add</item>
-        <item>@string/pfx_subtract</item>
-        <item>@string/pfx_log</item>
-        <item>@string/pfx_pow</item>
-    </string-array>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

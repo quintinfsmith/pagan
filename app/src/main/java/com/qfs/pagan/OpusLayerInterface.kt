@@ -2192,6 +2192,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
             editor_table.add_column_to_map(beat, column)
         }
+        println("${editor_table._inv_column_map}")
     }
 
     private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {

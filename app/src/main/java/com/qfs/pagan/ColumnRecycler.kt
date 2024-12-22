@@ -4,17 +4,28 @@ import android.annotation.SuppressLint
 import android.view.MotionEvent
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
-class ColumnRecycler(editor_table: EditorTable): RecyclerView(editor_table.context) {
+class ColumnRecycler(var editor_table: EditorTable): RecyclerView(editor_table.context) {
     private val _column_label_recycler = editor_table.column_label_recycler
     private var _last_y_position: Float? = null
     private var _scroll_locked: Boolean = false
+
+    var test_active_column = 0
+
     init {
         this.layoutManager = LeftAlignedLayoutManager(this, HORIZONTAL, false)
         this.itemAnimator = null
         this.adapter = ColumnRecyclerAdapter(this, editor_table)
         this.overScrollMode = View.OVER_SCROLL_NEVER
+    }
+
+    fun get_first_column_test() {
+        val x = this.scrollX // TODO: Not what i need
+        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        val reduced_x = x / min_leaf_width
+        val column = this.editor_table.get_column_from_leaf(reduced_x)
     }
 
     override fun onScrolled(dx: Int, dy: Int) {
@@ -23,7 +34,9 @@ class ColumnRecycler(editor_table: EditorTable): RecyclerView(editor_table.conte
             this._column_label_recycler.scrollBy(dx, 0)
             this._column_label_recycler.unlock_scroll()
         }
+
         super.onScrolled(dx, dy)
+        this.get_first_column_test()
     }
 
     @SuppressLint("ClickableViewAccessibility")

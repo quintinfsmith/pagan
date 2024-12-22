@@ -28,6 +28,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
+    val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
 
     init {
@@ -77,6 +78,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_label_recycler.layoutParams.width = 0
 
         ColumnLabelAdapter(this)
+    }
+
+    fun get_column_from_leaf(x: Int): Int {
+        return this._inv_column_map[x]!!
     }
 
     fun get_scroll_view(): CompoundScrollView {
@@ -157,6 +162,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun recalculate_column_max(x: Int) {
         this._column_width_maxes[x] = this._column_width_map[x].max()
+        this._update_inv_column_map(x)
     }
 
     fun recalculate_column_maxes(): List<Int> {
@@ -167,6 +173,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 output.add(new_max)
                 this._column_width_maxes[x] = new_max
             }
+        }
+        if (output.isNotEmpty()) {
+            this._update_inv_column_map(output.min())
         }
         return output
     }
@@ -485,6 +494,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun clear_column_map() {
         this._column_width_map.clear()
         this._column_width_maxes.clear()
+        this._inv_column_map.clear()
     }
 
     fun swap_mapped_lines(line_a: Int, line_b: Int) {
@@ -508,12 +518,16 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 this._column_width_maxes[j] = this._column_width_map[j].max()
             }
         }
+        if (output.isNotEmpty()) {
+            this._update_inv_column_map(output.min())
+        }
         return output
     }
 
     fun remove_mapped_column(x: Int) {
         this._column_width_map.removeAt(x)
         this._column_width_maxes.removeAt(x)
+        this._update_inv_column_map(x)
     }
 
     fun add_column_to_map(x: Int, column: List<Int>) {
@@ -523,6 +537,25 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         } else {
             1
         })
+
+        this._update_inv_column_map(x)
+    }
+
+    private fun _update_inv_column_map(x: Int = 0) {
+        var working_leaf_x = this._column_width_maxes.subList(0, x).sum()
+
+        for (k in this._inv_column_map.keys) {
+            if (k >= working_leaf_x) {
+                this._inv_column_map.remove(k)!!
+            }
+        }
+
+        for (column in x until this._column_width_maxes.size) {
+            val w = this._column_width_maxes[column]
+            for (i in 0 until w) {
+                this._inv_column_map[working_leaf_x++] = column
+            }
+        }
     }
 
     fun add_line_to_map(y: Int, line: List<Int>): List<Int> {
@@ -535,6 +568,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 output.add(x)
             }
         }
+        if (output.isNotEmpty()) {
+            this._update_inv_column_map(output.min())
+        }
         return output
     }
 
@@ -546,7 +582,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val is_trivial = this._column_width_map[x][y] == width
         if (! is_trivial) {
             this._column_width_map[x][y] = width
+            this._update_inv_column_map(x)
         }
+
         return !is_trivial
     }
 }

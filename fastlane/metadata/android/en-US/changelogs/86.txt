@@ -11,6 +11,7 @@ Removed (v1.6.0):
     'Click anywhere to stop' functionality. Just use the play/pause button
 
 Fixed/Improved:
+    Block ability to import any RIFF file instead of SF2. (v1.6.5)
     Fixed bug where new beats inherit the width of proceding beats (v1.6.5)
     Fixed a missing check that caused notes to overlap in some cases (v1.6.4)
     Incorrect remapping of overlaps on leafs depth > 0 (v1.6.3)

@@ -22,6 +22,7 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
         val tag: String,
         val size: Int
     )
+    lateinit var type_cc: String
 
     var list_chunks: MutableList<ListChunkHeader> = mutableListOf()
     var sub_chunks: MutableList<List<SubChunkHeader>> = mutableListOf()
@@ -37,7 +38,7 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
                 throw InvalidRiff(file_path)
             }
             val riff_size = this.get_little_endian(4, 4)
-            this.get_string(8, 4) // typecc
+            this.type_cc = this.get_string(8, 4) // typecc
 
             var working_index = 12
             while (working_index < riff_size - 4) {

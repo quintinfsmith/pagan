@@ -1649,7 +1649,12 @@ class MainActivity : AppCompatActivity() {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(getString(R.string.invalid_soundfont))
             return
+        } catch (e: SoundFont.InvalidSoundFont) {
+            // Possible if user puts the sf2 in their files manually
+            this.feedback_msg("Invalid Soundfont")
+            return
         }
+
         this.configuration.soundfont = filename
         this.populate_supported_soundfont_instrument_names()
 

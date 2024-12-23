@@ -9,6 +9,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class SoundFont(file_path: String) {
+    class InvalidSoundFont(file_path: String): Exception("Not a soundfont $file_path")
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
     data class CachedSampleData(var data: ShortArray, var count: Int = 1)
@@ -34,6 +35,9 @@ class SoundFont(file_path: String) {
 
     init {
         this.riff = Riff(file_path) { riff: Riff ->
+            if (riff.type_cc != "sfbk") {
+                throw InvalidSoundFont(file_path)
+            }
             val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
             val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
             val info_offset = riff.list_chunks[0].index

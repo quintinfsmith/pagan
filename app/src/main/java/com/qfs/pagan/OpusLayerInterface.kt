@@ -1093,11 +1093,13 @@ class OpusLayerInterface : OpusLayerHistory() {
                         }
                     }
                 }
-
-                this._new_column_in_column_width_map(beat_index)
             }
 
             super.insert_beat(beat_index, beats_in_column)
+
+            if (!this.ui_change_bill.is_full_locked()) {
+                this._new_column_in_column_width_map(beat_index)
+            }
         }
     }
 

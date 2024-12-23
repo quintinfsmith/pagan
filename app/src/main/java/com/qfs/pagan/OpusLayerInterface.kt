@@ -1093,13 +1093,10 @@ class OpusLayerInterface : OpusLayerHistory() {
                         }
                     }
                 }
+                this._new_column_in_column_width_map(beat_index)
             }
 
             super.insert_beat(beat_index, beats_in_column)
-
-            if (!this.ui_change_bill.is_full_locked()) {
-                this._new_column_in_column_width_map(beat_index)
-            }
         }
     }
 
@@ -2266,60 +2263,29 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         val column = mutableListOf<Int>()
-        if (index < this.beat_count) {
-            this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*, *> ->
-                channel.lines.forEachIndexed { j: Int, line: OpusLineAbstract<*> ->
-                    val tree = this.get_tree(BeatKey(i, j, index))
-                    column.add(tree.get_total_child_weight())
-                    for ((type, controller) in channel.lines[j].controllers.get_all()) {
-                        if (!controller.visible) {
-                            continue
-                        }
-                        val ctl_tree = controller.get_tree(index)
-                        column.add(ctl_tree.get_total_child_weight())
-                    }
-                }
-
-                for ((type, controller) in channel.controllers.get_all()) {
-                    if (!controller.visible) {
-                        continue
-                    }
-                    val ctl_tree = controller.get_tree(index)
-                    column.add(ctl_tree.get_total_child_weight())
-                }
-            }
-            for ((type, controller) in this.controllers.get_all()) {
-                if (!controller.visible) {
-                    continue
-                }
-                val ctl_tree = controller.get_tree(index)
-                column.add(ctl_tree.get_total_child_weight())
-            }
-        } else {
-            this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*, *> ->
-                channel.lines.forEachIndexed { j: Int, line: OpusLineAbstract<*> ->
-                    column.add(1)
-                    for ((type, controller) in channel.lines[j].controllers.get_all()) {
-                        if (!controller.visible) {
-                            continue
-                        }
-                        column.add(1)
-                    }
-                }
-
-                for ((type, controller) in channel.controllers.get_all()) {
+        this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*, *> ->
+            channel.lines.forEachIndexed { j: Int, line: OpusLineAbstract<*> ->
+                column.add(1)
+                for ((type, controller) in channel.lines[j].controllers.get_all()) {
                     if (!controller.visible) {
                         continue
                     }
                     column.add(1)
                 }
             }
-            for ((type, controller) in this.controllers.get_all()) {
+
+            for ((type, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) {
                     continue
                 }
                 column.add(1)
             }
+        }
+        for ((type, controller) in this.controllers.get_all()) {
+            if (!controller.visible) {
+                continue
+            }
+            column.add(1)
         }
 
         this.get_editor_table()?.add_column_to_map(index, column)

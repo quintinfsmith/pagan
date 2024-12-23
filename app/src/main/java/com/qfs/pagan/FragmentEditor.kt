@@ -376,7 +376,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
         }
 
-        setFragmentResultListener(IntentFragmentToken.MostRecent.name) { _, bundle: Bundle? ->
+        setFragmentResultListener(IntentFragmentToken.MostRecent.name) { _, _ ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
             val main = this.get_main()

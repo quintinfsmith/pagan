@@ -430,7 +430,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                         try {
                             opus_manager.convert_event_to_absolute()
                             //val current_tree = opus_manager.get_tree()
-                            var new_event = current_tree.get_event()!!
+                            val new_event = current_tree.get_event()!!
                             (new_event as AbsoluteNoteEvent).note
                         } catch (e: OpusLayerBase.NoteOutOfRange) {
                             opus_manager.set_event_at_cursor(
@@ -468,12 +468,12 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     /* + */
                     1 -> {
                         val cursor = opus_manager.cursor
-                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
+                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
                         if (value >= 0) {
                             opus_manager.convert_event_to_relative()
 
                             //val current_tree = opus_manager.get_tree()
-                            var new_event = current_tree.get_event()!!
+                            val new_event = current_tree.get_event()!!
                             abs((new_event as RelativeNoteEvent).offset)
                         } else {
                             opus_manager.relative_mode = 1
@@ -484,12 +484,12 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     /* - */
                     2 -> {
                         val cursor = opus_manager.cursor
-                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
+                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
                         if (value <= 0) {
                             opus_manager.convert_event_to_relative()
 
                             //val current_tree = opus_manager.get_tree()
-                            var new_event = current_tree.get_event()!!
+                            val new_event = current_tree.get_event()!!
                             abs((new_event as RelativeNoteEvent).offset)
                         } else {
                             opus_manager.relative_mode = 2

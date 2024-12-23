@@ -7,14 +7,6 @@ import kotlin.math.min
 open class OpusLayerHistory: OpusLayerCursor() {
     var history_cache = HistoryCache()
 
-    inline fun <reified T> checked_cast(value: Any): T {
-        if (value is T) {
-            return value
-        }  else {
-            throw ClassCastException()
-        }
-    }
-
     override fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
         this._remember {
             super.new_line_repeat(channel, line_offset, count)
@@ -332,14 +324,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.SET_EVENT -> {
                     this.set_event(
                         current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1]),
+                        checked_cast<List<Int>>(current_node.args[1]),
                         current_node.args[2] as InstrumentEvent
                     )
                 }
 
                 HistoryToken.SET_PERCUSSION_EVENT -> {
                     val beat_key = current_node.args[0] as BeatKey
-                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    val position = checked_cast<List<Int>>(current_node.args[1])
                     this.percussion_set_event(beat_key, position)
                     this.set_duration(
                         beat_key,
@@ -351,14 +343,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.UNSET -> {
                     this.unset(
                         current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1])
+                        checked_cast<List<Int>>(current_node.args[1])
                     )
                 }
 
                 HistoryToken.REPLACE_TREE -> {
                     val beatkey = current_node.args[0] as BeatKey
-                    val position = this.checked_cast<List<Int>>(current_node.args[1]).toList()
-                    val tree = this.checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2])
+                    val position = checked_cast<List<Int>>(current_node.args[1]).toList()
+                    val tree = checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2])
                     this.replace_tree(beatkey, position, tree)
                 }
 
@@ -366,8 +358,8 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     this.controller_global_replace_tree(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
-                        this.checked_cast<List<Int>>(current_node.args[2]).toList(),
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
+                        checked_cast<List<Int>>(current_node.args[2]).toList(),
+                        checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
                     )
                 }
 
@@ -376,8 +368,8 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
                         current_node.args[2] as Int,
-                        this.checked_cast<List<Int>>(current_node.args[3]).toList(),
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4])
+                        checked_cast<List<Int>>(current_node.args[3]).toList(),
+                        checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4])
                     )
                 }
 
@@ -385,22 +377,22 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     this.controller_line_replace_tree(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[2]).toList(),
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
+                        checked_cast<List<Int>>(current_node.args[2]).toList(),
+                        checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3])
                     )
                 }
 
                 HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT -> {
                     this.controller_global_set_initial_event(
                         current_node.args[0] as ControlEventType,
-                        this.checked_cast<OpusControlEvent>(current_node.args[1])
+                        checked_cast<OpusControlEvent>(current_node.args[1])
                     )
                 }
                 HistoryToken.SET_CHANNEL_CTL_INITIAL_EVENT -> {
                     this.controller_channel_set_initial_event(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
-                        this.checked_cast<OpusControlEvent>(current_node.args[2])
+                        checked_cast<OpusControlEvent>(current_node.args[2])
                     )
                 }
 
@@ -409,7 +401,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
                         current_node.args[2] as Int,
-                        this.checked_cast<OpusControlEvent>(current_node.args[3])
+                        checked_cast<OpusControlEvent>(current_node.args[3])
                     )
                 }
 
@@ -424,14 +416,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     this.insert_line(
                         current_node.args[0] as Int,
                         current_node.args[1] as Int,
-                        this.checked_cast<OpusLine>(current_node.args[2])
+                        checked_cast<OpusLine>(current_node.args[2])
                     )
                 }
                 HistoryToken.INSERT_LINE_PERCUSSION -> {
                     this.insert_line(
                         current_node.args[0] as Int,
                         current_node.args[1] as Int,
-                        this.checked_cast<OpusLinePercussion>(current_node.args[2])
+                        checked_cast<OpusLinePercussion>(current_node.args[2])
                     )
                 }
 
@@ -453,39 +445,39 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.REMOVE -> {
                     this.remove(
                         current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1])
+                        checked_cast<List<Int>>(current_node.args[1])
                     )
                 }
 
                 HistoryToken.INSERT -> {
                     val beat_key = current_node.args[0] as BeatKey
-                    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                    val position = checked_cast<List<Int>>(current_node.args[1])
                     this.insert(beat_key, position)
                     this.replace_tree(
                         beat_key,
                         position,
-                        this.checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2]).copy()
+                        checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2]).copy()
                     )
                 }
 
                 HistoryToken.INSERT_CTL_GLOBAL -> {
-                    val type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    val type = checked_cast<ControlEventType>(current_node.args[0])
                     val beat = current_node.args[1] as Int
-                    val position = this.checked_cast<List<Int>>(current_node.args[2])
+                    val position = checked_cast<List<Int>>(current_node.args[2])
                     this.controller_global_insert(type, beat, position)
                     this.controller_global_replace_tree(
                         type,
                         beat,
                         position,
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3]).copy()
+                        checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3]).copy()
                     )
                 }
 
                 HistoryToken.INSERT_CTL_CHANNEL -> {
-                    val type = this.checked_cast<ControlEventType>(current_node.args[0])
+                    val type = checked_cast<ControlEventType>(current_node.args[0])
                     val channel = current_node.args[1] as Int
                     val beat = current_node.args[2] as Int
-                    val position = this.checked_cast<List<Int>>(current_node.args[3])
+                    val position = checked_cast<List<Int>>(current_node.args[3])
 
                     this.controller_channel_insert(type, channel, beat, position)
                     this.controller_channel_replace_tree(
@@ -493,21 +485,21 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         channel,
                         beat,
                         position,
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4]).copy()
+                        checked_cast<OpusTree<OpusControlEvent>>(current_node.args[4]).copy()
                     )
                 }
 
                 HistoryToken.INSERT_CTL_LINE -> {
-                    val type = this.checked_cast<ControlEventType>(current_node.args[0])
-                    val beat_key = this.checked_cast<BeatKey>(current_node.args[1])
-                    val position = this.checked_cast<List<Int>>(current_node.args[2])
+                    val type = checked_cast<ControlEventType>(current_node.args[0])
+                    val beat_key = checked_cast<BeatKey>(current_node.args[1])
+                    val position = checked_cast<List<Int>>(current_node.args[2])
 
                     this.controller_line_insert(type, beat_key, position)
                     this.controller_line_replace_tree(
                         type,
                         beat_key,
                         position,
-                        this.checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3]).copy()
+                        checked_cast<OpusTree<OpusControlEvent>>(current_node.args[3]).copy()
                     )
                 }
 
@@ -515,7 +507,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     this.controller_global_remove(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
-                        this.checked_cast<List<Int>>(current_node.args[2])
+                        checked_cast<List<Int>>(current_node.args[2])
                     )
                 }
                 HistoryToken.REMOVE_CTL_CHANNEL -> {
@@ -523,14 +515,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as Int,
                         current_node.args[2] as Int,
-                        this.checked_cast<List<Int>>(current_node.args[3])
+                        checked_cast<List<Int>>(current_node.args[3])
                     )
                 }
                 HistoryToken.REMOVE_CTL_LINE -> {
                     this.controller_line_remove(
                         current_node.args[0] as ControlEventType,
                         current_node.args[1] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[2])
+                        checked_cast<List<Int>>(current_node.args[2])
                     )
                 }
 
@@ -543,8 +535,8 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.INSERT_BEAT -> {
-                    val instrument_events = this.checked_cast<List<OpusTree<OpusEvent>>>(current_node.args[1])
-                    val control_events = this.checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>, List<Pair<ControlEventType, OpusTree<OpusControlEvent>>>>>(current_node.args[2])
+                    val instrument_events = checked_cast<List<OpusTree<OpusEvent>>>(current_node.args[1])
+                    val control_events = checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, OpusTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, OpusTree<OpusControlEvent>>>, List<Pair<ControlEventType, OpusTree<OpusControlEvent>>>>>(current_node.args[2])
                     val beat_index = current_node.args[0] as Int
                     this.insert_beat(beat_index, instrument_events)
 
@@ -573,7 +565,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                 HistoryToken.SET_TUNING_MAP -> {
                     this.set_tuning_map(
-                        this.checked_cast<Array<Pair<Int, Int>>>(current_node.args[0]),
+                        checked_cast<Array<Pair<Int, Int>>>(current_node.args[0]),
                         false
                     )
                 }
@@ -581,7 +573,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.SET_CHANNEL_INSTRUMENT -> {
                     this.channel_set_instrument(
                         current_node.args[0] as Int,
-                        this.checked_cast<Pair<Int, Int>>(current_node.args[1])
+                        checked_cast<Pair<Int, Int>>(current_node.args[1])
                     )
                 }
 
@@ -595,7 +587,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.SET_EVENT_DURATION -> {
                     this.set_duration(
                         current_node.args[0] as BeatKey,
-                        this.checked_cast<List<Int>>(current_node.args[1]),
+                        checked_cast<List<Int>>(current_node.args[1]),
                         current_node.args[2] as Int
                     )
                 }
@@ -674,7 +666,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 //HistoryToken.CURSOR_SELECT_RANGE -> {
-                //    var args = this.checked_cast<List<Int>>(current_node.args)
+                //    var args = checked_cast<List<Int>>(current_node.args)
                 //    val beat_key_a = BeatKey(args[0], args[1], args[2])
                 //    val beat_key_b = BeatKey(args[3], args[4], args[5])
                 //    if (beat_key_a != beat_key_b) {
@@ -696,7 +688,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 //    }
                 //}
                 //HistoryToken.CURSOR_SELECT_LINE -> {
-                //    var args = this.checked_cast<List<Int>>(current_node.args)
+                //    var args = checked_cast<List<Int>>(current_node.args)
                 //    this.queue_cursor_select(
                 //        OpusManagerCursor(
                 //            mode = OpusManagerCursor.CursorMode.Line,
@@ -709,7 +701,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 //HistoryToken.CURSOR_SELECT -> {
                 //    val beat_key = current_node.args[0] as BeatKey
                 //    val args = mutableListOf<Int>(beat_key.channel, beat_key.line_offset, beat_key.beat)
-                //    val position = this.checked_cast<List<Int>>(current_node.args[1])
+                //    val position = checked_cast<List<Int>>(current_node.args[1])
                 //    args.addAll(position)
 
                 //    this.queue_cursor_select(
@@ -737,9 +729,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 //        OpusManagerCursor(
                 //            mode = OpusManagerCursor.CursorMode.Single,
                 //            beat = current_node.args[1] as Int,
-                //            position = this.checked_cast<List<Int>>(current_node.args[2]),
+                //            position = checked_cast<List<Int>>(current_node.args[2]),
                 //            ctl_level = CtlLineLevel.Global,
-                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
                 //        )
                 //    )
                 //}
@@ -749,23 +741,23 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 //            mode = OpusManagerCursor.CursorMode.Single,
                 //            channel = current_node.args[1] as Int,
                 //            beat = current_node.args[2] as Int,
-                //            position = this.checked_cast<List<Int>>(current_node.args[3]),
+                //            position = checked_cast<List<Int>>(current_node.args[3]),
                 //            ctl_level = CtlLineLevel.Channel,
-                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
                 //        )
                 //    )
                 //}
                 //HistoryToken.CURSOR_SELECT_LINE_CTL -> {
-                //    val beat_key = this.checked_cast<BeatKey>(current_node.args[1])
+                //    val beat_key = checked_cast<BeatKey>(current_node.args[1])
                 //    this.queue_cursor_select(
                 //        OpusManagerCursor(
                 //            mode = OpusManagerCursor.CursorMode.Single,
                 //            channel = beat_key.channel,
                 //            line_offset = beat_key.line_offset,
                 //            beat = beat_key.beat,
-                //            position = this.checked_cast<List<Int>>(current_node.args[2]),
+                //            position = checked_cast<List<Int>>(current_node.args[2]),
                 //            ctl_level = CtlLineLevel.Line,
-                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
                 //        )
                 //    )
                 //}
@@ -776,7 +768,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 //            channel = current_node.args[1] as Int,
                 //            line_offset = current_node.args[2] as Int,
                 //            ctl_level = CtlLineLevel.Line,
-                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
                 //        )
                 //    )
                 //}
@@ -786,7 +778,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 //            mode = OpusManagerCursor.CursorMode.Line,
                 //            ctl_level = CtlLineLevel.Channel,
                 //            channel = current_node.args[1] as Int,
-                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
                 //        )
                 //    )
                 //}
@@ -795,7 +787,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 //        OpusManagerCursor(
                 //            mode = OpusManagerCursor.CursorMode.Line,
                 //            ctl_level = CtlLineLevel.Global,
-                //            ctl_type = this.checked_cast<ControlEventType>(current_node.args[0])
+                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
                 //        )
                 //    )
                 //}

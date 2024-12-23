@@ -1,11 +1,11 @@
 # Pagan, a Music Sequencer
 
 
-Mobile music applications can be limited.
+Step Sequencers can be limited.
 
-Desktop sequencers and workstations can be impenetrable.
+DAWs and Notation Software can be impenetrable.
 
-Pagan dons its wax wings and dares to be both.
+Pagan is something different.
 
 [![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
 
@@ -60,7 +60,7 @@ Pagan dons its wax wings and dares to be both.
 * Connect to and playback through Midi devices
 * Variable Tone Tuning (not just 12)
 * Export .wav files
-
+* Variable sized steps-per-beat-per-instrument
 
 ## Screenshots
 <table>

@@ -28,10 +28,17 @@
         <item name="android:gravity">center</item>
     </style>
 
+    <style name="button_labelled_inner">
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
+    </style>
+
     <style name="button">
         <item name="android:background">@drawable/button</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:clickable">true</item>
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
     <style name="button_number_selector" parent="button">
@@ -171,6 +178,7 @@
     </style>
 
     <style name="corner_view">
+        <item name="android:clickable">false</item>
         <item name="android:background">@drawable/corner_button</item>
         <item name="android:paddingTop">5dp</item>
         <item name="android:paddingLeft">5dp</item>

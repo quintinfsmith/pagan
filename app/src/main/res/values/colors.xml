@@ -59,7 +59,10 @@
     <color name="channel_even_text">@color/main_fg</color>
     <color name="channel_odd_text">@color/main_fg</color>
     <color name="button">#FFFFFF</color>
+    <color name="button_disabled">#AAFFFFFF</color>
+    <color name="button_pressed">#efefef</color>
     <color name="button_text">@color/main_fg</color>
+    <color name="button_text_disabled">#AA2A2A46</color>
     <color name="button_alt">@color/main_fg</color>
     <color name="button_alt_text">#FFFFFF</color>
     <color name="button_selected">@color/leaf_main</color>

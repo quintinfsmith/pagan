@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:theme="@style/icon_button"
             android:id="@+id/btnSplit"
             android:layout_width="@dimen/icon_button_width"
@@ -14,7 +14,7 @@
             android:contentDescription="@string/cd_split"
             app:srcCompat="@drawable/split"/>
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:theme="@style/icon_button"
             android:id="@+id/btnInsert"
             android:layout_width="@dimen/icon_button_width"
@@ -24,7 +24,7 @@
             android:text="Insert"
             app:srcCompat="@drawable/insert" />
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:theme="@style/icon_button"
             android:id="@+id/btnRemove"
             android:layout_width="@dimen/icon_button_width"
@@ -34,7 +34,7 @@
             android:text="Remove"
             app:srcCompat="@drawable/remove" />
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:theme="@style/icon_button"
             android:id="@+id/btnUnset"
             android:layout_width="@dimen/icon_button_width"
@@ -44,7 +44,7 @@
             android:text="Unset"
             app:srcCompat="@drawable/unset" />
 
-        <com.qfs.pagan.ButtonStd
+        <TextView
             android:theme="@style/icon_button"
             android:id="@+id/btnDuration"
             android:minHeight="@dimen/icon_button_height"

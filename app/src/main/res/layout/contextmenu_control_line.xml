@@ -4,7 +4,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <com.qfs.pagan.ButtonIcon
+    <ImageView
         android:id="@+id/btnToggleCtl"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/hide"
@@ -16,7 +16,7 @@
         android:layout_weight="1"
         android:layout_height="match_parent"/>
 
-    <com.qfs.pagan.ButtonIcon
+    <ImageView
         android:id="@+id/btnRemoveCtl"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/remove_line"

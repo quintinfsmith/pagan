@@ -56,7 +56,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
-        <com.qfs.pagan.ButtonStd
+        <TextView
             android:id="@+id/btnMostRecent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -67,7 +67,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <com.qfs.pagan.ButtonStd
+        <TextView
             android:clickable="true"
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
@@ -78,7 +78,7 @@
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
-        <com.qfs.pagan.ButtonStd
+        <TextView
             android:clickable="true"
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
@@ -91,7 +91,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <com.qfs.pagan.ButtonStd
+        <TextView
             android:clickable="true"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
@@ -104,7 +104,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <com.qfs.pagan.ButtonStd
+        <TextView
             android:clickable="true"
             android:id="@+id/btnFrontSettings"
             android:layout_width="match_parent"

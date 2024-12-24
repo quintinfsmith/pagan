@@ -2,6 +2,8 @@ package com.qfs.pagan
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
@@ -10,10 +12,10 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 */
 
 class ContextMenuChannel(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_channel, R.layout.contextmenu_channel_secondary, primary_container, secondary_container) {
-    lateinit var button_insert: ButtonIcon
-    lateinit var button_remove: ButtonIcon
-    lateinit var button_choose_instrument: ButtonStd
-    lateinit var button_toggle_controllers: ButtonIcon
+    lateinit var button_insert: ImageView
+    lateinit var button_remove: ImageView
+    lateinit var button_choose_instrument: TextView
+    lateinit var button_toggle_controllers: ImageView
     val _visible_controls_domain = listOf(
  //       ControlEventType.Volume,
         ControlEventType.Pan

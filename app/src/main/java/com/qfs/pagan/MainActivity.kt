@@ -50,6 +50,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -1100,7 +1101,6 @@ class MainActivity : AppCompatActivity() {
     fun update_menu_options() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val options_menu = this._options_menu ?: return
-        options_menu.setGroupDividerEnabled(true)
         val text_color = this.view_model.color_map[Palette.TitleBarText]
 
         when (navHost?.childFragmentManager?.fragments?.get(0)) {

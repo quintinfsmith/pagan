@@ -2,14 +2,16 @@ package com.qfs.pagan
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import com.qfs.pagan.opusmanager.BeatKey
 
 class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell_percussion, null, primary_container, secondary_container) {
-    lateinit var button_split: ButtonIcon
-    lateinit var button_insert: ButtonIcon
-    lateinit var button_unset: ButtonIcon
-    lateinit var button_remove: ButtonIcon
-    lateinit var button_duration: ButtonStd
+    lateinit var button_split: ImageView
+    lateinit var button_insert: ImageView
+    lateinit var button_unset: ImageView
+    lateinit var button_remove: ImageView
+    lateinit var button_duration: TextView
 
     init {
         this.refresh()

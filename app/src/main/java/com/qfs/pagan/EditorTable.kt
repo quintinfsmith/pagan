@@ -34,14 +34,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._top_row.addView(this._spacer)
         this._top_row.addView(this.column_label_recycler)
 
-        this._spacer.setOnClickListener {
+        this._spacer.getChildAt(0).setOnClickListener {
             val fragment = this.get_activity().get_active_fragment()
             if (fragment is FragmentEditor) {
                 fragment.shortcut_dialog()
             }
         }
 
-        this._spacer.setOnLongClickListener {
+        this._spacer.getChildAt(0).setOnLongClickListener {
             this.get_opus_manager().cursor_select_column(0)
             true
         }

@@ -2,7 +2,9 @@ package com.qfs.pagan
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -12,11 +14,11 @@ import kotlin.math.max
 class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container) {
     lateinit var widget_wrapper: LinearLayout
     // --------------------------------
-    lateinit var button_split: ButtonIcon
-    lateinit var button_insert: ButtonIcon
-    lateinit var button_remove: ButtonIcon
-    lateinit var button_duration: ButtonStd
-    lateinit var button_unset: ButtonIcon
+    lateinit var button_split: ImageView
+    lateinit var button_insert: ImageView
+    lateinit var button_remove: ImageView
+    lateinit var button_duration: TextView
+    lateinit var button_unset: ImageView
 
     init {
         this.init_widget()

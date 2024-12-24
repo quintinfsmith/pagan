@@ -1,11 +1,12 @@
 package com.qfs.pagan
 
 import android.view.ViewGroup
+import android.widget.ImageView
 import com.qfs.pagan.opusmanager.OpusLayerBase
 
 class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_column, null, primary_parent, secondary_parent) {
-    lateinit var button_insert: ButtonIcon
-    lateinit var button_remove: ButtonIcon
+    lateinit var button_insert: ImageView
+    lateinit var button_remove: ImageView
 
     init {
         this.refresh()

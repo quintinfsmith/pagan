@@ -3,17 +3,19 @@ package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Space
+import android.widget.TextView
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container) {
-    lateinit var button_insert: ButtonIcon
-    lateinit var button_remove: ButtonIcon
-    lateinit var button_choose_percussion: ButtonStd
-    lateinit var button_toggle_volume_control: ButtonIcon
+    lateinit var button_insert: ImageView
+    lateinit var button_remove: ImageView
+    lateinit var button_choose_percussion: TextView
+    lateinit var button_toggle_volume_control: ImageView
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
     val _visible_line_controls_domain = listOf(ControlEventType.Volume, ControlEventType.Pan)

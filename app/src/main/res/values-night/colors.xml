@@ -23,4 +23,9 @@
     <color name="empty_linked_selected">#4a87b2</color>
     <color name="ctl_line">#000000</color>
     <color name="ctl_line_text">#e1e1e1</color>
+
+    <color name="ns_default">@color/button</color>
+    <color name="ns_default_text">@color/button_text</color>
+    <color name="ns_alt">#4D5058</color>
+    <color name="ns_alt_text">#e1e1e1</color>
 </resources>

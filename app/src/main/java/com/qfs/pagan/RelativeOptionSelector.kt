@@ -1,15 +1,11 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import androidx.appcompat.view.ContextThemeWrapper
-import com.qfs.pagan.ColorMap.Palette
 
 
 class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
@@ -41,49 +37,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
                 this.setActive(true)
             }
         }
-        private fun _setup_colors() {
-            var context = this.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
-            }
-            val color_map = context.view_model.color_map
-
-            val states = arrayOf<IntArray>(
-                intArrayOf(R.attr.state_active),
-                intArrayOf(
-                    -R.attr.state_active,
-                    R.attr.state_alternate
-                ),
-                intArrayOf(
-                    -R.attr.state_active,
-                    -R.attr.state_alternate
-                )
-            )
-            for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)?.setTintList(
-                    ColorStateList(
-                        states,
-                        intArrayOf(
-                            color_map[Palette.Selection],
-                            color_map[Palette.ButtonAlt],
-                            color_map[Palette.Button]
-                        )
-                    )
-                )
-            }
-
-            this.setTextColor(
-                ColorStateList(
-                    states,
-                    intArrayOf(
-                        color_map[Palette.SelectionText],
-                        color_map[Palette.ButtonAltText],
-                        color_map[Palette.ButtonText]
-                    )
-                )
-            )
-        }
-
 
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {
             val drawableState = super.onCreateDrawableState(extraSpace + 1)
@@ -107,12 +60,6 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             this.text = resources.getString(this._value)
             this.gravity = CENTER
         }
-
-        override fun onAttachedToWindow() {
-            super.onAttachedToWindow()
-            this._setup_colors()
-        }
-
     }
 
     init {

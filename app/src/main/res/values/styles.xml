@@ -41,11 +41,10 @@
         <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
-    <style name="button_number_selector" parent="button">
-        <item name="android:paddingLeft">-3dp</item>
-        <item name="android:paddingRight">0dp</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">3dp</item>
+    <style name="button_number_selector">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:background">@drawable/number_selector_button</item>
+        <item name="android:textColor">@color/number_select_button_text_selector</item>
     </style>
 
     <style name="icon_button" parent="button">

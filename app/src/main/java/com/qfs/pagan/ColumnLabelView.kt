@@ -1,12 +1,9 @@
 package com.qfs.pagan
 
-import android.content.res.ColorStateList
-import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.ColorMap.Palette
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -31,35 +28,6 @@ class ColumnLabelView(private val _view_holder: RecyclerView.ViewHolder): AppCom
             val opus_manager = this.get_opus_manager()
             opus_manager.cursor_select_column(this._view_holder.bindingAdapterPosition)
         }
-
-        val activity = (this._view_holder.bindingAdapter as ColumnLabelAdapter).get_activity()
-        val color_map = activity.view_model.color_map
-
-        val states = arrayOf<IntArray>(
-            intArrayOf(R.attr.state_focused),
-            intArrayOf(-R.attr.state_focused)
-        )
-
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines).setTint(color_map[Palette.Lines])
-        (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background).setTintList(
-            ColorStateList(
-                states,
-                intArrayOf(
-                    color_map[Palette.Selection],
-                    color_map[Palette.ColumnLabel]
-                )
-            )
-        )
-
-        this.setTextColor(
-            ColorStateList(
-                states,
-                intArrayOf(
-                    color_map[Palette.SelectionText],
-                    color_map[Palette.ColumnLabelText]
-                )
-            )
-        )
 
         // Kludge: Needs to be called here or else will be unreliable
         this.refreshDrawableState()

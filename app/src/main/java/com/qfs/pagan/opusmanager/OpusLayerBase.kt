@@ -289,15 +289,6 @@ open class OpusLayerBase {
         }
 
 
-        fun next_position(position: List<Int>, i: Int): List<Int> {
-            return List(position.size + 1) { j: Int ->
-                if (j == position.size) {
-                    i
-                } else {
-                    position[j]
-                }
-            }
-        }
 
         inline fun <reified T> checked_cast(value: Any): T {
             if (value is T) {

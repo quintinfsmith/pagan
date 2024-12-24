@@ -2,12 +2,33 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.Rational
 import com.qfs.pagan.opusmanager.OpusLayerBase.BadInsertPosition
-import com.qfs.pagan.opusmanager.OpusLayerBase.Companion.next_position
 import com.qfs.pagan.structure.OpusTree
 
 // TODO: This constructor signature feels wonky. do something about that.
 open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
     constructor(): this(listOf())
+
+    companion object {
+        fun next_position(position: List<Int>, i: Int): List<Int> {
+            return List(position.size + 1) { j: Int ->
+                if (j == position.size) {
+                    i
+                } else {
+                    position[j]
+                }
+            }
+        }
+
+        fun inc_position(position: List<Int>): List<Int> {
+            return List(position.size) { j: Int ->
+                if (j == position.size - 1) {
+                    position[j] + 1
+                } else {
+                    position[j]
+                }
+            }
+        }
+    }
 
     class BlockedTreeException(var beat: Int, var position: List<Int>, var blocker_beat: Int, var blocker_position: List<Int>): Exception("$beat | $position is blocked by event @ $blocker_beat $blocker_position")
     private val _cache_blocked_tree_map = HashMap<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>()
@@ -659,23 +680,7 @@ open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
     }
 
     fun insert_after(beat: Int, position: List<Int>) {
-        val check_position = position.subList(0, position.size - 1) + listOf(position.last() + 1)
-        val blocked_pair = this.is_blocked_insert(beat, check_position)
-        if (blocked_pair != null) {
-            throw BlockedTreeException(beat, check_position, blocked_pair.first, blocked_pair.second)
-        }
-
-        val parent_position = if (position.isNotEmpty()) {
-            position.subList(0,  position.size - 1)
-        } else {
-            position
-        }
-
-        this.recache_blocked_tree_wrapper(beat, parent_position) {
-            val parent = this.get_tree(beat, parent_position)
-            val index = position.last()
-            parent.insert(index + 1)
-        }
+        this.insert(beat, OpusTreeArray.inc_position(position))
     }
 
     fun insert(beat: Int, position: List<Int>) {

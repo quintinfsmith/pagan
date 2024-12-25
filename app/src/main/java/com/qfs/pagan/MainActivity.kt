@@ -1249,9 +1249,8 @@ class MainActivity : AppCompatActivity() {
         return output
     }
     internal fun _adjust_dialog_colors(dialog: AlertDialog) {
-        val color_map = this.view_model.color_map
 
-        dialog.window!!.decorView.background.setTint(color_map[Palette.Background])
+        dialog.window!!.decorView.background.setTint(getColor(R.color.main_bg))
         val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
         dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
 
@@ -1260,8 +1259,10 @@ class MainActivity : AppCompatActivity() {
         dialog.getButton(DialogInterface.BUTTON_NEGATIVE).apply {
             (this.layoutParams as MarginLayoutParams).marginEnd = this@MainActivity.resources.getDimension(R.dimen.alert_padding).toInt()
             this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
+
             this.backgroundTintList = null
             this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button_alt)
+            this.setTextColor(getColor(R.color.button_alt_text))
             this.setPadding(
                 resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_top).roundToInt(),
@@ -1271,13 +1272,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialog.getButton(DialogInterface.BUTTON_NEUTRAL).apply {
+            this.backgroundTintList = null
             this.background = null
-            this.setTextColor(color_map[Palette.Foreground])
+            this.setTextColor(getColor(R.color.main_fg))
         }
 
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
             this.backgroundTintList = null
             this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
+            this.setTextColor(getColor(R.color.button_text))
             this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
             this.setPadding(
                 resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),

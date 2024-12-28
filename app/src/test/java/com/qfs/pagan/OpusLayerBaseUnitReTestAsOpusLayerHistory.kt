@@ -566,6 +566,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         var new_tree = OpusTree<TunedInstrumentEvent>()
+        manager.unset(beatkey, listOf())
         manager.split_tree(beatkey, listOf(), 12)
         var position = listOf<Int>(0)
         var old_parent = manager.get_tree(beatkey, position).parent

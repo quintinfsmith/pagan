@@ -93,6 +93,21 @@ class OpusTreeArrayUnitTest {
             array.get_tree(0, listOf(0)).size
         )
 
+        val test_event = AbsoluteNoteEvent(2, 1)
+        array.set_event(1, listOf(), test_event)
+        array.split_tree(1, listOf(), 4, true)
+        assertEquals(
+            test_event,
+            array.get_tree(1, listOf(3)).get_event()
+        )
+
+        // Trivial call
+        array.split_tree(2, listOf(), 1, false)
+
+        assertThrows(OpusTreeArray.SplittingBranchException::class.java) {
+            array.split_tree(1, listOf(), 2, true)
+        }
+
     }
 
     @Test
@@ -132,7 +147,16 @@ class OpusTreeArrayUnitTest {
         array.set_event(1, listOf(2), test_event_b)
         assertThrows(OpusTreeArray.BlockedTreeException::class.java) {
             // The new tree should move event_b from 1/3 to 1/4 and event_a takes up 2/3 of the tree
-            array.insert(1, listOf(3))
+            try {
+                array.insert(1, listOf(3))
+            } catch (e: OpusTreeArray.BlockedTreeException) {
+                // TODO: This isn't a priority right now but it should be dealt with for ui's sake
+                // assertEquals(
+                //     Pair(e.blocker_beat, e.blocker_position),
+                //     Pair(0, listOf(2))
+                // )
+                throw e
+            }
         }
     }
 
@@ -159,5 +183,43 @@ class OpusTreeArrayUnitTest {
             tree_b
         )
     }
+
+    @Test
+    fun test_insert_remove_beat() {
+        val array = OpusTreeArray<OpusEvent>()
+        array.insert_beat(0)
+        array.insert_beat(0)
+        array.insert_beat(0)
+        array.insert_beat(0)
+        array.split_tree(0, listOf(), 2, false)
+
+        array.set_event(0, listOf(1), AbsoluteNoteEvent(2, 2))
+        array.set_event(2, listOf(), AbsoluteNoteEvent(3, 2))
+
+        array.insert_beat(1)
+        assertThrows(OpusTreeArray.BlockedTreeException::class.java) {
+            array.set_event(1, listOf(), AbsoluteNoteEvent(2, 1))
+        }
+
+        assertThrows(OpusTreeArray.BlockedTreeException::class.java) {
+            array.set_event(4, listOf(), AbsoluteNoteEvent(2, 1))
+        }
+
+        array.remove_beat(1)
+        assertThrows(OpusTreeArray.BlockedTreeException::class.java) {
+            array.set_event(1, listOf(), AbsoluteNoteEvent(2, 1))
+        }
+
+        assertThrows(OpusTreeArray.BlockedTreeException::class.java) {
+            array.set_event(3, listOf(), AbsoluteNoteEvent(2, 1))
+        }
+
+        array.remove_beat(2)
+        assertEquals(
+            1,
+            array._cache_blocked_tree_map.size
+        )
+    }
+
 
 }

@@ -7,6 +7,7 @@ import com.qfs.pagan.structure.OpusTree
 // TODO: This constructor signature feels wonky. do something about that.
 open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
     constructor(): this(listOf())
+    class SplittingBranchException(beat: Int, position: List<Int>): Exception("Can't split non-leaf @ $beat $position")
 
     companion object {
         fun next_position(position: List<Int>, i: Int): List<Int> {
@@ -31,7 +32,7 @@ open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
     }
 
     class BlockedTreeException(var beat: Int, var position: List<Int>, var blocker_beat: Int, var blocker_position: List<Int>): Exception("$beat | $position is blocked by event @ $blocker_beat $blocker_position")
-    private val _cache_blocked_tree_map = HashMap<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>()
+    internal val _cache_blocked_tree_map = HashMap<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<Int, List<Int>>, Triple<Int, List<Int>, Rational>>()
 
     val beats = input_beats.toMutableList()
@@ -144,15 +145,18 @@ open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
             val (working_tree, working_beat, working_position) = stack.removeFirst()
             if (working_tree.is_leaf()) {
                 val cache_key = Pair(working_beat, working_position.toList())
-                this._cache_blocked_tree_map[cache_key] = this.calculate_blocking_leafs(working_beat, working_position)
+                val blocking_leafs = this.calculate_blocking_leafs(working_beat, working_position)
+                if (blocking_leafs.isNotEmpty()) {
+                    this._cache_blocked_tree_map[cache_key] = blocking_leafs
 
-                for ((blocked_beat, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
-                    this._assign_to_inv_cache(blocked_beat, blocked_position, working_beat, working_position, blocked_amount)
-                }
-                for ((blocked_beat, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
-                    val overlappee_pair = Pair(blocked_beat, blocked_position.toList())
+                    for ((blocked_beat, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
+                        this._assign_to_inv_cache(blocked_beat, blocked_position, working_beat, working_position, blocked_amount)
+                    }
+                    for ((blocked_beat, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
+                        val overlappee_pair = Pair(blocked_beat, blocked_position.toList())
 
-                    this._on_overlap(cache_key, overlappee_pair)
+                        this._on_overlap(cache_key, overlappee_pair)
+                    }
                 }
             } else {
                 for (i in 0 until working_tree.size) {
@@ -414,6 +418,15 @@ open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
     }
 
     fun split_tree(beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
+        val tree = this.get_tree(beat, position)
+        if (!tree.is_leaf()) {
+            println("${tree.size}")
+            throw OpusTreeArray.SplittingBranchException(beat, position)
+        }
+
+        if (splits == 1) {
+            return
+        }
         // Not sure why i put this here. a split tree can't possibly cause overlap. leaving commented for know in case i figure it out.
         //val current_tree_position = this.get_blocking_position(beat, position)
         //if (current_tree_position != null) {
@@ -433,12 +446,10 @@ open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
                 working_tree.unset_event()
                 working_tree.set_size(splits)
 
-                if (splits > 1) {
-                    working_tree = if (move_event_to_end) {
-                        working_tree[working_tree.size - 1]
-                    } else {
-                        working_tree[0]
-                    }
+                working_tree = if (move_event_to_end) {
+                    working_tree[working_tree.size - 1]
+                } else {
+                    working_tree[0]
                 }
 
                 working_tree.set_event(event)
@@ -826,7 +837,6 @@ open class OpusTreeArray<T: OpusEvent>(input_beats: List<OpusTree<T>>) {
         } else {
             null
         }
-
     }
 
     /* Check if a beat can be removed without causing an overlap */

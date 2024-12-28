@@ -4,6 +4,7 @@ import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusTreeArray
+import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -134,4 +135,29 @@ class OpusTreeArrayUnitTest {
             array.insert(1, listOf(3))
         }
     }
+
+    @Test
+    fun test_replace_tree() {
+        val array = OpusTreeArray<OpusEvent>()
+        array.insert_beat(0)
+        val tree = OpusTree<OpusEvent>()
+        tree.set_size(3)
+
+        array.replace_tree(0, listOf(), tree)
+
+        assertEquals(
+            array.get_tree(0, listOf()),
+            tree
+        )
+
+        val tree_b = OpusTree<OpusEvent>()
+        tree_b.set_size(2)
+        array.replace_tree(0, listOf(1), tree_b)
+
+        assertEquals(
+            array.get_tree(0, listOf(1)),
+            tree_b
+        )
+    }
+
 }

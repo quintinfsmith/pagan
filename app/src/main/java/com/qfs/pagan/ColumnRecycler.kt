@@ -22,10 +22,13 @@ class ColumnRecycler(var editor_table: EditorTable): RecyclerView(editor_table.c
     }
 
     fun get_first_column_test() {
-        val x = this.scrollX // TODO: Not what i need
+        val x = this.computeHorizontalScrollOffset()
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         val reduced_x = x / min_leaf_width
+        println("$x: $reduced_x")
         val column = this.editor_table.get_column_from_leaf(reduced_x)
+        println("${this.editor_table._inv_column_map}")
+        println("COLUMN: $column")
     }
 
     override fun onScrolled(dx: Int, dy: Int) {
@@ -36,7 +39,6 @@ class ColumnRecycler(var editor_table: EditorTable): RecyclerView(editor_table.c
         }
 
         super.onScrolled(dx, dy)
-        this.get_first_column_test()
     }
 
     @SuppressLint("ClickableViewAccessibility")

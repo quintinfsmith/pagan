@@ -81,7 +81,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun get_column_from_leaf(x: Int): Int {
-        return this._inv_column_map[x]!!
+        return this._inv_column_map[x] ?: 0
     }
 
     fun get_scroll_view(): CompoundScrollView {
@@ -544,7 +544,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     private fun _update_inv_column_map(x: Int = 0) {
         var working_leaf_x = this._column_width_maxes.subList(0, x).sum()
 
-        for (k in this._inv_column_map.keys) {
+        for (k in (this._inv_column_map.keys).toList()) {
             if (k >= working_leaf_x) {
                 this._inv_column_map.remove(k)!!
             }
@@ -586,5 +586,48 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         return !is_trivial
+    }
+
+    fun _calculate_table_size(): Pair<Int, Int> {
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
+        val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size).toInt()
+        val controller_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
+        val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
+
+
+        val width = (this._inv_column_map.keys.max() + 1) * base_width
+        var vis_channel_count = 0
+        var controller_count = 0
+        var line_count = 0
+
+        val opus_manager = this.get_opus_manager()
+        for (channel in opus_manager.get_all_channels()) {
+            if (!channel.visible) {
+                continue
+            }
+            for (line in channel.lines) {
+                line_count += 1
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (controller.visible) {
+                        controller_count += 1
+                    }
+                }
+            }
+            vis_channel_count += 1
+            for ((_, controller) in channel.controllers.get_all()) {
+                if (controller.visible) {
+                    controller_count += 1
+                }
+            }
+        }
+
+        for ((_, controller) in opus_manager.controllers.get_all()) {
+            if (controller.visible) {
+                controller_count += 1
+            }
+        }
+
+        val height = (vis_channel_count * channel_gap_size) + (line_count * line_height) + (controller_count * controller_height)
+        return Pair(width, height)
     }
 }

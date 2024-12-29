@@ -41,6 +41,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
         this.layoutParams.width = width
 
         val beat = this.get_beat()
+        val channel_gap_size = context.resources.getDimension(R.dimen.channel_gap_size).toInt()
         val tree = when (control_level) {
             CtlLineLevel.Line -> {
                 val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
@@ -60,7 +61,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
             }
             CtlLineLevel.Global -> {
                 // Kludge: Only works because Only one global control is in use (Tempo)
-                this.setPadding(0, 20, 0, 0)
+                this.setPadding(0, channel_gap_size, 0, 0)
 
                 opus_manager.get_global_ctl_tree(
                     control_type!!,
@@ -70,7 +71,7 @@ class CellLayout(private val _column_layout: ColumnLayout, val row: Int): Linear
             null -> {
                 val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                 if (channel != 0 && line_offset == 0) {
-                    this.setPadding(0, 20, 0, 0)
+                    this.setPadding(0, channel_gap_size, 0, 0)
                 }
                 this.get_beat_tree(BeatKey(channel, line_offset, beat))
             }

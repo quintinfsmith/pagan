@@ -108,17 +108,17 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
             opus_manager.get_ctl_line_from_row(this.row)
         )
-
+        val channel_gap_size = context.resources.getDimension(R.dimen.channel_gap_size).toInt()
         if (ctl_level == null) {
             val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
             if (channel != 0 && line_offset == 0) {
-                this.setPadding(0, 20, 0, 0)
+                this.setPadding(0, channel_gap_size, 0, 0)
             } else {
                 this.setPadding(0, 0, 0, 0)
             }
             // Kludge: Only works because Only one global control is in use (Tempo)
         } else if (ctl_level == CtlLineLevel.Global) {
-            this.setPadding(0, 20, 0, 0)
+            this.setPadding(0, channel_gap_size, 0, 0)
         } else {
             this.setPadding(0, 0, 0, 0)
         }

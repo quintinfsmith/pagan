@@ -3,12 +3,13 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.View
+import android.widget.ImageView
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusPanEvent
 
 class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context: Context, callback: (OpusPanEvent) -> Unit): ControlWidget<OpusPanEvent>(ContextThemeWrapper(context, R.style.pan_widget), default, is_initial_event, R.layout.control_widget_pan, callback) {
     private lateinit var _slider: PanSliderWidget
-    private lateinit var _transition_button: ButtonIcon
+    private lateinit var _transition_button: ImageView
 
     private val _min = -10
     private val _max = 10

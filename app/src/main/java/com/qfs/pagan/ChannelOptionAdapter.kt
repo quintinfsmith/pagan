@@ -2,8 +2,6 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.StateListDrawable
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -23,19 +21,6 @@ class ChannelOptionAdapter(
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
     class BackLinkView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.song_config_button)) {
         var view_holder: ChannelOptionViewHolder? = null
-        init {
-            var working_context = this.context
-            while (working_context !is MainActivity) {
-                working_context = (working_context as ContextThemeWrapper).baseContext
-            }
-
-            val color_map = working_context.view_model.color_map
-            for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(color_map[Palette.Button])
-            }
-            this.gravity = Gravity.CENTER_VERTICAL
-        }
     }
 
     private var _channel_count = 0

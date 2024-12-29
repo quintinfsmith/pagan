@@ -16,7 +16,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"/>
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"

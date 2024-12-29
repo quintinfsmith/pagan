@@ -7,8 +7,9 @@
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.qfs.pagan.ButtonIcon
+    <ImageView
         android:id="@+id/btnSplit"
+        style="@style/icon_button"
         android:layout_gravity="center"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -17,8 +18,9 @@
 
         app:srcCompat="@drawable/split"/>
 
-    <com.qfs.pagan.ButtonIcon
+    <ImageView
         android:id="@+id/btnInsert"
+        style="@style/icon_button"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_insert"
@@ -26,8 +28,8 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/insert" />
 
-    <com.qfs.pagan.ButtonIcon
-        android:theme="@style/icon_button"
+    <ImageView
+        style="@style/icon_button"
         android:id="@+id/btnRemove"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -36,8 +38,8 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/remove" />
 
-    <com.qfs.pagan.ButtonIcon
-        android:theme="@style/icon_button"
+    <ImageView
+        style="@style/icon_button"
         android:id="@+id/btnUnset"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -46,8 +48,8 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/unset" />
 
-    <com.qfs.pagan.ButtonStd
-        android:theme="@style/icon_button"
+    <TextView
+        style="@style/icon_button"
         android:id="@+id/btnDuration"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"

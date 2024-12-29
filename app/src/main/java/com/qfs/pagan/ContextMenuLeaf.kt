@@ -2,6 +2,8 @@ package com.qfs.pagan
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -11,11 +13,11 @@ import kotlin.math.abs
 import kotlin.math.max
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
-    lateinit var button_split: ButtonIcon
-    lateinit var button_insert: ButtonIcon
-    lateinit var button_unset: ButtonIcon
-    lateinit var button_remove: ButtonIcon
-    lateinit var button_duration: ButtonStd
+    lateinit var button_split: ImageView
+    lateinit var button_insert: ImageView
+    lateinit var button_unset: ImageView
+    lateinit var button_remove: ImageView
+    lateinit var button_duration: TextView
     lateinit var ns_octave: NumberSelector
     lateinit var ns_offset: NumberSelector
     lateinit var ros_relative_option: RelativeOptionSelector

@@ -6,7 +6,7 @@
             <padding
                 android:left="8dp"
                 android:right="8dp" />
-            <solid android:color="#000000"/>
+            <solid android:color="@color/number_select_button_selector"/>
             <corners android:radius="4dp"/>
         </shape>
     </item>

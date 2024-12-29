@@ -50,6 +50,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -1100,7 +1101,6 @@ class MainActivity : AppCompatActivity() {
     fun update_menu_options() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val options_menu = this._options_menu ?: return
-        options_menu.setGroupDividerEnabled(true)
         val text_color = this.view_model.color_map[Palette.TitleBarText]
 
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
@@ -1249,9 +1249,8 @@ class MainActivity : AppCompatActivity() {
         return output
     }
     internal fun _adjust_dialog_colors(dialog: AlertDialog) {
-        val color_map = this.view_model.color_map
 
-        dialog.window!!.decorView.background.setTint(color_map[Palette.Background])
+        dialog.window!!.decorView.background.setTint(getColor(R.color.main_bg))
         val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
         dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
 
@@ -1260,29 +1259,28 @@ class MainActivity : AppCompatActivity() {
         dialog.getButton(DialogInterface.BUTTON_NEGATIVE).apply {
             (this.layoutParams as MarginLayoutParams).marginEnd = this@MainActivity.resources.getDimension(R.dimen.alert_padding).toInt()
             this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
+
             this.backgroundTintList = null
-            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
+            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button_alt)
+            this.setTextColor(getColor(R.color.button_alt_text))
             this.setPadding(
                 resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_top).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
             )
-            for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(color_map[Palette.ButtonAlt])
-            }
-            this.setTextColor(color_map[Palette.ButtonAltText])
         }
 
         dialog.getButton(DialogInterface.BUTTON_NEUTRAL).apply {
+            this.backgroundTintList = null
             this.background = null
-            this.setTextColor(color_map[Palette.Foreground])
+            this.setTextColor(getColor(R.color.main_fg))
         }
 
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
             this.backgroundTintList = null
             this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
+            this.setTextColor(getColor(R.color.button_text))
             this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
             this.setPadding(
                 resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
@@ -1290,11 +1288,6 @@ class MainActivity : AppCompatActivity() {
                 resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
             )
-            for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(color_map[Palette.Button])
-            }
-            this.setTextColor(color_map[Palette.ButtonText])
         }
     }
 

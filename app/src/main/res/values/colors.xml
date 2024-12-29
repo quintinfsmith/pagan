@@ -49,6 +49,13 @@
     <color name="radio_unchecked">@color/main_fg</color>
     <color name="radio_checked">@color/leaf_main</color>
 
+    <color name="ns_default">@color/button</color>
+    <color name="ns_default_text">@color/button_text</color>
+    <color name="ns_alt">@color/main_fg</color>
+    <color name="ns_alt_text">#FFFFFF</color>
+    <color name="ns_selected">@color/blue_sky</color>
+    <color name="ns_selected_text">#000000</color>
+
     <color name="primary">#302111</color>
     <color name="primary_text">#e1e1e1</color>
     <color name="main_bg">#e0e0e0</color>
@@ -59,7 +66,10 @@
     <color name="channel_even_text">@color/main_fg</color>
     <color name="channel_odd_text">@color/main_fg</color>
     <color name="button">#FFFFFF</color>
+    <color name="button_disabled">#AAFFFFFF</color>
+    <color name="button_pressed">#efefef</color>
     <color name="button_text">@color/main_fg</color>
+    <color name="button_text_disabled">#AA2A2A46</color>
     <color name="button_alt">@color/main_fg</color>
     <color name="button_alt_text">#FFFFFF</color>
     <color name="button_selected">@color/leaf_main</color>

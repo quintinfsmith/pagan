@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:id="@+id/btnToggleChannelCtl"
             android:theme="@style/icon_button"
             app:srcCompat="@drawable/ctl"
@@ -22,7 +22,7 @@
             android:layout_width="0dp" />
 
 
-        <com.qfs.pagan.ButtonStd
+        <TextView
             android:layout_gravity="center"
             android:ellipsize="end"
             android:maxLines="1"
@@ -35,7 +35,7 @@
             android:textAlignment="center"
             android:text="" />
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:id="@+id/btnRemoveLine"
             android:theme="@style/icon_button"
             app:srcCompat="@drawable/remove_line"
@@ -43,7 +43,7 @@
             android:layout_height="@dimen/icon_button_height"
             android:contentDescription="Remove Line"/>
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:theme="@style/icon_button"
             android:id="@+id/btnInsertLine"
             app:srcCompat="@drawable/insert_line"

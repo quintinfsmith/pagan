@@ -28,17 +28,23 @@
         <item name="android:gravity">center</item>
     </style>
 
+    <style name="button_labelled_inner">
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
+    </style>
+
     <style name="button">
         <item name="android:background">@drawable/button</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:clickable">true</item>
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
-    <style name="button_number_selector" parent="button">
-        <item name="android:paddingLeft">-3dp</item>
-        <item name="android:paddingRight">0dp</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">3dp</item>
+    <style name="button_number_selector">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:background">@drawable/number_selector_button</item>
+        <item name="android:textColor">@color/number_select_button_text_selector</item>
     </style>
 
     <style name="icon_button" parent="button">
@@ -50,6 +56,7 @@
     </style>
 
     <style name="song_config_button" parent="button">
+        <item name="android:gravity">center</item>
         <item name="android:textSize">18sp</item>
         <item name="android:paddingStart">9dp</item>
         <item name="android:paddingEnd">12dp</item>
@@ -146,6 +153,7 @@
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:background">@drawable/editor_label_column</item>
+        <item name="android:textColor">@color/column_label_text</item>
     </style>
 
     <style name="line_label">
@@ -171,6 +179,7 @@
     </style>
 
     <style name="corner_view">
+        <item name="android:clickable">false</item>
         <item name="android:background">@drawable/corner_button</item>
         <item name="android:paddingTop">5dp</item>
         <item name="android:paddingLeft">5dp</item>

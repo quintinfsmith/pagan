@@ -15,12 +15,6 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
     data class Coordinate(var y: Int, var x: Int)
-    val column_label_recycler = ColumnLabelRecycler(context)
-    private val _line_label_layout = LineLabelColumnLayout(this)
-    private var _scroll_view = CompoundScrollView(this)
-    private val _top_row = TableRow(context)
-    private val _bottom_row = TableRow(context)
-    private val _spacer = CornerView(context)
 
     // Scroll Locks
     private var _label_scroll_locked = false
@@ -30,6 +24,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
+
+    val column_label_recycler = ColumnLabelRecycler(context)
+    private val _line_label_layout = LineLabelColumnLayout(this)
+    private var _scroll_view = CompoundScrollView(this)
+    private val _top_row = TableRow(context)
+    private val _bottom_row = TableRow(context)
+    private val _spacer = CornerView(context)
 
     init {
         this._top_row.addView(this._spacer)
@@ -79,6 +80,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         ColumnLabelAdapter(this)
     }
+
+    fun resize_grid() {
+        this._scroll_view.set_grid_size()
+        val (width, height) = this._calculate_table_size()
+        this._scroll_view.layoutParams.width = width
+        this._scroll_view.layoutParams.height = height
+    }
+
 
     fun get_column_from_leaf(x: Int): Int {
         return this._inv_column_map[x] ?: 0
@@ -594,8 +603,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val controller_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
         val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
 
+        val size = if (this._inv_column_map.keys.isNotEmpty()) {
+            this._inv_column_map.keys.max() + 1
+        } else {
+            0
+        }
 
-        val width = (this._inv_column_map.keys.max() + 1) * base_width
+        val width = size * base_width
         var vis_channel_count = 0
         var controller_count = 0
         var line_count = 0
@@ -629,5 +643,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         val height = (vis_channel_count * channel_gap_size) + (line_count * line_height) + (controller_count * controller_height)
         return Pair(width, height)
+    }
+
+    fun get_column_width_map(): List<List<Int>> {
+        return this._column_width_map
     }
 }

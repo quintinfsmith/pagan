@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -138,20 +137,7 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
     }
 
     fun get_editor_table(): EditorTable? {
-        var view = this._recycler as View
-        while (view !is EditorTable) {
-            if (view.parent == null) {
-                break
-            }
-
-            view = view.parent as View
-        }
-
-        return if (view is EditorTable) {
-            view
-        } else {
-            null
-        }
+        return this._recycler.editor_table
     }
 
     private fun _get_column_layout(beat: Int): ColumnLayout? {

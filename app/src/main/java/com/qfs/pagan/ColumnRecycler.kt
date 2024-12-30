@@ -8,11 +8,7 @@ import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 class ColumnRecycler(var editor_table: EditorTable): RecyclerView(editor_table.context) {
-    private val _column_label_recycler = editor_table.column_label_recycler
     private var _last_y_position: Float? = null
-    private var _scroll_locked: Boolean = false
-
-    var test_active_column = 0
 
     init {
         this.layoutManager = LeftAlignedLayoutManager(this, HORIZONTAL, false)
@@ -29,16 +25,6 @@ class ColumnRecycler(var editor_table: EditorTable): RecyclerView(editor_table.c
         val column = this.editor_table.get_column_from_leaf(reduced_x)
         println("${this.editor_table._inv_column_map}")
         println("COLUMN: $column")
-    }
-
-    override fun onScrolled(dx: Int, dy: Int) {
-        if (!this.is_scroll_locked()) {
-            this._column_label_recycler.lock_scroll()
-            this._column_label_recycler.scrollBy(dx, 0)
-            this._column_label_recycler.unlock_scroll()
-        }
-
-        super.onScrolled(dx, dy)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -66,14 +52,4 @@ class ColumnRecycler(var editor_table: EditorTable): RecyclerView(editor_table.c
         return super.onTouchEvent(motion_event)
     }
 
-    fun lock_scroll() {
-        this._scroll_locked = true
-    }
-    fun unlock_scroll() {
-        this._scroll_locked = false
-    }
-
-    private fun is_scroll_locked(): Boolean {
-        return this._scroll_locked
-    }
 }

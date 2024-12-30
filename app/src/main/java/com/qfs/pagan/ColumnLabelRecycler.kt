@@ -25,8 +25,8 @@ class ColumnLabelRecycler(context: Context, attrs: AttributeSet? = null): Recycl
         this.layoutParams.height = WRAP_CONTENT
     }
 
-    private fun _get_column_recycler(): ColumnRecycler {
-        return this._get_editor_table().get_column_recycler()
+    private fun _get_compound_scrollview(): CompoundScrollView {
+        return this._get_editor_table().get_scroll_view()
     }
 
     private fun _get_editor_table(): EditorTable {
@@ -34,11 +34,11 @@ class ColumnLabelRecycler(context: Context, attrs: AttributeSet? = null): Recycl
     }
 
     override fun onScrolled(dx: Int, dy: Int) {
-        val column_recycler = this._get_column_recycler()
+        val compound_scrollview = this._get_compound_scrollview()
         if (! this.is_scroll_locked()) {
-            column_recycler.lock_scroll()
-            column_recycler.scrollBy(dx, 0)
-            column_recycler.unlock_scroll()
+            compound_scrollview.lock_scroll()
+            compound_scrollview.scrollBy(dx, 0)
+            compound_scrollview.unlock_scroll()
         }
         super.onScrolled(dx, dy)
     }

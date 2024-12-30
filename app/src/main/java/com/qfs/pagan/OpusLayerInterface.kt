@@ -2523,6 +2523,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
             this.ui_change_bill.clear()
             editor_table.get_column_recycler().get_first_column_test()
+            editor_table.resize_grid()
         }
     }
 

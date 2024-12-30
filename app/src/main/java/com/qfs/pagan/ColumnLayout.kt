@@ -5,22 +5,18 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import androidx.appcompat.view.ContextThemeWrapper
+import androidx.core.view.children
+import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLayout((_view_holder.itemView.context as ContextThemeWrapper).baseContext) {
+class ColumnLayout(var editor_table: EditorTable): LinearLayout(editor_table.context) {
     class ColumnDetachedException: Exception()
     private var _populated = false
     var column_width_factor = 1
     init {
         this.orientation = VERTICAL
-        (this._view_holder.itemView as ViewGroup).removeAllViews()
-        (this._view_holder.itemView as ViewGroup).addView(this)
 
-        this.layoutParams.height = MATCH_PARENT
-        this.layoutParams.width = WRAP_CONTENT
         this.overScrollMode = View.OVER_SCROLL_NEVER
-        this.column_width_factor = this._get_editor_table().get_column_width(this._view_holder.bindingAdapterPosition)
         this._populate()
     }
 
@@ -32,47 +28,45 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
         }
     }
 
+    fun rebuild() {
+        this.clear()
+        this._populate()
+    }
+
     fun get_item_count(): Int {
         return this.childCount
     }
-
 
     fun insert_cells(y: Int, count: Int) {
         for (i in y until y + count) {
             this.addView(CellLayout(this, i), i)
         }
-
-        this.notifyItemRangeChanged(0, y)
-        this.notifyItemRangeChanged(y + count, this.get_item_count() - (y + count))
     }
 
     fun remove_cells(y: Int, count: Int) {
-        this.removeViews(y, count)
-        this.notifyItemRangeChanged(0, y)
-        this.notifyItemRangeChanged(y, this.get_item_count() - y)
+        this.removeViews(y, min(count, this.get_item_count() - y))
     }
 
-    fun notifyItemChanged(y: Int, state_only: Boolean = false) {
-        this.notifyItemRangeChanged(y, 1, state_only)
+    fun notify_state_changed() {
+        this.notify_item_range_changed(0, this.get_item_count(), true)
     }
 
-    fun notifyItemRangeChanged(y: Int, count: Int, state_only: Boolean = false) {
-        for (i in 0 until count) {
-            if (state_only && this.get_item_count() > y + i) {
+    fun notify_item_changed(y: Int, state_only: Boolean = false) {
+        this.notify_item_range_changed(y, 1, state_only)
+    }
+
+    fun notify_item_range_changed(y: Int, count: Int, state_only: Boolean = false) {
+        if (state_only) {
+            for (i in 0 until count) {
+                if (this.get_item_count() <= y + i) {
+                    continue
+                }
                 (this.getChildAt(y + i) as CellLayout).invalidate_all()
-            } else if (this.get_item_count() > y + i) {
-                this.rebind(i + y)
             }
+        } else {
+            this.remove_cells(y, count)
+            this.insert_cells(y, count)
         }
-    }
-
-    private fun rebind(index: Int) {
-        if (index >= this.get_item_count()) {
-            return
-        }
-
-        this.removeViewAt(index)
-        this.addView(CellLayout(this, index), index)
     }
 
     fun clear() {
@@ -80,24 +74,18 @@ class ColumnLayout(private var _view_holder: ColumnRecyclerViewHolder): LinearLa
     }
 
     fun get_opus_manager(): OpusManager {
-        return (this._view_holder.bindingAdapter as ColumnRecyclerAdapter).get_opus_manager()
+        return this.editor_table.get_opus_manager()
     }
 
     fun get_beat(): Int {
-        return this._view_holder.bindingAdapterPosition
+        // TODO: Probably slow
+        return (this.parent as ViewGroup).children.indexOf(this)
     }
 
-    private fun _get_column_recycler_adapter(): ColumnRecyclerAdapter {
-        if (this._view_holder.bindingAdapter == null) {
-            throw ColumnDetachedException()
-        }
-        return this._view_holder.bindingAdapter as ColumnRecyclerAdapter
-    }
-    private fun _get_editor_table(): EditorTable {
-        return this._get_column_recycler_adapter().get_editor_table()!!
-    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        this.layoutParams.height = MATCH_PARENT
+        this.layoutParams.width = WRAP_CONTENT
     }
 }

@@ -98,7 +98,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
     fun clear() {
         this.get_activity().runOnUiThread {
-            (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter).clear()
+            this._scroll_view.column_container.clear()
             (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
             this._line_label_layout.clear()
         }
@@ -106,7 +106,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun setup(height: Int, width: Int) {
         // NOTE: Needs column map initialized first
-        val main_adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
+
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
 
         for (beat in 0 until width) {
@@ -114,55 +114,50 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
         this._line_label_layout.insert_labels(0, height)
 
-        main_adapter.add_columns(0, width)
+        this._scroll_view.column_container.add_columns(0, width)
     }
 
     fun new_row(y: Int) {
-        val adapter = (this.get_column_recycler().adapter as ColumnRecyclerAdapter)
-        adapter.insert_row(y)
+        this._scroll_view.column_container.insert_row(y)
+
         this._line_label_layout.insert_label(y)
         (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
     fun remove_rows(y: Int, count: Int) {
-        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_rows(y, count)
+        this._scroll_view.column_container.remove_rows(y, count)
         this._line_label_layout.remove_labels(y, count)
         (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
     fun new_column(index: Int) {
+        this._scroll_view.column_container.add_column(index)
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
-        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).add_column(index)
     }
 
     fun remove_column(index: Int) {
         (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
-        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).remove_column(index)
-
+        this._scroll_view.column_container.remove_column(index)
     }
 
     fun notify_cell_changes(cell_coords: List<Coordinate>, state_only: Boolean = false) {
         // TODO: This may need optimization
-        val column_recycler_adapter = (this.get_column_recycler().adapter!! as ColumnRecyclerAdapter)
         for (coord in cell_coords) {
-            column_recycler_adapter.notify_cell_changed(coord.y, coord.x, state_only)
+            this._scroll_view.column_container.notify_cell_changed(coord.y, coord.x, state_only)
         }
     }
 
     fun notify_column_changed(x: Int, state_only: Boolean = false) {
+        this._scroll_view.column_container.notify_column_changed(x, state_only)
+
         val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-        val column_adapter = this.get_column_recycler().adapter as ColumnRecyclerAdapter
-        if (state_only) {
-            column_adapter.notify_column_state_changed(x)
-        } else {
-            column_adapter.notifyItemChanged(x)
-        }
         column_label_adapter.notifyItemChanged(x)
+
     }
 
     fun notify_row_changed(y: Int, state_only: Boolean = false) {
         this._line_label_layout.notify_item_changed(y)
-        (this.get_column_recycler().adapter as ColumnRecyclerAdapter).notify_row_changed(y, state_only)
+        this._scroll_view.column_container.notify_row_change(y, state_only)
     }
 
     fun get_column_map_size(): Int {
@@ -211,23 +206,26 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     private fun _align_column_labels() {
-        val layout_manager_columns = this.get_column_recycler().layoutManager!! as LinearLayoutManager
         val layout_manager_labels = this.column_label_recycler.layoutManager!! as LinearLayoutManager
 
-        val column_position = layout_manager_columns.findFirstVisibleItemPosition()
-        val column = layout_manager_columns.findViewByPosition(column_position)
+        val scroll_container_offset = this._scroll_view.scrollX
+        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        val reduced_x = scroll_container_offset / min_leaf_width
+        val column_position = this.get_column_from_leaf(reduced_x)
+        val column = this._scroll_view.column_container.get_column(column_position)
 
-        val label_position = layout_manager_labels.findFirstVisibleItemPosition()
-        val label = layout_manager_labels.findViewByPosition(label_position)
-        if (label?.x != column?.x) {
-            val new_offset = column?.x?.roundToInt() ?: 0
-            this._main_scroll_locked = true
-            layout_manager_columns.scrollToPositionWithOffset(column_position, new_offset)
-            this._main_scroll_locked = false
-            this._label_scroll_locked = true
-            layout_manager_labels.scrollToPositionWithOffset(column_position, new_offset)
-            this._label_scroll_locked = false
-        }
+        // TODO
+        //val label_position = layout_manager_labels.findFirstVisibleItemPosition()
+        //val label = layout_manager_labels.findViewByPosition(label_position)
+        //if (label?.x != column?.x) {
+        //    val new_offset = column?.x?.roundToInt() ?: 0
+        //    this._main_scroll_locked = true
+        //    layout_manager_columns.scrollToPositionWithOffset(column_position, new_offset)
+        //    this._main_scroll_locked = false
+        //    this._label_scroll_locked = true
+        //    layout_manager_labels.scrollToPositionWithOffset(column_position, new_offset)
+        //    this._label_scroll_locked = false
+        //}
     }
 
     fun scroll_to_position(x: Int? = null, y: Int? = null, offset: Float = 0f, offset_width: Float = 1f, force: Boolean = false) {
@@ -247,146 +245,148 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     private fun _forced_scroll_to_beat(x: Int) {
-        val box_width = this.get_column_recycler().measuredWidth
+        // TODO
+        // val box_width = this.get_column_recycler().measuredWidth
 
-        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-        val max_width = (this._column_width_maxes[x] * base_width).toInt()
+        // val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        // val max_width = (this._column_width_maxes[x] * base_width).toInt()
 
-        val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
-        val offset = if (max_width >= box_width) {
-            (box_width - max_width) / 2
-        } else {
-            0
-        }
+        // val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
+        // val offset = if (max_width >= box_width) {
+        //     (box_width - max_width) / 2
+        // } else {
+        //     0
+        // }
 
-        this._main_scroll_locked = true
-        layout_manager.scrollToPositionWithOffset(x, offset)
-        this._main_scroll_locked = false
+        // this._main_scroll_locked = true
+        // layout_manager.scrollToPositionWithOffset(x, offset)
+        // this._main_scroll_locked = false
 
-        this._label_scroll_locked = true
-        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, offset)
-        this._label_scroll_locked = false
+        // this._label_scroll_locked = true
+        // (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, offset)
+        // this._label_scroll_locked = false
     }
 
     private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
-        val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
+        // TODO
+        //val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
 
-        val box_width = this.get_column_recycler().measuredWidth
+        //val box_width = this.get_column_recycler().measuredWidth
 
-        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-        val max_width = (this._column_width_maxes[x] * base_width).toInt()
-        val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
-        val visible_range = layout_manager.findFirstVisibleItemPosition() .. layout_manager.findLastVisibleItemPosition()
-        val target_offset = (max_width * offset).toInt()
+        //val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        //val max_width = (this._column_width_maxes[x] * base_width).toInt()
+        //val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
+        //val visible_range = layout_manager.findFirstVisibleItemPosition() .. layout_manager.findLastVisibleItemPosition()
+        //val target_offset = (max_width * offset).toInt()
 
-        val POSITION_ON_SCREEN: Int = 0
-        val POSITION_TO_RIGHT: Int = 1
-        val POSITION_TO_LEFT: Int = 2
-        val FITS_ON_SCREEN: Int = 3
+        //val POSITION_ON_SCREEN: Int = 0
+        //val POSITION_TO_RIGHT: Int = 1
+        //val POSITION_TO_LEFT: Int = 2
+        //val FITS_ON_SCREEN: Int = 3
 
-        val column_state = Array(4) { false }
-        val subdiv_state = Array(4) { false }
+        //val column_state = Array(4) { false }
+        //val subdiv_state = Array(4) { false }
 
-        subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
-        column_state[FITS_ON_SCREEN] = max_width <= box_width
+        //subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
+        //column_state[FITS_ON_SCREEN] = max_width <= box_width
 
-        if (x in visible_range) {
-            val target_column = layout_manager.findViewByPosition(x)
-            if (target_column == null) {
-                // Shouldn't be Reachable
-                return
-            } else if (target_column.x + target_width + target_offset > box_width) {
-                subdiv_state[POSITION_TO_RIGHT] = true
-                subdiv_state[POSITION_ON_SCREEN] = target_column.x + target_offset < box_width
-                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
-            } else if (target_column.x + target_width + target_offset > 0) {
-                subdiv_state[POSITION_ON_SCREEN] = true
-                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
-            } else {
-                subdiv_state[POSITION_TO_LEFT] = true
-            }
+        //if (x in visible_range) {
+        //    val target_column = layout_manager.findViewByPosition(x)
+        //    if (target_column == null) {
+        //        // Shouldn't be Reachable
+        //        return
+        //    } else if (target_column.x + target_width + target_offset > box_width) {
+        //        subdiv_state[POSITION_TO_RIGHT] = true
+        //        subdiv_state[POSITION_ON_SCREEN] = target_column.x + target_offset < box_width
+        //        subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
+        //    } else if (target_column.x + target_width + target_offset > 0) {
+        //        subdiv_state[POSITION_ON_SCREEN] = true
+        //        subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
+        //    } else {
+        //        subdiv_state[POSITION_TO_LEFT] = true
+        //    }
 
 
-            if (target_column.x > box_width) {
-                column_state[POSITION_TO_RIGHT] = true
-            } else if (target_column.x > 0) {
-                column_state[POSITION_ON_SCREEN] = true
-                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
-            } else {
-                column_state[POSITION_TO_LEFT] = true
-                column_state[POSITION_ON_SCREEN] = target_column.x + max_width > 0
-                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
-            }
-        } else if (x > visible_range.last) {
-            column_state[POSITION_TO_RIGHT] = true
-            subdiv_state[POSITION_TO_RIGHT] = true
-        } else {
-            column_state[POSITION_TO_LEFT] = true
-            subdiv_state[POSITION_TO_LEFT] = true
-        }
+        //    if (target_column.x > box_width) {
+        //        column_state[POSITION_TO_RIGHT] = true
+        //    } else if (target_column.x > 0) {
+        //        column_state[POSITION_ON_SCREEN] = true
+        //        column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
+        //    } else {
+        //        column_state[POSITION_TO_LEFT] = true
+        //        column_state[POSITION_ON_SCREEN] = target_column.x + max_width > 0
+        //        column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
+        //    }
+        //} else if (x > visible_range.last) {
+        //    column_state[POSITION_TO_RIGHT] = true
+        //    subdiv_state[POSITION_TO_RIGHT] = true
+        //} else {
+        //    column_state[POSITION_TO_LEFT] = true
+        //    subdiv_state[POSITION_TO_LEFT] = true
+        //}
 
-        var subdiv_int = 0
-        var column_int = 0
-        var working_offset = 1
-        for (i in 0 until 4) {
-            subdiv_int += working_offset * if (subdiv_state[i]) { 1 } else { 0 }
-            column_int += working_offset * if (column_state[i]) { 1 } else { 0 }
-            working_offset *= 2
-        }
+        //var subdiv_int = 0
+        //var column_int = 0
+        //var working_offset = 1
+        //for (i in 0 until 4) {
+        //    subdiv_int += working_offset * if (subdiv_state[i]) { 1 } else { 0 }
+        //    column_int += working_offset * if (column_state[i]) { 1 } else { 0 }
+        //    working_offset *= 2
+        //}
 
-        // FITS, LEFT, RIGHT, ON SCREEN
-        val adj_offset = when (subdiv_int) {
-            // Center the section
-            0b0011,
-            0b0101,
-            0b0010,
-            0b0100 -> (box_width - target_width) / 2
+        //// FITS, LEFT, RIGHT, ON SCREEN
+        //val adj_offset = when (subdiv_int) {
+        //    // Center the section
+        //    0b0011,
+        //    0b0101,
+        //    0b0010,
+        //    0b0100 -> (box_width - target_width) / 2
 
-            // Try to scroll the column onto screen, then the section
-            0b1010 -> {
-                if (column_state[FITS_ON_SCREEN]) {
-                    box_width - max_width
-                } else {
-                    (0 - target_offset) + ((box_width - target_width) / 2)
-                }
-            }
+        //    // Try to scroll the column onto screen, then the section
+        //    0b1010 -> {
+        //        if (column_state[FITS_ON_SCREEN]) {
+        //            box_width - max_width
+        //        } else {
+        //            (0 - target_offset) + ((box_width - target_width) / 2)
+        //        }
+        //    }
 
-            // Align the end of the section with the end of the screen
-            0b1011 -> box_width - target_offset - target_width
+        //    // Align the end of the section with the end of the screen
+        //    0b1011 -> box_width - target_offset - target_width
 
-            // Try to scroll the column onto screen, then the section
-            0b1100 -> {
-                if (column_state[FITS_ON_SCREEN]) {
-                    0
-                } else {
-                    box_width - target_offset - target_width - ((box_width - target_width) / 2)
-                }
-            }
+        //    // Try to scroll the column onto screen, then the section
+        //    0b1100 -> {
+        //        if (column_state[FITS_ON_SCREEN]) {
+        //            0
+        //        } else {
+        //            box_width - target_offset - target_width - ((box_width - target_width) / 2)
+        //        }
+        //    }
 
-            // Align the start of the section with the start of the screen
-            0b1101 -> 0 - target_offset
+        //    // Align the start of the section with the start of the screen
+        //    0b1101 -> 0 - target_offset
 
-            0b0111,   // Overflowing,
-            0b1001 -> { // No need to scroll
-                this._align_column_labels()
-                return
-            }
-            // 0b0000 -> { }   // Invalid
-            // 0b0001 -> { }   // Invalid
-            // 0b0110 -> { }   // Invalid
-            // 0b1000 -> { }   // Invalid
-            // 0b1110 -> { }   // Invalid
-            // 0b1111 -> { }   // Invalid
-            else -> { return }     // Unreachable
-        }
+        //    0b0111,   // Overflowing,
+        //    0b1001 -> { // No need to scroll
+        //        this._align_column_labels()
+        //        return
+        //    }
+        //    // 0b0000 -> { }   // Invalid
+        //    // 0b0001 -> { }   // Invalid
+        //    // 0b0110 -> { }   // Invalid
+        //    // 0b1000 -> { }   // Invalid
+        //    // 0b1110 -> { }   // Invalid
+        //    // 0b1111 -> { }   // Invalid
+        //    else -> { return }     // Unreachable
+        //}
 
-        this._main_scroll_locked = true
-        layout_manager.scrollToPositionWithOffset(x, adj_offset)
-        this._main_scroll_locked = false
+        //this._main_scroll_locked = true
+        //layout_manager.scrollToPositionWithOffset(x, adj_offset)
+        //this._main_scroll_locked = false
 
-        this._label_scroll_locked = true
-        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, adj_offset)
-        this._label_scroll_locked = false
+        //this._label_scroll_locked = true
+        //(this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, adj_offset)
+        //this._label_scroll_locked = false
     }
 
     // TODO: Create row_height_map so OpusManager isn't accessed here
@@ -475,24 +475,25 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int? = null, y_fine: Int? = null) {
-        val main_lm = (this.get_column_recycler().layoutManager!! as LinearLayoutManager)
-        main_lm.scrollToPositionWithOffset(x_coarse, x_fine)
+        // TODO
+        // val main_lm = (this.get_column_recycler().layoutManager!! as LinearLayoutManager)
+        // main_lm.scrollToPositionWithOffset(x_coarse, x_fine)
 
-        val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
-        column_label_lm.scrollToPositionWithOffset(x_coarse, x_fine)
+        // val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
+        // column_label_lm.scrollToPositionWithOffset(x_coarse, x_fine)
 
-        if (y_coarse != null) {
-            val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-            this._scroll_view.scrollTo(0, (line_height * y_coarse) + (y_fine ?: 0))
-        }
+        // if (y_coarse != null) {
+        //     val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
+        //     this._scroll_view.scrollTo(0, (line_height * y_coarse) + (y_fine ?: 0))
+        // }
     }
 
     fun get_first_visible_column_index(): Int {
-        return (this.get_column_recycler().layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-    }
-
-    fun get_column_recycler(): ColumnRecycler {
-        return this._scroll_view.column_recycler
+        val scroll_container_offset = this._scroll_view.scrollX
+        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        val reduced_x = scroll_container_offset / min_leaf_width
+        val column_position = this.get_column_from_leaf(reduced_x)
+        return column_position
     }
 
     fun get_line_label_layout(): LineLabelColumnLayout {

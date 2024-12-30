@@ -33,7 +33,7 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
     }
 
     override fun onBindViewHolder(holder: ColumnRecyclerViewHolder, position: Int) {
-        ColumnLayout(holder)
+    //    ColumnLayout(holder)
     }
 
     override fun onViewAttachedToWindow(holder: ColumnRecyclerViewHolder) {
@@ -104,9 +104,9 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
     }
     fun add_columns(index: Int, count: Int) {
         this._column_count += count
+
         this.notifyItemRangeInserted(index, count)
         this.notifyItemRangeChanged(index + count, count)
-
     }
 
     fun remove_column(index: Int) {
@@ -160,24 +160,24 @@ class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table:
         if (column_layout == null) {
             this.notifyItemChanged(x)
         } else {
-            column_layout.notifyItemChanged(y, state_only)
+            column_layout.notify_item_changed(y, state_only)
         }
     }
 
     fun notify_row_changed(y: Int, state_only: Boolean = false) {
         if (state_only) {
             this._apply_to_visible_columns { _: Int, column_layout: ColumnLayout ->
-                column_layout.notifyItemChanged(y, true)
+                column_layout.notify_item_changed(y, true)
             }
         } else {
             this.apply_and_notify_remaining { _: Int, column_layout: ColumnLayout ->
-                column_layout.notifyItemChanged(y, false)
+                column_layout.notify_item_changed(y, false)
             }
         }
     }
 
     fun notify_column_state_changed(x: Int) {
         val column_layout = this._get_column_layout(x) ?: return
-        column_layout.notifyItemRangeChanged(0, column_layout.childCount, true)
+        column_layout.notify_item_range_changed(0, column_layout.childCount, true)
     }
 }

@@ -9,7 +9,6 @@ import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
 import androidx.appcompat.view.ContextThemeWrapper
-import androidx.recyclerview.widget.LinearLayoutManager
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -24,8 +23,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
-
-    val column_label_recycler = ColumnLabelRecycler(context)
+    val column_label_container = ColumnLabelContainer(this)
     private val _line_label_layout = LineLabelColumnLayout(this)
     private var _scroll_view = CompoundScrollView(this)
     private val _top_row = TableRow(context)
@@ -34,7 +32,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     init {
         this._top_row.addView(this._spacer)
-        this._top_row.addView(this.column_label_recycler)
+        this._top_row.addView(this.column_label_container)
 
         this._spacer.getChildAt(0).setOnClickListener {
             val fragment = this.get_activity().get_active_fragment()
@@ -75,19 +73,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._scroll_view.layoutParams.width = 0
         this._scroll_view.layoutParams.height = MATCH_PARENT
 
-        (this.column_label_recycler.layoutParams as LinearLayout.LayoutParams).weight = 1F
-        this.column_label_recycler.layoutParams.width = 0
-
-        ColumnLabelAdapter(this)
+        (this.column_label_container.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        this.column_label_container.layoutParams.width = 0
+        this.column_label_container.layoutParams.height = WRAP_CONTENT
     }
-
-    fun resize_grid() {
-        this._scroll_view.set_grid_size()
-        val (width, height) = this._calculate_table_size()
-        //this._scroll_view.layoutParams.width = width
-        //this._scroll_view.layoutParams.height = height
-    }
-
 
     fun get_column_from_leaf(x: Int): Int {
         return this._inv_column_map[x] ?: 0
@@ -99,7 +88,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun clear() {
         this.get_activity().runOnUiThread {
             this._scroll_view.column_container.clear()
-            (this.column_label_recycler.adapter!! as ColumnLabelAdapter).clear()
+            this.column_label_container.clear()
             this._line_label_layout.clear()
         }
     }
@@ -107,10 +96,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun setup(height: Int, width: Int) {
         // NOTE: Needs column map initialized first
 
-        val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-
         for (beat in 0 until width) {
-            column_label_adapter.add_column(beat)
+            this.column_label_container.add_column(beat)
         }
         this._line_label_layout.insert_labels(0, height)
 
@@ -121,22 +108,20 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._scroll_view.column_container.insert_row(y)
 
         this._line_label_layout.insert_label(y)
-        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
     fun remove_rows(y: Int, count: Int) {
         this._scroll_view.column_container.remove_rows(y, count)
         this._line_label_layout.remove_labels(y, count)
-        (this.column_label_recycler.adapter as ColumnLabelAdapter).notifyDataSetChanged()
     }
 
     fun new_column(index: Int) {
         this._scroll_view.column_container.add_column(index)
-        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).add_column(index)
+        this.column_label_container.add_column(index)
     }
 
     fun remove_column(index: Int) {
-        (this.column_label_recycler.adapter!! as ColumnLabelAdapter).remove_column(index)
+        this.column_label_container.remove_column(index)
         this._scroll_view.column_container.remove_column(index)
     }
 
@@ -149,10 +134,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun notify_column_changed(x: Int, state_only: Boolean = false) {
         this._scroll_view.column_container.notify_column_changed(x, state_only)
-
-        val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-        column_label_adapter.notifyItemChanged(x)
-
+        this.column_label_container.notify_column_changed(x, state_only)
     }
 
     fun notify_row_changed(y: Int, state_only: Boolean = false) {
@@ -201,13 +183,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun update_column_label(x: Int) {
-        val column_label_adapter = (this.column_label_recycler.adapter as ColumnLabelAdapter)
-        column_label_adapter.notifyItemChanged(x)
+        this.column_label_container.notify_column_changed(x)
     }
 
     private fun _align_column_labels() {
-        val layout_manager_labels = this.column_label_recycler.layoutManager!! as LinearLayoutManager
-
         val scroll_container_offset = this._scroll_view.scrollX
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         val reduced_x = scroll_container_offset / min_leaf_width
@@ -258,11 +237,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         val pixel_x = (this._scroll_view.column_container.get_column(x).x).toInt()
         this._main_scroll_locked = true
-        this._scroll_view.scrollTo(pixel_x + offset, this._scroll_view.scrollY)
+        this._scroll_view.scrollTo(pixel_x + offset, 0)
         this._main_scroll_locked = false
 
         this._label_scroll_locked = true
-        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, offset)
+        this.column_label_container.scrollTo(pixel_x + offset, 0)
         this._label_scroll_locked = false
     }
 
@@ -292,16 +271,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 // Shouldn't be Reachable
                 return
             } else if (target_column.x + target_width + target_offset > box_width + this._scroll_view.scrollX) {
-                println("A, ${target_column.x} $target_width, $target_offset, $box_width")
                 subdiv_state[POSITION_TO_RIGHT] = true
                 subdiv_state[POSITION_ON_SCREEN] = target_column.x + target_offset < box_width + this._scroll_view.scrollX
                 subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < this._scroll_view.scrollX
             } else if (target_column.x + target_width + target_offset > this._scroll_view.scrollX) {
-                println("B")
                 subdiv_state[POSITION_ON_SCREEN] = true
                 subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < this._scroll_view.scrollX
             } else {
-                println("C")
                 subdiv_state[POSITION_TO_LEFT] = true
             }
 
@@ -389,7 +365,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._main_scroll_locked = false
 
         this._label_scroll_locked = true
-        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, adj_offset)
+        this.column_label_container.scrollTo(calc_x - adj_offset, 0)
         this._label_scroll_locked = false
     }
 
@@ -463,18 +439,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun get_scroll_offset(): Pair<Pair<Int, Int>, Pair<Int, Int>> {
-        val column_lm = this.column_label_recycler.layoutManager!! as LinearLayoutManager
-        val coarse_x = column_lm.findFirstVisibleItemPosition()
-        val column = column_lm.findViewByPosition(coarse_x)
-        val fine_x = column?.x ?: 0
+        // NOTE: Used to be based on recycler view positions. So now we just set the Pairs to Pair(0, scroll[X/Y])
 
-        val line_lm = this._line_label_layout
-        val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        val coarse_y = line_lm.scrollY / line_height
-        val fine_y = line_lm.scrollY % line_height
         return Pair(
-            Pair(coarse_x, fine_x.toInt()),
-            Pair(coarse_y, fine_y)
+            Pair(0, this._scroll_view.scrollX),
+            Pair(0, this._scroll_view.vertical_scroll_view.scrollY)
         )
     }
 

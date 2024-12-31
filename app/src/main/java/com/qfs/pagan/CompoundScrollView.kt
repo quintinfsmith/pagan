@@ -31,7 +31,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
         fun add_columns(x: Int, count: Int) {
             for (i in x until count) {
-                this.add_column(x)
+                this.add_column(i)
             }
         }
 
@@ -67,33 +67,31 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         }
     }
 
-    private val _column_label_recycler = editor_table.column_label_recycler
+    private val _column_label_recycler = editor_table.column_label_container
     val column_container = ColumnsLayout(editor_table)
     private var _scroll_locked: Boolean = false
     //val column_recycler = ColumnRecycler(editor_table)
 
     private val _line_label_layout = editor_table.get_line_label_layout()
+    val vertical_scroll_view = ScrollView(this.context)
     init {
-        val vertical_scroll_view = ScrollView(this.context)
-        vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
-        vertical_scroll_view.isVerticalScrollBarEnabled = false
-        vertical_scroll_view.addView(this.column_container)
-        this.addView(vertical_scroll_view)
+        this.vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
+        this.vertical_scroll_view.isVerticalScrollBarEnabled = false
+        this.vertical_scroll_view.addView(this.column_container)
+        this.addView(this.vertical_scroll_view)
 
-        vertical_scroll_view.layoutParams.height = MATCH_PARENT
-        vertical_scroll_view.layoutParams.width = WRAP_CONTENT
+        this.vertical_scroll_view.layoutParams.height = MATCH_PARENT
+        this.vertical_scroll_view.layoutParams.width = WRAP_CONTENT
 
         this.overScrollMode = OVER_SCROLL_NEVER
         this.isHorizontalScrollBarEnabled = false
     }
 
-    fun set_grid_size() { }
-
     override fun onScrollChanged(x: Int, y: Int, old_x: Int, old_y: Int) {
         this._line_label_layout.scrollTo(x, y)
         if (!this.is_scroll_locked()) {
             this._column_label_recycler.lock_scroll()
-            this._column_label_recycler.scrollBy(x - old_x, 0)
+            this._column_label_recycler.scrollTo(x, 0)
             this._column_label_recycler.unlock_scroll()
         }
         super.onScrollChanged(x, y, old_x, old_y)

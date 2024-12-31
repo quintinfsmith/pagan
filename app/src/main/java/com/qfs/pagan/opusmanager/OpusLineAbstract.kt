@@ -18,7 +18,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     fun clear_block_caches() {
         this._cache_blocked_tree_map.clear()
         this._cache_inv_blocked_tree_map.clear()
-
     }
 
     fun _init_blocked_tree_caches() {

@@ -15,10 +15,9 @@ class ColumnLayout(var editor_table: EditorTable, index: Int): LinearLayout(edit
     var column_width_factor = 1
     init {
         this.orientation = VERTICAL
-        this.column_width_factor = editor_table.get_column_width(index)
         this.overScrollMode = View.OVER_SCROLL_NEVER
-        this._populate()
     }
+
 
     private fun _populate() {
         this._populated = true
@@ -30,6 +29,7 @@ class ColumnLayout(var editor_table: EditorTable, index: Int): LinearLayout(edit
 
     fun rebuild() {
         this.clear()
+        this.column_width_factor = editor_table.get_column_width(this.get_beat())
         this._populate()
     }
 
@@ -79,13 +79,16 @@ class ColumnLayout(var editor_table: EditorTable, index: Int): LinearLayout(edit
 
     fun get_beat(): Int {
         // TODO: Probably slow
-        return (this.parent as ViewGroup).children.indexOf(this)
+        val output = (this.parent as ViewGroup).children.indexOf(this)
+        println("BEAT: $output")
+        return output
     }
-
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.layoutParams.height = MATCH_PARENT
         this.layoutParams.width = WRAP_CONTENT
+        this.column_width_factor = editor_table.get_column_width(this.get_beat())
+        this._populate()
     }
 }

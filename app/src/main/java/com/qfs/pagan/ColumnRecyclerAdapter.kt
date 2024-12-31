@@ -9,10 +9,10 @@ import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ColumnRecyclerAdapter(private val _recycler: ColumnRecycler, editor_table: EditorTable): RecyclerView.Adapter<ColumnRecyclerViewHolder>() {
-    private val _column_label_recycler: ColumnLabelRecycler
+    private val _column_label_recycler: ColumnLabelContainer
     private var _column_count = 0
     init {
-        this._column_label_recycler = editor_table.column_label_recycler
+        this._column_label_recycler = editor_table.column_label_container
 
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {

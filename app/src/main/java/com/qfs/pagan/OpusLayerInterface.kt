@@ -2522,7 +2522,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
             }
             this.ui_change_bill.clear()
-            editor_table.resize_grid()
         }
     }
 

@@ -1,8 +1,11 @@
 package com.qfs.pagan
 
 import android.annotation.SuppressLint
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 
 @SuppressLint("ViewConstructor")
 class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
@@ -22,7 +25,8 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         }
 
         fun add_column(x: Int) {
-            this.addView(ColumnLayout(this.editor_table), x)
+            val new_column = ColumnLayout(this.editor_table, x)
+            this.addView(new_column, x)
         }
 
         fun add_columns(x: Int, count: Int) {
@@ -69,40 +73,21 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
     //val column_recycler = ColumnRecycler(editor_table)
 
     private val _line_label_layout = editor_table.get_line_label_layout()
-    private var _last_x_position: Float? = null
     init {
-        this.addView(this.column_container)
+        val vertical_scroll_view = ScrollView(this.context)
+        vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
+        vertical_scroll_view.isVerticalScrollBarEnabled = false
+        vertical_scroll_view.addView(this.column_container)
+        this.addView(vertical_scroll_view)
+
+        vertical_scroll_view.layoutParams.height = MATCH_PARENT
+        vertical_scroll_view.layoutParams.width = WRAP_CONTENT
 
         this.overScrollMode = OVER_SCROLL_NEVER
-        this.isVerticalScrollBarEnabled = false
+        this.isHorizontalScrollBarEnabled = false
     }
 
-
-    //@SuppressLint("ClickableViewAccessibility")
-    //override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
-    //    if (motion_event  == null) {
-    //        // pass
-    //    } else if (motion_event.action == MotionEvent.ACTION_UP) {
-    //        this._last_x_position = null
-    //    } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
-    //        if (this._last_x_position == null) {
-    //            this._last_x_position = (motion_event.x - this.column_recycler.x) - this.column_recycler.scrollY.toFloat()
-    //        }
-
-    //        val rel_x = (motion_event.x - this.column_recycler.x) - this.column_recycler.scrollY
-    //        val delta_x = this._last_x_position!! - rel_x
-
-    //        this.column_recycler.scrollBy(delta_x.toInt(), 0)
-    //        this._last_x_position = rel_x
-    //    } else {
-    //        // pass
-    //    }
-
-    //    return super.onTouchEvent(motion_event)
-    //}
-
-    fun set_grid_size() {
-    }
+    fun set_grid_size() { }
 
     override fun onScrollChanged(x: Int, y: Int, old_x: Int, old_y: Int) {
         this._line_label_layout.scrollTo(x, y)

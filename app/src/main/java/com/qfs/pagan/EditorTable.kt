@@ -84,8 +84,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun resize_grid() {
         this._scroll_view.set_grid_size()
         val (width, height) = this._calculate_table_size()
-        this._scroll_view.layoutParams.width = width
-        this._scroll_view.layoutParams.height = height
+        //this._scroll_view.layoutParams.width = width
+        //this._scroll_view.layoutParams.height = height
     }
 
 
@@ -245,148 +245,152 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     private fun _forced_scroll_to_beat(x: Int) {
-        // TODO
-        // val box_width = this.get_column_recycler().measuredWidth
+        val box_width = this._scroll_view.measuredWidth
 
-        // val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-        // val max_width = (this._column_width_maxes[x] * base_width).toInt()
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val max_width = (this._column_width_maxes[x] * base_width).toInt()
 
-        // val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
-        // val offset = if (max_width >= box_width) {
-        //     (box_width - max_width) / 2
-        // } else {
-        //     0
-        // }
+        val offset = if (max_width >= box_width) {
+            (box_width - max_width) / 2
+        } else {
+            0
+        }
 
-        // this._main_scroll_locked = true
-        // layout_manager.scrollToPositionWithOffset(x, offset)
-        // this._main_scroll_locked = false
+        val pixel_x = (this._scroll_view.column_container.get_column(x).x).toInt()
+        this._main_scroll_locked = true
+        this._scroll_view.scrollTo(pixel_x + offset, this._scroll_view.scrollY)
+        this._main_scroll_locked = false
 
-        // this._label_scroll_locked = true
-        // (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, offset)
-        // this._label_scroll_locked = false
+        this._label_scroll_locked = true
+        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, offset)
+        this._label_scroll_locked = false
     }
 
     private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
-        // TODO
-        //val layout_manager = this.get_column_recycler().layoutManager!! as LinearLayoutManager
+        val box_width = this._scroll_view.measuredWidth
 
-        //val box_width = this.get_column_recycler().measuredWidth
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val max_width = (this._column_width_maxes[x] * base_width).toInt()
+        val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
+        val visible_range = this.get_first_visible_column_index() .. this.get_last_visible_column_index()
+        val target_offset = (max_width * offset).toInt()
 
-        //val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-        //val max_width = (this._column_width_maxes[x] * base_width).toInt()
-        //val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
-        //val visible_range = layout_manager.findFirstVisibleItemPosition() .. layout_manager.findLastVisibleItemPosition()
-        //val target_offset = (max_width * offset).toInt()
+        val POSITION_ON_SCREEN: Int = 0
+        val POSITION_TO_RIGHT: Int = 1
+        val POSITION_TO_LEFT: Int = 2
+        val FITS_ON_SCREEN: Int = 3
 
-        //val POSITION_ON_SCREEN: Int = 0
-        //val POSITION_TO_RIGHT: Int = 1
-        //val POSITION_TO_LEFT: Int = 2
-        //val FITS_ON_SCREEN: Int = 3
+        val column_state = Array(4) { false }
+        val subdiv_state = Array(4) { false }
 
-        //val column_state = Array(4) { false }
-        //val subdiv_state = Array(4) { false }
+        subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
+        column_state[FITS_ON_SCREEN] = max_width <= box_width
 
-        //subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
-        //column_state[FITS_ON_SCREEN] = max_width <= box_width
-
-        //if (x in visible_range) {
-        //    val target_column = layout_manager.findViewByPosition(x)
-        //    if (target_column == null) {
-        //        // Shouldn't be Reachable
-        //        return
-        //    } else if (target_column.x + target_width + target_offset > box_width) {
-        //        subdiv_state[POSITION_TO_RIGHT] = true
-        //        subdiv_state[POSITION_ON_SCREEN] = target_column.x + target_offset < box_width
-        //        subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
-        //    } else if (target_column.x + target_width + target_offset > 0) {
-        //        subdiv_state[POSITION_ON_SCREEN] = true
-        //        subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < 0
-        //    } else {
-        //        subdiv_state[POSITION_TO_LEFT] = true
-        //    }
+        if (x in visible_range) {
+            val target_column = this._scroll_view.column_container.get_column(x)
+            if (target_column == null) {
+                // Shouldn't be Reachable
+                return
+            } else if (target_column.x + target_width + target_offset > box_width + this._scroll_view.scrollX) {
+                println("A, ${target_column.x} $target_width, $target_offset, $box_width")
+                subdiv_state[POSITION_TO_RIGHT] = true
+                subdiv_state[POSITION_ON_SCREEN] = target_column.x + target_offset < box_width + this._scroll_view.scrollX
+                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < this._scroll_view.scrollX
+            } else if (target_column.x + target_width + target_offset > this._scroll_view.scrollX) {
+                println("B")
+                subdiv_state[POSITION_ON_SCREEN] = true
+                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < this._scroll_view.scrollX
+            } else {
+                println("C")
+                subdiv_state[POSITION_TO_LEFT] = true
+            }
 
 
-        //    if (target_column.x > box_width) {
-        //        column_state[POSITION_TO_RIGHT] = true
-        //    } else if (target_column.x > 0) {
-        //        column_state[POSITION_ON_SCREEN] = true
-        //        column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
-        //    } else {
-        //        column_state[POSITION_TO_LEFT] = true
-        //        column_state[POSITION_ON_SCREEN] = target_column.x + max_width > 0
-        //        column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width
-        //    }
-        //} else if (x > visible_range.last) {
-        //    column_state[POSITION_TO_RIGHT] = true
-        //    subdiv_state[POSITION_TO_RIGHT] = true
-        //} else {
-        //    column_state[POSITION_TO_LEFT] = true
-        //    subdiv_state[POSITION_TO_LEFT] = true
-        //}
+            if (target_column.x > box_width + this._scroll_view.scrollX) {
+                column_state[POSITION_TO_RIGHT] = true
+            } else if (target_column.x > this._scroll_view.scrollX) {
+                column_state[POSITION_ON_SCREEN] = true
+                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width + this._scroll_view.scrollX
+            } else {
+                column_state[POSITION_TO_LEFT] = true
+                column_state[POSITION_ON_SCREEN] = target_column.x + max_width > this._scroll_view.scrollX
+                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width + this._scroll_view.scrollX
+            }
+        } else if (x > visible_range.last) {
+            column_state[POSITION_TO_RIGHT] = true
+            subdiv_state[POSITION_TO_RIGHT] = true
+        } else {
+            column_state[POSITION_TO_LEFT] = true
+            subdiv_state[POSITION_TO_LEFT] = true
+        }
 
-        //var subdiv_int = 0
-        //var column_int = 0
-        //var working_offset = 1
-        //for (i in 0 until 4) {
-        //    subdiv_int += working_offset * if (subdiv_state[i]) { 1 } else { 0 }
-        //    column_int += working_offset * if (column_state[i]) { 1 } else { 0 }
-        //    working_offset *= 2
-        //}
+        var subdiv_int = 0
+        var column_int = 0
+        var working_offset = 1
+        for (i in 0 until 4) {
+            subdiv_int += working_offset * if (subdiv_state[i]) { 1 } else { 0 }
+            column_int += working_offset * if (column_state[i]) { 1 } else { 0 }
+            working_offset *= 2
+        }
 
-        //// FITS, LEFT, RIGHT, ON SCREEN
-        //val adj_offset = when (subdiv_int) {
-        //    // Center the section
-        //    0b0011,
-        //    0b0101,
-        //    0b0010,
-        //    0b0100 -> (box_width - target_width) / 2
+        // FITS, LEFT, RIGHT, ON SCREEN
+        val adj_offset = when (subdiv_int) {
+            // Center the section
+            0b0011,
+            0b0101,
+            0b0010,
+            0b0100 -> (box_width - target_width) / 2
 
-        //    // Try to scroll the column onto screen, then the section
-        //    0b1010 -> {
-        //        if (column_state[FITS_ON_SCREEN]) {
-        //            box_width - max_width
-        //        } else {
-        //            (0 - target_offset) + ((box_width - target_width) / 2)
-        //        }
-        //    }
+            // Try to scroll the column onto screen, then the section
+            0b1010 -> {
+                if (column_state[FITS_ON_SCREEN]) {
+                    box_width - max_width
+                } else {
+                    (0 - target_offset) + ((box_width - target_width) / 2)
+                }
+            }
 
-        //    // Align the end of the section with the end of the screen
-        //    0b1011 -> box_width - target_offset - target_width
+            // Align the end of the section with the end of the screen
+            0b1011 -> {
+                box_width - target_offset - target_width
+            }
 
-        //    // Try to scroll the column onto screen, then the section
-        //    0b1100 -> {
-        //        if (column_state[FITS_ON_SCREEN]) {
-        //            0
-        //        } else {
-        //            box_width - target_offset - target_width - ((box_width - target_width) / 2)
-        //        }
-        //    }
 
-        //    // Align the start of the section with the start of the screen
-        //    0b1101 -> 0 - target_offset
+            // Try to scroll the column onto screen, then the section
+            0b1100 -> {
+                if (column_state[FITS_ON_SCREEN]) {
+                    0
+                } else {
+                    box_width - target_offset - target_width - ((box_width - target_width) / 2)
+                }
+            }
 
-        //    0b0111,   // Overflowing,
-        //    0b1001 -> { // No need to scroll
-        //        this._align_column_labels()
-        //        return
-        //    }
-        //    // 0b0000 -> { }   // Invalid
-        //    // 0b0001 -> { }   // Invalid
-        //    // 0b0110 -> { }   // Invalid
-        //    // 0b1000 -> { }   // Invalid
-        //    // 0b1110 -> { }   // Invalid
-        //    // 0b1111 -> { }   // Invalid
-        //    else -> { return }     // Unreachable
-        //}
+            // Align the start of the section with the start of the screen
+            0b1101 -> 0 - target_offset
 
-        //this._main_scroll_locked = true
-        //layout_manager.scrollToPositionWithOffset(x, adj_offset)
-        //this._main_scroll_locked = false
+            0b0111,   // Overflowing,
+            0b1001 -> { // No need to scroll
+                this._align_column_labels()
+                return
+            }
+            // 0b0000 -> { }   // Invalid
+            // 0b0001 -> { }   // Invalid
+            // 0b0110 -> { }   // Invalid
+            // 0b1000 -> { }   // Invalid
+            // 0b1110 -> { }   // Invalid
+            // 0b1111 -> { }   // Invalid
+            else -> { return }     // Unreachable
+        }
 
-        //this._label_scroll_locked = true
-        //(this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, adj_offset)
-        //this._label_scroll_locked = false
+        this._main_scroll_locked = true
+        val calc_x = (this._scroll_view.column_container.get_column(x).x).toInt()
+        // this._scroll_view.scrollTo(calc_x + adj_offset, this._scroll_view.scrollY)
+        this._scroll_view.scrollTo(calc_x - adj_offset, 0)
+        this._main_scroll_locked = false
+
+        this._label_scroll_locked = true
+        (this.column_label_recycler.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(x, adj_offset)
+        this._label_scroll_locked = false
     }
 
     // TODO: Create row_height_map so OpusManager isn't accessed here
@@ -490,6 +494,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun get_first_visible_column_index(): Int {
         val scroll_container_offset = this._scroll_view.scrollX
+        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        val reduced_x = scroll_container_offset / min_leaf_width
+        val column_position = this.get_column_from_leaf(reduced_x)
+        return column_position
+    }
+
+    fun get_last_visible_column_index(): Int {
+        val scroll_container_offset = this._scroll_view.scrollX + this._scroll_view.width
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x)

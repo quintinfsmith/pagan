@@ -9,13 +9,13 @@ import androidx.core.view.children
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ColumnLayout(var editor_table: EditorTable): LinearLayout(editor_table.context) {
+class ColumnLayout(var editor_table: EditorTable, index: Int): LinearLayout(editor_table.context) {
     class ColumnDetachedException: Exception()
     private var _populated = false
     var column_width_factor = 1
     init {
         this.orientation = VERTICAL
-
+        this.column_width_factor = editor_table.get_column_width(index)
         this.overScrollMode = View.OVER_SCROLL_NEVER
         this._populate()
     }

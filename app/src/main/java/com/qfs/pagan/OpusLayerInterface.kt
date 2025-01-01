@@ -2814,6 +2814,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         )
     }
+
     fun set_note_octave_at_cursor(octave: Int) {
         if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
             throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
@@ -2824,6 +2825,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
         this.set_note_octave(current_tree_position.first, current_tree_position.second, octave)
     }
+
     fun set_note_offset_at_cursor(offset: Int) {
         if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
             throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")

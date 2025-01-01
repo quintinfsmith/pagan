@@ -436,8 +436,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
-        val llContextMenuSecondary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        val llContextMenu = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        val llContextMenuSecondary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
 
         if (this.active_context_menu !is T) {
             llContextMenu.removeAllViews()
@@ -475,24 +475,28 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     private fun hide_context_menus() {
-        this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
-        this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
+        this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
+        this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
     }
 
     private fun show_context_menus() {
-        val primary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        val primary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)
         primary.visibility = if (primary.isNotEmpty()) {
             VISIBLE
         } else {
             GONE
         }
 
-        val secondary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        val secondary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         secondary.visibility = if (secondary.isNotEmpty()) {
             VISIBLE
         } else {
             GONE
         }
+        this.scroll_to_cursor()
+    }
+
+    fun scroll_to_cursor() {
         val opus_manager = this.get_main().get_opus_manager()
         val cursor = opus_manager.cursor
         val y = when (cursor.mode) {
@@ -633,9 +637,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         this.active_context_menu = ContextMenuControlLine(
             widget,
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         )
+
         this.show_context_menus()
     }
 
@@ -684,8 +689,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         this.active_context_menu = ContextMenuControlLeaf(
             widget,
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         )
         this.show_context_menus()
     }
@@ -693,8 +698,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_line_control_leaf_b() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafB>()) {
             this.active_context_menu = ContextMenuControlLeafB(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -703,8 +708,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_range() {
         if (!this.refresh_or_clear_context_menu<ContextMenuRange>()) {
             this.active_context_menu = ContextMenuRange(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -713,13 +718,14 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_column() {
         if (this.get_main().in_playback()) {
             this.clear_context_menu()
+            this.scroll_to_cursor()
             return
         }
 
         if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
             this.active_context_menu = ContextMenuColumn(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -728,8 +734,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_line() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLine>()) {
             this.active_context_menu = ContextMenuLine(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -738,8 +744,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_channel() {
         if (!this.refresh_or_clear_context_menu<ContextMenuChannel>()) {
             this.active_context_menu = ContextMenuChannel(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -749,8 +755,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
             this.active_context_menu = ContextMenuLeaf(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -759,8 +765,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_leaf_percussion() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeafPercussion>()) {
             this.active_context_menu = ContextMenuLeafPercussion(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()

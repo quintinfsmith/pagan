@@ -1834,6 +1834,86 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.set_channel_visibility(this.channels.size, true)
     }
 
+    fun queue_scroll_to_cursor(cursor: OpusManagerCursor) {
+        val y = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Single -> {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                    CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+                    CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                    null -> {
+                        this.get_visible_row_from_ctl_line(
+                            this.get_actual_line_index(
+                                this.get_instrument_line_index(
+                                    this.cursor.channel,
+                                    this.cursor.line_offset
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
+                    CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
+                    CtlLineLevel.Global ->  this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                    null -> this.get_visible_row_from_ctl_line(
+                        this.get_actual_line_index(
+                            this.get_instrument_line_index(
+                                cursor.range!!.second.channel,
+                                cursor.range!!.second.line_offset
+                            )
+                        )
+                    )
+                }
+
+            }
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> null
+
+            OpusManagerCursor.CursorMode.Channel -> {
+                this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
+                            this.cursor.channel,
+                            0
+                        )
+                    )
+                )
+            }
+        }
+
+        val (beat, offset, offset_width) = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
+            OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
+            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
+            OpusManagerCursor.CursorMode.Single -> {
+                var tree = when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> this.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
+                    CtlLineLevel.Channel -> this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
+                    CtlLineLevel.Global -> this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat)
+                    null -> this.get_tree(cursor.get_beatkey())
+                }
+
+                var width = 1f
+                var offset = 0f
+                for (p in cursor.get_position()) {
+                    width /= tree.size
+                    offset += p * width
+                    tree = tree[p]
+                }
+                Triple(cursor.beat, offset, width)
+            }
+
+            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
+            OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
+        }
+
+        this.ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset.toInt(), offset_width.toInt(), _activity?.in_playback() ?: false)
+    }
+
     fun queue_cursor_update(cursor: OpusManagerCursor, deep_update: Boolean = true) {
         if (cursor != this._cache_cursor) {
             try {
@@ -1842,6 +1922,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                 // Pass
             }
             this._cache_cursor = cursor.copy()
+
+            this.queue_scroll_to_cursor(cursor)
         }
         val coordinates_to_update = mutableSetOf<EditorTable.Coordinate>()
 
@@ -2304,6 +2386,21 @@ class OpusLayerInterface : OpusLayerHistory() {
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()
                 when (entry) {
+                    BillableItem.ForceScroll -> {
+                        val y = this.ui_change_bill.get_next_int()
+                        val x = this.ui_change_bill.get_next_int()
+                        val offset = this.ui_change_bill.get_next_int().toFloat()
+                        val offset_width = this.ui_change_bill.get_next_int().toFloat()
+                        val force = this.ui_change_bill.get_next_int() != 0
+                        editor_table.scroll_to_position(
+                            y = if (y == -1) null else y,
+                            x = if (x == -1) null else x,
+                            offset = offset,
+                            offset_width = offset_width,
+                            force = force
+                        )
+                    }
+
                     BillableItem.FullRefresh -> {
                         activity.setup_project_config_drawer()
                         activity.update_menu_options()

@@ -459,8 +459,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
             this@MainActivity.save_to_backup()
@@ -587,7 +585,6 @@ class MainActivity : AppCompatActivity() {
         this.setSupportActionBar(this._binding.appBarMain.toolbar)
 
         this.view_model.opus_manager.attach_activity(this)
-
         this.view_model.color_map.set_fallback_palette(this.get_palette())
 
 
@@ -666,34 +663,30 @@ class MainActivity : AppCompatActivity() {
         })
 
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
-        drawer_layout.addDrawerListener(object : ActionBarDrawerToggle(
-            this,
-            drawer_layout,
-            R.string.drawer_open,
-            R.string.drawer_close
-        ) {
-            override fun onDrawerOpened(drawerView: View) {
-                val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                if (channel_recycler.adapter == null) {
-                    ChannelOptionAdapter(this@MainActivity.get_opus_manager(), channel_recycler)
+        drawer_layout.addDrawerListener(
+            object : ActionBarDrawerToggle( this, drawer_layout, R.string.drawer_open, R.string.drawer_close) {
+                override fun onDrawerOpened(drawerView: View) {
+                    val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                    if (channel_recycler.adapter == null) {
+                        ChannelOptionAdapter(this@MainActivity.get_opus_manager(), channel_recycler)
+                    }
+                    val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                    if (channel_adapter.itemCount == 0) {
+                        channel_adapter.setup()
+                    }
+                    super.onDrawerOpened(drawerView)
+
+                    this@MainActivity.playback_stop()
+                    this@MainActivity.playback_stop_midi_output()
+                    this@MainActivity.drawer_unlock() // So the drawer can be closed with a swipe
                 }
-                val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-                if (channel_adapter.itemCount == 0) {
-                    channel_adapter.setup()
+
+                override fun onDrawerClosed(drawerView: View) {
+                    super.onDrawerClosed(drawerView)
+                    this@MainActivity.drawer_lock() // so the drawer can't be opened with a swipe
                 }
-                super.onDrawerOpened(drawerView)
-
-                this@MainActivity.playback_stop()
-                this@MainActivity.playback_stop_midi_output()
-                this@MainActivity.drawer_unlock() // So the drawer can be closed with a swipe
             }
-
-            override fun onDrawerClosed(drawerView: View) {
-                super.onDrawerClosed(drawerView)
-                this@MainActivity.drawer_lock() // so the drawer can't be opened with a swipe
-            }
-        })
-
+        )
     }
 
 

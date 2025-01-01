@@ -493,95 +493,91 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         } else {
             GONE
         }
-        this.scroll_to_cursor()
     }
 
-    fun scroll_to_cursor() {
-        val opus_manager = this.get_main().get_opus_manager()
-        val cursor = opus_manager.cursor
-        val y = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Line,
-            OpusManagerCursor.CursorMode.Single -> {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-                    CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
-                    CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                    null -> {
-                        opus_manager.get_visible_row_from_ctl_line(
-                            opus_manager.get_actual_line_index(
-                                opus_manager.get_instrument_line_index(
-                                    opus_manager.cursor.channel,
-                                    opus_manager.cursor.line_offset
-                                )
-                            )
-                        )
-                    }
-                }
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
-                    CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
-                    CtlLineLevel.Global ->  opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                    null -> opus_manager.get_visible_row_from_ctl_line(
-                        opus_manager.get_actual_line_index(
-                            opus_manager.get_instrument_line_index(
-                                cursor.range!!.second.channel,
-                                cursor.range!!.second.line_offset
-                            )
-                        )
-                    )
-                }
+    // fun scroll_to_cursor(cursor: OpusManagerCursor, force: Boolean = false) {
+    //     val opus_manager = this.get_main().get_opus_manager()
+    //     val y = when (cursor.mode) {
+    //         OpusManagerCursor.CursorMode.Line,
+    //         OpusManagerCursor.CursorMode.Single -> {
+    //             when (cursor.ctl_level) {
+    //                 CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+    //                 CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+    //                 CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+    //                 null -> {
+    //                     opus_manager.get_visible_row_from_ctl_line(
+    //                         opus_manager.get_actual_line_index(
+    //                             opus_manager.get_instrument_line_index(
+    //                                 opus_manager.cursor.channel,
+    //                                 opus_manager.cursor.line_offset
+    //                             )
+    //                         )
+    //                     )
+    //                 }
+    //             }
+    //         }
+    //         OpusManagerCursor.CursorMode.Range -> {
+    //             when (cursor.ctl_level) {
+    //                 CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
+    //                 CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
+    //                 CtlLineLevel.Global ->  opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+    //                 null -> opus_manager.get_visible_row_from_ctl_line(
+    //                     opus_manager.get_actual_line_index(
+    //                         opus_manager.get_instrument_line_index(
+    //                             cursor.range!!.second.channel,
+    //                             cursor.range!!.second.line_offset
+    //                         )
+    //                     )
+    //                 )
+    //             }
 
-            }
-            OpusManagerCursor.CursorMode.Column,
-            OpusManagerCursor.CursorMode.Unset -> null
+    //         }
+    //         OpusManagerCursor.CursorMode.Column,
+    //         OpusManagerCursor.CursorMode.Unset -> null
 
-            OpusManagerCursor.CursorMode.Channel -> {
-                opus_manager.get_visible_row_from_ctl_line(
-                    opus_manager.get_actual_line_index(
-                        opus_manager.get_instrument_line_index(
-                            opus_manager.cursor.channel,
-                            0
-                        )
-                    )
-                )
-            }
-        }
+    //         OpusManagerCursor.CursorMode.Channel -> {
+    //             opus_manager.get_visible_row_from_ctl_line(
+    //                 opus_manager.get_actual_line_index(
+    //                     opus_manager.get_instrument_line_index(
+    //                         opus_manager.cursor.channel,
+    //                         0
+    //                     )
+    //                 )
+    //             )
+    //         }
+    //     }
 
-        val (beat, offset, offset_width) = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
-            OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
-            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
-            OpusManagerCursor.CursorMode.Single -> {
-                var tree = when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
-                    CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
-                    CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat)
-                    null -> opus_manager.get_tree(cursor.get_beatkey())
-                }
+    //     val (beat, offset, offset_width) = when (cursor.mode) {
+    //         OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Single -> {
+    //             var tree = when (cursor.ctl_level) {
+    //                 CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
+    //                 CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
+    //                 CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat)
+    //                 null -> opus_manager.get_tree(cursor.get_beatkey())
+    //             }
 
-                var width = 1f
-                var offset = 0f
-                for (p in cursor.get_position()) {
-                    width /= tree.size
-                    offset += p * width
-                    tree = tree[p]
-                }
-                Triple(cursor.beat, offset, width)
-            }
-            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
-            OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
-        }
+    //             var width = 1f
+    //             var offset = 0f
+    //             for (p in cursor.get_position()) {
+    //                 width /= tree.size
+    //                 offset += p * width
+    //                 tree = tree[p]
+    //             }
+    //             Triple(cursor.beat, offset, width)
+    //         }
+    //         OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
+    //     }
 
-        // If the row is out of view, scrolls to it
-        thread {
-            this.get_main().runOnUiThread {
-                val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-                editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width)
-            }
-        }
-    }
+    //     // If the row is out of view, scrolls to it
+    //     this.get_main().runOnUiThread {
+    //         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+    //         editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width, force = force)
+    //     }
+    // }
 
 
     internal fun set_context_menu_control_line() {
@@ -718,7 +714,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_column() {
         if (this.get_main().in_playback()) {
             this.clear_context_menu()
-            this.scroll_to_cursor()
             return
         }
 

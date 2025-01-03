@@ -1922,8 +1922,12 @@ class OpusLayerInterface : OpusLayerHistory() {
                 // Pass
             }
             this._cache_cursor = cursor.copy()
+            // TODO: THis shoudln't throw an eerror
+            try {
+                this.queue_scroll_to_cursor(cursor)
+            } catch (e: IndexOutOfBoundsException) {
 
-            this.queue_scroll_to_cursor(cursor)
+            }
         }
         val coordinates_to_update = mutableSetOf<EditorTable.Coordinate>()
 

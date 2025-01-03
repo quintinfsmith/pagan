@@ -1,16 +1,44 @@
 package com.qfs.pagan
 
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
+import kotlin.math.roundToInt
 
 class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
     private var _scroll_locked = false
     class ColumnLabelContainerInner(val editor_table: EditorTable): LinearLayout(editor_table.context) {
+        val paint = Paint()
         init {
             this.orientation = HORIZONTAL
+            this.paint.color = resources.getColor(R.color.table_lines)
+            this.paint.strokeWidth = 3F
+            this.setWillNotDraw(false)
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+            println("---?")
+            val base_width = resources.getDimension(R.dimen.base_leaf_width)
+            val first_x = this.editor_table.get_first_visible_column_index()
+            val last_x = this.editor_table.get_last_visible_column_index()
+            var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
+            val initial_offset = offset
+
+            for (i in first_x .. last_x) {
+                offset += (this.editor_table.get_column_width(i) * base_width).roundToInt()
+                canvas.drawLine(
+                    offset,
+                    0F,
+                    offset,
+                    canvas.height.toFloat(),
+                    this.paint
+                )
+            }
         }
 
         fun clear() {
@@ -18,26 +46,26 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
         }
 
         fun add_column(i: Int) {
-            this.addView(ColumnLabelView(this.editor_table), i)
-            for (x in i until this.childCount) {
-                this.notify_column_changed(x, false)
-            }
+            //this.addView(ColumnLabelView(this.editor_table), i)
+            //for (x in i until this.childCount) {
+            //    this.notify_column_changed(x, false)
+            //}
         }
 
         fun remove_column(index: Int) {
-            this.removeViewAt(index)
-            for (x in index until this.childCount) {
-                this.notify_column_changed(x, false)
-            }
+            //this.removeViewAt(index)
+            //for (x in index until this.childCount) {
+            //    this.notify_column_changed(x, false)
+            //}
         }
 
         fun notify_column_changed(x: Int, state_only: Boolean = false) {
-            val column_label = this.get_column_label(x)
-            if (state_only) {
-                column_label.refreshDrawableState()
-            } else {
-                column_label.rebuild()
-            }
+            //val column_label = this.get_column_label(x)
+            //if (state_only) {
+            //    column_label.refreshDrawableState()
+            //} else {
+            //    column_label.rebuild()
+            //}
         }
 
         fun get_column_label(index: Int): ColumnLabelView {
@@ -51,7 +79,7 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
         }
     }
 
-    private val inner_container = ColumnLabelContainerInner(editor_table)
+    internal val inner_container = ColumnLabelContainerInner(editor_table)
     init {
         this.isHorizontalScrollBarEnabled = false
         this.overScrollMode = View.OVER_SCROLL_NEVER
@@ -101,6 +129,7 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             compound_scrollview.scrollTo(x, 0)
             compound_scrollview.unlock_scroll()
         }
+        this.inner_container.invalidate()
         super.onScrollChanged(x, y, old_x, old_y)
     }
 }

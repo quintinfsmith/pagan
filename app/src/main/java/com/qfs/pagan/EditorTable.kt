@@ -14,6 +14,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
     data class Coordinate(var y: Int, var x: Int)
+    data class Rectangle(var x: Int, var y: Int, var width: Int, var height: Int)
 
     // Scroll Locks
     private var _label_scroll_locked = false
@@ -102,11 +103,18 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._line_label_layout.insert_labels(0, height)
 
         this._scroll_view.column_container.add_columns(0, width)
+
+        val (pix_width, pix_height) = this._calculate_table_size()
+        this._scroll_view.column_container.minimumWidth = pix_width
+        this._scroll_view.column_container.minimumHeight = pix_height
+
+        this.column_label_container.inner_container.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
+        this.column_label_container.inner_container.minimumWidth = pix_width
+
     }
 
     fun new_row(y: Int) {
         this._scroll_view.column_container.insert_row(y)
-
         this._line_label_layout.insert_label(y)
     }
 
@@ -191,7 +199,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x)
-        val column = this._scroll_view.column_container.get_column(column_position)
+        //val column = this._scroll_view.column_container.get_column(column_position)
 
         // TODO
         //val label_position = layout_manager_labels.findFirstVisibleItemPosition()
@@ -235,7 +243,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             0
         }
 
-        val pixel_x = (this._scroll_view.column_container.get_column(x).x).toInt()
+        //val pixel_x = (this._scroll_view.column_container.get_column(x).x).toInt()
+        val pixel_x = this._column_width_maxes.subList(0, x).sum()
         this._main_scroll_locked = true
         this._scroll_view.scrollTo(pixel_x + offset, 0)
         this._main_scroll_locked = false
@@ -243,6 +252,20 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._label_scroll_locked = true
         this.column_label_container.scrollTo(pixel_x + offset, 0)
         this._label_scroll_locked = false
+    }
+
+    fun get_column_rect(x: Int): Rectangle? {
+        if (this._column_width_maxes.size <= x) {
+            return null
+        }
+
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        return Rectangle(
+            this._column_width_maxes.subList(0, x).sum() * base_width.toInt(),
+            0,
+            this._column_width_maxes[x] * base_width.toInt(),
+            1 // TODO
+        )
     }
 
     private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
@@ -265,32 +288,32 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
         column_state[FITS_ON_SCREEN] = max_width <= box_width
 
+        val target_rect = this.get_column_rect(x) ?: return
         if (x in visible_range) {
-            val target_column = this._scroll_view.column_container.get_column(x)
-            if (target_column == null) {
+            if (target_rect == null) {
                 // Shouldn't be Reachable
                 return
-            } else if (target_column.x + target_width + target_offset > box_width + this._scroll_view.scrollX) {
+            } else if (target_rect.x + target_width + target_offset > box_width + this._scroll_view.scrollX) {
                 subdiv_state[POSITION_TO_RIGHT] = true
-                subdiv_state[POSITION_ON_SCREEN] = target_column.x + target_offset < box_width + this._scroll_view.scrollX
-                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < this._scroll_view.scrollX
-            } else if (target_column.x + target_width + target_offset > this._scroll_view.scrollX) {
+                subdiv_state[POSITION_ON_SCREEN] = target_rect.x + target_offset < box_width + this._scroll_view.scrollX
+                subdiv_state[POSITION_TO_LEFT] = target_rect.x + target_offset < this._scroll_view.scrollX
+            } else if (target_rect.x + target_width + target_offset > this._scroll_view.scrollX) {
                 subdiv_state[POSITION_ON_SCREEN] = true
-                subdiv_state[POSITION_TO_LEFT] = target_column.x + target_offset < this._scroll_view.scrollX
+                subdiv_state[POSITION_TO_LEFT] = target_rect.x + target_offset < this._scroll_view.scrollX
             } else {
                 subdiv_state[POSITION_TO_LEFT] = true
             }
 
 
-            if (target_column.x > box_width + this._scroll_view.scrollX) {
+            if (target_rect.x > box_width + this._scroll_view.scrollX) {
                 column_state[POSITION_TO_RIGHT] = true
-            } else if (target_column.x > this._scroll_view.scrollX) {
+            } else if (target_rect.x > this._scroll_view.scrollX) {
                 column_state[POSITION_ON_SCREEN] = true
-                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width + this._scroll_view.scrollX
+                column_state[POSITION_TO_RIGHT] = target_rect.x + max_width > box_width + this._scroll_view.scrollX
             } else {
                 column_state[POSITION_TO_LEFT] = true
-                column_state[POSITION_ON_SCREEN] = target_column.x + max_width > this._scroll_view.scrollX
-                column_state[POSITION_TO_RIGHT] = target_column.x + max_width > box_width + this._scroll_view.scrollX
+                column_state[POSITION_ON_SCREEN] = target_rect.x + max_width > this._scroll_view.scrollX
+                column_state[POSITION_TO_RIGHT] = target_rect.x + max_width > box_width + this._scroll_view.scrollX
             }
         } else if (x > visible_range.last) {
             column_state[POSITION_TO_RIGHT] = true
@@ -359,13 +382,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         this._main_scroll_locked = true
-        val calc_x = (this._scroll_view.column_container.get_column(x).x).toInt()
-        // this._scroll_view.scrollTo(calc_x + adj_offset, this._scroll_view.scrollY)
-        this._scroll_view.scrollTo(calc_x - adj_offset, 0)
+        this._scroll_view.scrollTo(target_rect.x - adj_offset, 0)
         this._main_scroll_locked = false
 
         this._label_scroll_locked = true
-        this.column_label_container.scrollTo(calc_x - adj_offset, 0)
+        this.column_label_container.scrollTo(target_rect.x - adj_offset, 0)
         this._label_scroll_locked = false
     }
 
@@ -470,7 +491,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun get_last_visible_column_index(): Int {
-        val scroll_container_offset = this._scroll_view.scrollX + this._scroll_view.width
+        val scroll_container_offset = if (this._scroll_view.column_container.width <= this._scroll_view.width) {
+            this._scroll_view.column_container.width - 1
+        } else {
+            this._scroll_view.scrollX + this._scroll_view.width
+        }
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x)

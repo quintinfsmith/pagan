@@ -128,7 +128,6 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                 }
                 for ((blocked_beat, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
                     val overlappee_pair = Pair(blocked_beat, blocked_position.toList())
-
                     this._on_overlap(cache_key, overlappee_pair)
                 }
             } else {

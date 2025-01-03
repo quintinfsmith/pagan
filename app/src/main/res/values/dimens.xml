@@ -50,4 +50,7 @@
     <dimen name="secondary_contextmenu_padding_bottom">2dp</dimen>
     <dimen name="secondary_contextmenu_height">52dp</dimen>
     <dimen name="secondary_contextmenu_button_height">42dp</dimen>
+
+    <dimen name="text_size_offset">18sp</dimen>
+    <dimen name="text_size_octave">14sp</dimen>
 </resources>

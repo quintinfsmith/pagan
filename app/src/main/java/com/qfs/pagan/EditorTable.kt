@@ -15,6 +15,10 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
     data class Coordinate(var y: Int, var x: Int)
     data class Rectangle(var x: Int, var y: Int, var width: Int, var height: Int)
+    enum class RowType {
+        Standard,
+        Control
+    }
 
     // Scroll Locks
     private var _label_scroll_locked = false
@@ -79,8 +83,74 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.column_label_container.layoutParams.height = WRAP_CONTENT
     }
 
-    fun get_column_from_leaf(x: Int): Int {
-        return this._inv_column_map[x] ?: 0
+    fun get_column_from_leaf(x: Int, fallback: Int = 0): Int {
+        return this._inv_column_map[x] ?: fallback
+    }
+
+    fun get_visible_row_from_pixel(y: Float): Int? {
+        val line_height = resources.getDimension(R.dimen.line_height)
+        val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height)
+        val channel_gap_size = resources.getDimension(R.dimen.channel_gap_size)
+        var check_y = y
+        var output = -1
+        val opus_manager = this.get_opus_manager()
+        val channels = opus_manager.get_all_channels()
+        for (i in channels.indices) {
+            val channel = channels[i]
+            if (!channel.visible) {
+                continue
+            }
+            for (j in channel.lines.indices) {
+                val line = channel.lines[j]
+                if (check_y <= 0) {
+                    return output
+                } else {
+                    check_y -= line_height
+                    output += 1
+                }
+
+                for ((type, controller) in line.controllers.get_all()) {
+                    if (!controller.visible) {
+                        continue
+                    }
+                    if (check_y <= 0) {
+                        return output
+                    } else {
+                        check_y -= ctl_line_height
+                        output += 1
+                    }
+                }
+            }
+            for ((type, controller) in channel.controllers.get_all()) {
+                if (!controller.visible) {
+                    continue
+                }
+                if (check_y <= 0) {
+                    return output
+                } else {
+                    check_y -= ctl_line_height
+                    output += 1
+                }
+            }
+            if (check_y >= 0 && check_y - channel_gap_size <= 0) {
+                return null
+            }
+            check_y -= channel_gap_size
+        }
+
+        for ((type, controller) in opus_manager.controllers.get_all()) {
+            if (!controller.visible) {
+                continue
+            }
+            if (check_y <= 0) {
+                return output
+            } else {
+                check_y -= ctl_line_height
+                output += 1
+            }
+        }
+
+        return output
     }
 
     fun get_scroll_view(): CompoundScrollView {
@@ -88,6 +158,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
     fun clear() {
         this.get_activity().runOnUiThread {
+
             this._scroll_view.column_container.clear()
             this.column_label_container.clear()
             this._line_label_layout.clear()
@@ -492,15 +563,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun get_last_visible_column_index(): Int {
         val scroll_container_offset = if (this._scroll_view.column_container.width <= this._scroll_view.width) {
-            println("A")
             this._scroll_view.column_container.width - 1
         } else {
-            println("B")
             this._scroll_view.scrollX + this._scroll_view.width
         }
-        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
-        val column_position = this.get_column_from_leaf(reduced_x)
+        val column_position = this.get_column_from_leaf(reduced_x, this._column_width_map.size - 1)
         return column_position
     }
 
@@ -605,6 +674,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         return !is_trivial
     }
+
 
     fun _calculate_table_size(): Pair<Int, Int> {
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()

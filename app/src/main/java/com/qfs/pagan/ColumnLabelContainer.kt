@@ -13,10 +13,14 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
     private var _scroll_locked = false
     class ColumnLabelContainerInner(val editor_table: EditorTable): LinearLayout(editor_table.context) {
         val paint = Paint()
+        val text_paint = Paint()
         init {
             this.orientation = HORIZONTAL
             this.paint.color = resources.getColor(R.color.table_lines)
             this.paint.strokeWidth = 3F
+            this.text_paint.textSize = resources.getDimension(R.dimen.text_size_offset)
+            this.text_paint.color = resources.getColor(R.color.table_lines)
+            this.text_paint.strokeWidth = 3F
             this.setWillNotDraw(false)
         }
 
@@ -29,6 +33,7 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             val initial_offset = offset
 
             for (i in first_x .. last_x) {
+                canvas.drawText("$i", offset, (canvas.height / 2).toFloat(), this.text_paint)
                 offset += (this.editor_table.get_column_width(i) * base_width).roundToInt()
                 canvas.drawLine(
                     offset,
@@ -37,11 +42,12 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
                     canvas.height.toFloat(),
                     this.paint
                 )
+
             }
         }
 
         fun clear() {
-            this.removeAllViews()
+            //this.removeAllViews()
         }
 
         fun add_column(i: Int) {
@@ -86,6 +92,8 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
     }
 
     fun clear() {
+        this.scrollX = 0
+        this.scrollY = 0
         this.inner_container.clear()
     }
 

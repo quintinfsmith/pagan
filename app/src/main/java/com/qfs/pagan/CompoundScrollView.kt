@@ -12,7 +12,9 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.InstrumentEvent
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.PercussionEvent
@@ -55,11 +57,12 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
             val reduced_x = x / min_leaf_width
             val column_position = this.editor_table.get_column_from_leaf(reduced_x.toInt())
-            println("CLICKED: $column_position")
+
+            var row_position = this.editor_table.get_visible_row_from_pixel(y)
+            println("CLICKED: $column_position, $row_position")
         }
 
-
-        fun build_drawable_state(beat_key: BeatKey, position: List<Int>): IntArray {
+        fun get_standard_leaf_state(beat_key: BeatKey, position: List<Int>): IntArray {
             val opus_manager = this.editor_table.get_opus_manager()
 
             val tree = opus_manager.get_tree(beat_key, position)
@@ -115,6 +118,79 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             return new_state.toIntArray()
         }
 
+        fun get_global_control_leaf_state(type: ControlEventType, beat: Int, position: List<Int>): IntArray {
+            val new_state = mutableListOf<Int>()
+            val opus_manager = this.editor_table.get_opus_manager()
+            val controller = opus_manager.controllers.get_controller<OpusControlEvent>(type)
+
+            val tree = controller.get_tree(beat, position)
+            val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
+            val tree_original = controller.get_tree(original_position.first, original_position.second)
+
+            if (tree.is_event()) {
+                new_state.add(R.attr.state_active)
+            } else if (tree_original != tree) {
+                new_state.add(R.attr.state_spill)
+            }
+
+            if (opus_manager.is_global_control_selected(type, beat, position)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_global_control_secondary_selected(type, beat, position)) {
+                new_state.add(R.attr.state_focused_secondary)
+            }
+
+            return new_state.toIntArray()
+        }
+
+        fun get_channel_control_leaf_state(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): IntArray {
+            val new_state = mutableListOf<Int>()
+            val opus_manager = this.editor_table.get_opus_manager()
+            val controller = opus_manager.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
+
+            val tree = controller.get_tree(beat, position)
+            val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
+            val tree_original = controller.get_tree(original_position.first, original_position.second)
+
+            if (tree.is_event()) {
+                new_state.add(R.attr.state_active)
+            } else if (tree_original != tree) {
+                new_state.add(R.attr.state_spill)
+            }
+
+            if (opus_manager.is_channel_control_selected(type, channel, beat, position)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_channel_control_secondary_selected(type, channel, beat, position)) {
+                new_state.add(R.attr.state_focused_secondary)
+            }
+
+            return new_state.toIntArray()
+        }
+
+        fun get_line_control_leaf_state(type: ControlEventType, beat_key: BeatKey, position: List<Int>): IntArray {
+            val new_state = mutableListOf<Int>()
+            val opus_manager = this.editor_table.get_opus_manager()
+            val controller = opus_manager.get_line_controller<OpusControlEvent>(type, beat_key.channel, beat_key.line_offset)
+
+            val beat = beat_key.beat
+            val tree = controller.get_tree(beat, position)
+            val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
+            val tree_original = controller.get_tree(original_position.first, original_position.second)
+
+            if (tree.is_event()) {
+                new_state.add(R.attr.state_active)
+            } else if (tree_original != tree) {
+                new_state.add(R.attr.state_spill)
+            }
+
+            if (opus_manager.is_line_control_selected(type, beat_key, position)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_line_control_secondary_selected(type, beat_key, position)) {
+                new_state.add(R.attr.state_focused_secondary)
+            }
+
+            return new_state.toIntArray()
+        }
+
         fun <T: TunedInstrumentEvent> draw_event(event: T, canvas: Canvas, x: Float, y: Float, width: Float, height: Float) {
             canvas.drawText(
                 "$event",
@@ -124,22 +200,15 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             )
         }
 
-        fun <T: InstrumentEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, beat_key: BeatKey, position: List<Int>, x: Float, y: Float, width: Float, height: Float, callback: (T, Canvas, Float, Float, Float, Float) -> Unit) {
+        fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, height: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float, Float) -> Unit) {
             if (tree.is_leaf()) {
-                val leaf_drawable = resources.getDrawable(R.drawable.leaf)
-                leaf_drawable.setState(this.build_drawable_state(beat_key, position))
-                leaf_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + height).toInt())
-                leaf_drawable.draw(canvas)
-
-                if (tree.is_event()) {
-                    callback(tree.get_event()!!, canvas, x, y, width, height)
-                }
+                callback(tree.get_event(), position, canvas, x, y, width, height)
             } else {
                 val new_width = width / tree.size
                 for (i in 0 until tree.size) {
                     val child = tree[i]
                     val next_position = OpusLayerBase.next_position(position, i)
-                    this.draw_tree<T>(canvas, child, beat_key, next_position, x + (i * new_width), y, new_width, height, callback)
+                    this.draw_tree<T>(canvas, child, next_position, x + (i * new_width), y, new_width, height, callback)
                 }
             }
         }
@@ -156,7 +225,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
             val opus_manager = this.editor_table.get_opus_manager()
             val channels = opus_manager.get_all_channels()
-            println("!!! _ $last_x")
+
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * base_width)
 
@@ -168,8 +237,14 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                     }
                     for (k in channel.lines.indices) {
                         val line = channel.lines[k]
-                        val tree = opus_manager.get_tree(BeatKey(j, k, i), listOf())
-                        this.draw_tree(canvas, tree, BeatKey(j, k, i), listOf(), offset, y_offset, beat_width, line_height) { event, canvas, x, y, width, height ->
+                        val beat_key = BeatKey(j, k, i)
+                        val tree = opus_manager.get_tree(beat_key, listOf())
+                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width, line_height) { event, position, canvas, x, y, width, height ->
+                            val leaf_drawable = resources.getDrawable(R.drawable.leaf)
+                            leaf_drawable.setState(this.get_standard_leaf_state(beat_key, position))
+                            leaf_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + height).toInt())
+                            leaf_drawable.draw(canvas)
+
                             when (event) {
                                 is AbsoluteNoteEvent -> {
                                     canvas.drawText(
@@ -210,9 +285,14 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                             if (!controller.visible) {
                                 continue
                             }
-                            val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
-                            ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
-                            ctl_drawable.draw(canvas)
+                            val tree = controller.get_tree(i, listOf())
+                            this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width, ctl_line_height) { event, position, canvas, x, y, width, height ->
+                                val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
+                                ctl_drawable.setState(this.get_line_control_leaf_state(type, beat_key, position))
+                                ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
+                                ctl_drawable.draw(canvas)
+                            }
+
                             y_offset += ctl_line_height
                         }
                     }
@@ -221,9 +301,13 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                         if (!controller.visible) {
                             continue
                         }
-                        val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
-                        ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
-                        ctl_drawable.draw(canvas)
+                        val tree = controller.get_tree(i, listOf())
+                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width, ctl_line_height) { event, position, canvas, x, y, width, height ->
+                            val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
+                            ctl_drawable.setState(this.get_channel_control_leaf_state(type, j, i, position))
+                            ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
+                            ctl_drawable.draw(canvas)
+                        }
                         y_offset += ctl_line_height
                     }
                     canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height, this.paint)
@@ -234,9 +318,14 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                     if (!controller.visible) {
                         continue
                     }
-                    val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
-                    ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
-                    ctl_drawable.draw(canvas)
+                    val tree = controller.get_tree(i, listOf())
+                    this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width, ctl_line_height) { event, position, canvas, x, y, width, height ->
+                        val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
+                        ctl_drawable.setState(this.get_global_control_leaf_state(type, i, position))
+                        ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
+                        ctl_drawable.draw(canvas)
+                    }
+
                     y_offset += ctl_line_height
                 }
                 offset += beat_width
@@ -322,6 +411,15 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
         this.overScrollMode = OVER_SCROLL_NEVER
         //this.isHorizontalScrollBarEnabled = false
+    }
+
+    fun clear() {
+        this.vertical_scroll_view.scrollX = 0
+        this.vertical_scroll_view.scrollY = 0
+        this.scrollX = 0
+        this.scrollY = 0
+        this.column_container.clear()
+
     }
 
     override fun onScrollChanged(x: Int, y: Int, old_x: Int, old_y: Int) {

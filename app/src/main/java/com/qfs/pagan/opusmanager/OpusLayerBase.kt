@@ -975,19 +975,29 @@ open class OpusLayerBase {
         }
     }
 
+    fun <T: OpusControlEvent> get_line_controller(type: ControlEventType, channel: Int, line_offset: Int): ActiveController<T> {
+        return this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type)
+    }
+
     fun <T : OpusControlEvent> get_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int): T {
-        val controller = this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type)
-        return controller.initial_event
+        return this.get_line_controller<T>(type, channel, line_offset).initial_event
+    }
+
+    fun <T : OpusControlEvent> get_channel_controller(type: ControlEventType, channel: Int): ActiveController<T> {
+        val controller = this.get_channel(channel).controllers.get_controller<T>(type)
+        return controller
     }
 
     fun <T : OpusControlEvent> get_channel_controller_initial_event(type: ControlEventType, channel: Int): T {
-        val controller = this.get_channel(channel).controllers.get_controller<T>(type)
-        return controller.initial_event
+        return this.get_channel_controller<T>(type, channel).initial_event
+    }
+
+    fun <T : OpusControlEvent> get_global_controller(type: ControlEventType): ActiveController<T> {
+        return this.controllers.get_controller<T>(type)
     }
 
     fun <T : OpusControlEvent> get_global_controller_initial_event(type: ControlEventType): T {
-        val controller = this.controllers.get_controller<T>(type)
-        return controller.initial_event
+        return this.get_global_controller<T>(type).initial_event
     }
 
     fun <T : OpusControlEvent> get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T {

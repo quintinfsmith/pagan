@@ -80,7 +80,6 @@ class ColumnLayout(var editor_table: EditorTable, index: Int): LinearLayout(edit
     fun get_beat(): Int {
         // TODO: Probably slow
         val output = (this.parent as ViewGroup).children.indexOf(this)
-        println("BEAT: $output")
         return output
     }
 

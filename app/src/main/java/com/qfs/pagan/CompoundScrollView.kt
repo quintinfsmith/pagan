@@ -3,6 +3,8 @@ package com.qfs.pagan
 import android.annotation.SuppressLint
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
@@ -17,6 +19,7 @@ import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
@@ -24,6 +27,8 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         val paint = Paint()
         val text_paint_offset = Paint()
         val text_paint_octave = Paint()
+        var touch_position_x = 0F
+        var touch_position_y = 0F
         init {
             this.paint.color = resources.getColor(R.color.table_lines)
             this.paint.strokeWidth = 3F
@@ -32,7 +37,27 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             this.text_paint_octave.textSize = resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_octave.textAlign = Paint.Align.CENTER
             this.setWillNotDraw(false)
+
+            this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
+                if (touchEvent != null) {
+                    this.touch_position_y = touchEvent.y
+                    this.touch_position_x = touchEvent.x
+                }
+                false
+            }
+            this.setOnClickListener {
+                this.on_click_listener(this.touch_position_x, this.touch_position_y)
+            }
         }
+
+
+        fun on_click_listener(x: Float, y: Float) {
+            val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+            val reduced_x = x / min_leaf_width
+            val column_position = this.editor_table.get_column_from_leaf(reduced_x.toInt())
+            println("CLICKED: $column_position")
+        }
+
 
         fun build_drawable_state(beat_key: BeatKey, position: List<Int>): IntArray {
             val opus_manager = this.editor_table.get_opus_manager()
@@ -131,6 +156,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
             val opus_manager = this.editor_table.get_opus_manager()
             val channels = opus_manager.get_all_channels()
+            println("!!! _ $last_x")
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * base_width)
 

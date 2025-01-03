@@ -22,7 +22,6 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
-            println("---?")
             val base_width = resources.getDimension(R.dimen.base_leaf_width)
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()

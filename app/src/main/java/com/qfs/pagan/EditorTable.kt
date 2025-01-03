@@ -244,7 +244,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         }
 
         //val pixel_x = (this._scroll_view.column_container.get_column(x).x).toInt()
-        val pixel_x = this._column_width_maxes.subList(0, x).sum()
+        val pixel_x = this._column_width_maxes.subList(0, x).sum() * base_width.toInt()
         this._main_scroll_locked = true
         this._scroll_view.scrollTo(pixel_x + offset, 0)
         this._main_scroll_locked = false
@@ -492,8 +492,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun get_last_visible_column_index(): Int {
         val scroll_container_offset = if (this._scroll_view.column_container.width <= this._scroll_view.width) {
+            println("A")
             this._scroll_view.column_container.width - 1
         } else {
+            println("B")
             this._scroll_view.scrollX + this._scroll_view.width
         }
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()

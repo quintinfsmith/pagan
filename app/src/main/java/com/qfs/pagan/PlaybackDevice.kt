@@ -82,12 +82,6 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
         }
 
         opus_manager.cursor_select_column(max(i, 0))
-
-        // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
-        this.activity.runOnUiThread {
-            val editor_table = this.activity.findViewById<EditorTable?>(R.id.etEditorTable)
-            editor_table?.scroll_to_position(x = max(i, 0), force = true)
-        }
     }
 
     override fun on_cancelled() {

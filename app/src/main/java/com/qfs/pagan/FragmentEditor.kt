@@ -436,8 +436,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
-        val llContextMenu = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
-        val llContextMenuSecondary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        val llContextMenu = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        val llContextMenuSecondary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
 
         if (this.active_context_menu !is T) {
             llContextMenu.removeAllViews()
@@ -475,109 +475,109 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     private fun hide_context_menus() {
-        this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
-        this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
+        this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
+        this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
     }
 
     private fun show_context_menus() {
-        val primary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        val primary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)
         primary.visibility = if (primary.isNotEmpty()) {
             VISIBLE
         } else {
             GONE
         }
 
-        val secondary = this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        val secondary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         secondary.visibility = if (secondary.isNotEmpty()) {
             VISIBLE
         } else {
             GONE
         }
-        val opus_manager = this.get_main().get_opus_manager()
-        val cursor = opus_manager.cursor
-        val y = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Line,
-            OpusManagerCursor.CursorMode.Single -> {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-                    CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
-                    CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                    null -> {
-                        opus_manager.get_visible_row_from_ctl_line(
-                            opus_manager.get_actual_line_index(
-                                opus_manager.get_instrument_line_index(
-                                    opus_manager.cursor.channel,
-                                    opus_manager.cursor.line_offset
-                                )
-                            )
-                        )
-                    }
-                }
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
-                    CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
-                    CtlLineLevel.Global ->  opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                    null -> opus_manager.get_visible_row_from_ctl_line(
-                        opus_manager.get_actual_line_index(
-                            opus_manager.get_instrument_line_index(
-                                cursor.range!!.second.channel,
-                                cursor.range!!.second.line_offset
-                            )
-                        )
-                    )
-                }
-
-            }
-            OpusManagerCursor.CursorMode.Column,
-            OpusManagerCursor.CursorMode.Unset -> null
-
-            OpusManagerCursor.CursorMode.Channel -> {
-                opus_manager.get_visible_row_from_ctl_line(
-                    opus_manager.get_actual_line_index(
-                        opus_manager.get_instrument_line_index(
-                            opus_manager.cursor.channel,
-                            0
-                        )
-                    )
-                )
-            }
-        }
-
-        val (beat, offset, offset_width) = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
-            OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
-            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
-            OpusManagerCursor.CursorMode.Single -> {
-                var tree = when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
-                    CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
-                    CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat)
-                    null -> opus_manager.get_tree(cursor.get_beatkey())
-                }
-
-                var width = 1f
-                var offset = 0f
-                for (p in cursor.get_position()) {
-                    width /= tree.size
-                    offset += p * width
-                    tree = tree[p]
-                }
-                Triple(cursor.beat, offset, width)
-            }
-            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
-            OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
-        }
-
-        // If the row is out of view, scrolls to it
-        thread {
-            this.get_main().runOnUiThread {
-                val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-                editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width)
-            }
-        }
     }
+
+    // fun scroll_to_cursor(cursor: OpusManagerCursor, force: Boolean = false) {
+    //     val opus_manager = this.get_main().get_opus_manager()
+    //     val y = when (cursor.mode) {
+    //         OpusManagerCursor.CursorMode.Line,
+    //         OpusManagerCursor.CursorMode.Single -> {
+    //             when (cursor.ctl_level) {
+    //                 CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+    //                 CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+    //                 CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+    //                 null -> {
+    //                     opus_manager.get_visible_row_from_ctl_line(
+    //                         opus_manager.get_actual_line_index(
+    //                             opus_manager.get_instrument_line_index(
+    //                                 opus_manager.cursor.channel,
+    //                                 opus_manager.cursor.line_offset
+    //                             )
+    //                         )
+    //                     )
+    //                 }
+    //             }
+    //         }
+    //         OpusManagerCursor.CursorMode.Range -> {
+    //             when (cursor.ctl_level) {
+    //                 CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
+    //                 CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
+    //                 CtlLineLevel.Global ->  opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+    //                 null -> opus_manager.get_visible_row_from_ctl_line(
+    //                     opus_manager.get_actual_line_index(
+    //                         opus_manager.get_instrument_line_index(
+    //                             cursor.range!!.second.channel,
+    //                             cursor.range!!.second.line_offset
+    //                         )
+    //                     )
+    //                 )
+    //             }
+
+    //         }
+    //         OpusManagerCursor.CursorMode.Column,
+    //         OpusManagerCursor.CursorMode.Unset -> null
+
+    //         OpusManagerCursor.CursorMode.Channel -> {
+    //             opus_manager.get_visible_row_from_ctl_line(
+    //                 opus_manager.get_actual_line_index(
+    //                     opus_manager.get_instrument_line_index(
+    //                         opus_manager.cursor.channel,
+    //                         0
+    //                     )
+    //                 )
+    //             )
+    //         }
+    //     }
+
+    //     val (beat, offset, offset_width) = when (cursor.mode) {
+    //         OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Single -> {
+    //             var tree = when (cursor.ctl_level) {
+    //                 CtlLineLevel.Line -> opus_manager.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
+    //                 CtlLineLevel.Channel -> opus_manager.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
+    //                 CtlLineLevel.Global -> opus_manager.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat)
+    //                 null -> opus_manager.get_tree(cursor.get_beatkey())
+    //             }
+
+    //             var width = 1f
+    //             var offset = 0f
+    //             for (p in cursor.get_position()) {
+    //                 width /= tree.size
+    //                 offset += p * width
+    //                 tree = tree[p]
+    //             }
+    //             Triple(cursor.beat, offset, width)
+    //         }
+    //         OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
+    //         OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
+    //     }
+
+    //     // If the row is out of view, scrolls to it
+    //     this.get_main().runOnUiThread {
+    //         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+    //         editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width, force = force)
+    //     }
+    // }
 
 
     internal fun set_context_menu_control_line() {
@@ -633,9 +633,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         this.active_context_menu = ContextMenuControlLine(
             widget,
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         )
+
         this.show_context_menus()
     }
 
@@ -684,8 +685,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         this.active_context_menu = ContextMenuControlLeaf(
             widget,
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-            this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
         )
         this.show_context_menus()
     }
@@ -693,8 +694,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_line_control_leaf_b() {
         if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafB>()) {
             this.active_context_menu = ContextMenuControlLeafB(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -703,8 +704,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_range() {
         if (!this.refresh_or_clear_context_menu<ContextMenuRange>()) {
             this.active_context_menu = ContextMenuRange(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -718,8 +719,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
             this.active_context_menu = ContextMenuColumn(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -728,8 +729,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_line() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLine>()) {
             this.active_context_menu = ContextMenuLine(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -738,8 +739,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_channel() {
         if (!this.refresh_or_clear_context_menu<ContextMenuChannel>()) {
             this.active_context_menu = ContextMenuChannel(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -749,8 +750,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_leaf() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
             this.active_context_menu = ContextMenuLeaf(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()
@@ -759,8 +760,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     internal fun set_context_menu_leaf_percussion() {
         if (!this.refresh_or_clear_context_menu<ContextMenuLeafPercussion>()) {
             this.active_context_menu = ContextMenuLeafPercussion(
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.activity!!.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )
         }
         this.show_context_menus()

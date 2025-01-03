@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.max
 
 class UIChangeBill {
@@ -69,7 +70,8 @@ class UIChangeBill {
         PercussionButtonRefresh,
         LineLabelRefresh,
         ColumnLabelRefresh,
-        FullRefresh
+        FullRefresh,
+        ForceScroll
     }
 
     class Node {
@@ -128,7 +130,7 @@ class UIChangeBill {
     }
 
     val ui_lock = UILock()
-    private val _tree: Node = Node()
+    private var _tree: Node = Node()
     private val working_path = mutableListOf<Int>()
     
     fun consolidate() {
@@ -141,7 +143,9 @@ class UIChangeBill {
         val queued_line_labels = mutableSetOf<Int>()
         val queued_column_labels = mutableSetOf<Int>()
         var queued_context_menu: BillableItem? = null
+        var queued_cursor_scroll: OpusManagerCursor? = null
         var stack = mutableListOf<Node>(this._tree)
+        this._tree = Node()
         while (stack.isNotEmpty()) {
             var node = stack.removeFirst()
             for (bill_item in node.bill) {
@@ -178,10 +182,16 @@ class UIChangeBill {
                         return
                     }
 
+                    BillableItem.ForceScroll -> {
+                        for (i in 0 until 5) {
+                            this._tree.int_queue.add(node.int_queue.removeFirst())
+                        }
+                    }
+
                     BillableItem.RowAdd -> {
                         val y = node.int_queue.removeFirst()
-                        for (i in 0 until queued_cells.size) {
-                            for (coord in queued_cells[i]) {
+                        for (element in queued_cells) {
+                            for (coord in element) {
                                 if (coord.y >= y) {
                                     coord.y += 1
                                 }
@@ -208,7 +218,7 @@ class UIChangeBill {
                         val count = node.int_queue.removeFirst()
 
                         val check_range = y until y + count
-                        for (i in 0 until queued_cells.size) {
+                        for (i in queued_cells.indices) {
                             queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
                                 check_range.contains(coord.y)
                             }.toSet()
@@ -449,7 +459,7 @@ class UIChangeBill {
                 this._tree.int_queue.add(cell.x)
             }
             this._tree.bill.add(BillableItem.CellChange)
-        } 
+        }
 
         for (y in queued_line_labels) {
             this._tree.bill.add(BillableItem.LineLabelRefresh)
@@ -683,6 +693,17 @@ class UIChangeBill {
 
     fun queue_full_refresh() {
         this._tree.get(this.working_path).bill.add(BillableItem.FullRefresh)
+    }
+
+    fun queue_force_scroll(y: Int, x: Int, offset: Int, offset_width: Int, force: Boolean) {
+        // editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width, force = force)
+        val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(y)
+        working_tree.int_queue.add(x)
+        working_tree.int_queue.add(offset)
+        working_tree.int_queue.add(offset_width)
+        working_tree.int_queue.add(if (force) 1 else 0)
+        working_tree.bill.add(BillableItem.ForceScroll)
     }
         
     fun get_working_tree(): Node? {

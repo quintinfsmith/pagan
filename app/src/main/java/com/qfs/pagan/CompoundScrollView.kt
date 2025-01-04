@@ -13,6 +13,7 @@ import android.widget.ScrollView
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -21,7 +22,6 @@ import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
-import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
@@ -54,12 +54,54 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
 
         fun on_click_listener(x: Float, y: Float) {
-            val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
-            val reduced_x = x / min_leaf_width
-            val column_position = this.editor_table.get_column_from_leaf(reduced_x.toInt())
+            var row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return
 
-            var row_position = this.editor_table.get_visible_row_from_pixel(y)
-            println("CLICKED: $column_position, $row_position")
+            val opus_manager = this.editor_table.get_opus_manager()
+            val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
+            val reduced_x = x / min_leaf_width
+            val beat = this.editor_table.get_column_from_leaf(reduced_x.toInt())
+
+            val inner_offset = x - this.editor_table.get_column_offset(beat)
+            val column_width = this.editor_table.get_column_width(beat) * min_leaf_width
+
+            val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(row_position))
+            when (ctl_line_level) {
+                null -> {
+                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                    val beat_key = BeatKey(channel, line_offset, beat)
+                    val position = this.calc_position(opus_manager.get_tree(beat_key), column_width, inner_offset)
+                    opus_manager.cursor_select(BeatKey(channel, line_offset, beat), position)
+                }
+                CtlLineLevel.Line -> {
+                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                    val beat_key = BeatKey(channel, line_offset, beat)
+                    val position = this.calc_position(opus_manager.get_line_ctl_tree(ctl_type!!, beat_key), column_width, inner_offset)
+                    opus_manager.cursor_select_ctl_at_line(ctl_type!!, beat_key, position)
+                }
+                CtlLineLevel.Channel -> {
+                    val position = this.calc_position(opus_manager.get_channel_ctl_tree(ctl_type!!, pointer, beat), column_width, inner_offset)
+                    opus_manager.cursor_select_ctl_at_channel(ctl_type!!, pointer, beat, position)
+                }
+                CtlLineLevel.Global -> {
+                    val position = this.calc_position(opus_manager.get_global_ctl_tree(ctl_type!!, beat), column_width, inner_offset)
+                    opus_manager.cursor_select_ctl_at_global(ctl_type!!, beat, position)
+                }
+            }
+        }
+
+        fun <T: OpusEvent> calc_position(tree: OpusTree<T>, initial_width: Int, target_x: Float): List<Int> {
+            var working_width = initial_width.toFloat()
+            var working_tree = tree
+            var working_x = target_x.toInt()
+            val output = mutableListOf<Int>()
+            while (!working_tree.is_leaf()) {
+                val child_pos = (working_x * working_tree.size / working_width).toInt()
+                output.add(child_pos)
+                working_width /= working_tree.size
+                working_x %= working_width.toInt()
+                working_tree = working_tree[child_pos]
+            }
+            return output
         }
 
         fun get_standard_leaf_state(beat_key: BeatKey, position: List<Int>): IntArray {
@@ -367,7 +409,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         fun notify_cell_changed(y: Int, x: Int, state_only: Boolean = false) {
            // val column = this.get_column(x)
            // column.notify_item_changed(y, state_only)
-            this.refreshDrawableState()
+            this.invalidate()
         }
 
         fun notify_column_changed(x: Int, state_only: Boolean = false) {

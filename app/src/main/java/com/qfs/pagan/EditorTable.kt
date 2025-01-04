@@ -91,10 +91,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val line_height = resources.getDimension(R.dimen.line_height)
         val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height)
         val channel_gap_size = resources.getDimension(R.dimen.channel_gap_size)
-        var check_y = y
-        var output = -1
+        var check_y = 0f
+        var output = 0
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
+
+        println("$y, $line_height, $ctl_line_height, $channel_gap_size")
         for (i in channels.indices) {
             val channel = channels[i]
             if (!channel.visible) {
@@ -102,10 +104,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             }
             for (j in channel.lines.indices) {
                 val line = channel.lines[j]
-                if (check_y <= 0) {
+
+                check_y += line_height
+                if (check_y >= y) {
+                    println("$check_y, $y: $output")
                     return output
                 } else {
-                    check_y -= line_height
                     output += 1
                 }
 
@@ -113,10 +117,10 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                     if (!controller.visible) {
                         continue
                     }
-                    if (check_y <= 0) {
+                    check_y += ctl_line_height
+                    if (check_y >= y) {
                         return output
                     } else {
-                        check_y -= ctl_line_height
                         output += 1
                     }
                 }
@@ -125,27 +129,28 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
                 if (!controller.visible) {
                     continue
                 }
-                if (check_y <= 0) {
+                check_y += ctl_line_height
+                if (check_y >= y) {
                     return output
                 } else {
-                    check_y -= ctl_line_height
                     output += 1
                 }
             }
-            if (check_y >= 0 && check_y - channel_gap_size <= 0) {
+
+            check_y += channel_gap_size
+            if (check_y >= y) {
                 return null
             }
-            check_y -= channel_gap_size
         }
 
         for ((type, controller) in opus_manager.controllers.get_all()) {
             if (!controller.visible) {
                 continue
             }
-            if (check_y <= 0) {
+            check_y += ctl_line_height
+            if (check_y >= y) {
                 return output
             } else {
-                check_y -= ctl_line_height
                 output += 1
             }
         }
@@ -325,6 +330,11 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this._label_scroll_locked = false
     }
 
+    fun get_column_offset(x: Int): Int {
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        return this._column_width_maxes.subList(0, x).sum() * base_width.toInt()
+    }
+
     fun get_column_rect(x: Int): Rectangle? {
         if (this._column_width_maxes.size <= x) {
             return null
@@ -332,7 +342,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
         return Rectangle(
-            this._column_width_maxes.subList(0, x).sum() * base_width.toInt(),
+            this.get_column_offset(x),
             0,
             this._column_width_maxes[x] * base_width.toInt(),
             1 // TODO

@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.view.MotionEvent
@@ -21,8 +22,9 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             this.orientation = HORIZONTAL
             this.paint.color = resources.getColor(R.color.table_lines)
             this.paint.strokeWidth = 3F
-            this.text_paint.textSize = resources.getDimension(R.dimen.text_size_offset)
-            this.text_paint.color = resources.getColor(R.color.table_lines)
+            this.text_paint.textSize = resources.getDimension(R.dimen.text_size_octave)
+            this.text_paint.isFakeBoldText = true
+            this.text_paint.isAntiAlias = true
             this.text_paint.strokeWidth = 3F
             this.setWillNotDraw(false)
 
@@ -63,11 +65,15 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
             val initial_offset = offset
 
+
+            val color_list = resources.getColorStateList(R.color.column_label_text)!!
             for (i in first_x .. last_x) {
+                val state = this.get_column_label_state(i)
+                this.text_paint.color = color_list.getColorForState(state, Color.MAGENTA)
+
                 val column_width = this.editor_table.get_column_width(i) * base_width
                 val drawable = resources.getDrawable(R.drawable.editor_label_column)
-
-                drawable.setState(this.get_column_label_state(i))
+                drawable.setState(state)
                 drawable.setBounds(offset.toInt(), 0, (offset + column_width).toInt(), canvas.height)
                 drawable.draw(canvas)
 

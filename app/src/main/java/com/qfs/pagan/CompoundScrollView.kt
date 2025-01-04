@@ -323,26 +323,28 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                                     val octave_text_bounds = Rect()
                                     this.text_paint_octave.getTextBounds(octave_text, 0, octave_text.length, octave_text_bounds)
 
-                                    val padding = resources.getDimension(R.dimen.octave_label_padding)
-                                    val total_width = octave_text_bounds.width() + padding + offset_text_bounds.width()
+                                    val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
+                                    val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
+                                    //val total_width = octave_text_bounds.width() + padding + offset_text_bounds.width()
+                                    val octave_text_y = y + ((line_height + offset_text_bounds.height()) / 2)
 
                                     canvas.drawText(
                                         offset_text,
-                                        x + ((width + total_width) / 2) - offset_text_bounds.width() - offset_text_bounds.left - (padding / 2),
-                                        y - offset_text_bounds.top + ((line_height - offset_text_bounds.height()) / 2),
+                                        x + ((width - offset_text_bounds.width()) / 2),
+                                        octave_text_y,
                                         this.text_paint_offset
                                     )
 
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - total_width) / 2) - octave_text_bounds.left - (padding / 2),
-                                        y - octave_text_bounds.top + ((line_height + padding) / 2),
+                                        x + ((width - base_width) / 2) + padding_x,
+                                        y + line_height - padding_y,
                                         this.text_paint_octave
                                     )
-
                                 }
 
                                 is RelativeNoteEvent -> {
+
                                     val offset_text = "${abs(event.offset) % opus_manager.tuning_map.size}"
                                     val offset_text_bounds = Rect()
                                     this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, offset_text_bounds)
@@ -356,34 +358,32 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                                     } else {
                                         context.getString(R.string.pfx_add)
                                     }
-
                                     val prefix_text_bounds = Rect()
                                     this.text_paint_octave.getTextBounds(prefix_text, 0, prefix_text.length, prefix_text_bounds)
 
-                                    println("$prefix_text | ${prefix_text_bounds.height()} ${prefix_text_bounds.top} ${prefix_text_bounds.bottom}")
-
-                                    val padding = resources.getDimension(R.dimen.octave_label_padding)
-                                    val total_width = octave_text_bounds.width() + padding + offset_text_bounds.width()
-                                    val offset_text_top = y - offset_text_bounds.top + ((line_height - offset_text_bounds.height()) / 2)
+                                    val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
+                                    val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
+                                    //val total_width = octave_text_bounds.width() + padding + offset_text_bounds.width()
+                                    val octave_text_y = y + ((line_height + offset_text_bounds.height()) / 2)
 
                                     canvas.drawText(
                                         offset_text,
-                                        x + ((width + total_width) / 2) - offset_text_bounds.width() - offset_text_bounds.left - (padding / 2),
-                                        offset_text_top,
+                                        x + ((width - offset_text_bounds.width()) / 2),
+                                        octave_text_y,
                                         this.text_paint_offset
                                     )
 
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - total_width) / 2) - octave_text_bounds.left - (padding / 2),
-                                        y - octave_text_bounds.top + ((line_height + padding) / 2),
+                                        x + ((width - base_width) / 2) + padding_x,
+                                        y + line_height - padding_y,
                                         this.text_paint_octave
                                     )
 
                                     canvas.drawText(
                                         prefix_text,
-                                        x + ((width - total_width) / 2) - prefix_text_bounds.left - (padding / 2),
-                                        offset_text_top + prefix_text_bounds.top,
+                                        (x + ((width - base_width) / 2) + padding_x) + ((offset_text_bounds.width() - prefix_text_bounds.width()) / 2),
+                                        octave_text_y - octave_text_bounds.height(),
                                         this.text_paint_octave
                                     )
 
@@ -396,7 +396,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                                     canvas.drawText(
                                         offset_text,
                                         x + ((width - bounds.width()) / 2),
-                                        y + ((line_height - bounds.height()) / 2),
+                                        y + ((line_height + bounds.height()) / 2),
                                         this.text_paint_offset
                                     )
                                 }
@@ -487,7 +487,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             canvas.drawText(
                 text,
                 x - text_bounds.left + ((width - text_bounds.width()) / 2),
-                y - text_bounds.top + ((ctl_line_height - text_bounds.height()) / 2),
+                y + ((ctl_line_height + text_bounds.height()) / 2),
                 this.text_paint_ctl
             )
         }
@@ -545,7 +545,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             //for (x in 0 until this.childCount) {
             //    this.get_column(x).notify_item_changed(y, state_only)
             //}
-            this.refreshDrawableState()
+            this.invalidate()
         }
 
         fun clear() {

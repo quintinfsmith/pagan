@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -32,6 +33,7 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
                 }
                 false
             }
+
             this.setOnClickListener {
                 val opus_manager = this.editor_table.get_opus_manager()
                 val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
@@ -62,13 +64,23 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             val initial_offset = offset
 
             for (i in first_x .. last_x) {
-                val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
+                val column_width = this.editor_table.get_column_width(i) * base_width
                 val drawable = resources.getDrawable(R.drawable.editor_label_column)
+
                 drawable.setState(this.get_column_label_state(i))
-                drawable.setBounds(offset.toInt(), 0, offset.toInt() + column_width, canvas.height)
+                drawable.setBounds(offset.toInt(), 0, (offset + column_width).toInt(), canvas.height)
                 drawable.draw(canvas)
 
-                canvas.drawText("$i", offset, (canvas.height / 2).toFloat(), this.text_paint)
+                val column_text = "$i"
+                val bounds = Rect()
+                this.text_paint.getTextBounds(column_text, 0, column_text.length, bounds)
+                canvas.drawText(
+                    "$i",
+                    offset - bounds.left + ((column_width - bounds.width()) / 2),
+                    0 - bounds.top + ((this.height  - bounds.height()) / 2).toFloat(),
+                    this.text_paint
+                )
+
                 offset += column_width
             }
         }

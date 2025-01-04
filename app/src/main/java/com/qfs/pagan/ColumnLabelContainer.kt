@@ -2,18 +2,20 @@ package com.qfs.pagan
 
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
-import kotlin.math.roundToInt
 
 class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
     private var _scroll_locked = false
     class ColumnLabelContainerInner(val editor_table: EditorTable): LinearLayout(editor_table.context) {
         val paint = Paint()
         val text_paint = Paint()
+        var touch_position_x = 0F
+        var touch_position_y = 0F
         init {
             this.orientation = HORIZONTAL
             this.paint.color = resources.getColor(R.color.table_lines)
@@ -22,6 +24,33 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             this.text_paint.color = resources.getColor(R.color.table_lines)
             this.text_paint.strokeWidth = 3F
             this.setWillNotDraw(false)
+
+            this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
+                if (touchEvent != null) {
+                    this.touch_position_y = touchEvent.y
+                    this.touch_position_x = touchEvent.x
+                }
+                false
+            }
+            this.setOnClickListener {
+                val opus_manager = this.editor_table.get_opus_manager()
+                val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
+                val reduced_x = this.touch_position_x / min_leaf_width
+
+                val beat = this.editor_table.get_column_from_leaf(reduced_x.toInt())
+                opus_manager.cursor_select_column(beat)
+            }
+        }
+
+        private fun get_column_label_state(x: Int): IntArray {
+            val new_state = mutableSetOf<Int>()
+
+            val opus_manager = this.editor_table.get_opus_manager()
+            if (opus_manager.is_beat_selected(x)) {
+                new_state.add(R.attr.state_focused)
+            }
+
+            return new_state.toIntArray()
         }
 
         override fun onDraw(canvas: Canvas) {
@@ -33,16 +62,14 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             val initial_offset = offset
 
             for (i in first_x .. last_x) {
-                canvas.drawText("$i", offset, (canvas.height / 2).toFloat(), this.text_paint)
-                offset += (this.editor_table.get_column_width(i) * base_width).roundToInt()
-                canvas.drawLine(
-                    offset,
-                    0F,
-                    offset,
-                    canvas.height.toFloat(),
-                    this.paint
-                )
+                val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
+                val drawable = resources.getDrawable(R.drawable.editor_label_column)
+                drawable.setState(this.get_column_label_state(i))
+                drawable.setBounds(offset.toInt(), 0, offset.toInt() + column_width, canvas.height)
+                drawable.draw(canvas)
 
+                canvas.drawText("$i", offset, (canvas.height / 2).toFloat(), this.text_paint)
+                offset += column_width
             }
         }
 
@@ -71,6 +98,7 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             //} else {
             //    column_label.rebuild()
             //}
+            this.invalidate()
         }
 
         fun get_column_label(index: Int): ColumnLabelView {

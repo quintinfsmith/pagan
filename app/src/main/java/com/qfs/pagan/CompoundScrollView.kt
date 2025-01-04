@@ -331,7 +331,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                             this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width, ctl_line_height) { event, position, canvas, x, y, width, height ->
                                 val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
                                 ctl_drawable.setState(this.get_line_control_leaf_state(type, beat_key, position))
-                                ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
+                                ctl_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + height).toInt())
                                 ctl_drawable.draw(canvas)
                             }
 
@@ -347,7 +347,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                         this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width, ctl_line_height) { event, position, canvas, x, y, width, height ->
                             val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
                             ctl_drawable.setState(this.get_channel_control_leaf_state(type, j, i, position))
-                            ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
+                            ctl_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + height).toInt())
                             ctl_drawable.draw(canvas)
                         }
                         y_offset += ctl_line_height
@@ -361,10 +361,13 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                         continue
                     }
                     val tree = controller.get_tree(i, listOf())
+                    if (i == 1) {
+                        println("${tree.size} OK?")
+                    }
                     this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width, ctl_line_height) { event, position, canvas, x, y, width, height ->
                         val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
                         ctl_drawable.setState(this.get_global_control_leaf_state(type, i, position))
-                        ctl_drawable.setBounds(offset.toInt(), y_offset.toInt(), (offset + beat_width).toInt(), (y_offset + ctl_line_height).toInt())
+                        ctl_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + height).toInt())
                         ctl_drawable.draw(canvas)
                     }
 
@@ -419,7 +422,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             //} else {
             //    column.rebuild()
             //}
-            this.refreshDrawableState()
+            this.invalidate()
         }
 
         fun notify_row_change(y: Int, state_only: Boolean = false) {

@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.ContextThemeWrapper
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import kotlin.math.roundToInt
 
 abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): androidx.appcompat.widget.AppCompatImageView(
     ContextThemeWrapper(context, R.style.ctl_line_label)
@@ -19,8 +18,8 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this.layoutParams.height = this.resources.getDimension(R.dimen.ctl_line_height).roundToInt()
-        this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        this.layoutParams.height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
+        this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         this.setImageResource(this.get_label_icon())
     }
 

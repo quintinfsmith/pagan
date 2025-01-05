@@ -2,17 +2,13 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
-import android.widget.TableLayout
-import android.widget.TableRow
-import androidx.appcompat.view.ContextThemeWrapper
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, attrs) {
+class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, attrs) {
     data class Coordinate(var y: Int, var x: Int)
     data class Rectangle(var x: Int, var y: Int, var width: Int, var height: Int)
     enum class RowType {
@@ -20,18 +16,14 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         Control
     }
 
-    // Scroll Locks
-    private var _label_scroll_locked = false
-    private var _main_scroll_locked = false
-
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
     private val _line_label_layout = LineLabelColumnLayout(this)
     private var _scroll_view = CompoundScrollView(this)
-    private val _bottom_row = TableRow(context)
     private val _spacer = CornerView(context)
+    private val _first_column = LinearLayout(context, attrs)
 
     init {
         this._spacer.getChildAt(0).setOnClickListener {
@@ -46,24 +38,22 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             true
         }
 
-        this._bottom_row.addView(LinearLayout(ContextThemeWrapper(context, R.style.column)))
+        this.addView(this._first_column)
+        this._first_column.orientation = VERTICAL
+        this._first_column.addView(this._spacer)
+        this._first_column.addView(this._line_label_layout)
 
-        (this._bottom_row.getChildAt(0) as ViewGroup).layoutParams.width = MATCH_PARENT
-        (this._bottom_row.getChildAt(0) as ViewGroup).layoutParams.height = WRAP_CONTENT
-        (this._bottom_row.getChildAt(0) as ViewGroup).addView(this._line_label_layout)
+        this.addView(this._scroll_view)
 
-        this._bottom_row.addView(this._scroll_view)
+        this._first_column.layoutParams.width = WRAP_CONTENT
+        this._first_column.layoutParams.height = MATCH_PARENT
 
-        this.addView(this._bottom_row)
+        this._spacer.layoutParams.width = MATCH_PARENT
+        this._spacer.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
 
-        this._bottom_row.layoutParams.width = MATCH_PARENT
-        this._bottom_row.layoutParams.height = MATCH_PARENT
-
-        //this._spacer.layoutParams.width = MATCH_PARENT
-        //this._spacer.layoutParams.height = MATCH_PARENT
-
+        (this._line_label_layout.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        this._line_label_layout.layoutParams.height = 0
         this._line_label_layout.layoutParams.width = WRAP_CONTENT
-        this._line_label_layout.layoutParams.height = MATCH_PARENT
 
         (this._scroll_view.layoutParams as LinearLayout.LayoutParams).weight = 1F
         this._scroll_view.layoutParams.width = 0

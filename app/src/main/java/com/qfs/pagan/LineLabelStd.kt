@@ -10,7 +10,6 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.pow
-import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)) {
@@ -29,8 +28,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     }
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this.layoutParams.height = this.resources.getDimension(R.dimen.line_height).roundToInt()
-        this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        this.layoutParams.height = this.resources.getDimension(R.dimen.line_height).toInt()
+        this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         this.set_text()
     }
 

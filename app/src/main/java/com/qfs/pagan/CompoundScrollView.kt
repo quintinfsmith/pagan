@@ -74,6 +74,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                 }
                 false
             }
+
             this.setOnClickListener {
                 this.on_click_listener(this.touch_position_x, this.touch_position_y)
             }
@@ -294,9 +295,9 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             // TODO: deal with draw Allocations. preallocate in different function?
             super.onDraw(canvas)
             val base_width = resources.getDimension(R.dimen.base_leaf_width)
-            val line_height = resources.getDimension(R.dimen.line_height)
-            val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height)
-            val channel_gap_height = resources.getDimension(R.dimen.channel_gap_size)
+            val line_height = resources.getDimension(R.dimen.line_height).toInt().toFloat()
+            val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
+            val channel_gap_height = resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
 
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()

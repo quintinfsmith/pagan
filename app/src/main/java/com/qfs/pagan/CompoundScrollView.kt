@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
@@ -39,6 +40,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         val text_paint_offset = Paint()
         val text_paint_octave = Paint()
         val text_paint_ctl = Paint()
+        val text_paint_column = Paint()
         var touch_position_x = 0F
         var touch_position_y = 0F
         init {
@@ -57,6 +59,11 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             this.text_paint_ctl.textSize = resources.getDimension(R.dimen.text_size_ctl)
             this.text_paint_ctl.color = ContextCompat.getColor(context, R.color.ctl_leaf_text_selector)
             this.text_paint_ctl.isAntiAlias = true
+
+            this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
+            this.text_paint_column.isFakeBoldText = true
+            this.text_paint_column.isAntiAlias = true
+            this.text_paint_column.strokeWidth = 3F
 
             this.setWillNotDraw(false)
 
@@ -84,27 +91,35 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             val inner_offset = x - this.editor_table.get_column_offset(beat)
             val column_width = this.editor_table.get_column_width(beat) * min_leaf_width
 
-            val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(row_position))
-            when (ctl_line_level) {
-                null -> {
-                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                    val beat_key = BeatKey(channel, line_offset, beat)
-                    val position = this.calc_position(opus_manager.get_tree(beat_key), column_width, inner_offset)
-                    opus_manager.cursor_select(BeatKey(channel, line_offset, beat), position)
-                }
-                CtlLineLevel.Line -> {
-                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                    val beat_key = BeatKey(channel, line_offset, beat)
-                    val position = this.calc_position(opus_manager.get_line_ctl_tree(ctl_type!!, beat_key), column_width, inner_offset)
-                    opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)
-                }
-                CtlLineLevel.Channel -> {
-                    val position = this.calc_position(opus_manager.get_channel_ctl_tree(ctl_type!!, pointer, beat), column_width, inner_offset)
-                    opus_manager.cursor_select_ctl_at_channel(ctl_type, pointer, beat, position)
-                }
-                CtlLineLevel.Global -> {
-                    val position = this.calc_position(opus_manager.get_global_ctl_tree(ctl_type!!, beat), column_width, inner_offset)
-                    opus_manager.cursor_select_ctl_at_global(ctl_type, beat, position)
+
+            if (row_position == -1) {
+                opus_manager.cursor_select_column(beat)
+            } else {
+                val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(row_position))
+                when (ctl_line_level) {
+                    null -> {
+                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                        val beat_key = BeatKey(channel, line_offset, beat)
+                        val position = this.calc_position(opus_manager.get_tree(beat_key), column_width, inner_offset)
+                        opus_manager.cursor_select(BeatKey(channel, line_offset, beat), position)
+                    }
+
+                    CtlLineLevel.Line -> {
+                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                        val beat_key = BeatKey(channel, line_offset, beat)
+                        val position = this.calc_position(opus_manager.get_line_ctl_tree(ctl_type!!, beat_key), column_width, inner_offset)
+                        opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+                    }
+
+                    CtlLineLevel.Channel -> {
+                        val position = this.calc_position(opus_manager.get_channel_ctl_tree(ctl_type!!, pointer, beat), column_width, inner_offset)
+                        opus_manager.cursor_select_ctl_at_channel(ctl_type, pointer, beat, position)
+                    }
+
+                    CtlLineLevel.Global -> {
+                        val position = this.calc_position(opus_manager.get_global_ctl_tree(ctl_type!!, beat), column_width, inner_offset)
+                        opus_manager.cursor_select_ctl_at_global(ctl_type, beat, position)
+                    }
                 }
             }
         }
@@ -289,10 +304,12 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             val opus_manager = this.editor_table.get_opus_manager()
             val channels = opus_manager.get_all_channels()
 
+            val column_label_y = (this.parent as ViewGroup).scrollY
+
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * base_width)
 
-                var y_offset = 0F
+                var y_offset = line_height
                 for (j in channels.indices) {
                     val channel = channels[j]
                     if (!channel.visible) {
@@ -325,7 +342,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
                                     val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
                                     val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
-                                    //val total_width = octave_text_bounds.width() + padding + offset_text_bounds.width()
                                     val octave_text_y = y + ((line_height + offset_text_bounds.height()) / 2)
 
                                     canvas.drawText(
@@ -344,7 +360,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                                 }
 
                                 is RelativeNoteEvent -> {
-
                                     val offset_text = "${abs(event.offset) % opus_manager.tuning_map.size}"
                                     val offset_text_bounds = Rect()
                                     this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, offset_text_bounds)
@@ -363,7 +378,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
                                     val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
                                     val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
-                                    //val total_width = octave_text_bounds.width() + padding + offset_text_bounds.width()
                                     val octave_text_y = y + ((line_height + offset_text_bounds.height()) / 2)
 
                                     canvas.drawText(
@@ -449,8 +463,42 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
                     y_offset += ctl_line_height
                 }
+
+                val color_list = resources.getColorStateList(R.color.column_label_text)!!
+                val state = this.get_column_label_state(i)
+                this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
+
+                val column_width = this.editor_table.get_column_width(i) * base_width
+                val drawable = resources.getDrawable(R.drawable.editor_label_column)
+                drawable.setState(state)
+                drawable.setBounds(offset.toInt(), column_label_y, (offset + column_width).toInt(), (column_label_y + line_height).toInt())
+                drawable.draw(canvas)
+
+                val column_text = "$i"
+                val bounds = Rect()
+                this.text_paint_column.getTextBounds(column_text, 0, column_text.length, bounds)
+
+                canvas.drawText(
+                    "$i",
+                    offset - bounds.left + ((column_width - bounds.width()) / 2),
+                    column_label_y + ((line_height + bounds.height()) / 2),
+                    this.text_paint_column
+                )
+
                 offset += beat_width
             }
+
+        }
+
+        private fun get_column_label_state(x: Int): IntArray {
+            val new_state = mutableSetOf<Int>()
+
+            val opus_manager = this.editor_table.get_opus_manager()
+            if (opus_manager.is_beat_selected(x)) {
+                new_state.add(R.attr.state_focused)
+            }
+
+            return new_state.toIntArray()
         }
 
         fun process_ctl_event_layout(state: IntArray, event: OpusControlEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
@@ -554,13 +602,17 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
     }
 
-    private val _column_label_recycler = editor_table.column_label_container
     val column_container = ColumnsLayout(editor_table)
     private var _scroll_locked: Boolean = false
     //val column_recycler = ColumnRecycler(editor_table)
 
     private val _line_label_layout = editor_table.get_line_label_layout()
-    val vertical_scroll_view = ScrollView(this.context)
+    val vertical_scroll_view = object : ScrollView(this.context) {
+        override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+            super.onScrollChanged(l, t, oldl, oldt)
+            this@CompoundScrollView.column_container.invalidate()
+        }
+    }
     init {
         this.vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
         this.vertical_scroll_view.isVerticalScrollBarEnabled = false
@@ -583,17 +635,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
     }
 
-    override fun onScrollChanged(x: Int, y: Int, old_x: Int, old_y: Int) {
-        this._line_label_layout.scrollTo(x, y)
-        if (!this.is_scroll_locked()) {
-            this._column_label_recycler.lock_scroll()
-            this._column_label_recycler.scrollTo(x, 0)
-            this._column_label_recycler.unlock_scroll()
-        }
-        this.column_container.invalidate()
-        super.onScrollChanged(x, y, old_x, old_y)
-    }
-
 
     fun lock_scroll() {
         this._scroll_locked = true
@@ -607,4 +648,8 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         return this._scroll_locked
     }
 
+    override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        this.column_container.invalidate()
+    }
 }

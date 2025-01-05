@@ -28,17 +28,12 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
-    val column_label_container = ColumnLabelContainer(this)
     private val _line_label_layout = LineLabelColumnLayout(this)
     private var _scroll_view = CompoundScrollView(this)
-    private val _top_row = TableRow(context)
     private val _bottom_row = TableRow(context)
     private val _spacer = CornerView(context)
 
     init {
-        this._top_row.addView(this._spacer)
-        this._top_row.addView(this.column_label_container)
-
         this._spacer.getChildAt(0).setOnClickListener {
             val fragment = this.get_activity().get_active_fragment()
             if (fragment is FragmentEditor) {
@@ -59,17 +54,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         this._bottom_row.addView(this._scroll_view)
 
-        this.addView(this._top_row)
         this.addView(this._bottom_row)
-
-        this._top_row.layoutParams.width = MATCH_PARENT
-        this._top_row.layoutParams.height = WRAP_CONTENT
 
         this._bottom_row.layoutParams.width = MATCH_PARENT
         this._bottom_row.layoutParams.height = MATCH_PARENT
 
-        this._spacer.layoutParams.width = MATCH_PARENT
-        this._spacer.layoutParams.height = MATCH_PARENT
+        //this._spacer.layoutParams.width = MATCH_PARENT
+        //this._spacer.layoutParams.height = MATCH_PARENT
 
         this._line_label_layout.layoutParams.width = WRAP_CONTENT
         this._line_label_layout.layoutParams.height = MATCH_PARENT
@@ -77,10 +68,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         (this._scroll_view.layoutParams as LinearLayout.LayoutParams).weight = 1F
         this._scroll_view.layoutParams.width = 0
         this._scroll_view.layoutParams.height = MATCH_PARENT
-
-        (this.column_label_container.layoutParams as LinearLayout.LayoutParams).weight = 1F
-        this.column_label_container.layoutParams.width = 0
-        this.column_label_container.layoutParams.height = WRAP_CONTENT
     }
 
     fun get_column_from_leaf(x: Int, fallback: Int = 0): Int {
@@ -91,12 +78,15 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         val line_height = resources.getDimension(R.dimen.line_height)
         val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height)
         val channel_gap_size = resources.getDimension(R.dimen.channel_gap_size)
-        var check_y = 0f
+        var check_y = line_height // consider column labels
         var output = 0
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
 
-        println("$y, $line_height, $ctl_line_height, $channel_gap_size")
+        if (y - this._scroll_view.vertical_scroll_view.scrollY < line_height) {
+            return -1
+        }
+
         for (i in channels.indices) {
             val channel = channels[i]
             if (!channel.visible) {
@@ -165,7 +155,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
         this.get_activity().runOnUiThread {
 
             this._scroll_view.column_container.clear()
-            this.column_label_container.clear()
             this._line_label_layout.clear()
         }
     }
@@ -173,20 +162,13 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     fun setup(height: Int, width: Int) {
         // NOTE: Needs column map initialized first
 
-        for (beat in 0 until width) {
-            this.column_label_container.add_column(beat)
-        }
         this._line_label_layout.insert_labels(0, height)
 
         this._scroll_view.column_container.add_columns(0, width)
 
         val (pix_width, pix_height) = this._calculate_table_size()
         this._scroll_view.column_container.minimumWidth = pix_width
-        this._scroll_view.column_container.minimumHeight = pix_height
-
-        this.column_label_container.inner_container.minimumHeight = resources.getDimension(R.dimen.line_height).toInt()
-        this.column_label_container.inner_container.minimumWidth = pix_width
-
+        this._scroll_view.column_container.minimumHeight = pix_height + resources.getDimension(R.dimen.line_height).toInt()
     }
 
     fun new_row(y: Int) {
@@ -201,11 +183,9 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun new_column(index: Int) {
         this._scroll_view.column_container.add_column(index)
-        this.column_label_container.add_column(index)
     }
 
     fun remove_column(index: Int) {
-        this.column_label_container.remove_column(index)
         this._scroll_view.column_container.remove_column(index)
     }
 
@@ -218,7 +198,6 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
     fun notify_column_changed(x: Int, state_only: Boolean = false) {
         this._scroll_view.column_container.notify_column_changed(x, state_only)
-        this.column_label_container.notify_column_changed(x, state_only)
     }
 
     fun notify_row_changed(y: Int, state_only: Boolean = false) {
@@ -267,7 +246,8 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
     }
 
     fun update_column_label(x: Int) {
-        this.column_label_container.notify_column_changed(x)
+        // TODO?
+        //this.column_label_container.notify_column_changed(x)
     }
 
     private fun _align_column_labels() {
@@ -321,13 +301,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
 
         //val pixel_x = (this._scroll_view.column_container.get_column(x).x).toInt()
         val pixel_x = this._column_width_maxes.subList(0, x).sum() * base_width.toInt()
-        this._main_scroll_locked = true
         this._scroll_view.scrollTo(pixel_x + offset, 0)
-        this._main_scroll_locked = false
-
-        this._label_scroll_locked = true
-        this.column_label_container.scrollTo(pixel_x + offset, 0)
-        this._label_scroll_locked = false
     }
 
     fun get_column_offset(x: Int): Int {
@@ -462,13 +436,7 @@ class EditorTable(context: Context, attrs: AttributeSet): TableLayout(context, a
             else -> { return }     // Unreachable
         }
 
-        this._main_scroll_locked = true
         this._scroll_view.scrollTo(target_rect.x - adj_offset, 0)
-        this._main_scroll_locked = false
-
-        this._label_scroll_locked = true
-        this.column_label_container.scrollTo(target_rect.x - adj_offset, 0)
-        this._label_scroll_locked = false
     }
 
     // TODO: Create row_height_map so OpusManager isn't accessed here

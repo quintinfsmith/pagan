@@ -493,6 +493,14 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         } else {
             GONE
         }
+
+        this.force_scroll_to_cursor_vertical()
+    }
+
+    fun force_scroll_to_cursor_vertical() {
+        val cursor = this.get_main().get_opus_manager().cursor
+        // TODO()
+
     }
 
     // fun scroll_to_cursor(cursor: OpusManagerCursor, force: Boolean = false) {

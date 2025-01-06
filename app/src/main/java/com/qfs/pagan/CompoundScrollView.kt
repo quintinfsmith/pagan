@@ -306,7 +306,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             val channels = opus_manager.get_all_channels()
 
             val column_label_y = (this.parent as ViewGroup).scrollY
-
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * base_width)
 
@@ -454,9 +453,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                         continue
                     }
                     val tree = controller.get_tree(i, listOf())
-                    if (i == 1) {
-                        println("${tree.size} OK?")
-                    }
                     this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                         val state = this.get_global_control_leaf_state(type, i, position)
                         this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height )
@@ -488,6 +484,16 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
                 offset += beat_width
             }
+
+            val scroll_x = (this.parent.parent as ViewGroup).scrollX
+
+            canvas.drawLine(
+                scroll_x.toFloat() + 1F,
+                column_label_y + line_height,
+                scroll_x.toFloat() + 1F,
+                column_label_y + (this.parent as ViewGroup).measuredHeight.toFloat(),
+                this.paint
+            )
 
         }
 
@@ -547,6 +553,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             //    val column = this.get_column(i)
             //    column.insert_cells(y, 1)
             //}
+            this.invalidate()
         }
 
         fun remove_rows(y: Int, count: Int = 1) {
@@ -554,24 +561,25 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             //    val column = this.get_column(i)
             //    column.remove_cells(y, count)
             //}
+            this.invalidate()
         }
 
         fun add_column(x: Int) {
             //val new_column = ColumnLayout(this.editor_table, x)
             //this.addView(new_column, x)
-            this.refreshDrawableState()
+            this.invalidate()
         }
 
         fun add_columns(x: Int, count: Int) {
             //for (i in x until count) {
             //    this.add_column(i)
             //}
-            this.refreshDrawableState()
+            this.invalidate()
         }
 
         fun remove_column(x: Int) {
             //this.removeViewAt(x)
-            this.refreshDrawableState()
+            this.invalidate()
         }
 
         fun notify_cell_changed(y: Int, x: Int, state_only: Boolean = false) {
@@ -611,6 +619,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
     val vertical_scroll_view = object : ScrollView(this.context) {
         override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
             super.onScrollChanged(l, t, oldl, oldt)
+            this@CompoundScrollView.editor_table.line_label_layout.scrollTo(l, t)
             this@CompoundScrollView.column_container.invalidate()
         }
     }

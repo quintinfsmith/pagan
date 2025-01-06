@@ -20,7 +20,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
-    private val _line_label_layout = LineLabelColumnLayout(this)
+    val line_label_layout = LineLabelColumnLayout(this)
     private var _scroll_view = CompoundScrollView(this)
     private val _spacer = CornerView(context)
     private val _first_column = LinearLayout(context, attrs)
@@ -41,7 +41,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this.addView(this._first_column)
         this._first_column.orientation = VERTICAL
         this._first_column.addView(this._spacer)
-        this._first_column.addView(this._line_label_layout)
+        this._first_column.addView(this.line_label_layout)
 
         this.addView(this._scroll_view)
 
@@ -51,9 +51,9 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this._spacer.layoutParams.width = MATCH_PARENT
         this._spacer.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
 
-        (this._line_label_layout.layoutParams as LinearLayout.LayoutParams).weight = 1F
-        this._line_label_layout.layoutParams.height = 0
-        this._line_label_layout.layoutParams.width = WRAP_CONTENT
+        (this.line_label_layout.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        this.line_label_layout.layoutParams.height = 0
+        this.line_label_layout.layoutParams.width = WRAP_CONTENT
 
         (this._scroll_view.layoutParams as LinearLayout.LayoutParams).weight = 1F
         this._scroll_view.layoutParams.width = 0
@@ -87,7 +87,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
                 check_y += line_height
                 if (check_y >= y) {
-                    println("$check_y, $y: $output")
                     return output
                 } else {
                     output += 1
@@ -145,37 +144,41 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this.get_activity().runOnUiThread {
 
             this._scroll_view.column_container.clear()
-            this._line_label_layout.clear()
+            this.line_label_layout.clear()
         }
     }
 
     fun setup(height: Int, width: Int) {
         // NOTE: Needs column map initialized first
-
-        this._line_label_layout.insert_labels(0, height)
-
+        this.line_label_layout.insert_labels(0, height)
         this._scroll_view.column_container.add_columns(0, width)
+        this.reset_table_size()
+    }
 
+    fun reset_table_size() {
         val (pix_width, pix_height) = this._calculate_table_size()
         this._scroll_view.column_container.minimumWidth = pix_width
         this._scroll_view.column_container.minimumHeight = pix_height + resources.getDimension(R.dimen.line_height).toInt()
     }
-
     fun new_row(y: Int) {
+        this.reset_table_size()
+        this.line_label_layout.insert_label(y)
         this._scroll_view.column_container.insert_row(y)
-        this._line_label_layout.insert_label(y)
     }
 
     fun remove_rows(y: Int, count: Int) {
+        this.reset_table_size()
+        this.line_label_layout.remove_labels(y, count)
         this._scroll_view.column_container.remove_rows(y, count)
-        this._line_label_layout.remove_labels(y, count)
     }
 
     fun new_column(index: Int) {
+        this.reset_table_size()
         this._scroll_view.column_container.add_column(index)
     }
 
     fun remove_column(index: Int) {
+        this.reset_table_size()
         this._scroll_view.column_container.remove_column(index)
     }
 
@@ -187,11 +190,17 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun notify_column_changed(x: Int, state_only: Boolean = false) {
+        if (!state_only) {
+            this.reset_table_size()
+        }
         this._scroll_view.column_container.notify_column_changed(x, state_only)
     }
 
     fun notify_row_changed(y: Int, state_only: Boolean = false) {
-        this._line_label_layout.notify_item_changed(y)
+        if (!state_only) {
+            this.reset_table_size()
+        }
+        this.line_label_layout.notify_item_changed(y)
         this._scroll_view.column_container.notify_row_change(y, state_only)
     }
 
@@ -232,7 +241,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun update_line_label(y: Int) {
-        this._line_label_layout.notify_item_changed(y)
+        this.line_label_layout.notify_item_changed(y)
     }
 
     fun update_column_label(x: Int) {
@@ -429,72 +438,81 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this._scroll_view.scrollTo(target_rect.x - adj_offset, 0)
     }
 
-    // TODO: Create row_height_map so OpusManager isn't accessed here
-    private fun _scroll_to_y(y: Int) {
-        val row_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        val control_row_height = resources.getDimension(R.dimen.ctl_line_height).toInt()
-        var target_y = 0
-        var count = 0
-        var working_row_height = row_height
+    fun get_row_y_position_and_height(row: Int): Pair<Int, Int> {
+        val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size).toInt()
+        val controller_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
+        val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
+
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
+        var y = 0
+        var working_y_offset = line_height // consider column label offset
         for (i in channels.indices) {
             val channel = channels[i]
+            if (!channel.visible) {
+                continue
+            }
             for (j in channel.lines.indices) {
                 val line = channel.lines[j]
-                if (count >= y) {
-                    break
+                if (y == row) {
+                    return Pair(working_y_offset, line_height)
+                } else {
+                    working_y_offset += line_height
+                    y += 1
                 }
 
-                target_y += row_height
-                working_row_height = row_height
-                count += 1
-                for ((_, controller) in line.controllers.get_all()) {
+                for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) {
                         continue
                     }
-                    if (count >= y) {
-                        break
+                    if (y == row) {
+                        return Pair(working_y_offset, controller_height)
+                    } else {
+                        working_y_offset += controller_height
+                        y += 1
                     }
-
-                    target_y += control_row_height
-                    working_row_height = control_row_height
-                    count += 1
                 }
             }
-            for ((_, controller) in channel.controllers.get_all()) {
+            for ((type, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) {
                     continue
                 }
-                if (count >= y) {
-                    break
+                if (y == row) {
+                    return Pair(working_y_offset, controller_height)
+                } else {
+                    working_y_offset += controller_height
+                    y += 1
                 }
-
-                target_y += control_row_height
-                working_row_height = control_row_height
-                count += 1
             }
+            working_y_offset += channel_gap_size
         }
 
-        for ((_, controller) in this.get_opus_manager().controllers.get_all()) {
+        for ((type, controller) in opus_manager.controllers.get_all()) {
             if (!controller.visible) {
                 continue
             }
-            if (count >= y) {
-                break
+            if (y == row) {
+                return Pair(working_y_offset, controller_height)
+            } else {
+                working_y_offset += controller_height
+                y += 1
             }
-            target_y += control_row_height
-            working_row_height = control_row_height
-            count += 1
         }
+        return Pair(working_y_offset, 0)
+    }
 
-        if (this._scroll_view.measuredHeight + this._scroll_view.scrollY < target_y + working_row_height) {
-            val adj_target_y = target_y - (this._scroll_view.measuredHeight - (working_row_height * 1.5).toInt())
-            this._line_label_layout.scrollTo(0, adj_target_y)
-            this._scroll_view.scrollTo(0, adj_target_y)
-        } else if (target_y < this._scroll_view.scrollY) {
-            this._line_label_layout.scrollTo(0, target_y)
-            this._scroll_view.scrollTo(0, target_y)
+
+    // TODO: Create row_height_map so OpusManager isn't accessed here
+    private fun _scroll_to_y(row: Int) {
+        val (target_y, row_height) = this.get_row_y_position_and_height(row)
+
+        val vertical_scroll_view = this._scroll_view.vertical_scroll_view
+        if (vertical_scroll_view.measuredHeight + vertical_scroll_view.scrollY < target_y + row_height) {
+            this.line_label_layout.scrollTo(0, target_y)
+            vertical_scroll_view.scrollTo(0, target_y)
+        } else if (target_y < vertical_scroll_view.scrollY) {
+            this.line_label_layout.scrollTo(0, target_y)
+            vertical_scroll_view.scrollTo(0, target_y)
         }
     }
 
@@ -542,7 +560,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_line_label_layout(): LineLabelColumnLayout {
-        return this._line_label_layout
+        return this.line_label_layout
     }
 
     // width map functions ---------------------------------------

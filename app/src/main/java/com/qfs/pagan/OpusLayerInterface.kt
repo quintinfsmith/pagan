@@ -1904,6 +1904,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     offset += p * width
                     tree = tree[p]
                 }
+
                 Triple(cursor.beat, offset, width)
             }
 
@@ -1921,6 +1922,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             } catch (e: OpusTree.InvalidGetCall) {
                 // Pass
             }
+
             this._cache_cursor = cursor.copy()
             // TODO: THis shoudln't throw an eerror
             try {
@@ -2389,6 +2391,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.ui_change_bill.consolidate()
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()
+                println("$entry")
                 when (entry) {
                     BillableItem.ForceScroll -> {
                         val y = this.ui_change_bill.get_next_int()

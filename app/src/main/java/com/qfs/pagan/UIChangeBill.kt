@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.max
 
 class UIChangeBill {
@@ -143,7 +142,7 @@ class UIChangeBill {
         val queued_line_labels = mutableSetOf<Int>()
         val queued_column_labels = mutableSetOf<Int>()
         var queued_context_menu: BillableItem? = null
-        var queued_cursor_scroll: OpusManagerCursor? = null
+        var queued_cursor_scroll: Array<Int>? = null
         var stack = mutableListOf<Node>(this._tree)
         this._tree = Node()
         while (stack.isNotEmpty()) {
@@ -169,6 +168,7 @@ class UIChangeBill {
                     BillableItem.ContextMenuSetRange,
                     BillableItem.ContextMenuSetColumn,
                     BillableItem.ContextMenuSetControlLine,
+                    BillableItem.ForceScroll,
                     BillableItem.ContextMenuClear -> {}
                     else -> {
                         this._tree.bill.add(bill_item)
@@ -183,8 +183,8 @@ class UIChangeBill {
                     }
 
                     BillableItem.ForceScroll -> {
-                        for (i in 0 until 5) {
-                            this._tree.int_queue.add(node.int_queue.removeFirst())
+                        queued_cursor_scroll = Array(5) {
+                            node.int_queue.removeFirst()
                         }
                     }
 
@@ -472,6 +472,11 @@ class UIChangeBill {
         }
         if (queued_context_menu != null) {
             this._tree.bill.add(queued_context_menu)
+        }
+
+        if (queued_cursor_scroll != null) {
+            this._tree.bill.add(BillableItem.ForceScroll)
+            this._tree.int_queue.addAll(queued_cursor_scroll)
         }
     }
 

@@ -538,11 +538,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     }
                 }
             }
-
-            OpusManagerCursor.CursorMode.Range -> TODO()
-            OpusManagerCursor.CursorMode.Channel -> TODO()
+            // No need to force_scroll in these modes
+            OpusManagerCursor.CursorMode.Range,
+            OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Column,
-            OpusManagerCursor.CursorMode.Unset -> return
+            OpusManagerCursor.CursorMode.Unset -> null
         } ?: return
 
         val (target_y, row_height) = this.get_row_y_position_and_height(row)

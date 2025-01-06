@@ -28,6 +28,7 @@ import java.io.File
 import java.io.FileInputStream
 import kotlin.concurrent.thread
 
+
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     var active_context_menu: ContextMenuView? = null
@@ -494,14 +495,15 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             GONE
         }
 
-        this.force_scroll_to_cursor_vertical()
+        // TODO: There's a better solution here.
+        // Kludge, the visibility observer callback doesn't let the resizing happen first
+        thread {
+            Thread.sleep(100)
+            val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+            editor_table.force_scroll_to_cursor_vertical()
+        }
     }
 
-    fun force_scroll_to_cursor_vertical() {
-        val cursor = this.get_main().get_opus_manager().cursor
-        // TODO()
-
-    }
 
     // fun scroll_to_cursor(cursor: OpusManagerCursor, force: Boolean = false) {
     //     val opus_manager = this.get_main().get_opus_manager()

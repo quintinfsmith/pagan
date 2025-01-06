@@ -5,6 +5,8 @@ import android.util.AttributeSet
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -501,6 +503,60 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         return Pair(working_y_offset, 0)
     }
 
+    fun force_scroll_to_cursor_vertical() {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        val row = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Line -> {
+                when (cursor.ctl_level) {
+                    null -> opus_manager.get_visible_row_from_ctl_line(
+                        opus_manager.get_actual_line_index(
+                            opus_manager.get_instrument_line_index(
+                                cursor.channel,
+                                cursor.line_offset
+                            )
+                        )
+                    )
+
+                    CtlLineLevel.Line -> {
+                        opus_manager.get_visible_row_from_ctl_line_line(
+                            cursor.ctl_type!!,
+                            cursor.channel,
+                            cursor.line_offset
+                        )
+                    }
+                    CtlLineLevel.Channel -> {
+                        opus_manager.get_visible_row_from_ctl_line_channel(
+                            cursor.ctl_type!!,
+                            cursor.channel
+                        )
+                    }
+                    CtlLineLevel.Global -> {
+                        opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                    }
+                }
+            }
+
+            OpusManagerCursor.CursorMode.Range -> TODO()
+            OpusManagerCursor.CursorMode.Channel -> TODO()
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> return
+        } ?: return
+
+        val (target_y, row_height) = this.get_row_y_position_and_height(row)
+
+        val vertical_scroll_view = this.get_scroll_view().vertical_scroll_view
+        if (vertical_scroll_view.measuredHeight + vertical_scroll_view.scrollY < target_y + row_height) {
+            val adj_y = (target_y + row_height) - vertical_scroll_view.measuredHeight
+            this.line_label_layout.scrollTo(0, adj_y)
+            vertical_scroll_view.scrollTo(0, adj_y)
+        } else if (target_y < vertical_scroll_view.scrollY) {
+            this.line_label_layout.scrollTo(0, target_y)
+            vertical_scroll_view.scrollTo(0, target_y)
+        }
+    }
 
     // TODO: Create row_height_map so OpusManager isn't accessed here
     private fun _scroll_to_y(row: Int) {
@@ -508,8 +564,9 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
         val vertical_scroll_view = this._scroll_view.vertical_scroll_view
         if (vertical_scroll_view.measuredHeight + vertical_scroll_view.scrollY < target_y + row_height) {
-            this.line_label_layout.scrollTo(0, target_y)
-            vertical_scroll_view.scrollTo(0, target_y)
+            val adj_y = (target_y + row_height) - vertical_scroll_view.measuredHeight
+            this.line_label_layout.scrollTo(0, adj_y)
+            vertical_scroll_view.scrollTo(0, adj_y)
         } else if (target_y < vertical_scroll_view.scrollY) {
             this.line_label_layout.scrollTo(0, target_y)
             vertical_scroll_view.scrollTo(0, target_y)

@@ -21,6 +21,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
@@ -30,6 +31,7 @@ import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -129,6 +131,74 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             }
         }
 
+        private fun _process_standard_on_click(beat_key: BeatKey, position: List<Int>) {
+            val opus_manager = this.editor_table.get_opus_manager()
+            val cursor = opus_manager.cursor
+            val activity = this.editor_table.get_activity()
+
+            if (cursor.is_selecting_range() && cursor.ctl_level == null) {
+                try {
+                    when (activity.configuration.move_mode) {
+                        PaganConfiguration.MoveMode.COPY -> {
+                            opus_manager.copy_to_beat(beat_key)
+                        }
+                        PaganConfiguration.MoveMode.MOVE -> {
+                            opus_manager.move_to_beat(beat_key)
+                        }
+                        PaganConfiguration.MoveMode.MERGE -> {
+                            opus_manager.merge_into_beat(beat_key)
+                        }
+                    }
+                    // Kludge, if the temporary blocker is set, assume the cursor has already changed
+                    if (opus_manager.temporary_blocker == null) {
+                        opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                    }
+                } catch (e: Exception) {
+                    when (e) {
+                        is OpusLayerBase.MixedInstrumentException -> {
+                            opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                            activity.feedback_msg(context.getString(R.string.feedback_mixed_link))
+                        }
+                        is OpusLayerBase.RangeOverflow -> {
+                            opus_manager.cursor_select(beat_key, position)
+                            activity.feedback_msg(context.getString(R.string.feedback_bad_range))
+                        }
+                        is OpusLayerCursor.InvalidCursorState -> {
+                            // Shouldn't ever actually be possible
+                            throw e
+                        }
+                        is OpusLayerBase.InvalidMergeException -> {
+                            opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                        }
+                        else -> {
+                            throw e
+                        }
+                    }
+                }
+            } else {
+                opus_manager.cursor_select(beat_key, position)
+                val tree = opus_manager.get_tree()
+
+                thread {
+                    if (tree.is_event()) {
+                        val note = if (opus_manager.is_percussion(beat_key.channel)) {
+                            opus_manager.get_percussion_instrument(beat_key.line_offset)
+                        } else {
+                            opus_manager.get_absolute_value(beat_key, position) ?: return@thread
+                        }
+                        if (note >= 0) {
+                            (editor_table.context as MainActivity).play_event(
+                                beat_key.channel,
+                                note,
+                                (opus_manager.get_current_line_controller_event(ControlEventType.Volume, beat_key, position) as OpusVolumeEvent).value
+                            )
+                        }
+                    }
+                }
+            }
+
+        }
+
         fun on_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?) {
             val opus_manager = this.editor_table.get_opus_manager()
 
@@ -139,7 +209,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                 when (ctl_line_level) {
                     null -> {
                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        opus_manager.cursor_select(BeatKey(channel, line_offset, beat), position!!)
+                        this._process_standard_on_click(BeatKey(channel, line_offset, beat), position!!)
                     }
 
                     CtlLineLevel.Line -> {

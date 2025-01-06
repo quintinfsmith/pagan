@@ -76,13 +76,20 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             }
 
             this.setOnClickListener {
-                this.on_click_listener(this.touch_position_x, this.touch_position_y)
+                val (line_info, beat, position) = this._get_current_line_info_and_position() ?: return@setOnClickListener
+                this.on_click_listener(line_info, beat, position)
+            }
+            this.setOnLongClickListener {
+                val (line_info, beat, position) = this._get_current_line_info_and_position() ?: return@setOnLongClickListener false
+                this.on_long_click_listener(line_info, beat, position)
             }
         }
 
+        private fun _get_current_line_info_and_position(): Triple<Triple<Int, CtlLineLevel?, ControlEventType?>?, Int, List<Int>?>?  {
+            val y = this.touch_position_y
+            val x = this.touch_position_x
 
-        fun on_click_listener(x: Float, y: Float) {
-            var row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return
+            var row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return null
 
             val opus_manager = this.editor_table.get_opus_manager()
             val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
@@ -93,35 +100,118 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             val column_width = this.editor_table.get_column_width(beat) * min_leaf_width
 
 
-            if (row_position == -1) {
-                opus_manager.cursor_select_column(beat)
+            return if (row_position == -1) {
+                Triple(null, beat, null)
             } else {
                 val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(row_position))
+                Triple(
+                    Triple(pointer, ctl_line_level, ctl_type),
+                    beat,
+                    when (ctl_line_level) {
+                        null -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                            val beat_key = BeatKey(channel, line_offset, beat)
+                            this.calc_position(opus_manager.get_tree(beat_key), column_width, inner_offset)
+                        }
+                        CtlLineLevel.Line -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                            val beat_key = BeatKey(channel, line_offset, beat)
+                            this.calc_position(opus_manager.get_line_ctl_tree(ctl_type!!, beat_key), column_width, inner_offset)
+                        }
+                        CtlLineLevel.Channel -> {
+                            this.calc_position(opus_manager.get_channel_ctl_tree(ctl_type!!, pointer, beat), column_width, inner_offset)
+                        }
+                        CtlLineLevel.Global -> {
+                            this.calc_position(opus_manager.get_global_ctl_tree(ctl_type!!, beat), column_width, inner_offset)
+                        }
+                    }
+                )
+            }
+        }
+
+        fun on_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?) {
+            val opus_manager = this.editor_table.get_opus_manager()
+
+            if (line_info == null) {
+                opus_manager.cursor_select_column(beat)
+            } else {
+                val (pointer, ctl_line_level, ctl_type) = line_info!!
                 when (ctl_line_level) {
                     null -> {
                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        val beat_key = BeatKey(channel, line_offset, beat)
-                        val position = this.calc_position(opus_manager.get_tree(beat_key), column_width, inner_offset)
-                        opus_manager.cursor_select(BeatKey(channel, line_offset, beat), position)
+                        opus_manager.cursor_select(BeatKey(channel, line_offset, beat), position!!)
                     }
 
                     CtlLineLevel.Line -> {
                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                         val beat_key = BeatKey(channel, line_offset, beat)
-                        val position = this.calc_position(opus_manager.get_line_ctl_tree(ctl_type!!, beat_key), column_width, inner_offset)
-                        opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+                        opus_manager.cursor_select_ctl_at_line(ctl_type!!, beat_key, position!!)
                     }
 
                     CtlLineLevel.Channel -> {
-                        val position = this.calc_position(opus_manager.get_channel_ctl_tree(ctl_type!!, pointer, beat), column_width, inner_offset)
-                        opus_manager.cursor_select_ctl_at_channel(ctl_type, pointer, beat, position)
+                        opus_manager.cursor_select_ctl_at_channel(ctl_type!!, pointer, beat, position!!)
                     }
 
                     CtlLineLevel.Global -> {
-                        val position = this.calc_position(opus_manager.get_global_ctl_tree(ctl_type!!, beat), column_width, inner_offset)
-                        opus_manager.cursor_select_ctl_at_global(ctl_type, beat, position)
+                        opus_manager.cursor_select_ctl_at_global(ctl_type!!, beat, position!!)
                     }
                 }
+            }
+        }
+
+        fun on_long_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?): Boolean {
+            val opus_manager = this.editor_table.get_opus_manager()
+            return if (line_info == null) {
+                false // No Action
+            } else {
+                val (pointer, ctl_line_level, ctl_type) = line_info!!
+                val cursor = opus_manager.cursor
+                when (ctl_line_level) {
+                    null -> {
+                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                        val beat_key = BeatKey(channel, line_offset, beat)
+                        val current_move_mode = this.editor_table.get_activity().configuration.move_mode
+
+                        if (cursor.is_selecting_range() && cursor.ctl_level == null && current_move_mode != PaganConfiguration.MoveMode.MERGE) {
+                            opus_manager.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
+                        } else {
+                            opus_manager.cursor_select_range(beat_key, beat_key)
+                        }
+                    }
+
+                    CtlLineLevel.Line -> {
+                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                        val beat_key = BeatKey(channel, line_offset, beat)
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && ctl_type == cursor.ctl_type) {
+                            opus_manager.cursor_select_line_ctl_range(ctl_type!!, cursor.range!!.first, beat_key)
+                        } else {
+                            opus_manager.cursor_select_line_ctl_range(ctl_type!!, beat_key, beat_key)
+                        }
+
+                        opus_manager.cursor_select_ctl_at_line(ctl_type!!, beat_key, position!!)
+                    }
+
+                    CtlLineLevel.Channel -> {
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == ctl_type!!) {
+                            // Currently, can't select multiple channels in a range
+                            if (pointer != cursor.range!!.first.channel) {
+                                return false
+                            }
+                            opus_manager.cursor_select_channel_ctl_range(ctl_type!!, pointer, cursor.range!!.first.beat, beat)
+                        } else {
+                            opus_manager.cursor_select_channel_ctl_range(ctl_type!!, pointer, beat, beat)
+                        }
+                    }
+
+                    CtlLineLevel.Global -> {
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == ctl_type!!) {
+                            opus_manager.cursor_select_global_ctl_range(ctl_type!!, cursor.range!!.first.beat, beat)
+                        } else {
+                            opus_manager.cursor_select_global_ctl_range(ctl_type!!, beat, beat)
+                        }
+                    }
+                }
+                true
             }
         }
 

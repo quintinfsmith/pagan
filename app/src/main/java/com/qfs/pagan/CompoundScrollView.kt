@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
-import android.widget.LinearLayout
 import android.widget.ScrollView
 import androidx.core.content.ContextCompat
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
@@ -37,7 +36,7 @@ import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
-    class ColumnsLayout(var editor_table: EditorTable): LinearLayout(editor_table.context) {
+    class ColumnsLayout(var editor_table: EditorTable): View(editor_table.context) {
         val paint = Paint()
         val text_paint_offset = Paint()
         val text_paint_octave = Paint()
@@ -649,12 +648,11 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
             canvas.drawLine(
                 scroll_x.toFloat() + 1F,
-                column_label_y + line_height,
+                column_label_y.toFloat(),
                 scroll_x.toFloat() + 1F,
                 column_label_y + (this.parent as ViewGroup).measuredHeight.toFloat(),
                 this.paint
             )
-
         }
 
         private fun get_column_label_state(x: Int): IntArray {
@@ -766,16 +764,12 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         }
 
         fun clear() {
-            this.removeAllViews()
         }
-
     }
 
     val column_container = ColumnsLayout(editor_table)
     private var _scroll_locked: Boolean = false
-    //val column_recycler = ColumnRecycler(editor_table)
 
-    private val _line_label_layout = editor_table.get_line_label_layout()
     val vertical_scroll_view = object : ScrollView(this.context) {
         override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
             super.onScrollChanged(l, t, oldl, oldt)
@@ -802,7 +796,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         this.scrollX = 0
         this.scrollY = 0
         this.column_container.clear()
-
     }
 
 

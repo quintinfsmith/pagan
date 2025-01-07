@@ -23,7 +23,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
     val line_label_layout = LineLabelColumnLayout(this)
-    private var _scroll_view = CompoundScrollView(this)
+    internal var _scroll_view = CompoundScrollView(this)
     private val _spacer = CornerView(context)
     private val _first_column = LinearLayout(context, attrs)
 
@@ -144,9 +144,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
     fun clear() {
         this.get_activity().runOnUiThread {
-
             this._scroll_view.column_container.clear()
             this.line_label_layout.clear()
+            this._scroll_view.scrollTo(0,0)
+            this._scroll_view.vertical_scroll_view.scrollTo(0,0)
+            this.reset_table_size()
         }
     }
 
@@ -159,9 +161,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun reset_table_size() {
         val (pix_width, pix_height) = this._calculate_table_size()
+        println("TABLE SIZE: $pix_width, $pix_height")
         this._scroll_view.column_container.minimumWidth = pix_width
         this._scroll_view.column_container.minimumHeight = pix_height + resources.getDimension(R.dimen.line_height).toInt()
     }
+
     fun new_row(y: Int) {
         this.reset_table_size()
         this.line_label_layout.insert_label(y)
@@ -573,27 +577,24 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         }
     }
 
-    fun get_scroll_offset(): Pair<Pair<Int, Int>, Pair<Int, Int>> {
+    fun get_scroll_offset(): Pair<Int, Int> {
         // NOTE: Used to be based on recycler view positions. So now we just set the Pairs to Pair(0, scroll[X/Y])
 
         return Pair(
-            Pair(0, this._scroll_view.scrollX),
-            Pair(0, this._scroll_view.vertical_scroll_view.scrollY)
+            this._scroll_view.scrollX,
+            this._scroll_view.vertical_scroll_view.scrollY
         )
     }
 
-    fun precise_scroll(x_coarse: Int = 0, x_fine: Int = 0, y_coarse: Int? = null, y_fine: Int? = null) {
-        // TODO
-        // val main_lm = (this.get_column_recycler().layoutManager!! as LinearLayoutManager)
-        // main_lm.scrollToPositionWithOffset(x_coarse, x_fine)
+    fun precise_scroll(scroll_x: Int = 0, scroll_y: Int? = null) {
+        println("RESTOREX ${this._scroll_view.column_container.minimumWidth}, ${this._scroll_view.column_container.minimumHeight}")
+        println("RESTORE ${this._scroll_view.column_container.measuredWidth}, ${this._scroll_view.column_container.measuredHeight}")
+        println("PRECISE: $scroll_x, $scroll_y")
 
-        // val column_label_lm = (this.column_label_recycler.layoutManager!! as LinearLayoutManager)
-        // column_label_lm.scrollToPositionWithOffset(x_coarse, x_fine)
-
-        // if (y_coarse != null) {
-        //     val line_height = (resources.getDimension(R.dimen.line_height)).toInt()
-        //     this._scroll_view.scrollTo(0, (line_height * y_coarse) + (y_fine ?: 0))
-        // }
+        this._scroll_view.scrollTo(scroll_x, 0)
+        if (scroll_y != null) {
+            this._scroll_view.vertical_scroll_view.scrollTo(0, scroll_y!!)
+        }
     }
 
     fun get_first_visible_column_index(): Int {

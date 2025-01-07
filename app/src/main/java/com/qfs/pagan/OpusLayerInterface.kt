@@ -1321,10 +1321,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         super.clear()
 
         val editor_table = this.get_editor_table()
-        editor_table?.clear()
-        this.runOnUiThread {
-            editor_table?.precise_scroll(0, 0, 0, 0)
-        }
+        editor_table.clear()
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
@@ -2391,7 +2388,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.ui_change_bill.consolidate()
             while (true) {
                 val entry = this.ui_change_bill.get_next_entry()
-                println("$entry")
                 when (entry) {
                     BillableItem.ForceScroll -> {
                         val y = this.ui_change_bill.get_next_int()
@@ -2412,11 +2408,15 @@ class OpusLayerInterface : OpusLayerHistory() {
                         activity.setup_project_config_drawer()
                         activity.update_menu_options()
 
-                        this._init_editor_table_width_map()
-                        editor_table?.setup(this.get_row_count(), this.beat_count)
+                        println("AAA: ${editor_table._scroll_view.column_container.measuredWidth}")
 
+                        this._init_editor_table_width_map()
+                        editor_table.setup(this.get_row_count(), this.beat_count)
+
+                        println("AAA: ${editor_table._scroll_view.column_container.measuredWidth}")
                         activity.update_channel_instruments()
                         this.withFragment {
+                            it.restore_view_model_position()
                             it.clear_context_menu()
                         }
                     }

@@ -87,26 +87,16 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         val opus_manager = main.get_opus_manager()
         this.view_model.backup_undo_stack = opus_manager.history_cache.copy()
-        this.view_model.coarse_x = scroll_x.first
-        this.view_model.fine_x = scroll_x.second
-        this.view_model.coarse_y = scroll_y.first
-        this.view_model.fine_y = scroll_y.second
-
-        // KLUDGE ALERT: RecyclerView loses position if fine offset is 0, so i need to offset it slightly
-        if (scroll_x.second == 0) {
-            this.view_model.fine_x = -1
-            editor_table.precise_scroll(scroll_x.first, -1, scroll_y.first, scroll_y.second)
-        }
+        this.view_model.scroll_x = scroll_x
+        this.view_model.scroll_y = scroll_y
     }
 
     fun restore_view_model_position() {
         val main = this.get_main()
         val editor_table = main.findViewById<EditorTable?>(R.id.etEditorTable)
         editor_table.precise_scroll(
-            this.view_model.coarse_x,
-            this.view_model.fine_x,
-            this.view_model.coarse_y,
-            this.view_model.fine_y
+            this.view_model.scroll_x,
+            this.view_model.scroll_y
         )
     }
 
@@ -123,10 +113,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putInt("coarse_x", this.view_model.coarse_x)
-        outState.putInt("fine_x", this.view_model.fine_x)
-        outState.putInt("coarse_y", this.view_model.coarse_y)
-        outState.putInt("fine_y", this.view_model.fine_y)
+        outState.putInt("scroll_x", this.view_model.scroll_x)
+        outState.putInt("scroll_y", this.view_model.scroll_y)
         super.onSaveInstanceState(outState)
     }
 
@@ -162,20 +150,17 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
         // *NEED* to make sure it isn't empty before traversing this branch
         if (savedInstanceState != null) {
-            this.view_model.coarse_x = savedInstanceState.getInt("coarse_x")
-            this.view_model.fine_x = savedInstanceState.getInt("fine_x")
-            this.view_model.coarse_y = savedInstanceState.getInt("coarse_y")
-            this.view_model.fine_y = savedInstanceState.getInt("fine_y")
+            this.view_model.scroll_x = savedInstanceState.getInt("scroll_x")
+            this.view_model.scroll_y = savedInstanceState.getInt("scroll_y")
         } else if (!opus_manager.first_load_done) {
             // Navigate to (import / load/new)
             editor_table.visibility = View.VISIBLE
             return
         }
 
+        editor_table.visibility = View.VISIBLE
         this.reload_from_bkp()
 
-        editor_table.visibility = View.VISIBLE
-        this.restore_view_model_position()
 
         // At the moment, can't save the history cache into a bundle, so restore it if
         // it exists, if not, too bad i guess

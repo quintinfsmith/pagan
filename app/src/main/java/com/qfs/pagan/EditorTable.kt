@@ -161,7 +161,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun reset_table_size() {
         val (pix_width, pix_height) = this._calculate_table_size()
-        println("TABLE SIZE: $pix_width, $pix_height")
         this._scroll_view.column_container.minimumWidth = pix_width
         this._scroll_view.column_container.minimumHeight = pix_height + resources.getDimension(R.dimen.line_height).toInt()
     }
@@ -587,14 +586,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun precise_scroll(scroll_x: Int = 0, scroll_y: Int? = null) {
-        println("RESTOREX ${this._scroll_view.column_container.minimumWidth}, ${this._scroll_view.column_container.minimumHeight}")
-        println("RESTORE ${this._scroll_view.column_container.measuredWidth}, ${this._scroll_view.column_container.measuredHeight}")
-        println("PRECISE: $scroll_x, $scroll_y")
-
-        this._scroll_view.scrollTo(scroll_x, 0)
-        if (scroll_y != null) {
-            this._scroll_view.vertical_scroll_view.scrollTo(0, scroll_y!!)
-        }
+        this._scroll_view.scroll(scroll_x, scroll_y)
     }
 
     fun get_first_visible_column_index(): Int {

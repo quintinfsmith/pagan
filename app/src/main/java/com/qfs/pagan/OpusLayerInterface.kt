@@ -43,6 +43,8 @@ class OpusLayerInterface : OpusLayerHistory() {
     private val ui_change_bill = UIChangeBill()
     var temporary_blocker: OpusManagerCursor? = null
 
+    private var in_reload = false
+
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
     }
@@ -1168,14 +1170,19 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun on_project_changed() {
         super.on_project_changed()
-
         this.recache_line_maps()
-        this.ui_change_bill.queue_full_refresh()
+        this.ui_change_bill.queue_full_refresh(this.in_reload)
         this.first_load_done = true
     }
 
     override fun load(bytes: ByteArray, new_path: String?) {
         super.load(bytes, new_path)
+    }
+
+    fun reload(bytes: ByteArray, new_path: String?) {
+        this.in_reload = true
+        this.load(bytes, new_path)
+        this.in_reload = false
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {
@@ -1319,7 +1326,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun clear() {
         super.clear()
-
         val editor_table = this.get_editor_table()
         editor_table.clear()
     }
@@ -2405,18 +2411,19 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.FullRefresh -> {
+                        val restore_position = this.ui_change_bill.get_next_int() != 0
                         activity.setup_project_config_drawer()
                         activity.update_menu_options()
-
-                        println("AAA: ${editor_table._scroll_view.column_container.measuredWidth}")
 
                         this._init_editor_table_width_map()
                         editor_table.setup(this.get_row_count(), this.beat_count)
 
-                        println("AAA: ${editor_table._scroll_view.column_container.measuredWidth}")
                         activity.update_channel_instruments()
                         this.withFragment {
-                            it.restore_view_model_position()
+                            if (restore_position) {
+                                it.restore_view_model_position()
+                            }
+
                             it.clear_context_menu()
                         }
                     }

@@ -137,7 +137,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val bytes = FileInputStream(bkp_json_path).readBytes()
         val backup_path: String = File("${main.applicationInfo.dataDir}/.bkp_path").readText()
 
-        opus_manager.load(bytes, backup_path)
+        opus_manager.reload(bytes, backup_path)
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
@@ -392,6 +392,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
                 }
                 main.runOnUiThread {
+                    println("BAM")
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()

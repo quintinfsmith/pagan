@@ -769,6 +769,8 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
     val column_container = ColumnsLayout(editor_table)
     private var _scroll_locked: Boolean = false
+    private var queued_scroll_x: Int? = null
+    private var queued_scroll_y: Int? = null
 
     val vertical_scroll_view = object : ScrollView(this.context) {
         override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
@@ -814,5 +816,28 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
         this.column_container.invalidate()
+    }
+
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
+        if (this.queued_scroll_x != null || this.queued_scroll_y != null) {
+            this.scroll(this.queued_scroll_x, this.queued_scroll_y,)
+            this.queued_scroll_x = null
+            this.queued_scroll_y = null
+        }
+    }
+
+    fun scroll(x: Int? = null, y: Int? = null) {
+        if (this.measuredWidth == 0) {
+            this.queued_scroll_x = x
+            this.queued_scroll_y = y
+        } else {
+            if (x != null) {
+                this.scrollTo(x, 0)
+            }
+            if (y != null) {
+                this.vertical_scroll_view.scrollTo(0, y)
+            }
+        }
     }
 }

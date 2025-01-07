@@ -394,7 +394,6 @@ class MainActivity : AppCompatActivity() {
                     try {
                         active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
                     } catch (e: Exception) {
-                        println(getString(R.string.error_caught_from_keyboard_input, e))
                         true
                     }
                 else -> false

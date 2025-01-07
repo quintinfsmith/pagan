@@ -179,6 +179,7 @@ class UIChangeBill {
                     BillableItem.FullRefresh -> {
                         this._tree.clear()
                         this._tree.bill.add(bill_item)
+                        this._tree.int_queue.add(node.int_queue.removeFirst())
                         return
                     }
 
@@ -696,8 +697,10 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.PercussionButtonRefresh)
     }
 
-    fun queue_full_refresh() {
-        this._tree.get(this.working_path).bill.add(BillableItem.FullRefresh)
+    fun queue_full_refresh(restore_position: Boolean = false) {
+        val working_tree = this.get_working_tree(true) ?: return
+        working_tree.int_queue.add(if (restore_position) 1 else 0)
+        working_tree.bill.add(BillableItem.FullRefresh)
     }
 
     fun queue_force_scroll(y: Int, x: Int, offset: Int, offset_width: Int, force: Boolean) {
@@ -710,9 +713,10 @@ class UIChangeBill {
         working_tree.int_queue.add(if (force) 1 else 0)
         working_tree.bill.add(BillableItem.ForceScroll)
     }
-        
-    fun get_working_tree(): Node? {
-        return if (this.is_full_locked()) {
+
+    fun get_working_tree(force: Boolean = false): Node? {
+        // Force is used ONLY to apply FullRefresh
+        return if (this.is_full_locked() && ! force) {
             null
         } else {
             this._tree.get(this.working_path)

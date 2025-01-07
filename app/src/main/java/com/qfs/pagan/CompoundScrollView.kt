@@ -453,6 +453,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         override fun onDraw(canvas: Canvas) {
             // TODO: deal with draw Allocations. preallocate in different function?
             super.onDraw(canvas)
+
             val base_width = resources.getDimension(R.dimen.base_leaf_width)
             val line_height = resources.getDimension(R.dimen.line_height).toInt().toFloat()
             val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
@@ -463,8 +464,17 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
             val opus_manager = this.editor_table.get_opus_manager()
             val channels = opus_manager.get_all_channels()
-
-            val column_label_y = (this.parent as ViewGroup).scrollY
+            val vertical_scroll_view = (this.parent as ViewGroup)
+            val horizontal_scroll_view = (vertical_scroll_view.parent as ViewGroup)
+            val scroll_y = vertical_scroll_view.scrollY
+            val scroll_x = horizontal_scroll_view.scrollX
+            canvas.drawRect(
+                scroll_x.toFloat(),
+                scroll_y.toFloat(),
+                (scroll_x + horizontal_scroll_view.measuredWidth).toFloat(),
+                (scroll_y + vertical_scroll_view.measuredHeight).toFloat(),
+                this.paint
+            )
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * base_width)
 
@@ -627,7 +637,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                 val column_width = this.editor_table.get_column_width(i) * base_width
                 val drawable = resources.getDrawable(R.drawable.editor_label_column)
                 drawable.setState(state)
-                drawable.setBounds(offset.toInt(), column_label_y, (offset + column_width).toInt(), (column_label_y + line_height).toInt())
+                drawable.setBounds(offset.toInt(), scroll_y, (offset + column_width).toInt(), (scroll_y + line_height).toInt())
                 drawable.draw(canvas)
 
                 val column_text = "$i"
@@ -637,22 +647,21 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                 canvas.drawText(
                     "$i",
                     offset - bounds.left + ((column_width - bounds.width()) / 2),
-                    column_label_y + ((line_height + bounds.height()) / 2),
+                    scroll_y + ((line_height + bounds.height()) / 2),
                     this.text_paint_column
                 )
 
                 offset += beat_width
             }
 
-            val scroll_x = (this.parent.parent as ViewGroup).scrollX
 
-            canvas.drawLine(
-                scroll_x.toFloat() + 1F,
-                column_label_y.toFloat(),
-                scroll_x.toFloat() + 1F,
-                column_label_y + (this.parent as ViewGroup).measuredHeight.toFloat(),
-                this.paint
-            )
+            //canvas.drawLine(
+            //    scroll_x.toFloat() + 1F,
+            //    column_label_y.toFloat(),
+            //    scroll_x.toFloat() + 1F,
+            //    column_label_y + (this.parent as ViewGroup).measuredHeight.toFloat(),
+            //    this.paint
+            //)
         }
 
         private fun get_column_label_state(x: Int): IntArray {

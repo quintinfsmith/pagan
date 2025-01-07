@@ -78,4 +78,6 @@
     <color name="empty_linked_selected">#4884ae</color>
     <color name="ctl_line">#FFFFFF</color>
     <color name="ctl_line_text">#101010</color>
+
+    <color name="leaf_outline">#AA1d1d1d</color>
 </resources>

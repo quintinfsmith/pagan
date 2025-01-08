@@ -392,7 +392,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
                 }
                 main.runOnUiThread {
-                    println("BAM")
                     editor_table?.visibility = View.VISIBLE
                 }
                 main.loading_reticle_hide()

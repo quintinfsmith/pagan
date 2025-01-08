@@ -635,11 +635,12 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
                     y_offset += ctl_line_height
                 }
 
+                // ------------------- Draw Labels ----------------------------
                 val color_list = resources.getColorStateList(R.color.column_label_text)!!
                 val state = this.get_column_label_state(i)
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
 
-                val column_width = this.editor_table.get_column_width(i) * base_width
+                val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
                 val drawable = resources.getDrawable(R.drawable.editor_label_column)
                 drawable.setState(state)
                 drawable.setBounds(offset.toInt(), scroll_y, (offset + column_width).toInt(), (scroll_y + line_height).toInt())
@@ -649,9 +650,22 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
                 val bounds = Rect()
                 this.text_paint_column.getTextBounds(column_text, 0, column_text.length, bounds)
 
+
+                val viewable_width = horizontal_scroll_view.measuredWidth
                 canvas.drawText(
                     "$i",
-                    offset - bounds.left + ((column_width - bounds.width()) / 2),
+                    // Keep the column number of huge columns on screen
+                    if (column_width > viewable_width) {
+                        if (offset <= scroll_x && offset + column_width >= scroll_x + viewable_width) {
+                            (scroll_x + ((viewable_width - bounds.width()) / 2)).toFloat()
+                        } else if (offset <= scroll_x) {
+                            offset + column_width - ((viewable_width + bounds.width()) / 2)
+                        } else {
+                            offset + ((viewable_width - bounds.width()) / 2)
+                        }
+                    } else {
+                        offset + ((column_width - bounds.width()) / 2)
+                    },
                     scroll_y + ((line_height + bounds.height()) / 2),
                     this.text_paint_column
                 )

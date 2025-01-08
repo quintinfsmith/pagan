@@ -54,6 +54,6 @@
     <dimen name="text_size_offset">18sp</dimen>
     <dimen name="text_size_octave">14sp</dimen>
     <dimen name="text_size_ctl">12sp</dimen>
-    <dimen name="octave_label_padding_y">6dp</dimen>
-    <dimen name="octave_label_padding_x">4dp</dimen>
+    <dimen name="octave_label_padding_y">12dp</dimen>
+    <dimen name="octave_label_padding_x">3dp</dimen>
 </resources>

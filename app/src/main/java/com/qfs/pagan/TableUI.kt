@@ -516,18 +516,18 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
 
                                     val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
                                     val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
-                                    val octave_text_y = y + ((line_height + offset_text_bounds.height()) / 2)
+                                    val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
 
                                     canvas.drawText(
                                         offset_text,
                                         x + ((width - offset_text_bounds.width()) / 2),
-                                        octave_text_y,
+                                        offset_text_y,
                                         this.text_paint_offset
                                     )
 
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - base_width) / 2) + padding_x,
+                                        x + ((width - offset_text_bounds.width()) / 2) - octave_text_bounds.width() - padding_x,
                                         y + line_height - padding_y,
                                         this.text_paint_octave
                                     )
@@ -552,26 +552,26 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
 
                                     val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
                                     val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
-                                    val octave_text_y = y + ((line_height + offset_text_bounds.height()) / 2)
+                                    val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
 
                                     canvas.drawText(
                                         offset_text,
                                         x + ((width - offset_text_bounds.width()) / 2),
-                                        octave_text_y,
+                                        offset_text_y,
                                         this.text_paint_offset
                                     )
 
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - base_width) / 2) + padding_x,
+                                        x + ((width - offset_text_bounds.width()) / 2) - octave_text_bounds.width() - padding_x,
                                         y + line_height - padding_y,
                                         this.text_paint_octave
                                     )
 
                                     canvas.drawText(
                                         prefix_text,
-                                        (x + ((width - base_width) / 2) + padding_x) + ((offset_text_bounds.width() - prefix_text_bounds.width()) / 2),
-                                        octave_text_y - octave_text_bounds.height(),
+                                        x + ((width - offset_text_bounds.width()) / 2) - prefix_text_bounds.width() - padding_x,
+                                        offset_text_y - octave_text_bounds.height(),
                                         this.text_paint_octave
                                     )
 
@@ -581,10 +581,11 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
                                     val offset_text = resources.getString(R.string.percussion_label)
                                     val bounds = Rect()
                                     this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, bounds)
+
                                     canvas.drawText(
                                         offset_text,
                                         x + ((width - bounds.width()) / 2),
-                                        y + ((line_height + bounds.height()) / 2),
+                                        y + ((line_height + (bounds.height() / 2)) / 2),
                                         this.text_paint_offset
                                     )
                                 }

@@ -1,0 +1,3 @@
+Rebuilt the table interface so it'll be easier to make changes in the future.
+Improved the timing of the scrolling during playback.
+Keep the column indices of large columns on-screen.

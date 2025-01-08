@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
@@ -119,10 +118,6 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             this.invalidate()
         }
 
-        fun get_column_label(index: Int): ColumnLabelView {
-            return (this as ViewGroup).getChildAt(index) as ColumnLabelView
-        }
-
         override fun onAttachedToWindow() {
             super.onAttachedToWindow()
             this.layoutParams.width = WRAP_CONTENT
@@ -153,10 +148,6 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
 
     fun notify_column_changed(x: Int, state_only: Boolean = false) {
         this.inner_container.notify_column_changed(x, state_only)
-    }
-
-    fun get_column_label(index: Int): ColumnLabelView {
-        return this.inner_container.get_column_label(index)
     }
 
     fun lock_scroll() {

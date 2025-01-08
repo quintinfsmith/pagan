@@ -184,7 +184,7 @@ class UIChangeBill {
                     }
 
                     BillableItem.ForceScroll -> {
-                        queued_cursor_scroll = Array(5) {
+                        queued_cursor_scroll = Array(7) {
                             node.int_queue.removeFirst()
                         }
                     }
@@ -703,13 +703,15 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.FullRefresh)
     }
 
-    fun queue_force_scroll(y: Int, x: Int, offset: Int, offset_width: Int, force: Boolean) {
+    fun queue_force_scroll(y: Int, x: Int, offset: Rational, offset_width: Rational, force: Boolean) {
         // editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width, force = force)
         val working_tree = this.get_working_tree() ?: return
         working_tree.int_queue.add(y)
         working_tree.int_queue.add(x)
-        working_tree.int_queue.add(offset)
-        working_tree.int_queue.add(offset_width)
+        working_tree.int_queue.add(offset.n)
+        working_tree.int_queue.add(offset.d)
+        working_tree.int_queue.add(offset_width.n)
+        working_tree.int_queue.add(offset_width.d)
         working_tree.int_queue.add(if (force) 1 else 0)
         working_tree.bill.add(BillableItem.ForceScroll)
     }

@@ -301,7 +301,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         }
 
         val pixel_x = this._column_width_maxes.subList(0, x).sum() * base_width.toInt()
-        println("$pixel_x, ... $offset")
         this.table_ui.scroll(pixel_x + offset, null)
     }
 
@@ -332,7 +331,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
         val visible_range = this.get_first_visible_column_index() .. this.get_last_visible_column_index()
         val target_offset = (max_width * offset).toInt()
-
         val POSITION_ON_SCREEN: Int = 0
         val POSITION_TO_RIGHT: Int = 1
         val POSITION_TO_LEFT: Int = 2
@@ -438,7 +436,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             // 0b1111 -> { }   // Invalid
             else -> { return }     // Unreachable
         }
-
 
         this.table_ui.scroll(target_rect.x - adj_offset, null)
     }

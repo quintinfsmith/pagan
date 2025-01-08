@@ -1889,9 +1889,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Channel -> Triple(null, 0f, 1f)
-            OpusManagerCursor.CursorMode.Line -> Triple(null, 0f, 1f)
-            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, 0f, 1f)
+            OpusManagerCursor.CursorMode.Channel -> Triple(null, Rational(0,1), Rational(1,1))
+            OpusManagerCursor.CursorMode.Line -> Triple(null,  Rational(0,1), Rational(1,1))
+            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, Rational(0,1), Rational(1,1))
             OpusManagerCursor.CursorMode.Single -> {
                 var tree = when (cursor.ctl_level) {
                     CtlLineLevel.Line -> this.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
@@ -1900,22 +1900,22 @@ class OpusLayerInterface : OpusLayerHistory() {
                     null -> this.get_tree(cursor.get_beatkey())
                 }
 
-                var width = 1f
-                var offset = 0f
+                var width = Rational(1,1)
+                var offset = Rational(0,1)
                 for (p in cursor.get_position()) {
-                    width /= tree.size
-                    offset += p * width
+                    width.d *= tree.size
+                    offset += Rational(p, width.d)
                     tree = tree[p]
                 }
 
                 Triple(cursor.beat, offset, width)
             }
 
-            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, 0f, 1f)
-            OpusManagerCursor.CursorMode.Unset -> Triple(null, 0f, 1f)
+            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, Rational(0,1), Rational(1,1))
+            OpusManagerCursor.CursorMode.Unset -> Triple(null, Rational(0,1), Rational(1,1))
         }
 
-        this.ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset.toInt(), offset_width.toInt(), _activity?.in_playback() ?: false)
+        this.ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, _activity?.in_playback() ?: false)
     }
 
     fun queue_cursor_update(cursor: OpusManagerCursor, deep_update: Boolean = true) {
@@ -2398,14 +2398,21 @@ class OpusLayerInterface : OpusLayerHistory() {
                     BillableItem.ForceScroll -> {
                         val y = this.ui_change_bill.get_next_int()
                         val x = this.ui_change_bill.get_next_int()
-                        val offset = this.ui_change_bill.get_next_int().toFloat()
-                        val offset_width = this.ui_change_bill.get_next_int().toFloat()
+                        val offset = Rational(
+                            this.ui_change_bill.get_next_int(),
+                            this.ui_change_bill.get_next_int()
+                        )
+
+                        val offset_width = Rational(
+                            this.ui_change_bill.get_next_int(),
+                            this.ui_change_bill.get_next_int()
+                        )
                         val force = this.ui_change_bill.get_next_int() != 0
                         editor_table.scroll_to_position(
                             y = if (y == -1) null else y,
                             x = if (x == -1) null else x,
-                            offset = offset,
-                            offset_width = offset_width,
+                            offset = offset.n.toFloat() / offset.d.toFloat(),
+                            offset_width = offset_width.n.toFloat() / offset_width.d.toFloat(),
                             force = force
                         )
                     }

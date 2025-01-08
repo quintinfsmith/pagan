@@ -109,10 +109,12 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                         }
 
                         if (marked_frames[this.current_mark_index] - start_frame == 0) {
-                            this@MappedPlaybackDevice.on_mark(this.current_mark_index)
+                            this@MappedPlaybackDevice.on_mark(this.current_mark_index++)
                         }
 
-                        track_handle?.set_next_notification_position(1)
+                        track_handle?.set_next_notification_position(
+                            marked_frames[this.current_mark_index] - start_frame
+                        )
                     }
                 }
 
@@ -133,19 +135,25 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                         return this._stop(audio_track)
                     }
 
-                    if (this.current_mark_index >= that.marked_frames!!.size) {
-                        return
-                    }
-
                     if (that.wave_generator.kill_frame == null) {
                         while (that.marked_frames!![this.current_mark_index] - start_frame + frame_delay < 1) {
                             this.current_mark_index += 1
                         }
+
+                        if (this.current_mark_index >= that.marked_frames!!.size) {
+                            return
+                        }
                     }
 
-                    val frame = that.marked_frames!![this.current_mark_index]
 
-                    that.on_mark(this.current_mark_index++ - 1)
+                    that.on_mark(this.current_mark_index++)
+
+                    if (this.current_mark_index >= that.marked_frames!!.size) {
+                        return
+                    }
+
+
+                    val frame = that.marked_frames!![this.current_mark_index]
 
                     that.active_audio_track_handle?.set_next_notification_position(
                         if (that.wave_generator.kill_frame != null) {

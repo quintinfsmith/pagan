@@ -875,7 +875,8 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
             this.queued_scroll_y = y
         } else {
             if (x != null) {
-                this.scrollTo(x, 0)
+
+                this.smoothScrollTo(x, 0)
             }
             if (y != null) {
                 this.vertical_scroll_view.scrollTo(0, y)

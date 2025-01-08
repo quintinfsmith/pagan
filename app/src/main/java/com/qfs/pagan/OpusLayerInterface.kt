@@ -2383,7 +2383,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     // UI FUNCS -----------------------
-    private fun apply_bill_changes() {
+    fun apply_bill_changes() {
         val editor_table = try {
             this.get_editor_table()
         } catch (e: MissingEditorTableException) {

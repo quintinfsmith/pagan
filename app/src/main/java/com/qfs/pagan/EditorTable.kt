@@ -18,6 +18,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         Control
     }
 
+
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
@@ -289,19 +290,9 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     private fun _forced_scroll_to_beat(x: Int) {
-        val box_width = this.table_ui.measuredWidth
-
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-        val max_width = (this._column_width_maxes[x] * base_width).toInt()
-
-        val offset = if (max_width >= box_width) {
-            (box_width - max_width) / 2
-        } else {
-            0
-        }
-
         val pixel_x = this._column_width_maxes.subList(0, x).sum() * base_width.toInt()
-        this.table_ui.scroll(pixel_x + offset, null)
+        this.table_ui.scroll(pixel_x, null)
     }
 
     fun get_column_offset(x: Int): Int {
@@ -746,4 +737,5 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     fun get_column_width_map(): List<List<Int>> {
         return this._column_width_map
     }
+
 }

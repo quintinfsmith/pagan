@@ -439,7 +439,11 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
         fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
             if (tree.is_leaf()) {
-                callback(tree.get_event(), position, canvas, x, y, width)
+                val horizontal_scroll_view = (this.parent.parent as ViewGroup)
+                // Don't draw outside of the view
+                if (x + width >= horizontal_scroll_view.scrollX && x <= horizontal_scroll_view.scrollX + horizontal_scroll_view.measuredWidth) {
+                    callback(tree.get_event(), position, canvas, x, y, width)
+                }
             } else {
                 val new_width = width / tree.size
                 for (i in 0 until tree.size) {

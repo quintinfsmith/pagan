@@ -1514,14 +1514,18 @@ class OpusLayerInterface : OpusLayerHistory() {
                     CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
                     CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     null -> {
-                        this.get_visible_row_from_ctl_line(
-                            this.get_actual_line_index(
-                                this.get_instrument_line_index(
-                                    this.cursor.channel,
-                                    this.cursor.line_offset
+                        try {
+                            this.get_visible_row_from_ctl_line(
+                                this.get_actual_line_index(
+                                    this.get_instrument_line_index(
+                                        this.cursor.channel,
+                                        this.cursor.line_offset
+                                    )
                                 )
                             )
-                        )
+                        } catch (e: IndexOutOfBoundsException) {
+                            return // nothing to select
+                        }
                     }
                 }
             }

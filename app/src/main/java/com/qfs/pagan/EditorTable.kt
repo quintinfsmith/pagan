@@ -13,11 +13,6 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, attrs) {
     data class Coordinate(var y: Int, var x: Int)
     data class Rectangle(var x: Int, var y: Int, var width: Int, var height: Int)
-    enum class RowType {
-        Standard,
-        Control
-    }
-
 
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
@@ -76,7 +71,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
 
-        if (y - this.table_ui.vertical_scroll_view.scrollY < line_height) {
+        if (y - this.table_ui.inner_scroll_view.scrollY < line_height) {
             return -1
         }
 
@@ -543,7 +538,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     private fun _scroll_to_y(row: Int) {
         val (target_y, row_height) = this.get_row_y_position_and_height(row)
         // TODO: This feels sloppy but i'm too tired to think of a sufficiently cleaner answer
-        val vertical_scroll_view = this.get_scroll_view().vertical_scroll_view
+        val vertical_scroll_view = this.get_scroll_view().inner_scroll_view
         if (vertical_scroll_view.measuredHeight + vertical_scroll_view.scrollY < target_y + row_height) {
             val adj_y = (target_y + row_height) - vertical_scroll_view.measuredHeight
             this.line_label_layout.scrollTo(0, adj_y)
@@ -559,7 +554,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
         return Pair(
             this.table_ui.scrollX,
-            this.table_ui.vertical_scroll_view.scrollY
+            this.table_ui.inner_scroll_view.scrollY
         )
     }
 

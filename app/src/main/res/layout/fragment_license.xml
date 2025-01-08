@@ -10,18 +10,18 @@
             android:orientation="vertical"
             style="@style/about_link"
             android:id="@+id/linkManual"
+            android:clickable="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 style="@style/about_link_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/label_manual" />
 
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 style="@style/about_link_url"
-                android:clickable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -32,18 +32,18 @@
             android:orientation="vertical"
             style="@style/about_link"
             android:id="@+id/linkSource"
+            android:clickable="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 style="@style/about_link_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/label_source_code" />
 
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 style="@style/about_link_url"
-                android:clickable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -54,18 +54,18 @@
             android:orientation="vertical"
             style="@style/about_link"
             android:id="@+id/linkIssues"
+            android:clickable="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 style="@style/about_link_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/label_issues_location" />
 
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 style="@style/about_link_url"
-                android:clickable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -76,7 +76,7 @@
             android:layout_height="20dp"
             android:layout_width="match_parent"/>
 
-        <com.qfs.pagan.PaganTextView
+        <TextView
             android:id="@+id/tvLicenseText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -37,9 +37,9 @@ import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 /* The UI of the EditorTable. Only drawing-related logic and onclick dispatching is handled here. */
-class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
+class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     class PaintedLayer(var editor_table: EditorTable): View(editor_table.context) {
-        val paint = Paint()
+        val table_line_paint = Paint()
         val text_paint_offset = Paint()
         val text_paint_octave = Paint()
         val text_paint_ctl = Paint()
@@ -47,8 +47,8 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
         var touch_position_x = 0F
         var touch_position_y = 0F
         init {
-            this.paint.color = ContextCompat.getColor(context, R.color.table_lines)
-            this.paint.strokeWidth = 3F
+            this.table_line_paint.color = ContextCompat.getColor(context, R.color.table_lines)
+            this.table_line_paint.strokeWidth = 1F
 
             this.text_paint_offset.textSize = resources.getDimension(R.dimen.text_size_offset)
             this.text_paint_offset.color = ContextCompat.getColor(context, R.color.leaf_text_selector)
@@ -440,7 +440,7 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
 
         fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
             if (tree.is_leaf()) {
-                val horizontal_scroll_view = (this.parent.parent as ViewGroup)
+                val horizontal_scroll_view = (this.parent as ViewGroup)
                 // Don't draw outside of the view
                 if (x + width >= horizontal_scroll_view.scrollX && x <= horizontal_scroll_view.scrollX + horizontal_scroll_view.measuredWidth) {
                     callback(tree.get_event(), position, canvas, x, y, width)
@@ -469,8 +469,8 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
             val opus_manager = this.editor_table.get_opus_manager()
             val channels = opus_manager.get_all_channels()
-            val vertical_scroll_view = (this.parent as ViewGroup)
-            val horizontal_scroll_view = (vertical_scroll_view.parent as ViewGroup)
+            val horizontal_scroll_view = (this.parent as ViewGroup)
+            val vertical_scroll_view = (horizontal_scroll_view.parent as ViewGroup)
             val scroll_y = vertical_scroll_view.scrollY
             val scroll_x = horizontal_scroll_view.scrollX
             canvas.drawRect(
@@ -478,7 +478,7 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
                 scroll_y.toFloat(),
                 (scroll_x + horizontal_scroll_view.measuredWidth).toFloat(),
                 (scroll_y + vertical_scroll_view.measuredHeight).toFloat(),
-                this.paint
+                this.table_line_paint
             )
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
@@ -619,7 +619,7 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
                         }
                         y_offset += ctl_line_height
                     }
-                    canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height, this.paint)
+                    canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height, this.table_line_paint)
                     y_offset += channel_gap_height
                 }
 
@@ -791,28 +791,26 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
     private var _scroll_locked: Boolean = false
     private var queued_scroll_x: Int? = null
     private var queued_scroll_y: Int? = null
-    private var _last_y_position: Float? = null
+    private var _last_x_position: Float? = null
 
-    val vertical_scroll_view = object : ScrollView(this.context) {
-        private var _initial_x_scroll_position: Pair<Float, Int>? = null
+    val inner_scroll_view = object : HorizontalScrollView(this.context) {
+        private var _initial_y_scroll_position: Pair<Float, Int>? = null
         override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
             super.onScrollChanged(l, t, oldl, oldt)
-            this@TableUI.editor_table.line_label_layout.scrollTo(l, t)
             this@TableUI.painted_layer.invalidate()
         }
-
         override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
             if (motion_event  == null) {
                 // pass
             } else if (motion_event.action == MotionEvent.ACTION_UP) {
-                this._initial_x_scroll_position = null
+                this._initial_y_scroll_position = null
             } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
-                if (this._initial_x_scroll_position == null) {
-                    this._initial_x_scroll_position = Pair((motion_event.x - this.x), this@TableUI.scrollX)
+                if (this._initial_y_scroll_position == null) {
+                    this._initial_y_scroll_position = Pair((motion_event.y - this.y), this@TableUI.scrollY)
                 }
 
-                val diff = this._initial_x_scroll_position!!.first - (motion_event.x - this.x)
-                this@TableUI.scrollBy(diff.roundToInt(), 0)
+                val diff = this._initial_y_scroll_position!!.first - (motion_event.y - this.y)
+                this@TableUI.scrollBy(0, diff.roundToInt())
             } else {
                 // pass
             }
@@ -822,21 +820,21 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
     }
 
     init {
-        this.vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
-        this.vertical_scroll_view.isVerticalScrollBarEnabled = false
-        this.vertical_scroll_view.addView(this.painted_layer)
-        this.addView(this.vertical_scroll_view)
+        this.inner_scroll_view.overScrollMode = OVER_SCROLL_NEVER
+        this.inner_scroll_view.isHorizontalScrollBarEnabled = false
+        this.inner_scroll_view.addView(this.painted_layer)
+        this.addView(this.inner_scroll_view)
 
-        this.vertical_scroll_view.layoutParams.height = MATCH_PARENT
-        this.vertical_scroll_view.layoutParams.width = WRAP_CONTENT
+        this.inner_scroll_view.layoutParams.height = MATCH_PARENT
+        this.inner_scroll_view.layoutParams.width = WRAP_CONTENT
 
         this.overScrollMode = OVER_SCROLL_NEVER
-        this.isHorizontalScrollBarEnabled = false
+        this.isVerticalScrollBarEnabled = false
     }
 
     fun clear() {
-        this.vertical_scroll_view.scrollX = 0
-        this.vertical_scroll_view.scrollY = 0
+        this.inner_scroll_view.scrollX = 0
+        this.inner_scroll_view.scrollY = 0
         this.scrollX = 0
         this.scrollY = 0
         this.painted_layer.clear()
@@ -857,6 +855,7 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
+        this.editor_table.line_label_layout.scrollTo(l, t)
         this.painted_layer.invalidate()
     }
 
@@ -876,10 +875,10 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
         } else {
             if (x != null) {
 
-                this.smoothScrollTo(x, 0)
+                this.inner_scroll_view.smoothScrollTo(x, 0)
             }
             if (y != null) {
-                this.vertical_scroll_view.scrollTo(0, y)
+                this.smoothScrollTo(0, y)
             }
         }
     }
@@ -923,7 +922,7 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
         return if (this.painted_layer.width <= this.width) {
             this.painted_layer.width - 1
         } else {
-            this.scrollX + this.width
+            this.inner_scroll_view.scrollX + this.width
         }
     }
 
@@ -931,21 +930,20 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
         if (motion_event  == null) {
             // pass
         } else if (motion_event.action == MotionEvent.ACTION_UP) {
-            this._last_y_position = null
+            this._last_x_position = null
         } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
-            if (this._last_y_position == null) {
-                this._last_y_position = motion_event.y
+            if (this._last_x_position == null) {
+                this._last_x_position = motion_event.x
             }
 
-            val rel_y = this._last_y_position!! - motion_event.y
+            val rel_x = this._last_x_position!! - motion_event.x
 
-            this.vertical_scroll_view.scrollBy(0, rel_y.toInt())
-            this._last_y_position = motion_event.y
+            this.inner_scroll_view.scrollBy(rel_x.toInt(), 0)
+            this._last_x_position = motion_event.x
         } else {
             // pass
         }
 
         return super.onTouchEvent(motion_event)
     }
-
 }

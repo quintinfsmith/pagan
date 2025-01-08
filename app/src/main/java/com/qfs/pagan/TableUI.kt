@@ -790,14 +790,36 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
     private var _scroll_locked: Boolean = false
     private var queued_scroll_x: Int? = null
     private var queued_scroll_y: Int? = null
+    private var _last_y_position: Float? = null
 
     val vertical_scroll_view = object : ScrollView(this.context) {
+        private var _initial_x_scroll_position: Pair<Float, Int>? = null
         override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
             super.onScrollChanged(l, t, oldl, oldt)
             this@TableUI.editor_table.line_label_layout.scrollTo(l, t)
             this@TableUI.painted_layer.invalidate()
         }
+
+        override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
+            if (motion_event  == null) {
+                // pass
+            } else if (motion_event.action == MotionEvent.ACTION_UP) {
+                this._initial_x_scroll_position = null
+            } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
+                if (this._initial_x_scroll_position == null) {
+                    this._initial_x_scroll_position = Pair((motion_event.x - this.x), this@TableUI.scrollX)
+                }
+
+                val diff = this._initial_x_scroll_position!!.first - (motion_event.x - this.x)
+                this@TableUI.scrollBy(diff.roundToInt(), 0)
+            } else {
+                // pass
+            }
+
+            return super.onTouchEvent(motion_event)
+        }
     }
+
     init {
         this.vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
         this.vertical_scroll_view.isVerticalScrollBarEnabled = false
@@ -840,7 +862,7 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
         if (this.queued_scroll_x != null || this.queued_scroll_y != null) {
-            this.scroll(this.queued_scroll_x, this.queued_scroll_y,)
+            this.scroll(this.queued_scroll_x, this.queued_scroll_y)
             this.queued_scroll_x = null
             this.queued_scroll_y = null
         }
@@ -901,6 +923,27 @@ class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.
         } else {
             this.scrollX + this.width
         }
+    }
+
+    override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
+        if (motion_event  == null) {
+            // pass
+        } else if (motion_event.action == MotionEvent.ACTION_UP) {
+            this._last_y_position = null
+        } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
+            if (this._last_y_position == null) {
+                this._last_y_position = motion_event.y
+            }
+
+            val rel_y = this._last_y_position!! - motion_event.y
+
+            this.vertical_scroll_view.scrollBy(0, rel_y.toInt())
+            this._last_y_position = motion_event.y
+        } else {
+            // pass
+        }
+
+        return super.onTouchEvent(motion_event)
     }
 
 }

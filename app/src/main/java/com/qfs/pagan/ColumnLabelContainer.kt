@@ -171,7 +171,7 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
         return this._scroll_locked
     }
 
-    private fun _get_compound_scrollview(): CompoundScrollView {
+    private fun _get_compound_scrollview(): TableUI {
         return this.editor_table.get_scroll_view()
     }
 

@@ -32,11 +32,13 @@ import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
-class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
-    class ColumnsLayout(var editor_table: EditorTable): View(editor_table.context) {
+/* The UI of the EditorTable. Only drawing-related logic and onclick dispatching is handled here. */
+class TableUI(var editor_table: EditorTable): HorizontalScrollView(editor_table.context) {
+    class PaintedLayer(var editor_table: EditorTable): View(editor_table.context) {
         val paint = Paint()
         val text_paint_offset = Paint()
         val text_paint_octave = Paint()
@@ -99,7 +101,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
             val inner_offset = x - this.editor_table.get_column_offset(beat)
             val column_width = this.editor_table.get_column_width(beat) * min_leaf_width
-
 
             return if (row_position == -1) {
                 Triple(null, beat, null)
@@ -480,7 +481,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
                 this.paint
             )
             for (i in first_x .. last_x) {
-                val beat_width = (this.editor_table.get_column_width(i) * base_width)
+                val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
 
                 var y_offset = line_height
                 for (j in channels.indices) {
@@ -657,15 +658,6 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
                 offset += beat_width
             }
-
-
-            //canvas.drawLine(
-            //    scroll_x.toFloat() + 1F,
-            //    column_label_y.toFloat(),
-            //    scroll_x.toFloat() + 1F,
-            //    column_label_y + (this.parent as ViewGroup).measuredHeight.toFloat(),
-            //    this.paint
-            //)
         }
 
         private fun get_column_label_state(x: Int): IntArray {
@@ -780,7 +772,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         }
     }
 
-    val column_container = ColumnsLayout(editor_table)
+    val painted_layer = PaintedLayer(editor_table)
     private var _scroll_locked: Boolean = false
     private var queued_scroll_x: Int? = null
     private var queued_scroll_y: Int? = null
@@ -788,14 +780,14 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
     val vertical_scroll_view = object : ScrollView(this.context) {
         override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
             super.onScrollChanged(l, t, oldl, oldt)
-            this@CompoundScrollView.editor_table.line_label_layout.scrollTo(l, t)
-            this@CompoundScrollView.column_container.invalidate()
+            this@TableUI.editor_table.line_label_layout.scrollTo(l, t)
+            this@TableUI.painted_layer.invalidate()
         }
     }
     init {
         this.vertical_scroll_view.overScrollMode = OVER_SCROLL_NEVER
         this.vertical_scroll_view.isVerticalScrollBarEnabled = false
-        this.vertical_scroll_view.addView(this.column_container)
+        this.vertical_scroll_view.addView(this.painted_layer)
         this.addView(this.vertical_scroll_view)
 
         this.vertical_scroll_view.layoutParams.height = MATCH_PARENT
@@ -810,7 +802,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
         this.vertical_scroll_view.scrollY = 0
         this.scrollX = 0
         this.scrollY = 0
-        this.column_container.clear()
+        this.painted_layer.clear()
     }
 
 
@@ -828,7 +820,7 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
-        this.column_container.invalidate()
+        this.painted_layer.invalidate()
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -853,4 +845,48 @@ class CompoundScrollView(var editor_table: EditorTable): HorizontalScrollView(ed
             }
         }
     }
+
+    fun insert_row(y: Int) {
+        this.painted_layer.insert_row(y)
+    }
+
+    fun remove_rows(y: Int, count: Int) {
+        this.painted_layer.remove_rows(y, count)
+    }
+
+    fun add_column(x: Int) {
+        this.painted_layer.add_column(x)
+    }
+
+    fun add_columns(x: Int, count: Int) {
+        this.painted_layer.add_columns(x, count)
+    }
+
+    fun remove_column(x: Int) {
+        this.painted_layer.remove_column(x)
+    }
+
+    fun notify_cell_changed(y: Int, x: Int, state_only: Boolean) {
+        this.painted_layer.notify_cell_changed(y, x, state_only)
+    }
+    fun notify_column_changed(x: Int, state_only: Boolean) {
+        this.painted_layer.notify_column_changed(x, state_only)
+    }
+    fun notify_row_change(y: Int, state_only: Boolean) {
+        this.painted_layer.notify_row_change(y, state_only)
+    }
+
+    fun set_size(width: Int, height: Int) {
+        this.painted_layer.minimumWidth = width
+        this.painted_layer.minimumHeight = height
+    }
+
+    fun get_scroll_x(): Int {
+        return if (this.painted_layer.width <= this.width) {
+            this.painted_layer.width - 1
+        } else {
+            this.scrollX + this.width
+        }
+    }
+
 }

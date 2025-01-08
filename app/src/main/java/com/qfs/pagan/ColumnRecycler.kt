@@ -34,7 +34,7 @@ class ColumnRecycler(var editor_table: EditorTable): RecyclerView(editor_table.c
         } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
             // pass
         } else {
-            val scroll_view = this.parent as CompoundScrollView
+            val scroll_view = this.parent as TableUI
 
             if (this._last_y_position == null) {
                 this._last_y_position = (motion_event.y - scroll_view.y) - scroll_view.scrollY.toFloat()

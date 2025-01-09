@@ -1192,8 +1192,6 @@ class MainActivity : AppCompatActivity() {
             etRadix.set_range(2, 36)
             etRadix.value_set_callback = { new_radix: Int? ->
                 rvTuningMap.reset_tuning_map(new_radix)
-                etTranspose.set_value(0)
-                etTranspose.set_range(0, (new_radix ?: 12) - 1)
             }
         }
         //-------------------------------------------

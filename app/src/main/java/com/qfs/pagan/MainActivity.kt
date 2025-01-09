@@ -1155,12 +1155,14 @@ class MainActivity : AppCompatActivity() {
 
             val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
             val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
-            etTranspose.set_range(0, radix - 1)
-            etTranspose.set_value(opus_manager.transpose)
+            etTranspose.set_range(0, 99999999)
+            etTranspose.set_value(opus_manager.transpose.first)
+            val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
+            etTransposeRadix.set_range(1, 99999999)
+            etTransposeRadix.set_value(opus_manager.transpose.second)
 
             val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
             rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
-
 
             val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
                 .setCustomTitle(this._build_dialog_title_view(
@@ -1168,9 +1170,10 @@ class MainActivity : AppCompatActivity() {
                 ))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    val tuning_map = (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
                     opus_manager.set_tuning_map_and_transpose(
-                        (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map,
-                        etTranspose.get_value() ?: 0
+                        tuning_map,
+                        Pair(etTranspose.get_value() ?: 0, etTransposeRadix.get_value() ?: tuning_map.size)
                     )
 
                     dialog.dismiss()
@@ -1476,7 +1479,7 @@ class MainActivity : AppCompatActivity() {
             val octave = event_value / radix
             val offset = opus_manager.tuning_map[event_value % radix]
 
-            val transpose_offset = 12.0 * opus_manager.transpose.toDouble() / radix.toDouble()
+            val transpose_offset = 12.0 * opus_manager.transpose.first.toDouble() / opus_manager.transpose.second.toDouble()
             val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
 
             val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()

@@ -317,7 +317,7 @@ open class OpusLayerBase {
     var percussion_channel = OpusPercussionChannel()
     var path: String? = null
     var project_name: String? = null
-    var transpose: Int = 0
+    var transpose: Pair<Int, Int> = Pair(0, 12)
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
 
     private var _cached_instrument_line_map = mutableListOf<Pair<Int, Int>>()
@@ -1424,7 +1424,7 @@ open class OpusLayerBase {
         this.project_name = new_name
     }
 
-    open fun set_transpose(new_transpose: Int) {
+    open fun set_transpose(new_transpose: Pair<Int, Int>) {
         this.transpose = new_transpose
     }
 
@@ -3097,7 +3097,7 @@ open class OpusLayerBase {
                                 val offset = this.tuning_map[current_note % radix]
 
                                 // This offset is calculated so the tuning map always reflects correctly
-                                val transpose_offset = 12.0 * this.transpose.toDouble() / radix.toDouble()
+                                val transpose_offset = 12.0 * this.transpose.first.toDouble() / this.transpose.second.toDouble()
                                 val std_offset = (offset.first.toDouble() * 12.0 / offset.second.toDouble())
 
                                 val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
@@ -3305,7 +3305,8 @@ open class OpusLayerBase {
             )
         })
 
-        output["transpose"] = JSONInteger(this.transpose)
+        output["transpose"] = JSONInteger(this.transpose.first)
+        output["transpose_radix"] = JSONInteger(this.transpose.second)
         output["controllers"] = ActiveControlSetJSONInterface.to_json(this.controllers)
 
         output["channels"] = JSONList(
@@ -3338,7 +3339,7 @@ open class OpusLayerBase {
             i: Int -> Pair(i, 12)
         }
         this.percussion_channel.clear()
-        this.transpose = 0
+        this.transpose = Pair(0, 12)
         this.controllers.clear()
 
         this._cached_row_map.clear()
@@ -3429,7 +3430,7 @@ open class OpusLayerBase {
     open fun _project_change_json(json_data: JSONHashMap) {
         val inner_map = json_data["d"] as JSONHashMap
         this.set_project_name(inner_map.get_stringn("title"))
-        this.transpose = inner_map.get_int("transpose", 0)
+
 
         this.channels.clear()
 
@@ -3459,6 +3460,12 @@ open class OpusLayerBase {
                 g_pair.get_int(1)
             )
         }
+
+        this.transpose = Pair(
+            inner_map.get_int("transpose", 0),
+            inner_map.get_int("transpose_radix", tuning_map.size)
+        )
+
         this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.beat_count)
     }
 

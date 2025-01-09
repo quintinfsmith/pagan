@@ -1,6 +1,7 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
+import com.qfs.pagan.Rational
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -206,7 +207,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         super.set_project_name(new_name)
     }
 
-    override fun set_transpose(new_transpose: Int) {
+    override fun set_transpose(new_transpose: Pair<Int, Int>) {
         super.set_transpose(new_transpose)
     }
 

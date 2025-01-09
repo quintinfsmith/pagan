@@ -560,7 +560,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.SET_TRANSPOSE -> {
-                    this.set_transpose(current_node.args[0] as Int)
+                    this.set_transpose(Pair(current_node.args[0] as Int, current_node.args[1] as Int))
                 }
 
                 HistoryToken.SET_TUNING_MAP -> {
@@ -858,7 +858,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     // Need a compound function so history can manage both at the same time
-    open fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Int) {
+    open fun set_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Pair<Int, Int>) {
         this._remember {
             this.set_tuning_map(tuning_map)
             this.set_transpose(transpose)
@@ -1570,8 +1570,8 @@ open class OpusLayerHistory: OpusLayerCursor() {
         super.set_project_name(new_name)
     }
 
-    override fun set_transpose(new_transpose: Int) {
-        this.push_to_history_stack(HistoryToken.SET_TRANSPOSE, listOf(this.transpose))
+    override fun set_transpose(new_transpose: Pair<Int, Int>) {
+        this.push_to_history_stack(HistoryToken.SET_TRANSPOSE, listOf(this.transpose.first, this.transpose.second))
         super.set_transpose(new_transpose)
     }
 

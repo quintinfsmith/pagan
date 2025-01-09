@@ -585,7 +585,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val offset = this.opus_manager.tuning_map[event.note % radix]
 
                 // This offset is calculated so the tuning map always reflects correctly
-                val transpose_offset = 12F * this.opus_manager.transpose.toFloat() / radix.toFloat()
+                val transpose_offset = 12F * this.opus_manager.transpose.first.toFloat() / this.opus_manager.transpose.second.toFloat()
                 val std_offset = (offset.first.toFloat() * 12F / offset.second.toFloat())
 
                 Pair(

@@ -29,6 +29,19 @@
             custom:max="36"
             android:minEms="2"
             android:text="0"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/"/>
+        <com.qfs.pagan.RangedIntegerInput
+            xmlns:custom="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/etTransposeRadix"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            custom:min="1"
+            custom:max="36"
+            android:minEms="2"
+            android:text="12"/>
 
         <Space
             android:layout_width="0dp"

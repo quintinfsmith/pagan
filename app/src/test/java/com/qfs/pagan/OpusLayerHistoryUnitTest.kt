@@ -344,7 +344,7 @@ class HistoryCacheUnitTest {
             tuning_map[0] = Pair(4, 36)
             it.set_tuning_map_and_transpose(
                 tuning_map,
-                10
+                Pair(10, 12)
             )
         }
     }

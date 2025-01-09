@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
@@ -28,7 +27,6 @@ import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.concurrent.thread
 import kotlin.math.abs
@@ -429,18 +427,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun <T: TunedInstrumentEvent> draw_event(event: T, canvas: Canvas, x: Float, y: Float, width: Float, height: Float) {
-            canvas.drawText(
-                "$event",
-                x + (width / 2),
-                y + resources.getDimension(R.dimen.text_size_octave),
-                this.text_paint_offset
-            )
-        }
-
         fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
             if (tree.is_leaf()) {
-                val horizontal_scroll_view = (this.parent as ViewGroup)
+                val horizontal_scroll_view = (this.parent as HorizontalScrollView)
                 // Don't draw outside of the view
                 if (x + width >= horizontal_scroll_view.scrollX && x <= horizontal_scroll_view.scrollX + horizontal_scroll_view.measuredWidth) {
                     callback(tree.get_event(), position, canvas, x, y, width)
@@ -469,8 +458,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
             val opus_manager = this.editor_table.get_opus_manager()
             val channels = opus_manager.get_all_channels()
-            val horizontal_scroll_view = (this.parent as ViewGroup)
-            val vertical_scroll_view = (horizontal_scroll_view.parent as ViewGroup)
+            val horizontal_scroll_view = (this.parent as HorizontalScrollView)
+            val vertical_scroll_view = (horizontal_scroll_view.parent as ScrollView)
             val scroll_y = vertical_scroll_view.scrollY
             val scroll_x = horizontal_scroll_view.scrollX
             canvas.drawRect(
@@ -517,17 +506,19 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
                                     val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
                                     val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
+                                    val offset_text_x = x + ((width - offset_text_bounds.width()) / 2)
 
                                     canvas.drawText(
                                         offset_text,
-                                        x + ((width - offset_text_bounds.width()) / 2),
+                                        offset_text_x,
                                         offset_text_y,
                                         this.text_paint_offset
                                     )
 
+                                    val octave_max_width = (base_width - offset_text_bounds.width()) / 2
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - offset_text_bounds.width()) / 2) - octave_text_bounds.width() - padding_x,
+                                        x + ((width - base_width) / 2) + ((octave_max_width - octave_text_bounds.width()) / 2),
                                         y + line_height - padding_y,
                                         this.text_paint_octave
                                     )
@@ -561,16 +552,17 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                         this.text_paint_offset
                                     )
 
+                                    val octave_max_width = (base_width - offset_text_bounds.width()) / 2
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - offset_text_bounds.width()) / 2) - octave_text_bounds.width() - padding_x,
+                                        x + ((width - base_width) / 2) + ((octave_max_width - octave_text_bounds.width()) / 2),
                                         y + line_height - padding_y,
                                         this.text_paint_octave
                                     )
 
                                     canvas.drawText(
                                         prefix_text,
-                                        x + ((width - offset_text_bounds.width()) / 2) - prefix_text_bounds.width() - padding_x,
+                                        x + ((width - base_width) / 2) + ((octave_max_width - prefix_text_bounds.width()) / 2),
                                         offset_text_y - octave_text_bounds.height(),
                                         this.text_paint_octave
                                     )
@@ -874,7 +866,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.queued_scroll_y = y
         } else {
             if (x != null) {
-
                 this.inner_scroll_view.smoothScrollTo(x, 0)
             }
             if (y != null) {
@@ -918,7 +909,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.painted_layer.minimumHeight = height
     }
 
-    fun get_scroll_x(): Int {
+    fun get_scroll_x_max(): Int {
         return if (this.painted_layer.width <= this.width) {
             this.painted_layer.width - 1
         } else {

@@ -247,27 +247,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         //this.column_label_container.notify_column_changed(x)
     }
 
-    private fun _align_column_labels() {
-        val scroll_container_offset = this.table_ui.scrollX
-        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
-        val reduced_x = scroll_container_offset / min_leaf_width
-        val column_position = this.get_column_from_leaf(reduced_x)
-        //val column = this._scroll_view.column_container.get_column(column_position)
-
-        // TODO
-        //val label_position = layout_manager_labels.findFirstVisibleItemPosition()
-        //val label = layout_manager_labels.findViewByPosition(label_position)
-        //if (label?.x != column?.x) {
-        //    val new_offset = column?.x?.roundToInt() ?: 0
-        //    this._main_scroll_locked = true
-        //    layout_manager_columns.scrollToPositionWithOffset(column_position, new_offset)
-        //    this._main_scroll_locked = false
-        //    this._label_scroll_locked = true
-        //    layout_manager_labels.scrollToPositionWithOffset(column_position, new_offset)
-        //    this._label_scroll_locked = false
-        //}
-    }
-
     fun scroll_to_position(x: Int? = null, y: Int? = null, offset: Float = 0f, offset_width: Float = 1f, force: Boolean = false) {
         if (x != null) {
             if (x >= this.get_opus_manager().beat_count) {
@@ -310,7 +289,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
-        val box_width = this.table_ui.measuredWidth
+        val box_width = this.table_ui.inner_scroll_view.measuredWidth
 
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
         val max_width = (this._column_width_maxes[x] * base_width).toInt()
@@ -328,32 +307,30 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
         column_state[FITS_ON_SCREEN] = max_width <= box_width
 
+        val scroll_x = this.table_ui.inner_scroll_view.scrollX
         val target_rect = this.get_column_rect(x) ?: return
         if (x in visible_range) {
-            if (target_rect == null) {
-                // Shouldn't be Reachable
-                return
-            } else if (target_rect.x + target_width + target_offset > box_width + this.table_ui.scrollX) {
+            if (target_rect.x + target_width + target_offset > box_width + scroll_x) {
                 subdiv_state[POSITION_TO_RIGHT] = true
-                subdiv_state[POSITION_ON_SCREEN] = target_rect.x + target_offset < box_width + this.table_ui.scrollX
-                subdiv_state[POSITION_TO_LEFT] = target_rect.x + target_offset < this.table_ui.scrollX
-            } else if (target_rect.x + target_width + target_offset > this.table_ui.scrollX) {
+                subdiv_state[POSITION_ON_SCREEN] = target_rect.x + target_offset < box_width + scroll_x
+                subdiv_state[POSITION_TO_LEFT] = target_rect.x + target_offset < scroll_x
+            } else if (target_rect.x + target_width + target_offset > scroll_x) {
                 subdiv_state[POSITION_ON_SCREEN] = true
-                subdiv_state[POSITION_TO_LEFT] = target_rect.x + target_offset < this.table_ui.scrollX
+                subdiv_state[POSITION_TO_LEFT] = target_rect.x + target_offset < scroll_x
             } else {
                 subdiv_state[POSITION_TO_LEFT] = true
             }
 
 
-            if (target_rect.x > box_width + this.table_ui.scrollX) {
+            if (target_rect.x > box_width + scroll_x) {
                 column_state[POSITION_TO_RIGHT] = true
-            } else if (target_rect.x > this.table_ui.scrollX) {
+            } else if (target_rect.x > scroll_x) {
                 column_state[POSITION_ON_SCREEN] = true
-                column_state[POSITION_TO_RIGHT] = target_rect.x + max_width > box_width + this.table_ui.scrollX
+                column_state[POSITION_TO_RIGHT] = target_rect.x + max_width > box_width + scroll_x
             } else {
                 column_state[POSITION_TO_LEFT] = true
-                column_state[POSITION_ON_SCREEN] = target_rect.x + max_width > this.table_ui.scrollX
-                column_state[POSITION_TO_RIGHT] = target_rect.x + max_width > box_width + this.table_ui.scrollX
+                column_state[POSITION_ON_SCREEN] = target_rect.x + max_width > scroll_x
+                column_state[POSITION_TO_RIGHT] = target_rect.x + max_width > box_width + scroll_x
             }
         } else if (x > visible_range.last) {
             column_state[POSITION_TO_RIGHT] = true
@@ -411,7 +388,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
             0b0111,   // Overflowing,
             0b1001 -> { // No need to scroll
-                this._align_column_labels()
                 return
             }
             // 0b0000 -> { }   // Invalid
@@ -530,7 +506,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> null
         } ?: return
-
         this._scroll_to_y(row)
     }
 
@@ -538,7 +513,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     private fun _scroll_to_y(row: Int) {
         val (target_y, row_height) = this.get_row_y_position_and_height(row)
         // TODO: This feels sloppy but i'm too tired to think of a sufficiently cleaner answer
-        val vertical_scroll_view = this.get_scroll_view().inner_scroll_view
+        val vertical_scroll_view = this.get_scroll_view()
         if (vertical_scroll_view.measuredHeight + vertical_scroll_view.scrollY < target_y + row_height) {
             val adj_y = (target_y + row_height) - vertical_scroll_view.measuredHeight
             this.line_label_layout.scrollTo(0, adj_y)
@@ -553,8 +528,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         // NOTE: Used to be based on recycler view positions. So now we just set the Pairs to Pair(0, scroll[X/Y])
 
         return Pair(
-            this.table_ui.scrollX,
-            this.table_ui.inner_scroll_view.scrollY
+            this.table_ui.inner_scroll_view.scrollX,
+            this.table_ui.scrollY
         )
     }
 
@@ -563,7 +538,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_first_visible_column_index(): Int {
-        val scroll_container_offset = this.table_ui.scrollX
+        val scroll_container_offset = this.table_ui.inner_scroll_view.scrollX
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x)
@@ -571,7 +546,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_last_visible_column_index(): Int {
-        val scroll_container_offset = this.table_ui.get_scroll_x()
+        val scroll_container_offset = this.table_ui.get_scroll_x_max()
         val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x, this._column_width_map.size - 1)

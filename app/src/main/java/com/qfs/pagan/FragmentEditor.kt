@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.view.GravityCompat
+import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
@@ -464,28 +465,32 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
         this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
     }
+    fun on_show_context_menus(a: View, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int): Boolean {
+        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.force_scroll_to_cursor_vertical()
+        return false
+    }
 
     private fun show_context_menus() {
+
         val primary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        primary.removeOnLayoutChangeListener(this::on_show_context_menus)
         primary.visibility = if (primary.isNotEmpty()) {
+            primary.addOnLayoutChangeListener(this::on_show_context_menus)
             VISIBLE
         } else {
             GONE
         }
 
         val secondary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        secondary.removeOnLayoutChangeListener(this::on_show_context_menus)
         secondary.visibility = if (secondary.isNotEmpty()) {
+            if (primary.isEmpty()) {
+                secondary.addOnLayoutChangeListener(this::on_show_context_menus)
+            }
             VISIBLE
         } else {
             GONE
-        }
-
-        // TODO: There's a better solution here.
-        // Kludge, the visibility observer callback doesn't let the resizing happen first
-        thread {
-            Thread.sleep(100)
-            val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
-            editor_table.force_scroll_to_cursor_vertical()
         }
     }
 

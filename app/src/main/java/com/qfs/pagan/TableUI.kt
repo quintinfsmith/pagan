@@ -44,6 +44,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val text_paint_column = Paint()
         var touch_position_x = 0F
         var touch_position_y = 0F
+
+        var invalidate_queued = false
         init {
             this.table_line_paint.color = ContextCompat.getColor(context, R.color.table_lines)
             this.table_line_paint.strokeWidth = 1F
@@ -721,7 +723,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             //    val column = this.get_column(i)
             //    column.insert_cells(y, 1)
             //}
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun remove_rows(y: Int, count: Int = 1) {
@@ -729,31 +731,31 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             //    val column = this.get_column(i)
             //    column.remove_cells(y, count)
             //}
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun add_column(x: Int) {
             //val new_column = ColumnLayout(this.editor_table, x)
             //this.addView(new_column, x)
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun add_columns(x: Int, count: Int) {
             //for (i in x until count) {
             //    this.add_column(i)
             //}
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun remove_column(x: Int) {
             //this.removeViewAt(x)
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun notify_cell_changed(y: Int, x: Int, state_only: Boolean = false) {
            // val column = this.get_column(x)
            // column.notify_item_changed(y, state_only)
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun notify_column_changed(x: Int, state_only: Boolean = false) {
@@ -763,17 +765,23 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             //} else {
             //    column.rebuild()
             //}
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun notify_row_change(y: Int, state_only: Boolean = false) {
             //for (x in 0 until this.childCount) {
             //    this.get_column(x).notify_item_changed(y, state_only)
             //}
-            this.invalidate()
+            this.invalidate_wrapper()
         }
 
         fun clear() {
+            this.invalidate_wrapper()
+        }
+
+        /* The layout is currently refresh solely by an invalidate call. use the wrapper to stop it being called for EVERY update to the table before it gets redrawn */
+        fun invalidate_wrapper() {
+            this.invalidate_queued = true
         }
     }
 
@@ -934,5 +942,17 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
 
         return super.onTouchEvent(motion_event)
+    }
+
+    /*
+         Kludge. There is *currently* no spot-updating even though there are functions that make it look that way
+         So updates are queued and this is how we prevent the view getting redrawn multiple times per update.
+     */
+
+    fun finalize_update() {
+        if (this.painted_layer.invalidate_queued) {
+            this.painted_layer.invalidate()
+            this.painted_layer.invalidate_queued = false
+        }
     }
 }

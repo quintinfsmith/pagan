@@ -2305,6 +2305,9 @@ class OpusLayerInterface : OpusLayerHistory() {
                     null -> break
                 }
             }
+            // Temporary function call while I work on a spot-update solution
+            editor_table.table_ui.finalize_update()
+
             this._ui_change_bill.clear()
         }
     }

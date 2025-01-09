@@ -255,8 +255,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         } else {
                             opus_manager.cursor_select_line_ctl_range(ctl_type!!, beat_key, beat_key)
                         }
-
-                        opus_manager.cursor_select_ctl_at_line(ctl_type!!, beat_key, position!!)
                     }
 
                     CtlLineLevel.Channel -> {

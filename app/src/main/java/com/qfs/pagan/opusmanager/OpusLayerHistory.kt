@@ -163,12 +163,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         // Should Never be called on percussion channel so no need to do percussion checks
         return this._remember {
             val tmp_history_nodes = mutableListOf<Pair<HistoryToken, List<Any>>>()
-            val working_channel = if (this.is_percussion(channel)) {
-                // TODO: Specify Exception
-                throw Exception()
-            } else {
-                this.channels[channel]
-            }
+            val working_channel = this.channels[channel]
 
             val line_count = working_channel.lines.size
 
@@ -652,12 +647,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         current_node.args[0] as ControlEventType
                     )
                 }
+
                 HistoryToken.NEW_CHANNEL_CONTROLLER -> {
                     val type = current_node.args[0] as ControlEventType
                     val channel = current_node.args[1] as Int
                     this.new_channel_controller(type, channel)
                     this.set_channel_controller_visibility(type, channel, current_node.args[2] as Boolean)
                 }
+
                 HistoryToken.SET_CHANNEL_VISIBILITY -> {
                     this.set_channel_visibility(
                         current_node.args[0] as Int,
@@ -665,158 +662,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
-                //HistoryToken.CURSOR_SELECT_RANGE -> {
-                //    var args = checked_cast<List<Int>>(current_node.args)
-                //    val beat_key_a = BeatKey(args[0], args[1], args[2])
-                //    val beat_key_b = BeatKey(args[3], args[4], args[5])
-                //    if (beat_key_a != beat_key_b) {
-                //        this.queue_cursor_select(
-                //            OpusManagerCursor(
-                //                mode = OpusManagerCursor.CursorMode.Range,
-                //                range = Pair(beat_key_a, beat_key_b)
-                //            )
-                //        )
-                //    } else {
-                //        this.queue_cursor_select(
-                //            OpusManagerCursor(
-                //                mode = OpusManagerCursor.CursorMode.Single,
-                //                channel = beat_key_a.channel,
-                //                line_offset = beat_key_a.line_offset,
-                //                beat = beat_key_a.beat
-                //            )
-                //        )
-                //    }
-                //}
-                //HistoryToken.CURSOR_SELECT_LINE -> {
-                //    var args = checked_cast<List<Int>>(current_node.args)
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Line,
-                //            channel = args[0],
-                //            line_offset =  args[1]
-                //        )
-                //    )
-                //}
-
-                //HistoryToken.CURSOR_SELECT -> {
-                //    val beat_key = current_node.args[0] as BeatKey
-                //    val args = mutableListOf<Int>(beat_key.channel, beat_key.line_offset, beat_key.beat)
-                //    val position = checked_cast<List<Int>>(current_node.args[1])
-                //    args.addAll(position)
-
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Single,
-                //            channel = beat_key.channel,
-                //            line_offset = beat_key.line_offset,
-                //            beat = beat_key.beat,
-                //            position = position
-                //        )
-                //    )
-                //}
-
-                //HistoryToken.CURSOR_SELECT_COLUMN -> {
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Column,
-                //            beat = current_node.args[0] as Int
-                //        )
-                //    )
-                //}
-
-                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL -> {
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Single,
-                //            beat = current_node.args[1] as Int,
-                //            position = checked_cast<List<Int>>(current_node.args[2]),
-                //            ctl_level = CtlLineLevel.Global,
-                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
-                //        )
-                //    )
-                //}
-                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL -> {
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Single,
-                //            channel = current_node.args[1] as Int,
-                //            beat = current_node.args[2] as Int,
-                //            position = checked_cast<List<Int>>(current_node.args[3]),
-                //            ctl_level = CtlLineLevel.Channel,
-                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
-                //        )
-                //    )
-                //}
-                //HistoryToken.CURSOR_SELECT_LINE_CTL -> {
-                //    val beat_key = checked_cast<BeatKey>(current_node.args[1])
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Single,
-                //            channel = beat_key.channel,
-                //            line_offset = beat_key.line_offset,
-                //            beat = beat_key.beat,
-                //            position = checked_cast<List<Int>>(current_node.args[2]),
-                //            ctl_level = CtlLineLevel.Line,
-                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
-                //        )
-                //    )
-                //}
-                //HistoryToken.CURSOR_SELECT_LINE_CTL_ROW -> {
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Single,
-                //            channel = current_node.args[1] as Int,
-                //            line_offset = current_node.args[2] as Int,
-                //            ctl_level = CtlLineLevel.Line,
-                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
-                //        )
-                //    )
-                //}
-                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW -> {
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Line,
-                //            ctl_level = CtlLineLevel.Channel,
-                //            channel = current_node.args[1] as Int,
-                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
-                //        )
-                //    )
-                //}
-                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW -> {
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Line,
-                //            ctl_level = CtlLineLevel.Global,
-                //            ctl_type = checked_cast<ControlEventType>(current_node.args[0])
-                //        )
-                //    )
-                //}
-                //HistoryToken.CURSOR_SELECT_CHANNEL -> {
-                //    this.queue_cursor_select(
-                //        OpusManagerCursor(
-                //            mode = OpusManagerCursor.CursorMode.Channel,
-                //            channel = current_node.args[0] as Int,
-                //            ctl_level = null,
-                //            ctl_type = null
-                //        )
-                //    )
-                //}
-
                 HistoryToken.MULTI -> { /* Nothing */ }
-                HistoryToken.SAVE_POINT -> TODO()
-                HistoryToken.INSERT_TREE -> TODO()
-                HistoryToken.MOVE_LINE -> TODO()
-                //HistoryToken.CURSOR_SELECT -> TODO()
-                //HistoryToken.CURSOR_SELECT_COLUMN -> TODO()
-                //HistoryToken.CURSOR_SELECT_LINE -> TODO()
-                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL -> TODO()
-                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL -> TODO()
-                //HistoryToken.CURSOR_SELECT_LINE_CTL -> TODO()
-                //HistoryToken.CURSOR_SELECT_GLOBAL_CTL_ROW -> TODO()
-                //HistoryToken.CURSOR_SELECT_CHANNEL_CTL_ROW -> TODO()
-                //HistoryToken.CURSOR_SELECT_LINE_CTL_ROW -> TODO()
-                //HistoryToken.CURSOR_SELECT_RANGE -> TODO()
-
                 else -> {}
             }
         } catch (e: ClassCastException) {
@@ -1532,19 +1378,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun on_project_changed() {
-        super.on_project_changed()
-    }
-
-    override fun load(bytes: ByteArray, new_path: String?) {
-        super.load(bytes, new_path)
-    }
-
     override fun remove_channel(channel: Int) {
         this.push_rebuild_channel(channel) {
-            //this.history_cache.lock()
             super.remove_channel(channel)
-            // this.history_cache.unlock()
         }
     }
 

@@ -130,6 +130,8 @@
     <string name="playback_failed">Playback Failed</string>
     <string name="invalid_soundfont">Invalid Soundfont</string>
     <string name="std_percussion_swap">Can\'t swap percussion with other instruments</string>
+    <string name="corrupted_project">Corrupted Project</string>
+    <string name="untitled_op">Untitled Op. - %1$s</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

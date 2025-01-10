@@ -40,6 +40,7 @@ open class OpusLayerBase {
     class NonEventConversion(beat_key: BeatKey, position: List<Int>) : Exception("Attempting to convert non-event @ $beat_key:$position")
     class NonPercussionEventSet : Exception("Attempting to set normal event on percussion channel")
     class PercussionEventSet : Exception("Attempting to set percussion event on non-percussion channel")
+    class PercussionBankException : Exception("Can't set percussion channel bank. It is always 128")
     class BadInsertPosition : Exception("Can't insert tree at top level")
     class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
     class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
@@ -51,7 +52,11 @@ open class OpusLayerBase {
     class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
     class NoteOutOfRange(var n: Int) : Exception("Attempting to use unsupported note $n")
 
+    class InvalidPercussionLineException: Exception("Attemping to add a non-percussion line to the percussion channel")
+    class InvalidLineException: Exception("Attemping to add a percussion line to the non-percussion channel")
+
     class EmptyPath : Exception("Path Required but not given")
+    class EmptyJSONException: Excpetion("JSON object was NULL")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey) : Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
     class BlockedActionException(msg: String? = null) :
         Exception(msg) // Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
@@ -1384,14 +1389,12 @@ open class OpusLayerBase {
     open fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         if (line is OpusLine) {
             if (this.is_percussion(channel)) {
-                // TODO: Specify Exception
-                throw Exception()
+                throw InvalidLineException()
             }
             this.channels[channel].insert_line(line_offset, line)
         } else if (line is OpusLinePercussion) {
             if (!this.is_percussion(channel)) {
-                // TODO: SpecifyException
-                throw Exception()
+                throw InvalidPercussionLineException()
             }
             this.percussion_channel.insert_line(line_offset, line)
         }
@@ -1700,8 +1703,6 @@ open class OpusLayerBase {
     }
 
     open fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
-        // TODO: I don't think size == 0 needs to be checked here, maybe
-        //  AND should LastLineException be caught or allow to propagate here?
         for (i in 0 until count) {
             val working_channel = this.get_channel(channel)
             if (working_channel.size == 0) {
@@ -2864,8 +2865,7 @@ open class OpusLayerBase {
 
     private fun set_channel_bank(channel: Int, bank: Int) {
         if (this.is_percussion(channel)) {
-            // TODO: Specify Exception
-            throw Exception()
+            throw PercussionBankException()
         } else {
             this.channels[channel].set_midi_bank(bank)
         }
@@ -3378,7 +3378,7 @@ open class OpusLayerBase {
 
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        val generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw Exception() // TODO: Specify Exception
+        val generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
         val version = OpusManagerJSONInterface.detect_version(generalized_object)
         this.project_change_json(
             when (version) {

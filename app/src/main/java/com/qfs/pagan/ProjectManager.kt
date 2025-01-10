@@ -9,8 +9,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ProjectManager(data_dir: String) {
+class ProjectManager(val activity: MainActivity) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
+    private val data_dir = activity.getExternalFilesDir(null).toString()
     val path = "$data_dir/projects/"
     private val _cache_path = "$data_dir/project_list.json"
 
@@ -79,8 +80,7 @@ class ProjectManager(data_dir: String) {
     private fun generate_file_project_name(): String {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        // TODO: use resource string
-        return "Untitled Op. - ${now.format(formatter)}"
+        return this.activity.getString(R.string.untitled_op, now.format(formatter))
     }
 
     private fun _cache_project_list() {
@@ -98,8 +98,7 @@ class ProjectManager(data_dir: String) {
             var project_name = try {
                 this.get_file_project_name(json_file) ?: this.generate_file_project_name()
             } catch (e: Exception) {
-                // TODO: use resource string
-                "Corrupted Project"
+                this.activity.getString(R.string.corrupted_project)
             }
             project_list.add(Pair(json_file.path, project_name))
         }

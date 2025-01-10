@@ -1,7 +1,6 @@
 package com.qfs.pagan.opusmanager
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
-import com.qfs.pagan.Rational
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -1036,8 +1035,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             null -> {
-                // TODO: SPECIFY Exception
-                throw Exception()
+                throw InvalidCursorState()
             }
             CtlLineLevel.Global -> {
                 val (actual_beat, actual_position) = this.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
@@ -1082,10 +1080,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                     event as InstrumentEvent
                 )
             }
-            else -> {
-                // TODO: Specifiy Exception
-                throw Exception()
-            }
+            else -> throw InvalidCursorState()
         }
     }
     fun set_percussion_event_at_cursor() {
@@ -1272,7 +1267,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 }
             }
             OpusManagerCursor.CursorMode.Channel -> {
-                TODO()
+                TODO("The Button hasn't been added to the ui (don't panic)")
             }
             OpusManagerCursor.CursorMode.Unset -> {}
         }
@@ -1464,7 +1459,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                         this.controller_line_replace_tree(this.cursor.ctl_type!!, beat_key, listOf(), this.get_global_ctl_tree_copy(this.cursor.ctl_type!!, first.beat, listOf()))
                     }
                 }
-                null -> TODO()
+                null -> throw InvalidCursorState()
             }
         } else {
             throw InvalidCursorState()
@@ -1508,7 +1503,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                         this.controller_global_to_line_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat_key, listOf())
                     }
                 }
-                null -> TODO()
+                null -> throw InvalidCursorState()
             }
         } else {
             throw InvalidCursorState()
@@ -1588,7 +1583,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                     }
 
                 }
-                null -> TODO()
+                null -> throw InvalidCursorState()
             }
         } else {
             throw InvalidCursorState()
@@ -1685,7 +1680,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                         this.controller_global_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat, listOf())
                     }
                 }
-                null -> TODO()
+                null -> throw InvalidCursorState()
             }
         } else {
             throw InvalidCursorState()

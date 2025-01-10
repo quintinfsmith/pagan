@@ -551,7 +551,7 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
 
-        this._project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
+        this._project_manager = ProjectManager(this)
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
         val old_projects_dir = File("${applicationInfo.dataDir}/projects")
         if (old_projects_dir.isDirectory) {
@@ -1763,8 +1763,6 @@ class MainActivity : AppCompatActivity() {
             this.active_percussion_names.clear()
             val drums = this.get_drum_options()
             for ((name, note) in drums) {
-                // TODO: *Maybe* Allow drum instruments below 27? not sure what the standard is.
-                //  I thought 27 was the lowest, but i'll come up with something later
                 if (note >= 27) {
                     this.active_percussion_names[note] = name
                 }

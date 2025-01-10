@@ -133,27 +133,10 @@ class HistoryCacheUnitTest {
     }
 
     @Test
-    fun test_convert_event_to_relative() {
-        //var manager = OpusManager()
-        //manager.new()
-        //manager.set_event(BeatKey(0,0,0), listOf(), OpusEvent(12,12,0,false))
-        //manager.set_event(BeatKey(0,0,1), listOf(), OpusEvent(24,12,0,false))
-        //manager.convert_event_to_relative(BeatKey(0,0,1), listOf())
-        //manager.apply_undo()
-        //TODO("test_convert_event_to_relative")
-    }
-
-    @Test
-    fun test_convert_event_to_absolute() {
-        //TODO("test_convert_event_to_absolute")
-    }
-
-    @Test
     fun test_set_percussion_event() {
         var manager = OpusManager()
         manager._project_change_new()
 
-        println("CHANNELs: ${manager.get_channel_count()}")
         this.undo_and_check(manager) {
             it.percussion_set_event(BeatKey(1,0,0), listOf())
         }

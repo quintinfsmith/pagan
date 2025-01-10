@@ -3,17 +3,14 @@ package com.qfs.pagan.opusmanager
 enum class HistoryToken {
     // Meta
     MULTI,
-    SAVE_POINT,
     // Base
     INSERT,
     INSERT_BEAT,
     INSERT_LINE,
     INSERT_LINE_PERCUSSION,
-    INSERT_TREE,
     INSERT_CTL_GLOBAL,
     INSERT_CTL_CHANNEL,
     INSERT_CTL_LINE,
-    MOVE_LINE,
     NEW_CHANNEL,
     REMOVE,
     REMOVE_CTL_GLOBAL,

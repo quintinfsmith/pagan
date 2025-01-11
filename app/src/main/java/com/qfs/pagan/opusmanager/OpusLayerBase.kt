@@ -56,7 +56,7 @@ open class OpusLayerBase {
     class InvalidLineException: Exception("Attemping to add a percussion line to the non-percussion channel")
 
     class EmptyPath : Exception("Path Required but not given")
-    class EmptyJSONException: Excpetion("JSON object was NULL")
+    class EmptyJSONException: Exception("JSON object was NULL")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey) : Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
     class BlockedActionException(msg: String? = null) :
         Exception(msg) // Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer

@@ -55,7 +55,7 @@ class ActiveControllerJSONInterface {
                 }
                 controller.beats[index] = generic_event
             }
-            controller._init_blocked_tree_caches()
+            controller.init_blocked_tree_caches()
         }
 
         fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {

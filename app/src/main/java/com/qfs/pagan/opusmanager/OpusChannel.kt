@@ -269,7 +269,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
 
     fun remove(line_offset: Int, beat: Int, position: List<Int>) {
         this.catch_blocked_tree_exception(line_offset) {
-            this.lines[line_offset].remove_standard(beat, position)
+            this.lines[line_offset].remove_node(beat, position)
         }
     }
     fun controller_line_remove_leaf(type: ControlEventType, line_offset: Int, beat: Int, position: List<Int>) {
@@ -279,7 +279,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
     fun controller_channel_remove_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.controllers.get_controller<OpusControlEvent>(type).remove_standard(beat, position)
+            this.controllers.get_controller<OpusControlEvent>(type).remove_node(beat, position)
         }
     }
 

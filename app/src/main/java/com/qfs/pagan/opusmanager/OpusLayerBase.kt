@@ -38,7 +38,6 @@ import kotlin.math.roundToInt
 open class OpusLayerBase {
     class BadBeatKey(beat_key: BeatKey) : Exception("BeatKey $beat_key doesn't exist")
     class NonEventConversion(beat_key: BeatKey, position: List<Int>) : Exception("Attempting to convert non-event @ $beat_key:$position")
-    class NonPercussionEventSet : Exception("Attempting to set normal event on percussion channel")
     class PercussionEventSet : Exception("Attempting to set percussion event on non-percussion channel")
     class PercussionBankException : Exception("Can't set percussion channel bank. It is always 128")
     class BadInsertPosition : Exception("Can't insert tree at top level")
@@ -1115,7 +1114,7 @@ open class OpusLayerBase {
      */
     open fun insert(beat_key: BeatKey, position: List<Int>) {
 
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].insert_tree(beat_key.line_offset, beat_key.beat, position)
         }
     }
@@ -1130,7 +1129,7 @@ open class OpusLayerBase {
             throw BadInsertPosition()
         }
 
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].insert_after(beat_key.line_offset, beat_key.beat, position)
         }
     }
@@ -1139,7 +1138,7 @@ open class OpusLayerBase {
         if (position.isEmpty()) {
             throw BadInsertPosition()
         }
-        this.catch_blocked_tree_exception(channel) {
+        this._catch_blocked_tree_exception(channel) {
             this.get_all_channels()[channel].controller_channel_insert_leaf(type, beat, position)
         }
     }
@@ -1148,20 +1147,20 @@ open class OpusLayerBase {
         if (position.isEmpty()) {
             throw BadInsertPosition()
         }
-        this.catch_blocked_tree_exception(channel) {
+        this._catch_blocked_tree_exception(channel) {
             this.get_all_channels()[channel].controller_channel_insert_leaf_after(type, beat, position)
         }
     }
 
     open fun <T : OpusControlEvent> controller_channel_replace_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
-        this.catch_blocked_tree_exception(channel) {
+        this._catch_blocked_tree_exception(channel) {
             val tree_copy = tree.copy(this::copy_control_event)
             this.get_all_channels()[channel].replace_channel_control_leaf(type, beat, position ?: listOf(), tree_copy)
         }
     }
 
     open fun <T : OpusControlEvent> controller_channel_set_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, event: T) {
-        this.catch_blocked_tree_exception(channel) {
+        this._catch_blocked_tree_exception(channel) {
             this.get_all_channels()[channel].set_controller_event(type, beat, position, event)
         }
     }
@@ -1175,20 +1174,20 @@ open class OpusLayerBase {
     }
 
     open fun <T: OpusControlEvent> controller_line_replace_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             val tree_copy = tree.copy(this::copy_control_event)
             this.get_all_channels()[beat_key.channel].replace_line_control_leaf(type, beat_key.line_offset, beat_key.beat, position ?: listOf(), tree_copy)
         }
     }
 
     open fun <T: OpusControlEvent> controller_line_set_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>, event: T) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].set_line_controller_event(type, beat_key.line_offset, beat_key.beat, position, event)
         }
     }
 
     open fun <T: OpusControlEvent> controller_global_replace_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
-        this.catch_global_ctl_blocked_tree_exception(type) {
+        this._catch_global_ctl_blocked_tree_exception(type) {
             val tree_copy = tree.copy(this::copy_control_event)
             val controller = this.controllers.get_controller<T>(type)
             controller.replace_tree(
@@ -1200,7 +1199,7 @@ open class OpusLayerBase {
     }
 
     open fun <T : OpusControlEvent> controller_global_set_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
-        this.catch_global_ctl_blocked_tree_exception(type) {
+        this._catch_global_ctl_blocked_tree_exception(type) {
             this.controllers.get_controller<T>(type).set_event(beat, position, event)
         }
     }
@@ -1210,7 +1209,7 @@ open class OpusLayerBase {
     }
 
     open fun controller_global_split_tree(type: ControlEventType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean = false) {
-        this.catch_global_ctl_blocked_tree_exception(type) {
+        this._catch_global_ctl_blocked_tree_exception(type) {
             this.controllers.get_controller<OpusControlEvent>(type).split_tree(beat, position, splits, move_event_to_end)
         }
     }
@@ -1227,7 +1226,7 @@ open class OpusLayerBase {
         if (position.isEmpty()) {
             throw BadInsertPosition()
         }
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].controller_line_insert_leaf(type, beat_key.line_offset, beat_key.beat, position)
         }
     }
@@ -1237,7 +1236,7 @@ open class OpusLayerBase {
             throw BadInsertPosition()
         }
 
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].controller_line_insert_leaf_after(type, beat_key.line_offset, beat_key.beat, position)
         }
     }
@@ -1247,7 +1246,7 @@ open class OpusLayerBase {
             throw BadInsertPosition()
         }
 
-        this.catch_global_ctl_blocked_tree_exception(type) {
+        this._catch_global_ctl_blocked_tree_exception(type) {
             val controller = this.controllers.get_controller<OpusControlEvent>(type)
             controller.insert(beat, position)
         }
@@ -1258,7 +1257,7 @@ open class OpusLayerBase {
             throw BadInsertPosition()
         }
 
-        this.catch_global_ctl_blocked_tree_exception(type) {
+        this._catch_global_ctl_blocked_tree_exception(type) {
             val controller = this.controllers.get_controller<OpusControlEvent>(type)
             controller.insert_after(beat, position)
         }
@@ -1289,7 +1288,7 @@ open class OpusLayerBase {
     }
 
     open fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             if (this.is_percussion(beat_key.channel)) {
                 this.percussion_channel.replace_tree(
                     beat_key.line_offset,
@@ -1309,7 +1308,7 @@ open class OpusLayerBase {
     }
 
     open fun <T : InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             if (this.is_percussion(beat_key.channel)) {
                 this.percussion_channel.set_event(beat_key.line_offset, beat_key.beat, position, event as PercussionEvent)
             } else {
@@ -1586,7 +1585,7 @@ open class OpusLayerBase {
     }
 
     open fun controller_channel_remove_standard(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-        this.catch_blocked_tree_exception(channel) {
+        this._catch_blocked_tree_exception(channel) {
             this.get_all_channels()[channel].controller_channel_remove_leaf(type, beat, position)
         }
     }
@@ -2202,7 +2201,7 @@ open class OpusLayerBase {
     }
 
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             val tree = this.get_tree(beat_key, position)
             if (!tree.is_event()) {
                 throw EventlessTreeException()
@@ -2347,20 +2346,20 @@ open class OpusLayerBase {
         them and use the "forget" wrapper at the History layer
      */
     open fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].remove(beat_key.line_offset, beat_key.beat, position)
         }
     }
 
     open fun controller_line_remove_standard(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        this.catch_blocked_tree_exception(beat_key.channel) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].controller_line_remove_leaf(type, beat_key.line_offset, beat_key.beat, position)
         }
     }
 
     open fun controller_global_remove_standard(type: ControlEventType, beat: Int, position: List<Int>) {
-        this.catch_global_ctl_blocked_tree_exception(type) {
-            this.controllers.get_controller<OpusControlEvent>(type).remove_standard(beat, position)
+        this._catch_global_ctl_blocked_tree_exception(type) {
+            this.controllers.get_controller<OpusControlEvent>(type).remove_node(beat, position)
         }
     }
 
@@ -3798,18 +3797,18 @@ open class OpusLayerBase {
         // setup block/overlap caches ------------------
         for (channel in this.get_all_channels()) {
             for (line in channel.lines) {
-                line._init_blocked_tree_caches()
+                line.init_blocked_tree_caches()
                 for ((_, controller) in line.controllers.get_all()) {
-                    controller._init_blocked_tree_caches()
+                    controller.init_blocked_tree_caches()
                 }
             }
             for ((_, controller) in channel.controllers.get_all()) {
-                controller._init_blocked_tree_caches()
+                controller.init_blocked_tree_caches()
             }
         }
 
         for ((_, controller) in this.controllers.get_all()) {
-            controller._init_blocked_tree_caches()
+            controller.init_blocked_tree_caches()
         }
         // ----------------------------------------------
         // Unflag so blocking gets tracked
@@ -4145,13 +4144,13 @@ open class OpusLayerBase {
     fun blocked_check_remove_beat(index: Int, count: Int = 1) {
         val channels = this.get_all_channels()
         for (channel in channels.indices) {
-            this.catch_blocked_tree_exception(channel) {
+            this._catch_blocked_tree_exception(channel) {
                 channels[channel].blocked_check_remove_beat(index, count)
             }
         }
     }
 
-    fun <T> catch_blocked_tree_exception(channel: Int, callback: () -> T): T {
+    private fun <T> _catch_blocked_tree_exception(channel: Int, callback: () -> T): T {
         this._blocked_action_catcher += 1
         return try {
             val output = callback()
@@ -4197,7 +4196,7 @@ open class OpusLayerBase {
         // global is just a OpusTreeArray.BlockedTree at this layer and is caught with catch_global_ctl_blocked_tree_exception
     }
 
-    fun <T> catch_global_ctl_blocked_tree_exception(type: ControlEventType, callback: () -> T): T {
+    private fun <T> _catch_global_ctl_blocked_tree_exception(type: ControlEventType, callback: () -> T): T {
         return try {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {

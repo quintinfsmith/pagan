@@ -631,7 +631,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
             tree.parent = null
         }
 
-        if (position?.isEmpty() ?: true) {
+        if (position?.isEmpty() != false) {
             this.beats[beat] = tree
         }
         // -------------------------------

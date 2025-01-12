@@ -5,14 +5,13 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.pagan.opusmanager.ActiveControllerJSONInterface.UnknownControllerException
 
-class ActiveControlSetJSONInterface() {
-    class UnknownControllerException(): Exception()
+class ActiveControlSetJSONInterface {
+    class UnknownControllerException : Exception()
     companion object {
         fun from_json(json_obj: JSONHashMap, size: Int): ActiveControlSet {
             val control_set = ActiveControlSet(size)
             for (json_controller in json_obj.get_listn("controllers")?.list ?: listOf()) {
-                val label = (json_controller as JSONHashMap).get_string("type")
-                val controller = when (label) {
+                val controller = when (val label = (json_controller as JSONHashMap).get_string("type")) {
                     "tempo" -> {
                         ActiveControllerJSONInterface.from_json<OpusTempoEvent>(json_controller, size)
                     }

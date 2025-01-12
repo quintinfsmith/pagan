@@ -145,7 +145,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             parent = parent.parent
         }
 
-        val column_layout = parent as LineLabelColumnLayout
+        val column_layout = parent
 
         return if (touchEvent == null) {
             true
@@ -154,7 +154,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                 val d = sqrt((touchEvent.x - this.press_position!!.first).pow(2f) + (touchEvent.y - this.press_position!!.second).pow(2f))
                 if (d > this.click_threshold_pixels) {
                     column_layout.set_dragging_line(this.channel, this.line_offset)
-                    (view!!.parent as LineLabelView).startDragAndDrop(
+                    (view.parent as LineLabelView).startDragAndDrop(
                         null,
                         DragShadowBuilder(view),
                         null,

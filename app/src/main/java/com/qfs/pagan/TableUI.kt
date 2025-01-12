@@ -284,7 +284,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             if (line_info == null) {
                 opus_manager.cursor_select_column(beat)
             } else {
-                val (pointer, ctl_line_level, ctl_type) = line_info!!
+                val (pointer, ctl_line_level, ctl_type) = line_info
                 when (ctl_line_level) {
                     null -> {
                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
@@ -313,7 +313,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return if (line_info == null) {
                 false // No Action
             } else {
-                val (pointer, ctl_line_level, ctl_type) = line_info!!
+                val (pointer, ctl_line_level, ctl_type) = line_info
                 val cursor = opus_manager.cursor
                 when (ctl_line_level) {
                     null -> {
@@ -344,7 +344,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             if (pointer != cursor.range!!.first.channel) {
                                 return false
                             }
-                            opus_manager.cursor_select_channel_ctl_range(ctl_type!!, pointer, cursor.range!!.first.beat, beat)
+                            opus_manager.cursor_select_channel_ctl_range(ctl_type, pointer, cursor.range!!.first.beat, beat)
                         } else {
                             opus_manager.cursor_select_channel_ctl_range(ctl_type!!, pointer, beat, beat)
                         }
@@ -352,7 +352,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
                     CtlLineLevel.Global -> {
                         if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == ctl_type!!) {
-                            opus_manager.cursor_select_global_ctl_range(ctl_type!!, cursor.range!!.first.beat, beat)
+                            opus_manager.cursor_select_global_ctl_range(ctl_type, cursor.range!!.first.beat, beat)
                         } else {
                             opus_manager.cursor_select_global_ctl_range(ctl_type!!, beat, beat)
                         }
@@ -568,7 +568,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             leaf_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + line_height).toInt())
                             leaf_drawable.draw(canvas)
 
-                            val color_list = resources.getColorStateList(R.color.leaf_text_selector)!!
+                            val color_list = resources.getColorStateList(R.color.leaf_text_selector)
                             this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)
                             this.text_paint_offset.color = color_list.getColorForState(state, Color.MAGENTA)
 
@@ -708,7 +708,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 }
 
                 // ------------------- Draw Labels ----------------------------
-                val color_list = resources.getColorStateList(R.color.column_label_text)!!
+                val color_list = resources.getColorStateList(R.color.column_label_text)
                 val state = this.get_column_label_state(i)
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
 
@@ -763,7 +763,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             ctl_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + ctl_line_height).toInt())
             ctl_drawable.draw(canvas)
 
-            val color_list = resources.getColorStateList(R.color.ctl_leaf_text_selector)!!
+            val color_list = resources.getColorStateList(R.color.ctl_leaf_text_selector)
             this.text_paint_ctl.color = color_list.getColorForState(state, Color.MAGENTA)
 
             val text = when (event) {

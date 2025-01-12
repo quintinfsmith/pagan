@@ -20,7 +20,7 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
         this.label = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             this.secondary!!.findViewById(R.id.tvMoveModeLabelB)
         } else {
-            this.primary!!.findViewById(R.id.tvMoveModeLabel)
+            this.primary.findViewById(R.id.tvMoveModeLabel)
         }
 
         this.radio_mode = this.secondary!!.findViewById<RadioGroup?>(R.id.rgMoveMode)

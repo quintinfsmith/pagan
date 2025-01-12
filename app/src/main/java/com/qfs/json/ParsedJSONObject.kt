@@ -14,7 +14,7 @@ class InvalidJSON(msg: String): Exception(msg) {
         output
     }())
 }
-class NonNullableException(): Exception("Attempting to access non-nullable value which is null")
+class NonNullableException : Exception("Attempting to access non-nullable value which is null")
 
 interface JSONObject {
     fun to_string(): String

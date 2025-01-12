@@ -12,9 +12,7 @@ class ActiveControllerJSONInterface {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
     companion object {
         fun <T: OpusControlEvent> from_json(obj: JSONHashMap, size: Int): ActiveController<out OpusControlEvent> {
-            val label = obj.get_string("type")
-
-            val output = when (label) {
+            val output = when (val label = obj.get_string("type")) {
                 "tempo" -> {
                     val controller = TempoController(size)
                     controller.set_initial_event(OpusControlEventJSONInterface.tempo_event(obj.get_hashmap("initial")))

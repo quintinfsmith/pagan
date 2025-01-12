@@ -55,7 +55,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val cursor = opus_manager.cursor
 
         this.button_toggle_line_control = this.primary!!.findViewById(R.id.btnToggleCtl)
-        this.button_remove_line_control = this.primary!!.findViewById(R.id.btnRemoveCtl)
+        this.button_remove_line_control = this.primary.findViewById(R.id.btnRemoveCtl)
 
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
@@ -97,7 +97,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             }
         }
 
-        this.secondary!!.addView(this.widget as View)
+        this.secondary.addView(this.widget as View)
         (this.widget as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         (this.widget as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
     }

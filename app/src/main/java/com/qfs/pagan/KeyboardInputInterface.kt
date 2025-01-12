@@ -762,7 +762,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             CtlLineLevel.Global -> {
                 val beat = this.opus_manager.cursor.beat
                 val target_position = this.opus_manager.get_first_position_global_ctl(ctl_type!!, beat)
-                this.opus_manager.cursor_select_ctl_at_global(ctl_type!!, beat, target_position)
+                this.opus_manager.cursor_select_ctl_at_global(ctl_type, beat, target_position)
             }
             null -> {
                 val (channel, offset) = this.opus_manager.get_channel_and_line_offset(target)

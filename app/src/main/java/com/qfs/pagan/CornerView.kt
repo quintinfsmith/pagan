@@ -19,13 +19,4 @@ class CornerView(context: Context, attrs: AttributeSet? = null): LinearLayout(Co
 
     }
 
-    override fun drawableStateChanged() {
-        super.drawableStateChanged()
-        //val activity = (this.context as ContextThemeWrapper).baseContext as MainActivity
-        //val color_map = activity.view_model.color_map
-        //val background = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        //background.setTint(color_map[Palette.Background])
-        //val table_lines = (this.background as LayerDrawable).findDrawableByLayerId(R.id.tintable_lines)
-        //table_lines.setTint(color_map[Palette.Lines])
-    }
 }

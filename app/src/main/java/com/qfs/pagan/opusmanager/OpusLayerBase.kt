@@ -50,18 +50,28 @@ open class OpusLayerBase {
     class RemovingRootException : Exception()
     class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
     class NoteOutOfRange(var n: Int) : Exception("Attempting to use unsupported note $n")
-
     class InvalidPercussionLineException: Exception("Attemping to add a non-percussion line to the percussion channel")
     class InvalidLineException: Exception("Attemping to add a percussion line to the non-percussion channel")
-
     class EmptyPath : Exception("Path Required but not given")
     class EmptyJSONException: Exception("JSON object was NULL")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey) : Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
-    class BlockedActionException(msg: String? = null) :
-        Exception(msg) // Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
+
+    /**
+     * Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
+     */
+    class BlockedActionException(msg: String? = null) : Exception(msg)
 
     companion object {
         private var _channel_uuid_generator: Int = 0x00
+
+        inline fun <reified T> checked_cast(value: Any): T {
+            if (value is T) {
+                return value
+            }  else {
+                throw ClassCastException()
+            }
+        }
+
         fun gen_channel_uuid(): Int {
             return OpusLayerBase._channel_uuid_generator++
         }
@@ -96,7 +106,7 @@ open class OpusLayerBase {
             return Pair(from_key, to_key)
         }
 
-        private fun _tree_from_midi(midi: Midi): Triple<OpusTree<Set<Array<Int>>>, List<OpusTree<OpusTempoEvent>>, List<Triple<Int, Int?, Int?>>> {
+        fun tree_from_midi(midi: Midi): Triple<OpusTree<Set<Array<Int>>>, List<OpusTree<OpusTempoEvent>>, List<Triple<Int, Int?, Int?>>> {
             var beat_size = midi.get_ppqn()
             var total_beat_offset = 0
             var last_ts_change = 0
@@ -105,7 +115,6 @@ open class OpusLayerBase {
             var max_tick = 0
             var working_tempo: Float
             val instrument_map = mutableListOf<Triple<Int, Int?, Int?>>()
-
             val active_event_map = HashMap<Pair<Int, Int>, Array<Int>>()
 
             var denominator = 4F
@@ -292,7 +301,6 @@ open class OpusLayerBase {
             return new_manager
         }
 
-
         fun next_position(position: List<Int>, i: Int): List<Int> {
             return List(position.size + 1) { j: Int ->
                 if (j == position.size) {
@@ -302,18 +310,7 @@ open class OpusLayerBase {
                 }
             }
         }
-
-        inline fun <reified T> checked_cast(value: Any): T {
-            if (value is T) {
-                return value
-            }  else {
-                throw ClassCastException()
-            }
-        }
-
     }
-
-    private var _channel_uuid_map = HashMap<Int, OpusChannel>()
 
     var beat_count: Int = 1
     var controllers = ActiveControlSet(beat_count, setOf(ControlEventType.Tempo))
@@ -332,17 +329,15 @@ open class OpusLayerBase {
     private var _cached_abs_line_map_map = mutableListOf<Triple<Int, CtlLineLevel?, ControlEventType?>>()
     private var _cached_inv_abs_line_map_map = HashMap<Int, Int>()
 
-    internal var _blocked_action_catcher = 0
-
     private val _cached_row_map = HashMap<Int, Int>() // Key: visible line, Value: control_line
     private val _cached_inv_visible_line_map = HashMap<Int, Int>()
     private val _cached_ctl_map_line = HashMap<Triple<Int, Int, ControlEventType>, Int>()
     private val _cached_ctl_map_channel = HashMap<Pair<Int, ControlEventType>, Int>()
     private val _cached_ctl_map_global = HashMap<ControlEventType, Int>()
+    private var _channel_uuid_map = HashMap<Int, OpusChannel>()
 
+    internal var _blocked_action_catcher = 0
     internal var project_changing = false
-
-
 
     //// RO Functions ////
     /**
@@ -353,7 +348,7 @@ open class OpusLayerBase {
     }
 
     /**
-     * Calculates the position of the first leaf in a given tree
+     * Calculates the position of the first leaf in a given tree at [beat_key]/[start_position]
      */
     fun get_first_position(beat_key: BeatKey, start_position: List<Int>? = null): List<Int> {
         val output = start_position?.toMutableList() ?: mutableListOf()
@@ -365,6 +360,9 @@ open class OpusLayerBase {
         return output
     }
 
+    /**
+     * Calculates the position of the first leaf of the global [type] effect controller in a given tree at [beat]/[start_position]
+     */
     fun get_first_position_global_ctl(type: ControlEventType, beat: Int, start_position: List<Int>? = null): List<Int> {
         val output = start_position?.toMutableList() ?: mutableListOf()
         var tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, output)
@@ -375,6 +373,9 @@ open class OpusLayerBase {
         return output
     }
 
+    /**
+     * Calculates the position of the first leaf of the channel [type] effect controller in a given tree at [channel][beat]/[start_position]
+     */
     fun get_first_position_channel_ctl(type: ControlEventType, channel: Int, beat: Int, start_position: List<Int>? = null): List<Int> {
         val output = start_position?.toMutableList() ?: mutableListOf()
         var tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, output)
@@ -385,6 +386,9 @@ open class OpusLayerBase {
         return output
     }
 
+    /**
+     * Calculates the position of the first leaf of the line [type] effect controller in a given tree at [beat_key]/[start_position]
+     */
     fun get_first_position_line_ctl(type: ControlEventType, beat_key: BeatKey, start_position: List<Int>? = null): List<Int> {
         val output = start_position?.toMutableList() ?: mutableListOf()
         var tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, output)
@@ -395,6 +399,9 @@ open class OpusLayerBase {
         return output
     }
 
+    /**
+     * Does a tree exist at [beat_key][position]?
+     */
     fun is_valid(beat_key: BeatKey, position: List<Int>): Boolean {
         return try {
             this.get_tree(beat_key, position)
@@ -404,6 +411,9 @@ open class OpusLayerBase {
         }
     }
 
+    /**
+     * Does a tree exist in the global [ctl_type] controller at [beat][position]?
+     */
     fun is_valid_global_ctl(ctl_type: ControlEventType, beat: Int, position: List<Int>): Boolean {
         return try {
             this.get_global_ctl_tree<OpusControlEvent>(ctl_type, beat, position)
@@ -413,6 +423,9 @@ open class OpusLayerBase {
         }
     }
 
+    /**
+     * Does a tree exist in the channel [ctl_type] controller at [channel]/[beat]/[position]?
+     */
     fun is_valid_channel_ctl(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Boolean {
         return try {
             this.get_channel_ctl_tree<OpusControlEvent>(ctl_type, channel, beat, position)
@@ -422,6 +435,9 @@ open class OpusLayerBase {
         }
     }
 
+    /**
+     * Does a tree exist in the line [ctl_type] controller at [beat_key][position]?
+     */
     fun is_valid_line_ctl(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Boolean {
         return try {
             this.get_line_ctl_tree<OpusControlEvent>(ctl_type, beat_key, position)
@@ -431,7 +447,9 @@ open class OpusLayerBase {
         }
     }
 
-    /* Insert extra lines to fit overlapping events (happens on import midi or old savve file versions) */
+    /**
+     *  Insert extra lines to fit overlapping events (happens on import midi or old savve file versions)
+     */
     private fun _reshape_lines_from_blocked_trees() {
         val channels = this.get_all_channels()
         for (i in channels.indices) {
@@ -655,6 +673,10 @@ open class OpusLayerBase {
         )
     }
 
+    /**
+     * Get a copy of the tree structure found within the BeatKey [beat_key] at [position]
+     * [position] defaults to null, indicating the root tree of the beat
+    */
     fun get_tree_copy(beat_key: BeatKey, position: List<Int>? = null): OpusTree<out InstrumentEvent> {
         // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
         // Instead just copy the events here
@@ -667,6 +689,10 @@ open class OpusLayerBase {
         return working_tree
     }
 
+    /**
+     * Get a copy of the tree structure found in the line controller of type [type] at [beat_key]/[position]
+     * [position] defaults to null, indicating the root tree of the beat
+     */
     fun <T : OpusControlEvent> get_line_ctl_tree_copy(type: ControlEventType, beat_key: BeatKey, position: List<Int>? = null): OpusTree<T> {
         // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
         // Instead just copy the events here
@@ -680,6 +706,10 @@ open class OpusLayerBase {
         return working_tree
     }
 
+    /**
+     * Get a copy of the tree structure found in the channel controller of channel [channel] of type [type] at [beat]/[position]
+     * [position] defaults to null, indicating the root tree of the beat
+     */
     fun <T : OpusControlEvent> get_channel_ctl_tree_copy(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<T> {
         // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
         // Instead just copy the events here
@@ -693,6 +723,10 @@ open class OpusLayerBase {
         return working_tree
     }
 
+    /**
+     * Get a copy of the tree structure found in the global controller of type [type] at [beat]/[position]
+     * [position] defaults to null, indicating the root tree of the beat
+     */
     fun <T : OpusControlEvent> get_global_ctl_tree_copy(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<T> {
         // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
         // Instead just copy the events here
@@ -706,6 +740,10 @@ open class OpusLayerBase {
         return working_tree
     }
 
+    /**
+     * Get the tree structure found in the channel controller of channel [channel] of type [type] at [beat]/[position]
+     * [position] defaults to null, indicating the root tree of the beat
+     */
     fun <T : OpusControlEvent> get_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<T> {
         if (channel > this.channels.size) {
             throw InvalidChannel(channel)
@@ -717,6 +755,10 @@ open class OpusLayerBase {
         )
     }
 
+    /**
+     * Get a copy of the tree structure found in the line controller of type [type] at [beat_key]/[position]
+     * [position] defaults to null, indicating the root tree of the beat
+     */
     fun <T : OpusControlEvent> get_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>? = null): OpusTree<T> {
         if (beat_key.channel > this.channels.size) {
             throw BadBeatKey(beat_key)
@@ -735,6 +777,10 @@ open class OpusLayerBase {
         )
     }
 
+    /**
+     * Get the tree structure found in the global controller of type [type] at [beat]/[position]
+     * [position] defaults to null, indicating the root tree of the beat
+     */
     fun <T : OpusControlEvent> get_global_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): OpusTree<T> {
         return this.controllers.get_controller<T>(type).get_tree(beat, position)
     }
@@ -764,6 +810,9 @@ open class OpusLayerBase {
         return this.get_tree(working_beat_key, working_position).get_event()
     }
 
+    /**
+     * Get the location of the next event after the node @ [beat_key]/[position], if one exists.
+     */
     fun get_proceding_event_position(beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
         return this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_proceding_event_position(beat_key.beat, position)
     }
@@ -851,14 +900,23 @@ open class OpusLayerBase {
         return Pair(working_beat_key, working_position)
     }
 
+    /**
+     * Get the leaf immediately after (in a depth-first-search) the node @ [beat]/[position] in the global controller of type [ctl_type]
+     */
     fun get_global_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         return this.controllers.get_controller<OpusControlEvent>(ctl_type).get_proceding_leaf_position(beat, position)
     }
 
+    /**
+     * Get the leaf immediately after (in a depth-first-search) the node @ [beat]/[position] in the [channel] controller of type [ctl_type]
+     */
     fun get_channel_ctl_proceding_leaf_position(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         return this.get_channel(channel).controllers.get_controller<OpusControlEvent>(ctl_type).get_proceding_leaf_position(beat, position)
     }
 
+    /**
+     * Get the leaf immediately after (in a depth-first-search) the line controller's node @ [beat_key]/[position] of the controller of type [ctl_type]
+     */
     fun get_line_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
         return this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(ctl_type).get_proceding_leaf_position(beat_key.beat, position)
     }
@@ -955,22 +1013,41 @@ open class OpusLayerBase {
         return channel == this.channels.size
     }
 
+    /**
+     * Given the instrument line index [y], get the CtlLevel if the line is a controller.
+     */
     fun ctl_line_level(y: Int): CtlLineLevel? {
         return this._cached_abs_line_map_map[y].second
     }
 
+    /**
+     * Given the instrument line index [y], get the ControlEventType if the line is a controller.
+     */
     fun get_ctl_line_type(y: Int): ControlEventType? {
         return this._cached_abs_line_map_map[y].third
     }
 
+    /**
+     * Given the instrument line index [y], get a pointer Int, the CtlLineLeve and the ControlEventType.
+     * The pointer value will be different depending on the CtlLineLevel.
+     * if it's not a Controller or its a Line level controller, the pointer will be the instrument line index.
+     * if it's a Channel Controller, the pointer will be the channel.
+     * if it's a Global Controller, the pointer is 0 and isn't needed.
+     */
     fun get_ctl_line_info(y: Int): Triple<Int, CtlLineLevel?, ControlEventType?> {
         return this._cached_abs_line_map_map[y]
     }
 
-    fun get_actual_line_index(abs: Int): Int {
-        return this._cached_inv_abs_line_map_map[abs]!!
+    /**
+     * Given the instrument line index [y] (doesn't consider controllers) get the actual line index (DOES consider controllers)
+     */
+    fun get_actual_line_index(y: Int): Int {
+        return this._cached_inv_abs_line_map_map[y]!!
     }
 
+    /**
+     * Get the Channel Object @ [channel]
+     */
     fun get_channel(channel: Int): OpusChannelAbstract<*, *> {
         return if (this.is_percussion(channel)) {
             this.percussion_channel
@@ -979,46 +1056,76 @@ open class OpusLayerBase {
         }
     }
 
+    /**
+     * Get the [type] Controller of the line at [channel], [line_offset]
+     */
     fun <T: OpusControlEvent> get_line_controller(type: ControlEventType, channel: Int, line_offset: Int): ActiveController<T> {
         return this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type)
     }
 
-    fun <T: OpusControlEvent> get_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T? {
-        val controller = this.get_line_controller<T>(type, beat_key.channel, beat_key.line_offset)
-        return controller.get_tree(beat_key.beat, position).get_event()
-    }
-
-    fun <T : OpusControlEvent> get_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int): T {
-        return this.get_line_controller<T>(type, channel, line_offset).initial_event
-    }
-
+    /**
+     * Get the [type] controller of the channel at [channel]
+     */
     fun <T : OpusControlEvent> get_channel_controller(type: ControlEventType, channel: Int): ActiveController<T> {
         val controller = this.get_channel(channel).controllers.get_controller<T>(type)
         return controller
     }
 
-    fun <T : OpusControlEvent> get_channel_controller_initial_event(type: ControlEventType, channel: Int): T {
-        return this.get_channel_controller<T>(type, channel).initial_event
+    /**
+     * Get the [type] controller of the project.
+     */
+    fun <T : OpusControlEvent> get_global_controller(type: ControlEventType): ActiveController<T> {
+        return this.controllers.get_controller<T>(type)
     }
 
+    /**
+     * Get the [type] controller event for the line at [beat_key].channel, [beat_key].line_offset found at [beat_key].beat / [position]
+     */
+    fun <T: OpusControlEvent> get_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T? {
+        val controller = this.get_line_controller<T>(type, beat_key.channel, beat_key.line_offset)
+        return controller.get_tree(beat_key.beat, position).get_event()
+    }
+
+    /**
+     * Get the [type] Controller event for the [channel] at [beat]/[position]
+     */
     fun <T: OpusControlEvent> get_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): T? {
         val controller = this.get_channel_controller<T>(type, channel)
         return controller.get_tree(beat, position).get_event()
     }
 
-    fun <T : OpusControlEvent> get_global_controller(type: ControlEventType): ActiveController<T> {
-        return this.controllers.get_controller<T>(type)
-    }
-
-    fun <T : OpusControlEvent> get_global_controller_initial_event(type: ControlEventType): T {
-        return this.get_global_controller<T>(type).initial_event
-    }
-
+    /**
+     * Get the [type] controller for the project at [beat]/[position]
+     */
     fun <T: OpusControlEvent> get_global_controller_event(type: ControlEventType, beat: Int, position: List<Int>): T? {
         val controller = this.get_global_controller<T>(type)
         return controller.get_tree(beat, position).get_event()
     }
 
+    /**
+     * Get the initial [type] controller event of the line at [channel], [line_offset]
+     */
+    fun <T : OpusControlEvent> get_line_controller_initial_event(type: ControlEventType, channel: Int, line_offset: Int): T {
+        return this.get_line_controller<T>(type, channel, line_offset).initial_event
+    }
+
+    /**
+     * Get the initial [type] controller event of the channel at [channel]
+     */
+    fun <T : OpusControlEvent> get_channel_controller_initial_event(type: ControlEventType, channel: Int): T {
+        return this.get_channel_controller<T>(type, channel).initial_event
+    }
+
+    /**
+     * Get the initial [type] controller event of the project
+     */
+    fun <T : OpusControlEvent> get_global_controller_initial_event(type: ControlEventType): T {
+        return this.get_global_controller<T>(type).initial_event
+    }
+
+    /**
+     * Get the [type] controller event of the line at [channel], [line_offset] or the first preceding if it's null.
+     */
     fun <T : OpusControlEvent> get_current_line_controller_event(type: ControlEventType, beat_key: BeatKey, position: List<Int>): T {
         val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<T>(type)
         var output = controller.get_latest_event(beat_key.beat, position)
@@ -1037,6 +1144,9 @@ open class OpusLayerBase {
         return output
     }
 
+    /**
+     * Get the [type] Controller event for the [channel] at [beat]/[position] or the first preceding if it's null.
+     */
     fun <T : OpusControlEvent> get_current_channel_controller_event(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): T {
         val controller = this.get_channel(channel).controllers.get_controller<T>(type)
         var output = controller.get_latest_event(beat, position)
@@ -1056,6 +1166,9 @@ open class OpusLayerBase {
         return output
     }
 
+    /**
+     * Get the [type] controller for the project at [beat]/[position] or the first preceding if it's null
+     */
     fun <T : OpusControlEvent> get_current_global_controller_event(type: ControlEventType, beat: Int, position: List<Int>): T {
         val controller = this.controllers.get_controller<T>(type)
         var output = controller.get_latest_event(beat, position)
@@ -1076,11 +1189,16 @@ open class OpusLayerBase {
         return output
     }
 
+    /**
+     * Check if the percusssion channel has any events
+     */
     fun has_percussion(): Boolean {
         return !this.percussion_channel.is_empty()
     }
-    //// END RO Functions ////
 
+    /**
+     * Get the value of the actual (or potential) event relative to the preceding event found at [beat_key]/[position]
+     */
     fun get_relative_value(beat_key: BeatKey, position: List<Int>): Int {
         val tree = this.get_tree(beat_key, position)
         if (!tree.is_event()) {
@@ -1103,6 +1221,8 @@ open class OpusLayerBase {
         }
         return (event as AbsoluteNoteEvent).note - (preceding_value ?: 0)
     }
+    //// END RO Functions ////
+
     /*
      * ---------------------------- 1st Order Functions ---------------------------
      * These are the base write functions. All of them need to be implimented at higher Layers for the Opus Editor to work correctly
@@ -3490,7 +3610,7 @@ open class OpusLayerBase {
     }
 
     open fun _project_change_midi(midi: Midi) {
-        val (settree, tempo_line, instrument_map) = OpusLayerBase._tree_from_midi(midi)
+        val (settree, tempo_line, instrument_map) = OpusLayerBase.tree_from_midi(midi)
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
         val channel_sizes = mutableListOf<Int>()

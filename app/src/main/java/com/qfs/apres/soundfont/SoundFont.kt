@@ -12,6 +12,9 @@ class SoundFont(file_path: String) {
     class InvalidSoundFont(file_path: String): Exception("Not a soundfont $file_path")
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
+    class InvalidSampleType(i: Int): Exception("Unknown Sample Type $i")
+    class NoIROMDeclared: Exception("Need irom declared to read from ROM")
+
     data class CachedSampleData(var data: ShortArray, var count: Int = 1)
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
@@ -32,6 +35,22 @@ class SoundFont(file_path: String) {
 
     private var pdta_chunks = HashMap<String, ByteArray>()
     private var sample_data_cache =  HashMap<Pair<Int, Int>, CachedSampleData>()
+
+    companion object {
+        fun sample_type_from_int(i: Int): SampleType {
+            return when (i) {
+                0x0001 -> SampleType.Mono
+                0x0002 -> SampleType.Right
+                0x0004 -> SampleType.Left
+                0x0008 -> SampleType.Linked
+                0x8001 -> SampleType.RomMono
+                0x8002 -> SampleType.RomRight
+                0x8004 -> SampleType.RomLeft
+                0x8008 -> SampleType.RomLinked
+                else -> throw InvalidSampleType(i)
+            }
+        }
+    }
 
     init {
         this.riff = Riff(file_path) { riff: Riff ->
@@ -137,6 +156,7 @@ class SoundFont(file_path: String) {
         }
     }
 
+
     fun get_sample(sample_index: Int): Sample {
         val shdr_bytes = this.pdta_chunks["shdr"]!!
 
@@ -174,7 +194,9 @@ class SoundFont(file_path: String) {
             toUInt(shdr_bytes[offset + 40]),
             toUInt(shdr_bytes[offset + 41]),
             toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256),
-            toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256),
+            SoundFont.sample_type_from_int(
+                toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256)
+            ),
             data_placeholder = Pair(start, end)
         )
     }
@@ -291,15 +313,35 @@ class SoundFont(file_path: String) {
 
             this.riff.with {
                 for (sample in ordered_samples) {
-                    sample.data = this.get_sample_data(
-                        sample.data_placeholder.first,
-                        sample.data_placeholder.second
-                    )
+                    sample.data = when (sample.sampleType) {
+                        SampleType.RomMono,
+                        SampleType.RomRight,
+                        SampleType.RomLeft,
+                        SampleType.RomLinked -> {
+                            if (this.irom == null) {
+                                throw NoIROMDeclared()
+                            }
+                            this.read_rom_hook(
+                                sample.data_placeholder.first,
+                                sample.data_placeholder.second
+                            )
+                        }
+                        else -> {
+                            this.get_sample_data(
+                                sample.data_placeholder.first,
+                                sample.data_placeholder.second
+                            )
+                        }
+                    }
                 }
             }
         }
 
         return output ?: throw InvalidPresetIndex(preset_index,preset_bank)
+    }
+
+    open fun read_rom_hook(start: Int, end: Int): ShortArray {
+        return ShortArray(0)
     }
 
     fun get_instrument(instrument_index: Int): Instrument {

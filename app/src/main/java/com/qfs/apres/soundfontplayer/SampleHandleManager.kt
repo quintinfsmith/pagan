@@ -7,6 +7,7 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentDirective
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
+import com.qfs.apres.soundfont.SampleType
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.max
 
@@ -104,20 +105,25 @@ class SampleHandleManager(
 
             for (sample in samples) {
                 sample_pairs.add(Pair(sample, p_instrument))
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> {
+                when (sample.sample!!.sampleType) {
+                    SampleType.Mono,
+                    SampleType.RomMono -> {
                         sample_counts[1] += 1
                         sample_counts[0] += 1
                         sample_counts[2] += 1
                     }
-                    2 -> {
+                    SampleType.Right,
+                    SampleType.RomRight -> {
                         sample_counts[2] += 1
                         sample_counts[1] += 1
                     }
-                    4 -> {
+                    SampleType.Left,
+                    SampleType.RomLeft -> {
                         sample_counts[0] += 1
                         sample_counts[1] += 1
                     }
+                    SampleType.Linked -> TODO()
+                    SampleType.RomLinked -> TODO()
                 }
                 sample_count += 1
             }
@@ -158,22 +164,25 @@ class SampleHandleManager(
 
             for (sample in samples) {
                 sample_pairs.add(Pair(sample, p_instrument))
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> {
+                when (sample.sample!!.sampleType) {
+                    SampleType.Mono,
+                    SampleType.RomMono -> {
                         sample_counts[1] += 1
                         sample_counts[0] += 1
                         sample_counts[2] += 1
                     }
-
-                    2 -> {
+                    SampleType.Right,
+                    SampleType.RomRight -> {
                         sample_counts[2] += 1
                         sample_counts[1] += 1
                     }
-
-                    4 -> {
+                    SampleType.Left,
+                    SampleType.RomLeft -> {
                         sample_counts[0] += 1
                         sample_counts[1] += 1
                     }
+                    SampleType.Linked -> TODO()
+                    SampleType.RomLinked -> TODO()
                 }
                 sample_count += 1
             }

@@ -1,6 +1,6 @@
 package com.qfs.apres.soundfont
 
-enum class sfSampleType {
+enum class SampleType {
     Mono,
     Right,
     Left,

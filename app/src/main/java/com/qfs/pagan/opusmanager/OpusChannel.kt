@@ -14,7 +14,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     }
 }
 
-abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>() {
+abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
     class BlockedTreeException(var line_offset: Int, var e: OpusTreeArray.BlockedTreeException): Exception()
@@ -269,7 +269,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
 
     fun remove(line_offset: Int, beat: Int, position: List<Int>) {
         this.catch_blocked_tree_exception(line_offset) {
-            this.lines[line_offset].remove_standard(beat, position)
+            this.lines[line_offset].remove_node(beat, position)
         }
     }
     fun controller_line_remove_leaf(type: ControlEventType, line_offset: Int, beat: Int, position: List<Int>) {
@@ -279,7 +279,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>()
     }
     fun controller_channel_remove_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.controllers.get_controller<OpusControlEvent>(type).remove_standard(beat, position)
+            this.controllers.get_controller<OpusControlEvent>(type).remove_node(beat, position)
         }
     }
 
@@ -356,7 +356,7 @@ class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, Opus
 
 }
 
-class OpusPercussionChannel(): OpusChannelAbstract<PercussionEvent, OpusLinePercussion>() {
+class OpusPercussionChannel : OpusChannelAbstract<PercussionEvent, OpusLinePercussion>() {
 
     companion object {
         const val DEFAULT_INSTRUMENT = 0

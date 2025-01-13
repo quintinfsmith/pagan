@@ -65,7 +65,7 @@ class ColumnLabelContainer(val editor_table: EditorTable): HorizontalScrollView(
             val initial_offset = offset
 
 
-            val color_list = resources.getColorStateList(R.color.column_label_text)!!
+            val color_list = resources.getColorStateList(R.color.column_label_text)
             for (i in first_x .. last_x) {
                 val state = this.get_column_label_state(i)
                 this.text_paint.color = color_list.getColorForState(state, Color.MAGENTA)

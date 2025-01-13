@@ -6,7 +6,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, range: IntRange? = null, var is_loop: Boolean = false) {
-    class PitchedBufferOverflow(): Exception()
+    class PitchedBufferOverflow : Exception()
     val max: Int
     var _range = range ?: 0 until data.size
     var size: Int = ((this._range.last + 1 - this._range.first).toFloat() / this.pitch).roundToInt()

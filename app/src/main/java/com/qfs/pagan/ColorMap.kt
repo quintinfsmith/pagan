@@ -3,7 +3,7 @@ package com.qfs.pagan
 import android.graphics.Color
 
 class ColorMap(initial_palette: HashMap<Palette, Int>? = null) {
-    class InvalidColorException(msg: String): Exception(msg) {}
+    class InvalidColorException(msg: String): Exception(msg)
     enum class Palette {
         Background,
         Foreground,

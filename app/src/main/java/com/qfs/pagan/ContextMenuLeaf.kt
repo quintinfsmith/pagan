@@ -131,8 +131,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
-        val event = current_event_tree.get_event()
-        when (event) {
+        when (val event = current_event_tree.get_event()) {
             is TunedInstrumentEvent -> {
                 val value = if (event is RelativeNoteEvent) {
                     if (main.configuration.relative_mode) {

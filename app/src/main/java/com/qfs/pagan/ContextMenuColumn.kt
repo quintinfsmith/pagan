@@ -14,7 +14,7 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
 
     override fun init_properties() {
         this.button_insert = this.primary!!.findViewById(R.id.btnInsertBeat)
-        this.button_remove = this.primary!!.findViewById(R.id.btnRemoveBeat)
+        this.button_remove = this.primary.findViewById(R.id.btnRemoveBeat)
     }
 
     override fun refresh() {

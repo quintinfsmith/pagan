@@ -301,7 +301,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val (working_tree, working_ratio, working_offset) = stack.removeFirst()
 
                 if (working_tree.is_event()) {
-                    working_tempo = (working_tree.get_event()!! as OpusTempoEvent).value
+                    working_tempo = working_tree.get_event()!!.value
                     this._tempo_ratio_map.add(
                         Pair(
                             (i.toFloat() + working_offset) / this.opus_manager.beat_count.toFloat(),

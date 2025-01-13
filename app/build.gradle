@@ -3,7 +3,6 @@ plugins {
     id "org.jetbrains.kotlin.android" version "1.8.0"
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'
     id "org.jetbrains.kotlinx.kover" version "0.8.0"
-    id "org.jetbrains.dokka" version "1.6.0"
 }
 
 android {
@@ -53,5 +52,4 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation "org.jetbrains.kotlinx:kover-gradle-plugin:0.8.0"
-    implementation "org.jetbrains.dokka:dokka-gradle-plugin:1.6.0"
 }

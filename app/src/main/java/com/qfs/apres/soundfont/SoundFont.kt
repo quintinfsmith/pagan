@@ -72,24 +72,15 @@ class SoundFont(file_path: String) {
                     }
 
                     "isng" -> {
-                        this.isng =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.isng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "INAM" -> {
-                        this.inam =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.inam = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "irom" -> {
-                        this.irom =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.irom = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "iver" -> {
@@ -100,45 +91,27 @@ class SoundFont(file_path: String) {
                     }
 
                     "ICRD" -> {
-                        this.icrd =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.icrd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "IENG" -> {
-                        this.ieng =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.ieng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "IPRD" -> {
-                        this.iprd =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.iprd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "ICOP" -> {
-                        this.icop =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.icop = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "ICMT" -> {
-                        this.icmt =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.icmt = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     "ISFT" -> {
-                        this.isft =
-                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
-                                Charsets.UTF_8
-                            )
+                        this.isft = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
                     }
 
                     else -> {}
@@ -494,9 +467,6 @@ class SoundFont(file_path: String) {
         return output
     }
 
-    // TODO
-    //private fun modulate(modulatable: ModulatedGenerated, modulator: Modulator) { }
-
     private fun generate(working_generated: Generated, generator: Generator) {
         when (generator.get_operation()) {
             Operation.ModLFOPitch -> {
@@ -734,7 +704,7 @@ class SoundFont(file_path: String) {
         }
     }
 
-    fun get_sample_data(start_index: Int, end_index: Int): ShortArray {
+    private fun get_sample_data(start_index: Int, end_index: Int): ShortArray {
         val cache_key = Pair(start_index, end_index)
 
         if (this.sample_data_cache.containsKey(cache_key)) {

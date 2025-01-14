@@ -2,6 +2,7 @@ package com.qfs.apres.soundfontplayer
 
 import com.qfs.apres.soundfont.Generator.Operation
 import com.qfs.apres.soundfont.Modulator
+import com.qfs.apres.soundfont.SampleType
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.max
@@ -13,7 +14,7 @@ class SampleHandle(
     var sample_rate: Int,
     var initial_attenuation: Float = 0F,
     val loop_points: Pair<Int, Int>?,
-    var stereo_mode: Int,
+    var stereo_mode: SampleType,
 
     var volume_envelope: VolumeEnvelope,
     var modulation_envelope: ModulationEnvelope,
@@ -385,9 +386,24 @@ class SampleHandle(
     fun get_next_balance(): Pair<Float, Float> {
         val profile_pan = this.pan_profile?.get_next() ?: 0F
         // TODO: Implement ROM stereo modes
-        var (left_value, right_value) = when (this.stereo_mode and 7) {
-            // right
-            2 -> {
+        var (left_value, right_value) = when (this.stereo_mode) {
+            SampleType.RomMono,
+            SampleType.Mono -> {
+                Pair(
+                    if (this.pan < 0F) {
+                        1f + this.pan
+                    } else {
+                        1F // Mutes this this in the left side completely
+                    },
+                    if (this.pan > 0F) {
+                        1f - this.pan
+                    } else {
+                        1F
+                    }
+                )
+            }
+            SampleType.RomRight,
+            SampleType.Right -> { // 2
                 Pair(
                     0F,
                     if (this.pan > 0F) {
@@ -397,8 +413,9 @@ class SampleHandle(
                     }
                 )
             }
-            // left
-            4 -> {
+
+            SampleType.RomLeft,
+            SampleType.Left -> { // 4
                 Pair(
                     if (this.pan < 0F) {
                         1f + this.pan
@@ -408,19 +425,10 @@ class SampleHandle(
                     0F
                 )
             }
-            else -> Pair(
-                if (this.pan < 0F) {
-                    1f + this.pan
-                } else {
-                    1F // Mutes this this in the left side completely
-                },
-                if (this.pan > 0F) {
-                    1f - this.pan
-                } else {
-                    1F
-                }
-            )
+            SampleType.Linked -> TODO()
+            SampleType.RomLinked -> TODO()
         }
+
         left_value = if (profile_pan < 0F) {
             (1F + profile_pan) * left_value
         } else {

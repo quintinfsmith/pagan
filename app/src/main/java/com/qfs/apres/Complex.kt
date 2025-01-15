@@ -58,8 +58,10 @@ fun FFT(sample: Array<Complex>, inverse: Boolean = false): Array<Complex> {
         return sample
     }
 
+    val invmod = if (inverse) 1 else -1
     val twiddle_factors = Array(sample.size) { i: Int ->
-        val v = (-2F * PI.toFloat() * i.toFloat()) / sample.size.toFloat()
+
+        val v = (invmod * 2F * PI.toFloat() * i.toFloat()) / sample.size.toFloat()
         Complex(cos(v), sin(v))
     }
 

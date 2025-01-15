@@ -1,5 +1,6 @@
 package com.qfs.apres
 
+import junit.framework.TestCase.assertEquals
 import org.junit.Test
 import kotlin.math.PI
 import kotlin.math.pow
@@ -19,6 +20,15 @@ class ComplexTest {
         val transform = FFT(sample)
         println("${transform[frequency.toInt()]} ....")
         assert(1F < transform[frequency.toInt()].real)
+
+        val untransform = IFFT(transform)
+        for (i in untransform.indices) {
+            assertEquals(
+                "$i fail",
+                sample[i],
+                untransform[i]
+            )
+        }
 
     }
 }

@@ -38,6 +38,10 @@ data class Complex(var real: Float, var imaginary: Float = 0F) {
     operator fun div(other: Float): Complex {
         return this / Complex(other, 0F)
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Complex && this.real == other.real && this.imaginary == other.imaginary
+    }
 }
 
 fun IFFT(sample: Array<Complex>): Array<Complex> {
@@ -58,10 +62,8 @@ fun FFT(sample: Array<Complex>, inverse: Boolean = false): Array<Complex> {
         return sample
     }
 
-    val invmod = if (inverse) 1 else -1
     val twiddle_factors = Array(sample.size) { i: Int ->
-
-        val v = (invmod * 2F * PI.toFloat() * i.toFloat()) / sample.size.toFloat()
+        val v = (-2F * PI.toFloat() * i.toFloat()) / sample.size.toFloat()
         Complex(cos(v), sin(v))
     }
 
@@ -71,6 +73,11 @@ fun FFT(sample: Array<Complex>, inverse: Boolean = false): Array<Complex> {
 
     return Array(sample.size) { i: Int ->
         val x = i % (sample.size / 2)
-        result_evens[x] + (twiddle_factors[i] * result_odds[x])
+        val v = result_evens[x] + (twiddle_factors[i] * result_odds[x])
+        if (inverse) {
+            v / 2F
+        } else {
+            v
+        }
     }
 }

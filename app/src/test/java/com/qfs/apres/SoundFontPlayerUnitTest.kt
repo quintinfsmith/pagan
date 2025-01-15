@@ -15,9 +15,10 @@ import java.io.File
 class SoundFontPlayerUnitTest {
     fun get_soundfont(): SoundFont {
         val sffont = "FluidR3_GM_GS.sf2"
-        println( File(sffont).absolutePath)
+        println(File(sffont).absolutePath)
         return SoundFont(sffont)
     }
+
     @Test
     fun test_generator() {
         mockkStatic(AudioTrack::class) {

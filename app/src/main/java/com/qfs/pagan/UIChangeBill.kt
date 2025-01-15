@@ -1,7 +1,9 @@
 package com.qfs.pagan
 
 import kotlin.math.max
-
+/**
+* A queue of UI update commands to be executed once it is safe to do so.
+*/
 class UIChangeBill {
     class UILock {
         companion object {

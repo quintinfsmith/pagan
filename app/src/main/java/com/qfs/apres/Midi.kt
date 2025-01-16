@@ -55,7 +55,7 @@ class Midi {
             while (working_bytes.isNotEmpty()) {
                 chunk_type = ""
                 for (i in 0 until 4) {
-                    chunk_type = "${chunk_type}${working_bytes.removeFirst().toInt().toChar()}"
+                    chunk_type = "${chunk_type}${working_bytes.removeAt(0).toInt().toChar()}"
                 }
 
                 if (chunkcount.containsKey(chunk_type)) {
@@ -91,7 +91,7 @@ class Midi {
                         sub_bytes = mutableListOf()
 
                         for (i in 0 until track_length) {
-                            sub_bytes.add(working_bytes.removeFirst())
+                            sub_bytes.add(working_bytes.removeAt(0))
                         }
 
                         while (sub_bytes.isNotEmpty()) {

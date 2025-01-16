@@ -3,6 +3,7 @@ package com.qfs.apres
 import com.qfs.apres.soundfont.Instrument
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
+import com.qfs.apres.soundfont.SampleType
 import com.qfs.apres.soundfont.SoundFont
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -248,7 +249,7 @@ class SoundFontUnitTest {
         val sample = this.get_instrument_sample().sample!!
         assertEquals(
             "sample type is wrong",
-            4,
+            SampleType.Left,
             sample.sampleType
         )
     }

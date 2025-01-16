@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
-import com.qfs.pagan.ColorMap.Palette
 
 abstract class FragmentPagan<T: ViewBinding>: Fragment() {
     // Boiler Plate //
@@ -31,15 +30,10 @@ abstract class FragmentPagan<T: ViewBinding>: Fragment() {
 
     override fun onResume() {
         super.onResume()
-        this._refresh_background()
         this.get_main().update_menu_options()
         this.get_main().update_title_text()
     }
 
-    private fun _refresh_background() {
-        val color_map = this.get_main().view_model.color_map
-        this.view?.setBackgroundColor(color_map[Palette.Background])
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -13,7 +13,6 @@ import com.qfs.apres.event.CelesteLevel
 import com.qfs.apres.event.ChannelPrefix
 import com.qfs.apres.event.ChannelPressure
 import com.qfs.apres.event.ChorusLevel
-import com.qfs.apres.event.ControlChange
 import com.qfs.apres.event.CopyRightNotice
 import com.qfs.apres.event.CuePoint
 import com.qfs.apres.event.DataDecrement
@@ -104,7 +103,7 @@ class InvalidMIDIFile(var path: String): Exception("$path is not a valid midi fi
 
 fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
     var output: MIDIEvent? = null
-    val leadbyte = toUInt(bytes.removeFirst())
+    val leadbyte = toUInt(bytes.removeAt(0))
     val realtimes = listOf(0xF1, 0xF, 0xF8, 0xFC, 0xFE, 0xF7)
     val undefineds = listOf(0xF4, 0xF5, 0xF9, 0xFD)
 
@@ -117,14 +116,14 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
         when (leadnibble) {
             0x8 -> {
                 val channel = (leadbyte and 0x0F)
-                val note = bytes.removeFirst().toInt()
-                val velocity = bytes.removeFirst().toInt()
+                val note = bytes.removeAt(0).toInt()
+                val velocity = bytes.removeAt(0).toInt()
                 output = NoteOff(channel, note, velocity)
             }
             0x9 -> {
                 val channel = (leadbyte and 0x0F)
-                val note = bytes.removeFirst().toInt()
-                val velocity = bytes.removeFirst().toInt()
+                val note = bytes.removeAt(0).toInt()
+                val velocity = bytes.removeAt(0).toInt()
                 output = if (velocity == 0) {
                     NoteOff(channel, note, velocity)
                 } else {
@@ -133,14 +132,14 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
             }
             0xA -> {
                 val channel = (leadbyte and 0x0F)
-                val note = bytes.removeFirst().toInt()
-                val velocity = bytes.removeFirst().toInt()
+                val note = bytes.removeAt(0).toInt()
+                val velocity = bytes.removeAt(0).toInt()
                 output = PolyphonicKeyPressure(channel, note, velocity)
             }
             0xB -> {
                 val channel = (leadbyte and 0x0F)
-                val controller = bytes.removeFirst().toInt()
-                val value = bytes.removeFirst().toInt()
+                val controller = bytes.removeAt(0).toInt()
+                val value = bytes.removeAt(0).toInt()
                 output = when (controller) {
                     0x00 -> {
                         BankSelectMSB(channel, value)
@@ -364,20 +363,20 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
             0xC -> {
                 output = ProgramChange(
                     (leadbyte and 0x0F),
-                    bytes.removeFirst().toInt()
+                    bytes.removeAt(0).toInt()
                 )
             }
             0xD -> {
                 output = ChannelPressure(
                     (leadbyte and 0x0F),
-                    bytes.removeFirst().toInt()
+                    bytes.removeAt(0).toInt()
                 )
             }
             0xE -> {
                 output = build_pitch_wheel_change(
                     (leadbyte and 0x0F).toByte(),
-                    bytes.removeFirst(),
-                    bytes.removeFirst()
+                    bytes.removeAt(0),
+                    bytes.removeAt(0)
                 )
             }
             else -> { }
@@ -385,7 +384,7 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
     } else if (leadbyte == 0xF0) {
         val bytedump: MutableList<Byte> = mutableListOf()
         while (true) {
-            val byte = bytes.removeFirst()
+            val byte = bytes.removeAt(0)
             if (byte.toInt() == 0xF7) {
                 break
             } else {
@@ -394,14 +393,14 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
         }
         output = SystemExclusive(bytedump.toByteArray())
     } else if (leadbyte == 0xF2) {
-        val lsb = bytes.removeFirst().toInt()
-        val msb = bytes.removeFirst().toInt()
+        val lsb = bytes.removeAt(0).toInt()
+        val msb = bytes.removeAt(0).toInt()
         val beat: Int = (msb shl 8) + lsb
         output = SongPositionPointer(beat)
     } else if (leadbyte == 0xF3) {
-        output = SongSelect((bytes.removeFirst().toInt()) and 0x7F)
+        output = SongSelect((bytes.removeAt(0).toInt()) and 0x7F)
     } else if (leadbyte == 0xFF) {
-        val meta_byte = bytes.removeFirst().toInt()
+        val meta_byte = bytes.removeAt(0).toInt()
         val varlength = get_variable_length_number(bytes)
 
         if (meta_byte == 0x51) {
@@ -409,7 +408,7 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
         } else {
             val bytedump_list: MutableList<Byte> = mutableListOf()
             for (i in 0 until varlength) {
-                bytedump_list.add(bytes.removeFirst())
+                bytedump_list.add(bytes.removeAt(0))
             }
             val bytedump: ByteArray = bytedump_list.toByteArray()
             when (meta_byte) {
@@ -467,7 +466,7 @@ fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
                 }
                 0x7F -> {
                     for (i in 0 until 3) {
-                        bytedump_list.removeFirst()
+                        bytedump_list.removeAt(0)
                     }
                     output = SequencerSpecific(bytedump_list.toByteArray())
                 }
@@ -489,7 +488,7 @@ fun dequeue_n(bytelist: MutableList<Byte>, n: Int): Int {
     var output = 0
     for (_i in 0 until n) {
         output *= 256
-        val x = toUInt(bytelist.removeFirst())
+        val x = toUInt(bytelist.removeAt(0))
         output += x
     }
     return output
@@ -499,7 +498,7 @@ fun get_variable_length_number(bytes: MutableList<Byte>): Int {
     var output: Int = 0
     while (true) {
         output = output shl 7
-        val x = toUInt(bytes.removeFirst())
+        val x = toUInt(bytes.removeAt(0))
         output = output or (x and 0x7F)
         if (x and 0x80 == 0) {
             break
@@ -522,7 +521,7 @@ fun to_variable_length_bytes(number: Int): List<Byte> {
         output.add(tmp.toByte())
         first_pass = false
     }
-    return output.reversed()
+    return output.asReversed()
 }
 
 fun get_pitchwheel_value(n: Float): Int {

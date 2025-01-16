@@ -1,6 +1,4 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.Midi
-import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.min
 
@@ -82,7 +80,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                 this.controller_line_remove(type, beat_key, adj_position)
                 if (parent_size <= 2) { // Will be pruned
-                    adj_position.removeLast()
+                    adj_position.removeAt(adj_position.size - 1)
                 } else if (adj_position.last() == parent_size - 1) {
                     adj_position[adj_position.size - 1] -= 1
                 }
@@ -976,7 +974,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
             super.remove_beat(beat_index, count)
 
-            for (i in beat_cells.indices.reversed()) {
+            for (i in beat_cells.size - 1 downTo 0) {
                 this.push_to_history_stack(
                     HistoryToken.INSERT_BEAT,
                     listOf(working_beat_index - (count - 1), beat_cells[i].first, beat_cells[i].second)

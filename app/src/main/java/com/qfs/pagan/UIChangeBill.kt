@@ -1,7 +1,9 @@
 package com.qfs.pagan
 
 import kotlin.math.max
-
+/**
+* A queue of UI update commands to be executed once it is safe to do so.
+*/
 class UIChangeBill {
     class UILock {
         companion object {
@@ -146,7 +148,7 @@ class UIChangeBill {
         var stack = mutableListOf<Node>(this._tree)
         this._tree = Node()
         while (stack.isNotEmpty()) {
-            var node = stack.removeFirst()
+            var node = stack.removeAt(0)
             for (bill_item in node.bill) {
                 // The Specified BillableItems will be manually added to the end of the queue after some calculations
                 // The rest can be handled FIFO
@@ -179,18 +181,18 @@ class UIChangeBill {
                     BillableItem.FullRefresh -> {
                         this._tree.clear()
                         this._tree.bill.add(bill_item)
-                        this._tree.int_queue.add(node.int_queue.removeFirst())
+                        this._tree.int_queue.add(node.int_queue.removeAt(0))
                         return
                     }
 
                     BillableItem.ForceScroll -> {
                         queued_cursor_scroll = Array(7) {
-                            node.int_queue.removeFirst()
+                            node.int_queue.removeAt(0)
                         }
                     }
 
                     BillableItem.RowAdd -> {
-                        val y = node.int_queue.removeFirst()
+                        val y = node.int_queue.removeAt(0)
                         for (element in queued_cells) {
                             for (coord in element) {
                                 if (coord.y >= y) {
@@ -215,8 +217,8 @@ class UIChangeBill {
                     }
 
                     BillableItem.RowRemove -> {
-                        val y = node.int_queue.removeFirst()
-                        val count = node.int_queue.removeFirst()
+                        val y = node.int_queue.removeAt(0)
+                        val count = node.int_queue.removeAt(0)
 
                         val check_range = y until y + count
                         for (i in queued_cells.indices) {
@@ -249,7 +251,7 @@ class UIChangeBill {
                     }
 
                     BillableItem.ColumnAdd -> {
-                        val column = node.int_queue.removeFirst()
+                        val column = node.int_queue.removeAt(0)
 
                         for (i in 0 until queued_cells.size) {
                             for (coord in queued_cells[i]) {
@@ -285,7 +287,7 @@ class UIChangeBill {
                     }
 
                     BillableItem.ColumnRemove -> {
-                        val column = node.int_queue.removeFirst()
+                        val column = node.int_queue.removeAt(0)
                         for (i in 0 until queued_cells.size) {
                             val queued_cell_set = queued_cells[i]
                             queued_cell_set -= queued_cell_set.filter { coord: EditorTable.Coordinate ->
@@ -330,18 +332,18 @@ class UIChangeBill {
                     BillableItem.ChannelChange,
                     BillableItem.ChannelAdd,
                     BillableItem.ChannelRemove -> {
-                        this._tree.int_queue.add(node.int_queue.removeFirst())
+                        this._tree.int_queue.add(node.int_queue.removeAt(0))
                     }
 
                     BillableItem.LineLabelRefresh -> {
-                        queued_line_labels.add(node.int_queue.removeFirst())
+                        queued_line_labels.add(node.int_queue.removeAt(0))
                     }
                     BillableItem.ColumnLabelRefresh -> {
-                        queued_column_labels.add(node.int_queue.removeFirst())
+                        queued_column_labels.add(node.int_queue.removeAt(0))
                     }
 
                     BillableItem.PercussionButtonRefresh -> {
-                        this._tree.int_queue.add(node.int_queue.removeFirst())
+                        this._tree.int_queue.add(node.int_queue.removeAt(0))
                     }
 
                     BillableItem.RowChange,
@@ -352,7 +354,7 @@ class UIChangeBill {
                             0
                         }
 
-                        val y = node.int_queue.removeFirst()
+                        val y = node.int_queue.removeAt(0)
 
                         queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
                             coord.y == y
@@ -363,7 +365,7 @@ class UIChangeBill {
 
                     BillableItem.ColumnChange,
                     BillableItem.ColumnStateChange -> {
-                        val column = node.int_queue.removeFirst()
+                        val column = node.int_queue.removeAt(0)
 
                         val i = if (bill_item == BillableItem.ColumnChange) {
                             1
@@ -380,7 +382,7 @@ class UIChangeBill {
 
                     BillableItem.CellChange,
                     BillableItem.CellStateChange -> {
-                        val count = node.int_queue.removeFirst()
+                        val count = node.int_queue.removeAt(0)
                         val i = if (bill_item == BillableItem.CellChange) {
                             1
                         } else {
@@ -390,8 +392,8 @@ class UIChangeBill {
                         for (j in 0 until count) {
                             queued_cells[i].add(
                                 EditorTable.Coordinate(
-                                    node.int_queue.removeFirst(),
-                                    node.int_queue.removeFirst()
+                                    node.int_queue.removeAt(0),
+                                    node.int_queue.removeAt(0)
                                 )
                             )
                         }
@@ -483,14 +485,14 @@ class UIChangeBill {
 
     fun get_next_entry(): BillableItem? {
         return if (this._tree.bill.isNotEmpty()) {
-            this._tree.bill.removeFirst()
+            this._tree.bill.removeAt(0)
         } else {
             null
         }
     }
 
     fun get_next_int(): Int {
-        return this._tree.int_queue.removeFirst()
+        return this._tree.int_queue.removeAt(0)
     }
 
     fun clear() {
@@ -741,7 +743,9 @@ class UIChangeBill {
 
     fun unlock() {
         this.ui_lock.unlock()
-        this.working_path.removeLast()
+        if (this.working_path.isNotEmpty()) {
+            this.working_path.removeAt(this.working_path.size - 1)
+        }
     }
 
     fun is_locked(): Boolean {

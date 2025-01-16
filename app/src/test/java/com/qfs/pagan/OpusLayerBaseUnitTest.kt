@@ -2479,7 +2479,7 @@ class OpusLayerBaseUnitTest {
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
+            val position = stack.removeAt(0)
             manager.split_tree(beat_key, position, splits)
 
             if (position.size >= max_depth - 1) {
@@ -2528,7 +2528,7 @@ class OpusLayerBaseUnitTest {
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
+            val position = stack.removeAt(0)
             manager.controller_global_split_tree(type, beat, position, splits)
 
             if (position.size >= max_depth - 1) {
@@ -2578,7 +2578,7 @@ class OpusLayerBaseUnitTest {
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
+            val position = stack.removeAt(0)
             manager.controller_channel_split_tree(type, channel, beat, position, splits)
 
             if (position.size >= max_depth - 1) {
@@ -2628,7 +2628,7 @@ class OpusLayerBaseUnitTest {
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
+            val position = stack.removeAt(0)
             manager.controller_line_split_tree(type, beat_key, position, splits)
 
             if (position.size >= max_depth - 1) {

@@ -73,7 +73,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
 
         return if (index == null) {
             this.size -= 1
-            this.lines.removeLast()
+            this.lines.removeAt(this.lines.size - 1)
         } else if (index < this.lines.size) {
             this.size -= 1
             lines.removeAt(index)
@@ -328,6 +328,16 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
         this.catch_blocked_tree_exception(line_offset) {
             this.lines[line_offset].insert_after(beat, position)
         }
+    }
+
+    override fun hashCode(): Int {
+        var result = this.lines.hashCode()
+        result = (31 * result) + this.controllers.hashCode()
+        result = (31 * result) + this.midi_program
+        result = (31 * result) + this._beat_count
+        result = (31 * result) + this.size
+        result = (31 * result) + this.visible.hashCode()
+        return result
     }
 }
 

@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.qfs.pagan.PaganDrawerLayout
+    <LinearLayout
         android:id="@+id/config_drawer"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
@@ -23,6 +23,6 @@
             layout="@layout/fragment_song_config"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-    </com.qfs.pagan.PaganDrawerLayout>
+    </LinearLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

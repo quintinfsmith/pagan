@@ -1049,7 +1049,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             val parent = working_tree.get(cursor_position.subList(0, cursor_position.size - 1))
             if (parent.size == 2) {
                 parent.set_event(null)
-                cursor_position.removeLast()
+                cursor_position.removeAt(cursor_position.size - 1)
             } else if (cursor_position.last() == parent.size - 1) {
                 parent[cursor_position.last()].detach()
                 cursor_position[cursor_position.size - 1] -= 1
@@ -1061,23 +1061,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         return Pair(real_count, cursor_position)
     }
 
-    //fun controller_global_remove(count: Int) {
-    //    val cursor = this.cursor
-    //    val beat_key = cursor.get_beatkey()
-    //    val position = cursor.get_position().toMutableList()
-
-    //    val tree = this.get_tree()
-    //    val cursor_position = position.toMutableList()
-    //    if (tree.parent!!.size <= 2) { // Will be pruned
-    //        cursor_position.removeLast()
-    //    } else if (position.last() == tree.parent!!.size - 1) {
-    //        cursor_position[cursor_position.size - 1] -= 1
-    //    }
-
-    //    this.remove(beat_key, position, count)
-
-    //    this.cursor_select(beat_key, this.get_first_position(beat_key, cursor_position))
-    //}
     fun insert_line_at_cursor(count: Int) {
         this.new_line_repeat(
             this.cursor.channel,

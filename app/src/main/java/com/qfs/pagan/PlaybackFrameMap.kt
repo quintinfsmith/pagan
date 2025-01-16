@@ -298,7 +298,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             val stack = mutableListOf(Triple(tree, 1F, 0F))
             while (stack.isNotEmpty()) {
-                val (working_tree, working_ratio, working_offset) = stack.removeFirst()
+                val (working_tree, working_ratio, working_offset) = stack.removeAt(0)
 
                 if (working_tree.is_event()) {
                     working_tempo = working_tree.get_event()!!.value
@@ -336,7 +336,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 for (b in 0 until this.opus_manager.beat_count) {
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
                     while (stack.isNotEmpty()) {
-                        val working_item = stack.removeFirst()
+                        val working_item = stack.removeAt(0)
                         val working_tree = working_item.tree ?: continue
 
                         if (working_tree.is_event()) {
@@ -399,7 +399,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 for (b in 0 until this.opus_manager.beat_count) {
                     val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
                     while (stack.isNotEmpty()) {
-                        val working_item = stack.removeFirst()
+                        val working_item = stack.removeAt(0)
                         val working_tree = working_item.tree ?: continue
 
                         if (working_tree.is_event()) {

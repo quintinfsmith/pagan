@@ -110,34 +110,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         }
     }
 
-    private fun _set_colors() {
-        val activity = this.get_activity()
-        val color_map = activity.view_model.color_map
-        val states = arrayOf<IntArray>(
-            intArrayOf(
-                R.attr.state_focused,
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                -R.attr.state_channel_even
-            ),
-            intArrayOf(
-                -R.attr.state_focused,
-                R.attr.state_channel_even
-            )
-        )
-
-        this.setTextColor(
-            ColorStateList(
-                states,
-                intArrayOf(
-                    color_map[ColorMap.Palette.SelectionText],
-                    color_map[ColorMap.Palette.ChannelOddText],
-                    color_map[ColorMap.Palette.ChannelEvenText]
-                )
-            )
-        )
-    }
 
     fun touch_callback(view: View?, touchEvent: MotionEvent?): Boolean {
         var parent = view?.parent ?: return false

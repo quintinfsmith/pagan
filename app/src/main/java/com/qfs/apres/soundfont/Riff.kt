@@ -38,7 +38,7 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
                 throw InvalidRiff(file_path)
             }
             val riff_size = this.get_little_endian(4, 4)
-            this.type_cc = this.get_string(8, 4) // typecc
+            this.type_cc = this.get_string(8, 4)
 
             var working_index = 12
             while (working_index < riff_size - 4) {

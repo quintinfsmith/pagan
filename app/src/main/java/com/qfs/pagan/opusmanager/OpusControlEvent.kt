@@ -16,15 +16,16 @@ enum class ControlTransition {
 
 abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration) {
     abstract override fun copy(): OpusControlEvent
-    override fun equals(other: Any?): Boolean {
-        return other is OpusControlEvent && other.duration == this.duration
-    }
 }
 
 
 class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
     override fun equals(other: Any?): Boolean {
         return other is OpusTempoEvent && this.value == other.value && super.equals(other)
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode().xor(this.value.toRawBits())
     }
 
     override fun copy(): OpusTempoEvent {
@@ -37,6 +38,15 @@ class OpusVolumeEvent(var value: Float, var transition: ControlTransition = Cont
         return OpusVolumeEvent(this.value, this.transition, this.duration)
     }
 
+    override fun hashCode(): Int {
+        val code = super.hashCode().xor(this.value.toRawBits())
+        val shift = when (this.transition) {
+            ControlTransition.Instant -> 0
+            ControlTransition.Linear -> 1
+        }
+        return (code shl shift) + (code shr (32 - shift))
+    }
+
     override fun equals(other: Any?): Boolean {
         return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
     }
@@ -45,6 +55,9 @@ class OpusVolumeEvent(var value: Float, var transition: ControlTransition = Cont
 class OpusReverbEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
     override fun copy(): OpusReverbEvent {
         return OpusReverbEvent(this.value, this.duration)
+    }
+    override fun hashCode(): Int {
+        return super.hashCode().xor(this.value.toRawBits())
     }
     override fun equals(other: Any?): Boolean {
         return other is OpusReverbEvent && this.value == other.value && super.equals(other)
@@ -55,7 +68,17 @@ class OpusPanEvent(var value: Float, var transition: ControlTransition = Control
     override fun copy(): OpusPanEvent {
         return OpusPanEvent(this.value, this.transition, this.duration)
     }
+
     override fun equals(other: Any?): Boolean {
         return other is OpusPanEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
+    }
+
+    override fun hashCode(): Int {
+        val code = super.hashCode().xor(this.value.toRawBits())
+        val shift = when (this.transition) {
+            ControlTransition.Instant -> 0
+            ControlTransition.Linear -> 1
+        }
+        return (code shl shift) + (code shr (32 - shift))
     }
 }

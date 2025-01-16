@@ -87,7 +87,6 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -116,7 +115,6 @@ class MainActivity : AppCompatActivity() {
 
     class MainViewModel: ViewModel() {
         var export_handle: WavConverter? = null
-        var color_map = ColorMap()
         var opus_manager = OpusManager()
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, handler: WavConverter.ExporterEventHandler) {
@@ -422,7 +420,6 @@ class MainActivity : AppCompatActivity() {
                 0
             }
         )
-        this.view_model.color_map.set_fallback_palette(this.get_palette())
 
         if (this._midi_playback_device != null) {
             this.playback_state_soundfont = PlaybackState.Ready
@@ -582,12 +579,11 @@ class MainActivity : AppCompatActivity() {
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
         this.setSupportActionBar(this._binding.appBarMain.toolbar)
+        this._binding.root.setBackgroundColor(resources.getColor(R.color.main_bg))
 
         this.view_model.opus_manager.attach_activity(this)
-        this.view_model.color_map.set_fallback_palette(this.get_palette())
 
 
-        val color_map = this.view_model.color_map
         val toolbar = this._binding.appBarMain.toolbar
         //toolbar.popupTheme = R.style.popup_theme
         toolbar.backgroundTintList = ColorStateList(
@@ -596,10 +592,6 @@ class MainActivity : AppCompatActivity() {
         )
 
         toolbar.background = null
-        toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
-        toolbar.setBackgroundColor(color_map[Palette.TitleBar])
-        toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
-        toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
 
@@ -989,7 +981,7 @@ class MainActivity : AppCompatActivity() {
     fun drawer_unlock() {
         try {
             this._binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-            this.findViewById<PaganDrawerLayout>(R.id.config_drawer)?.refreshDrawableState()
+            this.findViewById<LinearLayout>(R.id.config_drawer)?.refreshDrawableState()
         } catch (e: UninitializedPropertyAccessException) {
             // pass, if it's not initialized, it's not locked
         }
@@ -1093,29 +1085,15 @@ class MainActivity : AppCompatActivity() {
     fun update_menu_options() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val options_menu = this._options_menu ?: return
-        val text_color = this.view_model.color_map[Palette.TitleBarText]
 
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is FragmentEditor -> {
                 val play_midi_visible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
-                options_menu.findItem(R.id.itmUndo).setIconTintList(ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                    intArrayOf(text_color)
-                ))
                 options_menu.findItem(R.id.itmNewProject).isVisible = true
                 options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
-                options_menu.findItem(R.id.itmPlay).setIconTintList(ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                    intArrayOf(text_color)
-                ))
                 options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
-                options_menu.findItem(R.id.itmPlayMidiOutput).setIconTintList(ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                    intArrayOf(text_color)
-                ))
-
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
                 options_menu.findItem(R.id.itmAbout).isVisible = true
@@ -1745,8 +1723,6 @@ class MainActivity : AppCompatActivity() {
 
     fun save_configuration() {
         try {
-            this.configuration.palette = this.view_model.color_map.get_palette()
-            this.configuration.use_palette = this.view_model.color_map.use_palette
             this.configuration.save(this._config_path)
         } catch (e: FileNotFoundException) {
             this.feedback_msg(resources.getString(R.string.config_file_not_found))
@@ -2370,67 +2346,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun _refresh_toolbar() {
-        val color_map = this.view_model.color_map
         val toolbar = this._binding.appBarMain.toolbar
-        val text_color = color_map[Palette.TitleBarText]
-        toolbar.setTitleTextColor(text_color)
-        toolbar.setBackgroundColor(color_map[Palette.TitleBar])
-        toolbar.setSubtitleTextColor(text_color)
-        toolbar.overflowIcon?.setTint(text_color)
-
 
         when (this.get_active_fragment()) {
             is FragmentEditor -> {
                 toolbar.setNavigationIcon(R.drawable.hamburger_32)
-                toolbar.navigationIcon?.setTint(text_color)
+                toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary_text))
             }
             is FragmentLandingPage -> {
                 toolbar.navigationIcon = null
             }
             else -> {
                 toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-                toolbar.navigationIcon?.setTint(text_color)
+                toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary_text))
             }
         }
-    }
-
-
-    private fun get_palette(): HashMap<Palette, Int> {
-        return hashMapOf<Palette, Int>(
-            Pair(Palette.Background, this.getColor(R.color.main_bg)),
-            Pair(Palette.Foreground, this.getColor(R.color.main_fg)),
-            Pair(Palette.Lines, this.getColor(R.color.table_lines)),
-            Pair(Palette.Leaf, this.getColor(R.color.leaf)),
-            Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
-            Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
-            Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
-            Pair(Palette.LeafInvalidSelected, this.getColor(R.color.leaf_invalid_selected)),
-            Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
-            Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
-            Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
-            Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
-            Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
-            Pair(Palette.ChannelEven, this.getColor(R.color.channel_even)),
-            Pair(Palette.ChannelEvenText, this.getColor(R.color.channel_even_text)),
-            Pair(Palette.ChannelOdd, this.getColor(R.color.channel_odd)),
-            Pair(Palette.ChannelOddText, this.getColor(R.color.channel_odd_text)),
-            Pair(Palette.ColumnLabel, this.getColor(R.color.main_bg)),
-            Pair(Palette.ColumnLabelText, this.getColor(R.color.main_fg)),
-            Pair(Palette.Button, this.getColor(R.color.button)),
-            Pair(Palette.ButtonText, this.getColor(R.color.button_text)),
-            Pair(Palette.ButtonAlt, this.getColor(R.color.button_alt)),
-            Pair(Palette.ButtonAltText, this.getColor(R.color.button_alt_text)),
-            Pair(Palette.TitleBar, this.getColor(R.color.primary)),
-            Pair(Palette.TitleBarText, this.getColor(R.color.primary_text)),
-            Pair(Palette.CtlLine, this.getColor(R.color.ctl_line)),
-            Pair(Palette.CtlLineText, this.getColor(R.color.ctl_line_text)),
-            Pair(Palette.CtlLineSelection, this.getColor(R.color.ctl_line_selected)),
-            Pair(Palette.CtlLineSelectionText, this.getColor(R.color.ctl_line_selected_text)),
-            Pair(Palette.CtlLeaf, this.getColor(R.color.ctl_leaf)),
-            Pair(Palette.CtlLeafText, this.getColor(R.color.ctl_leaf_text)),
-            //Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
-            //Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
-        )
     }
 
     fun vibrate() {

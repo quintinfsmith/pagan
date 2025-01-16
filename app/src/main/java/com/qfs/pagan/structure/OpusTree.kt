@@ -151,7 +151,7 @@ class OpusTree<T> {
                         )
                     )
                 } else {
-                    val (_, event_tree) = working_indices.removeFirst()
+                    val (_, event_tree) = working_indices.removeAt(0)
                     if (event_tree.is_event()) {
                         working_node.set_event(event_tree.get_event()!!)
                     }
@@ -316,7 +316,7 @@ class OpusTree<T> {
             output.add(tree.get_index()!!)
             tree = tree.parent!!
         }
-        return output.reversed()
+        return output.asReversed()
     }
 
     fun clear_singles() {
@@ -759,6 +759,23 @@ class OpusTree<T> {
             }
         } else {
             super.equals(other)
+        }
+    }
+
+    override fun hashCode(): Int {
+        return if (this.is_event()) {
+            this.get_event()!!.hashCode()
+        } else if (this.is_leaf()) {
+            0
+        } else {
+            var output = 0
+            for (i in 0 until this.size) {
+                output = (output shl 1)
+                if (this.divisions.containsKey(i)) {
+                    output = output.xor(this.divisions[i].hashCode())
+                }
+            }
+            output
         }
     }
 

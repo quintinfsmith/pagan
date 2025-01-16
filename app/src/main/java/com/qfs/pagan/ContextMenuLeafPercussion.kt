@@ -209,7 +209,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
         val position = opus_manager.cursor.get_position().toMutableList()
         if (position.isNotEmpty()) {
-            position.removeLast()
+            position.removeAt(position.size - 1)
         }
 
         opus_manager.cursor_select(

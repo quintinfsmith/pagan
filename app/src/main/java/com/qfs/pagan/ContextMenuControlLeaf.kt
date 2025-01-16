@@ -127,7 +127,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val cursor = opus_manager.cursor
         val position = cursor.get_position().toMutableList()
         if (position.isNotEmpty()) {
-            position.removeLast()
+            position.removeAt(position.size - 1)
         }
 
         when (cursor.ctl_level) {

@@ -1,14 +1,20 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.Pagan" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <item name="colorPrimary">#1d1d1d</item>
+    <style name="Theme.Pagan" parent="Theme.AppCompat.DayNight">
+        <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">#000000</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorOnPrimary">@color/primary_text</item>
         <item name="colorSecondary">@color/leaf_main</item>
         <item name="colorSecondaryVariant">@color/leaf_secondary</item>
         <item name="colorOnSecondary">#1A1a1a</item>
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="colorPrimaryDark">@color/primary</item>
+        <item name="android:textColorPrimary">@color/primary_text</item>
 
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="actionOverflowMenuStyle">@style/overflow_menu</item>
+        <item name="actionOverflowButtonStyle">@style/overflow_button</item>
+        <item name="actionMenuTextColor">@color/primary_text</item>
+        <item name="actionButtonStyle">@style/action_button</item>
         <!-- Customize your theme here. -->
 
         <item name="soundfont_warning_background">@color/blue_sky</item>
@@ -16,6 +22,17 @@
         <item name="soundfont_warning_text">@color/white</item>
         <item name="soundfont_warning_link">@color/blue_dark</item>
         <item name="drop_down_bg">#FFFFFF</item>
+    </style>
+
+    <style name="action_button" parent="@style/Widget.AppCompat.ActionButton">
+        <item name="android:drawableTint">@color/primary_text</item>
+    </style>
+
+    <style name="overflow_menu" parent="@style/Widget.AppCompat.ListPopupWindow">
+        <item name="android:popupBackground">@drawable/toolbar_overflow_menu</item>
+    </style>
+    <style name="overflow_button" parent="@style/Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:tint">@color/primary_text</item>
     </style>
     <style name="Theme.Pagan.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -26,7 +43,9 @@
         <item name="android:progressTint">@color/leaf_main</item>
         <item name="android:colorControlActivated">@color/leaf_main</item>
     </style>
-    <style name="Theme.Pagan.EditText">
+    <style name="Theme.Pagan.EditText" parent="Widget.AppCompat.EditText">
         <item name="android:textColorPrimary">@color/main_fg</item>
+        <item name="android:colorAccent">@color/leaf_main</item>
+        <item name="android:colorControlActivated">@color/leaf_main</item>
     </style>
 </resources>

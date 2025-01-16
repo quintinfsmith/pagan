@@ -56,7 +56,7 @@
     <color name="ns_selected">@color/blue_sky</color>
     <color name="ns_selected_text">#000000</color>
 
-    <color name="primary">#302111</color>
+    <color name="primary">#171717</color>
     <color name="primary_text">#e1e1e1</color>
     <color name="main_bg">#e0e0e0</color>
     <color name="main_fg">#2A2A46</color>

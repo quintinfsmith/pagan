@@ -73,7 +73,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
 
         return if (index == null) {
             this.size -= 1
-            this.lines.removeLast()
+            this.lines.removeAt(this.lines.size - 1)
         } else if (index < this.lines.size) {
             this.size -= 1
             lines.removeAt(index)

@@ -842,7 +842,7 @@ open class OpusLayerBase {
                     working_position[working_position.size - 1] -= 1
                     break
                 } else {
-                    working_position.removeLast()
+                    working_position.removeAt(working_position.size - 1)
                 }
             } else if (working_beat_key.beat > 0) {
                 working_beat_key.beat -= 1
@@ -880,7 +880,7 @@ open class OpusLayerBase {
                     working_tree = this.get_tree(working_beat_key, working_position)
                     break
                 } else {
-                    working_position.removeLast()
+                    working_position.removeAt(working_position.size - 1)
                     working_tree = working_tree.parent!!
                 }
             } else if (working_beat_key.beat < this.beat_count - 1) {
@@ -2553,7 +2553,7 @@ open class OpusLayerBase {
             this.remove(beat_key, adj_position)
 
             if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
+                adj_position.removeAt(adj_position.size - 1)
             } else if (adj_position.last() == parent_size - 1) {
                 adj_position[adj_position.size - 1] -= 1
             }
@@ -2568,7 +2568,7 @@ open class OpusLayerBase {
 
             this.controller_line_remove(type, beat_key, adj_position)
             if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
+                adj_position.removeAt(adj_position.size - 1)
             } else if (adj_position.last() == parent_size - 1) {
                 adj_position[adj_position.size - 1] -= 1
             }
@@ -2584,7 +2584,7 @@ open class OpusLayerBase {
             this.controller_channel_remove(type, channel, beat, adj_position)
 
             if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
+                adj_position.removeAt(adj_position.size - 1)
             } else if (adj_position.last() == parent_size - 1) {
                 adj_position[adj_position.size - 1] -= 1
             }
@@ -2600,7 +2600,7 @@ open class OpusLayerBase {
             this.controller_global_remove(type, beat, adj_position)
 
             if (parent_size <= 2) { // Will be pruned
-                adj_position.removeLast()
+                adj_position.removeAt(adj_position.size - 1)
             } else if (adj_position.last() == parent_size - 1) {
                 adj_position[adj_position.size - 1] -= 1
             }
@@ -2947,7 +2947,7 @@ open class OpusLayerBase {
     open fun convert_events_in_tree_to_relative(beat_key: BeatKey, position: List<Int>) {
         val stack = mutableListOf<Pair<BeatKey, List<Int>>>(Pair(beat_key, position))
         while (stack.isNotEmpty()) {
-            val (working_beat_key, working_position) = stack.removeFirst()
+            val (working_beat_key, working_position) = stack.removeAt(0)
             val working_tree = this.get_tree(working_beat_key, working_position)
             if (working_tree.is_event()) {
                 this.convert_event_to_relative(working_beat_key, working_position)
@@ -2968,7 +2968,7 @@ open class OpusLayerBase {
     open fun convert_events_in_tree_to_absolute(beat_key: BeatKey, position: List<Int>) {
         val stack = mutableListOf<Pair<BeatKey, List<Int>>>(Pair(beat_key, position))
         while (stack.isNotEmpty()) {
-            val (working_beat_key, working_position) = stack.removeFirst()
+            val (working_beat_key, working_position) = stack.removeAt(0)
             val working_tree = this.get_tree(working_beat_key, working_position)
             if (working_tree.is_event()) {
                 this.convert_event_to_absolute(working_beat_key, working_position)
@@ -3267,7 +3267,7 @@ open class OpusLayerBase {
                 val working_tree = controller.get_tree(i)
                 val stack: MutableList<StackItem<U>> = mutableListOf(StackItem(working_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn))
                 while (stack.isNotEmpty()) {
-                    val current = stack.removeFirst()
+                    val current = stack.removeAt(0)
                     if (current.tree.is_event()) {
                         val event = current.tree.get_event()!!
                         if (current.offset == 0) {
@@ -3357,7 +3357,7 @@ open class OpusLayerBase {
                 line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
                     val stack: MutableList<StackItem<TunedInstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
-                        val current = stack.removeFirst()
+                        val current = stack.removeAt(0)
                         if (current.tree.is_event()) {
                             val event = current.tree.get_event()!!
                             val (note, bend) = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
@@ -3446,7 +3446,7 @@ open class OpusLayerBase {
             line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<PercussionEvent> ->
                 val stack: MutableList<StackItem<PercussionEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
                 while (stack.isNotEmpty()) {
-                    val current = stack.removeFirst()
+                    val current = stack.removeAt(0)
                     if (current.tree.is_event()) {
                         val event = current.tree.get_event()!!
 

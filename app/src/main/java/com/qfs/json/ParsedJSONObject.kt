@@ -450,14 +450,14 @@ class JSONParser {
                                 //    throw InvalidJSON(json_content, index)
                                 //}
 
-                                val to_add_object = object_stack.removeLast()
+                                val to_add_object = object_stack.removeAt(object_stack.size - 1)
                                 when (object_stack.last()) {
                                     is JSONList -> {
                                         (object_stack.last() as JSONList).add(to_add_object)
                                     }
 
                                     is JSONString -> {
-                                        val key_object = object_stack.removeLast() as JSONString
+                                        val key_object = object_stack.removeAt(object_stack.size - 1) as JSONString
                                         if (object_stack.last() is JSONHashMap) {
                                             (object_stack.last() as JSONHashMap)[key_object.value] = to_add_object
                                         }
@@ -469,13 +469,13 @@ class JSONParser {
                             }
 
                             Char(125) -> { // "}"
-                                val object_index = position_stack.removeLast()
+                                val object_index = position_stack.removeAt(position_stack.size - 1)
                                 if (object_index == object_stack.size - 1) {
                                     // Nothing to be done
                                 } else {
                                     val map_object = object_stack[object_index]
-                                    val to_add_object = object_stack.removeLast()
-                                    val to_add_key = object_stack.removeLast()
+                                    val to_add_object = object_stack.removeAt(object_stack.size - 1)
+                                    val to_add_key = object_stack.removeAt(object_stack.size - 1)
 
                                     if (map_object is JSONHashMap && to_add_key is JSONString) {
                                         map_object[to_add_key.value] = to_add_object
@@ -487,12 +487,12 @@ class JSONParser {
                             }
 
                             Char(93) -> { // "]"
-                                val object_index = position_stack.removeLast()
+                                val object_index = position_stack.removeAt(position_stack.size - 1)
                                 if (object_index == object_stack.size - 1) {
                                     // Nothing to be Done
                                 } else {
                                     val list_object = object_stack[object_index]
-                                    val to_add_object = object_stack.removeLast()
+                                    val to_add_object = object_stack.removeAt(object_stack.size - 1)
 
                                     if (list_object is JSONList) {
                                         list_object.add(to_add_object)

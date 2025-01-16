@@ -96,14 +96,14 @@ class OpusChannelJSONInterface {
 
             val tree_stack = mutableListOf(output)
             var register: Int? = null
-            val opened_indeces: MutableList<Int> = mutableListOf()
+            val opened_indices: MutableList<Int> = mutableListOf()
             var relative_flag: Char? = null
             for (i in repstring.indices) {
                 val character = repstring[i]
                 if (character == CH_CLOSE) {
                     // Remove completed tree from stack
-                    tree_stack.removeLast()
-                    opened_indeces.removeLast()
+                    tree_stack.removeAt(tree_stack.size - 1)
+                    opened_indices.removeAt(opened_indices.size - 1)
                 }
 
                 if (character == CH_NEXT) {
@@ -126,7 +126,7 @@ class OpusChannelJSONInterface {
                         throw Exception("MISSING COMMA")
                     }
                     tree_stack.add(new_tree)
-                    opened_indeces.add(i)
+                    opened_indices.add(i)
                 } else if (relative_flag != null) {
                     var odd_note = 0
                     when (relative_flag) {
@@ -233,7 +233,7 @@ class OpusChannelJSONInterface {
                         var static_value: Int? = null
                         val stack = mutableListOf(lines.get_hashmap(i))
                         while (stack.isNotEmpty()) {
-                            var working_tree = stack.removeFirst()
+                            var working_tree = stack.removeAt(0)
                             val event = working_tree.get_hashmapn("event")
                             if (event != null) {
                                 val note = event.get_intn("note")

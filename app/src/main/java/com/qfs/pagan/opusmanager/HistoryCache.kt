@@ -92,18 +92,17 @@ class HistoryCache {
         }
         this._close_multi()
         return if (this._working_node != null) {
-            this._working_node!!.children.removeLast()
+            this._working_node!!.children.removeAt(this._working_node!!.children.size - 1)
         } else {
-            this._history.removeLast()
+            this._history.removeAt(this._history.size - 1)
         }
     }
 
     private fun _check_size() {
         while (this._history.size > this._max_history_size) {
-            this._history.removeFirst()
+            this._history.removeAt(0)
         }
     }
-
 
     fun clear() {
         this._history.clear()
@@ -121,7 +120,7 @@ class HistoryCache {
         return if (this._history.isEmpty()) {
             null
         } else {
-            this._history.removeLast()
+            this._history.removeAt(this._history.size - 1)
         }
     }
 

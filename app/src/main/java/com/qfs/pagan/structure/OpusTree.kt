@@ -151,7 +151,7 @@ class OpusTree<T> {
                         )
                     )
                 } else {
-                    val (_, event_tree) = working_indices.removeFirst()
+                    val (_, event_tree) = working_indices.removeAt(0)
                     if (event_tree.is_event()) {
                         working_node.set_event(event_tree.get_event()!!)
                     }

@@ -1049,7 +1049,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             val parent = working_tree.get(cursor_position.subList(0, cursor_position.size - 1))
             if (parent.size == 2) {
                 parent.set_event(null)
-                cursor_position.removeLast()
+                cursor_position.removeAt(cursor_position.size - 1)
             } else if (cursor_position.last() == parent.size - 1) {
                 parent[cursor_position.last()].detach()
                 cursor_position[cursor_position.size - 1] -= 1

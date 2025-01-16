@@ -974,7 +974,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
             super.remove_beat(beat_index, count)
 
-            for (i in beat_cells.indices.reversed()) {
+            for (i in beat_cells.size - 1 downTo 0) {
                 this.push_to_history_stack(
                     HistoryToken.INSERT_BEAT,
                     listOf(working_beat_index - (count - 1), beat_cells[i].first, beat_cells[i].second)

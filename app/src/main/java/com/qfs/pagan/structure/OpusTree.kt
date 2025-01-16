@@ -316,7 +316,7 @@ class OpusTree<T> {
             output.add(tree.get_index()!!)
             tree = tree.parent!!
         }
-        return output.reversed()
+        return output.asReversed()
     }
 
     fun clear_singles() {

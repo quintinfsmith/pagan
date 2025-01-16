@@ -13,7 +13,6 @@ import com.qfs.apres.event.CelesteLevel
 import com.qfs.apres.event.ChannelPrefix
 import com.qfs.apres.event.ChannelPressure
 import com.qfs.apres.event.ChorusLevel
-import com.qfs.apres.event.ControlChange
 import com.qfs.apres.event.CopyRightNotice
 import com.qfs.apres.event.CuePoint
 import com.qfs.apres.event.DataDecrement
@@ -522,7 +521,7 @@ fun to_variable_length_bytes(number: Int): List<Byte> {
         output.add(tmp.toByte())
         first_pass = false
     }
-    return output.reversed()
+    return output.asReversed()
 }
 
 fun get_pitchwheel_value(n: Float): Int {

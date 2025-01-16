@@ -2750,14 +2750,15 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
-        val width = (end - start) + 1
+        val width = end - start + 1
         val count = ((this.beat_count - start) / width) - 1
-        for (i in 0 until width) {
-            val working_beat_key = BeatKey(channel, line_offset, i + start)
+        for (i in start .. end) {
+
+            val working_beat_key = BeatKey(channel, line_offset, i)
             for (j in 0 until count) {
                 this.controller_global_replace_tree(
                     type,
-                    ((j + 1) * width) + (i + start),
+                    ((j + 1) * width) + i,
                     null,
                     this.get_line_ctl_tree<OpusControlEvent>(type, working_beat_key).copy(this::copy_control_event)
                 )
@@ -2771,13 +2772,13 @@ open class OpusLayerBase {
 
         val width = (end - start) + 1
         val count = ((this.beat_count - start) / width) - 1
-        for (i in 0 until width) {
+        for (i in start .. end) {
             for (j in 0 until count) {
                 this.controller_global_replace_tree(
                     type,
-                    ((j + 1) * width) + (i + start),
+                    ((j + 1) * width) + i,
                     null,
-                    this.get_channel_ctl_tree<OpusControlEvent>(type, channel, i + start).copy(this::copy_control_event)
+                    this.get_channel_ctl_tree<OpusControlEvent>(type, channel, i).copy(this::copy_control_event)
                 )
             }
         }
@@ -2787,16 +2788,16 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
-        val width = (end - start) + 1
-        val count = ((this.beat_count - start) / width)
+        val width = end - start + 1
+        val count = (this.beat_count - start) / width
 
-        for (i in 0 until width) {
-            val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, (i + start))
+        for (i in start .. end) {
+            val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, i)
             for (j in 0 until count) {
                 this.controller_channel_replace_tree(
                     type,
                     target_channel,
-                    (j * width) + (i + start),
+                    (j * width) + i,
                     null,
                     working_tree.copy(this::copy_control_event)
                 )
@@ -2808,18 +2809,18 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
-        val width = (end - start) + 1
-        val count = ((this.beat_count - start) / width)
+        val width = end - start + 1
+        val count = (this.beat_count - start) / width
 
-        for (i in 0 until width) {
-            val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, (i + start))
+        for (i in start .. end) {
+            val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, i)
             for (j in 0 until count) {
                 this.controller_line_replace_tree(
                     type,
                     BeatKey(
                         target_channel,
                         target_line_offset,
-                        (j * width) + (i + start)
+                        (j * width) + i
                     ),
                     null,
                     working_tree.copy(this::copy_control_event)
@@ -3322,7 +3323,7 @@ open class OpusLayerBase {
                         val working_list = mutableListOf<Pair<Int, MIDIEvent>>()
                         var last_val: Int? = null
                         for (x in 0 until frames * event.duration) {
-                            val mid_val = (working_value + (x * diff))
+                            val mid_val = working_value + (x * diff)
                             val value = min(((mid_val + 1F) * 64).toInt(), 127)
                             if (last_val != value) {
                                 working_list.add(Pair(x, BalanceMSB(c, value)))
@@ -3378,9 +3379,9 @@ open class OpusLayerBase {
 
                                 // This offset is calculated so the tuning map always reflects correctly
                                 val transpose_offset = 12.0 * this.transpose.first.toDouble() / this.transpose.second.toDouble()
-                                val std_offset = (offset.first.toDouble() * 12.0 / offset.second.toDouble())
+                                val std_offset = offset.first.toDouble() * 12.0 / offset.second.toDouble()
 
-                                val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
+                                val bend = ((std_offset - floor(std_offset) + transpose_offset - floor(transpose_offset)) * 512.0).toInt()
 
                                 prev_note = current_note
 
@@ -3491,7 +3492,7 @@ open class OpusLayerBase {
         }
 
         pseudo_midi_map.sortBy {
-            (it.first * 2) + (if (it.third) { 1 } else { 0})
+            (it.first * 2) + if (it.third) { 1 } else { 0 }
         }
 
         val index_map = HashMap<PseudoMidiEvent, Int>()
@@ -4160,8 +4161,10 @@ open class OpusLayerBase {
 
         this._cached_abs_line_map_map.clear()
         this._cached_inv_abs_line_map_map.clear()
-        // STD Channels ---------------------
-        this.channels.forEachIndexed { channel_index: Int, channel: OpusChannel ->
+
+        val channels = this.get_all_channels()
+        for (channel_index in channels.indices) {
+            val channel = channels[channel_index]
             for (line_offset in channel.lines.indices) {
                 val keypair = Pair(channel_index, line_offset)
                 this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
@@ -4188,32 +4191,6 @@ open class OpusLayerBase {
             }
         }
 
-        // PERCUSSION Channel ---------------------------
-        for (line_offset in this.percussion_channel.lines.indices) {
-            val keypair = Pair(this.channels.size, line_offset)
-            this._cached_inv_abs_line_map_map[this._cached_std_line_map[keypair]!!] = this._cached_abs_line_map_map.size
-            this._cached_abs_line_map_map.add(Triple(this._cached_std_line_map[keypair]!!, null, null))
-
-            for ((type, _) in this.percussion_channel.lines[line_offset].controllers.get_all()) {
-                this._cached_abs_line_map_map.add(
-                    Triple(
-                        this._cached_std_line_map[keypair]!!,
-                        CtlLineLevel.Line,
-                        type
-                    )
-                )
-            }
-        }
-        for ((type, _) in this.percussion_channel.controllers.get_all()) {
-            this._cached_abs_line_map_map.add(
-                Triple(
-                    this.channels.size,
-                    CtlLineLevel.Channel,
-                    type
-                )
-            )
-        }
-        // ------------------------------------------------------
         for ((type, _) in this.controllers.get_all()) {
             this._cached_abs_line_map_map.add(
                 Triple(
@@ -4235,7 +4212,8 @@ open class OpusLayerBase {
         var ctl_line = 0
         var visible_line = 0
 
-        this.get_all_channels().forEachIndexed { channel_index: Int, channel: OpusChannelAbstract<*,*> ->
+        for (channel_index in channels.indices) {
+            val channel = channels[channel_index]
             for (line_offset in channel.lines.indices) {
                 if (channel.visible) {
                     this._cached_inv_visible_line_map[ctl_line] = visible_line
@@ -4288,8 +4266,8 @@ open class OpusLayerBase {
 
     private fun _get_beat_keys_for_overwrite_beat_range_horizontally(first_key: BeatKey, second_key: BeatKey): List<List<BeatKey>> {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
-        val width = (to_key.beat - from_key.beat) + 1
-        val count = ((this.beat_count - from_key.beat) / width)
+        val width = to_key.beat - from_key.beat + 1
+        val count = (this.beat_count - from_key.beat) / width
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
         return List(beat_keys.size) { i: Int ->
             val beat_key = beat_keys[i]

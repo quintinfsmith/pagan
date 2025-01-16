@@ -3239,10 +3239,9 @@ open class OpusLayerBase {
 
     open fun set_beat_count(new_count: Int) {
         this.beat_count = new_count
-        for (channel in this.channels) {
+        for (channel in this.get_all_channels()) {
             channel.set_beat_count(new_count)
         }
-        this.percussion_channel.set_beat_count(new_count)
         this.controllers.set_beat_count(new_count)
     }
 
@@ -4091,7 +4090,7 @@ open class OpusLayerBase {
     }
 
     private fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
-        if (! this.is_valid_beat_range(from_key, to_key)) {
+        if (! this._is_valid_beat_range(from_key, to_key)) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }
 
@@ -4119,7 +4118,8 @@ open class OpusLayerBase {
 
         return event.copy() as T
     }
-    fun is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
+
+    private fun _is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
         return if (this.channels.size + 1 <= first_corner.channel) {
             false
         } else if (this.get_channel(first_corner.channel).size <= first_corner.line_offset) {

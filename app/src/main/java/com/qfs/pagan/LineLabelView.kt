@@ -12,14 +12,11 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context) {
     init {
-        val activity = this.get_activity()
-        val color_map = activity.view_model.color_map
-        this.setBackgroundColor(color_map[ColorMap.Palette.Lines])
 
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
             val adapter = (view.parent.parent as LineLabelColumnLayout)
             val opus_manager = this.get_opus_manager()
-            val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+            val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
                 opus_manager.get_ctl_line_from_row( this.row )
             )
 
@@ -77,6 +74,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         val ctl_line = opus_manager.get_ctl_line_from_row(this.row)
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(ctl_line)
 
+        this.setBackgroundColor(resources.getColor(R.color.table_lines))
         this.addView(
             when (ctl_level) {
                 null -> {
@@ -105,7 +103,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         this.row = new_row
 
         val opus_manager = this.get_opus_manager()
-        val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(
+        val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
             opus_manager.get_ctl_line_from_row(this.row)
         )
         val channel_gap_size = context.resources.getDimension(R.dimen.channel_gap_size).toInt()

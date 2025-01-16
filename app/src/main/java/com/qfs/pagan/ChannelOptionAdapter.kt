@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
@@ -11,7 +10,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.ColorMap.Palette
 import kotlin.math.roundToInt
 
 class ChannelOptionAdapter(
@@ -43,18 +41,12 @@ class ChannelOptionAdapter(
         while (context !is MainActivity) {
             context = (context as ContextThemeWrapper).baseContext
         }
-        val color_map = context.view_model.color_map
 
         val top_view = BackLinkView(ContextThemeWrapper(parent.context, R.style.recycler_option))
         val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
         val btn_kill_channel = ImageView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
         top_view.addView(btn_choose_instrument)
         top_view.addView(btn_kill_channel)
-        btn_choose_instrument.setTextColor(color_map[Palette.ButtonText])
-        btn_kill_channel.imageTintList = ColorStateList(
-            arrayOf(intArrayOf()),
-            intArrayOf(color_map[Palette.ButtonText])
-        )
 
         btn_choose_instrument.layoutParams.width = 0
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F

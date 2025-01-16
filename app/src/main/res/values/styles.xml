@@ -18,6 +18,9 @@
         <item name="android:textSize">18sp</item>
         <item name="android:paddingTop">2dp</item>
         <item name="android:paddingBottom">2dp</item>
+
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
     <style name="recycler_option_instrument" parent="recycler_option_text">
@@ -25,6 +28,7 @@
     </style>
 
     <style name="recycler_option_x" parent="recycler_option_text">
+        <item name="android:tint">@color/button_text_selector</item>
         <item name="android:gravity">center</item>
     </style>
 
@@ -62,6 +66,7 @@
         <item name="android:paddingEnd">12dp</item>
         <item name="android:paddingTop">5dp</item>
         <item name="android:paddingBottom">8dp</item>
+        <item name="android:foregroundTint">@color/button_text</item>
     </style>
 
     <style name="button_front" parent="@style/button">

@@ -3,13 +3,13 @@ package com.qfs.pagan
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.InstrumentEvent
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.structure.OpusTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.qfs.pagan.opusmanager.OpusLayerOverlapControl as OpusManager
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -61,7 +61,7 @@ class OpusLayerOverlapControlUnitTest {
         manager.split_tree(BeatKey(0,0,1), listOf(), 2)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
 
-        assertThrows(OpusManager.BlockedTreeException::class.java) {
+        assertThrows(OpusLayerBase.BlockedTreeException::class.java) {
             manager.set_event(BeatKey(0,0,1), listOf(0), AbsoluteNoteEvent(10))
         }
 
@@ -69,7 +69,7 @@ class OpusLayerOverlapControlUnitTest {
         try {
             manager.set_event(BeatKey(0,0,1), listOf(0), AbsoluteNoteEvent(10))
             assertTrue(true)
-        } catch (e: OpusManager.BlockedTreeException) {
+        } catch (e: OpusLayerBase.BlockedTreeException) {
             assertFalse(true)
         }
     }
@@ -82,7 +82,7 @@ class OpusLayerOverlapControlUnitTest {
         manager.split_tree(BeatKey(0,0,1), listOf(), 2)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
 
-        assertThrows(OpusManager.BlockedTreeException::class.java) {
+        assertThrows(OpusLayerBase.BlockedTreeException::class.java) {
             val tree = OpusTree<InstrumentEvent>()
             tree.set_event(AbsoluteNoteEvent(10))
             manager.replace_tree(BeatKey(0,0,1), listOf(0), tree)
@@ -94,7 +94,7 @@ class OpusLayerOverlapControlUnitTest {
             tree.set_event(AbsoluteNoteEvent(10))
             manager.replace_tree(BeatKey(0,0,1), listOf(0), tree)
             true
-        } catch (e: OpusManager.BlockedTreeException) {
+        } catch (e: OpusLayerBase.BlockedTreeException) {
             false
         })
     }
@@ -107,7 +107,7 @@ class OpusLayerOverlapControlUnitTest {
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 3))
         manager.set_event(BeatKey(0,0,2), listOf(), AbsoluteNoteEvent(10))
 
-        assertThrows(OpusManager.BlockedTreeException::class.java) {
+        assertThrows(OpusLayerBase.BlockedTreeException::class.java) {
             manager.remove_beat(1)
         }
     }
@@ -120,7 +120,7 @@ class OpusLayerOverlapControlUnitTest {
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(10, 2))
         manager.set_event(BeatKey(0,0,0), listOf(2), AbsoluteNoteEvent(10))
 
-        assertThrows(OpusManager.BlockedTreeException::class.java) {
+        assertThrows(OpusLayerBase.BlockedTreeException::class.java) {
             manager.remove(BeatKey(0,0,0), listOf(1))
         }
     }

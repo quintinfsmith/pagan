@@ -5,7 +5,6 @@ import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerOverlapControl
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import kotlin.math.max
@@ -149,7 +148,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1)
-                        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                        } catch (e: OpusLayerBase.BlockedTreeException) {
                             // pass
                         }
                     } else {
@@ -309,7 +308,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1, true)
-                        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                        } catch (e: OpusLayerBase.BlockedTreeException) {
                             // pass
                         }
                     } else {
@@ -590,7 +589,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     null -> {
                         try {
                             opus_manager.split_tree_at_cursor(splits)
-                        } catch (e: OpusLayerOverlapControl.BlockedTreeException) {
+                        } catch (e: OpusLayerBase.BlockedTreeException) {
                             // ignore
                         }
                     }

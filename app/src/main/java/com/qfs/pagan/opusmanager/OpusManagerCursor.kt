@@ -300,6 +300,18 @@ data class OpusManagerCursor(
         this.select_channel_ctl_range(type,channel, beat, beat)
     }
 
+    override fun hashCode(): Int {
+        var result = this.mode.hashCode()
+        result = ((result shl 5) + (result shr 27)).xor(this.channel)
+        result = ((result shl 5) + (result shr 27)).xor(this.line_offset)
+        result = ((result shl 5) + (result shr 27)).xor(this.beat)
+        result = ((result shl 5) + (result shr 27)).xor(this.position.hashCode())
+        result = ((result shl 5) + (result shr 27)).xor((this.range?.hashCode() ?: 0))
+        result = ((result shl 5) + (result shr 27)).xor((this.ctl_level?.hashCode() ?: 0))
+        result = ((result shl 5) + (result shr 27)).xor((this.ctl_type?.hashCode() ?: 0))
+        return result
+    }
+
     //fun move_left() {
     //    var working_tree = this.opus_manager.get_beat_tree(this.get_beatkey())
     //    for (i in this.position) {

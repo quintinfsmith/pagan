@@ -164,6 +164,16 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         return true
     }
 
+    override fun hashCode(): Int {
+        var output = this.javaClass.hashCode()
+        for (i in 0 until this.beats.size) {
+            // Circular Shift
+            output = (output shl 1).xor(this.beats[i].hashCode()) + (output shr 31)
+        }
+
+        return output
+    }
+
     private fun _assign_to_inv_cache(beat: Int, position: List<Int>, blocker: Int, blocker_position: List<Int>, amount: Rational) {
         this._cache_inv_blocked_tree_map[Pair(beat, position.toList())] = Triple(blocker, blocker_position.toList(), amount)
     }

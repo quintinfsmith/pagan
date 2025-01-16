@@ -329,6 +329,16 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
             this.lines[line_offset].insert_after(beat, position)
         }
     }
+
+    override fun hashCode(): Int {
+        var result = this.lines.hashCode()
+        result = (31 * result) + this.controllers.hashCode()
+        result = (31 * result) + this.midi_program
+        result = (31 * result) + this._beat_count
+        result = (31 * result) + this.size
+        result = (31 * result) + this.visible.hashCode()
+        return result
+    }
 }
 
 class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {

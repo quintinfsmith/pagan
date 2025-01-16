@@ -4546,4 +4546,18 @@ open class OpusLayerBase {
     fun get_visible_row_from_ctl_line_global(type: ControlEventType): Int {
         return this._cached_ctl_map_global[type]!!
     }
+
+    override fun hashCode(): Int {
+        var result = this.beat_count
+        result = ((result shl 5) + (result shr 27)).xor(this.controllers.hashCode())
+        result = ((result shl 5) + (result shr 27)).xor(this.channels.hashCode())
+        result = ((result shl 5) + (result shr 27)).xor(this.percussion_channel.hashCode())
+        result = ((result shl 5) + (result shr 27)).xor((this.path?.hashCode() ?: 0))
+        result = ((result shl 5) + (result shr 27)).xor((this.project_name?.hashCode() ?: 0))
+        result = ((result shl 5) + (result shr 27)).xor(this.transpose.hashCode())
+        result = ((result shl 5) + (result shr 27)).xor(this.tuning_map.contentHashCode())
+        return result
+    }
+
+    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
 }

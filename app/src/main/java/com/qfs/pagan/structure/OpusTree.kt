@@ -762,4 +762,21 @@ class OpusTree<T> {
         }
     }
 
+    override fun hashCode(): Int {
+        return if (this.is_event()) {
+            this.get_event()!!.hashCode()
+        } else if (this.is_leaf()) {
+            0
+        } else {
+            var output = 0
+            for (i in 0 until this.size) {
+                output = (output shl 1)
+                if (this.divisions.containsKey(i)) {
+                    output = output.xor(this.divisions[i].hashCode())
+                }
+            }
+            output
+        }
+    }
+
 }

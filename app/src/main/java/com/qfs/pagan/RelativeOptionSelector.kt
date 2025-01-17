@@ -115,11 +115,11 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         }
     }
 
-    fun unsetOnChange() {
+    fun unset_on_change() {
         this._on_change_hook = null
     }
 
-    fun setOnChange(hook: (RelativeOptionSelector) -> Unit) {
+    fun set_on_change(hook: (RelativeOptionSelector) -> Unit) {
         this._on_change_hook = hook
     }
 

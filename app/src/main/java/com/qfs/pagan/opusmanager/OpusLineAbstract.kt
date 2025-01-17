@@ -28,7 +28,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
         for ((type, controller) in this.controllers.get_all()) {
             try {
                 controller.remove_beat(index, count)
-            } catch (e: OpusTreeArray.BlockedTreeException) {
+            } catch (e: BlockedTreeException) {
                 throw BlockedCtlTreeException(type, e)
             }
         }
@@ -37,7 +37,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     fun remove_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
         try {
             this.get_controller<OpusControlEvent>(type).remove_node(beat, position)
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
@@ -45,7 +45,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     fun insert_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
         try {
             this.get_controller<OpusControlEvent>(type).insert(beat, position)
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
@@ -53,7 +53,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     fun insert_control_leaf_after(type: ControlEventType, beat: Int, position: List<Int>) {
         try {
             this.get_controller<OpusControlEvent>(type).insert_after(beat, position)
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
@@ -61,7 +61,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     fun <T: OpusControlEvent> replace_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: OpusTree<T>) {
         try {
             this.get_controller<T>(type).replace_tree(beat, position, tree)
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
@@ -73,7 +73,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     fun <T: OpusControlEvent> set_controller_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
         try {
             this.get_controller<T>(type).set_event(beat, position, event)
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }

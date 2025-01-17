@@ -35,15 +35,16 @@ import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 /* The UI of the EditorTable. Only drawing-related logic and onclick dispatching is handled here. */
-class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
-    class PaintedLayer(var editor_table: EditorTable): View(editor_table.context) {
-        val table_line_paint = Paint()
-        val text_paint_offset = Paint()
-        val text_paint_octave = Paint()
-        val text_paint_ctl = Paint()
-        val text_paint_column = Paint()
-        var touch_position_x = 0F
-        var touch_position_y = 0F
+class TableUI(private var editor_table: EditorTable): ScrollView(editor_table.context) {
+    @SuppressLint("ClickableViewAccessibility")
+    class PaintedLayer(private var editor_table: EditorTable): View(editor_table.context) {
+        private val table_line_paint = Paint()
+        private val text_paint_offset = Paint()
+        private val text_paint_octave = Paint()
+        private val text_paint_ctl = Paint()
+        private val text_paint_column = Paint()
+        private var touch_position_x = 0F
+        private var touch_position_y = 0F
 
         var invalidate_queued = false
         init {
@@ -70,7 +71,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             this.setWillNotDraw(false)
 
-            this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
+            this.setOnTouchListener { _: View?, touchEvent: MotionEvent? ->
                 if (touchEvent != null) {
                     this.touch_position_y = touchEvent.y
                     this.touch_position_x = touchEvent.x
@@ -92,7 +93,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val y = this.touch_position_y
             val x = this.touch_position_x
 
-            var row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return null
+            val row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return null
 
             val opus_manager = this.editor_table.get_opus_manager()
             val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
@@ -278,7 +279,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        fun on_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?) {
+        private fun on_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?) {
             val opus_manager = this.editor_table.get_opus_manager()
 
             if (line_info == null) {
@@ -308,7 +309,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        fun on_long_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?): Boolean {
+        private fun on_long_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?): Boolean {
             val opus_manager = this.editor_table.get_opus_manager()
             return if (line_info == null) {
                 false // No Action
@@ -362,7 +363,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        fun <T: OpusEvent> calc_position(tree: OpusTree<T>, initial_width: Int, target_x: Float): List<Int> {
+        private fun <T: OpusEvent> calc_position(tree: OpusTree<T>, initial_width: Int, target_x: Float): List<Int> {
             var working_width = initial_width.toFloat()
             var working_tree = tree
             var working_x = target_x.toInt()
@@ -377,7 +378,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return output
         }
 
-        fun get_standard_leaf_state(beat_key: BeatKey, position: List<Int>): IntArray {
+        private fun get_standard_leaf_state(beat_key: BeatKey, position: List<Int>): IntArray {
             val opus_manager = this.editor_table.get_opus_manager()
 
             val tree = opus_manager.get_tree(beat_key, position)
@@ -433,7 +434,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun get_global_control_leaf_state(type: ControlEventType, beat: Int, position: List<Int>): IntArray {
+        private fun get_global_control_leaf_state(type: ControlEventType, beat: Int, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
             val controller = opus_manager.controllers.get_controller<OpusControlEvent>(type)
@@ -457,7 +458,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun get_channel_control_leaf_state(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): IntArray {
+        private fun get_channel_control_leaf_state(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
             val controller = opus_manager.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
@@ -481,7 +482,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun get_line_control_leaf_state(type: ControlEventType, beat_key: BeatKey, position: List<Int>): IntArray {
+        private fun get_line_control_leaf_state(type: ControlEventType, beat_key: BeatKey, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
             val controller = opus_manager.get_line_controller<OpusControlEvent>(type, beat_key.channel, beat_key.line_offset)
@@ -506,7 +507,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
+        private fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
             if (tree.is_leaf()) {
                 val horizontal_scroll_view = (this.parent as HorizontalScrollView)
                 // Don't draw outside of the view
@@ -518,7 +519,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 for (i in 0 until tree.size) {
                     val child = tree[i]
                     val next_position = OpusLayerBase.next_position(position, i)
-                    this.draw_tree<T>(canvas, child, next_position, x + (i * new_width), y, new_width, callback)
+                    this.draw_tree(canvas, child, next_position, x + (i * new_width), y, new_width, callback)
                 }
             }
         }
@@ -561,14 +562,14 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val line = channel.lines[k]
                         val beat_key = BeatKey(j, k, i)
                         val tree = opus_manager.get_tree(beat_key, listOf())
-                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, working_canvas, x, y, width ->
                             val state = this.get_standard_leaf_state(beat_key, position)
-                            val leaf_drawable = resources.getDrawable(R.drawable.leaf)
+                            val leaf_drawable = ContextCompat.getDrawable(this.context, R.drawable.leaf)!!
                             leaf_drawable.setState(state)
                             leaf_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + line_height).toInt())
-                            leaf_drawable.draw(canvas)
+                            leaf_drawable.draw(working_canvas)
 
-                            val color_list = resources.getColorStateList(R.color.leaf_text_selector)
+                            val color_list = ContextCompat.getColorStateList(this.context, R.color.leaf_text_selector)!!
                             this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)
                             this.text_paint_offset.color = color_list.getColorForState(state, Color.MAGENTA)
 
@@ -583,11 +584,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     this.text_paint_octave.getTextBounds(octave_text, 0, octave_text.length, octave_text_bounds)
 
                                     val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
-                                    val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
                                     val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
                                     val offset_text_x = x + ((width - offset_text_bounds.width()) / 2)
 
-                                    canvas.drawText(
+                                    working_canvas.drawText(
                                         offset_text,
                                         offset_text_x,
                                         offset_text_y,
@@ -595,7 +595,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     )
 
                                     val octave_max_width = (base_width - offset_text_bounds.width()) / 2
-                                    canvas.drawText(
+                                    working_canvas.drawText(
                                         octave_text,
                                         x + ((width - base_width) / 2) + ((octave_max_width - octave_text_bounds.width()) / 2),
                                         y + line_height - padding_y,
@@ -621,10 +621,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     this.text_paint_octave.getTextBounds(prefix_text, 0, prefix_text.length, prefix_text_bounds)
 
                                     val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
-                                    val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
                                     val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
 
-                                    canvas.drawText(
+                                    working_canvas.drawText(
                                         offset_text,
                                         x + ((width - offset_text_bounds.width()) / 2),
                                         offset_text_y,
@@ -632,14 +631,14 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     )
 
                                     val octave_max_width = (base_width - offset_text_bounds.width()) / 2
-                                    canvas.drawText(
+                                    working_canvas.drawText(
                                         octave_text,
                                         x + ((width - base_width) / 2) + ((octave_max_width - octave_text_bounds.width()) / 2),
                                         y + line_height - padding_y,
                                         this.text_paint_octave
                                     )
 
-                                    canvas.drawText(
+                                    working_canvas.drawText(
                                         prefix_text,
                                         x + ((width - base_width) / 2) + ((octave_max_width - prefix_text_bounds.width()) / 2),
                                         offset_text_y - octave_text_bounds.height(),
@@ -653,7 +652,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     val bounds = Rect()
                                     this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, bounds)
 
-                                    canvas.drawText(
+                                    working_canvas.drawText(
                                         offset_text,
                                         x + ((width - bounds.width()) / 2),
                                         y + ((line_height + (bounds.height() / 2)) / 2),
@@ -669,10 +668,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             if (!controller.visible) {
                                 continue
                             }
-                            val tree = controller.get_tree(i, listOf())
-                            this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                            val working_tree = controller.get_tree(i, listOf())
+                            this.draw_tree(canvas, working_tree, listOf(), offset, y_offset, beat_width) { event, position, working_canvas, x, y, width ->
                                 val state = this.get_line_control_leaf_state(type, beat_key, position)
-                                this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
+                                this.process_ctl_event_layout(state, event, working_canvas, x, y, width, ctl_line_height)
                             }
 
                             y_offset += ctl_line_height
@@ -684,9 +683,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             continue
                         }
                         val tree = controller.get_tree(i, listOf())
-                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, working_canvas, x, y, width ->
                             val state = this.get_channel_control_leaf_state(type, j, i, position)
-                            this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
+                            this.process_ctl_event_layout(state, event, working_canvas, x, y, width, ctl_line_height)
                         }
                         y_offset += ctl_line_height
                     }
@@ -699,21 +698,21 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         continue
                     }
                     val tree = controller.get_tree(i, listOf())
-                    this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                    this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, working_canvas, x, y, width ->
                         val state = this.get_global_control_leaf_state(type, i, position)
-                        this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height )
+                        this.process_ctl_event_layout(state, event, working_canvas, x, y, width, ctl_line_height )
                     }
 
                     y_offset += ctl_line_height
                 }
 
                 // ------------------- Draw Labels ----------------------------
-                val color_list = resources.getColorStateList(R.color.column_label_text)
+                val color_list = ContextCompat.getColorStateList(this.context, R.color.column_label_text)!!
                 val state = this.get_column_label_state(i)
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
 
                 val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
-                val drawable = resources.getDrawable(R.drawable.editor_label_column)
+                val drawable = ContextCompat.getDrawable(this.context, R.drawable.editor_label_column)!!
                 drawable.setState(state)
                 drawable.setBounds(offset.toInt(), scroll_y, (offset + column_width).toInt(), (scroll_y + line_height).toInt())
                 drawable.draw(canvas)
@@ -757,13 +756,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun process_ctl_event_layout(state: IntArray, event: OpusControlEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
-            val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
+        private fun process_ctl_event_layout(state: IntArray, event: OpusControlEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
+            val ctl_drawable = ContextCompat.getDrawable(this.context, R.drawable.ctl_leaf)!!
             ctl_drawable.setState(state)
             ctl_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + ctl_line_height).toInt())
             ctl_drawable.draw(canvas)
 
-            val color_list = resources.getColorStateList(R.color.ctl_leaf_text_selector)
+            val color_list = ContextCompat.getColorStateList(this.context, R.color.ctl_leaf_text_selector)!!
             this.text_paint_ctl.color = color_list.getColorForState(state, Color.MAGENTA)
 
             val text = when (event) {
@@ -859,13 +858,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
 
         /* The layout is currently refresh solely by an invalidate call. use the wrapper to stop it being called for EVERY update to the table before it gets redrawn */
-        fun invalidate_wrapper() {
+        private fun invalidate_wrapper() {
             this.invalidate_queued = true
         }
     }
 
     val painted_layer = PaintedLayer(editor_table)
-    private var _scroll_locked: Boolean = false
     private var queued_scroll_x: Int? = null
     private var queued_scroll_y: Int? = null
     private var _last_x_position: Float? = null
@@ -917,18 +915,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.painted_layer.clear()
     }
 
-
-    fun lock_scroll() {
-        this._scroll_locked = true
-    }
-
-    fun unlock_scroll() {
-        this._scroll_locked = false
-    }
-
-    private fun is_scroll_locked(): Boolean {
-        return this._scroll_locked
-    }
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
@@ -1027,7 +1013,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
          Kludge. There is *currently* no spot-updating even though there are functions that make it look that way
          So updates are queued and this is how we prevent the view getting redrawn multiple times per update.
      */
-
     fun finalize_update() {
         if (this.painted_layer.invalidate_queued) {
             this.painted_layer.invalidate()

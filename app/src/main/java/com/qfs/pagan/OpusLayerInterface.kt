@@ -2352,7 +2352,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
     }
-    fun set_relative_mode(event: TunedInstrumentEvent) {
+    private fun set_relative_mode(event: TunedInstrumentEvent) {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = when (event) {
                 is AbsoluteNoteEvent -> {

@@ -1,7 +1,5 @@
 package com.qfs.pagan
 
-import android.util.Log
-
 const val CH_OPEN = '['
 const val CH_CLOSE = ']'
 const val CH_NEXT = ','
@@ -89,10 +87,3 @@ fun str_to_int(number: String, radix: Int): Int {
     }
     return output
 }
-
-fun tlog(label: String, callback: () -> Unit) {
-    val a = System.currentTimeMillis()
-    callback()
-    Log.d("TLOG", "$label: ${System.currentTimeMillis() - a}")
-}
-

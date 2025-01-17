@@ -31,8 +31,8 @@ import kotlin.concurrent.thread
 
 
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
-    val view_model: EditorViewModel by viewModels()
-    var active_context_menu: ContextMenuView? = null
+    private val view_model: EditorViewModel by viewModels()
+    private var active_context_menu: ContextMenuView? = null
     var keyboard_input_interface: KeyboardInputInterface? = null
 
     override fun inflate(inflater: LayoutInflater, container: ViewGroup?): FragmentMainBinding {
@@ -81,7 +81,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         super.onStop()
     }
 
-    fun backup_position() {
+    private fun backup_position() {
         val main = this.get_main()
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
@@ -119,7 +119,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         super.onSaveInstanceState(outState)
     }
 
-    fun load_from_bkp() {
+    private fun load_from_bkp() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
@@ -128,7 +128,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         opus_manager.load(bytes, backup_path)
     }
 
-    fun reload_from_bkp() {
+    private fun reload_from_bkp() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
@@ -155,11 +155,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             this.view_model.scroll_y = savedInstanceState.getInt("scroll_y")
         } else if (!opus_manager.first_load_done) {
             // Navigate to (import / load/new)
-            editor_table.visibility = View.VISIBLE
+            editor_table.visibility = VISIBLE
             return
         }
 
-        editor_table.visibility = View.VISIBLE
+        editor_table.visibility = VISIBLE
         this.reload_from_bkp()
 
 
@@ -213,7 +213,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     main.get_opus_manager().load_path(path)
                 }
                 main.runOnUiThread {
-                    editor_table?.visibility = View.VISIBLE
+                    editor_table?.visibility = VISIBLE
                 }
                 this.view_model.backup_fragment_intent = null
                 main.loading_reticle_hide()
@@ -244,7 +244,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                                 main.get_opus_manager().project_change_new()
                             } else {
                                 this.reload_from_bkp()
-                                editor_table.visibility = View.VISIBLE
+                                editor_table.visibility = VISIBLE
                                 this.restore_view_model_position()
                             }
                         }
@@ -253,7 +253,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 }
 
                 main.runOnUiThread {
-                    editor_table?.visibility = View.VISIBLE
+                    editor_table?.visibility = VISIBLE
                 }
 
                 this.view_model.backup_fragment_intent = null
@@ -311,7 +311,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()
-                            editor_table.visibility = View.VISIBLE
+                            editor_table.visibility = VISIBLE
                             this.restore_view_model_position()
                         }
                     }
@@ -320,7 +320,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 }
 
                 main.runOnUiThread {
-                    editor_table?.visibility = View.VISIBLE
+                    editor_table?.visibility = VISIBLE
                 }
                 main.loading_reticle_hide()
                 this.view_model.backup_fragment_intent = null
@@ -349,7 +349,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()
-                            editor_table.visibility = View.VISIBLE
+                            editor_table.visibility = VISIBLE
                             this.restore_view_model_position()
                         }
                     }
@@ -357,7 +357,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
                 }
                 main.runOnUiThread {
-                    editor_table?.visibility = View.VISIBLE
+                    editor_table?.visibility = VISIBLE
                 }
                 main.loading_reticle_hide()
             }
@@ -385,7 +385,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     } else {
                         main.runOnUiThread {
                             this.reload_from_bkp()
-                            editor_table.visibility = View.VISIBLE
+                            editor_table.visibility = VISIBLE
                             this.restore_view_model_position()
                         }
                     }
@@ -393,7 +393,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
                 }
                 main.runOnUiThread {
-                    editor_table?.visibility = View.VISIBLE
+                    editor_table?.visibility = VISIBLE
                 }
                 main.loading_reticle_hide()
             }
@@ -411,7 +411,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             thread {
                 main.get_opus_manager().project_change_new()
                 main.runOnUiThread {
-                    editor_table?.visibility = View.VISIBLE
+                    editor_table?.visibility = VISIBLE
                 }
                 main.loading_reticle_hide()
             }
@@ -465,7 +465,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
         this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
     }
-    fun on_show_context_menus(a: View, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int): Boolean {
+    private fun on_show_context_menus(a: View, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int): Boolean {
         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.force_scroll_to_cursor_vertical()
         return false

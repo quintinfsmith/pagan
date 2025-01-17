@@ -6,7 +6,6 @@ import android.text.InputFilter
 import android.text.InputType
 import android.text.Spanned
 import android.util.AttributeSet
-import android.widget.EditText
 
 open class HexEditText(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(context, attrs) {
     class HexFilter: InputFilter {

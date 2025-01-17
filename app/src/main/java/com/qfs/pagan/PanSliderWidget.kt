@@ -6,7 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
-import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.ImageView
@@ -24,12 +23,12 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
     }
     val stroke_width = 10F
 
-    var in_transition = false
+    private var in_transition = false
     var max = 1
     var min = -1
     var progress: Int = ((this.max - this.min) / 2) + this.min
     var on_change_listener: OnSeekBarChangeListener? = null
-    val image_view: ImageView = object: androidx.appcompat.widget.AppCompatImageView(context, attrs) {
+    private val image_view: ImageView = object: androidx.appcompat.widget.AppCompatImageView(context, attrs) {
         val paint = Paint()
         val path = Path()
         val relative_handle_point: Float
@@ -37,15 +36,6 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
         init {
             val that = this@PanSliderWidget
             this.relative_handle_point = (that.progress - that.min).toFloat() / (that.max - that.min).toFloat()
-        }
-
-
-        fun get_main_activity(): MainActivity {
-            var context = this@PanSliderWidget.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
-            }
-            return context
         }
 
         override fun onDraw(canvas: Canvas) {
@@ -118,7 +108,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
         this.image_view.layoutParams.height = MATCH_PARENT
         this.image_view.setPadding(0,0,0,0)
 
-        this.image_view.setOnTouchListener { view, motionEvent ->
+        this.image_view.setOnTouchListener { _, motionEvent ->
             when (motionEvent.action) {
                 MotionEvent.ACTION_DOWN -> {
                     this.on_change_listener?.on_touch_start(this)

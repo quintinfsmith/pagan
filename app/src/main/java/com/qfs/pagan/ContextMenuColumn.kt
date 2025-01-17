@@ -5,47 +5,47 @@ import android.widget.ImageView
 import com.qfs.pagan.opusmanager.OpusLayerBase
 
 class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_column, null, primary_parent, secondary_parent) {
-    lateinit var button_insert: ImageView
-    lateinit var button_remove: ImageView
+    private lateinit var _button_insert: ImageView
+    private lateinit var _button_remove: ImageView
 
     init {
         this.refresh()
     }
 
     override fun init_properties() {
-        this.button_insert = this.primary!!.findViewById(R.id.btnInsertBeat)
-        this.button_remove = this.primary.findViewById(R.id.btnRemoveBeat)
+        this._button_insert = this.primary!!.findViewById(R.id.btnInsertBeat)
+        this._button_remove = this.primary.findViewById(R.id.btnRemoveBeat)
     }
 
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
 
-        this.button_remove.isEnabled = opus_manager.beat_count > 1
+        this._button_remove.isEnabled = opus_manager.beat_count > 1
     }
 
     override fun setup_interactions() {
-        this.button_insert.setOnClickListener {
+        this._button_insert.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
             this.click_button_insert_beat()
         }
 
-        this.button_insert.setOnLongClickListener {
+        this._button_insert.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
             this.long_click_button_insert_beat()
         }
 
-        this.button_remove.setOnClickListener {
+        this._button_remove.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
             this.click_button_remove_beat()
         }
 
-        this.button_remove.setOnLongClickListener {
+        this._button_remove.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
@@ -53,7 +53,7 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
         }
     }
 
-    fun click_button_remove_beat() {
+    private fun click_button_remove_beat() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         try {
@@ -63,7 +63,7 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
         }
     }
 
-    fun long_click_button_remove_beat(): Boolean {
+    private fun long_click_button_remove_beat(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         main.dialog_number_input(this.context.getString(R.string.dlg_remove_beats), 1, opus_manager.beat_count - 1) { count: Int ->
@@ -72,12 +72,12 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
         return true
     }
 
-    fun click_button_insert_beat() {
+    private fun click_button_insert_beat() {
         val opus_manager = this.get_opus_manager()
         opus_manager.insert_beat_after_cursor(1)
     }
 
-    fun long_click_button_insert_beat(): Boolean {
+    private fun long_click_button_insert_beat(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 

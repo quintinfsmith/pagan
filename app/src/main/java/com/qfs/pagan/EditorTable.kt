@@ -16,7 +16,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     private val _column_width_map = mutableListOf<MutableList<Int>>()
     private val _column_width_maxes = mutableListOf<Int>()
-    val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
+    private val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
     val line_label_layout = LineLabelColumnLayout(this)
     internal var table_ui = TableUI(this)
@@ -49,11 +49,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this._spacer.layoutParams.width = MATCH_PARENT
         this._spacer.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
 
-        (this.line_label_layout.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        (this.line_label_layout.layoutParams as LayoutParams).weight = 1F
         this.line_label_layout.layoutParams.height = 0
         this.line_label_layout.layoutParams.width = WRAP_CONTENT
 
-        (this.table_ui.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        (this.table_ui.layoutParams as LayoutParams).weight = 1F
         this.table_ui.layoutParams.width = 0
         this.table_ui.layoutParams.height = MATCH_PARENT
     }
@@ -90,7 +90,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     output += 1
                 }
 
-                for ((type, controller) in line.controllers.get_all()) {
+                for ((_, controller) in line.controllers.get_all()) {
                     if (!controller.visible) {
                         continue
                     }
@@ -102,7 +102,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     }
                 }
             }
-            for ((type, controller) in channel.controllers.get_all()) {
+            for ((_, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) {
                     continue
                 }
@@ -120,7 +120,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             }
         }
 
-        for ((type, controller) in opus_manager.controllers.get_all()) {
+        for ((_, controller) in opus_manager.controllers.get_all()) {
             if (!controller.visible) {
                 continue
             }
@@ -142,7 +142,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this.get_activity().runOnUiThread {
             this.line_label_layout.clear()
             this.table_ui.clear()
-            this.reset_table_size()
+            this._reset_table_size()
         }
     }
 
@@ -150,33 +150,33 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         // NOTE: Needs column map initialized first
         this.line_label_layout.insert_labels(0, height)
         this.table_ui.add_columns(0, width)
-        this.reset_table_size()
+        this._reset_table_size()
     }
 
-    fun reset_table_size() {
+    private fun _reset_table_size() {
         val (pix_width, pix_height) = this._calculate_table_size()
         this.table_ui.set_size(pix_width, pix_height + resources.getDimension(R.dimen.line_height).toInt())
     }
 
     fun new_row(y: Int) {
-        this.reset_table_size()
+        this._reset_table_size()
         this.line_label_layout.insert_label(y)
         this.table_ui.insert_row(y)
     }
 
     fun remove_rows(y: Int, count: Int) {
-        this.reset_table_size()
+        this._reset_table_size()
         this.line_label_layout.remove_labels(y, count)
         this.table_ui.remove_rows(y, count)
     }
 
     fun new_column(index: Int) {
-        this.reset_table_size()
+        this._reset_table_size()
         this.table_ui.add_column(index)
     }
 
     fun remove_column(index: Int) {
-        this.reset_table_size()
+        this._reset_table_size()
         this.table_ui.remove_column(index)
     }
 
@@ -189,14 +189,14 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun notify_column_changed(x: Int, state_only: Boolean = false) {
         if (!state_only) {
-            this.reset_table_size()
+            this._reset_table_size()
         }
         this.table_ui.notify_column_changed(x, state_only)
     }
 
     fun notify_row_changed(y: Int, state_only: Boolean = false) {
         if (!state_only) {
-            this.reset_table_size()
+            this._reset_table_size()
         }
         this.line_label_layout.notify_item_changed(y)
         this.table_ui.notify_row_change(y, state_only)
@@ -209,21 +209,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     fun recalculate_column_max(x: Int) {
         this._column_width_maxes[x] = this._column_width_map[x].max()
         this._update_inv_column_map(x)
-    }
-
-    fun recalculate_column_maxes(): List<Int> {
-        val output = mutableListOf<Int>()
-        for (x in 0 until this._column_width_map.size) {
-            val new_max = this._column_width_map[x].max()
-            if (new_max != this._column_width_maxes[x]) {
-                output.add(new_max)
-                this._column_width_maxes[x] = new_max
-            }
-        }
-        if (output.isNotEmpty()) {
-            this._update_inv_column_map(output.min())
-        }
-        return output
     }
 
     fun get_column_width(column: Int): Int {
@@ -296,10 +281,10 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
         val visible_range = this.get_first_visible_column_index() .. this.get_last_visible_column_index()
         val target_offset = (max_width * offset).toInt()
-        val POSITION_ON_SCREEN: Int = 0
-        val POSITION_TO_RIGHT: Int = 1
-        val POSITION_TO_LEFT: Int = 2
-        val FITS_ON_SCREEN: Int = 3
+        val POSITION_ON_SCREEN = 0
+        val POSITION_TO_RIGHT = 1
+        val POSITION_TO_LEFT = 2
+        val FITS_ON_SCREEN = 3
 
         val column_state = Array(4) { false }
         val subdiv_state = Array(4) { false }
@@ -402,7 +387,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this.table_ui.scroll(target_rect.x - adj_offset, null)
     }
 
-    fun get_row_y_position_and_height(row: Int): Pair<Int, Int> {
+    private fun _get_row_y_position_and_height(row: Int): Pair<Int, Int> {
         val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size).toInt()
         val controller_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
         val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
@@ -425,7 +410,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     y += 1
                 }
 
-                for ((type, controller) in line.controllers.get_all()) {
+                for ((_, controller) in line.controllers.get_all()) {
                     if (!controller.visible) {
                         continue
                     }
@@ -437,7 +422,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     }
                 }
             }
-            for ((type, controller) in channel.controllers.get_all()) {
+            for ((_, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) {
                     continue
                 }
@@ -451,7 +436,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             working_y_offset += channel_gap_size
         }
 
-        for ((type, controller) in opus_manager.controllers.get_all()) {
+        for ((_, controller) in opus_manager.controllers.get_all()) {
             if (!controller.visible) {
                 continue
             }
@@ -511,7 +496,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     // TODO: Create row_height_map so OpusManager isn't accessed here
     private fun _scroll_to_y(row: Int) {
-        val (target_y, row_height) = this.get_row_y_position_and_height(row)
+        val (target_y, row_height) = this._get_row_y_position_and_height(row)
         // TODO: This feels sloppy but i'm too tired to think of a sufficiently cleaner answer
         val vertical_scroll_view = this.get_scroll_view()
         if (vertical_scroll_view.measuredHeight + vertical_scroll_view.scrollY < target_y + row_height) {
@@ -551,10 +536,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x, this._column_width_map.size - 1)
         return column_position
-    }
-
-    fun get_line_label_layout(): LineLabelColumnLayout {
-        return this.line_label_layout
     }
 
     // width map functions ---------------------------------------
@@ -656,7 +637,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
 
-    fun _calculate_table_size(): Pair<Int, Int> {
+    private fun _calculate_table_size(): Pair<Int, Int> {
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size).toInt()
         val controller_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
@@ -703,9 +684,4 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val height = (vis_channel_count * channel_gap_size) + (line_count * line_height) + (controller_count * controller_height)
         return Pair(width, height)
     }
-
-    fun get_column_width_map(): List<List<Int>> {
-        return this._column_width_map
-    }
-
 }

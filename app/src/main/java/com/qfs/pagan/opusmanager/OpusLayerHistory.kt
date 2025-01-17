@@ -236,15 +236,10 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun push_remove(beat_key: BeatKey, position: List<Int>) {
-        // Call AFTER insert
+        // Reminder: Call AFTER insert
 
         if (position.isNotEmpty()) {
             val stamp_position = position.toMutableList()
-            val parent_position = position.subList(0, position.size - 1)
-            val parent = this.get_tree(beat_key, parent_position)
-            //if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
-            //    stamp_position[stamp_position.size - 1] = parent.size - 2
-            //}
             this.push_to_history_stack( HistoryToken.REMOVE, listOf(beat_key.copy(), stamp_position) )
         }
     }
@@ -1719,8 +1714,4 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 }

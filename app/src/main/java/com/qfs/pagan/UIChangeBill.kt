@@ -12,22 +12,22 @@ class UIChangeBill {
             const val NONE = 0
         }
 
-        var flag = NONE
-        var level = 0
+        private var flag = NONE
+        private var level = 0
         fun lock_partial() {
-            this.flag = max(this.flag, UILock.PARTIAL)
+            this.flag = max(this.flag, PARTIAL)
             this.level += 1
         }
 
         fun lock_full() {
-            this.flag = max(this.flag, UILock.FULL)
+            this.flag = max(this.flag, FULL)
             this.level += 1
         }
 
         fun unlock() {
             this.level -= 1
             if (this.level == 0) {
-                this.flag = UILock.NONE
+                this.flag = NONE
             }
         }
 
@@ -36,7 +36,7 @@ class UIChangeBill {
         }
 
         fun is_full_locked(): Boolean {
-            return this.flag == UILock.FULL
+            return this.flag == FULL
         }
     }
 
@@ -94,7 +94,7 @@ class UIChangeBill {
         }
 
 
-        fun remove_node(path: List<Int>) {
+        private fun remove_node(path: List<Int>) {
             val next = path[0]
             if (path.size == 1) {
                 this.sub_nodes.removeAt(next)
@@ -130,7 +130,7 @@ class UIChangeBill {
         }
     }
 
-    val ui_lock = UILock()
+    private val ui_lock = UILock()
     private var _tree: Node = Node()
     private val working_path = mutableListOf<Int>()
     
@@ -145,10 +145,10 @@ class UIChangeBill {
         val queued_column_labels = mutableSetOf<Int>()
         var queued_context_menu: BillableItem? = null
         var queued_cursor_scroll: Array<Int>? = null
-        var stack = mutableListOf<Node>(this._tree)
+        val stack = mutableListOf(this._tree)
         this._tree = Node()
         while (stack.isNotEmpty()) {
-            var node = stack.removeAt(0)
+            val node = stack.removeAt(0)
             for (bill_item in node.bill) {
                 // The Specified BillableItems will be manually added to the end of the queue after some calculations
                 // The rest can be handled FIFO
@@ -253,7 +253,7 @@ class UIChangeBill {
                     BillableItem.ColumnAdd -> {
                         val column = node.int_queue.removeAt(0)
 
-                        for (i in 0 until queued_cells.size) {
+                        for (i in queued_cells.indices) {
                             for (coord in queued_cells[i]) {
                                 if (coord.x >= column) {
                                     coord.x += 1
@@ -288,7 +288,7 @@ class UIChangeBill {
 
                     BillableItem.ColumnRemove -> {
                         val column = node.int_queue.removeAt(0)
-                        for (i in 0 until queued_cells.size) {
+                        for (i in queued_cells.indices) {
                             val queued_cell_set = queued_cells[i]
                             queued_cell_set -= queued_cell_set.filter { coord: EditorTable.Coordinate ->
                                 coord.x == column
@@ -718,7 +718,7 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ForceScroll)
     }
 
-    fun get_working_tree(force: Boolean = false): Node? {
+    private fun get_working_tree(force: Boolean = false): Node? {
         // Force is used ONLY to apply FullRefresh
         return if (this.is_full_locked() && ! force) {
             null

@@ -132,7 +132,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
         return Pair(this.get_midi_bank(), this.midi_program)
     }
 
-    fun get_line(index: Int): T {
+    private fun get_line(index: Int): T {
         return this.lines[index]
     }
 
@@ -158,7 +158,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
             this.lines[line_offset].remove_beat(index, count)
         }
 
-        for ((type, controller) in this.controllers.get_all()) {
+        for ((_, controller) in this.controllers.get_all()) {
             controller.remove_beat(index, count)
         }
 
@@ -166,21 +166,21 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
     }
 
     /* Catch Blocked tree exceptions and upgrade them to exceptions with more context */
-    fun <T> catch_blocked_tree_exception_channel_controller(type: ControlEventType, callback: () -> T): T {
+    private fun <T> catch_blocked_tree_exception_channel_controller(type: ControlEventType, callback: () -> T): T {
         return try {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
-            throw OpusChannelAbstract.BlockedCtlTreeException(OpusLineAbstract.BlockedCtlTreeException(type, e))
+            throw BlockedCtlTreeException(OpusLineAbstract.BlockedCtlTreeException(type, e))
         }
     }
     /* Catch Blocked tree exceptions and upgrade them to exceptions with more context */
-    fun <T> catch_blocked_tree_exception(line_offset: Int, callback: () -> T): T {
+    private fun <T> catch_blocked_tree_exception(line_offset: Int, callback: () -> T): T {
         return try {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
-            throw OpusChannelAbstract.BlockedTreeException(line_offset, e)
+            throw BlockedTreeException(line_offset, e)
         } catch (e: OpusLineAbstract.BlockedCtlTreeException) {
-            throw OpusChannelAbstract.BlockedLineCtlTreeException(line_offset, e)
+            throw BlockedLineCtlTreeException(line_offset, e)
         }
     }
 
@@ -197,7 +197,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
         this.controllers.insert_beat(index)
     }
 
-    fun line_is_empty(line_offset: Int): Boolean {
+    private fun line_is_empty(line_offset: Int): Boolean {
         for (tree in this.get_line(line_offset).beats) {
             if (!tree.is_leaf() || tree.is_event()) {
                 return false
@@ -374,7 +374,7 @@ class OpusPercussionChannel : OpusChannelAbstract<PercussionEvent, OpusLinePercu
 
 
     override fun gen_line(): OpusLinePercussion {
-        return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
+        return OpusLinePercussion(DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 
     fun set_instrument(line: Int, offset: Int) {

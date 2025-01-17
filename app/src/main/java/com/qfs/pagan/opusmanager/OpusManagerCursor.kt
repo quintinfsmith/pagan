@@ -21,7 +21,6 @@ data class OpusManagerCursor(
     }
 
     class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
-    class InvalidControlLevelException(actual: CtlLineLevel?, expected: CtlLineLevel?): Exception("Incorrect Control Level. Expected: $expected but got $actual")
 
     override fun equals(other: Any?): Boolean {
         if (other !is OpusManagerCursor) {
@@ -252,18 +251,6 @@ data class OpusManagerCursor(
         return Pair(from_key, to_key)
     }
 
-    fun select_first_corner(beat_key: BeatKey) {
-        this.select_range(beat_key, beat_key)
-        this.ctl_type = null
-        this.ctl_level = null
-    }
-
-    fun select_line_ctl_first_corner(type: ControlEventType, beat_key: BeatKey) {
-        this.select_range(beat_key, beat_key)
-        this.ctl_type = type
-        this.ctl_level = CtlLineLevel.Line
-    }
-
     fun select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.select_range(beat_key_a, beat_key_b)
 
@@ -282,10 +269,6 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Global
     }
 
-    fun select_global_ctl_end_point(type: ControlEventType, beat: Int) {
-        this.select_global_ctl_range(type, beat, beat)
-    }
-
     fun select_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
         this.range = Pair(
             BeatKey(channel,0, first_beat),
@@ -294,10 +277,6 @@ data class OpusManagerCursor(
         this.mode = CursorMode.Range
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Channel
-    }
-
-    fun select_channel_ctl_end_point(type: ControlEventType, channel: Int, beat: Int) {
-        this.select_channel_ctl_range(type,channel, beat, beat)
     }
 
     override fun hashCode(): Int {

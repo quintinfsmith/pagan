@@ -47,7 +47,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
 
     abstract fun is_selected(): Boolean
 
-    fun get_label_icon(): Int {
+    private fun get_label_icon(): Int {
         return when (this.ctl_type) {
             ControlEventType.Tempo -> R.drawable.tempo
             ControlEventType.Volume -> R.drawable.volume
@@ -58,9 +58,5 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
 
     fun get_opus_manager(): OpusLayerInterface {
         return (this.parent as LineLabelView).get_opus_manager()
-    }
-
-    fun get_activity(): MainActivity {
-        return (this.context as ContextThemeWrapper).baseContext as MainActivity
     }
 }

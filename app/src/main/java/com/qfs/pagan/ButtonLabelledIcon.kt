@@ -11,19 +11,19 @@ import androidx.appcompat.widget.LinearLayoutCompat
 
 class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearLayoutCompat(ContextThemeWrapper(context, R.style.icon_button), attrs) {
     val label: TextView
-    val icon: ImageView
-    val inner: LinearLayoutCompat
+    private val _icon: ImageView
+    private val _inner: LinearLayoutCompat
 
     init {
         this.orientation = HORIZONTAL
-        this.inner = LayoutInflater.from(context)
+        this._inner = LayoutInflater.from(context)
             .inflate(
                 R.layout.button_labelled_icon,
                 this.parent as ViewGroup?,
                 false
             ) as LinearLayoutCompat
-        this.addView(this.inner)
-        this.icon = this.findViewById(R.id.icon)
+        this.addView(this._inner)
+        this._icon = this.findViewById(R.id.icon)
         this.label = this.findViewById(R.id.label)
     }
 
@@ -32,7 +32,7 @@ class ButtonLabelledIcon(context: Context, attrs: AttributeSet? = null): LinearL
     }
 
     fun set_icon(icon_id: Int) {
-        this.icon.setImageResource(icon_id)
+        this._icon.setImageResource(icon_id)
     }
 
 }

@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
@@ -13,10 +12,10 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)) {
-    val click_threshold_millis = 250
-    val click_threshold_pixels = 5
-    var press_position: Pair<Float, Float>? = null
-    var press_timestamp: Long = 0
+    private val click_threshold_millis = 250
+    private val click_threshold_pixels = 5
+    private var press_position: Pair<Float, Float>? = null
+    private var press_timestamp: Long = 0
     init {
         this.setOnClickListener {
             this.on_click()
@@ -171,7 +170,4 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         return (this.parent as LineLabelView).get_opus_manager()
     }
 
-    fun get_activity(): MainActivity {
-        return (this.context as ContextThemeWrapper).baseContext as MainActivity
-    }
 }

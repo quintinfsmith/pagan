@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class TuningMapRecycler(context: Context, attrs: AttributeSet): RecyclerView(context, attrs) {
-    class TuningMapViewHolder(itemView: View): RecyclerView.ViewHolder(itemView)
+    class TuningMapViewHolder(itemView: View): ViewHolder(itemView)
     init {
         this.layoutManager = LinearLayoutManager(this.context)
     }

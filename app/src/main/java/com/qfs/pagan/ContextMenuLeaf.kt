@@ -13,14 +13,14 @@ import kotlin.math.abs
 import kotlin.math.max
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
-    lateinit var button_split: ImageView
-    lateinit var button_insert: ImageView
-    lateinit var button_unset: ImageView
-    lateinit var button_remove: ImageView
-    lateinit var button_duration: TextView
-    lateinit var ns_octave: NumberSelector
-    lateinit var ns_offset: NumberSelector
-    lateinit var ros_relative_option: RelativeOptionSelector
+    private lateinit var _button_split: ImageView
+    private lateinit var _button_insert: ImageView
+    private lateinit var _button_unset: ImageView
+    private lateinit var _button_remove: ImageView
+    private lateinit var _button_duration: TextView
+    private lateinit var _ns_octave: NumberSelector
+    private lateinit var _ns_offset: NumberSelector
+    private lateinit var _ros_relative_option: RelativeOptionSelector
 
     init {
         this.refresh()
@@ -28,36 +28,36 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
     override fun init_properties() {
         val primary = this.primary!!
-        this.button_split = primary.findViewById(R.id.btnSplit)
-        this.button_insert = primary.findViewById(R.id.btnInsert)
-        this.button_unset = primary.findViewById(R.id.btnUnset)
-        this.button_remove = primary.findViewById(R.id.btnRemove)
-        this.button_duration = primary.findViewById(R.id.btnDuration)
-        this.ns_octave = primary.findViewById(R.id.nsOctave)
-        this.ns_offset = primary.findViewById(R.id.nsOffset)
-        this.ros_relative_option = primary.findViewById(R.id.rosRelativeOption)
+        this._button_split = primary.findViewById(R.id.btnSplit)
+        this._button_insert = primary.findViewById(R.id.btnInsert)
+        this._button_unset = primary.findViewById(R.id.btnUnset)
+        this._button_remove = primary.findViewById(R.id.btnRemove)
+        this._button_duration = primary.findViewById(R.id.btnDuration)
+        this._ns_octave = primary.findViewById(R.id.nsOctave)
+        this._ns_offset = primary.findViewById(R.id.nsOffset)
+        this._ros_relative_option = primary.findViewById(R.id.rosRelativeOption)
     }
 
     override fun setup_interactions() {
-        this.ns_octave.setOnChange(this::on_octave_change)
-        this.ns_offset.setOnChange(this::on_offset_change)
+        this._ns_octave.set_on_change(this::on_octave_change)
+        this._ns_offset.set_on_change(this::on_offset_change)
 
-        this.ros_relative_option.setOnChange(this::interact_rosRelativeOption)
+        this._ros_relative_option.set_on_change(this::interact_rosRelativeOption)
 
-        this.button_duration.setOnClickListener {
+        this._button_duration.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
 
             this.click_button_duration()
         }
-        this.button_duration.setOnLongClickListener {
+        this._button_duration.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
             this.long_click_button_duration()
         }
-        this.button_remove.setOnClickListener {
+        this._button_remove.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
@@ -65,21 +65,21 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             this.click_button_remove()
         }
 
-        this.button_remove.setOnLongClickListener {
+        this._button_remove.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
             this.long_click_button_remove()
         }
 
-        this.button_unset.setOnClickListener {
+        this._button_unset.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
             this.click_button_unset()
         }
 
-        this.button_split.setOnClickListener {
+        this._button_split.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
@@ -87,7 +87,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             this.click_button_split()
         }
 
-        this.button_split.setOnLongClickListener {
+        this._button_split.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
@@ -95,7 +95,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             this.long_click_button_split()
         }
 
-        this.button_insert.setOnClickListener {
+        this._button_insert.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
@@ -103,7 +103,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             this.click_button_insert()
         }
 
-        this.button_insert.setOnLongClickListener {
+        this._button_insert.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
@@ -117,13 +117,13 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val opus_manager = this.get_opus_manager()
 
         val radix = opus_manager.tuning_map.size
-        this.ns_offset.set_max(radix - 1)
+        this._ns_offset.set_max(radix - 1)
 
         if (main.configuration.relative_mode) {
-            this.ros_relative_option.visibility = View.VISIBLE
-            this.ros_relative_option.setState(opus_manager.relative_mode, true, true)
+            this._ros_relative_option.visibility = View.VISIBLE
+            this._ros_relative_option.setState(opus_manager.relative_mode, manual = true, surpress_callback = true)
         } else {
-            this.ros_relative_option.visibility = View.GONE
+            this._ros_relative_option.visibility = View.GONE
         }
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
@@ -147,48 +147,48 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 }
 
                 if (value >= 0) {
-                    this.ns_offset.setState(
+                    this._ns_offset.setState(
                         value % radix,
                         manual = true,
                         surpress_callback = true
                     )
-                    this.ns_octave.setState(
+                    this._ns_octave.setState(
                         value / radix,
                         manual = true,
                         surpress_callback = true
                     )
                 }
 
-                this.button_unset.setImageResource(R.drawable.unset)
-                this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
+                this._button_unset.setImageResource(R.drawable.unset)
+                this._button_duration.text = this.context.getString(R.string.label_duration, event.duration)
             }
             null -> {
-                this.ns_octave.unset_active_button()
-                this.ns_offset.unset_active_button()
-                this.button_duration.text = ""
+                this._ns_octave.unset_active_button()
+                this._ns_offset.unset_active_button()
+                this._button_duration.text = ""
             }
         }
 
-        this.ros_relative_option.setState(
+        this._ros_relative_option.setState(
             opus_manager.relative_mode,
-            true,
-            true
+            manual = true,
+            surpress_callback = true
         )
 
-        this.button_split.isEnabled = true
-        this.button_split.isClickable = this.button_split.isEnabled
+        this._button_split.isEnabled = true
+        this._button_split.isClickable = this._button_split.isEnabled
 
-        this.button_duration.isEnabled = current_event_tree.is_event()
-        this.button_duration.isClickable = this.button_duration.isEnabled
+        this._button_duration.isEnabled = current_event_tree.is_event()
+        this._button_duration.isClickable = this._button_duration.isEnabled
 
-        this.button_unset.isEnabled = !(current_event_tree.is_leaf() && !current_event_tree.is_event())
-        this.button_unset.isClickable = this.button_unset.isEnabled
+        this._button_unset.isEnabled = !(current_event_tree.is_leaf() && !current_event_tree.is_event())
+        this._button_unset.isClickable = this._button_unset.isEnabled
 
-        this.button_remove.isEnabled = opus_manager.cursor.get_position().isNotEmpty()
-        this.button_remove.isClickable = this.button_remove.isEnabled
+        this._button_remove.isEnabled = opus_manager.cursor.get_position().isNotEmpty()
+        this._button_remove.isClickable = this._button_remove.isEnabled
     }
 
-    fun click_button_duration() {
+    private fun click_button_duration() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -203,13 +203,13 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         }
     }
 
-    fun click_button_split() {
+    private fun click_button_split() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.split_tree_at_cursor(2)
     }
 
-    fun click_button_insert() {
+    private fun click_button_insert() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
@@ -221,13 +221,13 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         }
     }
 
-    fun click_button_remove() {
+    private fun click_button_remove() {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         opus_manager.remove_at_cursor(1)
     }
 
-    fun long_click_button_split(): Boolean {
+    private fun long_click_button_split(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         main.dialog_number_input(this.context.getString(R.string.dlg_split), 2, 32) { splits: Int ->
@@ -236,7 +236,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         return true
     }
 
-    fun long_click_button_insert(): Boolean {
+    private fun long_click_button_insert(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
@@ -251,7 +251,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         return true
     }
 
-    fun long_click_button_duration(): Boolean {
+    private fun long_click_button_duration(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
@@ -266,7 +266,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         return true
     }
 
-    fun long_click_button_remove(): Boolean {
+    private fun long_click_button_remove(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 

@@ -5,10 +5,6 @@ import android.text.TextWatcher
 
 abstract class RangedTextWatcher<T: Number>(private var _number_input: RangedNumberInput<T>, var min_value: T, var max_value: T): TextWatcher {
     var lockout = false
-    init {
-        this._number_input.addTextChangedListener(this)
-    }
-
     override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
         if (this.lockout) {
             return

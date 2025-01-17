@@ -28,14 +28,14 @@ class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, c
         this._slider.progress = default.value.roundToInt()
 
         this._button.setOnClickListener {
-            var context = this.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
+            var working_context = this.context
+            while (working_context !is MainActivity) {
+                working_context = (working_context as ContextThemeWrapper).baseContext
             }
 
             val dlg_default = this.get_event().value
-            val dlg_title = context.getString(R.string.dlg_set_reverb)
-            context.dialog_float_input(dlg_title, this._min, this._max, dlg_default) { new_value: Float ->
+            val dlg_title = working_context.getString(R.string.dlg_set_reverb)
+            working_context.dialog_float_input(dlg_title, this._min, this._max, dlg_default) { new_value: Float ->
                 val new_event = OpusReverbEvent(new_value)
                 this.set_event(new_event)
             }

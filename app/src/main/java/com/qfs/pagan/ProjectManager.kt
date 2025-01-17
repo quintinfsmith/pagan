@@ -15,7 +15,7 @@ class ProjectManager(val activity: MainActivity) {
     val path = "$data_dir/projects/"
     private val _cache_path = "$data_dir/project_list.json"
 
-    fun get_directory(): File {
+    private fun get_directory(): File {
         val directory = File(this.path)
         if (!directory.isDirectory) {
             if (! directory.mkdirs()) {
@@ -95,7 +95,7 @@ class ProjectManager(val activity: MainActivity) {
 
         val project_list = mutableListOf<Pair<String, String>>()
         for (json_file in directory.listFiles()!!) {
-            var project_name = try {
+            val project_name = try {
                 this.get_file_project_name(json_file) ?: this.generate_file_project_name()
             } catch (e: Exception) {
                 this.activity.getString(R.string.corrupted_project)

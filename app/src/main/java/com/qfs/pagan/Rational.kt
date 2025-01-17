@@ -6,6 +6,9 @@ data class Rational(var n: Int, var d: Int) {
     init {
         this.reduce()
     }
+    override fun hashCode(): Int {
+        return (this.n.toFloat() / this.d.toFloat()).toRawBits()
+    }
     override fun toString(): String {
         this.reduce()
         return "($n / $d)"

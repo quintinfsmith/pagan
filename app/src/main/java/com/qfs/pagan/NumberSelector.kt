@@ -184,7 +184,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 (this.getChildAt(j) as ViewGroup).addView(currentView)
             }
 
-            val layout_params = (currentView.layoutParams as LinearLayout.LayoutParams)
+            val layout_params = (currentView.layoutParams as LayoutParams)
             layout_params.weight = 1F
             layout_params.gravity = CENTER
             if (orientation == HORIZONTAL) {
@@ -213,7 +213,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
     }
 
-    fun setOnChange(hook: (NumberSelector) -> Unit) {
+    fun set_on_change(hook: (NumberSelector) -> Unit) {
         this._on_change_hook = hook
     }
 

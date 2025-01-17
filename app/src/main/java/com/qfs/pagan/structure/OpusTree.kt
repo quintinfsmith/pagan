@@ -164,7 +164,7 @@ class OpusTree<T> {
         } else {
             this.set_size(place_holder.size)
             for ((key, value) in place_holder.divisions) {
-                this.set(key, value)
+                this[key] = value
             }
         }
     }

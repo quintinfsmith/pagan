@@ -12,13 +12,13 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import kotlin.math.max
 
 class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container) {
-    lateinit var widget_wrapper: LinearLayout
+    private lateinit var _widget_wrapper: LinearLayout
     // --------------------------------
-    lateinit var button_split: ImageView
-    lateinit var button_insert: ImageView
-    lateinit var button_remove: ImageView
-    lateinit var button_duration: TextView
-    lateinit var button_unset: ImageView
+    private lateinit var _button_split: ImageView
+    private lateinit var _button_insert: ImageView
+    private lateinit var _button_remove: ImageView
+    private lateinit var _button_duration: TextView
+    private lateinit var _button_unset: ImageView
 
     init {
         this.init_widget()
@@ -27,74 +27,74 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
 
     override fun init_properties() {
-        this.widget_wrapper = this.secondary!! as LinearLayout
+        this._widget_wrapper = this.secondary!! as LinearLayout
         val primary = this.primary!!
-        this.button_split = primary.findViewById(R.id.btnSplit)
-        this.button_insert = primary.findViewById(R.id.btnInsert)
-        this.button_remove = primary.findViewById(R.id.btnRemove)
-        this.button_duration = primary.findViewById(R.id.btnDuration)
-        this.button_unset = primary.findViewById(R.id.btnUnset)
+        this._button_split = primary.findViewById(R.id.btnSplit)
+        this._button_insert = primary.findViewById(R.id.btnInsert)
+        this._button_remove = primary.findViewById(R.id.btnRemove)
+        this._button_duration = primary.findViewById(R.id.btnDuration)
+        this._button_unset = primary.findViewById(R.id.btnUnset)
     }
 
-    fun _widget_callback(event: T) {
+    private fun _widget_callback(event: T) {
         val opus_manager = this.get_opus_manager()
         opus_manager.set_event_at_cursor(event)
     }
 
-    fun init_widget() {
-        this.widget_wrapper.removeAllViews()
-        this.widget_wrapper.addView(this.widget as View)
+    private fun init_widget() {
+        this._widget_wrapper.removeAllViews()
+        this._widget_wrapper.addView(this.widget as View)
         (this.widget as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
         (this.widget as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
     }
 
     override fun setup_interactions() {
-        this.button_split.setOnClickListener {
+        this._button_split.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
             this.click_button_split()
         }
-        this.button_split.setOnLongClickListener {
+        this._button_split.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
             this.long_click_button_split()
         }
 
-        this.button_duration.setOnClickListener {
+        this._button_duration.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
             this.click_button_duration()
         }
 
-        this.button_duration.setOnLongClickListener {
+        this._button_duration.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
             this.long_click_button_duration()
         }
-        this.button_insert.setOnClickListener {
+        this._button_insert.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
             this.click_button_insert()
         }
-        this.button_insert.setOnLongClickListener {
+        this._button_insert.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
             this.long_click_button_insert()
         }
 
-        this.button_remove.setOnClickListener {
+        this._button_remove.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
             this.click_button_remove()
         }
-        this.button_remove.setOnLongClickListener {
+        this._button_remove.setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
             }
@@ -102,7 +102,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             this.long_click_button_remove()
         }
 
-        this.button_unset.setOnClickListener {
+        this._button_unset.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
@@ -111,16 +111,16 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         }
     }
 
-    fun click_button_unset() {
+    private fun click_button_unset() {
         val opus_manager = this.get_opus_manager()
         opus_manager.unset()
     }
-    fun click_button_remove() {
+    private fun click_button_remove() {
         val opus_manager = this.get_opus_manager()
         opus_manager.remove_at_cursor(1)
     }
 
-    fun long_click_button_remove(): Boolean {
+    private fun long_click_button_remove(): Boolean {
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
@@ -147,7 +147,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         return false
     }
 
-    fun click_button_insert() {
+    private fun click_button_insert() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
@@ -169,7 +169,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         }
     }
 
-    fun long_click_button_insert(): Boolean {
+    private fun long_click_button_insert(): Boolean {
         val main = this.get_main()
         main.dialog_number_input(main.getString(R.string.dlg_insert), 2, 32, 2) { insert_count: Int ->
             val opus_manager = this.get_opus_manager()
@@ -195,7 +195,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         return false
     }
 
-    fun click_button_split() {
+    private fun click_button_split() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         when (cursor.ctl_level) {
@@ -206,7 +206,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         }
     }
 
-    fun long_click_button_split(): Boolean {
+    private fun long_click_button_split(): Boolean {
         val main = this.get_main()
         main.dialog_number_input(main.getString(R.string.dlg_split), 2, 32, 2) { split_count: Int ->
             val opus_manager = this.get_opus_manager()
@@ -226,7 +226,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val cursor = opus_manager.cursor
         val current_event = this.get_control_event<T>()
 
-        if (this.widget_wrapper.isEmpty()) {
+        if (this._widget_wrapper.isEmpty()) {
             this.init_widget()
         } else {
             this.widget.set_event(current_event, true)
@@ -235,7 +235,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         val ctl_tree = when (cursor.ctl_level!!) {
             CtlLineLevel.Global -> {
                 val (actual_beat, actual_position) = opus_manager.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
-                opus_manager.get_global_ctl_tree<T>(
+                opus_manager.get_global_ctl_tree(
                     cursor.ctl_type!!,
                     actual_beat,
                     actual_position
@@ -243,7 +243,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             }
             CtlLineLevel.Channel -> {
                 val (actual_beat, actual_position) = opus_manager.controller_channel_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
-                opus_manager.get_channel_ctl_tree<T>(
+                opus_manager.get_channel_ctl_tree(
                     cursor.ctl_type!!,
                     cursor.channel,
                     actual_beat,
@@ -261,25 +261,25 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             }
         }
 
-        this.button_remove.isEnabled = cursor.get_position().isNotEmpty()
-        this.button_unset.isEnabled = ctl_tree.is_event()
-        this.button_duration.isEnabled = ctl_tree.is_event()
+        this._button_remove.isEnabled = cursor.get_position().isNotEmpty()
+        this._button_unset.isEnabled = ctl_tree.is_event()
+        this._button_duration.isEnabled = ctl_tree.is_event()
 
-        this.button_duration.text = if (ctl_tree.is_event()) {
+        this._button_duration.text = if (ctl_tree.is_event()) {
            this.context.getString(R.string.label_duration, ctl_tree.get_event()!!.duration)
         } else {
             ""
         }
         if (cursor.ctl_type != ControlEventType.Tempo) {
-            this.button_duration.visibility = View.VISIBLE
+            this._button_duration.visibility = View.VISIBLE
         } else {
-            this.button_duration.visibility = View.GONE
+            this._button_duration.visibility = View.GONE
         }
 
         this.widget.set_event(current_event, true)
     }
 
-    fun <T: OpusControlEvent> get_control_event(): T {
+    private fun <T: OpusControlEvent> get_control_event(): T {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         return when (cursor.ctl_level!!) {

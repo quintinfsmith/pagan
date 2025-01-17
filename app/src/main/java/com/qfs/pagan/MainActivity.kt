@@ -1118,8 +1118,6 @@ class MainActivity : AppCompatActivity() {
             this.dialog_project_name()
         }
 
-        val radix = this.get_opus_manager().tuning_map.size
-
         //-------------------------------------------
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
         btnRadix.setOnClickListener {

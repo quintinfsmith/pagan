@@ -1,6 +1,4 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.Midi
-import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -179,7 +177,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         super.new_channel(channel, lines, uuid)
-        this.cursor_select_channel(channel ?: this.channels.size - 1)
+        this.cursor_select_channel(channel ?: (this.channels.size - 1))
     }
 
     override fun new_line(channel: Int, line_offset: Int?) {
@@ -821,8 +819,8 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val beat_key = cursor.get_beatkey()
                 val position = cursor.get_position().toMutableList()
 
-                var working_tree = this.get_tree(beat_key).copy()
-                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, position, count)
+                val working_tree = this.get_tree(beat_key).copy()
+                val (real_count, _) = this._calculate_new_position_after_remove(working_tree, position, count)
 
                 this.remove_repeat(beat_key, position, real_count)
             }
@@ -1038,7 +1036,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         )
     }
 
-    fun <T> _calculate_new_position_after_remove(working_tree: OpusTree<T>, position: List<Int>, count: Int): Pair<Int, List<Int>> {
+    private fun <T> _calculate_new_position_after_remove(working_tree: OpusTree<T>, position: List<Int>, count: Int): Pair<Int, List<Int>> {
         val cursor_position = position.toMutableList()
         var real_count = 0
         for (i in 0 until count) {
@@ -1539,7 +1537,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                var working_beat_key = cursor.get_beatkey()
+                val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {
@@ -1608,7 +1606,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                var working_beat_key = cursor.get_beatkey()
+                val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
                 val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
@@ -1743,7 +1741,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                var working_beat_key = cursor.get_beatkey()
+                val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {

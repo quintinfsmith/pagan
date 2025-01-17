@@ -7,31 +7,31 @@ import android.widget.RadioGroup
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_range, R.layout.contextmenu_range_secondary, primary_container, secondary_container) {
-    lateinit var button_erase: ImageView
-    lateinit var radio_mode: RadioGroup
-    lateinit var label: PaganTextView
+    private lateinit var _button_erase: ImageView
+    private lateinit var _radio_mode: RadioGroup
+    private lateinit var _label: PaganTextView
 
     init {
         this.refresh()
     }
 
     override fun init_properties() {
-        this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
-        this.label = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        this._button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
+        this._label = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             this.secondary!!.findViewById(R.id.tvMoveModeLabelB)
         } else {
             this.primary.findViewById(R.id.tvMoveModeLabel)
         }
 
-        this.radio_mode = this.secondary!!.findViewById<RadioGroup?>(R.id.rgMoveMode)
+        this._radio_mode = this.secondary!!.findViewById(R.id.rgMoveMode)
     }
 
     override fun setup_interactions() {
-        this.button_erase.setOnClickListener {
+        this._button_erase.setOnClickListener {
             this.get_opus_manager().unset()
         }
 
-        this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
+        this._radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
             val main = this.get_main()
             val opus_manager = this.get_opus_manager()
 
@@ -43,7 +43,7 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
             }
             main.save_configuration()
 
-            label.text = when (button_id) {
+            _label.text = when (button_id) {
                 R.id.rbMoveModeMove -> {
                     if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
                         this.context.resources.getString(R.string.label_move_range)
@@ -73,14 +73,14 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
 
-        this.radio_mode.check(when (main.configuration.move_mode) {
+        this._radio_mode.check(when (main.configuration.move_mode) {
             PaganConfiguration.MoveMode.MOVE -> R.id.rbMoveModeMove
             PaganConfiguration.MoveMode.COPY -> R.id.rbMoveModeCopy
             PaganConfiguration.MoveMode.MERGE -> R.id.rbMoveModeMerge
         })
 
         if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            this.label.text = when (main.configuration.move_mode) {
+            this._label.text = when (main.configuration.move_mode) {
                 PaganConfiguration.MoveMode.MOVE -> this.context.resources.getString(R.string.label_move_beat)
                 PaganConfiguration.MoveMode.COPY ->  this.context.resources.getString(R.string.label_copy_beat)
                 PaganConfiguration.MoveMode.MERGE -> this.context.resources.getString(R.string.label_merge_beat)

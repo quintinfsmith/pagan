@@ -42,11 +42,6 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
 
     }
 
-    fun remove_label(y: Int) {
-        this._inner_wrapper.removeViewAt(y)
-        this._notify_item_range_changed(y, this.get_count() - y)
-    }
-
     fun remove_labels(y: Int, count: Int) {
         val original_child_count = this.get_count()
         val adj_count = if (y + count < original_child_count) {

@@ -38,7 +38,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         }
 
         override fun get_marked_frames(): Array<Int> {
-            return arrayOf<Int>()
+            return arrayOf()
         }
 
         override fun has_frames_remaining(frame: Int): Boolean {

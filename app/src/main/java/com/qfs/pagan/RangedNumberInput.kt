@@ -19,6 +19,7 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
         }
     }
     init {
+        this.addTextChangedListener(this._watcher)
         this.inputType = InputType.TYPE_CLASS_NUMBER
     }
     override fun get_value(): Int? {
@@ -53,6 +54,7 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
     }
     init {
         this.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        this.addTextChangedListener(this._watcher)
     }
 
     override fun get_value(): Float? {

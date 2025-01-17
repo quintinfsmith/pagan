@@ -142,7 +142,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun single(opus_manager: OpusLayerInterface) {
-                var repeat = this.get_buffer_value(1, maximum=64)
+                val repeat = this.get_buffer_value(1, maximum=64)
                 if (repeat > 0) {
                     val tree = opus_manager.get_tree()
                     if (tree.parent == null) {

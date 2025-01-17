@@ -170,15 +170,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private fun _map_real_handle(handle: SampleHandle, start_frame: Int) {
         val end_frame = handle.release_frame!! + start_frame
-        var sample_start_frame = start_frame
-        var sample_end_frame = end_frame + handle.get_release_duration()
+        val actual_end_frame = end_frame + handle.get_release_duration()
 
-        this._handle_range_map[handle.uuid] = sample_start_frame .. sample_end_frame
+        this._handle_range_map[handle.uuid] = start_frame..actual_end_frame
         this._handle_map[handle.uuid] = handle
-        if (!this._frame_map.containsKey(sample_start_frame)) {
-            this._frame_map[sample_start_frame] = mutableSetOf()
+        if (!this._frame_map.containsKey(start_frame)) {
+            this._frame_map[start_frame] = mutableSetOf()
         }
-        this._frame_map[sample_start_frame]!!.add(handle.uuid)
+        this._frame_map[start_frame]!!.add(handle.uuid)
     }
 
     fun clear() {

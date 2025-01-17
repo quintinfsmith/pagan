@@ -2039,8 +2039,11 @@ open class OpusLayerBase {
     open fun _controller_global_copy_range(type: ControlEventType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean = false) {
         val start = min(point_a, point_b)
         val end = max(point_a, point_b)
-        if (target + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+
+        // Expand the song duration if necessary
+        val max_beat = (end - start) + target
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2069,8 +2072,8 @@ open class OpusLayerBase {
     open fun _controller_channel_to_global_copy_range(type: ControlEventType, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
         val start = min(point_a, point_b)
         val end = max(point_a, point_b)
-        if (target_beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+        while (this.beat_count <= target_beat + (end - start)) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2098,8 +2101,11 @@ open class OpusLayerBase {
     open fun _controller_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
         val start = min(point_a, point_b)
         val end = max(point_a, point_b)
-        if (target_beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+
+        // Expand the song duration if necessary
+        val max_beat = (end - start) + target_beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2125,6 +2131,14 @@ open class OpusLayerBase {
     }
 
     open fun _controller_line_copy_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        // Expand the song duration if necessary
+        val first_beat = min(second_corner.beat, first_corner.beat)
+        val second_beat = max(second_corner.beat, first_corner.beat)
+        val max_beat = (second_beat - first_beat) + beat_key.beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
+        }
+
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -2163,8 +2177,10 @@ open class OpusLayerBase {
     open fun _controller_channel_to_line_copy_range(type: ControlEventType, channel_from: Int, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
         val start = min(beat_a, beat_b)
         val end = max(beat_a, beat_b)
-        if (target_key.beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+
+        val max_beat = (end - start) + target_key.beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2193,8 +2209,9 @@ open class OpusLayerBase {
     open fun _controller_global_to_line_copy_range(type: ControlEventType, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
         val start = min(beat_a, beat_b)
         val end = max(beat_a, beat_b)
-        if (target_key.beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+        val max_beat = (end - start) + target_key.beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2224,8 +2241,9 @@ open class OpusLayerBase {
         val start = min(beat_a, beat_b)
         val end = max(beat_a, beat_b)
 
-        if (target_beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+        val max_beat = (end - start) + target_beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2254,8 +2272,9 @@ open class OpusLayerBase {
         val start = min(beat_a, beat_b)
         val end = max(beat_a, beat_b)
 
-        if (target_beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+        val max_beat = (end - start) + target_beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2283,8 +2302,9 @@ open class OpusLayerBase {
     open fun _controller_global_to_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
         val start = min(point_a, point_b)
         val end = max(point_a, point_b)
-        if (target_beat + (end - start) >= this.beat_count) {
-            throw IndexOutOfBoundsException()
+        val max_beat = (end - start) + target_beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2310,9 +2330,18 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+        // Expand the song duration if necessary
+        val first_beat = min(first_corner.beat, second_corner.beat)
+        val second_beat = max(first_corner.beat, second_corner.beat)
+        val max_beat = (second_beat - first_beat) + beat_key.beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
+        }
 
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
+
+
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
 
         for (i in original_keys.indices) {
@@ -2337,6 +2366,14 @@ open class OpusLayerBase {
     }
 
     open fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        // Expand the song duration if necessary
+        val first_beat = min(first_corner.beat, second_corner.beat)
+        val second_beat = max(first_corner.beat, second_corner.beat)
+        val max_beat = (second_beat - first_beat) + beat_key.beat
+        while (max_beat >= this.beat_count) {
+            this.insert_beat(this.beat_count)
+        }
+
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -2363,6 +2400,7 @@ open class OpusLayerBase {
         }
 
         for (i in target_keys.indices) {
+
             this.replace_tree(
                 target_keys[i],
                 null,

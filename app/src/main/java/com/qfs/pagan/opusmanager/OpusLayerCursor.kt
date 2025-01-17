@@ -1115,6 +1115,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             throw InvalidCursorState()
         }
     }
+
     fun copy_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!

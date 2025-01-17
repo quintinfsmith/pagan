@@ -1,6 +1,4 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.Midi
-import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -1218,17 +1216,17 @@ open class OpusLayerCursor: OpusLayerBase() {
             throw InvalidCursorState()
         }
 
-        val tree = this.get_line_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            beat_key,
-            listOf()
-        )
+       // val tree = this.get_line_ctl_tree<OpusControlEvent>(
+       //     this.cursor.ctl_type!!,
+       //     beat_key,
+       //     listOf()
+       // )
 
-        this.cursor_select_ctl_at_line(
-            this.cursor.ctl_type!!,
-            beat_key,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
+       // this.cursor_select_ctl_at_line(
+       //     this.cursor.ctl_type!!,
+       //     beat_key,
+       //     tree.get_first_event_tree_position() ?: listOf()
+       // )
     }
 
     fun copy_channel_ctl_to_beat(channel: Int, beat: Int) {
@@ -1297,20 +1295,60 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
+    }
 
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            channel,
-            beat,
-            listOf()
-        )
+    override fun controller_global_to_line_move_leaf(type: ControlEventType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
+        super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
+        val cursor_position = this.get_first_position_line_ctl(type, target_key, target_position)
+        this.cursor_select_ctl_at_line(type, target_key, cursor_position)
+    }
 
-        this.cursor_select_ctl_at_channel(
-            this.cursor.ctl_type!!,
-            channel,
-            beat,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
+    override fun controller_global_to_channel_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
+        val cursor_position = this.get_first_position_channel_ctl(type, channel_to, beat_to, position_to)
+        this.cursor_select_ctl_at_channel(type, channel_to, beat_to, cursor_position)
+    }
+
+    override fun controller_global_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
+        super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
+        val cursor_position = this.get_first_position_global_ctl(type, beat_to, position_to)
+        this.cursor_select_ctl_at_global(type, beat_to, cursor_position)
+    }
+
+    override fun controller_channel_to_line_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
+        val cursor_position = this.get_first_position_line_ctl(type, beat_key_to, position_to)
+        this.cursor_select_ctl_at_line(type, beat_key_to, cursor_position)
+    }
+
+    override fun controller_channel_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_channel_move_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
+        val cursor_position = this.get_first_position_channel_ctl(type, channel_to, beat_to, position_to)
+        this.cursor_select_ctl_at_channel(type, channel_to, beat_to, cursor_position)
+    }
+
+    override fun controller_channel_to_global_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
+        val cursor_position = this.get_first_position_global_ctl(type, target_beat, target_position)
+        this.cursor_select_ctl_at_global(type, target_beat, cursor_position)
+    }
+
+    override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
+        val cursor_position = this.get_first_position_line_ctl(type, beat_key_to, position_to)
+        this.cursor_select_ctl_at_line(type, beat_key_to, cursor_position)
+    }
+
+    override fun controller_line_to_channel_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
+        val cursor_position = this.get_first_position_channel_ctl(type, channel_to, beat_to, position_to)
+        this.cursor_select_ctl_at_channel(type, channel_to, beat_to, cursor_position)
+    }
+
+    override fun controller_line_to_global_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
+        val cursor_position = this.get_first_position_global_ctl(type, target_beat, target_position)
+        this.cursor_select_ctl_at_global(type, target_beat, cursor_position)
     }
 
     fun copy_global_ctl_to_beat(beat: Int) {
@@ -1347,19 +1385,8 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
-
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            beat,
-            listOf()
-        )
-
-        this.cursor_select_ctl_at_global(
-            this.cursor.ctl_type!!,
-            beat,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
     }
+
     fun move_global_ctl_to_beat(beat: Int) {
         if (this.cursor.ctl_level != CtlLineLevel.Global) {
             throw InvalidOverwriteCall()
@@ -1394,18 +1421,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
-
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            beat,
-            listOf()
-        )
-
-        this.cursor_select_ctl_at_global(
-            this.cursor.ctl_type!!,
-            beat,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
     }
 
     fun move_to_previous_visible_line(repeat: Int = 1) {

@@ -57,28 +57,29 @@ class OpusLayerInterface : OpusLayerHistory() {
     // UI BILL Interface functions vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     private fun <T> lock_ui_full(callback: () -> T): T? {
         this._ui_change_bill.lock_full()
+
         val output = try {
-            callback()
+            val tmp = callback()
+            this._ui_change_bill.unlock()
+            tmp
         } catch (e: BlockedActionException) {
+            this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            if (this._blocked_action_catcher > 0) {
-                this._ui_change_bill.unlock()
+            if (this._ui_change_bill.is_locked()) {
                 throw e
+            } else {
+                null
             }
-            null
         } catch (e: Exception) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            //if (!this.ui_change_bill.is_locked()) {
-            //    this.apply_bill_changes()
-            //}
             throw e
         }
 
-        this._ui_change_bill.unlock()
         if (!this._ui_change_bill.is_locked()) {
             this._apply_bill_changes()
         }
+
         return output
     }
 
@@ -86,28 +87,27 @@ class OpusLayerInterface : OpusLayerHistory() {
         this._ui_change_bill.lock_partial()
 
         val output = try {
-            callback()
+            val tmp = callback()
+            this._ui_change_bill.unlock()
+            tmp
         } catch (e: BlockedActionException) {
+            this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            if (this._blocked_action_catcher > 0) {
-                this._ui_change_bill.unlock()
+            if (this.history_cache.get_call_depth() > 0) {
                 throw e
+            } else {
+                null
             }
-            null
         } catch (e: Exception) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-
-            //if (!this.ui_change_bill.is_locked()) {
-            //    this.apply_bill_changes()
-            //}
             throw e
         }
 
-        this._ui_change_bill.unlock()
         if (!this._ui_change_bill.is_locked()) {
             this._apply_bill_changes()
         }
+
         return output
     }
 
@@ -392,9 +392,117 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    override fun _controller_line_copy_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_line_copy_range(type, beat_key, first_corner, second_corner, unset_original)
+        }
+    }
+
+    override fun _controller_line_to_channel_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_channel: Int, target_beat: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_line_to_channel_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_channel, target_beat, unset_original)
+        }
+    }
+
+    override fun _controller_line_to_global_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_beat: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_line_to_global_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_beat, unset_original)
+        }
+    }
+
+    override fun _controller_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_channel_copy_range(type, target_channel, target_beat, original_channel, point_a, point_b, unset_original)
+        }
+    }
+
+    override fun _controller_channel_to_line_copy_range(type: ControlEventType, channel_from: Int, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_channel_to_line_copy_range(type, channel_from, beat_a, beat_b, target_key, unset_original)
+        }
+    }
+
+    override fun _controller_channel_to_global_copy_range(type: ControlEventType, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_channel_to_global_copy_range(type, target_beat, original_channel, point_a, point_b, unset_original)
+        }
+    }
+
+    override fun _controller_global_copy_range(type: ControlEventType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_global_copy_range(type, target, point_a, point_b, unset_original)
+        }
+    }
+
+    override fun _controller_global_to_line_copy_range(type: ControlEventType, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_global_to_line_copy_range(type, beat_a, beat_b, target_key, unset_original)
+        }
+    }
+
+    override fun _controller_global_to_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_global_to_channel_copy_range(type, target_channel, target_beat, point_a, point_b, unset_original)
+        }
+    }
+
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         this.lock_ui_partial {
             super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+        }
+    }
+
+    override fun controller_line_to_global_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
+        }
+    }
+
+    override fun controller_line_to_channel_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
+        }
+    }
+
+    override fun controller_channel_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_channel_move_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun controller_channel_to_line_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
+        }
+    }
+
+    override fun controller_channel_to_global_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
+        }
+    }
+
+    override fun controller_global_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
+        }
+    }
+
+    override fun controller_global_to_channel_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun controller_global_to_line_move_leaf(type: ControlEventType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
         }
     }
 

@@ -145,7 +145,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
             val use_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position).copy()
 
             val output = callback()
-
             this.push_to_history_stack(
                 HistoryToken.REPLACE_LINE_CTL_TREE,
                 listOf(type, beat_key.copy(), position.toList(), use_tree)
@@ -240,11 +239,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
         if (position.isNotEmpty()) {
             val stamp_position = position.toMutableList()
-            val parent_position = position.subList(0, position.size - 1)
-            val parent = this.get_tree(beat_key, parent_position)
-            //if (stamp_position.last() >= parent.size - 1 && parent.size > 1) {
-            //    stamp_position[stamp_position.size - 1] = parent.size - 2
-            //}
             this.push_to_history_stack( HistoryToken.REMOVE, listOf(beat_key.copy(), stamp_position) )
         }
     }
@@ -270,26 +264,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     private fun <T> _remember(callback: () -> T): T {
         return try {
-            this.history_cache.remember {
-                callback()
+            val output = this.history_cache.remember(callback)
+            output
+        } catch (e: Exception) {
+            val call_depth = this.history_cache.get_call_depth()
+            if (call_depth == 0) {
+                this.apply_undo()
             }
-        } catch (history_error: HistoryCache.HistoryError) {
-            val real_exception = history_error.e
-            var tmp_error: Exception = history_error
-            var node: HistoryCache.HistoryNode? = null
-
-            while (tmp_error is HistoryCache.HistoryError) {
-                node = tmp_error.failed_node
-                tmp_error = tmp_error.e
-            }
-
-            if (node != null) {
-                this.history_cache.forget {
-                    this.apply_history_node(node)
-                }
-            }
-
-            throw real_exception
+            throw e
         }
     }
 
@@ -1045,9 +1027,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+    override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
         this._remember {
-            super.controller_line_move_leaf(type, beatkey_from, position_from, beatkey_to, position_to)
+            super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
         }
     }
 

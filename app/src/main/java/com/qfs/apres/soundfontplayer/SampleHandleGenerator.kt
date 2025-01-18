@@ -41,29 +41,59 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     }
 
 
-    var sample_data_map = HashMap<MapKey, SampleHandle>()
+    var sample_data_map = HashMap<MapKey, Pair<SampleHandle, SampleHandle?>>()
     var generated = 0
 
     fun clear() {
         this.sample_data_map.clear()
     }
 
-    fun get(event: NoteOn, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
+    fun get(event: NoteOn, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): Pair<SampleHandle, SampleHandle?> {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
-        val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
-        output.volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
-        output.pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
-        return output
+        val (handle_main, handle_linked) = this.sample_data_map[map_key]!!
+
+        val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
+        val pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
+
+        val first = SampleHandle.copy(handle_main)
+        first.volume_profile = volume_profile
+        first.pan_profile = pan_profile
+
+
+        val linked = if (handle_linked != null) {
+            val tmp = SampleHandle.copy(handle_linked)
+            tmp.volume_profile = volume_profile
+            tmp.pan_profile = pan_profile
+            tmp
+        } else {
+            null
+        }
+
+        return Pair(first, linked)
     }
 
-    fun get(event: NoteOn79, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
+    fun get(event: NoteOn79, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): Pair<SampleHandle, SampleHandle?> {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
-        val output = SampleHandle.copy(this.sample_data_map[map_key]!!)
+        val (handle_main, handle_linked) = this.sample_data_map[map_key]!!
         val volume = event.velocity / (128 shl 8).toFloat()
-        output.volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(volume, 0F))), 0)
-        output.pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
-        return output
+        val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(volume, 0F))), 0)
+        val pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
+
+        val first = SampleHandle.copy(handle_main)
+        first.volume_profile = volume_profile
+        first.pan_profile = pan_profile
+
+        val linked = if (handle_linked != null) {
+            val tmp = SampleHandle.copy(handle_linked)
+            tmp.volume_profile = volume_profile
+            tmp.pan_profile = pan_profile
+            tmp
+        } else {
+            null
+        }
+
+        return Pair(first, linked)
     }
 
     fun cache_or_create_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): MapKey {
@@ -75,7 +105,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         return map_key
     }
 
-    fun generate_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): SampleHandle {
+    fun generate_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): Pair<SampleHandle, SampleHandle?> {
         var pitch_shift = 1F
 
         val original_note = sample_directive.root_key ?: sample_directive.sample!!.originalPitch
@@ -162,7 +192,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             new_modulators[key] = new_modulators[key]!! + modulators
         }
         val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 100F
-        return SampleHandle(
+        val main_handle = SampleHandle(
             data = SampleData(data),
             sample_rate = sample_rate,
             pan = pan,
@@ -194,6 +224,36 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             filter_cutoff = filter_cutoff,
             modulators = new_modulators
         )
+
+        return if (sample_directive.sample!!.linked_sample != null) {
+            val linked_sample = sample_directive.sample!!.linked_sample!!
+            Pair(
+                main_handle,
+                SampleHandle(
+                    data = SampleData(linked_sample.data!!),
+                    sample_rate = main_handle.sample_rate,
+                    pan = main_handle.pan,
+                    pitch_shift = main_handle.pitch_shift,
+                    initial_attenuation = main_handle.initial_attenuation,
+                    stereo_mode = linked_sample.sampleType,
+                    loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
+                        Pair(
+                            linked_sample.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
+                            linked_sample.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
+                        )
+                    } else {
+                        null
+                    },
+                    modulation_lfo = main_handle.modulation_lfo,
+                    volume_envelope = volume_envelope,
+                    modulation_envelope = modulation_envelope,
+                    filter_cutoff = filter_cutoff,
+                    modulators = new_modulators
+                )
+            )
+        } else {
+            Pair(main_handle, null)
+        }
     }
 
     //fun resample(sample_data: ShortArray, pitch_shift: Float): ShortArray {

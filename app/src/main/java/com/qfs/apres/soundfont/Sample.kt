@@ -7,7 +7,7 @@ data class Sample(
     var sampleRate: Int,
     var originalPitch: Int,
     var pitchCorrection: Int,
-    var linkIndex: Int,
+    var linked_sample: Sample?,
     var sampleType: SampleType, // TODO: Use SfSampleType
     var data_placeholder: Pair<Int, Int>,
     var data: ShortArray? = null

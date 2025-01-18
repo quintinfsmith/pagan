@@ -1321,8 +1321,20 @@ open class OpusLayerHistory: OpusLayerCursor() {
         this._remember {
             super.overwrite_beat_range(beat_key, first_corner, second_corner)
         }
-
     }
+
+    override fun controller_line_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_key: BeatKey) {
+        this._remember {
+            super.controller_line_to_channel_overwrite_line(type, target_channel, original_key)
+        }
+    }
+
+    override fun controller_global_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, beat: Int) {
+        this._remember {
+            super.controller_global_to_channel_overwrite_line(type, target_channel, beat)
+        }
+    }
+
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         this._remember {

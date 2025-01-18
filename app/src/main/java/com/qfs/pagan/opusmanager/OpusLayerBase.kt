@@ -2660,6 +2660,16 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        val first_beat = min(first_key.beat, second_key.beat)
+        val second_beat = max(first_key.beat, second_key.beat)
+
+        // Increase song duration as needed
+        val chunk_size = second_beat - first_beat + 1
+        val mod_beats = (this.beat_count - first_beat) % chunk_size
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, chunk_size - mod_beats)
+        }
+
         val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(first_key, second_key)
         for (key_list in beat_keys) {
             if (key_list.isEmpty()) {
@@ -2680,7 +2690,13 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
+        // Increase song duration as needed
         val width = (end - start) + 1
+        val mod_beats = (this.beat_count - start) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = ((this.beat_count - start) / width) - 1
         for (i in 0 until width) {
             for (j in 0 until count) {
@@ -2698,7 +2714,13 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
+        // Increase song size as needed
         val width = (end - start) + 1
+        val mod_beats = (this.beat_count - start) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = ((this.beat_count - start) / width) - 1
         for (i in 0 until width) {
             for (j in 0 until count) {
@@ -2719,7 +2741,13 @@ open class OpusLayerBase {
     open fun controller_line_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
 
+        // Increase song size as needed
         val width = (to_key.beat - from_key.beat) + 1
+        val mod_beats = (this.beat_count - from_key.beat) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = ((this.beat_count - from_key.beat) / width)
 
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -2741,7 +2769,13 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
+        // Increase song size as needed
         val width = (end - start) + 1
+        val mod_beats = (this.beat_count - start) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = ((this.beat_count - start) / width) - 1
         for (i in 0 until width) {
             for (j in 0 until count) {
@@ -2759,7 +2793,13 @@ open class OpusLayerBase {
     open fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
 
+        // Increase song size as needed
         val width = (to_key.beat - from_key.beat) + 1
+        val mod_beats = (this.beat_count - from_key.beat) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = ((this.beat_count - from_key.beat) / width)
 
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -2780,7 +2820,13 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
+        // Increase song size as needed
         val width = end - start + 1
+        val mod_beats = (this.beat_count - start) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = ((this.beat_count - start) / width) - 1
         for (i in start .. end) {
 
@@ -2800,7 +2846,13 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
+        // Increase song size as needed
         val width = (end - start) + 1
+        val mod_beats = (this.beat_count - start) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = ((this.beat_count - start) / width) - 1
         for (i in start .. end) {
             for (j in 0 until count) {
@@ -2818,7 +2870,13 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
+        // Increase song size as needed
         val width = end - start + 1
+        val mod_beats = (this.beat_count - start) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = (this.beat_count - start) / width
 
         for (i in start .. end) {
@@ -2839,7 +2897,13 @@ open class OpusLayerBase {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
+        // Increase song size as needed
         val width = end - start + 1
+        val mod_beats = (this.beat_count - start) % width
+        if (mod_beats != 0) {
+            this.insert_beats(this.beat_count, width - mod_beats)
+        }
+
         val count = (this.beat_count - start) / width
 
         for (i in start .. end) {

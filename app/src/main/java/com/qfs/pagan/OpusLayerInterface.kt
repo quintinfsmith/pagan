@@ -1521,19 +1521,15 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-        println("ATTEMPO")
         if (this._block_cursor_selection()) {
             return
         }
-        println("OK (${this.temporary_blocker}")
         this.lock_ui_partial {
-            println("ZZ")
             this._unset_temporary_blocker()
             if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
                 this.make_percussion_visible()
             }
 
-            println("ZA")
             super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
 
             this._queue_cursor_update(this.cursor, false)

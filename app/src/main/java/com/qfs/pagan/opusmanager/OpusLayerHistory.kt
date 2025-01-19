@@ -94,17 +94,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>? = null, callback: () -> T): T {
         return if (!this.history_cache.isLocked()) {
-            println("NO LOCKED")
             val use_tree = tree ?: this.get_tree_copy(beat_key, position)
             val output = callback()
-            println("OK?")
             this.push_to_history_stack(
                 HistoryToken.REPLACE_TREE,
                 listOf(beat_key.copy(), position?.toList() ?: listOf<Int>(), use_tree)
             )
             output
         } else {
-            println("yeLOCKED $beat_key")
             callback()
         }
     }
@@ -271,7 +268,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
             if (e.history_node != null && e.history_node!!.parent == null) {
                 this._forget {
                     this.lock_cursor {
-                        println("CATCH")
                         this.apply_history_node(e.history_node!!)
                     }
                 }
@@ -328,7 +324,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.REPLACE_TREE -> {
-                    println("APPLYINGRT")
                     val beatkey = current_node.args[0] as BeatKey
                     val position = checked_cast<List<Int>>(current_node.args[1]).toList()
                     val tree = checked_cast<OpusTree<InstrumentEvent>>(current_node.args[2])
@@ -997,7 +992,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         this._remember {
-            println("REPLACING... $beat_key")
             this.push_replace_tree(beat_key, position) {
                 super.replace_tree(beat_key, position, tree)
             }

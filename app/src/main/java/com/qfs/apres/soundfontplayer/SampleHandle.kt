@@ -121,33 +121,37 @@ class SampleHandle(
         }
 
         fun set_frame(frame: Int) {
+            val original_frame = this.current_frame
+
             this.current_frame = frame + this.start_frame
-            for ((range, index) in this.index_map) {
-                if (range.contains(this.current_frame)) {
-                    this._set_index(index)
-                    return
+
+            if (original_frame == this.current_frame) {
+                return
+            } else if (original_frame < this.current_frame) {
+                while (this.current_index < this.frames.size - 1) {
+                    if (this.frames[this.current_index + 1].first <= this.current_frame) {
+                        this.current_index += 1
+                    } else {
+                        break
+                    }
                 }
-            }
-
-            // No Frame data found, use final entry
-            this._set_index(this.frames.size - 1)
-        }
-
-        private fun _set_index(index: Int) {
-            // Note: working frame is this current frame - 1 SO THAT:
-            // when get_next() is called, the value isn't incremented here AND there
-            val working_frame = this.current_frame - 1
-            this.current_index = index
-            var frame_data = this.frames[index]
-            this.current_value = frame_data.second.first
-            if (frame_data.second.second != 0F) {
-                this.current_value += (working_frame - frame_data.first).toFloat() * frame_data.second.second
+            } else {
+                while (this.current_index > 0 && this.frames[this.current_index].first > this.current_frame) {
+                    this.current_index -= 1
+                }
             }
 
             this.next_frame_trigger = if (this.current_index < this.frames.size - 1) {
                 this.frames[this.current_index + 1].first
             } else {
                 -1
+            }
+
+            val working_frame = this.current_frame - 1
+            var frame_data = this.frames[this.current_index]
+            this.current_value = frame_data.second.first
+            if (frame_data.second.second != 0F) {
+                this.current_value += (working_frame - frame_data.first).toFloat() * frame_data.second.second
             }
         }
 

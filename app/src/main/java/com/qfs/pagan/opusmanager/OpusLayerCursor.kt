@@ -8,7 +8,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     var cursor = OpusManagerCursor()
     private var _cursor_lock = 0
 
-    private fun <T> lock_cursor(callback: () -> T): T {
+    internal fun <T> lock_cursor(callback: () -> T): T {
         this._cursor_lock += 1
         val output = try {
             callback()
@@ -534,7 +534,9 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.move_beat_range(beat_key, first_corner, second_corner)
+        this.lock_cursor {
+            super.move_beat_range(beat_key, first_corner, second_corner)
+        }
         this.cursor_select(beat_key, this.get_first_position(beat_key))
     }
 
@@ -1103,6 +1105,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             throw InvalidCursorState()
         }
     }
+
     fun move_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.range!!
@@ -2286,8 +2289,6 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     internal fun _block_cursor_selection(): Boolean {
-        // DEBUG!! May cause problems
-        return false
-        //return (this._blocked_action_catcher > 0 || this._cursor_lock > 0)
+        return (this._blocked_action_catcher > 0 || this._cursor_lock > 0)
     }
 }

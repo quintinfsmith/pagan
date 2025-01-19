@@ -1,7 +1,7 @@
 package com.qfs.pagan.opusmanager
 
 class HistoryCache {
-    class HistoryError(var e: Exception): Exception()
+    class HistoryError(var e: Exception, var history_node: HistoryNode?): Exception()
     class HistoryNode(var token: HistoryToken, var args: List<Any>) {
         var children: MutableList<HistoryNode> = mutableListOf()
         var parent: HistoryNode? = null
@@ -10,7 +10,6 @@ class HistoryCache {
     private var _history_lock = 0
     private var _history: MutableList<HistoryNode> = mutableListOf()
     private var _working_node: HistoryNode? = null
-    private var call_depth: Int = 0
     fun isLocked(): Boolean {
         return this._history_lock != 0
     }
@@ -38,20 +37,14 @@ class HistoryCache {
     // Keep track of all history as one group
     fun <T> remember(callback: () -> T): T {
         return try {
-            this.call_depth += 1
             this._open_multi()
             val output = callback()
             this._close_multi()
-            this.call_depth -= 1
             output
         } catch (e: Exception) {
             this._close_multi()
-            this.call_depth -= 1
-            throw e
+            throw HistoryError(e, this._working_node)
         }
-    }
-    fun get_call_depth(): Int {
-        return this.call_depth
     }
 
     // Run a callback with logging history
@@ -120,13 +113,13 @@ class HistoryCache {
     }
 
     // Unused
-    //fun peek(): HistoryNode? {
-    //    return if (this._history.isEmpty()) {
-    //        null
-    //    } else {
-    //        this._history.last()
-    //    }
-    //}
+    fun peek(): HistoryNode? {
+        return if (this._history.isEmpty()) {
+            null
+        } else {
+            this._history.last()
+        }
+    }
 
     fun copy(): HistoryCache {
         val c = HistoryCache()

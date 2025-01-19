@@ -93,11 +93,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         } catch (e: BlockedActionException) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            if (this.history_cache.get_call_depth() > 0) {
-                throw e
-            } else {
-                null
-            }
+            null
         } catch (e: Exception) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()

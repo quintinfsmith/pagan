@@ -2361,9 +2361,9 @@ open class OpusLayerBase {
         // Expand the song duration if necessary
         val first_beat = min(first_corner.beat, second_corner.beat)
         val second_beat = max(first_corner.beat, second_corner.beat)
-        val max_beat = (second_beat - first_beat) + beat_key.beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        val max_beat = (second_beat - first_beat) + 1 + beat_key.beat
+        if (max_beat > this.beat_count) {
+            this.insert_beats(this.beat_count, max_beat - this.beat_count)
         }
 
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
@@ -2392,7 +2392,6 @@ open class OpusLayerBase {
         }
 
         for (i in target_keys.indices) {
-
             this.replace_tree(
                 target_keys[i],
                 null,

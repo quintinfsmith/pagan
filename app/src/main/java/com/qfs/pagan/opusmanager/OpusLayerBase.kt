@@ -2347,6 +2347,9 @@ open class OpusLayerBase {
         for (o_key in original_keys) {
             trees.add(this.get_tree_copy(o_key))
         }
+        for (i in trees.indices) {
+            this.unset(target_keys[i], listOf())
+        }
 
         for (i in trees.indices) {
             this.replace_tree(
@@ -2665,29 +2668,28 @@ open class OpusLayerBase {
             this.insert_beats(this.beat_count, chunk_size - mod_beats)
         }
 
-        val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(first_key, second_key)
+        val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
         // Need to unset all events FIRST so no replaces get blocked
-        for (key_list in beat_keys) {
+        for ((target_key, key_list) in beat_keys) {
             if (key_list.isEmpty()) {
                 continue
             }
-            for (i in 1 until key_list.size) {
-                val overwrite_key = key_list[i]
-                this.unset(overwrite_key, listOf())
+            for (overwrite_key in key_list) {
+                if (overwrite_key != target_key) {
+                    this.unset(overwrite_key, listOf())
+                }
             }
         }
-        for (key_list in beat_keys) {
+
+        for ((target_key, key_list) in beat_keys) {
             if (key_list.isEmpty()) {
                 continue
             }
-
-            for (i in 1 until key_list.size) {
-                val overwrite_key = key_list[i]
-                this.replace_tree(
-                    overwrite_key,
-                    null,
-                    this.get_tree_copy(key_list[0])
-                )
+            val tree_copy = this.get_tree_copy(target_key)
+            for (overwrite_key in key_list) {
+                if (target_key != overwrite_key) {
+                    this.replace_tree(overwrite_key, null, tree_copy)
+                }
             }
         }
     }
@@ -2848,7 +2850,9 @@ open class OpusLayerBase {
         for (beat_key in beat_keys) {
             for (i in 0 until count) {
                 val to_overwrite = BeatKey(channel, line_offset, beat_key.beat + (i * width))
-                this.controller_line_unset(type, to_overwrite, listOf())
+                if (to_overwrite != beat_key) {
+                    this.controller_line_unset(type, to_overwrite, listOf())
+                }
             }
         }
 
@@ -3070,9 +3074,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
+        if (channel != beat_key.channel || line_offset != beat_key.line_offset) {
             throw InvalidOverwriteCall()
         }
+
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
         val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
         for (x in beat_key.beat until this.beat_count) {
@@ -4437,24 +4442,25 @@ open class OpusLayerBase {
 
     }
 
-    private fun _get_beat_keys_for_overwrite_beat_range_horizontally(first_key: BeatKey, second_key: BeatKey): List<List<BeatKey>> {
+    private fun _get_beat_keys_for_overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey): List<Pair<BeatKey, List<BeatKey>>> {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         val width = to_key.beat - from_key.beat + 1
         val count = (this.beat_count - from_key.beat) / width
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
+        val y_index_main = this.get_instrument_line_index(channel, line_offset)
+        val y_index_from = this.get_instrument_line_index(from_key.channel, from_key.line_offset)
+        val y_diff = y_index_main - y_index_from
+
         return List(beat_keys.size) { i: Int ->
             val beat_key = beat_keys[i]
-            List(count) { j: Int ->
-                if (j == 0) {
-                    beat_key
-                } else {
-                    BeatKey(
-                        beat_key.channel,
-                        beat_key.line_offset,
-                        beat_key.beat + (j * width)
-                    )
+            val y_index_new = this.get_instrument_line_index(beat_key.channel, beat_key.line_offset)
+            val (new_channel, new_line_offset) = this.get_channel_and_line_offset(y_index_new + y_diff)
+            Pair(
+                beat_key,
+                List(count) { j: Int ->
+                    BeatKey(new_channel, new_line_offset, beat_key.beat + (j * width))
                 }
-            }
+            )
         }
     }
 

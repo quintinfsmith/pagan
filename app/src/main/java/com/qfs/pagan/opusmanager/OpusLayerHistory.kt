@@ -407,6 +407,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.REMOVE_CHANNEL -> {
+                    println("REMOVING CHANNEL")
                     val uuid = current_node.args[0] as Int
                     this.remove_channel_by_uuid(uuid)
                 }

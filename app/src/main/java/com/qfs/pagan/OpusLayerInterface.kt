@@ -1930,6 +1930,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                         channel.lines[cursor.line_offset].get_controller(cursor.ctl_type!!)
                                     )
                                 } catch (e: NullPointerException) {
+                                    // Dead cursor
                                     return
                                 }
                             }
@@ -1954,18 +1955,27 @@ class OpusLayerInterface : OpusLayerHistory() {
                                         this._ui_change_bill.queue_line_label_refresh(line_y++)
                                     }
                                 }
-
-                                Pair(
-                                    this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
-                                    this.get_all_channels()[cursor.channel].controllers.get_controller(cursor.ctl_type!!)
-                                )
+                                try {
+                                    Pair(
+                                        this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
+                                        this.get_all_channels()[cursor.channel].controllers.get_controller(cursor.ctl_type!!)
+                                    )
+                                } catch (e: NullPointerException) {
+                                    // Dead cursor
+                                    return
+                                }
                             }
 
                             CtlLineLevel.Global -> {
-                                Pair(
-                                    this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
-                                    this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
-                                )
+                                try {
+                                    Pair(
+                                        this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
+                                        this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                                    )
+                                } catch (e: NullPointerException) {
+                                    // Dead cursor
+                                    return
+                                }
                             }
                         }
 

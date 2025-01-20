@@ -1336,12 +1336,12 @@ class OpusLayerInterface : OpusLayerHistory() {
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // CURSOR FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    override fun cursor_apply(cursor: OpusManagerCursor) {
-        if (this._block_cursor_selection()) {
+    override fun cursor_apply(cursor: OpusManagerCursor, force: Boolean) {
+        if (!force && this._block_cursor_selection()) {
             return
         }
         this.lock_ui_partial {
-            super.cursor_apply(cursor)
+            super.cursor_apply(cursor, force)
 
             this._queue_cursor_update(this.cursor)
 
@@ -1627,6 +1627,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
+
             this.temporary_blocker = OpusManagerCursor(
                 mode = OpusManagerCursor.CursorMode.Single,
                 channel = beat_key.channel,
@@ -1634,6 +1635,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat_key.beat,
                 position = position
             )
+            this.cursor_apply(this.temporary_blocker!!, true)
         }
     }
 
@@ -1650,6 +1652,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat_key.beat,
                 position = position
             )
+            this.cursor_apply(this.temporary_blocker!!, true)
         }
     }
 
@@ -1664,6 +1667,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat,
                 position = position
             )
+            this.cursor_apply(this.temporary_blocker!!, true)
         }
     }
 
@@ -1677,6 +1681,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat,
                 position = position
             )
+            this.cursor_apply(this.temporary_blocker!!, true)
         }
     }
 

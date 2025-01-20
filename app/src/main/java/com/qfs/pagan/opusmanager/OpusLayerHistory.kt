@@ -266,7 +266,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
             this.history_cache.remember(callback)
         } catch (e: HistoryCache.HistoryError) {
             if (e.history_node != null && e.history_node!!.parent == null) {
-                this.apply_undo()
+                this.lock_cursor {
+                    this.apply_undo()
+                }
             }
             throw e.e
         }

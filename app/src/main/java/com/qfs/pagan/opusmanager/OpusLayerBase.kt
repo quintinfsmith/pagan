@@ -2666,10 +2666,21 @@ open class OpusLayerBase {
         }
 
         val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(first_key, second_key)
+        // Need to unset all events FIRST so no replaces get blocked
         for (key_list in beat_keys) {
             if (key_list.isEmpty()) {
                 continue
             }
+            for (i in 1 until key_list.size) {
+                val overwrite_key = key_list[i]
+                this.unset(overwrite_key, listOf())
+            }
+        }
+        for (key_list in beat_keys) {
+            if (key_list.isEmpty()) {
+                continue
+            }
+
             for (i in 1 until key_list.size) {
                 val overwrite_key = key_list[i]
                 this.replace_tree(
@@ -2693,6 +2704,12 @@ open class OpusLayerBase {
         }
 
         val count = ((this.beat_count - start) / width) - 1
+        // Unset targets to prevent blocking
+        for (i in 0 until width) {
+            for (j in 0 until count) {
+                this.controller_global_unset(type, ((j + 1) * width) + (i + start), listOf())
+            }
+        }
         for (i in 0 until width) {
             for (j in 0 until count) {
                 this.controller_global_replace_tree(
@@ -2717,6 +2734,21 @@ open class OpusLayerBase {
         }
 
         val count = ((this.beat_count - start) / width) - 1
+        // Unset targets to prevent blocking
+        for (i in 0 until width) {
+            for (j in 0 until count) {
+                this.controller_line_unset(
+                    type,
+                    BeatKey(
+                        target_channel,
+                        target_line_offset,
+                        ((j + 1) * width) + (i + start),
+                    ),
+                    listOf()
+                )
+            }
+        }
+
         for (i in 0 until width) {
             for (j in 0 until count) {
                 this.controller_line_replace_tree(
@@ -2745,7 +2777,14 @@ open class OpusLayerBase {
 
         val count = ((this.beat_count - from_key.beat) / width)
 
+        // Unset Targets to prevent blocking
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
+        for (beat_key in beat_keys) {
+            for (i in 0 until count) {
+                this.controller_channel_unset(type, channel, beat_key.beat + (i * width), listOf())
+            }
+        }
+
         for (beat_key in beat_keys) {
             val working_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
             for (i in 0 until count) {
@@ -2772,6 +2811,13 @@ open class OpusLayerBase {
         }
 
         val count = ((this.beat_count - start) / width) - 1
+        // Unset Targets to prevent blocking
+        for (i in 0 until width) {
+            for (j in 0 until count) {
+                this.controller_channel_unset(type, channel, ((j + 1) * width) + (i + start), listOf())
+            }
+        }
+
         for (i in 0 until width) {
             for (j in 0 until count) {
                 this.controller_channel_replace_tree(
@@ -2798,6 +2844,14 @@ open class OpusLayerBase {
         val count = ((this.beat_count - from_key.beat) / width)
 
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
+        // Unset targets to prevent blocking
+        for (beat_key in beat_keys) {
+            for (i in 0 until count) {
+                val to_overwrite = BeatKey(channel, line_offset, beat_key.beat + (i * width))
+                this.controller_line_unset(type, to_overwrite, listOf())
+            }
+        }
+
         for (beat_key in beat_keys) {
             val working_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
             for (i in 0 until count) {
@@ -2823,6 +2877,13 @@ open class OpusLayerBase {
         }
 
         val count = ((this.beat_count - start) / width) - 1
+        // Unset Targets to prevent blocking
+        for (i in start .. end) {
+            for (j in 0 until count) {
+                this.controller_global_unset(type, ((j + 1) * width) + i, listOf())
+            }
+        }
+
         for (i in start .. end) {
 
             val working_beat_key = BeatKey(channel, line_offset, i)
@@ -2849,6 +2910,14 @@ open class OpusLayerBase {
         }
 
         val count = ((this.beat_count - start) / width) - 1
+
+        // Unset Targets to prevent blocking
+        for (i in start .. end) {
+            for (j in 0 until count) {
+                this.controller_global_unset(type, ((j + 1) * width) + i, listOf())
+            }
+        }
+
         for (i in start .. end) {
             for (j in 0 until count) {
                 this.controller_global_replace_tree(
@@ -2873,6 +2942,13 @@ open class OpusLayerBase {
         }
 
         val count = (this.beat_count - start) / width
+
+        // Unset Targets first to prevent blocking
+        for (i in start .. end) {
+            for (j in 0 until count) {
+                this.controller_channel_unset(type, target_channel, (j * width) + i, listOf())
+            }
+        }
 
         for (i in start .. end) {
             val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, i)
@@ -2900,6 +2976,14 @@ open class OpusLayerBase {
         }
 
         val count = (this.beat_count - start) / width
+
+        // Unset Targets first to prevent blocking.
+        for (i in start .. end) {
+            for (j in 0 until count) {
+                val working_key = BeatKey(target_channel, target_line_offset, (j * width) + i)
+                this.controller_line_unset(type, working_key, listOf())
+            }
+        }
 
         for (i in start .. end) {
             val working_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, from_channel, i)

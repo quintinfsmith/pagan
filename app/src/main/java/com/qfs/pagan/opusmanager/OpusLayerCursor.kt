@@ -621,7 +621,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
         super.on_action_blocked(blocker_key, blocker_position)
-
         this.cursor_select(blocker_key, blocker_position)
     }
 

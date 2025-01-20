@@ -18,6 +18,22 @@ class HistoryCache {
         return this._history.isEmpty()
     }
 
+    fun prepend_undoer(token: HistoryToken, args: List<Any>) {
+        if (this.isLocked()) {
+            return
+        }
+        val new_node = HistoryNode(token, args)
+
+        if (this._working_node != null) {
+            new_node.parent = this._working_node
+            this._working_node!!.children.add(0, new_node)
+        } else {
+            this._history.add(0, new_node)
+        }
+
+        this._check_size()
+    }
+
     fun append_undoer(token: HistoryToken, args: List<Any>) {
         if (this.isLocked()) {
             return

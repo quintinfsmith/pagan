@@ -266,11 +266,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
             this.history_cache.remember(callback)
         } catch (e: HistoryCache.HistoryError) {
             if (e.history_node != null && e.history_node!!.parent == null) {
-                this._forget {
-                    this.lock_cursor {
-                        this.apply_history_node(e.history_node!!)
-                    }
-                }
+                this.apply_undo()
             }
             throw e.e
         }
@@ -282,11 +278,16 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
+    fun prepend_to_history_stack(token: HistoryToken, args: List<Any>) {
+        this.history_cache.prepend_undoer(token, args)
+    }
+
     open fun push_to_history_stack(token: HistoryToken, args: List<Any>) {
         this.history_cache.append_undoer(token, args)
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        println("APPLYING ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -640,6 +641,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     this.set_channel_visibility(
                         current_node.args[0] as Int,
                         current_node.args[1] as Boolean
+                    )
+                }
+
+                HistoryToken.CURSOR_SELECT -> {
+                    this.cursor_select(
+                        checked_cast<BeatKey>(current_node.args[0]),
+                        checked_cast<List<Int>>(current_node.args[1])
                     )
                 }
 
@@ -1097,6 +1105,24 @@ open class OpusLayerHistory: OpusLayerCursor() {
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
         this._remember {
             super.move_beat_range(beat_key, first_corner, second_corner)
+        }
+    }
+
+    override fun controller_channel_to_global_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        this._remember {
+            super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
+        }
+    }
+
+    override fun controller_global_to_channel_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this._remember {
+            super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun controller_line_to_global_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        this._remember {
+            super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
         }
     }
 

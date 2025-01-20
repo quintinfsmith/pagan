@@ -2366,7 +2366,7 @@ open class OpusLayerBase {
             this.insert_beats(this.beat_count, max_beat - this.beat_count)
         }
 
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
@@ -2392,11 +2392,7 @@ open class OpusLayerBase {
         }
 
         for (i in target_keys.indices) {
-            this.replace_tree(
-                target_keys[i],
-                null,
-                trees[i]
-            )
+            this.replace_tree(target_keys[i], null, trees[i])
         }
     }
 
@@ -4631,4 +4627,5 @@ open class OpusLayerBase {
     }
 
     class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
+
 }

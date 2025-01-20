@@ -93,7 +93,11 @@ class OpusLayerInterface : OpusLayerHistory() {
         } catch (e: BlockedActionException) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            null
+            if (this._ui_change_bill.is_locked()) {
+                throw e
+            } else {
+                null
+            }
         } catch (e: Exception) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
@@ -1291,7 +1295,7 @@ class OpusLayerInterface : OpusLayerHistory() {
    // }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
-        //super.on_action_blocked(blocker_key, blocker_position)
+        super.on_action_blocked(blocker_key, blocker_position)
         if (!this.project_changing) {
             this._set_temporary_blocker(blocker_key, blocker_position)
         }
@@ -2765,5 +2769,11 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.cursor.get_position()
         )
         this._set_note_offset(current_tree_position.first, current_tree_position.second, offset)
+    }
+
+    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this.lock_ui_partial {
+            super.move_beat_range(beat_key, first_corner, second_corner)
+        }
     }
 }

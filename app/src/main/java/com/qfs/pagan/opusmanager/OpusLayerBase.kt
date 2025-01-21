@@ -3074,10 +3074,6 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (channel != beat_key.channel || line_offset != beat_key.line_offset) {
-            throw InvalidOverwriteCall()
-        }
-
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
         val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
         for (x in beat_key.beat until this.beat_count) {

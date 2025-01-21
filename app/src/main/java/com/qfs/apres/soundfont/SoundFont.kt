@@ -326,7 +326,6 @@ class SoundFont(file_path: String) {
                 }
                 this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
             }
-
             else -> {
                 this.get_sample_data(sample.data_placeholder.first, sample.data_placeholder.second)
             }

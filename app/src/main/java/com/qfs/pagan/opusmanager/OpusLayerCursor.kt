@@ -2020,6 +2020,9 @@ open class OpusLayerCursor: OpusLayerBase() {
                     if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
                         return false
                     }
+                    if (channel != this.cursor.channel) {
+                        return false
+                    }
 
                     var output = false
                     val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(control_type)

@@ -2157,7 +2157,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                         && this.cursor.channel == channel
             }
             OpusManagerCursor.CursorMode.Channel -> {
-                channel == this.cursor.channel && control_type == this.cursor.ctl_type
+                channel == this.cursor.channel
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, _) = this.cursor.get_ordered_range()!!

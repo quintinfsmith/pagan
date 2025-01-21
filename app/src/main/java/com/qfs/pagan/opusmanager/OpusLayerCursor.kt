@@ -2054,9 +2054,9 @@ open class OpusLayerCursor: OpusLayerBase() {
             OpusManagerCursor.CursorMode.Single -> {
                 val cposition = this.cursor.get_position()
                 this.cursor.channel == beat_key.channel
+                        && this.cursor.line_offset == beat_key.line_offset
                         && control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Line
-                        && this.cursor.line_offset == beat_key.line_offset
                         && beat_key.beat == this.cursor.beat
                         && position.size >= cposition.size
                         && position.subList(0, cposition.size) == cposition
@@ -2091,6 +2091,10 @@ open class OpusLayerCursor: OpusLayerBase() {
                     val cposition = this.cursor.get_position()
                     val beat = beat_key.beat
                     if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
+                        return false
+                    }
+
+                    if (this.cursor.channel != beat_key.channel || this.cursor.line_offset != beat_key.line_offset) {
                         return false
                     }
 

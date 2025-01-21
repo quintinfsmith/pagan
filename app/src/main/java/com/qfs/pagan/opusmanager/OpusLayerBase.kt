@@ -4267,7 +4267,7 @@ open class OpusLayerBase {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
 
-    private fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
+    internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {
         if (! this._is_valid_beat_range(from_key, to_key)) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }

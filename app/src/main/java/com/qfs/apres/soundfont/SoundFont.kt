@@ -302,48 +302,35 @@ class SoundFont(file_path: String) {
 
             this.riff.with {
                 for (sample in ordered_samples) {
-                    sample.data = when (sample.sampleType) {
-                        SampleType.RomMono,
-                        SampleType.RomRight,
-                        SampleType.RomLeft,
-                        SampleType.RomLinked -> {
-                            if (this.irom == null) {
-                                throw NoIROMDeclared()
-                            }
-                            this.read_rom_hook(
-                                sample.data_placeholder.first,
-                                sample.data_placeholder.second
-                            )
-                        }
-                        else -> {
-                            this.get_sample_data(
-                                sample.data_placeholder.first,
-                                sample.data_placeholder.second
-                            )
-                        }
-                    }
+                    this.apply_sample_data(sample)
+
                     val linked_sample = sample.linked_sample
                     if (linked_sample is Sample) {
-                        linked_sample.data = when (linked_sample.sampleType) {
-                            SampleType.RomMono,
-                            SampleType.RomRight,
-                            SampleType.RomLeft,
-                            SampleType.RomLinked -> {
-                                if (this.irom == null) {
-                                    throw NoIROMDeclared()
-                                }
-                                this.read_rom_hook(linked_sample.data_placeholder.first, linked_sample.data_placeholder.second)
-                            }
-                            else -> {
-                                this.get_sample_data(linked_sample.data_placeholder.first, linked_sample.data_placeholder.second)
-                            }
-                        }
+                        this.apply_sample_data(linked_sample)
                     }
                 }
             }
         }
 
         return output ?: throw InvalidPresetIndex(preset_index,preset_bank)
+    }
+
+    fun apply_sample_data(sample: Sample) {
+        sample.data = when (sample.sampleType) {
+            SampleType.RomMono,
+            SampleType.RomRight,
+            SampleType.RomLeft,
+            SampleType.RomLinked -> {
+                if (this.irom == null) {
+                    throw NoIROMDeclared()
+                }
+                this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
+            }
+
+            else -> {
+                this.get_sample_data(sample.data_placeholder.first, sample.data_placeholder.second)
+            }
+        }
     }
 
     open fun read_rom_hook(start: Int, end: Int): ShortArray {

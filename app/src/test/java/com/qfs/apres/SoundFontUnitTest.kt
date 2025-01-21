@@ -256,7 +256,8 @@ class SoundFontUnitTest {
 
     @Test
     fun test_sample_link() {
-        val preset = this.get_soundfont().get_preset(124, 4)
+        val soundfont = this.get_soundfont()
+        val preset = soundfont.get_preset(124, 4)
         val instrument = preset.get_instruments(20,64).first().instrument!!
         val samples = instrument.get_samples(20, 64).toList()
 
@@ -266,10 +267,13 @@ class SoundFontUnitTest {
             samples[1].sample!!
         }
 
+        val compare_sample = soundfont.get_sample(1444, false)
+        soundfont.apply_sample_data(compare_sample)
+
         assertEquals(
             "sample link is wrong",
-            1444,
-            sample.linkIndex
+            compare_sample,
+            sample.linked_sample
         )
     }
 

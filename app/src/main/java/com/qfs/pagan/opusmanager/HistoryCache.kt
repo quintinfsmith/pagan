@@ -1,7 +1,6 @@
 package com.qfs.pagan.opusmanager
 
 class HistoryCache {
-    class HistoryError(var e: Exception, var history_node: HistoryNode?): Exception()
     class HistoryNode(var token: HistoryToken, var args: List<Any>) {
         var children: MutableList<HistoryNode> = mutableListOf()
         var parent: HistoryNode? = null
@@ -59,7 +58,7 @@ class HistoryCache {
             output
         } catch (e: Exception) {
             this._close_multi()
-            throw HistoryError(e, this._working_node)
+            throw e
         }
     }
 
@@ -100,6 +99,10 @@ class HistoryCache {
         if (this._working_node != null) {
             this._working_node = this._working_node!!.parent
         }
+    }
+
+    fun size(): Int {
+        return this._history.size
     }
 
     private fun _check_size() {

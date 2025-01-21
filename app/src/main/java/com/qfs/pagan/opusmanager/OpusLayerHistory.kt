@@ -4,6 +4,7 @@ import kotlin.math.min
 
 open class OpusLayerHistory: OpusLayerCursor() {
     var history_cache = HistoryCache()
+    var memory_depth = 0
 
     override fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
         this._remember {
@@ -263,14 +264,19 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     private fun <T> _remember(callback: () -> T): T {
         return try {
-            this.history_cache.remember(callback)
-        } catch (e: HistoryCache.HistoryError) {
-            if (e.history_node != null && e.history_node!!.parent == null) {
+            val original_history_stack_size = this.history_cache.
+            this.memory_depth += 1
+            val output = this.history_cache.remember(callback)
+            this.memory_depth -= 1
+            output
+        } catch (e: Exception) {
+            this.memory_depth -= 1
+            if (this.memory_depth == 0 &&) {
                 this.lock_cursor {
                     this.apply_undo()
                 }
             }
-            throw e.e
+            throw e
         }
     }
 

@@ -109,14 +109,16 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                         first_key,
                         cursor.range!!.second
                     )
+                } catch (e: OpusLayerBase.MixedInstrumentException) {
+                    opus_manager.cursor_select_line(this.channel, this.line_offset)
                 } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                    // No Feedback.  feels Redundant
+                    opus_manager.cursor_select_line(this.channel, this.line_offset)
                 }
             } else {
                 try {
                     opus_manager.overwrite_line(this.channel, this.line_offset, first_key)
                 } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                    // No Feedback.  feels Redundant
+                    opus_manager.cursor_select_line(this.channel, this.line_offset)
                 }
             }
         } else {

@@ -4443,7 +4443,7 @@ open class OpusLayerBase {
     }
 
     private fun _get_beat_keys_for_overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey): List<Pair<BeatKey, List<BeatKey>>> {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
         val width = to_key.beat - from_key.beat + 1
         val count = (this.beat_count - from_key.beat) / width
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -4455,6 +4455,9 @@ open class OpusLayerBase {
             val beat_key = beat_keys[i]
             val y_index_new = this.get_instrument_line_index(beat_key.channel, beat_key.line_offset)
             val (new_channel, new_line_offset) = this.get_channel_and_line_offset(y_index_new + y_diff)
+            if (this.is_percussion(new_channel) != this.is_percussion(beat_key.channel)) {
+                throw MixedInstrumentException(beat_key,  BeatKey(new_channel, new_line_offset, beat_key.beat))
+            }
             Pair(
                 beat_key,
                 List(count) { j: Int ->

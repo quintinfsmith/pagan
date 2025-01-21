@@ -294,7 +294,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
-        println("APPLYING ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -412,7 +411,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.REMOVE_CHANNEL -> {
-                    println("REMOVING CHANNEL")
                     val uuid = current_node.args[0] as Int
                     this.remove_channel_by_uuid(uuid)
                 }

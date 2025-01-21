@@ -82,14 +82,11 @@ class HistoryCache {
 
         val next_node = HistoryNode(HistoryToken.MULTI, listOf())
 
-        print("Opened ")
         if (this._working_node != null) {
             next_node.parent = this._working_node
             this._working_node!!.children.add(next_node)
-            println("In-tree")
         } else {
             this._history.add(next_node)
-            println("In stack")
         }
         this._working_node = next_node
     }
@@ -98,7 +95,6 @@ class HistoryCache {
         if (this.isLocked()) {
             return
         }
-        println("Closed")
         if (this._working_node != null) {
             this._working_node = this._working_node!!.parent
         }

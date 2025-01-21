@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
@@ -58,11 +57,30 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = cursor.get_ordered_range()!!
-                val abs_y_start = opus_manager.get_instrument_line_index(first.channel, first.line_offset)
-                val abs_y_end = opus_manager.get_instrument_line_index(second.channel, second.line_offset)
-                val this_y = opus_manager.get_instrument_line_index(this.channel, this.line_offset)
-                if ((abs_y_start .. abs_y_end).contains(this_y)) {
-                    new_state.add(R.attr.state_focused)
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> {
+                        if (first.channel == second.channel && second.line_offset == first.line_offset) {
+                            if (first.channel == this.channel && this.line_offset == first.line_offset) {
+                                new_state.add(R.attr.state_focused)
+                            }
+                        } else {
+                            TODO("First and second channels/line_offset can currently only be the same")
+                        }
+                    }
+                    CtlLineLevel.Channel -> {
+                        if ((first.channel..second.channel).contains(this.channel)) {
+                            new_state.add(R.attr.state_focused)
+                        }
+                    }
+                    CtlLineLevel.Global -> {}
+                    null -> {
+                        val abs_y_start = opus_manager.get_instrument_line_index(first.channel, first.line_offset)
+                        val abs_y_end = opus_manager.get_instrument_line_index(second.channel, second.line_offset)
+                        val this_y = opus_manager.get_instrument_line_index(this.channel, this.line_offset)
+                        if ((abs_y_start .. abs_y_end).contains(this_y)) {
+                            new_state.add(R.attr.state_focused)
+                        }
+                    }
                 }
             }
             OpusManagerCursor.CursorMode.Channel -> {

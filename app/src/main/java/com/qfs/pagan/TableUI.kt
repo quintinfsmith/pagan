@@ -224,6 +224,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 opus_manager.cursor_select_ctl_at_line(type, beat_key, position)
             }
         }
+
         private fun _process_ctl_channel_on_click(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
             val opus_manager = this.editor_table.get_opus_manager()
             val cursor = opus_manager.cursor
@@ -250,6 +251,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
         }
+
         private fun _process_ctl_global_on_click(type: ControlEventType, beat: Int, position: List<Int>) {
             val opus_manager = this.editor_table.get_opus_manager()
             val cursor = opus_manager.cursor
@@ -795,7 +797,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 this.text_paint_ctl
             )
         }
-
 
         fun insert_row(y: Int) {
             //for (i in 0 until this.childCount) {

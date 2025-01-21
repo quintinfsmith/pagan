@@ -1992,7 +1992,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
-                (beat == first.beat || beat == second.beat) && (this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type)
+                (beat == first.beat || beat == second.beat) && (this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type && (first.channel .. second.channel).contains(channel))
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Line,
@@ -2038,7 +2038,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
-                beat in first.beat + 1 until second.beat && this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type
+                beat in first.beat + 1 until second.beat && this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type && (first.channel .. second.channel).contains(channel)
             }
 
             OpusManagerCursor.CursorMode.Channel -> {
@@ -2157,10 +2157,11 @@ open class OpusLayerCursor: OpusLayerBase() {
                         && this.cursor.channel == channel
             }
             OpusManagerCursor.CursorMode.Channel -> {
-                channel == this.cursor.channel
+                channel == this.cursor.channel && control_type == this.cursor.ctl_type
             }
             OpusManagerCursor.CursorMode.Range -> {
-                control_type == this.cursor.ctl_type && this.cursor.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel
+                val (first, _) = this.cursor.get_ordered_range()!!
+                control_type == this.cursor.ctl_type && first.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel
             }
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column -> false

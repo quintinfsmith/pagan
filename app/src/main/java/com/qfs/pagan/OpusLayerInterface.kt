@@ -2028,15 +2028,43 @@ class OpusLayerInterface : OpusLayerHistory() {
                         val (top_left, bottom_right) = cursor.get_ordered_range()!!
                         val y = when (cursor.ctl_level!!) {
                             // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
-                            CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(
-                                cursor.ctl_type!!,
-                                top_left.channel,
-                                top_left.line_offset
-                            )
+                            CtlLineLevel.Line -> {
+                                this._ui_change_bill.queue_line_label_refresh(
+                                    this.get_visible_row_from_ctl_line(
+                                        this.get_actual_line_index(
+                                            this.get_instrument_line_index(
+                                                top_left.channel,
+                                                top_left.line_offset
+                                            )
+                                        )
+                                    )!!
+                                )
+
+                                this.get_visible_row_from_ctl_line_line(
+                                    cursor.ctl_type!!,
+                                    top_left.channel,
+                                    top_left.line_offset
+                                )
+                            }
                             // Can assume top_left.channel == bottom_right.channel
-                            CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+                            CtlLineLevel.Channel -> {
+                                for (i in 0 until this.get_channel(top_left.channel).lines.size) {
+                                    this._ui_change_bill.queue_line_label_refresh(
+                                        this.get_visible_row_from_ctl_line(
+                                            this.get_actual_line_index(
+                                                this.get_instrument_line_index(
+                                                    top_left.channel,
+                                                    i
+                                                )
+                                            )
+                                        )!!
+                                    )
+                                }
+                                this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+                            }
                             CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                         }
+
                         val first_beat = min(top_left.beat, bottom_right.beat)
                         val last_beat = max(top_left.beat, bottom_right.beat)
 

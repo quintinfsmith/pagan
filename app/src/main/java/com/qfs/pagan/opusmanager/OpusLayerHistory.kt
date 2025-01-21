@@ -264,14 +264,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     private fun <T> _remember(callback: () -> T): T {
         return try {
-            val original_history_stack_size = this.history_cache.
             this.memory_depth += 1
             val output = this.history_cache.remember(callback)
             this.memory_depth -= 1
             output
         } catch (e: Exception) {
             this.memory_depth -= 1
-            if (this.memory_depth == 0 &&) {
+            if (this.memory_depth == 0) {
                 this.lock_cursor {
                     this.apply_undo()
                 }
@@ -681,11 +680,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
             val node = this.history_cache.pop()
             if (node == null) {
                 this.history_cache.unlock()
-                return
-            } else if (node.token == HistoryToken.MULTI && node.children.isEmpty()) {
-                // If the node was an empty 'multi'  node, try the next one
-                this.history_cache.unlock()
-                this.apply_undo()
                 return
             }
 

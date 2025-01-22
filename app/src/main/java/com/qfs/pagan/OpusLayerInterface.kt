@@ -85,7 +85,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private fun <T> lock_ui_partial(callback: () -> T): T? {
         this._ui_change_bill.lock_partial()
-
         val output = try {
             val tmp = callback()
             this._ui_change_bill.unlock()
@@ -96,6 +95,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             if (this._ui_change_bill.is_locked()) {
                 throw e
             } else {
+                this.cursor_apply(this.temporary_blocker!!.copy())
                 null
             }
         } catch (e: Exception) {
@@ -1635,7 +1635,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat_key.beat,
                 position = position
             )
-            this.cursor_apply(this.temporary_blocker!!, true)
+            this.cursor_apply(this.temporary_blocker!!.copy(), true)
         }
     }
 
@@ -1652,7 +1652,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat_key.beat,
                 position = position
             )
-            this.cursor_apply(this.temporary_blocker!!, true)
+            this.cursor_apply(this.temporary_blocker!!.copy(), true)
         }
     }
 
@@ -1667,7 +1667,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat,
                 position = position
             )
-            this.cursor_apply(this.temporary_blocker!!, true)
+            this.cursor_apply(this.temporary_blocker!!.copy(), true)
         }
     }
 
@@ -1681,7 +1681,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 beat = beat,
                 position = position
             )
-            this.cursor_apply(this.temporary_blocker!!, true)
+            this.cursor_apply(this.temporary_blocker!!.copy(), true)
         }
     }
 

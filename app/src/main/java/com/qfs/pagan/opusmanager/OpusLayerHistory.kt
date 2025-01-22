@@ -263,7 +263,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> _remember(callback: () -> T): T {
-        val bkp_cursor = this.cursor.copy()
         return try {
             this._memory_depth += 1
             val output = this.history_cache.remember(callback)
@@ -275,7 +274,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 this.lock_cursor {
                     this.apply_undo()
                 }
-                this.cursor_apply(bkp_cursor)
             }
             throw e
         }

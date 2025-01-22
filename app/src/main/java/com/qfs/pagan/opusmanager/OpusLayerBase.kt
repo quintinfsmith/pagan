@@ -2107,6 +2107,7 @@ open class OpusLayerBase {
             if (unset_original) {
                 this.controller_channel_unset(type, original_channel, i, listOf())
             }
+            this.controller_channel_unset(type, target_channel, (i - start) + target_beat, listOf())
         }
 
         for ((beat, tree) in overwrite_map) {

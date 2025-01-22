@@ -224,6 +224,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 opus_manager.cursor_select_ctl_at_line(type, beat_key, position)
             }
         }
+
         private fun _process_ctl_channel_on_click(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
             val opus_manager = this.editor_table.get_opus_manager()
             val cursor = opus_manager.cursor
@@ -250,6 +251,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
         }
+
         private fun _process_ctl_global_on_click(type: ControlEventType, beat: Int, position: List<Int>) {
             val opus_manager = this.editor_table.get_opus_manager()
             val cursor = opus_manager.cursor
@@ -442,6 +444,17 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
             val tree_original = controller.get_tree(original_position.first, original_position.second)
 
+            val match_cursor = OpusManagerCursor(
+                mode = OpusManagerCursor.CursorMode.Single,
+                ctl_type = type,
+                ctl_level = CtlLineLevel.Global,
+                beat = original_position.first
+            )
+
+            if (opus_manager.temporary_blocker == match_cursor) {
+                new_state.add(R.attr.state_invalid)
+            }
+
             if (tree.is_event()) {
                 new_state.add(R.attr.state_active)
             } else if (tree_original != tree) {
@@ -465,6 +478,18 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val tree = controller.get_tree(beat, position)
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
             val tree_original = controller.get_tree(original_position.first, original_position.second)
+
+            val match_cursor = OpusManagerCursor(
+                mode = OpusManagerCursor.CursorMode.Single,
+                ctl_type = type,
+                ctl_level = CtlLineLevel.Channel,
+                channel = channel,
+                beat = original_position.first
+            )
+
+            if (opus_manager.temporary_blocker == match_cursor) {
+                new_state.add(R.attr.state_invalid)
+            }
 
             if (tree.is_event()) {
                 new_state.add(R.attr.state_active)
@@ -490,6 +515,19 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val tree = controller.get_tree(beat, position)
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
             val tree_original = controller.get_tree(original_position.first, original_position.second)
+
+            val match_cursor = OpusManagerCursor(
+                mode = OpusManagerCursor.CursorMode.Single,
+                ctl_type = type,
+                ctl_level = CtlLineLevel.Line,
+                channel = beat_key.channel,
+                line_offset = beat_key.line_offset,
+                beat = original_position.first
+            )
+
+            if (opus_manager.temporary_blocker == match_cursor) {
+                new_state.add(R.attr.state_invalid)
+            }
 
             if (tree.is_event()) {
                 new_state.add(R.attr.state_active)
@@ -795,7 +833,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 this.text_paint_ctl
             )
         }
-
 
         fun insert_row(y: Int) {
             //for (i in 0 until this.childCount) {

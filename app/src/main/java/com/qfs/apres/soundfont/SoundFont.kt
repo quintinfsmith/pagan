@@ -130,7 +130,7 @@ class SoundFont(file_path: String) {
     }
 
 
-    fun get_sample(sample_index: Int): Sample {
+    fun get_sample(sample_index: Int, build_linked: Boolean = true): Sample {
         val shdr_bytes = this.pdta_chunks["shdr"]!!
 
         val offset = sample_index * 46
@@ -148,6 +148,7 @@ class SoundFont(file_path: String) {
         val end = toUInt(shdr_bytes[offset + 24]) + (toUInt(shdr_bytes[offset + 25]) * 256) + (toUInt(shdr_bytes[offset + 26]) * 65536) + (toUInt(shdr_bytes[offset + 27]) * 16777216)
 
         //val sample_data = this.get_sample_data(start, end)!!
+        val sample_type = SoundFont.sample_type_from_int(toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256))
         return Sample(
             sample_name,
             toUInt(shdr_bytes[offset + 28])
@@ -166,10 +167,24 @@ class SoundFont(file_path: String) {
                     + (toUInt(shdr_bytes[offset + 39]) * 16777216),
             toUInt(shdr_bytes[offset + 40]),
             toUInt(shdr_bytes[offset + 41]),
-            toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256),
-            SoundFont.sample_type_from_int(
-                toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256)
-            ),
+            when (sample_type) {
+                SampleType.Right,
+                SampleType.Left,
+                SampleType.Linked -> {
+                    val linked_addr = toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256)
+                    if (build_linked && linked_addr != 0) {
+                        this.get_sample(linked_addr, false)
+                    } else {
+                        null
+                    }
+                }
+                SampleType.Mono,
+                SampleType.RomMono,
+                SampleType.RomRight,
+                SampleType.RomLeft,
+                SampleType.RomLinked -> null
+            },
+            sample_type,
             data_placeholder = Pair(start, end)
         )
     }
@@ -279,6 +294,7 @@ class SoundFont(file_path: String) {
                     ordered_samples.add(sample)
                 }
             }
+
             ordered_samples = ordered_samples.sortedBy { sample: Sample ->
                 sample.data_placeholder.first
             }.toMutableList()
@@ -286,31 +302,34 @@ class SoundFont(file_path: String) {
 
             this.riff.with {
                 for (sample in ordered_samples) {
-                    sample.data = when (sample.sampleType) {
-                        SampleType.RomMono,
-                        SampleType.RomRight,
-                        SampleType.RomLeft,
-                        SampleType.RomLinked -> {
-                            if (this.irom == null) {
-                                throw NoIROMDeclared()
-                            }
-                            this.read_rom_hook(
-                                sample.data_placeholder.first,
-                                sample.data_placeholder.second
-                            )
-                        }
-                        else -> {
-                            this.get_sample_data(
-                                sample.data_placeholder.first,
-                                sample.data_placeholder.second
-                            )
-                        }
+                    this.apply_sample_data(sample)
+
+                    val linked_sample = sample.linked_sample
+                    if (linked_sample is Sample) {
+                        this.apply_sample_data(linked_sample)
                     }
                 }
             }
         }
 
         return output ?: throw InvalidPresetIndex(preset_index,preset_bank)
+    }
+
+    fun apply_sample_data(sample: Sample) {
+        sample.data = when (sample.sampleType) {
+            SampleType.RomMono,
+            SampleType.RomRight,
+            SampleType.RomLeft,
+            SampleType.RomLinked -> {
+                if (this.irom == null) {
+                    throw NoIROMDeclared()
+                }
+                this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
+            }
+            else -> {
+                this.get_sample_data(sample.data_placeholder.first, sample.data_placeholder.second)
+            }
+        }
     }
 
     open fun read_rom_hook(start: Int, end: Int): ShortArray {

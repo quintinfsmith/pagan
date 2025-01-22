@@ -130,7 +130,7 @@ class SampleHandleManager(
         }
 
         for ((sample,p_instrument) in sample_pairs) {
-            val new_handle = this.sample_handle_generator.get(
+            val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
@@ -140,6 +140,10 @@ class SampleHandleManager(
 
             //new_handle.volume_profile = velocity.toFloat()  * .6F / 128.toFloat()
             output.add(new_handle)
+            if (new_linked_handle != null) {
+                output.add(new_linked_handle)
+            }
+
             if (this.sample_limit != null && output.size >= this.sample_limit!!) {
                 break
             }
@@ -189,7 +193,7 @@ class SampleHandleManager(
         }
 
         for ((sample, p_instrument) in sample_pairs) {
-            val new_handle = this.sample_handle_generator.get(
+            val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
@@ -198,6 +202,9 @@ class SampleHandleManager(
             )
             //new_handle.volume_profile = (event.get_velocity().toFloat() * .6F / 128F)
             output.add(new_handle)
+            if (new_linked_handle != null) {
+                output.add(new_linked_handle)
+            }
 
             if (this.sample_limit != null && output.size >= this.sample_limit!!) {
                 break

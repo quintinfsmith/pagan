@@ -1,6 +1,4 @@
 package com.qfs.pagan.opusmanager
-import com.qfs.apres.Midi
-import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.OpusTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -10,7 +8,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     var cursor = OpusManagerCursor()
     private var _cursor_lock = 0
 
-    private fun <T> lock_cursor(callback: () -> T): T {
+    internal fun <T> lock_cursor(callback: () -> T): T {
         this._cursor_lock += 1
         val output = try {
             callback()
@@ -536,7 +534,9 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.move_beat_range(beat_key, first_corner, second_corner)
+        this.lock_cursor {
+            super.move_beat_range(beat_key, first_corner, second_corner)
+        }
         this.cursor_select(beat_key, this.get_first_position(beat_key))
     }
 
@@ -621,7 +621,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
         super.on_action_blocked(blocker_key, blocker_position)
-
         this.cursor_select(blocker_key, blocker_position)
     }
 
@@ -644,8 +643,8 @@ open class OpusLayerCursor: OpusLayerBase() {
 
 
     // Cursor Functions ////////////////////////////////////////////////////////////////////////////
-    open fun cursor_apply(cursor: OpusManagerCursor) {
-        if (this._block_cursor_selection()) {
+    open fun cursor_apply(cursor: OpusManagerCursor, force: Boolean = false) {
+        if (!force && this._block_cursor_selection()) {
             return
         }
         this.cursor.clear()
@@ -712,6 +711,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             return
         }
         this.cursor.select_ctl_at_line(beat_key, position, ctl_type)
+
     }
     open fun cursor_select_ctl_at_channel(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         if (this._block_cursor_selection()) {
@@ -917,16 +917,16 @@ open class OpusLayerCursor: OpusLayerBase() {
                         this.cursor_select(first_key, listOf())
                     }
                     CtlLineLevel.Global -> {
-                        val (key_a, key_b) = this.cursor.range!!
-                        val start = min(key_a.beat, key_b.beat)
-                        val end = max(key_a.beat, key_b.beat)
+                        val (key_a, key_b) = this.cursor.get_ordered_range()!!
+                        val start = key_a.beat
+                        val end = key_b.beat
                         this.controller_global_unset_range(this.cursor.ctl_type!!, start, end)
                         this.cursor_select_ctl_at_global(this.cursor.ctl_type!!, start, listOf())
                     }
                     CtlLineLevel.Channel -> {
-                        val (key_a, key_b) = this.cursor.range!!
-                        val start = min(key_a.beat, key_b.beat)
-                        val end = max(key_a.beat, key_b.beat)
+                        val (key_a, key_b) = this.cursor.get_ordered_range()!!
+                        val start = key_a.beat
+                        val end = key_b.beat
                         this.controller_channel_unset_range(this.cursor.ctl_type!!, key_a.channel, start, end)
                         this.cursor_select_ctl_at_channel(this.cursor.ctl_type!!, key_a.channel, start, listOf())
                     }
@@ -1087,7 +1087,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
     fun merge_into_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             if (first != second) {
                 TODO()
             } else {
@@ -1100,9 +1100,10 @@ open class OpusLayerCursor: OpusLayerBase() {
             throw InvalidCursorState()
         }
     }
+
     fun move_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             if (first != second) {
                 this.move_beat_range(beat_key, first, second)
             } else {
@@ -1115,9 +1116,10 @@ open class OpusLayerCursor: OpusLayerBase() {
             throw InvalidCursorState()
         }
     }
+
     fun copy_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             if (first != second) {
                 this.overwrite_beat_range(beat_key, first, second)
             } else {
@@ -1137,9 +1139,10 @@ open class OpusLayerCursor: OpusLayerBase() {
             throw InvalidCursorState()
         }
     }
+
     fun copy_line_ctl_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             when (this.cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first != second) {
@@ -1172,22 +1175,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
-
-        val tree = this.get_line_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            beat_key,
-            listOf()
-        )
-
-        this.cursor_select_ctl_at_line(
-            this.cursor.ctl_type!!,
-            beat_key,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
     }
+
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             when (this.cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first != second) {
@@ -1217,22 +1209,11 @@ open class OpusLayerCursor: OpusLayerBase() {
             throw InvalidCursorState()
         }
 
-        val tree = this.get_line_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            beat_key,
-            listOf()
-        )
-
-        this.cursor_select_ctl_at_line(
-            this.cursor.ctl_type!!,
-            beat_key,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
     }
 
     fun copy_channel_ctl_to_beat(channel: Int, beat: Int) {
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             when (this.cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first != second) {
@@ -1243,9 +1224,9 @@ open class OpusLayerCursor: OpusLayerBase() {
                 }
                 CtlLineLevel.Channel -> {
                     if (first != second) {
-                        this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, this.cursor.channel, first.beat, second.beat)
+                        this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, first.channel, first.beat, second.beat)
                     } else {
-                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, this.cursor.channel, first.beat, listOf()))
+                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, first.channel, first.beat, listOf()))
                     }
                 }
                 CtlLineLevel.Global -> {
@@ -1260,14 +1241,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
-
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(this.cursor.ctl_type!!, channel, beat, listOf())
-        this.cursor_select_ctl_at_channel(this.cursor.ctl_type!!, channel, beat, tree.get_first_event_tree_position() ?: listOf())
     }
 
     fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             when (this.cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first != second) {
@@ -1296,20 +1274,60 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
+    }
 
-        val tree = this.get_channel_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            channel,
-            beat,
-            listOf()
-        )
+    override fun controller_global_to_line_move_leaf(type: ControlEventType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
+        super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
+        val cursor_position = this.get_first_position_line_ctl(type, target_key, target_position)
+        this.cursor_select_ctl_at_line(type, target_key, cursor_position)
+    }
 
-        this.cursor_select_ctl_at_channel(
-            this.cursor.ctl_type!!,
-            channel,
-            beat,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
+    override fun controller_global_to_channel_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
+        val cursor_position = this.get_first_position_channel_ctl(type, channel_to, beat_to, position_to)
+        this.cursor_select_ctl_at_channel(type, channel_to, beat_to, cursor_position)
+    }
+
+    override fun controller_global_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
+        super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
+        val cursor_position = this.get_first_position_global_ctl(type, beat_to, position_to)
+        this.cursor_select_ctl_at_global(type, beat_to, cursor_position)
+    }
+
+    override fun controller_channel_to_line_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
+        val cursor_position = this.get_first_position_line_ctl(type, beat_key_to, position_to)
+        this.cursor_select_ctl_at_line(type, beat_key_to, cursor_position)
+    }
+
+    override fun controller_channel_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_channel_move_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
+        val cursor_position = this.get_first_position_channel_ctl(type, channel_to, beat_to, position_to)
+        this.cursor_select_ctl_at_channel(type, channel_to, beat_to, cursor_position)
+    }
+
+    override fun controller_channel_to_global_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
+        val cursor_position = this.get_first_position_global_ctl(type, target_beat, target_position)
+        this.cursor_select_ctl_at_global(type, target_beat, cursor_position)
+    }
+
+    override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
+        val cursor_position = this.get_first_position_line_ctl(type, beat_key_to, position_to)
+        this.cursor_select_ctl_at_line(type, beat_key_to, cursor_position)
+    }
+
+    override fun controller_line_to_channel_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
+        val cursor_position = this.get_first_position_channel_ctl(type, channel_to, beat_to, position_to)
+        this.cursor_select_ctl_at_channel(type, channel_to, beat_to, cursor_position)
+    }
+
+    override fun controller_line_to_global_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
+        val cursor_position = this.get_first_position_global_ctl(type, target_beat, target_position)
+        this.cursor_select_ctl_at_global(type, target_beat, cursor_position)
     }
 
     fun copy_global_ctl_to_beat(beat: Int) {
@@ -1318,7 +1336,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
 
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             when (this.cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first != second) {
@@ -1346,26 +1364,15 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
-
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            beat,
-            listOf()
-        )
-
-        this.cursor_select_ctl_at_global(
-            this.cursor.ctl_type!!,
-            beat,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
     }
+
     fun move_global_ctl_to_beat(beat: Int) {
         if (this.cursor.ctl_level != CtlLineLevel.Global) {
             throw InvalidOverwriteCall()
         }
 
         if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.range!!
+            val (first, second) = this.cursor.get_ordered_range()!!
             when (this.cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first != second) {
@@ -1393,18 +1400,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             throw InvalidCursorState()
         }
-
-        val tree = this.get_global_ctl_tree<OpusControlEvent>(
-            this.cursor.ctl_type!!,
-            beat,
-            listOf()
-        )
-
-        this.cursor_select_ctl_at_global(
-            this.cursor.ctl_type!!,
-            beat,
-            tree.get_first_event_tree_position() ?: listOf()
-        )
     }
 
     fun move_to_previous_visible_line(repeat: Int = 1) {
@@ -1902,10 +1897,8 @@ open class OpusLayerCursor: OpusLayerBase() {
                 }
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val first_beat = min(this.cursor.range!!.first.beat, this.cursor.range!!.second.beat)
-                val second_beat = max(this.cursor.range!!.first.beat, this.cursor.range!!.second.beat)
-
-                (this.cursor.ctl_level == CtlLineLevel.Global && control_type == this.cursor.ctl_type) && (beat == second_beat || beat == first_beat)
+                val (first, second) = this.cursor.get_ordered_range()!!
+                (this.cursor.ctl_level == CtlLineLevel.Global && control_type == this.cursor.ctl_type) && (beat == second.beat || beat == first.beat)
             }
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column,
@@ -1971,7 +1964,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
-                (beat == first.beat || beat == second.beat) && (this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type)
+                (beat == first.beat || beat == second.beat) && (this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type && (first.channel .. second.channel).contains(channel))
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Line,
@@ -1999,6 +1992,9 @@ open class OpusLayerCursor: OpusLayerBase() {
                     if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
                         return false
                     }
+                    if (channel != this.cursor.channel) {
+                        return false
+                    }
 
                     var output = false
                     val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(control_type)
@@ -2017,7 +2013,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
-                beat in first.beat + 1 until second.beat && this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type
+                beat in first.beat + 1 until second.beat && this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type && (first.channel .. second.channel).contains(channel)
             }
 
             OpusManagerCursor.CursorMode.Channel -> {
@@ -2033,9 +2029,9 @@ open class OpusLayerCursor: OpusLayerBase() {
             OpusManagerCursor.CursorMode.Single -> {
                 val cposition = this.cursor.get_position()
                 this.cursor.channel == beat_key.channel
+                        && this.cursor.line_offset == beat_key.line_offset
                         && control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Line
-                        && this.cursor.line_offset == beat_key.line_offset
                         && beat_key.beat == this.cursor.beat
                         && position.size >= cposition.size
                         && position.subList(0, cposition.size) == cposition
@@ -2070,6 +2066,10 @@ open class OpusLayerCursor: OpusLayerBase() {
                     val cposition = this.cursor.get_position()
                     val beat = beat_key.beat
                     if (cbeat == beat && position.size >= cposition.size && position.subList(0, cposition.size) == cposition) {
+                        return false
+                    }
+
+                    if (this.cursor.channel != beat_key.channel || this.cursor.line_offset != beat_key.line_offset) {
                         return false
                     }
 
@@ -2116,7 +2116,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val target = this.get_instrument_line_index(channel, line_offset)
                 val first = this.get_instrument_line_index(this.cursor.range!!.first.channel, this.cursor.range!!.first.line_offset)
                 val second = this.get_instrument_line_index(this.cursor.range!!.second.channel, this.cursor.range!!.second.line_offset)
-                (this.cursor.ctl_type == null || (control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line)) && (first .. second).contains(target)
+                channel == this.cursor.range!!.first.channel || ((this.cursor.ctl_type == null || (control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line)) && (first .. second).contains(target))
             }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> false
@@ -2139,7 +2139,8 @@ open class OpusLayerCursor: OpusLayerBase() {
                 channel == this.cursor.channel
             }
             OpusManagerCursor.CursorMode.Range -> {
-                control_type == this.cursor.ctl_type && this.cursor.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel
+                val (first, _) = this.cursor.get_ordered_range()!!
+                control_type == this.cursor.ctl_type && first.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel
             }
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column -> false

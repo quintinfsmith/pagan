@@ -31,6 +31,10 @@ class UIChangeBill {
             }
         }
 
+        fun get_level(): Int {
+            return this.level
+        }
+
         fun is_locked(): Boolean {
             return this.level > 0
         }
@@ -746,6 +750,10 @@ class UIChangeBill {
         if (this.working_path.isNotEmpty()) {
             this.working_path.removeAt(this.working_path.size - 1)
         }
+    }
+
+    fun get_level(): Int {
+        return this.ui_lock.get_level()
     }
 
     fun is_locked(): Boolean {

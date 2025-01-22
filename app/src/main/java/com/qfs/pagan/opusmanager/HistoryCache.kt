@@ -1,7 +1,6 @@
 package com.qfs.pagan.opusmanager
 
 class HistoryCache {
-    class HistoryError(val e: Exception, val failed_node: HistoryNode?): Exception()
     class HistoryNode(var token: HistoryToken, var args: List<Any>) {
         var children: MutableList<HistoryNode> = mutableListOf()
         var parent: HistoryNode? = null
@@ -10,13 +9,28 @@ class HistoryCache {
     private var _history_lock = 0
     private var _history: MutableList<HistoryNode> = mutableListOf()
     private var _working_node: HistoryNode? = null
-
     fun isLocked(): Boolean {
         return this._history_lock != 0
     }
 
     fun isEmpty(): Boolean {
         return this._history.isEmpty()
+    }
+
+    fun prepend_undoer(token: HistoryToken, args: List<Any>) {
+        if (this.isLocked()) {
+            return
+        }
+        val new_node = HistoryNode(token, args)
+
+        if (this._working_node != null) {
+            new_node.parent = this._working_node
+            this._working_node!!.children.add(0, new_node)
+        } else {
+            this._history.add(0, new_node)
+        }
+
+        this._check_size()
     }
 
     fun append_undoer(token: HistoryToken, args: List<Any>) {
@@ -43,7 +57,8 @@ class HistoryCache {
             this._close_multi()
             output
         } catch (e: Exception) {
-            throw HistoryError(e, this.cancel_multi())
+            this._close_multi()
+            throw e
         }
     }
 
@@ -80,22 +95,13 @@ class HistoryCache {
         if (this.isLocked()) {
             return
         }
-
         if (this._working_node != null) {
             this._working_node = this._working_node!!.parent
         }
     }
 
-    private fun cancel_multi(): HistoryNode? {
-        if (this.isLocked()) {
-            return null
-        }
-        this._close_multi()
-        return if (this._working_node != null) {
-            this._working_node!!.children.removeAt(this._working_node!!.children.size - 1)
-        } else {
-            this._history.removeAt(this._history.size - 1)
-        }
+    fun size(): Int {
+        return this._history.size
     }
 
     private fun _check_size() {
@@ -125,13 +131,13 @@ class HistoryCache {
     }
 
     // Unused
-    //fun peek(): HistoryNode? {
-    //    return if (this._history.isEmpty()) {
-    //        null
-    //    } else {
-    //        this._history.last()
-    //    }
-    //}
+    fun peek(): HistoryNode? {
+        return if (this._history.isEmpty()) {
+            null
+        } else {
+            this._history.last()
+        }
+    }
 
     fun copy(): HistoryCache {
         val c = HistoryCache()

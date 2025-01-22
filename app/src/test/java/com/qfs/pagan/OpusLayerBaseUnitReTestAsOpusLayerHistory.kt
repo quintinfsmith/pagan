@@ -1377,25 +1377,24 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         manager.set_beat_count(6)
 
         assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(3, 0, 0), BeatKey(3, 2, 2))
+            // Vertical overflow - channel
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(3, 0, 0), BeatKey(3, 2, 2))
         }
         assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 3, 0), BeatKey(1, 2, 2))
-        }
-        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-        }
-        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 4, 2))
+            // Vertical overflow - line
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(0, 3, 0), BeatKey(1, 2, 2))
         }
 
         assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-        }
-        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 4, 2))
         }
 
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        }
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
+            manager._get_beatkeys_from_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        }
     }
 
     @Test
@@ -1574,9 +1573,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             manager.get_global_ctl_tree<OpusControlEvent>(type, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.controller_global_overwrite_range(type, 3, 2, 3)
-        }
+        manager.controller_global_overwrite_range(type, 3, 2, 3)
+        assertEquals(5, manager.beat_count)
     }
 
     @Test
@@ -1603,9 +1601,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             manager.get_global_ctl_tree<OpusControlEvent>(type, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.controller_global_move_range(type, 3, 2, 3)
-        }
+        manager.controller_global_move_range(type, 3, 2, 3)
+        assertEquals(5, manager.beat_count)
 
     }
 
@@ -1628,9 +1625,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.controller_channel_overwrite_range(type, 0, 3, 0, 2, 3)
-        }
+        manager.controller_channel_overwrite_range(type, 0, 3, 0, 2, 3)
+        assertEquals(5, manager.beat_count)
     }
 
     @Test
@@ -1659,9 +1655,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.controller_channel_move_range(type, 0, 3, 0, 2, 3)
-        }
+        manager.controller_channel_move_range(type, 0, 3, 0, 2, 3)
+        assertEquals(5, manager.beat_count)
     }
 
     @Test

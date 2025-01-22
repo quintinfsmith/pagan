@@ -220,36 +220,8 @@ data class OpusManagerCursor(
         if (this.mode != CursorMode.Range) {
             return null
         }
-        val beat_key_a = this.range!!.first
-        val beat_key_b = this.range!!.second
 
-        val (from_key, to_key) = if (beat_key_a.channel < beat_key_b.channel) {
-            Pair(
-                BeatKey(beat_key_a.channel, beat_key_a.line_offset, -1),
-                BeatKey(beat_key_b.channel, beat_key_b.line_offset, -1)
-            )
-        } else if (beat_key_a.channel == beat_key_b.channel) {
-            if (beat_key_a.line_offset < beat_key_b.line_offset) {
-                Pair(
-                    BeatKey(beat_key_a.channel, beat_key_a.line_offset, -1),
-                    BeatKey(beat_key_b.channel, beat_key_b.line_offset, -1)
-                )
-            } else {
-                Pair(
-                    BeatKey(beat_key_b.channel, beat_key_b.line_offset, -1),
-                    BeatKey(beat_key_a.channel, beat_key_a.line_offset, -1)
-                )
-            }
-        } else {
-            Pair(
-                BeatKey(beat_key_b.channel, beat_key_b.line_offset, -1),
-                BeatKey(beat_key_a.channel, beat_key_a.line_offset, -1)
-            )
-        }
-
-        from_key.beat = Integer.min(beat_key_a.beat, beat_key_b.beat)
-        to_key.beat = Integer.max(beat_key_a.beat, beat_key_b.beat)
-        return Pair(from_key, to_key)
+        return OpusLayerBase.get_ordered_beat_key_pair(this.range!!.first, this.range!!.second)
     }
 
     fun select_first_corner(beat_key: BeatKey) {
@@ -404,5 +376,4 @@ data class OpusManagerCursor(
     //    }
     //    this.position = working_position
     //}
-
 }

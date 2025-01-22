@@ -57,57 +57,62 @@ class OpusLayerInterface : OpusLayerHistory() {
     // UI BILL Interface functions vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     private fun <T> lock_ui_full(callback: () -> T): T? {
         this._ui_change_bill.lock_full()
+
         val output = try {
-            callback()
+            val tmp = callback()
+            this._ui_change_bill.unlock()
+            tmp
         } catch (e: BlockedActionException) {
+            this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            if (this._blocked_action_catcher > 0) {
-                this._ui_change_bill.unlock()
+            if (!this._ui_change_bill.is_locked()) {
+                if (this.temporary_blocker != null) {
+                    this.cursor_apply(this.temporary_blocker!!)
+                }
+                null
+            } else { // Still Locked
                 throw e
             }
-            null
         } catch (e: Exception) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            //if (!this.ui_change_bill.is_locked()) {
-            //    this.apply_bill_changes()
-            //}
             throw e
         }
 
-        this._ui_change_bill.unlock()
         if (!this._ui_change_bill.is_locked()) {
             this._apply_bill_changes()
         }
+
         return output
     }
 
     private fun <T> lock_ui_partial(callback: () -> T): T? {
         this._ui_change_bill.lock_partial()
-
         val output = try {
-            callback()
+            val tmp = callback()
+            this._ui_change_bill.unlock()
+            tmp
         } catch (e: BlockedActionException) {
+            this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-            if (this._blocked_action_catcher > 0) {
-                this._ui_change_bill.unlock()
+            if (!this._ui_change_bill.is_locked()) {
+                if (this.temporary_blocker != null) {
+                    this.cursor_apply(this.temporary_blocker!!)
+                }
+                null
+            } else { // Still Locked
                 throw e
             }
-            null
         } catch (e: Exception) {
             this._ui_change_bill.unlock()
             this._ui_change_bill.cancel_most_recent()
-
-            //if (!this.ui_change_bill.is_locked()) {
-            //    this.apply_bill_changes()
-            //}
             throw e
         }
 
-        this._ui_change_bill.unlock()
         if (!this._ui_change_bill.is_locked()) {
             this._apply_bill_changes()
         }
+
         return output
     }
 
@@ -392,9 +397,244 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    override fun _controller_line_copy_range(type: ControlEventType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_line_copy_range(type, beat_key, first_corner, second_corner, unset_original)
+        }
+    }
+
+    override fun _controller_line_to_channel_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_channel: Int, target_beat: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_line_to_channel_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_channel, target_beat, unset_original)
+        }
+    }
+
+    override fun _controller_line_to_global_copy_range(type: ControlEventType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_beat: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_line_to_global_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_beat, unset_original)
+        }
+    }
+
+    override fun _controller_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_channel_copy_range(type, target_channel, target_beat, original_channel, point_a, point_b, unset_original)
+        }
+    }
+
+    override fun _controller_channel_to_line_copy_range(type: ControlEventType, channel_from: Int, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_channel_to_line_copy_range(type, channel_from, beat_a, beat_b, target_key, unset_original)
+        }
+    }
+
+    override fun _controller_channel_to_global_copy_range(type: ControlEventType, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_channel_to_global_copy_range(type, target_beat, original_channel, point_a, point_b, unset_original)
+        }
+    }
+
+    override fun _controller_global_copy_range(type: ControlEventType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_global_copy_range(type, target, point_a, point_b, unset_original)
+        }
+    }
+
+    override fun _controller_global_to_line_copy_range(type: ControlEventType, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_global_to_line_copy_range(type, beat_a, beat_b, target_key, unset_original)
+        }
+    }
+
+    override fun _controller_global_to_channel_copy_range(type: ControlEventType, target_channel: Int, target_beat: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
+        this.lock_ui_partial {
+            super._controller_global_to_channel_copy_range(type, target_channel, target_beat, point_a, point_b, unset_original)
+        }
+    }
+
+    override fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat)
+        }
+    }
+
+    override fun controller_channel_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_channel_to_global_overwrite_range_horizontally(type, channel, first_beat, second_beat)
+        }
+    }
+
+    override fun controller_channel_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_channel_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, from_channel, first_beat, second_beat)
+        }
+    }
+
+    override fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        this.lock_ui_partial {
+            super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
+        }
+    }
+
+    override fun controller_global_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_global_to_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat)
+        }
+    }
+
+    override fun controller_line_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_key: BeatKey, second_key: BeatKey) {
+        this.lock_ui_partial {
+            super.controller_line_to_channel_overwrite_range_horizontally(type, channel, first_key, second_key)
+        }
+    }
+
+    override fun controller_global_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, first_beat: Int, second_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_global_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, first_beat, second_beat)
+        }
+    }
+
+    override fun controller_global_overwrite_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_global_overwrite_range_horizontally(type, first_beat, second_beat)
+        }
+    }
+
+    override fun controller_line_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_beat: Int, second_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_line_to_global_overwrite_range_horizontally(type, channel, line_offset, first_beat, second_beat)
+        }
+    }
+
+    override fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+        this.lock_ui_partial {
+            super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key)
+        }
+    }
+
+    override fun controller_global_overwrite_line(type: ControlEventType, beat: Int) {
+        this.lock_ui_partial {
+            super.controller_global_overwrite_line(type, beat)
+        }
+    }
+
+    override fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
+        this.lock_ui_partial {
+            super.overwrite_line(channel, line_offset, beat_key)
+        }
+    }
+
+    override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this.lock_ui_partial {
+            super.overwrite_beat_range(beat_key, first_corner, second_corner)
+        }
+    }
+
+    override fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
+        this.lock_ui_partial {
+            super.controller_line_overwrite_line(type, channel, line_offset, beat_key)
+        }
+    }
+
+    override fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_channel_overwrite_line(type, target_channel, original_channel, original_beat)
+        }
+    }
+
+    override fun controller_line_to_global_overwrite_line(type: ControlEventType, beat_key: BeatKey) {
+        this.lock_ui_partial {
+            super.controller_line_to_global_overwrite_line(type, beat_key)
+        }
+    }
+
+    override fun controller_channel_to_line_overwrite_line(type: ControlEventType, target_channel: Int, target_line_offset: Int, original_channel: Int, original_beat: Int) {
+        this.lock_ui_partial {
+            super.controller_channel_to_line_overwrite_line(type, target_channel, target_line_offset, original_channel, original_beat)
+        }
+    }
+
+    override fun controller_channel_to_global_overwrite_line(type: ControlEventType, channel: Int, beat: Int) {
+        this.lock_ui_partial {
+            super.controller_channel_to_global_overwrite_line(type, channel, beat)
+        }
+    }
+
+    override fun controller_global_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, beat: Int) {
+        this.lock_ui_partial {
+            super.controller_global_to_channel_overwrite_line(type, target_channel, beat)
+        }
+    }
+
+    override fun controller_global_to_line_overwrite_line(type: ControlEventType, from_beat: Int, target_channel: Int, target_line_offset: Int) {
+        this.lock_ui_partial {
+            super.controller_global_to_line_overwrite_line(type, from_beat, target_channel, target_line_offset)
+        }
+    }
+
+    override fun controller_line_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_key: BeatKey) {
+        this.lock_ui_partial {
+            super.controller_line_to_channel_overwrite_line(type, target_channel, original_key)
+        }
+    }
+
+
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         this.lock_ui_partial {
             super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
+        }
+    }
+
+    override fun controller_line_to_global_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
+        }
+    }
+
+    override fun controller_line_to_channel_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun controller_line_move_leaf(type: ControlEventType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
+        }
+    }
+
+    override fun controller_channel_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_channel_move_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun controller_channel_to_line_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
+        }
+    }
+
+    override fun controller_channel_to_global_move_leaf(type: ControlEventType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
+        }
+    }
+
+    override fun controller_global_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
+        }
+    }
+
+    override fun controller_global_to_channel_move_leaf(type: ControlEventType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
+        }
+    }
+
+    override fun controller_global_to_line_move_leaf(type: ControlEventType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
+        this.lock_ui_partial {
+            super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
         }
     }
 
@@ -1060,7 +1300,7 @@ class OpusLayerInterface : OpusLayerHistory() {
    // }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
-        //super.on_action_blocked(blocker_key, blocker_position)
+        super.on_action_blocked(blocker_key, blocker_position)
         if (!this.project_changing) {
             this._set_temporary_blocker(blocker_key, blocker_position)
         }
@@ -1101,12 +1341,12 @@ class OpusLayerInterface : OpusLayerHistory() {
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // CURSOR FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    override fun cursor_apply(cursor: OpusManagerCursor) {
-        if (this._block_cursor_selection()) {
+    override fun cursor_apply(cursor: OpusManagerCursor, force: Boolean) {
+        if (!force && this._block_cursor_selection()) {
             return
         }
         this.lock_ui_partial {
-            super.cursor_apply(cursor)
+            super.cursor_apply(cursor, force)
 
             this._queue_cursor_update(this.cursor)
 
@@ -1141,9 +1381,11 @@ class OpusLayerInterface : OpusLayerHistory() {
                         this._ui_change_bill.queue_set_context_menu_line_control_leaf()
                     }
                 }
+
                 OpusManagerCursor.CursorMode.Range -> {
                     this._ui_change_bill.queue_set_context_menu_range()
                 }
+
                 OpusManagerCursor.CursorMode.Unset -> {
                     this._ui_change_bill.queue_clear_context_menu()
                 }
@@ -1392,32 +1634,55 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
-            this.cursor_select(beat_key, position)
-            this.temporary_blocker = this.cursor.copy()
+            this.temporary_blocker = OpusManagerCursor(
+                mode = OpusManagerCursor.CursorMode.Single,
+                channel = beat_key.channel,
+                line_offset = beat_key.line_offset,
+                beat = beat_key.beat,
+                position = position
+            )
         }
     }
 
     private fun _set_temporary_blocker_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
-            this.cursor_select_ctl_at_line(type, beat_key, position)
-            this.temporary_blocker = this.cursor.copy()
+            this.temporary_blocker = OpusManagerCursor(
+                mode = OpusManagerCursor.CursorMode.Single,
+                ctl_type = type,
+                ctl_level = CtlLineLevel.Line,
+                channel = beat_key.channel,
+                line_offset = beat_key.line_offset,
+                beat = beat_key.beat,
+                position = position
+            )
         }
     }
 
     private fun _set_temporary_blocker_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
-            this.cursor_select_ctl_at_channel(type, channel, beat, position)
-            this.temporary_blocker = this.cursor.copy()
+            this.temporary_blocker = OpusManagerCursor(
+                mode = OpusManagerCursor.CursorMode.Single,
+                ctl_type = type,
+                ctl_level = CtlLineLevel.Channel,
+                channel = channel,
+                beat = beat,
+                position = position
+            )
         }
     }
 
     private fun _set_temporary_blocker_global_ctl(type: ControlEventType, beat: Int, position: List<Int>) {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
-            this.cursor_select_ctl_at_global(type, beat, position)
-            this.temporary_blocker = this.cursor.copy()
+            this.temporary_blocker = OpusManagerCursor(
+                mode = OpusManagerCursor.CursorMode.Single,
+                ctl_type = type,
+                ctl_level = CtlLineLevel.Global,
+                beat = beat,
+                position = position
+            )
         }
     }
 
@@ -1426,18 +1691,10 @@ class OpusLayerInterface : OpusLayerHistory() {
             val blocker = this.temporary_blocker
             if (blocker != null) {
                 when (blocker.ctl_level) {
-                    CtlLineLevel.Line -> {
-                        this._queue_line_ctl_cell_change(blocker.ctl_type!!, blocker.get_beatkey())
-                    }
-                    CtlLineLevel.Channel -> {
-                        this._queue_channel_ctl_cell_change(blocker.ctl_type!!, blocker.channel, blocker.beat)
-                    }
-                    CtlLineLevel.Global -> {
-                        this._queue_global_ctl_cell_change(blocker.ctl_type!!, blocker.beat)
-                    }
-                    null -> {
-                        this._queue_cell_change(blocker.get_beatkey())
-                    }
+                    CtlLineLevel.Line -> this._queue_line_ctl_cell_change(blocker.ctl_type!!, blocker.get_beatkey())
+                    CtlLineLevel.Channel -> this._queue_channel_ctl_cell_change(blocker.ctl_type!!, blocker.channel, blocker.beat)
+                    CtlLineLevel.Global -> this._queue_global_ctl_cell_change(blocker.ctl_type!!, blocker.beat)
+                    null -> this._queue_cell_change(blocker.get_beatkey())
                 }
             }
             this.temporary_blocker = null
@@ -1494,7 +1751,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this._queue_global_ctl_cell_change(type, blocked.first)
             }
         }
-
     }
 
     private fun make_percussion_visible() {
@@ -1658,14 +1914,11 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 val channel = this.get_all_channels()[cursor.channel]
                                 try {
                                     Pair(
-                                        this.get_visible_row_from_ctl_line_line(
-                                            cursor.ctl_type!!,
-                                            cursor.channel,
-                                            cursor.line_offset
-                                        ),
+                                        this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset),
                                         channel.lines[cursor.line_offset].get_controller(cursor.ctl_type!!)
                                     )
                                 } catch (e: NullPointerException) {
+                                    // Dead cursor
                                     return
                                 }
                             }
@@ -1690,22 +1943,29 @@ class OpusLayerInterface : OpusLayerHistory() {
                                         this._ui_change_bill.queue_line_label_refresh(line_y++)
                                     }
                                 }
-
-                                Pair(
-                                    this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
-                                    this.get_all_channels()[cursor.channel].controllers.get_controller(cursor.ctl_type!!)
-                                )
+                                try {
+                                    Pair(
+                                        this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
+                                        this.get_all_channels()[cursor.channel].controllers.get_controller(cursor.ctl_type!!)
+                                    )
+                                } catch (e: NullPointerException) {
+                                    // Dead cursor
+                                    return
+                                }
                             }
 
                             CtlLineLevel.Global -> {
-                                Pair(
-                                    this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
-                                    this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
-                                )
+                                try {
+                                    Pair(
+                                        this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
+                                        this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                                    )
+                                } catch (e: NullPointerException) {
+                                    // Dead cursor
+                                    return
+                                }
                             }
                         }
-
-
 
                         val shadow_beats = mutableSetOf<Int>()
                         val beat = cursor.beat
@@ -1754,15 +2014,43 @@ class OpusLayerInterface : OpusLayerHistory() {
                         val (top_left, bottom_right) = cursor.get_ordered_range()!!
                         val y = when (cursor.ctl_level!!) {
                             // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
-                            CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(
-                                cursor.ctl_type!!,
-                                top_left.channel,
-                                top_left.line_offset
-                            )
+                            CtlLineLevel.Line -> {
+                                this._ui_change_bill.queue_line_label_refresh(
+                                    this.get_visible_row_from_ctl_line(
+                                        this.get_actual_line_index(
+                                            this.get_instrument_line_index(
+                                                top_left.channel,
+                                                top_left.line_offset
+                                            )
+                                        )
+                                    )!!
+                                )
+
+                                this.get_visible_row_from_ctl_line_line(
+                                    cursor.ctl_type!!,
+                                    top_left.channel,
+                                    top_left.line_offset
+                                )
+                            }
                             // Can assume top_left.channel == bottom_right.channel
-                            CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+                            CtlLineLevel.Channel -> {
+                                for (i in 0 until this.get_channel(top_left.channel).lines.size) {
+                                    this._ui_change_bill.queue_line_label_refresh(
+                                        this.get_visible_row_from_ctl_line(
+                                            this.get_actual_line_index(
+                                                this.get_instrument_line_index(
+                                                    top_left.channel,
+                                                    i
+                                                )
+                                            )
+                                        )!!
+                                    )
+                                }
+                                this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+                            }
                             CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                         }
+
                         val first_beat = min(top_left.beat, bottom_right.beat)
                         val last_beat = max(top_left.beat, bottom_right.beat)
 
@@ -1801,7 +2089,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 )
                             )
                         )
-
 
                         val row_index = try {
                             this.get_visible_row_from_ctl_line_line(
@@ -2510,5 +2797,11 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.cursor.get_position()
         )
         this._set_note_offset(current_tree_position.first, current_tree_position.second, offset)
+    }
+
+    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this.lock_ui_partial {
+            super.move_beat_range(beat_key, first_corner, second_corner)
+        }
     }
 }

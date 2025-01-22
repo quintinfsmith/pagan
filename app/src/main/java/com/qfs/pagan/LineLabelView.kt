@@ -40,12 +40,6 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
                             } catch (e: OpusLayerBase.IncompatibleChannelException) {
                                 this.get_activity().feedback_msg(context.getString(R.string.std_percussion_swap))
                             }
-                            //opus_manager.move_line(
-                            //    from_channel,
-                            //    from_line,
-                            //    to_channel,
-                            //    to_line
-                            //)
                         }
                     }
                     adapter.stop_dragging()

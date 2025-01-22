@@ -898,6 +898,8 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         this.lock_ui_partial {
+            super.swap_lines(channel_a, line_a, channel_b, line_b)
+
             val vis_line_a = this.get_visible_row_from_ctl_line(
                 this.get_actual_line_index(
                     this.get_instrument_line_index(channel_a, line_a)
@@ -910,11 +912,36 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
             )!!
 
-            super.swap_lines(channel_a, line_a, channel_b, line_b)
-
             this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
-            this._ui_change_bill.queue_row_change(vis_line_a)
-            this._ui_change_bill.queue_row_change(vis_line_b)
+
+            var y = 0
+            for (channel in this.get_all_channels()) {
+                if (!channel.visible) {
+                    continue
+                }
+
+                this._ui_change_bill.queue_row_change(y++)
+                for (line in channel.lines) {
+                    for ((_, controller) in line.controllers.get_all()) {
+                        if (controller.visible) {
+                            this._ui_change_bill.queue_row_change(y++)
+                        }
+                    }
+                }
+
+                for ((_, controller) in channel.controllers.get_all()) {
+                    if (controller.visible) {
+                        this._ui_change_bill.queue_row_change(y++)
+                    }
+                }
+            }
+            for ((_, controller) in this.controllers.get_all()) {
+                if (controller.visible) {
+                    this._ui_change_bill.queue_row_change(y++)
+                }
+            }
+
+
         }
     }
 

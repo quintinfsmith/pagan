@@ -1,1 +1,5 @@
+- fixed potential crashes and incorrect highlighting when moving/copying effect controls
 - fixed some soundfonts' samples only playing out of one speaker
+- when copying or moving a range, the project will now extend to fit the pasted selection
+- fixed line swapping not correctly updating line labels
+- fixed some over-engineering in the history stack

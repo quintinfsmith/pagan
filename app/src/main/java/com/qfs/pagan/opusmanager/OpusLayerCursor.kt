@@ -1226,9 +1226,9 @@ open class OpusLayerCursor: OpusLayerBase() {
                 }
                 CtlLineLevel.Channel -> {
                     if (first != second) {
-                        this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, this.cursor.channel, first.beat, second.beat)
+                        this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, first.channel, first.beat, second.beat)
                     } else {
-                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, this.cursor.channel, first.beat, listOf()))
+                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, first.channel, first.beat, listOf()))
                     }
                 }
                 CtlLineLevel.Global -> {

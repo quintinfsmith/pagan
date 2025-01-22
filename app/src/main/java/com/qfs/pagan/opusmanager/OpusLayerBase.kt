@@ -2107,7 +2107,9 @@ open class OpusLayerBase {
             if (unset_original) {
                 this.controller_channel_unset(type, original_channel, i, listOf())
             }
-            this.controller_channel_unset(type, target_channel, (i - start) + target_beat, listOf())
+            if (target_channel != original_channel || (i - start) + target_beat != start) {
+                this.controller_channel_unset(type, target_channel, (i - start) + target_beat, listOf())
+            }
         }
 
         for ((beat, tree) in overwrite_map) {
@@ -2951,7 +2953,9 @@ open class OpusLayerBase {
         // Unset Targets first to prevent blocking
         for (i in start .. end) {
             for (j in 0 until count) {
-                this.controller_channel_unset(type, target_channel, (j * width) + i, listOf())
+                if (target_channel != from_channel || j != 0) {
+                    this.controller_channel_unset(type, target_channel, (j * width) + i, listOf())
+                }
             }
         }
 

@@ -698,7 +698,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor.select_column(beat)
     }
     open fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        println("CS")
         if (this._block_cursor_selection()) {
             return
         }
@@ -733,7 +732,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor.select_ctl_at_global(beat, position, ctl_type)
     }
     open fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        println("CSR")
         if (this._block_cursor_selection()) {
             return
         }

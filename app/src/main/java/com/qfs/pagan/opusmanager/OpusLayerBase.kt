@@ -2688,10 +2688,9 @@ open class OpusLayerBase {
             if (key_list.isEmpty()) {
                 continue
             }
-            val tree_copy = this.get_tree_copy(target_key)
             for (overwrite_key in key_list) {
                 if (target_key != overwrite_key) {
-                    this.replace_tree(overwrite_key, null, tree_copy)
+                    this.replace_tree(overwrite_key, null, this.get_tree_copy(target_key))
                 }
             }
         }
@@ -3033,9 +3032,6 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
-        if (beat_key.channel != channel || beat_key.line_offset != line_offset) {
-            throw InvalidOverwriteCall()
-        }
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
         for (x in beat_key.beat until this.beat_count) {
             working_key.beat = x

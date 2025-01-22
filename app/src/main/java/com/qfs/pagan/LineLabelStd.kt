@@ -68,7 +68,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                         }
                     }
                     CtlLineLevel.Channel -> {
-                        if ((first.channel..second.channel).contains(this.channel)) {
+                        val is_selected = (first.channel..second.channel).contains(this.channel)
+                        if (is_selected) {
                             new_state.add(R.attr.state_focused)
                         }
                     }
@@ -189,9 +190,5 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
     fun get_opus_manager(): OpusLayerInterface {
         return (this.parent as LineLabelView).get_opus_manager()
-    }
-
-    fun get_activity(): MainActivity {
-        return (this.context as ContextThemeWrapper).baseContext as MainActivity
     }
 }

@@ -40,11 +40,12 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
                     }
                     null -> {}
                 }
+            } else {
+                opus_manager.cursor_select_channel_ctl_line(this.ctl_type, this.channel)
             }
         } catch (e: OpusLayerBase.InvalidOverwriteCall) {
             // pass
         }
-        opus_manager.cursor_select_channel_ctl_line(this.ctl_type, this.channel)
     }
 
     override fun is_selected(): Boolean {

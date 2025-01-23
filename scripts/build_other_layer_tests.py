@@ -14,8 +14,8 @@ disclaimer_text = f"""/*
 # Classes In heirarchichal order
 test_classes = [
     "OpusLayerBase",
-    "OpusLayerHistory",
-    #"OpusLayerCursor"
+    "OpusLayerCursor",
+    "OpusLayerHistory"
 ]
 working_directory = __file__[0:__file__.rfind("/")]
 TEST_FILE_DIR = f"{working_directory}/../app/src/test/java/com/qfs/pagan"

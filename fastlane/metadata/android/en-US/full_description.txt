@@ -3,4 +3,5 @@ Mobile music applications can be limited. Desktop sequencers and workstations ca
 * Use your own soundfont (.sf2)
 * Import, reorchestrate and export .mid files
 * Connect to and playback through Midi devices
+* Easy Polyrhythms and microtones
 * Export .wav files

@@ -269,6 +269,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
+                this@FragmentEditor.clear_context_menu()
             }
             thread {
                 val type: CompatibleFileType? = try {

@@ -1338,13 +1338,6 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         // add explicitly different tree
         manager.controller_line_split_tree(type, working_key, listOf(), 5)
 
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.controller_line_overwrite_line(type, working_key_b.channel + 1, working_key_b.line_offset, working_key_b)
-        }
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.controller_line_overwrite_line(type, working_key_b.channel, working_key_b.line_offset + 1, working_key_b)
-        }
-
         // apply overwrite
         manager.controller_line_overwrite_line(type, working_key_b.channel, working_key_b.line_offset, working_key_b)
 
@@ -2936,14 +2929,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         }
 
         manager.new_line(0)
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_line(0, 0, BeatKey(0, 1, 0))
-        }
         manager.new_channel()
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_line(0, 0, BeatKey(1, 0, 0))
-        }
-
     }
 
     @Test

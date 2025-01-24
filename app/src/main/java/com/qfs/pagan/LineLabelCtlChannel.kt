@@ -55,4 +55,11 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
             this.channel
         )
     }
+    override fun is_selected_secondary(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        return opus_manager.is_channel_control_line_selected_secondary(
+            this.ctl_type,
+            this.channel
+        )
+    }
 }

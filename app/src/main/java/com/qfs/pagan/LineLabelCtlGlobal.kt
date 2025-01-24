@@ -53,4 +53,8 @@ class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabe
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_global_control_line_selected(this.ctl_type)
     }
+    override fun is_selected_secondary(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        return opus_manager.is_global_control_line_selected_secondary(this.ctl_type)
+    }
 }

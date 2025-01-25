@@ -114,7 +114,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (cursor.is_selecting_range()) {
+        if (cursor.is_selecting_range() && cursor.ctl_level == null) {
             val (first_key, second_key) = cursor.get_ordered_range()!!
             val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
             activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->

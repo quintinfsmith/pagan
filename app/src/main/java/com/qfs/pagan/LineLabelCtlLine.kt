@@ -56,7 +56,7 @@ class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel
     override fun on_long_click(): Boolean {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (cursor.is_selecting_range()) {
+        if (cursor.is_selecting_range() && cursor.ctl_type == this.ctl_type) {
             val activity = this.get_activity()
             val (first, second) = cursor.get_ordered_range()!!
             val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()

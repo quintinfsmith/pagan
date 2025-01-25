@@ -55,7 +55,7 @@ class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabe
         val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (cursor.is_selecting_range()) {
+        if (cursor.is_selecting_range() && cursor.ctl_type == this.ctl_type) {
             val (first_key, second_key) = cursor.get_ordered_range()!!
             val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
             when (cursor.ctl_level) {

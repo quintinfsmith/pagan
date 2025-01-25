@@ -80,7 +80,7 @@ data class OpusManagerCursor(
             }
 
             CursorMode.Range -> {
-                this.range == other.range
+                this.range == other.range && other.ctl_level == this.ctl_level && other.ctl_type == this.ctl_type
             }
         }
     }

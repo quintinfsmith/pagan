@@ -1908,7 +1908,11 @@ class OpusLayerInterface : OpusLayerHistory() {
                         if (y != null) {
                             val line = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset]
                             val shadow_beats = mutableSetOf<Int>()
-                            val event_head = line.get_blocking_position(beat_key.beat, cursor.get_position()) ?: Pair(beat_key.beat, cursor.get_position())
+                            val event_head = try {
+                                line.get_blocking_position(beat_key.beat, cursor.get_position()) ?: Pair(beat_key.beat, cursor.get_position())
+                            } catch (e: IndexOutOfBoundsException) {
+                                return // dead cursor
+                            }
                             for ((shadow_beat, _) in line.get_all_blocked_positions(event_head.first, event_head.second)) {
                                 shadow_beats.add(shadow_beat)
                             }
@@ -1996,7 +2000,11 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                         val shadow_beats = mutableSetOf<Int>()
                         val beat = cursor.beat
-                        val event_head = controller.get_blocking_position(beat, cursor.get_position()) ?: Pair(beat, cursor.get_position())
+                        val event_head = try {
+                            controller.get_blocking_position(beat, cursor.get_position()) ?: Pair(beat, cursor.get_position())
+                        } catch (e: IndexOutOfBoundsException) {
+                            return // Dead Cursor
+                        }
                         for ((shadow_beat, _) in controller.get_all_blocked_positions(event_head.first, event_head.second)) {
                             shadow_beats.add(shadow_beat)
                         }
@@ -2080,7 +2088,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                         val first_beat = min(top_left.beat, bottom_right.beat)
                         val last_beat = max(top_left.beat, bottom_right.beat)
-
                         this._ui_change_bill.queue_line_label_refresh(y)
                         for (x in first_beat..last_beat) {
                             this._ui_change_bill.queue_column_label_refresh(x)
@@ -2122,10 +2129,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         // Update Standard Line label attached to controller
                         val line_y = this.get_visible_row_from_ctl_line(
                             this.get_actual_line_index(
-                                this.get_instrument_line_index(
-                                    cursor.channel,
-                                    cursor.line_offset
-                                )
+                                this.get_instrument_line_index(cursor.channel, cursor.line_offset)
                             )
                         )
 

@@ -117,8 +117,8 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         if (cursor.is_selecting_range() && cursor.ctl_level == null) {
             val (first_key, second_key) = cursor.get_ordered_range()!!
             val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
-            activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
-                if (first_key != second_key) {
+            if (first_key != second_key) {
+                activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
                     try {
                         opus_manager.overwrite_beat_range_horizontally(
                             this.channel,
@@ -132,13 +132,17 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
                     } catch (e: OpusLayerBase.InvalidOverwriteCall) {
                         opus_manager.cursor_select_line(this.channel, this.line_offset)
                     }
-                } else {
+                }
+            } else if (opus_manager.is_percussion(first_key.channel) == opus_manager.is_percussion(channel)) {
+                activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
                     try {
                         opus_manager.overwrite_line(this.channel, this.line_offset, first_key, repeat)
                     } catch (e: OpusLayerBase.InvalidOverwriteCall) {
                         opus_manager.cursor_select_line(this.channel, this.line_offset)
                     }
                 }
+            } else {
+                opus_manager.cursor_select_line(this.channel, this.line_offset)
             }
         } else {
             if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == this.channel && cursor.line_offset == this.line_offset && cursor.ctl_level == null) {

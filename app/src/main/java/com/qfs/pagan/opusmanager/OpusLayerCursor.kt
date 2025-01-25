@@ -1844,7 +1844,10 @@ open class OpusLayerCursor: OpusLayerBase() {
                 when (cursor.ctl_level) {
                     null,
                     CtlLineLevel.Global -> false
-                    else -> cursor.channel == channel && cursor.line_offset == line_offset
+                    CtlLineLevel.Channel -> cursor.channel == channel
+                    CtlLineLevel.Line -> {
+                        cursor.channel == channel && line_offset == cursor.line_offset
+                    }
                 }
             }
             OpusManagerCursor.CursorMode.Single -> {
@@ -2138,22 +2141,13 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun is_line_control_line_selected(control_type: ControlEventType, channel: Int, line_offset: Int): Boolean {
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Line,
-            OpusManagerCursor.CursorMode.Single -> {
-                val on_ctl_line = (this.cursor.ctl_level == CtlLineLevel.Line && control_type == this.cursor.ctl_type && this.cursor.line_offset == line_offset)
-                val on_ctl_channel = this.cursor.ctl_level == CtlLineLevel.Channel
-                this.cursor.channel == channel && (on_ctl_line || on_ctl_channel)
-
-                //&& !this.get_all_channels()[channel].lines[line_offset].controllers.has_controller(control_type)
+            OpusManagerCursor.CursorMode.Line ->  {
+                this.cursor.channel == channel && (this.cursor.ctl_level == CtlLineLevel.Line && control_type == this.cursor.ctl_type && this.cursor.line_offset == line_offset)
             }
-            OpusManagerCursor.CursorMode.Range -> {
-                val target = this.get_instrument_line_index(channel, line_offset)
-                val first = this.get_instrument_line_index(this.cursor.range!!.first.channel, this.cursor.range!!.first.line_offset)
-                val second = this.get_instrument_line_index(this.cursor.range!!.second.channel, this.cursor.range!!.second.line_offset)
-                channel == this.cursor.range!!.first.channel || ((this.cursor.ctl_type == null || (control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line)) && (first .. second).contains(target))
-            }
+            OpusManagerCursor.CursorMode.Range,
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset,
+            OpusManagerCursor.CursorMode.Single,
             OpusManagerCursor.CursorMode.Channel -> false
 
         }
@@ -2180,29 +2174,27 @@ open class OpusLayerCursor: OpusLayerBase() {
                 this.cursor.ctl_level == CtlLineLevel.Line && control_type == this.cursor.ctl_type && channel == this.cursor.channel && this.cursor.line_offset == line_offset
             }
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, _) = this.cursor.get_ordered_range()!!
-                this.cursor.ctl_level == CtlLineLevel.Line && first.channel == channel && first.line_offset == line_offset
+                val (first_key, second_key) = this.cursor.get_ordered_range()!!
+                val target = this.get_instrument_line_index(channel, line_offset)
+                val first = this.get_instrument_line_index(first_key.channel, first_key.line_offset)
+                val second = this.get_instrument_line_index(second_key.channel, second_key.line_offset)
+                (control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line) && (first .. second).contains(target)
             }
         }
     }
 
     fun is_channel_control_line_selected(control_type: ControlEventType, channel: Int): Boolean {
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Line,
-            OpusManagerCursor.CursorMode.Single -> {
+            OpusManagerCursor.CursorMode.Line -> {
                 control_type == this.cursor.ctl_type
                         && this.cursor.ctl_level == CtlLineLevel.Channel
                         && this.cursor.channel == channel
             }
-            OpusManagerCursor.CursorMode.Channel -> {
-                channel == this.cursor.channel
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, _) = this.cursor.get_ordered_range()!!
-                control_type == this.cursor.ctl_type && first.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel
-            }
+            OpusManagerCursor.CursorMode.Range,
             OpusManagerCursor.CursorMode.Unset,
-            OpusManagerCursor.CursorMode.Column -> false
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Channel,
+            OpusManagerCursor.CursorMode.Single -> false
         }
     }
 
@@ -2215,7 +2207,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 this.cursor.channel == channel
             }
             OpusManagerCursor.CursorMode.Single -> {
-                this.cursor.channel == channel && control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line
+                this.cursor.channel == channel && control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Channel
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, _) = this.cursor.get_ordered_range()!!
@@ -2254,10 +2246,13 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun is_beat_selected(beat: Int): Boolean {
         return when (this.cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Column -> {
-                this.cursor.beat == beat
-            }
+            OpusManagerCursor.CursorMode.Column -> this.cursor.beat == beat
+            else -> false
+        }
+    }
+    fun is_beat_selected_secondary(beat: Int): Boolean {
+        return when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Single -> this.cursor.beat == beat
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
                 (min(first.beat, second.beat) .. max(first.beat, second.beat)).contains(beat)

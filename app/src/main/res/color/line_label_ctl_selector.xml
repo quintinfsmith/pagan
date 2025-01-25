@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item app:state_focused="false"
-        android:color="@color/ctl_line" />
     <item app:state_focused="true"
         android:color="@color/ctl_line_selected" />
+
+    <item app:state_focused="false"
+        app:state_focused_secondary="false"
+        android:color="@color/ctl_line" />
+
     <item app:state_focused="false"
         app:state_focused_secondary="true"
-        android:color="@color/ctl_line_selected" />
+        android:color="@color/label_ctl_selected_secondary" />
 </selector>

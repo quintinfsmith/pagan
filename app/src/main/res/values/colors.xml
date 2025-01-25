@@ -35,8 +35,12 @@
 
     <color name="empty_selected">@color/blue_sky</color>
     <color name="empty_selected_text">#000000</color>
+    <color name="label_selected_secondary">@color/blue_sky</color>
+    <color name="label_selected_secondary_text">#000000</color>
     <color name="ctl_line_selected">#3e6e91</color>
     <color name="ctl_line_selected_text">#e1e1e1</color>
+    <color name="label_ctl_selected_secondary">#3e6e91</color>
+    <color name="label_ctl_selected_secondary_text">#e1e1e1</color>
 
     <color name="channel_button_bg">#BABABA</color>
     <color name="channel_button_fg">#2E2E2E</color>

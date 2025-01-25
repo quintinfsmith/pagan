@@ -6,7 +6,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration.getLongPressTimeout
 import androidx.appcompat.widget.AppCompatTextView
-import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.concurrent.thread
@@ -65,51 +64,10 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         val opus_manager = this.get_opus_manager()
 
         val new_state = mutableListOf<Int>()
-        val cursor = opus_manager.cursor
-        when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Line -> {
-                val line_selected = ((cursor.ctl_level == CtlLineLevel.Line || cursor.ctl_level == null) && cursor.line_offset == this.line_offset)
-                val channel_ctl_selected = (cursor.ctl_level == CtlLineLevel.Channel)
-                if (cursor.channel == this.channel && (line_selected || channel_ctl_selected)) {
-                    new_state.add(R.attr.state_focused)
-                }
-            }
-            OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = cursor.get_ordered_range()!!
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> {
-                        if (first.channel == second.channel && second.line_offset == first.line_offset) {
-                            if (first.channel == this.channel && this.line_offset == first.line_offset) {
-                                new_state.add(R.attr.state_focused)
-                            }
-                        } else {
-                            TODO("First and second channels/line_offset can currently only be the same")
-                        }
-                    }
-                    CtlLineLevel.Channel -> {
-                        val is_selected = (first.channel..second.channel).contains(this.channel)
-                        if (is_selected) {
-                            new_state.add(R.attr.state_focused)
-                        }
-                    }
-                    CtlLineLevel.Global -> {}
-                    null -> {
-                        val abs_y_start = opus_manager.get_instrument_line_index(first.channel, first.line_offset)
-                        val abs_y_end = opus_manager.get_instrument_line_index(second.channel, second.line_offset)
-                        val this_y = opus_manager.get_instrument_line_index(this.channel, this.line_offset)
-                        if ((abs_y_start .. abs_y_end).contains(this_y)) {
-                            new_state.add(R.attr.state_focused)
-                        }
-                    }
-                }
-            }
-            OpusManagerCursor.CursorMode.Channel -> {
-                if (cursor.channel == this.channel) {
-                    new_state.add(R.attr.state_focused)
-                }
-            }
-            else -> { }
+        if (opus_manager.is_line_selected(channel, line_offset)) {
+            new_state.add(R.attr.state_focused)
+        } else if (opus_manager.is_line_selected_secondary(channel, line_offset)) {
+            new_state.add(R.attr.state_focused_secondary)
         }
 
         mergeDrawableStates(drawableState, new_state.toIntArray())

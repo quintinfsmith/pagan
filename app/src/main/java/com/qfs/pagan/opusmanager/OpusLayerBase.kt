@@ -2668,8 +2668,7 @@ open class OpusLayerBase {
         // Increase song duration as needed
         val chunk_size = second_beat - first_beat + 1
         val count = repeat ?: ceil((this.beat_count - first_beat).toFloat() / chunk_size.toFloat()).toInt()
-        val increase_count = max(0, ((count * chunk_size) - first_beat) - this.beat_count)
-
+        val increase_count = max(0, ((count * chunk_size) + first_beat) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2706,7 +2705,7 @@ open class OpusLayerBase {
         // Increase song duration as needed
         val chunk_size = end - start + 1
         val count = repeat ?: ceil((this.beat_count - start).toFloat() / chunk_size.toFloat()).toInt()
-        val increase_count = max(0, ((count * chunk_size) - start) - this.beat_count)
+        val increase_count = max(0, ((count * chunk_size) + start) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2745,7 +2744,7 @@ open class OpusLayerBase {
         // Increase song duration as needed
         val width = end - start + 1
         val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        val increase_count = max(0, ((count * width) + start) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2792,7 +2791,7 @@ open class OpusLayerBase {
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
         val count = repeat ?: ceil((this.beat_count - from_key.beat).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - from_key.beat) - this.beat_count)
+        val increase_count = max(0, ((count * width) + from_key.beat) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2826,7 +2825,7 @@ open class OpusLayerBase {
         // Increase song duration as needed
         val width = end - start + 1
         val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        val increase_count = max(0, ((count * width) + start) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2857,7 +2856,7 @@ open class OpusLayerBase {
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
         val count = repeat ?: ceil((this.beat_count - from_key.beat).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - from_key.beat) - this.beat_count)
+        val increase_count = max(0, ((count * width) + from_key.beat) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2895,7 +2894,7 @@ open class OpusLayerBase {
         // Increase song size as needed
         val width = end - start + 1
         val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        val increase_count = max(0, ((count * width) + start) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2928,7 +2927,7 @@ open class OpusLayerBase {
         // Increase song size as needed
         val width = end - start + 1
         val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        val increase_count = max(0, ((count * width) + start) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2959,7 +2958,7 @@ open class OpusLayerBase {
         // Increase song size as needed
         val width = end - start + 1
         val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        val increase_count = max(0, ((count * width) + start) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(this.beat_count, increase_count)
         }
@@ -2994,7 +2993,7 @@ open class OpusLayerBase {
         // Increase song duration as needed
         val width = end - start + 1
         val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        val increase_count = max(0, ((count * width) + start) - this.beat_count)
         if (increase_count > 0) {
             this.insert_beats(end + 1, increase_count)
         }

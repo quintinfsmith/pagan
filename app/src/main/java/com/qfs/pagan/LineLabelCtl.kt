@@ -41,6 +41,8 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
 
         if (this.is_selected()) {
             new_state.add(R.attr.state_focused)
+        } else if (this.is_selected_secondary()) {
+            new_state.add(R.attr.state_focused_secondary)
         }
 
         new_state.add(R.attr.state_channel_even)
@@ -50,6 +52,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
     }
 
     abstract fun is_selected(): Boolean
+    abstract fun is_selected_secondary(): Boolean
 
     fun get_label_icon(): Int {
         return when (this.ctl_type) {

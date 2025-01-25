@@ -7,8 +7,8 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import kotlin.math.ceil
 
 class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val channel: Int): LineLabelCtl(context, CtlLineLevel.Channel, ctl_type) {
-    override fun on_click() {
 
+    override fun on_click() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         try {
@@ -47,14 +47,6 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
         } catch (e: OpusLayerBase.InvalidOverwriteCall) {
             // pass
         }
-    }
-
-    override fun is_selected(): Boolean {
-        val opus_manager = this.get_opus_manager()
-        return opus_manager.is_channel_control_line_selected(
-            this.ctl_type,
-            this.channel
-        )
     }
 
     override fun on_long_click(): Boolean {
@@ -101,5 +93,21 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
         }
 
         return true
+    }
+
+    override fun is_selected(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        return opus_manager.is_channel_control_line_selected(
+            this.ctl_type,
+            this.channel
+        )
+    }
+
+    override fun is_selected_secondary(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        return opus_manager.is_channel_control_line_selected_secondary(
+            this.ctl_type,
+            this.channel
+        )
     }
 }

@@ -1831,12 +1831,41 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     fun is_line_selected(channel: Int, line_offset: Int): Boolean {
-        val check_cursor = OpusManagerCursor(
-            mode = OpusManagerCursor.CursorMode.Line,
-            channel = channel,
-            line_offset = line_offset
-        )
-        return check_cursor == this.cursor
+        val cursor = this.cursor
+        return (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.ctl_level == null && cursor.line_offset == line_offset && cursor.channel == channel)
+    }
+
+    fun is_line_selected_secondary(channel: Int, line_offset: Int): Boolean {
+        val cursor = this.cursor
+        return when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> false
+            OpusManagerCursor.CursorMode.Line -> {
+                when (cursor.ctl_level) {
+                    null,
+                    CtlLineLevel.Global -> false
+                    else -> cursor.channel == channel && cursor.line_offset == line_offset
+                }
+            }
+            OpusManagerCursor.CursorMode.Single -> {
+                cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == null
+            }
+            OpusManagerCursor.CursorMode.Channel -> {
+                cursor.channel == channel
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = cursor.get_ordered_range()!!
+                when (cursor.ctl_level) {
+                    null -> {
+                        val abs_y_start = this.get_instrument_line_index(first.channel, first.line_offset)
+                        val abs_y_end = this.get_instrument_line_index(second.channel, second.line_offset)
+                        val this_y = this.get_instrument_line_index(channel, line_offset)
+                        (abs_y_start .. abs_y_end).contains(this_y)
+                    }
+                    else -> false
+                }
+            }
+        }
     }
 
     fun is_secondary_selection(beat_key: BeatKey, position: List<Int>): Boolean {
@@ -1872,15 +1901,19 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val (first, second) = this.cursor.get_ordered_range()!!
                 beat_key in this.get_beatkeys_in_range(first, second)
             }
+
             OpusManagerCursor.CursorMode.Column -> {
                 this.cursor.beat == beat_key.beat
             }
+
             OpusManagerCursor.CursorMode.Line -> {
                 this.cursor.line_offset == beat_key.line_offset && this.cursor.channel == beat_key.channel
             }
+
             OpusManagerCursor.CursorMode.Channel -> {
                 beat_key.channel == this.cursor.channel
             }
+
             else -> {
                 false
             }
@@ -1907,9 +1940,9 @@ open class OpusLayerCursor: OpusLayerBase() {
             OpusManagerCursor.CursorMode.Line -> {
                 false
             }
-
         }
     }
+
     fun is_global_control_secondary_selected(control_type: ControlEventType, beat: Int, position: List<Int>): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Single -> {
@@ -2111,7 +2144,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val on_ctl_channel = this.cursor.ctl_level == CtlLineLevel.Channel
                 this.cursor.channel == channel && (on_ctl_line || on_ctl_channel)
 
-                        //&& !this.get_all_channels()[channel].lines[line_offset].controllers.has_controller(control_type)
+                //&& !this.get_all_channels()[channel].lines[line_offset].controllers.has_controller(control_type)
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val target = this.get_instrument_line_index(channel, line_offset)
@@ -2120,11 +2153,36 @@ open class OpusLayerCursor: OpusLayerBase() {
                 channel == this.cursor.range!!.first.channel || ((this.cursor.ctl_type == null || (control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line)) && (first .. second).contains(target))
             }
             OpusManagerCursor.CursorMode.Column,
-            OpusManagerCursor.CursorMode.Unset -> false
-            OpusManagerCursor.CursorMode.Channel -> {
-                channel == this.cursor.channel
-            }
+            OpusManagerCursor.CursorMode.Unset,
+            OpusManagerCursor.CursorMode.Channel -> false
 
+        }
+    }
+
+    fun is_line_control_line_selected_secondary(control_type: ControlEventType, channel: Int, line_offset: Int): Boolean {
+        return when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> false
+            OpusManagerCursor.CursorMode.Line -> {
+                when (this.cursor.ctl_level) {
+                    CtlLineLevel.Line,
+                    CtlLineLevel.Channel,
+                    CtlLineLevel.Global -> false
+                    null -> {
+                        channel == this.cursor.channel && this.cursor.line_offset == line_offset
+                    }
+                }
+            }
+            OpusManagerCursor.CursorMode.Channel -> {
+                this.cursor.channel == channel
+            }
+            OpusManagerCursor.CursorMode.Single -> {
+                this.cursor.ctl_level == CtlLineLevel.Line && control_type == this.cursor.ctl_type && channel == this.cursor.channel && this.cursor.line_offset == line_offset
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, _) = this.cursor.get_ordered_range()!!
+                this.cursor.ctl_level == CtlLineLevel.Line && first.channel == channel && first.line_offset == line_offset
+            }
         }
     }
 
@@ -2147,21 +2205,53 @@ open class OpusLayerCursor: OpusLayerBase() {
             OpusManagerCursor.CursorMode.Column -> false
         }
     }
-    fun is_global_control_line_selected(control_type: ControlEventType): Boolean {
+
+    fun is_channel_control_line_selected_secondary(control_type: ControlEventType, channel: Int): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Line,
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Range -> {
-                control_type == this.cursor.ctl_type
-                        && this.cursor.ctl_level == CtlLineLevel.Global
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Unset -> false
+            OpusManagerCursor.CursorMode.Channel -> {
+                this.cursor.channel == channel
             }
+            OpusManagerCursor.CursorMode.Single -> {
+                this.cursor.channel == channel && control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, _) = this.cursor.get_ordered_range()!!
+                control_type == this.cursor.ctl_type && first.channel == channel && this.cursor.ctl_level == CtlLineLevel.Channel
+            }
+        }
+    }
+
+    fun is_global_control_line_selected(control_type: ControlEventType): Boolean {
+        return when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line -> {
+                this.cursor.ctl_level == CtlLineLevel.Global && this.cursor.ctl_type == control_type
+            }
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Range,
             OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Unset,
             OpusManagerCursor.CursorMode.Column -> false
-
         }
-
     }
+
+    fun is_global_control_line_selected_secondary(control_type: ControlEventType): Boolean {
+        return when (this.cursor.mode) {
+            OpusManagerCursor.CursorMode.Line,
+            OpusManagerCursor.CursorMode.Column,
+            OpusManagerCursor.CursorMode.Channel,
+            OpusManagerCursor.CursorMode.Unset -> false
+            OpusManagerCursor.CursorMode.Single -> {
+                this.cursor.ctl_level == CtlLineLevel.Global && this.cursor.ctl_type == control_type
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                this.cursor.ctl_level == CtlLineLevel.Global && this.cursor.ctl_type == control_type
+            }
+        }
+    }
+
     fun is_beat_selected(beat: Int): Boolean {
         return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Single,

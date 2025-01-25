@@ -11,7 +11,7 @@ import org.junit.Test
 import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
 
 
-public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
+class OpusLayerCursorUnitReTestAsOpusLayerHistory {
     // TODO: assert events selection (both std and ctl), test range selections
     @Test
     fun test_is_selected() {
@@ -64,6 +64,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         for (i in channels.indices) {
             for (j in channels[i].lines.indices) {
                 assertFalse(manager.is_line_selected(i, j))
+                assertFalse(manager.is_line_selected_secondary(i, j))
 
                 var working_beatkey = BeatKey(i,j, 0)
                 var working_position = manager.get_first_position(working_beatkey)
@@ -82,6 +83,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                 val line = channels[i].lines[j]
                 for ((type, _) in line.controllers.get_all()) {
                     assertFalse(manager.is_line_control_line_selected(type, i, j))
+                    assertFalse(manager.is_line_control_line_selected_secondary(type, i, j))
                     working_beatkey = BeatKey(i, j, 0)
                     working_position = manager.get_first_position_line_ctl(type, working_beatkey, listOf())
                     while (true) {
@@ -99,6 +101,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
             for ((type, _) in channels[i].controllers.get_all()) {
                 assertFalse(manager.is_channel_control_line_selected(type, i))
+                assertFalse(manager.is_channel_control_line_selected_secondary(type, i))
                 var working_beat = 0
                 var working_position = manager.get_first_position_channel_ctl(type, i, 0)
 
@@ -117,6 +120,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
         for ((type, _) in manager.controllers.get_all()) {
             assertFalse(manager.is_global_control_line_selected(type))
+            assertFalse(manager.is_global_control_line_selected_secondary(type))
             var working_beat = 0
             var working_position = manager.get_first_position_global_ctl(type, 0)
             while (true) {
@@ -141,6 +145,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                     i == channel && j == line_offset,
                     manager.is_line_selected(i, j)
                 )
+                assertFalse(manager.is_line_selected_secondary(i, j))
 
                 var working_beatkey = BeatKey(i,j, 0)
                 var working_position = manager.get_first_position(working_beatkey)
@@ -159,9 +164,10 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
                 val line = channels[i].lines[j]
                 for ((type, _) in line.controllers.get_all()) {
+                    assertFalse(manager.is_line_control_line_selected(type, i, j))
                     assertEquals(
-                        false,
-                        manager.is_line_control_line_selected(type, i, j)
+                        i == channel && line_offset == j,
+                        manager.is_line_control_line_selected_secondary(type, i, j)
                     )
                     working_beatkey = BeatKey(i, j, 0)
                     working_position = manager.get_first_position_line_ctl(type, working_beatkey, listOf())
@@ -175,10 +181,8 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                 }
             }
             for ((type, _) in channels[i].controllers.get_all()) {
-                assertEquals(
-                    false,
-                    manager.is_channel_control_line_selected(type, i)
-                )
+                assertFalse(manager.is_channel_control_line_selected(type, i))
+                assertFalse(manager.is_channel_control_line_selected_secondary(type, i))
                 var working_beat = 0
                 var working_position = manager.get_first_position_channel_ctl(type, i, 0)
 
@@ -193,6 +197,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         }
         for ((type, _) in manager.controllers.get_all()) {
             assertFalse(manager.is_global_control_line_selected(type))
+            assertFalse(manager.is_global_control_line_selected_secondary(type))
             var working_beat = 0
             var working_position = manager.get_first_position_global_ctl(type, 0)
             while (true) {
@@ -212,11 +217,10 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         for (i in channels.indices) {
             for (j in channels[i].lines.indices) {
                 assertFalse(manager.is_line_selected(i, j))
-                //TODO("is_line_secondary_selected")
-                // assertEquals(
-                //     i == channel,
-                //     manager.is_line_secondary_selected(i, j)
-                // )
+                assertEquals(
+                    i == channel,
+                    manager.is_line_selected_secondary(i, j)
+                )
 
                 var working_beatkey = BeatKey(i,j, 0)
                 var working_position = manager.get_first_position(working_beatkey)
@@ -236,6 +240,10 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                 val line = channels[i].lines[j]
                 for ((type, _) in line.controllers.get_all()) {
                     assertFalse(manager.is_line_control_line_selected(type, i, j))
+                    assertEquals(
+                        i == channel,
+                        manager.is_line_control_line_selected_secondary(type, i, j)
+                    )
                     working_beatkey = BeatKey(i, j, 0)
                     working_position = manager.get_first_position_line_ctl(type, working_beatkey, listOf())
                     while (true) {
@@ -271,6 +279,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
         for ((type, _) in manager.controllers.get_all()) {
             assertFalse(manager.is_global_control_line_selected(type))
+            assertFalse(manager.is_global_control_line_selected_secondary(type))
             var working_beat = 0
             var working_position = manager.get_first_position_global_ctl(type, 0)
             while (true) {
@@ -290,11 +299,10 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         for (i in channels.indices) {
             for (j in channels[i].lines.indices) {
                 assertFalse(manager.is_line_selected(i, j))
-                //TODO("is_line_secondary_selected")
-                // assertEquals(
-                //     i == channel,
-                //     manager.is_line_secondary_selected(i, j)
-                // )
+                assertEquals(
+                    i == selected_channel && j == selected_line_offset,
+                    manager.is_line_selected_secondary(i, j)
+                )
 
                 var working_beatkey = BeatKey(i,j, 0)
                 var working_position = manager.get_first_position(working_beatkey)
@@ -314,6 +322,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                         type == selected_type && i == selected_channel && j == selected_line_offset,
                         manager.is_line_control_line_selected(type, i, j)
                     )
+                    assertFalse(manager.is_line_control_line_selected_secondary(type, i, j))
 
                     working_beatkey = BeatKey(i, j, 0)
                     working_position = manager.get_first_position_line_ctl(type, working_beatkey, listOf())
@@ -332,6 +341,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
             for ((type, _) in channels[i].controllers.get_all()) {
                 assertFalse(manager.is_channel_control_line_selected(type, i))
+                assertFalse(manager.is_channel_control_line_selected_secondary(type, i))
                 var working_beat = 0
                 var working_position = manager.get_first_position_channel_ctl(type, i, 0)
 
@@ -347,6 +357,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
         for ((type, _) in manager.controllers.get_all()) {
             assertFalse(manager.is_global_control_line_selected(type))
+            assertFalse(manager.is_global_control_line_selected_secondary(type))
             var working_beat = 0
             var working_position = manager.get_first_position_global_ctl(type, 0)
             while (true) {
@@ -366,11 +377,10 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         for (i in channels.indices) {
             for (j in channels[i].lines.indices) {
                 assertFalse(manager.is_line_selected(i, j))
-                //TODO("is_line_secondary_selected")
-                // assertEquals(
-                //     i == channel,
-                //     manager.is_line_secondary_selected(i, j)
-                // )
+                assertEquals(
+                    i == selected_channel,
+                    manager.is_line_selected_secondary(i, j)
+                )
 
                 var working_beatkey = BeatKey(i,j, 0)
                 var working_position = manager.get_first_position(working_beatkey)
@@ -387,11 +397,12 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                 val line = channels[i].lines[j]
                 for ((type, _) in line.controllers.get_all()) {
                     assertFalse(manager.is_line_control_line_selected(type, i, j))
-                    // TODO: is_line_control_line_secondary_selected
-                   //  assertEquals(
-                   //      type == selected_type && i == selected_channel,
-                   //      manager.is_line_control_line_secondary_selected(type, i, j)
-                   //  )
+
+                    // Should this be false? as UI quirk i mean. I'm not sure if having line controls be unselected or selected isn't confusing either way
+                    assertEquals(
+                        i == selected_channel,
+                        manager.is_line_control_line_selected_secondary(type, i, j)
+                    )
 
                     working_beatkey = BeatKey(i, j, 0)
                     working_position = manager.get_first_position_line_ctl(type, working_beatkey, listOf())
@@ -413,6 +424,9 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                     i == selected_channel && type == selected_type,
                     manager.is_channel_control_line_selected(type, i)
                 )
+                assertFalse(manager.is_channel_control_line_selected_secondary(type, i))
+
+
                 var working_beat = 0
                 var working_position = manager.get_first_position_channel_ctl(type, i, 0)
 
@@ -431,6 +445,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
         for ((type, _) in manager.controllers.get_all()) {
             assertFalse(manager.is_global_control_line_selected(type))
+            assertFalse(manager.is_global_control_line_selected_secondary(type))
             var working_beat = 0
             var working_position = manager.get_first_position_global_ctl(type, 0)
             while (true) {
@@ -450,11 +465,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         for (i in channels.indices) {
             for (j in channels[i].lines.indices) {
                 assertFalse(manager.is_line_selected(i, j))
-                //TODO("is_line_secondary_selected")
-                // assertEquals(
-                //     i == channel,
-                //     manager.is_line_secondary_selected(i, j)
-                // )
+                assertFalse(manager.is_line_selected_secondary(i, j))
 
                 var working_beatkey = BeatKey(i,j, 0)
                 var working_position = manager.get_first_position(working_beatkey)
@@ -471,11 +482,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
                 val line = channels[i].lines[j]
                 for ((type, _) in line.controllers.get_all()) {
                     assertFalse(manager.is_line_control_line_selected(type, i, j))
-                    // TODO: is_line_control_line_secondary_selected
-                    //  assertEquals(
-                    //      type == selected_type && i == selected_channel,
-                    //      manager.is_line_control_line_secondary_selected(type, i, j)
-                    //  )
+                    assertFalse(manager.is_line_control_line_selected_secondary(type, i, j))
 
                     working_beatkey = BeatKey(i, j, 0)
                     working_position = manager.get_first_position_line_ctl(type, working_beatkey, listOf())
@@ -491,6 +498,7 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
 
             for ((type, _) in channels[i].controllers.get_all()) {
                 assertFalse(manager.is_channel_control_line_selected(type, i))
+                assertFalse(manager.is_channel_control_line_selected_secondary(type, i))
                 var working_beat = 0
                 var working_position = manager.get_first_position_channel_ctl(type, i, 0)
 
@@ -505,12 +513,19 @@ public class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         }
 
         for ((type, _) in manager.controllers.get_all()) {
-            assertFalse(manager.is_global_control_line_selected(type))
+            assertEquals(
+                type == selected_type,
+                manager.is_global_control_line_selected(type)
+            )
+            assertFalse(manager.is_global_control_line_selected_secondary(type))
             var working_beat = 0
             var working_position = manager.get_first_position_global_ctl(type, 0)
             while (true) {
                 assertFalse(manager.is_global_control_selected(type, working_beat, working_position))
-                assertFalse(manager.is_global_control_secondary_selected(type, working_beat, working_position))
+                assertEquals(
+                    selected_type == type,
+                    manager.is_global_control_secondary_selected(type, working_beat, working_position)
+                )
                 val pair = manager.get_global_ctl_proceding_leaf_position(type, working_beat, working_position) ?: break
                 working_beat = pair.first
                 working_position = pair.second

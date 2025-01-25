@@ -2094,7 +2094,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 val y = when (cursor.ctl_level) {
                     null -> {
                         try {
-                            this.get_visible_row_from_ctl_line(
+                            val line_y = this.get_visible_row_from_ctl_line(
                                 this.get_actual_line_index(
                                     this.get_instrument_line_index(
                                         cursor.channel,
@@ -2102,6 +2102,18 @@ class OpusLayerInterface : OpusLayerHistory() {
                                     )
                                 )
                             ) ?: return
+
+                            val channels = this.get_all_channels()
+                            if (channels[cursor.channel].visible) {
+                                var j = 1
+                                for ((_, controller) in channels[cursor.channel].lines[cursor.line_offset].controllers.get_all()) {
+                                    if  (controller.visible) {
+                                        this._ui_change_bill.queue_line_label_refresh(line_y + j++)
+                                    }
+                                }
+                            }
+
+                            line_y
                         } catch (e: IndexOutOfBoundsException) {
                             return
                         }

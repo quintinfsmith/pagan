@@ -22,6 +22,7 @@ import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface.Companion.LATEST_VERSION
 import com.qfs.pagan.structure.OpusTree
 import java.io.File
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -2660,18 +2661,20 @@ open class OpusLayerBase {
         }
     }
 
-    open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+    open fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
         val first_beat = min(first_key.beat, second_key.beat)
         val second_beat = max(first_key.beat, second_key.beat)
 
         // Increase song duration as needed
         val chunk_size = second_beat - first_beat + 1
-        val mod_beats = (this.beat_count - first_beat) % chunk_size
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, chunk_size - mod_beats)
+        val count = repeat ?: ceil((this.beat_count - first_beat).toFloat() / chunk_size.toFloat()).toInt()
+        val increase_count = max(0, ((count * chunk_size) - first_beat) - this.beat_count)
+
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
 
-        val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key)
+        val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key, count)
         // Need to unset all events FIRST so no replaces get blocked
         for ((target_key, key_list) in beat_keys) {
             if (key_list.isEmpty()) {
@@ -2696,71 +2699,85 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_global_overwrite_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int) {
+    open fun controller_global_overwrite_range_horizontally(type: ControlEventType, first_beat: Int, second_beat: Int, repeat: Int? = null) {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
         // Increase song duration as needed
-        val width = (end - start) + 1
-        val mod_beats = (this.beat_count - start) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        val chunk_size = end - start + 1
+        val count = repeat ?: ceil((this.beat_count - start).toFloat() / chunk_size.toFloat()).toInt()
+        val increase_count = max(0, ((count * chunk_size) - start) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
 
-        val count = ((this.beat_count - start) / width) - 1
         // Unset targets to prevent blocking
-        for (i in 0 until width) {
+        for (i in 0 until chunk_size) {
             for (j in 0 until count) {
-                this.controller_global_unset(type, ((j + 1) * width) + (i + start), listOf())
+                if (j != 0) {
+                    this.controller_global_unset(
+                        type,
+                        (j * chunk_size) + (i + start),
+                        listOf()
+                    )
+                }
             }
         }
-        for (i in 0 until width) {
+
+        for (i in 0 until chunk_size) {
             for (j in 0 until count) {
-                this.controller_global_replace_tree(
-                    type,
-                    ((j + 1) * width) + (i + start),
-                    null,
-                    this.get_global_ctl_tree<OpusControlEvent>(type, (i + start)).copy(this::copy_control_event)
-                )
+                if (j != 0) {
+                    this.controller_global_replace_tree(
+                        type,
+                        (j * chunk_size) + (i + start),
+                        null,
+                        this.get_global_ctl_tree<OpusControlEvent>(type, (i + start)).copy(this::copy_control_event)
+                    )
+                }
             }
         }
     }
 
-    open fun controller_global_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, first_beat: Int, second_beat: Int) {
+    open fun controller_global_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, first_beat: Int, second_beat: Int, repeat: Int? = null) {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
-        // Increase song size as needed
-        val width = (end - start) + 1
-        val mod_beats = (this.beat_count - start) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        // Increase song duration as needed
+        val width = end - start + 1
+        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
 
-        val count = ((this.beat_count - start) / width) - 1
         // Unset targets to prevent blocking
         for (i in 0 until width) {
             for (j in 0 until count) {
-                this.controller_line_unset(
-                    type,
-                    BeatKey(
-                        target_channel,
-                        target_line_offset,
-                        ((j + 1) * width) + (i + start),
-                    ),
-                    listOf()
-                )
+                if (j != 0) {
+                    this.controller_line_unset(
+                        type,
+                        BeatKey(
+                            target_channel,
+                            target_line_offset,
+                            (j * width) + (i + start),
+                        ),
+                        listOf()
+                    )
+                }
             }
         }
 
         for (i in 0 until width) {
             for (j in 0 until count) {
+                if (j == 0) {
+                    continue
+                }
                 this.controller_line_replace_tree(
                     type,
                     BeatKey(
                         target_channel,
                         target_line_offset,
-                        ((j + 1) * width) + (i + start),
+                        (j * width) + (i + start),
                     ),
                     null,
                     this.get_global_ctl_tree<OpusControlEvent>(type, (i + start)).copy(this::copy_control_event)
@@ -2769,17 +2786,16 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_line_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_key: BeatKey, second_key: BeatKey) {
+    open fun controller_line_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
 
-        // Increase song size as needed
-        val width = (to_key.beat - from_key.beat) + 1
-        val mod_beats = (this.beat_count - from_key.beat) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        // Increase song duration as needed
+        val width = to_key.beat - from_key.beat + 1
+        val count = repeat ?: ceil((this.beat_count - from_key.beat).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - from_key.beat) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
-
-        val count = ((this.beat_count - from_key.beat) / width)
 
         // Unset Targets to prevent blocking
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -2803,31 +2819,31 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_global_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+    open fun controller_global_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int, repeat: Int? = null) {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
-        // Increase song size as needed
-        val width = (end - start) + 1
-        val mod_beats = (this.beat_count - start) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        // Increase song duration as needed
+        val width = end - start + 1
+        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
 
-        val count = ((this.beat_count - start) / width) - 1
         // Unset Targets to prevent blocking
         for (i in 0 until width) {
-            for (j in 0 until count) {
-                this.controller_channel_unset(type, channel, ((j + 1) * width) + (i + start), listOf())
+            for (j in 1 until count) {
+                this.controller_channel_unset(type, channel, (j * width) + (i + start), listOf())
             }
         }
 
         for (i in 0 until width) {
-            for (j in 0 until count) {
+            for (j in 1 until count) {
                 this.controller_channel_replace_tree(
                     type,
                     channel,
-                    ((j + 1) * width) + (i + start),
+                    (j * width) + (i + start),
                     null,
                     this.get_global_ctl_tree<OpusControlEvent>(type, (i + start)).copy(this::copy_control_event)
                 )
@@ -2835,17 +2851,16 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey) {
+    open fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
 
-        // Increase song size as needed
-        val width = (to_key.beat - from_key.beat) + 1
-        val mod_beats = (this.beat_count - from_key.beat) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        // Increase song duration as needed
+        val width = to_key.beat - from_key.beat + 1
+        val count = repeat ?: ceil((this.beat_count - from_key.beat).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - from_key.beat) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
-
-        val count = ((this.beat_count - from_key.beat) / width)
 
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
         // Unset targets to prevent blocking
@@ -2866,23 +2881,25 @@ open class OpusLayerBase {
                     line_offset,
                     beat_key.beat + (i * width)
                 )
-                this.controller_line_replace_tree(type, to_overwrite, null, working_tree.copy(this::copy_control_event))
+                if (to_overwrite != beat_key) {
+                    this.controller_line_replace_tree(type, to_overwrite, null, working_tree.copy(this::copy_control_event))
+                }
             }
         }
     }
 
-    open fun controller_line_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_beat: Int, second_beat: Int) {
+    open fun controller_line_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_beat: Int, second_beat: Int, repeat: Int? = null) {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
         // Increase song size as needed
         val width = end - start + 1
-        val mod_beats = (this.beat_count - start) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
 
-        val count = ((this.beat_count - start) / width) - 1
         // Unset Targets to prevent blocking
         for (i in start .. end) {
             for (j in 0 until count) {
@@ -2904,23 +2921,22 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_channel_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+    open fun controller_channel_to_global_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int, repeat: Int? = null) {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
         // Increase song size as needed
-        val width = (end - start) + 1
-        val mod_beats = (this.beat_count - start) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        val width = end - start + 1
+        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
-
-        val count = ((this.beat_count - start) / width) - 1
 
         // Unset Targets to prevent blocking
         for (i in start .. end) {
             for (j in 0 until count) {
-                this.controller_global_unset(type, ((j + 1) * width) + i, listOf())
+                this.controller_global_unset(type, (j * width) + i, listOf())
             }
         }
 
@@ -2928,7 +2944,7 @@ open class OpusLayerBase {
             for (j in 0 until count) {
                 this.controller_global_replace_tree(
                     type,
-                    ((j + 1) * width) + i,
+                    (j * width) + i,
                     null,
                     this.get_channel_ctl_tree<OpusControlEvent>(type, channel, i).copy(this::copy_control_event)
                 )
@@ -2936,18 +2952,17 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+    open fun controller_channel_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int, repeat: Int? = null) {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
         // Increase song size as needed
         val width = end - start + 1
-        val mod_beats = (this.beat_count - start) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(this.beat_count, increase_count)
         }
-
-        val count = (this.beat_count - start) / width
 
         // Unset Targets first to prevent blocking
         for (i in start .. end) {
@@ -2972,18 +2987,18 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_channel_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, from_channel: Int, first_beat: Int, second_beat: Int) {
+    open fun controller_channel_to_line_overwrite_range_horizontally(type: ControlEventType, target_channel: Int, target_line_offset: Int, from_channel: Int, first_beat: Int, second_beat: Int, repeat: Int? = null) {
         val start = min(first_beat, second_beat)
         val end = max(first_beat, second_beat)
 
-        // Increase song size as needed
+        // Increase song duration as needed
         val width = end - start + 1
-        val mod_beats = (this.beat_count - start) % width
-        if (mod_beats != 0) {
-            this.insert_beats(this.beat_count, width - mod_beats)
+        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) - start) - this.beat_count)
+        if (increase_count > 0) {
+            this.insert_beats(end + 1, increase_count)
         }
 
-        val count = (this.beat_count - start) / width
 
         // Unset Targets first to prevent blocking.
         for (i in start .. end) {
@@ -3010,75 +3025,147 @@ open class OpusLayerBase {
         }
     }
 
-    open fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int) {
+    open fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int, repeat: Int? = null) {
+        val adj_repeat = repeat ?: (this.beat_count - original_beat)
+        val increase_length = (adj_repeat - original_beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, original_channel, original_beat)
-        for (i in original_beat until this.beat_count) {
-            this.controller_channel_replace_tree(type, target_channel, i, null, original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_channel_replace_tree(type, target_channel, i + original_beat, null, original_tree.copy(this::copy_control_event))
         }
     }
 
-    open fun controller_line_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_key: BeatKey) {
+    open fun controller_line_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_key: BeatKey, repeat: Int? = null) {
+        val adj_repeat = repeat ?: (this.beat_count - original_key.beat)
+        val increase_length = (adj_repeat - original_key.beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, original_key)
-        for (i in original_key.beat until this.beat_count) {
-            this.controller_channel_replace_tree(type, target_channel, i, null, original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_channel_replace_tree(type, target_channel, i + original_key.beat, null, original_tree.copy(this::copy_control_event))
         }
     }
 
-    open fun controller_global_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, beat: Int) {
+    open fun controller_global_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, beat: Int, repeat: Int? = null) {
+        val adj_repeat = repeat ?: (this.beat_count - beat)
+        val increase_length = (adj_repeat - beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat)
-        for (i in beat until this.beat_count) {
-            this.controller_channel_replace_tree(type, target_channel, i, null, original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_channel_replace_tree(type, target_channel, i + beat, null, original_tree.copy(this::copy_control_event))
         }
     }
 
-    open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey) {
+    open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int? = null) {
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
-        for (x in beat_key.beat until this.beat_count) {
-            working_key.beat = x
+        val adj_repeat = repeat ?: (this.beat_count - working_key.beat)
+        val increase_length = (adj_repeat - working_key.beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
+        for (x in 0 until adj_repeat) {
+            working_key.beat = x + beat_key.beat
             this.replace_tree(working_key, null, this.get_tree_copy(beat_key))
         }
     }
 
-    open fun controller_global_overwrite_line(type: ControlEventType, beat: Int) {
+    open fun controller_global_overwrite_line(type: ControlEventType, beat: Int, repeat: Int? = null) {
+        val adj_repeat = repeat ?: (this.beat_count - beat)
+        val increase_length = (adj_repeat - beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat)
-        for (i in beat until this.beat_count) {
-            this.controller_global_replace_tree(type, i, null, original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_global_replace_tree(type, i + beat, null, original_tree.copy(this::copy_control_event))
         }
     }
 
-    open fun controller_channel_to_global_overwrite_line(type: ControlEventType, channel: Int, beat: Int) {
+    open fun controller_channel_to_global_overwrite_line(type: ControlEventType, channel: Int, beat: Int, repeat: Int? = null) {
+        val adj_repeat = repeat ?: (this.beat_count - beat)
+        val increase_length = (adj_repeat - beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat)
-        for (i in beat until this.beat_count) {
-            this.controller_global_replace_tree(type, i, null, original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_global_replace_tree(type, i + beat, null, original_tree.copy(this::copy_control_event))
         }
     }
 
-    open fun controller_line_to_global_overwrite_line(type: ControlEventType, beat_key: BeatKey) {
+    open fun controller_line_to_global_overwrite_line(type: ControlEventType, beat_key: BeatKey, repeat: Int? = null) {
+        val beat = beat_key.beat
+        val adj_repeat = repeat ?: (this.beat_count - beat)
+        val increase_length = (adj_repeat - beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
-        for (i in beat_key.beat until this.beat_count) {
-            this.controller_global_replace_tree(type, i, null, original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_global_replace_tree(type, i + beat, null, original_tree.copy(this::copy_control_event))
         }
     }
 
-    open fun controller_global_to_line_overwrite_line(type: ControlEventType, from_beat: Int, target_channel: Int, target_line_offset: Int) {
+    open fun controller_global_to_line_overwrite_line(type: ControlEventType, from_beat: Int, target_channel: Int, target_line_offset: Int, repeat: Int? = null) {
+        val adj_repeat = repeat ?: (this.beat_count - from_beat)
+        val increase_length = (adj_repeat - from_beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, from_beat)
-        for (i in from_beat until this.beat_count) {
-            this.controller_line_replace_tree(type, BeatKey(target_channel, target_line_offset, i), listOf(), original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_line_replace_tree(
+                type,
+                BeatKey(target_channel, target_line_offset, i + adj_repeat),
+                listOf(),
+                original_tree.copy(this::copy_control_event)
+            )
         }
     }
 
-    open fun controller_channel_to_line_overwrite_line(type: ControlEventType, target_channel: Int, target_line_offset: Int, original_channel: Int, original_beat: Int) {
+    open fun controller_channel_to_line_overwrite_line(type: ControlEventType, target_channel: Int, target_line_offset: Int, original_channel: Int, original_beat: Int, repeat: Int? = null) {
+        val adj_repeat = repeat ?: (this.beat_count - original_beat)
+        val increase_length = (adj_repeat - original_beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, original_channel, original_beat)
-        for (i in original_beat until this.beat_count) {
-            this.controller_line_replace_tree(type, BeatKey(target_channel, target_line_offset, i), null, original_tree.copy(this::copy_control_event))
+        for (i in 0 until adj_repeat) {
+            this.controller_line_replace_tree(
+                type,
+                BeatKey(target_channel, target_line_offset, i + original_beat),
+                null,
+                original_tree.copy(this::copy_control_event)
+            )
         }
     }
 
-    open fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey) {
+    open fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int? = null) {
+        val beat = beat_key.beat
+        val adj_repeat = repeat ?: (this.beat_count - beat)
+        val increase_length = (adj_repeat - beat) - this.beat_count
+        if (increase_length > 0) {
+            this.insert_beats(this.beat_count, increase_length)
+        }
+
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
         val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
-        for (x in beat_key.beat until this.beat_count) {
-            working_key.beat = x
+        for (x in 0 until adj_repeat) {
+            working_key.beat = x + beat
             this.controller_line_replace_tree(type, working_key, null, original_tree.copy(this::copy_control_event))
         }
     }
@@ -4439,10 +4526,9 @@ open class OpusLayerBase {
 
     }
 
-    private fun _get_beat_keys_for_overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey): List<Pair<BeatKey, List<BeatKey>>> {
+    private fun _get_beat_keys_for_overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, count: Int): List<Pair<BeatKey, List<BeatKey>>> {
         val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
         val width = to_key.beat - from_key.beat + 1
-        val count = (this.beat_count - from_key.beat) / width
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
         val y_index_main = this.get_instrument_line_index(channel, line_offset)
         val y_index_from = this.get_instrument_line_index(from_key.channel, from_key.line_offset)

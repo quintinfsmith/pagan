@@ -12,9 +12,13 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
         this.setOnClickListener {
             this.on_click()
         }
+        this.setOnLongClickListener {
+            this.on_long_click()
+        }
     }
 
     abstract fun on_click()
+    abstract fun on_long_click(): Boolean
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()

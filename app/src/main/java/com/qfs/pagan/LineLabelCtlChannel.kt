@@ -55,7 +55,7 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
         if (cursor.is_selecting_range()) {
             val activity = this.get_activity()
             val (first, second) = cursor.get_ordered_range()!!
-            val default_count = ceil((second.beat - first.beat + 1).toFloat() / opus_manager.beat_count).toInt()
+            val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
             when (cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->

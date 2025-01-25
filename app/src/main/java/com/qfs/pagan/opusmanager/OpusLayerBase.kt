@@ -3064,6 +3064,10 @@ open class OpusLayerBase {
     }
 
     open fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int? = null) {
+        if (this.is_percussion(beat_key.channel) != this.is_percussion(channel)) {
+            throw InvalidOverwriteCall()
+        }
+
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
         val adj_repeat = repeat ?: (this.beat_count - working_key.beat)
         val increase_length = (adj_repeat - working_key.beat) - this.beat_count

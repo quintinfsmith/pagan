@@ -47,7 +47,7 @@ Pagan is something different.
    
   </td>
   <td>
-   Videos coming soon...
+
   </td>
  </tr>
  

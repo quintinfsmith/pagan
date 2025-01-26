@@ -1,0 +1,2 @@
+- Can now use dialog to set the number of times a repeat is done. (instead of repeating to end)
+- fixed some incorrect label highlighting

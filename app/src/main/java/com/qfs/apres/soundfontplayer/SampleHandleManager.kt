@@ -104,6 +104,9 @@ class SampleHandleManager(
             )?.toList() ?: listOf()
 
             for (sample in samples) {
+                if (sample.sample == null) {
+                    continue
+                }
                 sample_pairs.add(Pair(sample, p_instrument))
                 when (sample.sample!!.sampleType) {
                     SampleType.Mono,
@@ -130,6 +133,7 @@ class SampleHandleManager(
         }
 
         for ((sample,p_instrument) in sample_pairs) {
+
             val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
@@ -167,6 +171,9 @@ class SampleHandleManager(
             ).toList()
 
             for (sample in samples) {
+                if (sample.sample == null) {
+                    continue
+                }
                 sample_pairs.add(Pair(sample, p_instrument))
                 when (sample.sample!!.sampleType) {
                     SampleType.Mono,

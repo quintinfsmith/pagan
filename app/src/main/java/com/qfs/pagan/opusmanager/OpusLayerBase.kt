@@ -3026,7 +3026,7 @@ open class OpusLayerBase {
 
     open fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int, repeat: Int? = null) {
         val adj_repeat = repeat ?: (this.beat_count - original_beat)
-        val increase_length = (adj_repeat - original_beat) - this.beat_count
+        val increase_length = (adj_repeat + original_beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3039,7 +3039,7 @@ open class OpusLayerBase {
 
     open fun controller_line_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_key: BeatKey, repeat: Int? = null) {
         val adj_repeat = repeat ?: (this.beat_count - original_key.beat)
-        val increase_length = (adj_repeat - original_key.beat) - this.beat_count
+        val increase_length = (adj_repeat + original_key.beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3052,7 +3052,7 @@ open class OpusLayerBase {
 
     open fun controller_global_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, beat: Int, repeat: Int? = null) {
         val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat - beat) - this.beat_count
+        val increase_length = (adj_repeat + beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3070,7 +3070,7 @@ open class OpusLayerBase {
 
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
         val adj_repeat = repeat ?: (this.beat_count - working_key.beat)
-        val increase_length = (adj_repeat - working_key.beat) - this.beat_count
+        val increase_length = (adj_repeat + working_key.beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3083,7 +3083,7 @@ open class OpusLayerBase {
 
     open fun controller_global_overwrite_line(type: ControlEventType, beat: Int, repeat: Int? = null) {
         val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat - beat) - this.beat_count
+        val increase_length = (adj_repeat + beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3096,7 +3096,7 @@ open class OpusLayerBase {
 
     open fun controller_channel_to_global_overwrite_line(type: ControlEventType, channel: Int, beat: Int, repeat: Int? = null) {
         val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat - beat) - this.beat_count
+        val increase_length = (adj_repeat + beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3110,7 +3110,7 @@ open class OpusLayerBase {
     open fun controller_line_to_global_overwrite_line(type: ControlEventType, beat_key: BeatKey, repeat: Int? = null) {
         val beat = beat_key.beat
         val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat - beat) - this.beat_count
+        val increase_length = (adj_repeat + beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3123,7 +3123,7 @@ open class OpusLayerBase {
 
     open fun controller_global_to_line_overwrite_line(type: ControlEventType, from_beat: Int, target_channel: Int, target_line_offset: Int, repeat: Int? = null) {
         val adj_repeat = repeat ?: (this.beat_count - from_beat)
-        val increase_length = (adj_repeat - from_beat) - this.beat_count
+        val increase_length = (adj_repeat + from_beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3141,7 +3141,7 @@ open class OpusLayerBase {
 
     open fun controller_channel_to_line_overwrite_line(type: ControlEventType, target_channel: Int, target_line_offset: Int, original_channel: Int, original_beat: Int, repeat: Int? = null) {
         val adj_repeat = repeat ?: (this.beat_count - original_beat)
-        val increase_length = (adj_repeat - original_beat) - this.beat_count
+        val increase_length = (adj_repeat + original_beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }
@@ -3160,7 +3160,7 @@ open class OpusLayerBase {
     open fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int? = null) {
         val beat = beat_key.beat
         val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat - beat) - this.beat_count
+        val increase_length = (adj_repeat + beat) - this.beat_count
         if (increase_length > 0) {
             this.insert_beats(this.beat_count, increase_length)
         }

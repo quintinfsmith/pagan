@@ -24,12 +24,12 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
     }
     val stroke_width = 10F
 
-    var in_transition = false
+    private var _in_transition = false
     var max = 1
     var min = -1
     var progress: Int = ((this.max - this.min) / 2) + this.min
     var on_change_listener: OnSeekBarChangeListener? = null
-    val image_view: ImageView = object: androidx.appcompat.widget.AppCompatImageView(context, attrs) {
+    private val _image_view: ImageView = object: androidx.appcompat.widget.AppCompatImageView(context, attrs) {
         val paint = Paint()
         val path = Path()
         val relative_handle_point: Float
@@ -39,13 +39,12 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             this.relative_handle_point = (that.progress - that.min).toFloat() / (that.max - that.min).toFloat()
         }
 
-
         fun get_main_activity(): MainActivity {
-            var context = this@PanSliderWidget.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
+            var working_context = this@PanSliderWidget.context
+            while (working_context !is MainActivity) {
+                working_context = (working_context as ContextThemeWrapper).baseContext
             }
-            return context
+            return working_context
         }
 
         override fun onDraw(canvas: Canvas) {
@@ -113,24 +112,24 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
 
     init {
         this.orientation = HORIZONTAL
-        this.addView(this.image_view)
-        this.image_view.layoutParams.width = MATCH_PARENT
-        this.image_view.layoutParams.height = MATCH_PARENT
-        this.image_view.setPadding(0,0,0,0)
+        this.addView(this._image_view)
+        this._image_view.layoutParams.width = MATCH_PARENT
+        this._image_view.layoutParams.height = MATCH_PARENT
+        this._image_view.setPadding(0,0,0,0)
 
-        this.image_view.setOnTouchListener { view, motionEvent ->
+        this._image_view.setOnTouchListener { _, motionEvent ->
             when (motionEvent.action) {
                 MotionEvent.ACTION_DOWN -> {
                     this.on_change_listener?.on_touch_start(this)
-                    this.in_transition = true
+                    this._in_transition = true
                 }
             }
             when (motionEvent.action) {
                 MotionEvent.ACTION_MOVE,
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_UP -> {
-                    val measured_max_width = this.image_view.measuredWidth.toFloat()
-                    val padding = ((this.image_view.measuredHeight.toFloat()) / 2F) + (2F * this.stroke_width)
+                    val measured_max_width = this._image_view.measuredWidth.toFloat()
+                    val padding = ((this._image_view.measuredHeight.toFloat()) / 2F) + (2F * this.stroke_width)
                     val pos_x = (max(padding, min(measured_max_width - padding, motionEvent.x)) - padding)
                     val use_width = (measured_max_width - (2F * padding))
                     val rel_x = (pos_x / use_width) + (.5F / (this.max - this.min).toFloat())
@@ -142,7 +141,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             when (motionEvent.action) {
                 MotionEvent.ACTION_UP -> {
                     this.on_change_listener?.on_touch_stop(this)
-                    this.in_transition = false
+                    this._in_transition = false
                 }
             }
 
@@ -155,7 +154,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
         if (!surpress_callback) {
             this.on_change_listener?.on_progress_change(this, this.progress)
         }
-        this.image_view.invalidate()
+        this._image_view.invalidate()
     }
 
     override fun onAttachedToWindow() {

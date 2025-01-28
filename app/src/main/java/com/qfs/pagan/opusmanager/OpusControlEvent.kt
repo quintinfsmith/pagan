@@ -1,10 +1,10 @@
 package com.qfs.pagan.opusmanager
 
-enum class ControlEventType {
-    Tempo,
-    Volume,
-    Reverb,
-    Pan
+enum class ControlEventType(val i: Int) {
+    Tempo(0),
+    Volume(1),
+    Reverb(2),
+    Pan(3)
 }
 
 enum class ControlTransition {

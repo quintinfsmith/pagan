@@ -29,6 +29,20 @@ class OpusLayerInterface : OpusLayerHistory() {
     class HidingLastChannelException: Exception()
     class MissingEditorTableException: Exception()
 
+    companion object {
+        val global_controller_domain = listOf(
+            ControlEventType.Tempo
+        )
+        val channel_controller_domain = listOf(
+            //       ControlEventType.Volume,
+            ControlEventType.Pan
+        )
+        val line_controller_domain = listOf(
+            ControlEventType.Volume,
+            ControlEventType.Pan
+        )
+    }
+
     var relative_mode: Int = 0
     var first_load_done = false
     private var _activity: MainActivity? = null

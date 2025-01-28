@@ -16,10 +16,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_remove: ImageView
     lateinit var button_choose_instrument: TextView
     lateinit var button_toggle_controllers: ImageView
-    val _visible_controls_domain = listOf(
- //       ControlEventType.Volume,
-        ControlEventType.Pan
-    )
 
     init {
         this.refresh()
@@ -68,7 +64,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         )
 
         var show_control_toggle = false
-        for (ctl_type in this._visible_controls_domain) {
+        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
                 continue
             }
@@ -87,7 +83,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         val cursor = opus_manager.cursor
         val options = mutableListOf<Pair<ControlEventType, String>>( )
 
-        for (ctl_type in this._visible_controls_domain) {
+        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
                 continue
             }

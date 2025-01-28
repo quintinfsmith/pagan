@@ -18,7 +18,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var button_toggle_volume_control: ImageView
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
-    val _visible_line_controls_domain = listOf(ControlEventType.Volume, ControlEventType.Pan)
 
     init {
         this.refresh()
@@ -85,7 +84,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove.isEnabled = working_channel.size > 1
 
         var show_control_toggle = false
-        for (ctl_type in this._visible_line_controls_domain) {
+        for (ctl_type in OpusLayerInterface.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }
@@ -111,7 +110,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val options = mutableListOf<Pair<ControlEventType, String>>( )
         val cursor = opus_manager.cursor
 
-        for (ctl_type in this._visible_line_controls_domain) {
+        for (ctl_type in OpusLayerInterface.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }

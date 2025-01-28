@@ -46,6 +46,7 @@ class OpusLayerCursorUnitTest {
                 assert_channel_controller_line_selection(manager, i, type)
             }
         }
+
         for ((type, _) in manager.controllers.get_all()) {
             assert_global_controller_line_selection(manager, type)
         }

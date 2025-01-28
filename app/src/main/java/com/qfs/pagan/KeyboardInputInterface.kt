@@ -3,6 +3,7 @@ import android.view.KeyEvent
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
+import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -232,7 +233,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun call(opus_manager: OpusManager): Boolean {
                 val visible_channels = opus_manager.get_visible_channels()
                 val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
-                opus_manager.cursor_select_line(channel, 0)
+                opus_manager.cursor_select_channel(channel)
                 return true
             }
         },
@@ -241,6 +242,31 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusManager) {
                 val beatkey = opus_manager.cursor.get_beatkey()
                 opus_manager.cursor_select_range(beatkey, beatkey)
+            }
+        },
+
+        Pair(KeyEvent.KEYCODE_E, true) to object: CursorSpecificKeyStrokeNode(this) {
+            override fun line(opus_manager: OpusManager) {
+                val ctl_type_map = ControlEventType.values().associateBy { it.i }
+                val ctl_type = ctl_type_map [this.get_buffer_value(ControlEventType.Volume.i)]
+                if (ctl_type == null || !OpusLayerInterface.line_controller_domain.contains(ctl_type)) {
+                    return
+                }
+
+                val channel = opus_manager.cursor.channel
+                val line_offset = opus_manager.cursor.line_offset
+                opus_manager.toggle_line_controller_visibility(ctl_type, channel, line_offset)
+            }
+
+            override fun channel(opus_manager: OpusManager) {
+                val ctl_type_map = ControlEventType.values().associateBy { it.i }
+                val ctl_type = ctl_type_map [this.get_buffer_value(ControlEventType.Volume.i)]
+                if (ctl_type == null || !OpusLayerInterface.channel_controller_domain.contains(ctl_type)) {
+                    return
+                }
+
+                val channel = opus_manager.cursor.channel
+                opus_manager.toggle_channel_controller_visibility(ctl_type, channel)
             }
         },
 

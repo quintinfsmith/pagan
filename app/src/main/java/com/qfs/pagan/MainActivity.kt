@@ -15,8 +15,6 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.Cursor
 import android.graphics.Color
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.StateListDrawable
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
@@ -50,7 +48,6 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -115,6 +112,7 @@ class MainActivity : AppCompatActivity() {
 
     class MainViewModel: ViewModel() {
         var export_handle: WavConverter? = null
+        var action_interface = ActionTracker()
         var opus_manager = OpusManager()
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, handler: WavConverter.ExporterEventHandler) {
@@ -186,7 +184,6 @@ class MainActivity : AppCompatActivity() {
     // -------------------------------------------------------------------
 
     private var _popup_active: Boolean = false
-
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
@@ -581,7 +578,7 @@ class MainActivity : AppCompatActivity() {
         this.setSupportActionBar(this._binding.appBarMain.toolbar)
         this._binding.root.setBackgroundColor(resources.getColor(R.color.main_bg))
 
-        this.view_model.opus_manager.attach_activity(this)
+        this.view_model.action_interface.attach_activity(this)
 
 
         val toolbar = this._binding.appBarMain.toolbar
@@ -1423,11 +1420,6 @@ class MainActivity : AppCompatActivity() {
                 opus_channel.get_instrument()
             )
         }
-    }
-
-    fun set_opus_manager(opus_manager: OpusManager) {
-        this.view_model.opus_manager = opus_manager
-        opus_manager.attach_activity(this)
     }
 
     fun get_opus_manager(): OpusManager {
@@ -2386,6 +2378,10 @@ class MainActivity : AppCompatActivity() {
                 CompatibleFileType.Pagan
             }
         } ?: throw FileNotFoundException(path)
+    }
+
+    fun get_action_interface(): ActionTracker {
+        return this.view_model.action_interface
     }
 
 }

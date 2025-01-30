@@ -579,6 +579,7 @@ class MainActivity : AppCompatActivity() {
         this._binding.root.setBackgroundColor(resources.getColor(R.color.main_bg))
 
         this.view_model.action_interface.attach_activity(this)
+        this.view_model.opus_manager.attach_activity(this)
 
 
         val toolbar = this._binding.appBarMain.toolbar

@@ -6,10 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration.getLongPressTimeout
 import androidx.appcompat.widget.AppCompatTextView
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.concurrent.thread
-import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -75,82 +72,12 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     }
 
     private fun on_click() {
-        val opus_manager = this.get_opus_manager()
-
-        val cursor = opus_manager.cursor
-        if (cursor.is_selecting_range()) {
-            val (first_key, second_key) = cursor.get_ordered_range()!!
-            if (first_key != second_key) {
-                try {
-                    opus_manager.overwrite_beat_range_horizontally(
-                        this.channel,
-                        this.line_offset,
-                        first_key,
-                        second_key
-                    )
-                } catch (e: OpusLayerBase.MixedInstrumentException) {
-                    opus_manager.cursor_select_line(this.channel, this.line_offset)
-                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                    opus_manager.cursor_select_line(this.channel, this.line_offset)
-                }
-            } else {
-                try {
-                    opus_manager.overwrite_line(this.channel, this.line_offset, first_key)
-                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                    opus_manager.cursor_select_line(this.channel, this.line_offset)
-                }
-            }
-        } else {
-            if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == this.channel && cursor.line_offset == this.line_offset && cursor.ctl_level == null) {
-                opus_manager.cursor_select_channel(this.channel)
-            } else {
-                opus_manager.cursor_select_line(this.channel, this.line_offset)
-            }
-        }
+        this.get_activity().get_action_interface().click_label_line_std(this.channel, this.line_offset)
     }
 
     private fun on_long_click(): Boolean {
         val activity = this.get_activity()
-
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        if (cursor.is_selecting_range() && cursor.ctl_level == null) {
-            val (first_key, second_key) = cursor.get_ordered_range()!!
-            val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
-            if (first_key != second_key) {
-                activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
-                    try {
-                        opus_manager.overwrite_beat_range_horizontally(
-                            this.channel,
-                            this.line_offset,
-                            first_key,
-                            second_key,
-                            repeat
-                        )
-                    } catch (e: OpusLayerBase.MixedInstrumentException) {
-                        opus_manager.cursor_select_line(this.channel, this.line_offset)
-                    } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                        opus_manager.cursor_select_line(this.channel, this.line_offset)
-                    }
-                }
-            } else if (opus_manager.is_percussion(first_key.channel) == opus_manager.is_percussion(channel)) {
-                activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
-                    try {
-                        opus_manager.overwrite_line(this.channel, this.line_offset, first_key, repeat)
-                    } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-                        opus_manager.cursor_select_line(this.channel, this.line_offset)
-                    }
-                }
-            } else {
-                opus_manager.cursor_select_line(this.channel, this.line_offset)
-            }
-        } else {
-            if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == this.channel && cursor.line_offset == this.line_offset && cursor.ctl_level == null) {
-                opus_manager.cursor_select_channel(this.channel)
-            } else {
-                opus_manager.cursor_select_line(this.channel, this.line_offset)
-            }
-        }
+        activity.get_action_interface().long_click_label_line_std(this.channel, this.line_offset)
         return false
     }
 

@@ -1,13 +1,16 @@
 package com.qfs.pagan
 
 import android.util.Log
+import android.widget.TextView
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerCursor
+import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import kotlin.concurrent.thread
+import kotlin.math.ceil
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 /**
@@ -29,10 +32,14 @@ class ActionTracker {
         ClickLineLabelCTLLine,
         ClickLineLabelCTLChannel,
         ClickLineLabelCTLGlobal,
+        LongClickLineLabelSTD,
+        LongClickLineLabelCTLLine,
+        LongClickLineLabelCTLChannel,
+        LongClickLineLabelCTLGlobal
     }
 
     var activity: MainActivity? = null
-    private val action_queue = mutableListOf<Pair<TrackedAction, List<Int>>>()
+    private val action_queue = mutableListOf<Pair<TrackedAction, List<Int>?>>()
 
     fun attach_activity(activity: MainActivity) {
         this.activity = activity
@@ -223,6 +230,386 @@ class ActionTracker {
         }
     }
 
+    fun click_label_line_std(channel: Int, line_offset: Int) {
+        this.track(
+            TrackedAction.ClickLineLabelSTD,
+            listOf(channel, line_offset)
+        )
+
+        val opus_manager = this.get_opus_manager()
+
+        val cursor = opus_manager.cursor
+        if (cursor.is_selecting_range()) {
+            val (first_key, second_key) = cursor.get_ordered_range()!!
+            if (first_key != second_key) {
+                try {
+                    opus_manager.overwrite_beat_range_horizontally(
+                        channel,
+                        line_offset,
+                        first_key,
+                        second_key
+                    )
+                } catch (e: OpusLayerBase.MixedInstrumentException) {
+                    opus_manager.cursor_select_line(channel, line_offset)
+                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                    opus_manager.cursor_select_line(channel, line_offset)
+                }
+            } else {
+                try {
+                    opus_manager.overwrite_line(channel, line_offset, first_key)
+                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                    opus_manager.cursor_select_line(channel, line_offset)
+                }
+            }
+        } else {
+            if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == null) {
+                opus_manager.cursor_select_channel(channel)
+            } else {
+                opus_manager.cursor_select_line(channel, line_offset)
+            }
+        }
+    }
+
+    fun click_label_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
+        this.track(
+            TrackedAction.ClickLineLabelCTLLine,
+            listOf(type.i, channel, line_offset)
+        )
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        try {
+            if (cursor.is_selecting_range()) {
+                val (first, second) = cursor.range!!
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> {
+                        if (first != second) {
+                            opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second)
+                        } else {
+                            opus_manager.controller_line_overwrite_line(type, channel, line_offset, first)
+                        }
+                    }
+
+                    CtlLineLevel.Channel -> {
+                        if (first != second) {
+                            opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_channel_to_line_overwrite_line(type, channel, line_offset, first.channel, first.beat)
+                        }
+                    }
+
+                    CtlLineLevel.Global -> {
+                        if (first != second) {
+                            opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_global_to_line_overwrite_line(type, first.beat, channel, line_offset)
+                        }
+                    }
+                    null -> {
+                        opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
+                    }
+                }
+            } else {
+                opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
+            }
+        } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+            opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
+        }
+    }
+
+    fun long_click_label_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
+        this.track(
+            TrackedAction.LongClickLineLabelCTLLine,
+            listOf(type.i, channel, line_offset)
+        )
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        if (cursor.is_selecting_range() && cursor.ctl_type == type) {
+            val activity = this.get_activity()
+            val (first, second) = cursor.get_ordered_range()!!
+            val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
+            when (cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    activity.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first != second) {
+                            opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
+                        } else {
+                            opus_manager.controller_line_overwrite_line(type, channel, line_offset, first, repeat)
+                        }
+                    }
+                }
+                CtlLineLevel.Channel -> {
+                    activity.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first != second) {
+                            opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat, repeat)
+                        } else {
+                            opus_manager.controller_channel_to_line_overwrite_line(type, channel, line_offset, first.channel, first.beat, repeat)
+                        }
+                    }
+                }
+
+                CtlLineLevel.Global -> {
+                    activity.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first != second) {
+                            opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat, repeat)
+                        } else {
+                            opus_manager.controller_global_to_line_overwrite_line(type, first.beat, channel, line_offset, repeat)
+                        }
+                    }
+                }
+
+                null -> {
+                    opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
+                }
+            }
+        } else {
+            opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
+        }
+    }
+
+    fun long_click_label_line_std(channel: Int, line_offset: Int) {
+        this.track(
+            TrackedAction.LongClickLineLabelSTD,
+            listOf(channel, line_offset)
+        )
+
+        val context = this.get_activity()
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        if (cursor.is_selecting_range() && cursor.ctl_level == null) {
+            val (first_key, second_key) = cursor.get_ordered_range()!!
+            val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
+            if (first_key != second_key) {
+                context.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                    try {
+                        opus_manager.overwrite_beat_range_horizontally(
+                            channel,
+                            line_offset,
+                            first_key,
+                            second_key,
+                            repeat
+                        )
+                    } catch (e: OpusLayerBase.MixedInstrumentException) {
+                        opus_manager.cursor_select_line(channel, line_offset)
+                    } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                        opus_manager.cursor_select_line(channel, line_offset)
+                    }
+                }
+            } else if (opus_manager.is_percussion(first_key.channel) == opus_manager.is_percussion(channel)) {
+                context.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                    try {
+                        opus_manager.overwrite_line(channel, line_offset, first_key, repeat)
+                    } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                        opus_manager.cursor_select_line(channel, line_offset)
+                    }
+                }
+            } else {
+                opus_manager.cursor_select_line(channel, line_offset)
+            }
+        } else {
+            if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == null) {
+                opus_manager.cursor_select_channel(channel)
+            } else {
+                opus_manager.cursor_select_line(channel, line_offset)
+            }
+        }
+    }
+
+    fun click_label_line_ctl_channel(type: ControlEventType, channel: Int) {
+        this.track(
+            TrackedAction.ClickLineLabelCTLChannel,
+            listOf(type.i, channel)
+        )
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        try {
+            if (cursor.is_selecting_range()) {
+                val (first, second) = cursor.range!!
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> {
+                        if (first != second) {
+                            opus_manager.controller_line_to_channel_overwrite_range_horizontally(type, channel, first, second)
+                        } else {
+                            opus_manager.controller_line_to_channel_overwrite_line(type, channel, first)
+                        }
+                    }
+                    CtlLineLevel.Channel -> {
+                        if (first != second) {
+                            opus_manager.controller_channel_overwrite_range_horizontally(type, channel, first.channel, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_channel_overwrite_line(type, channel, first.channel, first.beat)
+                        }
+                    }
+                    CtlLineLevel.Global -> {
+                        if (first != second) {
+                            opus_manager.controller_global_to_channel_overwrite_range_horizontally(type, first.channel, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_global_to_channel_overwrite_line(type, channel, first.beat)
+                        }
+                    }
+                    null -> {
+                        opus_manager.cursor_select_channel_ctl_line(type, channel)
+                    }
+                }
+            } else {
+                opus_manager.cursor_select_channel_ctl_line(type, channel)
+            }
+        } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+            opus_manager.cursor_select_channel_ctl_line(type, channel)
+        }
+    }
+
+    fun long_click_label_line_ctl_channel(type: ControlEventType, channel: Int) {
+        this.track(
+            TrackedAction.LongClickLineLabelCTLChannel,
+            listOf(type.i, channel)
+        )
+
+        val opus_manager = this.get_opus_manager()
+        val context = this.get_activity()
+        val cursor = opus_manager.cursor
+        if (cursor.is_selecting_range() && cursor.ctl_type == type) {
+            val activity = this.get_activity()
+            val (first, second) = cursor.get_ordered_range()!!
+            val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
+            when (cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first != second) {
+                            opus_manager.controller_line_to_channel_overwrite_range_horizontally(type, channel, first, second, repeat)
+                        } else {
+                            opus_manager.controller_line_to_channel_overwrite_line(type, channel, first, repeat)
+                        }
+                    }
+                }
+                CtlLineLevel.Channel -> {
+                    activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first != second) {
+                            opus_manager.controller_channel_overwrite_range_horizontally(type, channel, first.channel, first.beat, second.beat, repeat)
+                        } else {
+                            opus_manager.controller_channel_overwrite_line(type, channel, first.channel, first.beat, repeat)
+                        }
+                    }
+                }
+                CtlLineLevel.Global -> {
+                    activity.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first != second) {
+                            opus_manager.controller_global_to_channel_overwrite_range_horizontally(type, first.channel, first.beat, second.beat, repeat)
+                        } else {
+                            opus_manager.controller_global_to_channel_overwrite_line(type, channel, first.beat, repeat)
+                        }
+                    }
+                }
+                null -> {
+                    opus_manager.cursor_select_channel_ctl_line(type, channel)
+                }
+            }
+        } else {
+            opus_manager.cursor_select_channel_ctl_line(type, channel)
+        }
+    }
+
+    fun click_label_line_ctl_global(type: ControlEventType) {
+        this.track(
+            TrackedAction.ClickLineLabelCTLGlobal,
+            listOf(type.i)
+        )
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        try {
+            if (cursor.is_selecting_range()) {
+                val (first, second) = cursor.range!!
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> {
+                        if (first != second) {
+                            opus_manager.controller_line_to_global_overwrite_range_horizontally(type, first.channel, first.line_offset, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_line_to_global_overwrite_line(type, first)
+                        }
+                    }
+
+                    CtlLineLevel.Channel -> {
+                        if (first != second) {
+                            opus_manager.controller_channel_to_global_overwrite_range_horizontally(type, first.channel, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_channel_to_global_overwrite_line(type, first.channel, first.beat)
+                        }
+                    }
+
+                    CtlLineLevel.Global -> {
+                        if (first != second) {
+                            opus_manager.controller_global_overwrite_range_horizontally(type, first.beat, second.beat)
+                        } else {
+                            opus_manager.controller_global_overwrite_line(type, first.beat)
+                        }
+                    }
+
+                    null -> {
+                        opus_manager.cursor_select_global_ctl_line(type)
+                    }
+                }
+            } else {
+                opus_manager.cursor_select_global_ctl_line(type)
+            }
+        } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+            opus_manager.cursor_select_global_ctl_line(type)
+        }
+    }
+
+    fun long_click_label_line_ctl_global(type: ControlEventType) {
+        this.track(
+            TrackedAction.LongClickLineLabelCTLGlobal,
+            listOf(type.i)
+        )
+
+        val activity = this.get_activity()
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        if (cursor.is_selecting_range() && cursor.ctl_type == type) {
+            val (first_key, second_key) = cursor.get_ordered_range()!!
+            val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
+            when (cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    activity.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first_key != second_key) {
+                            opus_manager.controller_line_to_global_overwrite_range_horizontally(type, first_key.channel, first_key.line_offset, first_key.beat, second_key.beat, repeat)
+                        } else {
+                            opus_manager.controller_line_to_global_overwrite_line(type, first_key, repeat)
+                        }
+                    }
+                }
+
+                CtlLineLevel.Channel -> {
+                    activity.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first_key != second_key) {
+                            opus_manager.controller_channel_to_global_overwrite_range_horizontally(type, first_key.channel, first_key.beat, second_key.beat, repeat)
+                        } else {
+                            opus_manager.controller_channel_to_global_overwrite_line(type, first_key.channel, first_key.beat, repeat)
+                        }
+                    }
+                }
+
+                CtlLineLevel.Global -> {
+                    activity.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count) { repeat: Int ->
+                        if (first_key != second_key) {
+                            opus_manager.controller_global_overwrite_range_horizontally(type, first_key.beat, second_key.beat, repeat)
+                        } else {
+                            opus_manager.controller_global_overwrite_line(type, first_key.beat, repeat)
+                        }
+                    }
+                }
+                null -> {
+                    opus_manager.cursor_select_global_ctl_line(type)
+                }
+            }
+        } else {
+            opus_manager.cursor_select_global_ctl_line(type)
+        }
+    }
+
     fun click_column(beat: Int) {
         this.track(
             TrackedAction.ClickColumn,
@@ -306,7 +693,9 @@ class ActionTracker {
         }
     }
 
-    private fun track(token: TrackedAction, args: List<Int>) {
+
+
+    private fun track(token: TrackedAction, args: List<Int>? = null) {
         this.action_queue.add(Pair(token, args))
         Log.d("PaganTracker", "$token")
     }

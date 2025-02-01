@@ -12,7 +12,6 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import androidx.core.content.ContextCompat
-import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -228,11 +227,59 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
 
         private fun _process_ctl_channel_on_click(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
-            this.get_action_interface().click_leaf_ctl_channel(type, channel, beat, position)
+            val activity = this.get_activity()
+            val opus_manager = activity.get_opus_manager()
+            val cursor = opus_manager.cursor
+
+            val tracker = this.get_action_interface()
+
+            if (cursor.is_selecting_range() && cursor.ctl_type == type) {
+                try {
+                    when (activity.configuration.move_mode) {
+                        PaganConfiguration.MoveMode.COPY -> tracker.copy_channel_ctl_to_beat(channel, beat)
+                        PaganConfiguration.MoveMode.MOVE -> tracker.move_channel_ctl_to_beat(channel, beat)
+                        PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
+                    }
+                } catch (e: Exception) {
+                    when (e) {
+                        is IndexOutOfBoundsException,
+                        is OpusLayerBase.InvalidOverwriteCall -> {
+                            tracker.ignore().cursor_select_ctl_at_channel(type, channel, beat, position)
+                        }
+                        else -> throw e
+                    }
+                }
+            } else {
+                tracker.cursor_select_ctl_at_channel(type, channel, beat, position)
+            }
         }
 
         private fun _process_ctl_global_on_click(type: ControlEventType, beat: Int, position: List<Int>) {
-            this.get_action_interface().click_leaf_ctl_global(type, beat, position)
+            val opus_manager = this.get_activity().get_opus_manager()
+            val cursor = opus_manager.cursor
+            val tracker = this.get_action_interface()
+
+            if (cursor.is_selecting_range() && cursor.ctl_type == type) {
+                try {
+                    when (this.get_activity().configuration.move_mode) {
+                        PaganConfiguration.MoveMode.COPY -> tracker.copy_global_ctl_to_beat(beat)
+                        PaganConfiguration.MoveMode.MOVE -> tracker.move_global_ctl_to_beat(beat)
+                        PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
+                    }
+                } catch (e: Exception) {
+                    when (e) {
+                        is IndexOutOfBoundsException,
+                        is OpusLayerBase.InvalidOverwriteCall -> {
+                            tracker.cursor_select_ctl_at_global(type, beat, position)
+                        }
+                        else -> {
+                            throw e
+                        }
+                    }
+                }
+            } else {
+                tracker.cursor_select_ctl_at_global(type, beat, position)
+            }
         }
 
         fun get_activity(): MainActivity {
@@ -247,7 +294,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val action_interface = this.get_action_interface()
 
             if (line_info == null) {
-                action_interface.click_column(beat)
+                action_interface.cursor_select_column(beat)
             } else {
                 val opus_manager = action_interface.get_opus_manager()
                 val (pointer, ctl_line_level, ctl_type) = line_info
@@ -298,10 +345,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                         val beat_key = BeatKey(channel, line_offset, beat)
 
-                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && type == cursor.ctl_type) {
-                            action_tracker.cursor_select_line_ctl_range(type, cursor.range!!.first, beat_key)
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && ctl_type == cursor.ctl_type) {
+                            action_tracker.cursor_select_line_ctl_range(ctl_type!!, cursor.range!!.first, beat_key)
                         } else {
-                            action_tracker.cursor_select_line_ctl_range(type, beat_key, beat_key)
+                            action_tracker.cursor_select_line_ctl_range(ctl_type!!, beat_key, beat_key)
                         }
                     }
 
@@ -320,10 +367,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
 
                     CtlLineLevel.Global -> {
-                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == type) {
-                            action_tracker.cursor_select_global_ctl_range(type, cursor.range!!.first.beat, beat)
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == ctl_type) {
+                            action_tracker.cursor_select_global_ctl_range(ctl_type!!, cursor.range!!.first.beat, beat)
                         } else {
-                            action_tracker.cursor_select_global_ctl_range(type, beat, beat)
+                            action_tracker.cursor_select_global_ctl_range(ctl_type!!, beat, beat)
                         }
                     }
                 }
@@ -926,7 +973,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.scrollY = 0
         this.painted_layer.clear()
     }
-
 
     fun lock_scroll() {
         this._scroll_locked = true

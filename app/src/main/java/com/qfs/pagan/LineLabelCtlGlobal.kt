@@ -6,11 +6,28 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 
 class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabelCtl(context, CtlLineLevel.Global, ctl_type) {
     override fun on_click() {
-        this.get_activity().get_action_interface().click_label_line_ctl_global(this.ctl_type)
+        val tracker = this.get_activity().get_action_interface()
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_ctl_global(this.ctl_type, -1)
+        } else {
+            tracker.cursor_select_global_ctl_line(this.ctl_type)
+        }
     }
 
     override fun on_long_click(): Boolean {
-        this.get_activity().get_action_interface().long_click_label_line_ctl_global(this.ctl_type)
+        val tracker = this.get_activity().get_action_interface()
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_ctl_global(this.ctl_type)
+        } else {
+            tracker.cursor_select_global_ctl_line(this.ctl_type)
+        }
+
         return true
     }
 

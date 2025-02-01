@@ -72,12 +72,28 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     }
 
     private fun on_click() {
-        this.get_activity().get_action_interface().click_label_line_std(this.channel, this.line_offset)
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        val tracker = this.get_activity().get_action_interface()
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_std(this.channel, this.line_offset, -1)
+        } else {
+            tracker.cursor_select_line_std(this.channel, this.line_offset)
+        }
     }
 
     private fun on_long_click(): Boolean {
-        val activity = this.get_activity()
-        activity.get_action_interface().long_click_label_line_std(this.channel, this.line_offset)
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        val tracker = this.get_activity().get_action_interface()
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_std(this.channel, this.line_offset)
+        } else {
+            tracker.cursor_select_line_std(this.channel, this.line_offset)
+        }
+
         return false
     }
 

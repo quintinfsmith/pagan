@@ -12,6 +12,10 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
             throw InvalidBeatKey(channel, line_offset, beat)
         }
     }
+
+    fun toList(): List<Int> {
+        return listOf(this.channel, this.line_offset, this.beat)
+    }
 }
 
 abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {

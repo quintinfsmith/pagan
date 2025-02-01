@@ -7,11 +7,30 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val channel: Int): LineLabelCtl(context, CtlLineLevel.Channel, ctl_type) {
 
     override fun on_click() {
-        this.get_activity().get_action_interface().click_label_line_ctl_channel(this.ctl_type, this.channel)
+        val tracker = this.get_activity().get_action_interface()
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_ctl_channel(this.ctl_type, this.channel, -1)
+        } else {
+            tracker.cursor_select_channel_ctl_line(this.ctl_type, this.channel)
+        }
     }
 
     override fun on_long_click(): Boolean {
-        this.get_activity().get_action_interface().long_click_label_line_ctl_channel(this.ctl_type, this.channel)
+        val tracker = this.get_activity().get_action_interface()
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_ctl_channel(this.ctl_type, this.channel)
+        } else {
+            tracker.cursor_select_channel_ctl_line(this.ctl_type, this.channel)
+        }
+
         return true
     }
 

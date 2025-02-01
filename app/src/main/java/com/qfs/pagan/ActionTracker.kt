@@ -46,12 +46,55 @@ class ActionTracker {
         CopyChannelCtlToBeat,
         CopyGlobalCtlToBeat,
         CopySelectionToBeat,
-        MergeSelectionIntoBeat
+        MergeSelectionIntoBeat,
+        SetOffset,
+        SetOctave,
+        TogglePercussion,
+        SplitLeaf,
+        SplitLeafCtlLine,
+        SplitLeafCtlChannel,
+        SplitLeafCtlGlobal,
+        InsertLeaf,
+        InsertLeafCtlLine,
+        InsertLeafCtlChannel,
+        InsertLeafCtlGlobal,
+        RemoveLeaf,
+        RemoveLeafCtlLine,
+        RemoveLeafCtlChannel,
+        RemoveLeafCtlGlobal,
+        Unset,
+        UnsetCtlLine,
+        UnsetCtlChannel,
+        UnsetCtlGlobal,
+        SetDuration,
+        SetDurationCtlLine,
+        SetDurationCtlChannel,
+        SetDurationCtlGlobal,
+        ClearSelection,
+        ClearSelectionCtlLine,
+        ClearSelectionCtlChannel,
+        ClearSelectionCtlGlobal,
+        SetChannelInstrument,
+        SetPercussionInstrument,
+        TogglePercussionVisibility,
+        ToggleControllerVisibility,
+        RemoveController,
+        InsertLine,
+        RemoveLine,
+        InsertChannel,
+        RemoveChannel,
+        SetTransitionAtCursor,
+        SetVolumeAtCursor,
+        SetTempoAtCursor,
+        SetPanAtCursor,
+        RemoveBeat,
+        InsertBeat
     }
 
     var activity: MainActivity? = null
     private var ignore_flagged: Boolean = false
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
+    private var lock: Boolean = false
 
     fun attach_activity(activity: MainActivity) {
         this.activity = activity
@@ -97,6 +140,7 @@ class ActionTracker {
             beat_key.toList() + position
         )
 
+        println("$beat_key, $position")
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
         opus_manager.cursor_select(beat_key, position)
@@ -512,7 +556,7 @@ class ActionTracker {
 
 
     fun play_event(channel: Int, note: Int, volume: Float) {
-        this.track(TrackedAction.PlayEvent, listOf(channel, note, (volume * 128F).toInt()))
+        this.track(TrackedAction.PlayEvent, listOf(channel, note, volume.toRawBits()))
         this.get_activity().play_event(channel, note, volume)
     }
 
@@ -523,7 +567,7 @@ class ActionTracker {
 
 
     private fun track(token: TrackedAction, args: List<Int?>? = null) {
-        if (this.ignore_flagged) {
+        if (this.ignore_flagged || this.lock) {
             this.ignore_flagged = false
             return
         }
@@ -534,5 +578,226 @@ class ActionTracker {
 
     fun get_opus_manager(): OpusManager {
         return this.get_activity().get_opus_manager()
+    }
+
+    fun playback() {
+        println("PLAYBACK")
+        this.lock = true
+        for ((action, integers) in this.action_queue) {
+            this.process_queued_action(action, integers ?: listOf())
+        }
+        this.lock = false
+    }
+
+    private fun process_queued_action(token: TrackedAction, integers: List<Int?>) {
+        when (token) {
+            TrackedAction.NewProject -> {
+                this.new_project()
+            }
+            TrackedAction.LoadProject -> {
+                val path_bytes = ByteArray(integers.size) { i: Int ->
+                     integers[i]!!.toByte()
+                }
+
+                this.load_project(path_bytes.decodeToString())
+            }
+            TrackedAction.CursorSelectColumn -> {
+                this.cursor_select_column(integers[0]!!)
+            }
+            TrackedAction.CursorSelectGlobalCtlRange -> {
+                this.cursor_select_global_ctl_range(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!,
+                    integers[2]!!
+                )
+            }
+            TrackedAction.CursorSelectChannelCtlRange -> {
+                this.cursor_select_channel_ctl_range(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!,
+                    integers[2]!!,
+                    integers[3]!!
+                )
+            }
+            TrackedAction.CursorSelectLineCtlRange -> {
+                this.cursor_select_line_ctl_range(
+                    ControlEventType.values()[integers[0]!!],
+                    BeatKey(
+                        integers[1]!!,
+                        integers[2]!!,
+                        integers[3]!!
+                    ),
+                    BeatKey(
+                        integers[4]!!,
+                        integers[5]!!,
+                        integers[6]!!
+                    )
+                )
+            }
+            TrackedAction.CursorSelectRange -> {
+                this.cursor_select_range(
+                    BeatKey(
+                        integers[0]!!,
+                        integers[1]!!,
+                        integers[2]!!
+                    ),
+                    BeatKey(
+                        integers[3]!!,
+                        integers[4]!!,
+                        integers[5]!!
+                    )
+                )
+            }
+            TrackedAction.CursorSelectLeaf -> {
+                this.cursor_select(
+                    BeatKey(
+                        integers[0]!!,
+                        integers[1]!!,
+                        integers[2]!!
+                    ),
+                    List(integers.size - 3) { i: Int -> integers[i + 3]!! }
+                )
+            }
+            TrackedAction.CursorSelectLeafCtlLine -> {
+                this.cursor_select_ctl_at_line(
+                    ControlEventType.values()[integers[0]!!],
+                    BeatKey(
+                        integers[1]!!,
+                        integers[2]!!,
+                        integers[3]!!
+                    ),
+                    List(integers.size - 4) { i: Int -> integers[i + 4]!! }
+                )
+            }
+            TrackedAction.CursorSelectLeafCtlChannel -> {
+                this.cursor_select_ctl_at_channel(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!,
+                    integers[2]!!,
+                    List(integers.size - 3) { i: Int -> integers[i + 3]!! }
+                )
+            }
+            TrackedAction.CursorSelectLeafCtlGlobal -> {
+                this.cursor_select_ctl_at_global(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!,
+                    List(integers.size - 2) { i: Int -> integers[i + 2]!! }
+                )
+            }
+            TrackedAction.CursorSelectLine -> {
+                this.cursor_select_line_std(
+                    integers[0]!!,
+                    integers[1]!!
+                )
+            }
+            TrackedAction.CursorSelectLineCtlLine -> {
+                this.cursor_select_line_ctl_line(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!,
+                    integers[2]!!
+                )
+            }
+            TrackedAction.CursorSelectChannelCtlLine -> {
+                this.cursor_select_channel_ctl_line(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!
+                )
+            }
+            TrackedAction.CursorSelectGlobalCtlLine -> {
+                this.cursor_select_global_ctl_line(
+                    ControlEventType.values()[integers[0]!!]
+                )
+            }
+            TrackedAction.PlayEvent -> {
+                this.play_event(
+                    integers[0]!!,
+                    integers[1]!!,
+                    Float.fromBits(integers[2]!!)
+                )
+            }
+            TrackedAction.RepeatSelectionStd -> {
+                this.repeat_selection_std(
+                    integers[0]!!,
+                    integers[1]!!,
+                    integers[2]
+                )
+            }
+            TrackedAction.RepeatSelectionCtlLine -> {
+                this.repeat_selection_ctl_line(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!,
+                    integers[2]!!,
+                    integers[3]
+                )
+            }
+            TrackedAction.RepeatSelectionCtlChannel -> {
+                this.repeat_selection_ctl_channel(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!,
+                    integers[2]!!
+                )
+            }
+            TrackedAction.RepeatSelectionCtlGlobal -> {
+                this.repeat_selection_ctl_global(
+                    ControlEventType.values()[integers[0]!!],
+                    integers[1]!!
+                )
+            }
+            TrackedAction.MoveLineCtlToBeat -> {
+                this.move_line_ctl_to_beat(
+                    BeatKey(
+                        integers[0]!!,
+                        integers[1]!!,
+                        integers[2]!!
+                    )
+                )
+            }
+            TrackedAction.MoveChannelCtlToBeat -> {
+                this.move_channel_ctl_to_beat(
+                    integers[0]!!,
+                    integers[1]!!
+                )
+            }
+            TrackedAction.MoveGlobalCtlToBeat -> {
+                this.move_global_ctl_to_beat(integers[0]!!)
+            }
+            TrackedAction.MoveSelectionToBeat -> {
+                this.move_selection_to_beat(
+                    BeatKey(
+                        integers[0]!!,
+                        integers[1]!!,
+                        integers[2]!!
+                    )
+                )
+            }
+            TrackedAction.CopyLineCtlToBeat -> {
+                this.copy_line_ctl_to_beat(
+                    BeatKey(
+                        integers[0]!!,
+                        integers[1]!!,
+                        integers[2]!!
+                    )
+                )
+            }
+            TrackedAction.CopyChannelCtlToBeat -> {
+                this.copy_channel_ctl_to_beat(
+                    integers[0]!!,
+                    integers[1]!!
+                )
+            }
+            TrackedAction.CopyGlobalCtlToBeat -> {
+                this.copy_global_ctl_to_beat(integers[0]!!)
+            }
+            TrackedAction.CopySelectionToBeat -> {
+                this.copy_selection_to_beat(
+                    BeatKey(
+                        integers[0]!!,
+                        integers[1]!!,
+                        integers[2]!!
+                    )
+                )
+            }
+            TrackedAction.MergeSelectionIntoBeat -> TODO()
+        }
     }
 }

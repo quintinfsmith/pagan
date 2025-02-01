@@ -10,7 +10,6 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     lateinit var button_toggle_line_control: ImageView
     lateinit var button_remove_line_control: ImageView
     init {
-
         this.init_widget()
         this.refresh()
     }

@@ -12,6 +12,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import androidx.core.content.ContextCompat
+import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -19,6 +20,7 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLayerCursor
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
@@ -27,6 +29,7 @@ import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
+import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -130,11 +133,98 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
 
         private fun _process_standard_on_click(beat_key: BeatKey, position: List<Int>) {
-            this.get_action_interface().click_leaf_std(beat_key, position)
+            val context = this.get_activity()
+            val opus_manager = context.get_opus_manager()
+            val cursor = opus_manager.cursor
+            val tracker = this.get_action_interface()
+            if (cursor.is_selecting_range() && cursor.ctl_level == null) {
+                try {
+                    when (context.configuration.move_mode) {
+                        PaganConfiguration.MoveMode.COPY -> {
+                            tracker.copy_selection_to_beat(beat_key)
+                        }
+                        PaganConfiguration.MoveMode.MOVE -> {
+                            tracker.move_selection_to_beat(beat_key)
+                        }
+                        PaganConfiguration.MoveMode.MERGE -> {
+                            tracker.merge_selection_into_beat(beat_key)
+                        }
+                    }
+                    // TODO: This shouldn't be here. cursor_select should be handled in OpusLayerCursor
+                    if (opus_manager.temporary_blocker == null) {
+                        opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                    }
+
+                } catch (e: Exception) {
+                    when (e) {
+                        is OpusLayerBase.MixedInstrumentException -> {
+                            tracker.ignore().cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                            context.feedback_msg(context.getString(R.string.feedback_mixed_link))
+                        }
+                        is OpusLayerBase.RangeOverflow -> {
+                            tracker.ignore().cursor_select(beat_key, position)
+                            context.feedback_msg(context.getString(R.string.feedback_bad_range))
+                        }
+                        is OpusLayerCursor.InvalidCursorState -> {
+                            // Shouldn't ever actually be possible
+                            throw e
+                        }
+                        is OpusLayerBase.InvalidMergeException -> {
+                            tracker.ignore().cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+                        }
+                        else -> {
+                            throw e
+                        }
+                    }
+                }
+            } else {
+                tracker.cursor_select(beat_key, position)
+
+                val tree = opus_manager.get_tree()
+                thread {
+                    if (tree.is_event()) {
+                        val note = if (opus_manager.is_percussion(beat_key.channel)) {
+                            opus_manager.get_percussion_instrument(beat_key.line_offset)
+                        } else {
+                            opus_manager.get_absolute_value(beat_key, position) ?: return@thread
+                        }
+                        if (note >= 0) {
+                            tracker.play_event(
+                                beat_key.channel,
+                                note,
+                                (opus_manager.get_current_line_controller_event(ControlEventType.Volume, beat_key, position) as OpusVolumeEvent).value
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         private fun _process_ctl_line_on_click(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
-            this.get_action_interface().click_leaf_ctl_line(type, beat_key, position)
+            val activity = this.get_activity()
+            val opus_manager = activity.get_opus_manager()
+            val cursor = opus_manager.cursor
+            val tracker = this.get_action_interface()
+
+            if (cursor.is_selecting_range() && cursor.ctl_type == type) {
+                try {
+                    when (activity.configuration.move_mode) {
+                        PaganConfiguration.MoveMode.COPY -> tracker.copy_line_ctl_to_beat(beat_key)
+                        PaganConfiguration.MoveMode.MOVE -> tracker.move_line_ctl_to_beat(beat_key)
+                        PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
+                    }
+                } catch (e: Exception) {
+                    when (e) {
+                        is IndexOutOfBoundsException,
+                        is OpusLayerBase.InvalidOverwriteCall -> {
+                            tracker.ignore().cursor_select_ctl_at_line(type, beat_key, position)
+                        }
+                        else -> throw e
+                    }
+                }
+            } else {
+                tracker.cursor_select_ctl_at_line(type, beat_key, position)
+            }
         }
 
         private fun _process_ctl_channel_on_click(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
@@ -197,22 +287,44 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                         val beat_key = BeatKey(channel, line_offset, beat)
 
-                        action_tracker.long_click_leaf_std(beat_key, position!!)
+                        if (cursor.is_selecting_range() && cursor.ctl_level == null) {
+                            action_tracker.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
+                        } else {
+                            action_tracker.cursor_select_range(beat_key, beat_key)
+                        }
                     }
 
                     CtlLineLevel.Line -> {
                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                         val beat_key = BeatKey(channel, line_offset, beat)
 
-                        action_tracker.long_click_leaf_ctl_line(ctl_type!!, beat_key, position!!)
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && type == cursor.ctl_type) {
+                            action_tracker.cursor_select_line_ctl_range(type, cursor.range!!.first, beat_key)
+                        } else {
+                            action_tracker.cursor_select_line_ctl_range(type, beat_key, beat_key)
+                        }
                     }
 
                     CtlLineLevel.Channel -> {
-                        action_tracker.long_click_leaf_ctl_channel(ctl_type!!, pointer, beat, position!!)
+                        val type = ctl_type!!
+                        val channel = pointer
+
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == type) {
+                            // Currently, can't select multiple channels in a range
+                            if (channel == cursor.range!!.first.channel) {
+                                action_tracker.cursor_select_channel_ctl_range(type, channel, cursor.range!!.first.beat, beat)
+                            }
+                        } else {
+                            action_tracker.cursor_select_channel_ctl_range(type, channel, beat, beat)
+                        }
                     }
 
                     CtlLineLevel.Global -> {
-                        action_tracker.long_click_leaf_ctl_global(ctl_type!!, beat, position!!)
+                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == type) {
+                            action_tracker.cursor_select_global_ctl_range(type, cursor.range!!.first.beat, beat)
+                        } else {
+                            action_tracker.cursor_select_global_ctl_range(type, beat, beat)
+                        }
                     }
                 }
                 true

@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity() {
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
-    val CHANNEL_ID = "com.qfs.pagan"
+    val CHANNEL_ID = "com.qfs.pagan" // TODO: Use String Resource
     private var _notification_channel: NotificationChannel? = null
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
@@ -712,12 +712,7 @@ class MainActivity : AppCompatActivity() {
 
             R.id.itmNewProject -> {
                 this.dialog_save_project {
-                    val fragment = this.get_active_fragment()
-                    fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
-                    fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-                    if (fragment !is FragmentEditor) {
-                        this.navigate(R.id.EditorFragment)
-                    }
+                    this.get_action_interface().new_project()
                 }
             }
 
@@ -1836,17 +1831,7 @@ class MainActivity : AppCompatActivity() {
         val project_list = this._project_manager.get_project_list()
 
         this.dialog_popup_menu("Load Project", project_list) { _: Int, path: String ->
-            val fragment = this.get_active_fragment() ?: return@dialog_popup_menu
-            this.loading_reticle_show(getString(R.string.reticle_msg_load_project))
-
-            fragment.setFragmentResult(
-                IntentFragmentToken.Load.name,
-                bundleOf(Pair("PATH", path))
-            )
-
-            if (fragment !is FragmentEditor) {
-                this.navigate(R.id.EditorFragment)
-            }
+            this.get_action_interface().load_project(path)
         }
     }
 
@@ -2384,5 +2369,4 @@ class MainActivity : AppCompatActivity() {
     fun get_action_interface(): ActionTracker {
         return this.view_model.action_interface
     }
-
 }

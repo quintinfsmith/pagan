@@ -123,29 +123,7 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
-        val main = this.get_activity()
-
-        val opus_manager = main.get_opus_manager()
-        try {
-            if (!opus_manager.percussion_channel.visible || opus_manager.channels.isNotEmpty()) {
-                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
-            } else {
-                return
-            }
-        } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
-            return
-        } catch (e: OpusLayerInterface.HidingLastChannelException) {
-            return
-        }
-
-        val remove_button = (view as ViewGroup).getChildAt(1) as ImageView
-        remove_button.setImageResource(
-            if (opus_manager.percussion_channel.visible) {
-                R.drawable.show_percussion
-            } else {
-                R.drawable.hide_percussion
-            }
-        )
+        this.get_activity().get_action_interface().toggle_percussion_visibility()
     }
 
     private fun interact_btnRemoveChannel(view: BackLinkView) {

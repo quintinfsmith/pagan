@@ -37,47 +37,11 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         }
 
         this.button_toggle_line_control.setOnClickListener {
-            when (cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    opus_manager.toggle_line_controller_visibility(
-                        cursor.ctl_type!!,
-                        cursor.channel,
-                        cursor.line_offset
-                    )
-                }
-
-                CtlLineLevel.Channel -> {
-                    opus_manager.toggle_channel_controller_visibility(
-                        cursor.ctl_type!!,
-                        cursor.channel
-                    )
-                }
-
-                CtlLineLevel.Global,
-                null -> {} // Pass
-            }
+            this.get_main().get_action_interface().toggle_controller_visibility()
         }
 
         this.button_remove_line_control.setOnClickListener {
-            when (cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    opus_manager.remove_line_controller(
-                        cursor.ctl_type!!,
-                        cursor.channel,
-                        cursor.line_offset
-                    )
-                }
-
-                CtlLineLevel.Channel -> {
-                    opus_manager.remove_channel_controller(
-                        cursor.ctl_type!!,
-                        cursor.channel
-                    )
-                }
-
-                CtlLineLevel.Global,
-                null -> {} // pass
-            }
+            this.get_main().get_action_interface().remove_controller()
         }
 
         this.secondary.addView(this.widget as View)

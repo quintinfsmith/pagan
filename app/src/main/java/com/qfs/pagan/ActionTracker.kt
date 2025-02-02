@@ -712,6 +712,24 @@ class ActionTracker {
         }
     }
 
+    fun toggle_percussion_visibility() {
+        this.track(TrackedAction.TogglePercussionVisibility)
+
+        val opus_manager = this.get_opus_manager()
+        try {
+            if (!opus_manager.percussion_channel.visible || opus_manager.channels.isNotEmpty()) {
+                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
+            } else {
+                return
+            }
+        } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
+            return
+        } catch (e: OpusLayerInterface.HidingLastChannelException) {
+            return
+        }
+
+    }
+
     fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>? = null) {
         val activity = this.get_activity()
         val sorted_keys = activity._soundfont_supported_instrument_names.keys.toList().sortedBy {
@@ -766,6 +784,7 @@ class ActionTracker {
     }
 
     fun insert_channel() {
+        this.track(TrackedAction.InsertChannel)
         val opus_manager = this.get_opus_manager()
         val channel = opus_manager.cursor.channel
         if (opus_manager.is_percussion(channel)) {
@@ -775,6 +794,8 @@ class ActionTracker {
         }
     }
     fun remove_channel() {
+        this.track(TrackedAction.RemoveChannel)
+
         val opus_manager = this.get_opus_manager()
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
             try {
@@ -864,6 +885,22 @@ class ActionTracker {
         this.dialog_float_input(main.getString(R.string.dlg_set_tempo), widget.min, widget.max, event.value, input_value) { new_value: Float ->
             val new_event = OpusTempoEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
             widget.set_event(new_event)
+        }
+    }
+
+    fun insert_beat_after_cursor(repeat: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        this.dialog_number_input(this.get_activity().getString(R.string.dlg_insert_beats), 1, 4096, stub_output = repeat) { count: Int ->
+            this.track(TrackedAction.InsertBeat, listOf(count))
+            opus_manager.insert_beat_after_cursor(count)
+        }
+    }
+
+    fun remove_beat_at_cursor(repeat: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        this.dialog_number_input(this.get_activity().getString(R.string.dlg_remove_beats), 1, opus_manager.beat_count - 1, stub_output = repeat) { count: Int ->
+            this.track(TrackedAction.RemoveBeat, listOf(count))
+            opus_manager.remove_beat_at_cursor(count)
         }
     }
 
@@ -1172,39 +1209,110 @@ class ActionTracker {
                 this.set_ctl_duration<OpusControlEvent>(integers[0])
             }
             TrackedAction.SetPercussionInstrument -> {
-                this.set_percussion_instrument(integers[0]!!)
+                this.set_percussion_instrument(integers[0])
             }
             TrackedAction.UnsetRoot -> {
                 this.unset_root()
             }
             TrackedAction.InsertLine -> {
-                this.insert_line(integers[0]!!)
+                this.insert_line(integers[0])
             }
             TrackedAction.RemoveLine -> {
-                this.remove_line(integers[0]!!)
+                this.remove_line(integers[0])
             }
             TrackedAction.SetTransitionAtCursor -> {
                 this.set_ctl_transition(ControlTransition.values()[integers[0]!!])
             }
             TrackedAction.SetVolumeAtCursor -> {
-                this.set_volume(integers[0]!!)
+                this.set_volume(integers[0])
             }
             TrackedAction.SetTempoAtCursor -> {
                 this.set_tempo_at_cursor(
                     Float.fromBits(integers[0]!!)
                 )
             }
-            TrackedAction.SetChannelInstrument -> TODO()
-            TrackedAction.TogglePercussionVisibility -> TODO()
-            TrackedAction.ToggleControllerVisibility -> TODO()
-            TrackedAction.RemoveController -> TODO()
-            TrackedAction.InsertChannel -> TODO()
-            TrackedAction.RemoveChannel -> TODO()
-            TrackedAction.SetPanAtCursor -> TODO()
-            TrackedAction.RemoveBeat -> TODO()
-            TrackedAction.InsertBeat -> TODO()
+            TrackedAction.SetChannelInstrument -> {
+                this.set_channel_instrument(integers[0]!!, Pair(integers[1]!!, integers[2]!!))
+            }
+            TrackedAction.RemoveBeat -> {
+                this.remove_beat_at_cursor(integers[0])
+            }
+            TrackedAction.InsertBeat -> {
+                this.insert_beat_after_cursor(integers[0]!!)
+            }
+            TrackedAction.SetPanAtCursor -> {
+                this.set_pan_at_cursor(integers[0]!!)
+            }
+            TrackedAction.ToggleControllerVisibility -> {
+                this.toggle_controller_visibility()
+            }
+            TrackedAction.RemoveController -> {
+                this.remove_controller()
+            }
+            TrackedAction.InsertChannel -> {
+                this.insert_channel()
+            }
+            TrackedAction.RemoveChannel -> {
+                this.remove_channel()
+            }
+            TrackedAction.TogglePercussionVisibility -> {
+                this.toggle_percussion_visibility()
+            }
             TrackedAction.MergeSelectionIntoBeat -> TODO()
             TrackedAction.SetCopyMode -> TODO()
+        }
+    }
+
+    fun remove_controller() {
+        this.track(TrackedAction.RemoveController)
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        when (cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                opus_manager.remove_line_controller(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.line_offset
+                )
+            }
+
+            CtlLineLevel.Channel -> {
+                opus_manager.remove_channel_controller(
+                    cursor.ctl_type!!,
+                    cursor.channel
+                )
+            }
+
+            CtlLineLevel.Global,
+            null -> {} // pass
+        }
+    }
+
+    fun toggle_controller_visibility() {
+        this.track(TrackedAction.ToggleControllerVisibility)
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        when (cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                opus_manager.toggle_line_controller_visibility(
+                    cursor.ctl_type!!,
+                    cursor.channel,
+                    cursor.line_offset
+                )
+            }
+
+            CtlLineLevel.Channel -> {
+                opus_manager.toggle_channel_controller_visibility(
+                    cursor.ctl_type!!,
+                    cursor.channel
+                )
+            }
+
+            CtlLineLevel.Global,
+            null -> {} // Pass
         }
     }
 }

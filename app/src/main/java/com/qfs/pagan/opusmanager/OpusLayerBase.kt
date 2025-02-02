@@ -3600,7 +3600,6 @@ open class OpusLayerBase {
             }
         }
 
-
         this.channels.forEachIndexed outer@{ c: Int, channel: OpusChannel ->
             midi.insert_event(
                 0,
@@ -3612,6 +3611,9 @@ open class OpusLayerBase {
                 0,
                 ProgramChange(channel.midi_channel, channel.midi_program)
             )
+
+
+
             for (l in channel.lines.indices) {
                 val line = channel.lines[l]
                 if (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value == 0F) {

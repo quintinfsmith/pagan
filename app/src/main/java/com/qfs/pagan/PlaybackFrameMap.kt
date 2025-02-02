@@ -596,20 +596,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             else -> Pair(0, 0) // Should be unreachable
         }
 
-        return if (this.opus_manager.is_tuning_standard()) {
-            NoteOn(
-                channel = this.opus_manager.get_channel(beat_key.channel).get_midi_channel(),
-                velocity = velocity,
-                note = note
-            )
-        } else {
-            NoteOn79(
-                index = 0, // Set index as note is applied
-                channel = this.opus_manager.get_channel(beat_key.channel).get_midi_channel(),
-                velocity = velocity shl 8,
-                note = note,
-                bend = bend
-            )
-        }
+        return NoteOn79(
+            index = 0, // Set index as note is applied
+            channel = this.opus_manager.get_channel(beat_key.channel).get_midi_channel(),
+            velocity = velocity shl 8,
+            note = note,
+            bend = bend
+        )
     }
 }

@@ -23,6 +23,7 @@ import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
+import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     private var _simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
@@ -231,7 +232,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 if (this._simple_mode) {
                     // Remove release phase. can get noisy on things like tubular bells with long fade outs
-                    handle.volume_envelope.frames_release = 0
+                    handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 10, handle.volume_envelope.frames_release)
                     handle.volume_envelope.frames_delay = 0
                 }
 

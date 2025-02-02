@@ -102,7 +102,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val controller = working_channel.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
         this.widget_volume.set_event(controller.initial_event, true)
         this.widget_volume.visibility = View.VISIBLE
-
     }
 
     fun dialog_popup_hidden_lines() {
@@ -170,68 +169,25 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     }
 
     fun click_button_insert_line() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.insert_line_at_cursor(1)
+        this.get_main().get_action_interface().insert_line(1)
     }
 
     fun long_click_button_insert_line(): Boolean {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        main.dialog_number_input(
-            this.context.getString(R.string.dlg_insert_lines),
-            1,
-            9,
-        ) { count: Int ->
-            opus_manager.insert_line_at_cursor(count)
-        }
+        this.get_main().get_action_interface().insert_line()
         return true
     }
 
     fun click_button_remove_line() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.remove_line_at_cursor(1)
+        this.get_main().get_action_interface().remove_line(1)
     }
 
     fun long_click_button_remove_line(): Boolean {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val lines = opus_manager.channels[opus_manager.cursor.channel].size
-        val max_lines = Integer.min(lines - 1, lines - opus_manager.cursor.line_offset)
-        main.dialog_number_input(
-            this.context.getString(R.string.dlg_remove_lines),
-            1,
-            max_lines
-        ) { count: Int ->
-            opus_manager.remove_line_at_cursor(count)
-        }
-
+        this.get_main().get_action_interface().remove_line()
         return true
     }
 
     private fun interact_btnChoosePercussion() {
-        val main = this.get_main()
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val default_instrument = opus_manager.get_percussion_instrument(cursor.line_offset)
-
-        val options = mutableListOf<Pair<Int, String>>()
-        val sorted_keys = main.active_percussion_names.keys.toMutableList()
-        sorted_keys.sort()
-        for (note in sorted_keys) {
-            val name = main.active_percussion_names[note]
-            options.add(Pair(note - 27, "${note - 27}: $name"))
-        }
-
-        main.dialog_popup_menu(this.context.getString(R.string.dropdown_choose_percussion), options, default_instrument) { _: Int, value: Int ->
-            opus_manager.set_percussion_instrument(value)
-            main.play_event(
-                opus_manager.channels.size,
-                value,
-                .8F
-            )
-        }
+        this.get_main().get_action_interface().set_percussion_instrument()
     }
 
 }

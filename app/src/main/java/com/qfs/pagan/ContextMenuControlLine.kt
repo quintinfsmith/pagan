@@ -14,39 +14,6 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.refresh()
     }
 
-
-    private fun _callback(value: OpusControlEvent) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Line -> {
-                opus_manager.controller_line_set_initial_event(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.line_offset,
-                    value
-                )
-            }
-
-            CtlLineLevel.Channel -> {
-                opus_manager.controller_channel_set_initial_event(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    value
-                )
-            }
-
-            CtlLineLevel.Global -> {
-                opus_manager.controller_global_set_initial_event(
-                    cursor.ctl_type!!,
-                    value
-                )
-            }
-
-            null -> {}
-        }
-    }
-
     fun init_widget() {
         this.secondary!!.removeAllViews()
 
@@ -57,42 +24,59 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.button_remove_line_control = this.primary.findViewById(R.id.btnRemoveCtl)
 
         when (cursor.ctl_level) {
-            CtlLineLevel.Line -> {
+            CtlLineLevel.Line,
+            CtlLineLevel.Channel -> {
                 this.button_toggle_line_control.visibility = View.VISIBLE
-                this.button_toggle_line_control.setOnClickListener {
+                this.button_remove_line_control.visibility = View.VISIBLE
+            }
+            CtlLineLevel.Global,
+            null -> {
+                this.button_toggle_line_control.visibility = View.GONE
+                this.button_remove_line_control.visibility = View.GONE
+            }
+        }
+
+        this.button_toggle_line_control.setOnClickListener {
+            when (cursor.ctl_level) {
+                CtlLineLevel.Line -> {
                     opus_manager.toggle_line_controller_visibility(
                         cursor.ctl_type!!,
                         cursor.channel,
                         cursor.line_offset
                     )
                 }
-                this.button_remove_line_control.setOnClickListener {
+
+                CtlLineLevel.Channel -> {
+                    opus_manager.toggle_channel_controller_visibility(
+                        cursor.ctl_type!!,
+                        cursor.channel
+                    )
+                }
+
+                CtlLineLevel.Global,
+                null -> {} // Pass
+            }
+        }
+
+        this.button_remove_line_control.setOnClickListener {
+            when (cursor.ctl_level) {
+                CtlLineLevel.Line -> {
                     opus_manager.remove_line_controller(
                         cursor.ctl_type!!,
                         cursor.channel,
                         cursor.line_offset
                     )
                 }
-            }
-            CtlLineLevel.Channel -> {
-                this.button_toggle_line_control.visibility = View.VISIBLE
-                this.button_toggle_line_control.setOnClickListener {
-                    opus_manager.toggle_channel_controller_visibility(
-                        cursor.ctl_type!!,
-                        cursor.channel
-                    )
-                }
-                this.button_remove_line_control.setOnClickListener {
+
+                CtlLineLevel.Channel -> {
                     opus_manager.remove_channel_controller(
                         cursor.ctl_type!!,
                         cursor.channel
                     )
                 }
-            }
-            CtlLineLevel.Global,
-            null -> {
-                this.button_toggle_line_control.visibility = View.GONE
-                this.button_remove_line_control.visibility = View.GONE
+
+                CtlLineLevel.Global,
+                null -> {} // pass
             }
         }
 

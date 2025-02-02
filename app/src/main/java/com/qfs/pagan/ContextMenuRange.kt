@@ -28,10 +28,11 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
 
     override fun setup_interactions() {
         this.button_erase.setOnClickListener {
-            this.get_opus_manager().unset()
+            this.get_main().get_action_interface().unset()
         }
 
         this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
+            // TODO: Move to ActionTracker
             val main = this.get_main()
             val opus_manager = this.get_opus_manager()
 
@@ -43,7 +44,7 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
             }
             main.save_configuration()
 
-            label.text = when (button_id) {
+            this.label.text = when (button_id) {
                 R.id.rbMoveModeMove -> {
                     if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
                         this.context.resources.getString(R.string.label_move_range)

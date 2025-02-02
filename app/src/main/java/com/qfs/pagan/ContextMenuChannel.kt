@@ -143,65 +143,27 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     }
 
     fun click_button_insert_channel() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
-            opus_manager.new_channel(opus_manager.cursor.channel)
-        } else {
-            opus_manager.new_channel(opus_manager.cursor.channel + 1)
-        }
+        this.get_main().get_action_interface().insert_channel()
     }
 
     fun long_click_button_insert_channel(): Boolean {
-        TODO()
-        //val main = this.get_main()
-        //val opus_manager = main.get_opus_manager()
-        //main.dialog_number_input(
-        //    this.context.getString(R.string.dlg_insert_lines),
-        //    1,
-        //    9,
-        //) { count: Int ->
-        //    opus_manager.insert_line(count)
-        //}
+        this.get_main().get_action_interface().insert_channel()
         return true
     }
 
     fun click_button_remove_channel() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
-            try {
-                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
-            } catch (e: OpusLayerInterface.HidingLastChannelException) {
-                // pass
-            }
-        } else if (opus_manager.channels.isNotEmpty()) {
-            opus_manager.remove_channel(opus_manager.cursor.channel)
-        }
+        this.get_main().get_action_interface().remove_channel()
     }
 
     fun long_click_button_remove_channel(): Boolean {
-        TODO()
-       // val main = this.get_main()
-       // val opus_manager = main.get_opus_manager()
-       // val lines = opus_manager.channels[opus_manager.cursor.channel].size
-       // val max_lines = Integer.min(lines - 1, lines - opus_manager.cursor.line_offset)
-       // main.dialog_number_input(
-       //     this.context.getString(R.string.dlg_remove_lines),
-       //     1,
-       //     max_lines
-       // ) { count: Int ->
-       //     opus_manager.remove_line(count)
-       // }
-
-       // return true
+        this.get_main().get_action_interface().remove_channel()
+        return true
     }
 
     private fun interact_choose_instrument() {
-        val main = this.get_main()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        main.dialog_set_channel_instrument(cursor.channel)
+        this.get_main().get_action_interface().set_channel_instrument(cursor.channel)
     }
 
 }

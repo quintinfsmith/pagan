@@ -124,6 +124,7 @@ class ChannelOptionAdapter(
 
     private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
         val main = this.get_activity()
+
         val opus_manager = main.get_opus_manager()
         try {
             if (!opus_manager.percussion_channel.visible || opus_manager.channels.isNotEmpty()) {
@@ -154,7 +155,7 @@ class ChannelOptionAdapter(
 
     private fun interact_btnChooseInstrument(view: BackLinkView) {
         val channel = view.view_holder?.bindingAdapterPosition ?: return
-        this.get_activity().dialog_set_channel_instrument(channel)
+        this.get_activity().get_action_interface().set_channel_instrument(channel)
     }
 
     override fun getItemCount(): Int {

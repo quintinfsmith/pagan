@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity() {
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
-    private var _soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
+    internal var _soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
     private var _sample_handle_manager: SampleHandleManager? = null
     private var _feedback_sample_manager: SampleHandleManager? = null
     private var _midi_playback_device: PlaybackDevice? = null

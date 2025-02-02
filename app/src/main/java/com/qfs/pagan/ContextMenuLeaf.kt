@@ -5,12 +5,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import kotlin.math.abs
-import kotlin.math.max
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
     lateinit var button_split: ImageView
@@ -100,7 +98,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 return@setOnClickListener
             }
 
-            this.click_button_insert()
+            this.get_main().get_action_interface().insert_leaf(1)
         }
 
         this.button_insert.setOnLongClickListener {
@@ -108,7 +106,8 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 return@setOnLongClickListener false
             }
 
-            this.long_click_button_insert()
+            this.get_main().get_action_interface().insert_leaf()
+            true
         }
     }
 
@@ -188,225 +187,55 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove.isClickable = this.button_remove.isEnabled
     }
 
-    fun click_button_duration() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val (beat_key, position) = opus_manager.get_actual_position(
-            cursor.get_beatkey(),
-            cursor.get_position()
-        )
-        val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
-
-        main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->
-            opus_manager.set_duration(beat_key, position, max(1, value))
-        }
+    private fun click_button_duration() {
+        this.get_main().get_action_interface().set_duration()
     }
 
-    fun click_button_split() {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.split_tree_at_cursor(2)
+    private fun click_button_split() {
+        this.get_main().get_action_interface().split(2)
     }
 
-    fun click_button_insert() {
+    private fun click_button_remove() {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val position = opus_manager.cursor.get_position().toMutableList()
-        if (position.isEmpty()) {
-            opus_manager.split_tree_at_cursor(2)
-        } else {
-            opus_manager.insert_after_cursor(1)
-        }
+        main.get_action_interface().remove_at_cursor()
     }
 
-    fun click_button_remove() {
+    private fun long_click_button_split(): Boolean {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        opus_manager.remove_at_cursor(1)
-    }
-
-    fun long_click_button_split(): Boolean {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        main.dialog_number_input(this.context.getString(R.string.dlg_split), 2, 32) { splits: Int ->
-            opus_manager.split_tree_at_cursor(splits)
-        }
+        main.get_action_interface().split()
         return true
     }
 
-    fun long_click_button_insert(): Boolean {
+    private fun long_click_button_duration(): Boolean {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        main.dialog_number_input(this.context.getString(R.string.dlg_insert), 1, 29) { count: Int ->
-            val position = opus_manager.cursor.get_position().toMutableList()
-            if (position.isEmpty()) {
-                opus_manager.split_tree_at_cursor(count + 1)
-            } else {
-                opus_manager.insert_after_cursor(count)
-            }
-        }
+        main.get_action_interface().set_duration(1)
         return true
     }
 
-    fun long_click_button_duration(): Boolean {
+    private fun long_click_button_remove(): Boolean {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val cursor = opus_manager.cursor
-
-        val (beat_key, position) = opus_manager.get_actual_position(
-            cursor.get_beatkey(),
-            cursor.get_position()
-        )
-
-        opus_manager.set_duration(beat_key, position, 1)
-        return true
-    }
-
-    fun long_click_button_remove(): Boolean {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-
-        val position = opus_manager.cursor.get_position().toMutableList()
-        if (position.isNotEmpty()) {
-            position.removeAt(position.size - 1)
-        }
-
-        opus_manager.cursor_select(
-            opus_manager.cursor.get_beatkey(),
-            position
-        )
-
-        opus_manager.unset()
-
+        main.get_action_interface().unset_root()
         return true
     }
 
     private fun click_button_unset() {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.unset()
+        this.get_main().get_action_interface().unset()
     }
 
     private fun on_offset_change(view: NumberSelector) {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
         val progress = view.getState()!!
-        opus_manager.set_note_offset_at_cursor(progress)
-        this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+        main.get_action_interface().set_offset(progress)
     }
 
     private fun on_octave_change(view: NumberSelector) {
         val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
         val progress = view.getState()!!
-        val current_tree_position = opus_manager.get_actual_position(
-            opus_manager.cursor.get_beatkey(),
-            opus_manager.cursor.get_position()
-        )
-        val current_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
-
-        val duration = if (current_tree.is_event()) {
-            val event = current_tree.get_event()!!
-            event.duration
-        } else {
-            1
-        }
-
-        val radix = opus_manager.tuning_map.size
-        val current_event = current_tree.get_event()
-        var convert_to_rel_flag = false
-        val value = when (opus_manager.relative_mode) {
-            0 -> {
-                when (current_event) {
-                    is AbsoluteNoteEvent -> (progress * radix) + (current_event.note % radix)
-                    null -> {
-                        val cursor = opus_manager.cursor
-                        val previous_value = opus_manager.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
-                        (progress * radix) + (previous_value % radix)
-                    }
-                    else -> {
-                        // TODO: Specify (Shouldn't be reachable)
-                        throw Exception()
-                    }
-                }
-            }
-            1 -> {
-                when (current_event) {
-                    is RelativeNoteEvent -> {
-                        (progress * radix) + (current_event.offset % radix)
-                    }
-                    is AbsoluteNoteEvent -> {
-                        val nsOffset = this.get_main().findViewById<NumberSelector>(R.id.nsOffset)
-                        nsOffset.setState(0, manual = true, surpress_callback = true)
-                        convert_to_rel_flag = true
-                        progress * radix
-                    }
-                    null -> {
-                        convert_to_rel_flag = true
-                        (progress * radix)
-                    }
-                    else -> {
-                        // TODO: Specify (Shouldn't be reachable)
-                        throw Exception()
-                    }
-                }
-            }
-            2 -> {
-                when (current_event) {
-                    is RelativeNoteEvent -> {
-                        0 - ((progress * radix) + (abs(current_event.offset) % radix))
-                    }
-                    is AbsoluteNoteEvent -> {
-                        val nsOffset = this.get_main().findViewById<NumberSelector>(R.id.nsOffset)
-                        nsOffset.setState(0, manual = true, surpress_callback = true)
-                        convert_to_rel_flag = true
-                        0 - (progress * radix)
-                    }
-                    null -> {
-                        convert_to_rel_flag = true
-                        0 - (progress * radix)
-                    }
-                    else -> {
-                        // TODO: Specify (Shouldn't be reachable)
-                        throw Exception()
-                    }
-                }
-
-            }
-            else -> {
-                // TODO: Specify (Shouldn't be reachable)
-                throw Exception()
-            }
-        }
-
-        opus_manager.set_event_at_cursor(
-            when (current_event) {
-                is RelativeNoteEvent -> {
-                    RelativeNoteEvent(value, duration)
-                }
-                null,
-                is AbsoluteNoteEvent -> {
-                    if (convert_to_rel_flag) {
-                        RelativeNoteEvent(value, duration)
-                    } else {
-                        AbsoluteNoteEvent(value, duration)
-                    }
-                }
-                else -> {
-                    // TODO: Specify (Shouldn't be reachable)
-                    throw Exception()
-                }
-            }
-        )
-
-        this._play_event(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+        main.get_action_interface().set_octave(progress)
     }
 
-
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
+        // TODO: Add to ActionTracker
         val main = this.get_main()
         val opus_manager = main.get_opus_manager()
         val current_tree_position = opus_manager.get_actual_position(
@@ -515,20 +344,5 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             nsOffset.setState(new_value % radix, manual = true, surpress_callback = true)
         }
         opus_manager.relative_mode = view.getState() ?: 0
-    }
-
-    private fun _play_event(beat_key: BeatKey, position: List<Int>) {
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        if (event_note < 0 || event_note > 8 * opus_manager.tuning_map.size) {
-            return
-        }
-
-        main.play_event(
-            beat_key.channel,
-            event_note,
-            opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
-        )
     }
 }

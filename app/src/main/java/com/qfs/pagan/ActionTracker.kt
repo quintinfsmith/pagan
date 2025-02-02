@@ -7,11 +7,17 @@ import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusPanEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 /**
@@ -59,8 +65,6 @@ class ActionTracker {
         UnsetRoot,
         SetDuration,
         SetDurationCtl,
-        ClearSelection,
-        ClearSelectionCtl,
         SetChannelInstrument,
         SetPercussionInstrument,
         TogglePercussionVisibility,
@@ -504,12 +508,72 @@ class ActionTracker {
     }
 
     fun play_event(channel: Int, note: Int, volume: Float) {
-        this.track(TrackedAction.PlayEvent, listOf(channel, note, volume.toRawBits()))
+        this.track(TrackedAction.PlayEvent, listOf(channel, note, volume.toBits()))
         this.get_activity().play_event(channel, note, volume)
     }
 
-    fun set_duration(duration: Int? = null) {
+    fun <K: OpusControlEvent> set_ctl_duration(duration: Int? = null) {
+        val main = this.get_activity()
 
+        val fragment = main.get_active_fragment()
+        if (fragment !is FragmentEditor) {
+            return
+        }
+
+        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<K>
+        val event = context_menu.get_control_event<K>().copy() as K
+        val event_duration = event.duration
+
+        this.dialog_number_input(main.getString(R.string.dlg_duration), 1, 99, event_duration, duration) { value: Int ->
+            this.track(TrackedAction.SetDurationCtl, listOf(value))
+            event.duration = max(1, value)
+            context_menu._widget_callback(event)
+        }
+    }
+
+    fun set_ctl_transition(transition: ControlTransition? = null) {
+        val control_transitions = ControlTransition.values()
+        val options = List(control_transitions.size) { i: Int ->
+            Pair(control_transitions[i], control_transitions[i].name)
+        }
+
+        val main = this.get_activity()
+
+        val fragment = main.get_active_fragment()
+        if (fragment !is FragmentEditor) {
+            return
+        }
+        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusControlEvent>
+
+        val event = context_menu.get_control_event<OpusControlEvent>().copy()
+        this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: ControlTransition ->
+            this.track(TrackedAction.SetTransitionAtCursor, listOf(transition.i))
+            event.transition = transition
+            context_menu.widget.set_event(event)
+        }
+    }
+
+    fun set_volume(volume: Int? = null) {
+        val main = this.get_activity()
+
+        val fragment = main.get_active_fragment()
+        if (fragment !is FragmentEditor) {
+            return
+        }
+
+        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusVolumeEvent>
+        val widget = context_menu.widget as ControlWidgetVolume
+
+        val dlg_default = (widget.get_event().value * widget.max.toFloat()).toInt()
+        val dlg_title = main.getString(R.string.dlg_set_volume)
+        this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, volume) { new_value: Int ->
+            this.track(TrackedAction.SetVolumeAtCursor, listOf(new_value))
+            val new_event = OpusVolumeEvent(new_value.toFloat() / widget.max.toFloat(), widget.get_event().transition, widget.working_event.duration)
+            widget.set_event(new_event)
+        }
+    }
+
+    fun set_duration(duration: Int? = null) {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -768,6 +832,41 @@ class ActionTracker {
         }
     }
 
+    fun set_pan_at_cursor(value: Int) {
+        val main = this.get_activity()
+        val fragment = main.get_active_fragment()
+        if (fragment !is FragmentEditor) {
+            return
+        }
+
+        this.track(TrackedAction.SetPanAtCursor, listOf(value))
+
+        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusPanEvent>
+        val widget = context_menu.widget as ControlWidgetPan
+        val new_event = widget.working_event.copy()
+        new_event.value = (value.toFloat() / widget.max.toFloat()) * -1F
+        widget.set_event(new_event)
+    }
+
+    fun set_tempo_at_cursor(input_value: Float? = null) {
+        val main = this.get_activity()
+        val fragment = main.get_active_fragment()
+        if (fragment !is FragmentEditor) {
+            return
+        }
+
+        this.track(TrackedAction.SetTempoAtCursor, listOf(input_value?.toBits()))
+
+        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusTempoEvent>
+        val widget = context_menu.widget as ControlWidgetTempo
+
+        val event = widget.get_event()
+        this.dialog_float_input(main.getString(R.string.dlg_set_tempo), widget.min, widget.max, event.value, input_value) { new_value: Float ->
+            val new_event = OpusTempoEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
+            widget.set_event(new_event)
+        }
+    }
+
     /**
      *  wrapper around MainActivity::dialog_number_input
      *  will subvert the popup on replay
@@ -778,6 +877,19 @@ class ActionTracker {
         } else {
             val activity = this.get_activity()
             activity.dialog_number_input(title, min_value, max_value, default, callback)
+        }
+    }
+
+    /**
+     *  wrapper around MainActivity::dialog_float_input
+     *  will subvert the popup on replay
+     */
+    private fun dialog_float_input(title: String, min_value: Float, max_value: Float, default: Float? = null, stub_output: Float? = null, callback: (value: Float) -> Unit) {
+        if (stub_output != null) {
+            callback(stub_output)
+        } else {
+            val activity = this.get_activity()
+            activity.dialog_float_input(title, min_value, max_value, default, callback)
         }
     }
 
@@ -1056,6 +1168,9 @@ class ActionTracker {
             TrackedAction.SetDuration -> {
                 this.set_duration(integers[0])
             }
+            TrackedAction.SetDurationCtl -> {
+                this.set_ctl_duration<OpusControlEvent>(integers[0])
+            }
             TrackedAction.SetPercussionInstrument -> {
                 this.set_percussion_instrument(integers[0]!!)
             }
@@ -1068,18 +1183,23 @@ class ActionTracker {
             TrackedAction.RemoveLine -> {
                 this.remove_line(integers[0]!!)
             }
-            TrackedAction.SetDurationCtl -> TODO()
-            TrackedAction.ClearSelection -> TODO()
-            TrackedAction.ClearSelectionCtl -> TODO()
+            TrackedAction.SetTransitionAtCursor -> {
+                this.set_ctl_transition(ControlTransition.values()[integers[0]!!])
+            }
+            TrackedAction.SetVolumeAtCursor -> {
+                this.set_volume(integers[0]!!)
+            }
+            TrackedAction.SetTempoAtCursor -> {
+                this.set_tempo_at_cursor(
+                    Float.fromBits(integers[0]!!)
+                )
+            }
             TrackedAction.SetChannelInstrument -> TODO()
             TrackedAction.TogglePercussionVisibility -> TODO()
             TrackedAction.ToggleControllerVisibility -> TODO()
             TrackedAction.RemoveController -> TODO()
             TrackedAction.InsertChannel -> TODO()
             TrackedAction.RemoveChannel -> TODO()
-            TrackedAction.SetTransitionAtCursor -> TODO()
-            TrackedAction.SetVolumeAtCursor -> TODO()
-            TrackedAction.SetTempoAtCursor -> TODO()
             TrackedAction.SetPanAtCursor -> TODO()
             TrackedAction.RemoveBeat -> TODO()
             TrackedAction.InsertBeat -> TODO()

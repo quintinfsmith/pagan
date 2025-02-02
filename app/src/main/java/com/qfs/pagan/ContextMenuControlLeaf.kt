@@ -9,7 +9,6 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
-import kotlin.math.max
 
 class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container) {
     lateinit var widget_wrapper: LinearLayout
@@ -228,49 +227,11 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     }
 
     private fun click_button_duration() {
-        val main = this.get_main()
-        val event = this.get_control_event<T>().copy() as T
-        val event_duration = event.duration
-
-        main.dialog_number_input(this.context.getString(R.string.dlg_duration), 1, 99, event_duration) { value: Int ->
-            event.duration = max(1, value)
-            this._widget_callback(event)
-        }
+        this.get_main().get_action_interface().set_ctl_duration<T>()
     }
 
     private fun long_click_button_duration(): Boolean {
-        val main = this.get_main()
-
-        val opus_manager = main.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Line -> {
-                val beat_key = cursor.get_beatkey()
-                val position = cursor.get_position()
-                val event = opus_manager.get_line_controller_event<OpusControlEvent>(cursor.ctl_type!!, beat_key, position) ?: return true
-                val copy_event = event.copy()
-                copy_event.duration = 1
-                opus_manager.controller_line_set_event(cursor.ctl_type!!, beat_key, position, copy_event)
-            }
-            CtlLineLevel.Channel -> {
-                val channel = cursor.channel
-                val line_offset = cursor.line_offset
-                val position = cursor.get_position()
-                val event = opus_manager.get_channel_controller_event<OpusControlEvent>(cursor.ctl_type!!, channel, line_offset, position) ?: return true
-                val copy_event = event.copy()
-                copy_event.duration = 1
-                opus_manager.controller_channel_set_event(cursor.ctl_type!!, channel, line_offset, position, copy_event)
-            }
-            CtlLineLevel.Global -> {
-                val position = cursor.get_position()
-                val event = opus_manager.get_global_controller_event<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, position) ?: return true
-                val copy_event = event.copy()
-                copy_event.duration = 1
-                opus_manager.controller_global_set_event(cursor.ctl_type!!, cursor.beat, position, copy_event)
-            }
-            null -> return true
-        }
-
+        this.get_main().get_action_interface().set_ctl_duration<T>(1)
         return true
     }
 }

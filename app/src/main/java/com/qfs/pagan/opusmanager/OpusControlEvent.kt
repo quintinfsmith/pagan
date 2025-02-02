@@ -7,17 +7,17 @@ enum class ControlEventType(val i: Int) {
     Pan(3)
 }
 
-enum class ControlTransition {
-    Instant,
-    Linear
+enum class ControlTransition(val i: Int) {
+    Instant(0),
+    Linear(1)
    // Concave,
    // Convex
 }
 
-abstract class OpusControlEvent(duration: Int = 1): OpusEvent(duration) {
+abstract class OpusControlEvent(duration: Int = 1, var transition: ControlTransition = ControlTransition.Instant): OpusEvent(duration) {
+    // TODO: within hashCodes, account for transition being moved here
     abstract override fun copy(): OpusControlEvent
 }
-
 
 class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
     override fun equals(other: Any?): Boolean {
@@ -33,7 +33,7 @@ class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(dura
     }
 }
 
-class OpusVolumeEvent(var value: Float, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
+class OpusVolumeEvent(var value: Float, transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration, transition) {
     override fun copy(): OpusVolumeEvent {
         return OpusVolumeEvent(this.value, this.transition, this.duration)
     }
@@ -64,7 +64,7 @@ class OpusReverbEvent(var value: Float, duration: Int = 1): OpusControlEvent(dur
     }
 }
 
-class OpusPanEvent(var value: Float, var transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration) {
+class OpusPanEvent(var value: Float, transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration, transition) {
     override fun copy(): OpusPanEvent {
         return OpusPanEvent(this.value, this.transition, this.duration)
     }

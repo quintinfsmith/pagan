@@ -134,6 +134,7 @@
     <string name="corrupted_project">Corrupted Project</string>
     <string name="untitled_op">Untitled Op. - %1$s</string>
     <string name="repeat_selection">Repeat Selection</string>
+    <string name="dialog_transition">Transition</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

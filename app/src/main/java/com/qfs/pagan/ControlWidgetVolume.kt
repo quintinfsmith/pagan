@@ -12,8 +12,8 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
     private lateinit var _slider: SeekBar
     private lateinit var _button: ButtonLabelledIcon
     private lateinit var _transition_button: ImageView
-    private val _min = 0
-    private val _max = 100
+    val min = 0
+    val max = 100
     private var _lockout_ui: Boolean = false
 
     override fun on_inflated() {
@@ -37,33 +37,25 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
 
             this._transition_button.setOnClickListener {
                 val main = (this.context as MainActivity)
-                val control_transitions = ControlTransition.values()
-                val options = List(control_transitions.size) { i: Int ->
-                    Pair(control_transitions[i], control_transitions[i].name)
-                }
-
-                val event = this.get_event().copy()
-                main.dialog_popup_menu("Transition", options, default = event.transition) { i: Int, transition: ControlTransition ->
-                    event.transition = transition
-                    this.set_event(event)
-                }
+                main.get_action_interface().set_ctl_transition()
             }
         }
 
-        this._slider.max = this._max
-        this._slider.min = this._min
-        this._slider.progress = (this.working_event.value * this._max.toFloat()).toInt()
+        this._slider.max = this.max
+        this._slider.min = this.min
+        this._slider.progress = (this.working_event.value * this.max.toFloat()).toInt()
 
         this._button.setOnClickListener {
             var context = this.context
             while (context !is MainActivity) {
                 context = (context as ContextThemeWrapper).baseContext
             }
+            (context as MainActivity).get_action_interface().set_volume()
 
-            val dlg_default = (this.get_event().value * this._max.toFloat()).toInt()
+            val dlg_default = (this.get_event().value * this.max.toFloat()).toInt()
             val dlg_title = context.getString(R.string.dlg_set_volume)
-            context.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
-                val new_event = OpusVolumeEvent(new_value.toFloat() / this._max.toFloat(), this.get_event().transition, this.working_event.duration)
+            context.dialog_number_input(dlg_title, this.min, this.max, dlg_default) { new_value: Int ->
+                val new_event = OpusVolumeEvent(new_value.toFloat() / this.max.toFloat(), this.get_event().transition, this.working_event.duration)
                 this.set_event(new_event)
             }
         }
@@ -83,7 +75,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
             override fun onStopTrackingTouch(seekbar: SeekBar) {
                 val that = this@ControlWidgetVolume
                 val event = that.get_event()
-                that.set_event(OpusVolumeEvent(seekbar.progress.toFloat() / that._max.toFloat(), event.transition, event.duration))
+                that.set_event(OpusVolumeEvent(seekbar.progress.toFloat() / that.max.toFloat(), event.transition, event.duration))
             }
         })
     }
@@ -95,8 +87,9 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
     fun set_text(value: Int) {
         this._button.set_text("%03d%%".format(value))
     }
+
     override fun on_set(event: OpusVolumeEvent) {
-        this._slider.progress = (event.value * this._max.toFloat()).toInt()
+        this._slider.progress = (event.value * this.max.toFloat()).toInt()
         val value = (event.value * 100).toInt()
         this.set_text(value)
         this._transition_button.setImageResource(when (event.transition) {

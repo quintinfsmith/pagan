@@ -1240,6 +1240,13 @@ class OpusLayerInterface : OpusLayerHistory() {
         this._set_overlap_callbacks()
     }
 
+    override fun set_transpose(new_transpose: Pair<Int, Int>) {
+        this.lock_ui_partial {
+            super.set_transpose(new_transpose)
+            this._ui_change_bill.queue_config_drawer_redraw_export_button()
+        }
+    }
+
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
         this.lock_ui_partial {
             val was_tuning_standard = this.is_tuning_standard()

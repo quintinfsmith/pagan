@@ -153,7 +153,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     }
 
     fun long_click_button_insert_channel(): Boolean {
-        TODO()
         //val main = this.get_main()
         //val opus_manager = main.get_opus_manager()
         //main.dialog_number_input(
@@ -181,7 +180,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     }
 
     fun long_click_button_remove_channel(): Boolean {
-        TODO()
        // val main = this.get_main()
        // val opus_manager = main.get_opus_manager()
        // val lines = opus_manager.channels[opus_manager.cursor.channel].size
@@ -194,7 +192,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
        //     opus_manager.remove_line(count)
        // }
 
-       // return true
+       return true
     }
 
     private fun interact_choose_instrument() {

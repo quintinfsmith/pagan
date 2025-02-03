@@ -7,7 +7,6 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
-import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, attrs) {
@@ -539,7 +538,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun get_first_visible_column_index(): Int {
         val scroll_container_offset = this.table_ui.inner_scroll_view.scrollX
-        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+        val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x)
         return column_position

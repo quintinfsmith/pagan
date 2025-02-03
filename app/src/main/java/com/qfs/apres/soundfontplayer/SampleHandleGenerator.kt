@@ -200,10 +200,15 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
             stereo_mode = sample_directive.sample!!.sampleType,
             loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
-                Pair(
+                val tmp = Pair(
                     sample_directive.sample!!.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
                     sample_directive.sample!!.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
                 )
+                if (tmp.first == tmp.second) {
+                    null
+                } else {
+                    tmp
+                }
             } else {
                 null
             },
@@ -237,10 +242,15 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                     initial_attenuation = main_handle.initial_attenuation,
                     stereo_mode = linked_sample.sampleType,
                     loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
-                        Pair(
+                        val tmp = Pair(
                             linked_sample.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
                             linked_sample.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
                         )
+                        if (tmp.first != tmp.second) {
+                            tmp
+                        } else {
+                            null
+                        }
                     } else {
                         null
                     },

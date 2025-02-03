@@ -1159,6 +1159,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         super.on_project_changed()
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
+        this.get_activity()?.disconnect_feedback_device()
         this.first_load_done = true
     }
 

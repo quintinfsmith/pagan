@@ -4,6 +4,10 @@ import android.util.Log
 import androidx.core.os.bundleOf
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONObject
+import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -1312,6 +1316,68 @@ class ActionTracker {
 
             CtlLineLevel.Global,
             null -> {} // Pass
+        }
+    }
+
+    fun to_json(): JSONObject {
+        return JSONList(
+            List(this.action_queue.size) { i: Int ->
+                val (token, integers) = this.action_queue[i]
+                JSONList(
+                    listOf(
+                        JSONString(token.name),
+                        if (integers == null) {
+                            null
+                        } else {
+                            when (token) {
+                                // STRING
+                                TrackedAction.LoadProject -> {
+                                    val path_bytes = ByteArray(integers.size) { i: Int ->
+                                        integers[i]!!.toByte()
+                                    }
+                                    JSONString(path_bytes.decodeToString())
+                                }
+                                else -> {
+                                    JSONList(
+                                        List(integers.size) {
+                                            JSONInteger(integers[it]!!)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    )
+                )
+            }
+        )
+    }
+
+    fun from_json(json_list: JSONList) {
+        this.action_queue.clear()
+        for (i in 0 until json_list.list.size) {
+            val entry = json_list.get_listn(i) ?: continue
+            val token = TrackedAction.valueOf(entry.get_string(0))
+            this.track(
+                token,
+                when (token) {
+                    // STRING
+                    TrackedAction.LoadProject -> {
+                        val string = entry.get_string(1)
+                        val bytes = string.toByteArray()
+                        List(bytes.size) { i: Int -> bytes[i].toInt() }
+                    }
+                    else -> {
+                        val int_list = entry.get_listn(1)
+                        if (int_list == null) {
+                            null
+                        } else {
+                            List(int_list.list.size) {
+                                int_list.get_int(it)
+                            }
+                        }
+                    } // PASS
+                }
+            )
         }
     }
 

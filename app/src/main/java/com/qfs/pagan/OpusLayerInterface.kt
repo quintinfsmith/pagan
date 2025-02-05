@@ -1198,7 +1198,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
-        this.on_project_changed()
         this.percussion_channel.visible = this.has_percussion()
     }
 

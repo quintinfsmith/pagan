@@ -91,12 +91,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
     val key_code_map = hashMapOf(
         // FOR DEBUG
-        // Pair(KeyEvent.KEYCODE_SLASH, true) to object: KeyStrokeNode(this) {
-        //     override fun call(opus_manager: OpusManager): Boolean {
-        //         opus_manager.get_activity()?.get_action_interface()?.playback() ?: return false
-        //         return true
-        //     }
-        // },
+        Pair(KeyEvent.KEYCODE_SLASH, true) to object: KeyStrokeNode(this) {
+            override fun call(opus_manager: OpusManager): Boolean {
+                opus_manager.get_activity()?.save_actions()
+                //opus_manager.get_activity()?.get_action_interface()?.playback() ?: return false
+                return true
+            }
+        },
         Pair(KeyEvent.KEYCODE_ESCAPE, false) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusManager): Boolean {
                 return if (this@KeyboardInputInterface.input_buffer_value == null) {

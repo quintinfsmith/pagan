@@ -2371,4 +2371,13 @@ class MainActivity : AppCompatActivity() {
     fun get_action_interface(): ActionTracker {
         return this.view_model.action_interface
     }
+
+    fun save_actions() {
+        val generated_code = this.get_action_interface().generate_kotlin()
+        val path = this.getExternalFilesDir(null).toString()
+        val timestamp = System.currentTimeMillis()
+        val file_name = "$path/generated_$timestamp.kt"
+        val file = File(file_name)
+        file.writeText(generated_code)
+    }
 }

@@ -8,13 +8,17 @@ class InvalidBeatKey(channel: Int, line_offset: Int, beat: Int): Exception("Can'
 @Serializable
 data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     init {
-        if (channel < 0 || line_offset < 0) {
-            throw InvalidBeatKey(channel, line_offset, beat)
+        if (this.channel < 0 || this.line_offset < 0) {
+            throw InvalidBeatKey(this.channel, this.line_offset, this.beat)
         }
     }
 
     fun toList(): List<Int> {
         return listOf(this.channel, this.line_offset, this.beat)
+    }
+
+    override fun toString(): String {
+        return "BeatKey(${this.channel}, ${this.line_offset}, ${this.beat})"
     }
 }
 

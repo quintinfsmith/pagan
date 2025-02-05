@@ -45,7 +45,7 @@ class SampleHandle(
     var kill_frame: Int? = null
     var is_dead = false
     var _active_buffer = 0
-    var _data_buffers: Array<PitchedBuffer> = data_buffers ?: if (this.loop_points != null) {
+    var _data_buffers: Array<PitchedBuffer> = data_buffers ?: if (this.loop_points != null && this.loop_points.first != this.loop_points.second) {
         arrayOf<PitchedBuffer>(
             PitchedBuffer(
                 data = this.data.data,
@@ -348,6 +348,7 @@ class SampleHandle(
                     this._data_buffers[0].position(frame)
                     this._active_buffer = 0
                 } else {
+                    println("$loop_points")
                     this._data_buffers[1].position((frame - this._data_buffers[0].size))
                     this._active_buffer = 1
                 }

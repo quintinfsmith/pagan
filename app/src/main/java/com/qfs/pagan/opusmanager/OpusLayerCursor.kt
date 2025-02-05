@@ -275,7 +275,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position.subList(0, position.size - 1))
         val new_index = max(0, min(tree.size - 1, position.last()))
         val new_position = position.subList(0, position.size - 1) + listOf(new_index)
-        this.cursor_select_ctl_at_channel(type, channel, beat, get_first_position_channel_ctl(type, channel, beat, new_position))
+        this.cursor_select_ctl_at_channel(type, channel, beat, this.get_first_position_channel_ctl(type, channel, beat, new_position))
     }
 
     override fun controller_global_remove_standard(type: ControlEventType, beat: Int, position: List<Int>) {

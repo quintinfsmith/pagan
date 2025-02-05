@@ -20,6 +20,7 @@ import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.opusmanager.UnreachableException
 import com.qfs.pagan.structure.OpusTree
+import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -699,21 +700,21 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         this.lock_ui_partial {
-                if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
-                    this.make_percussion_visible()
-                }
-
-                super.set_event(beat_key, position, event)
-
-                if (event is TunedInstrumentEvent) {
-                    this.set_relative_mode(event)
-                }
-
-                if (!this._ui_change_bill.is_full_locked()) {
-                    this._queue_cell_change(beat_key)
-                    this._ui_change_bill.queue_refresh_context_menu()
-                }
+            if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
+                this.make_percussion_visible()
             }
+
+            super.set_event(beat_key, position, event)
+
+            if (event is TunedInstrumentEvent) {
+                this.set_relative_mode(event)
+            }
+
+            if (!this._ui_change_bill.is_full_locked()) {
+                this._queue_cell_change(beat_key)
+                this._ui_change_bill.queue_refresh_context_menu()
+            }
+        }
     }
 
     override fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {
@@ -1158,6 +1159,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         super.on_project_changed()
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
+        this.get_activity()?.disconnect_feedback_device()
         this.first_load_done = true
     }
 
@@ -1196,7 +1198,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
-        this.on_project_changed()
         this.percussion_channel.visible = this.has_percussion()
     }
 
@@ -1238,6 +1239,13 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun recache_line_maps() {
         super.recache_line_maps()
         this._set_overlap_callbacks()
+    }
+
+    override fun set_transpose(new_transpose: Pair<Int, Int>) {
+        this.lock_ui_partial {
+            super.set_transpose(new_transpose)
+            this._ui_change_bill.queue_config_drawer_redraw_export_button()
+        }
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
@@ -2401,6 +2409,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._ui_change_bill.clear()
             return
         }
+        var queued_scroll: Triple<Pair<Int?, Int?>, Pair<Float, Float>, Boolean>? = null
         this.runOnUiThread { activity: MainActivity ->
             this._ui_change_bill.consolidate()
             while (true) {
@@ -2419,13 +2428,18 @@ class OpusLayerInterface : OpusLayerHistory() {
                             this._ui_change_bill.get_next_int()
                         )
                         val force = this._ui_change_bill.get_next_int() != 0
-                        editor_table.scroll_to_position(
-                            y = if (y == -1) null else y,
-                            x = if (x == -1) null else x,
-                            offset = offset.n.toFloat() / offset.d.toFloat(),
-                            offset_width = offset_width.n.toFloat() / offset_width.d.toFloat(),
-                            force = force
-                        )
+                        // KLUDGE. There's probably a better way to queue the scroll
+                        thread {
+                            this.runOnUiThread {
+                                editor_table.scroll_to_position(
+                                    y = if (y == -1) null else y,
+                                    x = if (x == -1) null else x,
+                                    offset = offset.n.toFloat() / offset.d.toFloat(),
+                                    offset_width = offset_width.n.toFloat() / offset_width.d.toFloat(),
+                                    force = force
+                                )
+                            }
+                        }
                     }
 
                     BillableItem.FullRefresh -> {

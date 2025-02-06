@@ -170,6 +170,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
                 if (seekbar != null) {
+                    main.get_action_interface().set_sample_rate(options[seekbar.progress])
                     main.set_sample_rate(options[seekbar.progress])
                 }
             }
@@ -177,6 +178,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     }
 
     private fun interact_btnChooseSoundFont() {
+        // TODO Track disable, set and import actions. not the popup (at least for now)
         val soundfont_dir = this.get_main().get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 

@@ -29,6 +29,7 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
 
         btn_settings.setOnClickListener {
+            thoi
             this.get_main().navigate(R.id.SettingsFragment)
         }
 

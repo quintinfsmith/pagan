@@ -639,17 +639,7 @@ class MainActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (navController.currentDestination?.id == R.id.EditorFragment) {
-                    if (this@MainActivity.get_opus_manager().cursor.mode != OpusManagerCursor.CursorMode.Unset) {
-                        this@MainActivity.get_opus_manager().cursor_clear()
-                    } else {
-                        this@MainActivity.dialog_save_project {
-                            finish()
-                        }
-                    }
-                } else {
-                    navController.popBackStack()
-                }
+                this@MainActivity.get_action_interface().go_back()
             }
         })
 
@@ -765,16 +755,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmSettings -> {
-                this.navigate(R.id.SettingsFragment)
+                this.get_action_interface().open_settings()
             }
             R.id.itmAbout -> {
-                this.navigate(R.id.LicenseFragment)
+                this.get_action_interface().open_about()
             }
         }
         return super.onOptionsItemSelected(item)
     }
 
-    private fun project_save() {
+    fun project_save() {
         this._project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
@@ -1952,7 +1942,7 @@ class MainActivity : AppCompatActivity() {
         return opus_manager != other
     }
 
-    private fun dialog_save_project(callback: () -> Unit) {
+    fun dialog_save_project(callback: (Boolean) -> Unit) {
         if (this.needs_save()) {
             this._adjust_dialog_colors(
                 AlertDialog.Builder(this, R.style.AlertDialog)
@@ -1961,16 +1951,16 @@ class MainActivity : AppCompatActivity() {
                     .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
                         this@MainActivity.project_save()
                         dialog.dismiss()
-                        callback()
+                        callback(true)
                     }
                     .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
                         dialog.dismiss()
-                        callback()
+                        callback(false)
                     }
                     .show()
             )
         } else {
-            callback()
+            callback(false)
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
+import androidx.navigation.findNavController
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
@@ -21,6 +22,7 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
+import java.io.File
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -88,7 +90,11 @@ class ActionTracker {
         InsertBeat,
         SetCopyMode,
         DrawerOpen,
-        DrawerClose
+        DrawerClose,
+        OpenSettings,
+        OpenAbout,
+        GoBack,
+        SetSampleRate,
     }
 
     companion object {
@@ -140,10 +146,31 @@ class ActionTracker {
         }
     }
 
+    // Track is called in the callback functions of onDrawerOpen and onDrawerClosed
     fun drawer_open() {
         val drawer_layout = this.get_activity().findViewById<DrawerLayout>(R.id.drawer_layout)
         if (!drawer_layout.isDrawerOpen(GravityCompat.START)) {
             drawer_layout.openDrawer(GravityCompat.START)
+        }
+    }
+
+    fun go_back(do_save: Boolean? = null) {
+        val activity = this.get_activity()
+        val opus_manager = activity.get_opus_manager()
+        val navController = activity.findNavController(R.id.nav_host_fragment_content_main)
+        if (navController.currentDestination?.id == R.id.EditorFragment) {
+            if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Unset) {
+                this.track(TrackedAction.GoBack)
+                opus_manager.cursor_clear()
+            } else {
+                this.dialog_save_project(do_save) { saved: Boolean ->
+                    this.track(TrackedAction.GoBack, listOf(if (saved) 1 else 0))
+                    activity.finish()
+                }
+            }
+        } else {
+            this.track(TrackedAction.GoBack)
+            navController.popBackStack()
         }
     }
 
@@ -525,6 +552,22 @@ class ActionTracker {
         val opus_manager = activity.get_opus_manager()
         opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
+
+    fun set_sample_rate(new_rate: Int) {
+        this.track(TrackedAction.SetSampleRate, listOf(new_rate))
+        this.get_activity().set_sample_rate(new_rate)
+    }
+
+    fun open_settings() {
+        this.track(TrackedAction.OpenSettings)
+        this.get_activity().navigate(R.id.SettingsFragment)
+    }
+
+    fun open_about() {
+        this.track(TrackedAction.OpenAbout)
+        this.get_activity().navigate(R.id.LicenseFragment)
+    }
+
 
     fun new_project() {
         this.track(TrackedAction.NewProject)
@@ -980,6 +1023,17 @@ class ActionTracker {
         }
     }
 
+    private fun dialog_save_project(stub_output: Boolean? = null, callback: (Boolean) -> Unit) {
+        if (stub_output == null) {
+            this.get_activity().dialog_save_project(callback)
+        } else {
+            if (stub_output) {
+                this.get_activity().project_save()
+            }
+            callback(stub_output)
+        }
+    }
+
     /**
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
@@ -1315,6 +1369,17 @@ class ActionTracker {
             }
             TrackedAction.MergeSelectionIntoBeat -> TODO()
             TrackedAction.SetCopyMode -> TODO()
+            TrackedAction.OpenSettings -> {
+                this.open_settings()
+            }
+            TrackedAction.OpenAbout -> {
+                this.open_about()
+            }
+            TrackedAction.GoBack -> {
+                this.go_back(
+
+                )
+            }
         }
     }
 

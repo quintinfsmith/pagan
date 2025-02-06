@@ -84,6 +84,9 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONObject
+import com.qfs.json.JSONString
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -2363,6 +2366,7 @@ class MainActivity : AppCompatActivity() {
             if (test_bytes.contentEquals("MThd".toByteArray())) {
                 CompatibleFileType.Midi1
             } else {
+
                 CompatibleFileType.Pagan
             }
         } ?: throw FileNotFoundException(path)
@@ -2373,10 +2377,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun save_actions() {
-        val generated_code = this.get_action_interface().generate_kotlin()
+        val generated_code = this.get_action_interface().to_json().to_string()
         val path = this.getExternalFilesDir(null).toString()
         val timestamp = System.currentTimeMillis()
-        val file_name = "$path/generated_$timestamp.kt"
+        val file_name = "$path/generated_$timestamp.json"
         val file = File(file_name)
         file.writeText(generated_code)
     }

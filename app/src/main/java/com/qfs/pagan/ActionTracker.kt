@@ -87,6 +87,33 @@ class ActionTracker {
         SetCopyMode
     }
 
+    companion object {
+        fun from_json_entry(entry: JSONList): Pair<TrackedAction, List<Int?>> {
+            val token = TrackedAction.valueOf(entry.get_string(0))
+            return Pair(
+                token,
+                when (token) {
+                    // STRING
+                    TrackedAction.LoadProject -> {
+                        val string = entry.get_string(1)
+                        val bytes = string.toByteArray()
+                        List(bytes.size) { i: Int -> bytes[i].toInt() }
+                    }
+                    else -> {
+                        val int_list = entry.get_listn(1)
+                        if (int_list == null) {
+                            listOf()
+                        } else {
+                            List(int_list.list.size) {
+                                int_list.get_intn(it)
+                            }
+                        }
+                    } // PASS
+                }
+            )
+        }
+    }
+
     var activity: MainActivity? = null
     private var ignore_flagged: Boolean = false
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
@@ -976,7 +1003,7 @@ class ActionTracker {
         this.lock = false
     }
 
-    private fun process_queued_action(token: TrackedAction, integers: List<Int?>) {
+    fun process_queued_action(token: TrackedAction, integers: List<Int?>) {
         when (token) {
             TrackedAction.NewProject -> {
                 this.new_project()
@@ -1352,32 +1379,13 @@ class ActionTracker {
         )
     }
 
+
     fun from_json(json_list: JSONList) {
         this.action_queue.clear()
         for (i in 0 until json_list.list.size) {
             val entry = json_list.get_listn(i) ?: continue
-            val token = TrackedAction.valueOf(entry.get_string(0))
-            this.track(
-                token,
-                when (token) {
-                    // STRING
-                    TrackedAction.LoadProject -> {
-                        val string = entry.get_string(1)
-                        val bytes = string.toByteArray()
-                        List(bytes.size) { i: Int -> bytes[i].toInt() }
-                    }
-                    else -> {
-                        val int_list = entry.get_listn(1)
-                        if (int_list == null) {
-                            null
-                        } else {
-                            List(int_list.list.size) {
-                                int_list.get_int(it)
-                            }
-                        }
-                    } // PASS
-                }
-            )
+            val (token, ints) = ActionTracker.from_json_entry(entry)
+            this.track(token, ints)
         }
     }
 

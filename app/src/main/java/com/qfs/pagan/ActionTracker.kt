@@ -2,6 +2,8 @@ package com.qfs.pagan
 
 import android.util.Log
 import androidx.core.os.bundleOf
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
 import com.qfs.json.JSONInteger
@@ -84,7 +86,9 @@ class ActionTracker {
         SetPanAtCursor,
         RemoveBeat,
         InsertBeat,
-        SetCopyMode
+        SetCopyMode,
+        DrawerOpen,
+        DrawerClose
     }
 
     companion object {
@@ -125,6 +129,22 @@ class ActionTracker {
 
     fun get_activity(): MainActivity {
         return this.activity ?: throw NoActivityException()
+    }
+
+
+    // Track is called in the callback functions of onDrawerOpen and onDrawerClosed
+    fun drawer_close() {
+        val drawer_layout = this.get_activity().findViewById<DrawerLayout>(R.id.drawer_layout)
+        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+            drawer_layout.closeDrawers()
+        }
+    }
+
+    fun drawer_open() {
+        val drawer_layout = this.get_activity().findViewById<DrawerLayout>(R.id.drawer_layout)
+        if (!drawer_layout.isDrawerOpen(GravityCompat.START)) {
+            drawer_layout.openDrawer(GravityCompat.START)
+        }
     }
 
 
@@ -979,8 +999,7 @@ class ActionTracker {
         return this
     }
 
-
-    private fun track(token: TrackedAction, args: List<Int?>? = null) {
+    fun track(token: TrackedAction, args: List<Int?>? = null) {
         if (this.ignore_flagged || this.lock) {
             this.ignore_flagged = false
             return
@@ -1288,6 +1307,12 @@ class ActionTracker {
             TrackedAction.TogglePercussionVisibility -> {
                 this.toggle_percussion_visibility()
             }
+            TrackedAction.DrawerOpen -> {
+                this.drawer_open()
+            }
+            TrackedAction.DrawerClose -> {
+                this.drawer_close()
+            }
             TrackedAction.MergeSelectionIntoBeat -> TODO()
             TrackedAction.SetCopyMode -> TODO()
         }
@@ -1389,290 +1414,6 @@ class ActionTracker {
         }
     }
 
-    fun generate_kotlin(tracker_name: String = "tracker"): String {
-        var output_lines = mutableListOf<String>()
-        for ((action, _ints) in this.action_queue) {
-            val integers = _ints ?: listOf()
-            val line = when (action) {
-                TrackedAction.NewProject -> {
-                    "it.new_project()"
-                }
-                TrackedAction.LoadProject -> {
-                    val path_bytes = ByteArray(integers.size) { i: Int ->
-                        integers[i]!!.toByte()
-                    }
-                    val path_string = path_bytes.decodeToString().replace("\"", "\\\"")
-
-                    "it.load_project(\"$path_string\")"
-                }
-                TrackedAction.CursorSelectColumn -> {
-                    val column = integers[0]!!
-                    "it.cursor_select_column($column)"
-                }
-                TrackedAction.CursorSelectGlobalCtlRange -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val beat_a = integers[1]!!
-                    val beat_b = integers[2]!!
-
-                    "it.cursor_select_global_ctl_range($type_string, $beat_a, $beat_b)"
-                }
-                TrackedAction.CursorSelectChannelCtlRange -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val channel = integers[1]!!
-                    val first_beat = integers[2]!!
-                    val second_beat = integers[3]!!
-                    "it.cursor_select_channel_ctl_range($type_string, $channel, $first_beat, $second_beat)"
-                }
-                TrackedAction.CursorSelectLineCtlRange -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val key_a = BeatKey(
-                        integers[1]!!,
-                        integers[2]!!,
-                        integers[3]!!
-                    )
-                    val key_b = BeatKey(
-                        integers[4]!!,
-                        integers[5]!!,
-                        integers[6]!!
-                    )
-                    "it.cursor_select_line_ctl_range($type_string, $key_a, $key_b)"
-                }
-                TrackedAction.CursorSelectRange -> {
-                    val key_a = BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                    val key_b = BeatKey(
-                        integers[3]!!,
-                        integers[4]!!,
-                        integers[5]!!
-                    )
-                    "it.cursor_select_range($key_a, $key_b)"
-                }
-                TrackedAction.CursorSelectLeaf -> {
-                    val beat_key = BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                    var position = this._gen_string_list(List(integers.size - 3) { i: Int -> integers[i + 3]!! })
-
-                    "it.cursor_select($beat_key, $position)"
-                }
-                TrackedAction.CursorSelectLeafCtlLine -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val beat_key = BeatKey(
-                        integers[1]!!,
-                        integers[2]!!,
-                        integers[3]!!
-                    )
-                    val position = this._gen_string_list(List(integers.size - 4) { i: Int -> integers[i + 4]!! })
-
-                    "it.cursor_select_ctl_at_line($type_string, $beat_key, $position)"
-                }
-                TrackedAction.CursorSelectLeafCtlChannel -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val channel = integers[1]!!
-                    val beat = integers[2]!!
-                    val position = this._gen_string_list(List(integers.size - 3) { i: Int -> integers[i + 3]!! })
-
-                    "it.cursor_select_ctl_at_channel($type_string, $channel, $beat, $position)"
-                }
-                TrackedAction.CursorSelectLeafCtlGlobal -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val beat = integers[1]!!
-                    val position = this._gen_string_list(List(integers.size - 2) { i: Int -> integers[i + 2]!! })
-
-                    "it.cursor_select_ctl_at_global($type_string, $beat, $position)"
-                }
-                TrackedAction.CursorSelectLine -> {
-                    val channel = integers[0]!!
-                    val line_offset = integers[1]!!
-
-                    "it.cursor_select_line_std($channel, $line_offset)"
-                }
-                TrackedAction.CursorSelectLineCtlLine -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val channel = integers[1]!!
-                    val line_offset = integers[2]!!
-
-                    "it.cursor_select_line_ctl_line($type_string, $channel, $line_offset)"
-                }
-                TrackedAction.CursorSelectChannelCtlLine -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val channel = integers[1]!!
-                    "it.cursor_select_channel_ctl_line($type_string, $channel)"
-                }
-                TrackedAction.CursorSelectGlobalCtlLine -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-
-                    "it.cursor_select_global_ctl_line($type_string)"
-                }
-                TrackedAction.PlayEvent -> {
-                    val channel = integers[0]!!
-                    val line_offset = integers[1]!!
-                    val float_string = Float.fromBits(integers[2]!!)
-
-                    "it.play_event($channel, $line_offset, $float_string)"
-                }
-                TrackedAction.RepeatSelectionStd -> {
-                    val channel = integers[0]!!
-                    val line_offset = integers[1]!!
-                    val repeat = integers[2]
-
-                    "it.repeat_selection_std($channel, $line_offset, $repeat)"
-                }
-                TrackedAction.RepeatSelectionCtlLine -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val channel = integers[1]!!
-                    val line_offset = integers[2]!!
-                    val repeat = integers[3]
-
-                    "it.repeat_selection_ctl_line($type_string, $channel, $line_offset, $repeat)"
-                }
-                TrackedAction.RepeatSelectionCtlChannel -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val channel = integers[1]!!
-                    val repeat = integers[2]!!
-                    "it.repeat_selection_ctl_channel($type_string, $channel, $repeat)"
-                }
-                TrackedAction.RepeatSelectionCtlGlobal -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    val repeat = integers[1]
-
-                    "it.repeat_selection_ctl_global($type_string, $repeat)"
-                }
-                TrackedAction.MoveLineCtlToBeat -> {
-                    val key = BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                    "it.move_line_ctl_to_beat($key)"
-                }
-                TrackedAction.MoveChannelCtlToBeat -> {
-                    "it.move_channel_ctl_to_beat(${integers[0]!!}, ${integers[1]!!})"
-                }
-                TrackedAction.MoveGlobalCtlToBeat -> {
-                    "it.move_global_ctl_to_beat(${integers[0]!!})"
-                }
-                TrackedAction.MoveSelectionToBeat -> {
-                    val key = BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-
-                    "it.move_selection_to_beat($key)"
-                }
-                TrackedAction.CopyLineCtlToBeat -> {
-                    val key = BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                    "it.copy_line_ctl_to_beat($key)"
-                }
-                TrackedAction.CopyChannelCtlToBeat -> {
-                    "it.copy_channel_ctl_to_beat(${integers[0]!!}, ${integers[1]!!})"
-                }
-                TrackedAction.CopyGlobalCtlToBeat -> {
-                    "it.copy_global_ctl_to_beat(${integers[0]!!})"
-                }
-                TrackedAction.CopySelectionToBeat -> {
-                    val key = BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                    "it.copy_selection_to_beat($key)"
-                }
-                TrackedAction.SetOffset -> {
-                    "it.set_offset(${integers[0]!!})"
-                }
-                TrackedAction.SetOctave -> {
-                    "it.set_octave(${integers[0]!!})"
-                }
-                TrackedAction.TogglePercussion -> {
-                    "it.toggle_percussion()"
-                }
-                TrackedAction.SplitLeaf -> {
-                    "it.split(${integers[0]})"
-                }
-                TrackedAction.InsertLeaf -> {
-                    "it.insert_leaf(${integers[0]})"
-                }
-                TrackedAction.RemoveLeaf -> {
-                    "it.remove_at_cursor()"
-                }
-                TrackedAction.Unset -> {
-                    "it.unset()"
-                }
-                TrackedAction.SetDuration -> {
-                    "it.set_duration(${integers[0]})"
-                }
-                TrackedAction.SetDurationCtl -> {
-                    "it.set_ctl_duration<OpusControlEvent>(${integers[0]})"
-                }
-                TrackedAction.SetPercussionInstrument -> {
-                    "it.set_percussion_instrument(${integers[0]})"
-                }
-                TrackedAction.UnsetRoot -> {
-                    "it.unset_root()"
-                }
-                TrackedAction.InsertLine -> {
-                    "it.insert_line(${integers[0]})"
-                }
-                TrackedAction.RemoveLine -> {
-                    "it.remove_line(${integers[0]})"
-                }
-                TrackedAction.SetTransitionAtCursor -> {
-                    val type_string = ControlEventType.values()[integers[0]!!].name
-                    "it.set_ctl_transition($type_string)"
-                }
-                TrackedAction.SetVolumeAtCursor -> {
-                    "it.set_volume(${integers[0]})"
-                }
-                TrackedAction.SetTempoAtCursor -> {
-                    "it.set_tempo_at_cursor(${Float.fromBits(integers[0]!!)})"
-                }
-                TrackedAction.SetChannelInstrument -> {
-                    "it.set_channel_instrument(${integers[0]!!}, Pair(${integers[1]!!}, ${integers[2]!!}))"
-                }
-                TrackedAction.RemoveBeat -> {
-                    "it.remove_beat_at_cursor(${integers[0]})"
-                }
-                TrackedAction.InsertBeat -> {
-                    "it.insert_beat_after_cursor(${integers[0]!!})"
-                }
-                TrackedAction.SetPanAtCursor -> {
-                    "it.set_pan_at_cursor(${integers[0]!!})"
-                }
-                TrackedAction.ToggleControllerVisibility -> {
-                    "it.toggle_controller_visibility()"
-                }
-                TrackedAction.RemoveController -> {
-                    "it.remove_controller()"
-                }
-                TrackedAction.InsertChannel -> {
-                    "it.insert_channel()"
-                }
-                TrackedAction.RemoveChannel -> {
-                    "it.remove_channel()"
-                }
-                TrackedAction.TogglePercussionVisibility -> {
-                    "it.toggle_percussion_visibility()"
-                }
-                TrackedAction.MergeSelectionIntoBeat,
-                TrackedAction.SetCopyMode -> TODO()
-            }
-
-            output_lines.add("run_action { $line }")
-        }
-
-        return "$tracker_name.apply {\n    ${output_lines.joinToString("    \n")}\n}"
-    }
 
     private fun _gen_string_list(int_list: List<Int>): String {
         return int_list.joinToString(", ", "listOf(", ")")

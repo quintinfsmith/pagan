@@ -584,7 +584,6 @@ class MainActivity : AppCompatActivity() {
         this.view_model.action_interface.attach_activity(this)
         this.view_model.opus_manager.attach_activity(this)
 
-
         val toolbar = this._binding.appBarMain.toolbar
         //toolbar.popupTheme = R.style.popup_theme
         toolbar.backgroundTintList = ColorStateList(
@@ -658,6 +657,7 @@ class MainActivity : AppCompatActivity() {
         drawer_layout.addDrawerListener(
             object : ActionBarDrawerToggle( this, drawer_layout, R.string.drawer_open, R.string.drawer_close) {
                 override fun onDrawerOpened(drawerView: View) {
+                    this@MainActivity.get_action_interface().track(ActionTracker.TrackedAction.DrawerOpen)
                     val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                     if (channel_recycler.adapter == null) {
                         ChannelOptionAdapter(this@MainActivity.get_opus_manager(), channel_recycler)
@@ -666,6 +666,7 @@ class MainActivity : AppCompatActivity() {
                     if (channel_adapter.itemCount == 0) {
                         channel_adapter.setup()
                     }
+
                     super.onDrawerOpened(drawerView)
 
                     this@MainActivity.playback_stop()
@@ -674,6 +675,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onDrawerClosed(drawerView: View) {
+                    this@MainActivity.get_action_interface().track(ActionTracker.TrackedAction.DrawerClose)
                     super.onDrawerClosed(drawerView)
                     this@MainActivity.drawer_lock() // so the drawer can't be opened with a swipe
                 }
@@ -963,11 +965,11 @@ class MainActivity : AppCompatActivity() {
 
     // Ui Wrappers ////////////////////////////////////////////
     private fun drawer_close() {
-        findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
+        this.get_action_interface().drawer_close()
     }
 
     private fun drawer_open() {
-        findViewById<DrawerLayout>(R.id.drawer_layout).openDrawer(GravityCompat.START)
+        this.get_action_interface().drawer_open()
     }
 
     fun drawer_lock() {

@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.util.Log
+import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -22,7 +23,7 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
-import java.io.File
+import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -95,6 +96,9 @@ class ActionTracker {
         OpenAbout,
         GoBack,
         SetSampleRate,
+        DisableSoundFont,
+        SetSoundFont,
+        SetProjectName
     }
 
     companion object {
@@ -153,6 +157,7 @@ class ActionTracker {
             drawer_layout.openDrawer(GravityCompat.START)
         }
     }
+
 
     fun go_back(do_save: Boolean? = null) {
         val activity = this.get_activity()
@@ -654,8 +659,16 @@ class ActionTracker {
             return
         }
 
-        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusVolumeEvent>
-        val widget = context_menu.widget as ControlWidgetVolume
+        val context_menu = fragment.active_context_menu
+        if (!(context_menu is ContextMenuControlLeaf<*> || context_menu is ContextMenuControlLine<*>)) {
+            return
+        }
+
+        val widget = if (context_menu is ContextMenuControlLeaf<*>) {
+            context_menu.widget as ControlWidgetVolume
+        } else {
+            (context_menu as ContextMenuControlLine<*>).widget as ControlWidgetVolume
+        }
 
         val dlg_default = (widget.get_event().value * widget.max.toFloat()).toInt()
         val dlg_title = main.getString(R.string.dlg_set_volume)
@@ -997,6 +1010,47 @@ class ActionTracker {
         }
     }
 
+    fun disable_soundfont() {
+        this.track(ActionTracker.TrackedAction.DisableSoundFont)
+        val activity = this.get_activity()
+        val btnChooseSoundFont = activity.findViewById<TextView>(R.id.btnChooseSoundFont)
+        btnChooseSoundFont.text = activity.getString(R.string.no_soundfont)
+        activity.disable_soundfont()
+        activity.save_configuration()
+    }
+
+    fun set_soundfont(filename: String) {
+        val bytes = filename.toByteArray()
+        this.track(TrackedAction.SetSoundFont, List(bytes.size) { i: Int -> bytes[i].toInt() })
+
+        val activity = this.get_activity()
+        val btnChooseSoundFont = activity.findViewById<TextView>(R.id.btnChooseSoundFont)
+        thread {
+            activity.loading_reticle_show(activity.getString(R.string.loading_new_soundfont))
+            activity.set_soundfont(filename)
+
+            // Check that it set
+            if (filename == activity.configuration.soundfont) {
+                btnChooseSoundFont.text = filename
+                activity.save_configuration()
+            }
+            activity.loading_reticle_hide()
+        }
+    }
+
+    fun set_project_name(project_name: String? = null) {
+        val activity = this.get_activity()
+        this.dialog_string_popup(activity.getString(R.string.dlg_change_name), this.get_opus_manager().project_name, project_name) { string: String ->
+            val bytes = string.toByteArray()
+            this.track(
+                TrackedAction.SetProjectName,
+                List(bytes.size) { i: Int -> bytes[i].toInt() }
+            )
+            val opus_manager = this.get_opus_manager()
+            opus_manager.set_project_name(string)
+        }
+    }
+
     /**
      *  wrapper around MainActivity::dialog_number_input
      *  will subvert the popup on replay
@@ -1045,7 +1099,15 @@ class ActionTracker {
             val activity = this.get_activity()
             activity.dialog_popup_menu(title, options, default, callback)
         }
+    }
 
+    private fun dialog_string_popup(title: String, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
+        val activity = this.get_activity()
+        if (stub_output != null) {
+            callback(stub_output)
+        } else {
+            activity.dialog_string_popup(title, default, callback)
+        }
     }
 
     fun ignore(): ActionTracker {
@@ -1376,9 +1438,33 @@ class ActionTracker {
                 this.open_about()
             }
             TrackedAction.GoBack -> {
-                this.go_back(
+                if (integers.isEmpty()) {
+                    this.go_back()
+                } else {
+                    this.go_back(integers[0] != 0)
+                }
+            }
 
-                )
+            TrackedAction.SetSampleRate -> {
+                this.set_sample_rate(integers[0]!!)
+            }
+            TrackedAction.DisableSoundFont -> {
+                this.disable_soundfont()
+            }
+            TrackedAction.SetSoundFont -> {
+                val path_bytes = ByteArray(integers.size) { i: Int ->
+                    integers[i]!!.toByte()
+                }
+
+                this.set_soundfont(path_bytes.decodeToString())
+            }
+
+            TrackedAction.SetProjectName -> {
+                val name_bytes = ByteArray(integers.size) { i: Int ->
+                    integers[i]!!.toByte()
+                }
+
+                this.set_project_name(name_bytes.decodeToString())
             }
         }
     }

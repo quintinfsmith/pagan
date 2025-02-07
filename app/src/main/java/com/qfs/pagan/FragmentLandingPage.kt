@@ -29,13 +29,11 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
 
         btn_settings.setOnClickListener {
-            thoi
-            this.get_main().navigate(R.id.SettingsFragment)
+            this.get_main().get_action_interface().open_settings()
         }
 
         btn_newProject.setOnClickListener {
-            this.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-            this.get_main().navigate(R.id.EditorFragment)
+            this.get_main().get_action_interface().new_project()
         }
 
         val bkp_json_path = "${this.get_main().applicationInfo.dataDir}/.bkp.json"

@@ -1103,10 +1103,8 @@ class MainActivity : AppCompatActivity() {
         val opus_manager = this.get_opus_manager()
         val tvChangeProjectName: TextView = this.findViewById(R.id.btnChangeProjectName)
         tvChangeProjectName.setOnClickListener {
-            this.dialog_project_name()
+            this.get_action_interface().set_project_name()
         }
-
-        val radix = this.get_opus_manager().tuning_map.size
 
         //-------------------------------------------
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
@@ -1207,8 +1205,9 @@ class MainActivity : AppCompatActivity() {
         output.text = text
         return output
     }
-    internal fun _adjust_dialog_colors(dialog: AlertDialog) {
 
+    internal fun _adjust_dialog_colors(dialog: AlertDialog) {
+        // TODO: Double check the necessity of this funcction
         dialog.window!!.decorView.background.setTint(getColor(R.color.main_bg))
         val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
         dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
@@ -1753,7 +1752,8 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
-    private fun dialog_project_name() {
+
+    fun dialog_string_popup(title: String, default: String? = null, callback: (String) -> Unit) {
         val main_fragment = this.get_active_fragment()
 
         val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
@@ -1764,15 +1764,14 @@ class MainActivity : AppCompatActivity() {
             )
 
         val input: EditText = viewInflated.findViewById(R.id.etProjectName)
-        input.setText(this.get_opus_manager().project_name)
+        input.setText(default ?: "")
 
-        val opus_manager = this.get_opus_manager()
         this._adjust_dialog_colors(
             AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setCustomTitle(this._build_dialog_title_view(getString(R.string.dlg_change_name)))
+                .setCustomTitle(this._build_dialog_title_view(title))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    opus_manager.set_project_name(input.text.toString())
+                    callback(input.text.toString())
                     dialog.dismiss()
                 }
                 .setNeutralButton(android.R.string.cancel) { dialog, _ ->
@@ -1780,6 +1779,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 .show()
         )
+
     }
 
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {

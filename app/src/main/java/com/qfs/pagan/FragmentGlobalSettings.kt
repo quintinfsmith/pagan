@@ -19,7 +19,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import kotlin.concurrent.thread
 
 class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     private var _import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -229,26 +228,11 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     }
 
     private fun _disable_soundfont() {
-        val btnChooseSoundFont = this.get_main().findViewById<TextView>(R.id.btnChooseSoundFont)
-        btnChooseSoundFont.text = getString(R.string.no_soundfont)
-        this.get_main().disable_soundfont()
-        this.get_main().save_configuration()
+        this.get_main().get_action_interface().disable_soundfont()
     }
 
     private fun _set_soundfont(filename: String) {
-        val btnChooseSoundFont = this.get_main().findViewById<TextView>(R.id.btnChooseSoundFont)
-        val main = this.get_main()
-        thread {
-            main.loading_reticle_show(getString(R.string.loading_new_soundfont))
-            this.get_main().set_soundfont(filename)
-
-            // Check that it set
-            if (filename == main.configuration.soundfont) {
-                btnChooseSoundFont.text = filename
-                this.get_main().save_configuration()
-            }
-            main.loading_reticle_hide()
-        }
+        this.get_main().get_action_interface().set_soundfont(filename)
     }
 
     private fun _import_soundfont() {

@@ -95,6 +95,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_SLASH, true) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean): Boolean {
                 opus_manager.get_activity()?.save_actions()
+                opus_manager.get_activity()?.feedback_msg("SAVED ACTIONS")
                 //opus_manager.get_activity()?.get_action_interface()?.playback() ?: return false
                 return true
             }

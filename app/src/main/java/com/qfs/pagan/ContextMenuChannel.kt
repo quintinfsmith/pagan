@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 /*
@@ -78,23 +77,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
     }
 
-    fun dialog_popup_hidden_lines() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val options = mutableListOf<Pair<ControlEventType, String>>( )
-
-        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
-            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
-                continue
-            }
-
-            options.add(Pair(ctl_type, ctl_type.name))
-        }
-
-        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
-            opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
-        }
-    }
 
     override fun setup_interactions() {
         this.button_choose_instrument.setOnClickListener {
@@ -137,8 +119,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-            this.dialog_popup_hidden_lines()
-            //this.click_button_toggle_volume_control()
+            this.get_main().get_action_interface().show_hidden_channel_controller()
         }
     }
 

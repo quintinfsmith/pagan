@@ -104,24 +104,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.widget_volume.visibility = View.VISIBLE
     }
 
-    fun dialog_popup_hidden_lines() {
-        val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<ControlEventType, String>>( )
-        val cursor = opus_manager.cursor
-
-        for (ctl_type in OpusLayerInterface.line_controller_domain) {
-            if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
-                continue
-            }
-
-            options.add(Pair(ctl_type, ctl_type.name))
-        }
-
-        this.get_main().dialog_popup_menu("Show Line Controls...", options) { index: Int, ctl_type: ControlEventType ->
-            opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
-        }
-    }
-
     override fun setup_interactions() {
         this.button_choose_percussion.setOnClickListener {
             if (!it.isEnabled) {
@@ -163,7 +145,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-            this.dialog_popup_hidden_lines()
+            this.get_main().get_action_interface().show_hidden_line_controller()
             //this.click_button_toggle_volume_control()
         }
     }

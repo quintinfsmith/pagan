@@ -35,6 +35,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class ActionTracker {
     class NoActivityException: Exception()
     enum class TrackedAction {
+        ApplyUndo,
         NewProject,
         LoadProject,
         CursorSelectColumn,
@@ -78,6 +79,8 @@ class ActionTracker {
         SetPercussionInstrument,
         TogglePercussionVisibility,
         ToggleControllerVisibility,
+        ShowLineController,
+        ShowChannelController,
         RemoveController,
         InsertLine,
         RemoveLine,
@@ -156,6 +159,11 @@ class ActionTracker {
         if (!drawer_layout.isDrawerOpen(GravityCompat.START)) {
             drawer_layout.openDrawer(GravityCompat.START)
         }
+    }
+
+    fun apply_undo() {
+        this.track(TrackedAction.ApplyUndo)
+        this.get_opus_manager().apply_undo()
     }
 
 
@@ -660,12 +668,14 @@ class ActionTracker {
         }
 
         val context_menu = fragment.active_context_menu
-        if (!(context_menu is ContextMenuControlLeaf<*> || context_menu is ContextMenuControlLine<*>)) {
+        if (!(context_menu is ContextMenuControlLeaf<*> || context_menu is ContextMenuControlLine<*> || context_menu is ContextMenuLine)) {
             return
         }
 
-        val widget = if (context_menu is ContextMenuControlLeaf<*>) {
+        val widget: ControlWidgetVolume = if (context_menu is ContextMenuControlLeaf<*>) {
             context_menu.widget as ControlWidgetVolume
+        } else if (context_menu is ContextMenuLine) {
+            context_menu.widget_volume
         } else {
             (context_menu as ContextMenuControlLine<*>).widget as ControlWidgetVolume
         }
@@ -695,6 +705,45 @@ class ActionTracker {
             opus_manager.set_duration(beat_key, position, max(1, value))
         }
     }
+
+    fun show_hidden_line_controller(forced_value: ControlEventType? = null) {
+        val opus_manager = this.get_opus_manager()
+        val options = mutableListOf<Pair<ControlEventType, String>>( )
+        val cursor = opus_manager.cursor
+
+        for (ctl_type in OpusLayerInterface.line_controller_domain) {
+            if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
+                continue
+            }
+
+            options.add(Pair(ctl_type, ctl_type.name))
+        }
+
+        this.dialog_popup_menu(this.get_activity().getString(R.string.show_line_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
+            this.track(TrackedAction.ShowLineController, listOf(ctl_type.i, cursor.channel, cursor.line_offset))
+            opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
+        }
+    }
+
+    fun show_hidden_channel_controller(forced_value: ControlEventType? =  null) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val options = mutableListOf<Pair<ControlEventType, String>>( )
+
+        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
+            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
+                continue
+            }
+
+            options.add(Pair(ctl_type, ctl_type.name))
+        }
+
+        this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
+            this.track(TrackedAction.ShowChannelController, listOf(ctl_type.i, cursor.channel))
+            opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
+        }
+    }
+
 
     fun split(split: Int? = null) {
         this.dialog_number_input(this.get_activity().getString(R.string.dlg_split), 2, 32, stub_output = split) { splits: Int ->
@@ -1140,6 +1189,9 @@ class ActionTracker {
 
     fun process_queued_action(token: TrackedAction, integers: List<Int?>) {
         when (token) {
+            TrackedAction.ApplyUndo -> {
+                this.apply_undo()
+            }
             TrackedAction.NewProject -> {
                 this.new_project()
             }
@@ -1465,6 +1517,13 @@ class ActionTracker {
                 }
 
                 this.set_project_name(name_bytes.decodeToString())
+            }
+
+            TrackedAction.ShowLineController -> {
+                this.show_hidden_line_controller(ControlEventType.values()[integers[0]!!])
+            }
+            TrackedAction.ShowChannelController -> {
+                this.show_hidden_channel_controller(ControlEventType.values()[integers[0]!!])
             }
         }
     }

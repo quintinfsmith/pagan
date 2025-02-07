@@ -135,6 +135,8 @@
     <string name="untitled_op">Untitled Op. - %1$s</string>
     <string name="repeat_selection">Repeat Selection</string>
     <string name="dialog_transition">Transition</string>
+    <string name="show_line_controls">Show Line Controls...</string>
+    <string name="show_channel_controls">Show Channel Controls...</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

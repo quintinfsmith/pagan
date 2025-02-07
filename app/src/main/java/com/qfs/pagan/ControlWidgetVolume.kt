@@ -45,19 +45,12 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
         this._slider.min = this.min
         this._slider.progress = (this.working_event.value * this.max.toFloat()).toInt()
 
+        var context = this.context
+        while (context !is MainActivity) {
+            context = (context as ContextThemeWrapper).baseContext
+        }
         this._button.setOnClickListener {
-            var context = this.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
-            }
             (context as MainActivity).get_action_interface().set_volume()
-
-            val dlg_default = (this.get_event().value * this.max.toFloat()).toInt()
-            val dlg_title = context.getString(R.string.dlg_set_volume)
-            context.dialog_number_input(dlg_title, this.min, this.max, dlg_default) { new_value: Int ->
-                val new_event = OpusVolumeEvent(new_value.toFloat() / this.max.toFloat(), this.get_event().transition, this.working_event.duration)
-                this.set_event(new_event)
-            }
         }
 
         this._slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -73,9 +66,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                val that = this@ControlWidgetVolume
-                val event = that.get_event()
-                that.set_event(OpusVolumeEvent(seekbar.progress.toFloat() / that.max.toFloat(), event.transition, event.duration))
+                context.get_action_interface().set_volume(seekbar.progress)
             }
         })
     }

@@ -724,7 +724,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.itmUndo -> {
-                this.get_opus_manager().apply_undo()
+                this.get_action_interface().apply_undo()
             }
 
             R.id.itmPlay -> {

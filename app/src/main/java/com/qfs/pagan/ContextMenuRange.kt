@@ -32,41 +32,14 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
         }
 
         this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
-            // TODO: Move to ActionTracker
             val main = this.get_main()
-            val opus_manager = this.get_opus_manager()
-
-            main.configuration.move_mode = when (button_id) {
+            val new_mode = when (button_id) {
                 R.id.rbMoveModeMove -> PaganConfiguration.MoveMode.MOVE
                 R.id.rbMoveModeCopy -> PaganConfiguration.MoveMode.COPY
                 R.id.rbMoveModeMerge -> PaganConfiguration.MoveMode.MERGE
                 else -> PaganConfiguration.MoveMode.COPY
             }
-            main.save_configuration()
-
-            this.label.text = when (button_id) {
-                R.id.rbMoveModeMove -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        this.context.resources.getString(R.string.label_move_range)
-                    } else {
-                        this.context.resources.getString(R.string.label_move_beat)
-                    }
-                }
-                R.id.rbMoveModeMerge -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        this.context.resources.getString(R.string.label_merge_range)
-                    } else {
-                        this.context.resources.getString(R.string.label_merge_beat)
-                    }
-                }
-                else -> {
-                    if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
-                        this.context.resources.getString(R.string.label_copy_range)
-                    } else {
-                        this.context.resources.getString(R.string.label_copy_beat)
-                    }
-                }
-            }
+            main.get_action_interface().set_copy_mode(new_mode)
         }
     }
 

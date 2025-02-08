@@ -1,5 +1,6 @@
 [
     ["NewProject",null],
+    ["SetProjectName", "butt"],
     ["CursorSelectLeaf",[0,0,0]],
     ["CursorSelectLine",[1,0]],
     ["InsertLine",[1]],
@@ -23,5 +24,7 @@
     ["CursorSelectLine",[1,0]],
     ["SetPercussionInstrument",[19]],
     ["DrawerOpen",null],
-    ["DrawerClose",null]
+    ["DrawerClose",null],
+    ["ShowLineController", "Volume"],
+    ["CursorSelectCtlLeafLine", [0, "V"]]
 ]

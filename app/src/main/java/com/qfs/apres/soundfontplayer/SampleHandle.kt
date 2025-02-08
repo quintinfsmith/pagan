@@ -214,7 +214,7 @@ class SampleHandle(
         }
     }
 
-    class ModulationEnvelope(
+    data class ModulationEnvelope(
         var sample_rate: Int,
         var delay: Float = 0F,
         var attack: Float = 0F,
@@ -277,8 +277,8 @@ class SampleHandle(
                 initial_attenuation = original.initial_attenuation,
                 loop_points = original.loop_points,
                 stereo_mode = original.stereo_mode,
-                volume_envelope = original.volume_envelope,
-                modulation_envelope = original.modulation_envelope,
+                volume_envelope = original.volume_envelope.copy(),
+                modulation_envelope = original.modulation_envelope.copy(),
                 modulation_lfo = original.modulation_lfo,
                 pitch_shift = original.pitch_shift,
                 filter_cutoff = original.filter_cutoff,
@@ -348,7 +348,6 @@ class SampleHandle(
                     this._data_buffers[0].position(frame)
                     this._active_buffer = 0
                 } else {
-                    println("$loop_points")
                     this._data_buffers[1].position((frame - this._data_buffers[0].size))
                     this._active_buffer = 1
                 }
@@ -388,6 +387,7 @@ class SampleHandle(
     private fun _get_active_data_buffer(): PitchedBuffer {
         return this._data_buffers[this._active_buffer]
     }
+
     fun get_next_balance(): Pair<Float, Float> {
         val profile_pan = this.pan_profile?.get_next() ?: 0F
         // TODO: Implement ROM stereo modes

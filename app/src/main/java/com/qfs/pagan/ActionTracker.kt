@@ -106,11 +106,14 @@ class ActionTracker {
 
     companion object {
         fun from_json_entry(entry: JSONList): Pair<TrackedAction, List<Int?>> {
-            val token = TrackedAction.valueOf(entry.get_string(0))
+            val s = entry.get_string(0)
+            val token = TrackedAction.valueOf(s)
             return Pair(
                 token,
                 when (token) {
                     // STRING
+                    TrackedAction.ShowLineController,
+                    TrackedAction.ShowChannelController,
                     TrackedAction.SetCopyMode,
                     TrackedAction.SetProjectName,
                     TrackedAction.LoadProject -> {
@@ -118,10 +121,11 @@ class ActionTracker {
                         ActionTracker.string_to_ints(string)
                     }
 
+                    TrackedAction.RepeatSelectionCtlLine,
+                    TrackedAction.RepeatSelectionCtlChannel,
+                    TrackedAction.RepeatSelectionCtlGlobal,
                     TrackedAction.CursorSelectLeafCtlChannel,
                     TrackedAction.CursorSelectLeafCtlGlobal,
-                    TrackedAction.ShowLineController,
-                    TrackedAction.ShowChannelController,
                     TrackedAction.CursorSelectGlobalCtlLine,
                     TrackedAction.CursorSelectGlobalCtlRange,
                     TrackedAction.CursorSelectChannelCtlLine,
@@ -132,8 +136,8 @@ class ActionTracker {
                         val json_list = entry.get_list(1)
                         val name = json_list.get_string(0)
                         val string_ints = string_to_ints(name)
-                        string_ints + List(json_list.list.size - string_ints[0]!! - 1) { i: Int ->
-                            json_list.get_intn(i + string_ints[0]!! + 1)
+                        listOf(string_ints.size) + string_ints + List(json_list.list.size - 1) { i: Int ->
+                            json_list.get_intn(i + 1)
                         }
                     }
 
@@ -778,7 +782,7 @@ class ActionTracker {
         }
 
         this.dialog_popup_menu(this.get_activity().getString(R.string.show_line_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
-            this.track(TrackedAction.ShowLineController, listOf(ctl_type.i, cursor.channel, cursor.line_offset))
+            this.track(TrackedAction.ShowLineController, string_to_ints(ctl_type.name))
             opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
         }
     }
@@ -797,7 +801,7 @@ class ActionTracker {
         }
 
         this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
-            this.track(TrackedAction.ShowChannelController, listOf(ctl_type.i, cursor.channel))
+            this.track(TrackedAction.ShowChannelController, string_to_ints(ctl_type.name))
             opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
         }
     }
@@ -1235,7 +1239,6 @@ class ActionTracker {
     }
 
     fun playback() {
-        println("PLAYBACK")
         this.lock = true
         for ((action, integers) in this.action_queue) {
             this.process_queued_action(action, integers ?: listOf())
@@ -1265,7 +1268,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.CursorSelectChannelCtlRange -> {
-                val offset = integers[0]!! + 1
+                val offset = integers[0]!!
                 this.cursor_select_channel_ctl_range(
                     type_from_ints(integers),
                     integers[1 + offset]!!,
@@ -1274,7 +1277,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.CursorSelectLineCtlRange -> {
-                val offset = integers[0]!! + 1
+                val offset = integers[0]!!
                 this.cursor_select_line_ctl_range(
                     type_from_ints(integers),
                     BeatKey(
@@ -1314,7 +1317,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.CursorSelectLeafCtlLine -> {
-                val offset = integers[0]!! + 1
+                val offset = integers[0]!!
                 this.cursor_select_ctl_at_line(
                     type_from_ints(integers),
                     BeatKey(
@@ -1322,24 +1325,24 @@ class ActionTracker {
                         integers[2 + offset]!!,
                         integers[3 + offset]!!
                     ),
-                    List(integers.size - 4) { i: Int -> integers[i + 4 + offset]!! }
+                    List(integers.size - 4 - offset) { i: Int -> integers[i + 4 + offset]!! }
                 )
             }
             TrackedAction.CursorSelectLeafCtlChannel -> {
-                val offset = 1 + integers[0]!!
+                val offset = integers[0]!!
                 this.cursor_select_ctl_at_channel(
                     type_from_ints(integers),
                     integers[1 + offset]!!,
                     integers[2 + offset]!!,
-                    List(integers.size - 3) { i: Int -> integers[i + 3 + offset]!! }
+                    List(integers.size - 3 - offset) { i: Int -> integers[i + 3 + offset]!! }
                 )
             }
             TrackedAction.CursorSelectLeafCtlGlobal -> {
-                val offset = 1 + integers[0]!!
+                val offset = integers[0]!!
                 this.cursor_select_ctl_at_global(
                     type_from_ints(integers),
                     integers[1 + offset]!!,
-                    List(integers.size - 2) { i: Int -> integers[i + 2 + offset]!! }
+                    List(integers.size - 2 - offset) { i: Int -> integers[i + 2 + offset]!! }
                 )
             }
             TrackedAction.CursorSelectLine -> {
@@ -1349,7 +1352,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.CursorSelectLineCtlLine -> {
-                val offset = 1 + integers[0]!!
+                val offset = integers[0]!!
                 this.cursor_select_line_ctl_line(
                     type_from_ints(integers),
                     integers[1 + offset]!!,
@@ -1357,7 +1360,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.CursorSelectChannelCtlLine -> {
-                val offset = 1 + integers[0]!!
+                val offset = integers[0]!!
                 this.cursor_select_channel_ctl_line(
                     type_from_ints(integers),
                     integers[1 + offset]!!
@@ -1381,7 +1384,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.RepeatSelectionCtlLine -> {
-                val offset = 1 + integers[0]!!
+                val offset = integers[0]!!
                 this.repeat_selection_ctl_line(
                     type_from_ints(integers),
                     integers[1 + offset]!!,
@@ -1390,7 +1393,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.RepeatSelectionCtlChannel -> {
-                val offset = 1 + integers[0]!!
+                val offset = integers[0]!!
                 this.repeat_selection_ctl_channel(
                     type_from_ints(integers),
                     integers[1 + offset]!!,
@@ -1398,7 +1401,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.RepeatSelectionCtlGlobal -> {
-                val offset = 1 + integers[0]!!
+                val offset = integers[0]!!
                 this.repeat_selection_ctl_global(
                     type_from_ints(integers),
                     integers[1 + offset]!!
@@ -1573,11 +1576,13 @@ class ActionTracker {
 
             TrackedAction.ShowLineController -> {
                 this.show_hidden_line_controller(
-                    ActionTracker.type_from_ints(integers)
+                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
                 )
             }
             TrackedAction.ShowChannelController -> {
-                this.show_hidden_channel_controller(ActionTracker.type_from_ints(integers))
+                this.show_hidden_channel_controller(
+                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
+                )
             }
         }
     }

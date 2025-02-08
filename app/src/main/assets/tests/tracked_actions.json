@@ -26,5 +26,9 @@
     ["DrawerOpen",null],
     ["DrawerClose",null],
     ["ShowLineController", "Volume"],
-    ["CursorSelectCtlLeafLine", [0, "V"]]
+    ["CursorSelectLeafCtlLine", ["Volume", 1, 0, 0]],
+    ["SplitLeaf", [3]],
+    ["SetVolumeAtCursor", [50]],
+    ["CursorSelectLineCtlRange", ["Volume", 1, 0, 0, 1, 0, 0]],
+    ["RepeatSelectionCtlLine", ["Volume", 1, 0, 4]]
 ]

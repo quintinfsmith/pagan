@@ -213,7 +213,6 @@ class MainActivityTest {
                 this.run_action(token, intlist)
             }
         }
-
     }
 
     private fun childAtPosition(

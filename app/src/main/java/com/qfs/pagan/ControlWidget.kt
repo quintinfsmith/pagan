@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,5 +35,13 @@ abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_
         if (!surpress_callback) {
             this.callback(event)
         }
+    }
+
+    fun get_main(): MainActivity {
+        var working_context = this.context
+        while (working_context !is MainActivity) {
+            working_context = (working_context as ContextThemeWrapper).baseContext
+        }
+        return working_context
     }
 }

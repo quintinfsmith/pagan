@@ -770,7 +770,7 @@ class MainActivity : AppCompatActivity() {
         this.update_menu_options()
     }
 
-    private fun project_delete() {
+    fun project_delete() {
         val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
         this._project_manager.delete(this.get_opus_manager())
 
@@ -783,7 +783,7 @@ class MainActivity : AppCompatActivity() {
         this.feedback_msg(resources.getString(R.string.feedback_delete, title))
     }
 
-    private fun project_move_to_copy() {
+    fun project_move_to_copy() {
         this.dialog_save_project {
             this._project_manager.move_to_copy(this.get_opus_manager())
             this.update_title_text()
@@ -1121,6 +1121,7 @@ class MainActivity : AppCompatActivity() {
             val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
             etTranspose.set_range(0, 99999999)
             etTranspose.set_value(opus_manager.transpose.first)
+
             val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
             etTransposeRadix.set_range(1, 99999999)
             etTransposeRadix.set_value(opus_manager.transpose.second)
@@ -1160,7 +1161,9 @@ class MainActivity : AppCompatActivity() {
         }
         //-------------------------------------------
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
-            opus_manager.new_channel()
+            this.get_action_interface().insert_channel(
+                opus_manager.channels.size
+            )
         }
 
         this.setup_project_config_drawer_export_button()
@@ -1168,8 +1171,7 @@ class MainActivity : AppCompatActivity() {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-
-            this.project_save()
+            this.get_action_interface().save()
         }
         this.findViewById<View>(R.id.btnSaveProject).setOnLongClickListener {
             if (!it.isEnabled) {
@@ -1194,8 +1196,7 @@ class MainActivity : AppCompatActivity() {
 
         btnCopyProject.setOnClickListener {
             if (it.isEnabled) {
-                this.project_move_to_copy()
-                this.drawer_close()
+                this.get_action_interface().project_copy()
             }
         }
     }
@@ -1972,9 +1973,8 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
                 .setCustomTitle(this._build_dialog_title_view(resources.getString(R.string.dlg_delete_title, title)))
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    this@MainActivity.project_delete()
+                    this@MainActivity.get_action_interface().delete()
                     dialog.dismiss()
-                    this@MainActivity.drawer_close()
                 }
                 .setNegativeButton(android.R.string.cancel) { dialog, _ ->
                     dialog.cancel()

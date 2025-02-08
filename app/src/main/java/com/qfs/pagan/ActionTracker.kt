@@ -30,9 +30,12 @@ import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 /**
- * Handle all the logic between a user action and the OpusManager
+ * Handle all the logic between a user action and the OpusManager.
+ * This class is meant for recording and playing back UI tests and eventually debugging so
+ * not every action directed through here at the moment.
  */
 class ActionTracker {
+    val DEBUG_ON = false
     class NoActivityException: Exception()
     enum class TrackedAction {
         ApplyUndo,
@@ -51,7 +54,6 @@ class ActionTracker {
         CursorSelectLineCtlLine,
         CursorSelectChannelCtlLine,
         CursorSelectGlobalCtlLine,
-        PlayEvent, // Not Sure about this one
         RepeatSelectionStd,
         RepeatSelectionCtlLine,
         RepeatSelectionCtlChannel,
@@ -67,6 +69,9 @@ class ActionTracker {
         MergeSelectionIntoBeat,
         SetOffset,
         SetOctave,
+        SaveProject,
+        DeleteProject,
+        CopyProject,
         TogglePercussion,
         SplitLeaf,
         InsertLeaf,
@@ -278,6 +283,25 @@ class ActionTracker {
         opus_manager.merge_into_beat(beat_key)
     }
 
+    fun save() {
+        this.track(TrackedAction.SaveProject)
+        this.get_activity().project_save()
+    }
+
+    fun delete() {
+        this.track(TrackedAction.DeleteProject)
+        val activity = this.get_activity()
+        activity.project_delete()
+        this.ignore().drawer_close()
+    }
+
+    fun project_copy() {
+        this.track(TrackedAction.CopyProject)
+        val activity = this.get_activity()
+        activity.project_move_to_copy()
+        this.ignore().drawer_close()
+    }
+
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeaf,
@@ -287,6 +311,24 @@ class ActionTracker {
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
         opus_manager.cursor_select(beat_key, position)
+
+        val tree = opus_manager.get_tree()
+        thread {
+            if (tree.is_event()) {
+                val note = if (opus_manager.is_percussion(beat_key.channel)) {
+                    opus_manager.get_percussion_instrument(beat_key.line_offset)
+                } else {
+                    opus_manager.get_absolute_value(beat_key, position) ?: return@thread
+                }
+                if (note >= 0) {
+                    this.get_activity().play_event(
+                        beat_key.channel,
+                        note,
+                        (opus_manager.get_current_line_controller_event(ControlEventType.Volume, beat_key, position) as OpusVolumeEvent).value
+                    )
+                }
+            }
+        }
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
@@ -675,10 +717,6 @@ class ActionTracker {
         }
     }
 
-    fun play_event(channel: Int, note: Int, volume: Float) {
-        this.track(TrackedAction.PlayEvent, listOf(channel, note, volume.toBits()))
-        this.get_activity().play_event(channel, note, volume)
-    }
 
     fun <K: OpusControlEvent> set_ctl_duration(duration: Int? = null) {
         val main = this.get_activity()
@@ -1000,18 +1038,23 @@ class ActionTracker {
         }
     }
 
-    fun insert_channel() {
-        this.track(TrackedAction.InsertChannel)
+    fun insert_channel(index: Int? = null) {
+        this.track(TrackedAction.InsertChannel, listOf(index ?: -1))
         val opus_manager = this.get_opus_manager()
-        val channel = opus_manager.cursor.channel
-        if (opus_manager.is_percussion(channel)) {
-            opus_manager.new_channel(channel)
+        if (index != null) {
+            opus_manager.new_channel(index)
         } else {
-            opus_manager.new_channel(channel + 1)
+            val channel = opus_manager.cursor.channel
+            if (opus_manager.is_percussion(channel)) {
+                opus_manager.new_channel(channel)
+            } else {
+                opus_manager.new_channel(channel + 1)
+            }
         }
     }
-    fun remove_channel() {
-        this.track(TrackedAction.RemoveChannel)
+
+    fun remove_channel(index: Int? = null) {
+        this.track(TrackedAction.RemoveChannel, listOf(index ?: - 1))
 
         val opus_manager = this.get_opus_manager()
         if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
@@ -1225,13 +1268,13 @@ class ActionTracker {
     }
 
     fun track(token: TrackedAction, args: List<Int?>? = null) {
-        if (this.ignore_flagged || this.lock) {
+        if (this.DEBUG_ON || this.ignore_flagged || this.lock) {
             this.ignore_flagged = false
             return
         }
 
         this.action_queue.add(Pair(token, args))
-        Log.d("PaganTracker", "$token")
+        Log.d("PaganTracker", "Tracked $token")
     }
 
     fun get_opus_manager(): OpusManager {
@@ -1255,7 +1298,7 @@ class ActionTracker {
                 this.new_project()
             }
             TrackedAction.LoadProject -> {
-                this.load_project(ActionTracker.string_from_ints(integers))
+                this.load_project(string_from_ints(integers))
             }
             TrackedAction.CursorSelectColumn -> {
                 this.cursor_select_column(integers[0]!!)
@@ -1368,13 +1411,6 @@ class ActionTracker {
             }
             TrackedAction.CursorSelectGlobalCtlLine -> {
                 this.cursor_select_global_ctl_line(type_from_ints(integers))
-            }
-            TrackedAction.PlayEvent -> {
-                this.play_event(
-                    integers[0]!!,
-                    integers[1]!!,
-                    Float.fromBits(integers[2]!!)
-                )
             }
             TrackedAction.RepeatSelectionStd -> {
                 this.repeat_selection_std(
@@ -1530,10 +1566,22 @@ class ActionTracker {
                 this.remove_controller()
             }
             TrackedAction.InsertChannel -> {
-                this.insert_channel()
+                // -1 means insert channel at cursor
+                val index = integers[0]!!
+                if (index == -1) {
+                    this.insert_channel(null)
+                } else {
+                    this.insert_channel(index)
+                }
             }
             TrackedAction.RemoveChannel -> {
-                this.remove_channel()
+                // -1 means remove channel at cursor
+                val index = integers[0]!!
+                if (index == -1) {
+                    this.remove_channel(null)
+                } else {
+                    this.remove_channel(index)
+                }
             }
             TrackedAction.TogglePercussionVisibility -> {
                 this.toggle_percussion_visibility()
@@ -1567,22 +1615,32 @@ class ActionTracker {
                 this.disable_soundfont()
             }
             TrackedAction.SetSoundFont -> {
-                this.set_soundfont(ActionTracker.string_from_ints(integers))
+                this.set_soundfont(string_from_ints(integers))
             }
 
             TrackedAction.SetProjectName -> {
-                this.set_project_name(ActionTracker.string_from_ints(integers))
+                this.set_project_name(string_from_ints(integers))
             }
 
             TrackedAction.ShowLineController -> {
                 this.show_hidden_line_controller(
-                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
+                    ControlEventType.valueOf(string_from_ints(integers))
                 )
             }
             TrackedAction.ShowChannelController -> {
                 this.show_hidden_channel_controller(
-                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
+                    ControlEventType.valueOf(string_from_ints(integers))
                 )
+            }
+
+            TrackedAction.SaveProject -> {
+                this.save()
+            }
+            TrackedAction.DeleteProject -> {
+                this.delete()
+            }
+            TrackedAction.CopyProject -> {
+                this.project_copy()
             }
         }
     }

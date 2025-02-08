@@ -128,7 +128,7 @@ class ChannelOptionAdapter(
 
     private fun interact_btnRemoveChannel(view: BackLinkView) {
         val x = view.view_holder?.bindingAdapterPosition ?: return
-        this._opus_manager.remove_channel(x)
+        this.get_activity().get_action_interface().remove_channel(x)
     }
 
     private fun interact_btnChooseInstrument(view: BackLinkView) {

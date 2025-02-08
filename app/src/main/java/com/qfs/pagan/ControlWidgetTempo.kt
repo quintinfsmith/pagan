@@ -16,11 +16,6 @@ class ControlWidgetTempo(default: OpusTempoEvent, is_initial_event: Boolean, con
         this.input.set_text("${this.working_event.value} BPM")
         this.input.setOnClickListener {
             (this.context as MainActivity).get_action_interface().set_tempo_at_cursor()
-            val event = this.get_event()
-            (this.context as MainActivity).dialog_float_input(context.getString(R.string.dlg_set_tempo), this.min, this.max, event.value) { new_value: Float ->
-                val new_event = OpusTempoEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
-                this.set_event(new_event)
-            }
         }
     }
     init {

@@ -178,24 +178,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 }
             } else {
                 tracker.cursor_select(beat_key, position)
-
-                val tree = opus_manager.get_tree()
-                thread {
-                    if (tree.is_event()) {
-                        val note = if (opus_manager.is_percussion(beat_key.channel)) {
-                            opus_manager.get_percussion_instrument(beat_key.line_offset)
-                        } else {
-                            opus_manager.get_absolute_value(beat_key, position) ?: return@thread
-                        }
-                        if (note >= 0) {
-                            tracker.play_event(
-                                beat_key.channel,
-                                note,
-                                (opus_manager.get_current_line_controller_event(ControlEventType.Volume, beat_key, position) as OpusVolumeEvent).value
-                            )
-                        }
-                    }
-                }
             }
         }
 

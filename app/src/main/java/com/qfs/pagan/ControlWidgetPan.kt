@@ -41,7 +41,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         this._slider.on_change_listener = object: PanSliderWidget.OnSeekBarChangeListener() {
             override fun on_touch_start(slider: PanSliderWidget) { }
             override fun on_touch_stop(slider: PanSliderWidget) {
-                val main = (this@ControlWidgetPan.context as MainActivity)
+                val main = this@ControlWidgetPan.get_main()
                 main.get_action_interface().set_pan_at_cursor(slider.progress)
             }
             override fun on_progress_change(slider: PanSliderWidget, value: Int) {

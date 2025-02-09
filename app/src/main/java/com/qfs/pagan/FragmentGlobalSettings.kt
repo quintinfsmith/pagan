@@ -117,6 +117,14 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             main.save_configuration()
         }
 
+        val switch_clip_release = view.findViewById<Switch>(R.id.sClipSameLineRelease)
+        switch_clip_release.isChecked = main.configuration.clip_same_line_release
+        switch_clip_release.setOnCheckedChangeListener { _, enabled: Boolean ->
+            main.configuration.clip_same_line_release = enabled
+            main.save_configuration()
+        }
+
+
         //val switch_stereo_playback = view.findViewById<Switch>(R.id.sPlaybackStereo)
         //switch_stereo_playback.isChecked = main.configuration.playback_stereo_mode == WaveGenerator.StereoMode.Stereo
         //switch_stereo_playback.setOnCheckedChangeListener { _, enabled: Boolean ->

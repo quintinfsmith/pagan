@@ -43,6 +43,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _pan_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::pan]
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
+    var clip_same_line_release = false
+
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
         this.check_frame(frame + this._sample_handle_manager.buffer_size)
@@ -519,15 +521,31 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         val event = working_tree.get_event()!!.copy()
-        val next_event_position = this.opus_manager.get_proceding_event_position(beat_key, position)
-        val next_event_frame = if (next_event_position != null) {
-            val (next_beat, next_position) = next_event_position
-            val (offset, width) = this.opus_manager.get_leaf_offset_and_width(BeatKey(beat_key.channel, beat_key.line_offset, next_beat), next_position)
-            val float_offset = offset.toFloat()
-            val beat = float_offset.toInt()
-            val next_rel_offset = float_offset - beat.toFloat()
-            val (next_start, _) = this.calculate_event_frame_range(offset.toFloat().toInt(), 1, 1F, next_rel_offset)
-            next_start
+        val next_event_frame = if (this.clip_same_line_release) {
+            val next_event_position =
+                this.opus_manager.get_proceding_event_position(beat_key, position)
+            if (next_event_position != null) {
+                val (next_beat, next_position) = next_event_position
+                val (offset, width) = this.opus_manager.get_leaf_offset_and_width(
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset,
+                        next_beat
+                    ), next_position
+                )
+                val float_offset = offset.toFloat()
+                val beat = float_offset.toInt()
+                val next_rel_offset = float_offset - beat.toFloat()
+                val (next_start, _) = this.calculate_event_frame_range(
+                    offset.toFloat().toInt(),
+                    1,
+                    1F,
+                    next_rel_offset
+                )
+                next_start
+            } else {
+                null
+            }
         } else {
             null
         }

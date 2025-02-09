@@ -23,9 +23,11 @@ import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
+    private val FADE_LIMIT = _sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
     private var _simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
     private val _handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
     private val _handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
@@ -236,7 +238,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     // Remove release phase. can get noisy on things like tubular bells with long fade outs
                     //handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 11, handle.volume_envelope.frames_release)
                     //handle.volume_envelope.frames_delay = 0
-                    handle.volume_envelope.release = min(next_event_frame - end_frame, handle.volume_envelope.frames_release).toFloat() / this._sample_handle_manager.sample_rate.toFloat()
+                    if (handle.volume_envelope.frames_release > this.FADE_LIMIT) {
+                        handle.volume_envelope.release = max(this.FADE_LIMIT, min(next_event_frame - end_frame, handle.volume_envelope.frames_release)).toFloat() / this._sample_handle_manager.sample_rate.toFloat()
+                    }
                 }
 
                 if (volume_profile != null) {

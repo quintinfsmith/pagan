@@ -1110,55 +1110,7 @@ class MainActivity : AppCompatActivity() {
         //-------------------------------------------
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
         btnRadix.setOnClickListener {
-            val main_fragment = this.get_active_fragment() ?: return@setOnClickListener
-            val viewInflated: View = LayoutInflater.from(main_fragment.context)
-                .inflate(
-                    R.layout.dialog_tuning_map,
-                    main_fragment.view as ViewGroup,
-                    false
-                )
-
-            val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
-            val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
-            etTranspose.set_range(0, 99999999)
-            etTranspose.set_value(opus_manager.transpose.first)
-
-            val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
-            etTransposeRadix.set_range(1, 99999999)
-            etTransposeRadix.set_value(opus_manager.transpose.second)
-
-            val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
-            rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
-
-            val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setCustomTitle(this._build_dialog_title_view(
-                     resources.getString(R.string.dlg_tuning)
-                ))
-                .setView(viewInflated)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    val tuning_map = (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
-                    opus_manager.set_tuning_map_and_transpose(
-                        tuning_map,
-                        Pair(etTranspose.get_value() ?: 0, etTransposeRadix.get_value() ?: tuning_map.size)
-                    )
-
-                    dialog.dismiss()
-                }
-                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-
-            this._adjust_dialog_colors(dialog)
-
-
-            val default_value = opus_manager.tuning_map.size
-
-            etRadix.set_value(default_value)
-            etRadix.set_range(2, 36)
-            etRadix.value_set_callback = { new_radix: Int? ->
-                rvTuningMap.reset_tuning_map(new_radix)
-            }
+            this.get_action_interface().set_tuning_table_and_transpose()
         }
         //-------------------------------------------
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {

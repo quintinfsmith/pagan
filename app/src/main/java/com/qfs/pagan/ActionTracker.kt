@@ -1,6 +1,10 @@
 package com.qfs.pagan
 
+import android.app.AlertDialog
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
@@ -107,7 +111,8 @@ class ActionTracker {
         DisableSoundFont,
         SetSoundFont,
         SetProjectName,
-        SetClipNotes
+        SetClipNotes,
+        SetTuningTable
     }
 
     companion object {
@@ -1647,6 +1652,18 @@ class ActionTracker {
             TrackedAction.SetClipNotes -> {
                 this.set_clip_same_line_notes(integers[0] != 0)
             }
+
+            TrackedAction.SetTuningTable -> {
+                this.set_tuning_table_and_transpose(
+                    Array<Pair<Int, Int>>((integers.size - 2) / 2) { i: Int ->
+                        Pair(integers[i * 2]!!, integers[(i * 2) + 1]!!)
+                    },
+                    Pair(
+                        integers[integers.size - 2]!!,
+                        integers[integers.size - 1]!!
+                    )
+                )
+            }
         }
     }
 
@@ -1751,6 +1768,84 @@ class ActionTracker {
         val activity = this.get_activity()
         activity.configuration.clip_same_line_release = value
         activity.save_configuration()
+    }
+
+    private fun dialog_tuning_table() {
+        val activity = this.get_activity()
+        val opus_manager = this.get_opus_manager()
+        val main_fragment = activity.get_active_fragment() ?: return
+
+        val viewInflated: View = LayoutInflater.from(main_fragment.context)
+            .inflate(
+                R.layout.dialog_tuning_map,
+                main_fragment.view as ViewGroup,
+                false
+            )
+
+        val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
+        val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
+        etTranspose.set_range(0, 99999999)
+        etTranspose.set_value(opus_manager.transpose.first)
+
+        val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
+        etTransposeRadix.set_range(1, 99999999)
+        etTransposeRadix.set_value(opus_manager.transpose.second)
+
+        val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
+        rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
+
+
+        val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+            .setCustomTitle(activity._build_dialog_title_view(
+                activity.resources.getString(R.string.dlg_tuning)
+            ))
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                val tuning_map = (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
+                val transpose = Pair(etTranspose.get_value() ?: 0, etTransposeRadix.get_value() ?: tuning_map.size)
+                this._track_tuning_map_and_transpose(tuning_map, transpose)
+                opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
+                dialog.dismiss()
+            }
+            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
+
+        activity._adjust_dialog_colors(dialog)
+
+
+        val default_value = opus_manager.tuning_map.size
+
+        etRadix.set_value(default_value)
+        etRadix.set_range(2, 36)
+        etRadix.value_set_callback = { new_radix: Int? ->
+            rvTuningMap.reset_tuning_map(new_radix)
+        }
+    }
+
+    private fun _track_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Pair<Int, Int>) {
+        this.track(
+            TrackedAction.SetTuningTable,
+            List(tuning_map.size * 2) { i: Int ->
+                if (i % 2 == 0) {
+                    tuning_map[i / 2].first
+                } else {
+                    tuning_map[i / 2].second
+                }
+            }
+            + listOf(transpose.first, transpose.second)
+        )
+    }
+
+    fun set_tuning_table_and_transpose(tuning_map: Array<Pair<Int, Int>>? = null, transpose: Pair<Int, Int>? = null) {
+        if (tuning_map == null || transpose == null) {
+            this.dialog_tuning_table()
+        } else {
+            val opus_manager = this.get_opus_manager()
+            this._track_tuning_map_and_transpose(tuning_map, transpose)
+            opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
+        }
     }
 
     fun to_json(): JSONObject {

@@ -119,8 +119,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         val switch_clip_release = view.findViewById<Switch>(R.id.sClipSameLineRelease)
         switch_clip_release.isChecked = main.configuration.clip_same_line_release
         switch_clip_release.setOnCheckedChangeListener { _, enabled: Boolean ->
-            main.configuration.clip_same_line_release = enabled
-            main.save_configuration()
+            main.get_action_interface().set_clip_same_line_notes(enabled)
         }
 
 

@@ -106,7 +106,8 @@ class ActionTracker {
         SetSampleRate,
         DisableSoundFont,
         SetSoundFont,
-        SetProjectName
+        SetProjectName,
+        SetClipNotes
     }
 
     companion object {
@@ -1642,6 +1643,10 @@ class ActionTracker {
             TrackedAction.CopyProject -> {
                 this.project_copy()
             }
+
+            TrackedAction.SetClipNotes -> {
+                this.set_clip_same_line_notes(integers[0] != 0)
+            }
         }
     }
 
@@ -1662,7 +1667,6 @@ class ActionTracker {
         }
 
         this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
-
 
         context_menu.label.text = when (mode) {
             PaganConfiguration.MoveMode.MOVE -> {
@@ -1740,6 +1744,13 @@ class ActionTracker {
             CtlLineLevel.Global,
             null -> {} // Pass
         }
+    }
+
+    fun set_clip_same_line_notes(value: Boolean) {
+        this.track(TrackedAction.SetClipNotes, listOf(if (value) 1 else 0))
+        val activity = this.get_activity()
+        activity.configuration.clip_same_line_release = value
+        activity.save_configuration()
     }
 
     fun to_json(): JSONObject {

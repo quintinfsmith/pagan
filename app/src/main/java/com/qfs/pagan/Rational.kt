@@ -11,6 +11,10 @@ data class Rational(var n: Int, var d: Int) {
         return "($n / $d)"
     }
 
+    fun toFloat(): Float {
+        return this.n.toFloat() / this.d.toFloat()
+    }
+
     override fun equals(other: Any?): Boolean {
         return when (other) {
             is Rational -> (this.n * other.d) == (other.n * this.d)

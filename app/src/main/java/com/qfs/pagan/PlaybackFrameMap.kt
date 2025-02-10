@@ -23,9 +23,11 @@ import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
+    private val FADE_LIMIT = _sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
     private var _simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
     private val _handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
     private val _handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
@@ -42,6 +44,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _volume_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::volume]
     private val _pan_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::pan]
     private val _percussion_setter_ids = mutableSetOf<Int>()
+
+    var clip_same_line_release = false
 
     override fun get_new_handles(frame: Int): Set<SampleHandle>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
@@ -198,7 +202,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: SampleHandle.ProfileBuffer? = null) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: SampleHandle.ProfileBuffer? = null, next_event_frame: Int? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -230,15 +234,19 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             for (handle in handles) {
                 handle.set_release_frame(end_frame - start_frame)
 
-                if (this._simple_mode) {
+                if (next_event_frame != null) {
                     // Remove release phase. can get noisy on things like tubular bells with long fade outs
-                    handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 10, handle.volume_envelope.frames_release)
-                    handle.volume_envelope.frames_delay = 0
+                    //handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 11, handle.volume_envelope.frames_release)
+                    //handle.volume_envelope.frames_delay = 0
+                    if (handle.volume_envelope.frames_release > this.FADE_LIMIT) {
+                        handle.volume_envelope.release = max(this.FADE_LIMIT, min(next_event_frame - end_frame, handle.volume_envelope.frames_release)).toFloat() / this._sample_handle_manager.sample_rate.toFloat()
+                    }
                 }
 
                 if (volume_profile != null) {
                     handle.volume_profile = volume_profile.copy()
                 }
+
                 if (pan_profile != null) {
                     handle.pan_profile = pan_profile.copy()
                 }
@@ -456,6 +464,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 break
             }
         }
+
         var frames_per_beat = (frames_per_minute / working_tempo).toInt()
 
         // Calculate Start Position
@@ -516,6 +525,34 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         val event = working_tree.get_event()!!.copy()
+        val next_event_frame = if (this.clip_same_line_release) {
+            val next_event_position =
+                this.opus_manager.get_proceding_event_position(beat_key, position)
+            if (next_event_position != null) {
+                val (next_beat, next_position) = next_event_position
+                val (offset, width) = this.opus_manager.get_leaf_offset_and_width(
+                    BeatKey(
+                        beat_key.channel,
+                        beat_key.line_offset,
+                        next_beat
+                    ), next_position
+                )
+                val float_offset = offset.toFloat()
+                val beat = float_offset.toInt()
+                val next_rel_offset = float_offset - beat.toFloat()
+                val (next_start, _) = this.calculate_event_frame_range(
+                    offset.toFloat().toInt(),
+                    1,
+                    1F,
+                    next_rel_offset
+                )
+                next_start
+            } else {
+                null
+            }
+        } else {
+            null
+        }
 
         val (start_frame, end_frame) = this.calculate_event_frame_range(beat_key.beat, event.duration, relative_width, relative_offset)
 
@@ -557,7 +594,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up
         if (start_event != null) {
-            this._add_handles(start_frame, end_frame, start_event, new_volume_profile, new_pan_profile)
+            this._add_handles(start_frame, end_frame, start_event, new_volume_profile, new_pan_profile, next_event_frame)
         }
 
         return when (event) {

@@ -137,6 +137,23 @@
                 android:layout_height="48dp"/>
         </LinearLayout>
         <LinearLayout
+            android:id="@+id/llClipSameLineRelease"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.qfs.pagan.PaganTextView
+                android:text="@string/label_settings_same_line_release"
+                android:paddingStart="15dp"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <Switch
+                android:theme="@style/Theme.Pagan.SeekBar"
+                android:id="@+id/sClipSameLineRelease"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"/>
+        </LinearLayout>
+        <LinearLayout
             android:id="@+id/llRelativeEnabled"
             android:orientation="horizontal"
             android:layout_width="match_parent"

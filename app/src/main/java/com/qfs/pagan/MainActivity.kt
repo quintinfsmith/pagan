@@ -120,6 +120,7 @@ class MainActivity : AppCompatActivity() {
 
         fun export_wav(sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, handler: WavConverter.ExporterEventHandler) {
             val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
+            frame_map.clip_same_line_release = this.opus_manager.get_activity()?.configuration?.clip_same_line_release ?: true
             frame_map.parse_opus()
 
             val start_frame = frame_map.get_marked_frames()[0]

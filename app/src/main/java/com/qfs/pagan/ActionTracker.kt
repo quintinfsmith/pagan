@@ -24,7 +24,6 @@ import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import kotlin.concurrent.thread
@@ -774,17 +773,11 @@ class ActionTracker {
         }
 
         val context_menu = fragment.active_context_menu
-        if (!(context_menu is ContextMenuControlLeaf<*> || context_menu is ContextMenuControlLine<*> || context_menu is ContextMenuLine)) {
+        if (context_menu !is ContextMenuWithController<*>) {
             return
         }
 
-        val widget: ControlWidgetVolume = if (context_menu is ContextMenuControlLeaf<*>) {
-            context_menu.widget as ControlWidgetVolume
-        } else if (context_menu is ContextMenuLine) {
-            context_menu.widget_volume
-        } else {
-            (context_menu as ContextMenuControlLine<*>).widget as ControlWidgetVolume
-        }
+        val widget: ControlWidgetVolume = context_menu.get_widget() as ControlWidgetVolume
 
         val dlg_default = (widget.get_event().value * widget.max.toFloat()).toInt()
         val dlg_title = main.getString(R.string.dlg_set_volume)
@@ -1127,9 +1120,12 @@ class ActionTracker {
         }
 
         this.track(TrackedAction.SetPanAtCursor, listOf(value))
+        val context_menu = fragment.active_context_menu
+        if (context_menu !is ContextMenuWithController<*>) {
+            return
+        }
 
-        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusPanEvent>
-        val widget = context_menu.widget as ControlWidgetPan
+        val widget = context_menu.get_widget() as ControlWidgetPan
         val new_event = widget.working_event.copy()
         new_event.value = (value.toFloat() / widget.max.toFloat()) * -1F
         widget.set_event(new_event)
@@ -1144,8 +1140,11 @@ class ActionTracker {
 
         this.track(TrackedAction.SetTempoAtCursor, listOf(input_value?.toBits()))
 
-        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusTempoEvent>
-        val widget = context_menu.widget as ControlWidgetTempo
+        val context_menu = fragment.active_context_menu
+        if (context_menu !is ContextMenuWithController<*>) {
+            return
+        }
+        val widget = context_menu.get_widget() as ControlWidgetTempo
 
         val event = widget.get_event()
         this.dialog_float_input(main.getString(R.string.dlg_set_tempo), widget.min, widget.max, event.value, input_value) { new_value: Float ->

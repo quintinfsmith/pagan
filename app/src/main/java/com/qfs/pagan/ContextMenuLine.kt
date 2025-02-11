@@ -11,7 +11,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container) {
+class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container), ContextMenuWithController<OpusVolumeEvent> {
     lateinit var button_insert: ImageView
     lateinit var button_remove: ImageView
     lateinit var button_choose_percussion: TextView
@@ -172,4 +172,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.get_main().get_action_interface().set_percussion_instrument()
     }
 
+    override fun get_widget(): ControlWidget<OpusVolumeEvent> {
+        return this.widget_volume
+    }
 }

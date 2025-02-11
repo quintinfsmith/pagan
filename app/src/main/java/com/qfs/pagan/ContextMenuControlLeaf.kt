@@ -9,8 +9,7 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
-
-class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container) {
+class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container), ContextMenuWithController<T> {
     lateinit var widget_wrapper: LinearLayout
     // --------------------------------
     lateinit var button_split: ImageView
@@ -24,6 +23,9 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.refresh()
     }
 
+    override fun get_widget(): ControlWidget<T> {
+        return this.widget
+    }
 
     override fun init_properties() {
         this.widget_wrapper = this.secondary!! as LinearLayout

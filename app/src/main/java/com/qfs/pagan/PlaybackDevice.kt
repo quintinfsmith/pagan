@@ -78,6 +78,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
 
         val opus_manager = this.activity.get_opus_manager()
         if (i >= opus_manager.beat_count) {
+            this.kill()
             return
         }
 

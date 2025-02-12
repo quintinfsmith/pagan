@@ -59,7 +59,6 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.os.bundleOf
-import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
@@ -84,9 +83,7 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONObject
-import com.qfs.json.JSONString
+import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -343,21 +340,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var _general_import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    internal var general_import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
-                val fragment = this.get_active_fragment()
-                fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
-                fragment?.setFragmentResult(
-                    IntentFragmentToken.ImportGeneral.name,
-                    bundleOf(Pair("URI", uri.toString()))
-                )
-                if (fragment !is FragmentEditor) {
-                    this.navigate(R.id.EditorFragment)
-                }
+                this.navigate_import(uri)
             }
         }
     }
+
 
     private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -1937,10 +1927,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun select_import_file() {
-        val intent = Intent()
-            .setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
-            .setAction(Intent.ACTION_GET_CONTENT)
-        this._general_import_intent_launcher.launch(intent)
+        this.get_action_interface().import()
     }
 
 
@@ -2328,5 +2315,17 @@ class MainActivity : AppCompatActivity() {
         val file_name = "$path/generated_$timestamp.json"
         val file = File(file_name)
         file.writeText(generated_code)
+    }
+
+    fun navigate_import(uri: Uri) {
+        val fragment = this.get_active_fragment()
+        fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
+        fragment?.setFragmentResult(
+            IntentFragmentToken.ImportGeneral.name,
+            bundleOf(Pair("URI", uri.toString()))
+        )
+        if (fragment !is FragmentEditor) {
+            this.navigate(R.id.EditorFragment)
+        }
     }
 }

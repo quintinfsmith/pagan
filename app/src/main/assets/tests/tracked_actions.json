@@ -30,5 +30,6 @@
     ["SplitLeaf", [3]],
     ["SetVolumeAtCursor", [50]],
     ["CursorSelectLineCtlRange", ["Volume", 1, 0, 0, 1, 0, 0]],
-    ["RepeatSelectionCtlLine", ["Volume", 1, 0, 4]]
+    ["RepeatSelectionCtlLine", ["Volume", 1, 0, 4]],
+    ["ImportSong","content://com.android.externalstorage.documents/document/primary%3AMidis%2F2Guiles_Theme_Street_Fighter_II.mid"]
 ]

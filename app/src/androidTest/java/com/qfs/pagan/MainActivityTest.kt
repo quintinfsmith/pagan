@@ -9,6 +9,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.rule.GrantPermissionRule
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -25,9 +26,22 @@ import org.junit.runner.RunWith
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 
+@JvmField
+@Rule
+var permissionRead: GrantPermissionRule = GrantPermissionRule.grant(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
+    //@Rule
+    //var permissionCamera: GrantPermissionRule = GrantPermissionRule.grant(android.Manifest.permission.CAMERA)
+    //@Rule
+    //var permissionAudio: GrantPermissionRule = GrantPermissionRule.grant(android.Manifest.permission.RECORD_AUDIO)
+    //@Rule
+    //var permissionLocation: GrantPermissionRule = GrantPermissionRule.grant(android.Manifest.permission.ACCESS_FINE_LOCATION)
+    //@Rule
+    //var permissionWrite: GrantPermissionRule = GrantPermissionRule.grant(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
 
     @Rule
     @JvmField
@@ -213,6 +227,7 @@ class MainActivityTest {
                 this.run_action(token, intlist)
             }
         }
+        Thread.sleep(3000)
     }
 
     private fun childAtPosition(

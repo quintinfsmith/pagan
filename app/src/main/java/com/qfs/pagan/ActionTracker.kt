@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -31,6 +33,7 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
+
 
 /**
  * Handle all the logic between a user action and the OpusManager.
@@ -111,7 +114,8 @@ class ActionTracker {
         SetSoundFont,
         SetProjectName,
         SetClipNotes,
-        SetTuningTable
+        SetTuningTable,
+        ImportSong
     }
 
     companion object {
@@ -122,6 +126,7 @@ class ActionTracker {
                 token,
                 when (token) {
                     // STRING
+                    TrackedAction.ImportSong,
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
                     TrackedAction.SetCopyMode,
@@ -1273,7 +1278,7 @@ class ActionTracker {
     }
 
     fun track(token: TrackedAction, args: List<Int?>? = null) {
-        if (this.DEBUG_ON || this.ignore_flagged || this.lock) {
+        if (!this.DEBUG_ON || this.ignore_flagged || this.lock) {
             this.ignore_flagged = false
             return
         }
@@ -1663,6 +1668,13 @@ class ActionTracker {
                     )
                 )
             }
+
+            ActionTracker.TrackedAction.ImportSong -> {
+                val uri_string = ActionTracker.string_from_ints(integers)
+                val uri = Uri.parse(uri_string)
+                println("importing ${uri.toString()}")
+                this.import(uri)
+            }
         }
     }
 
@@ -1847,6 +1859,22 @@ class ActionTracker {
         }
     }
 
+    fun import(uri: Uri? = null) {
+        val activity = this.get_activity()
+        if (uri == null) {
+            val intent = Intent()
+            intent.setAction(Intent.ACTION_GET_CONTENT)
+            intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+            activity.general_import_intent_launcher.launch(intent)
+        } else {
+            // TODO: Right now this still needs to be manually handled during playback. Not sure if its even possible to automate
+            val intent = Intent()
+            intent.setAction(Intent.ACTION_GET_CONTENT)
+            intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+            activity.general_import_intent_launcher.launch(intent)
+        }
+    }
+
     fun to_json(): JSONObject {
         return JSONList(
             List(this.action_queue.size) { i: Int ->
@@ -1859,6 +1887,7 @@ class ActionTracker {
                         } else {
                             when (token) {
                                 // STRING
+                                TrackedAction.ImportSong,
                                 TrackedAction.SetProjectName,
                                 TrackedAction.LoadProject -> {
                                     JSONString(ActionTracker.string_from_ints(integers))

@@ -277,6 +277,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         main.get_file_type(path)
                     }
                 } catch (e: Exception) {
+
                     null
                 }
 

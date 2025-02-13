@@ -448,6 +448,9 @@ class MainActivity : AppCompatActivity() {
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
+            if (this@MainActivity.get_action_interface().DEBUG_ON) {
+                this@MainActivity.save_actions()
+            }
             this@MainActivity.save_to_backup()
 
             val ctx = applicationContext

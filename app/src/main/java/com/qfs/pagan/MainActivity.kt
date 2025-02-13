@@ -751,6 +751,18 @@ class MainActivity : AppCompatActivity() {
             R.id.itmAbout -> {
                 this.get_action_interface().open_about()
             }
+            R.id.itmDebug -> {
+                val tracker = this.get_action_interface()
+                if (tracker.DEBUG_ON) {
+                    this.save_actions()
+                    tracker.disable_tracking()
+                    this.feedback_msg("SAVED ACTIONS")
+                } else {
+                    tracker.enable_tracking()
+                    this.feedback_msg("START TRACKING")
+                }
+
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -1076,6 +1088,7 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
                 options_menu.findItem(R.id.itmAbout).isVisible = true
+                options_menu.findItem(R.id.itmDebug).isVisible = false
             }
             else -> {
                 options_menu.findItem(R.id.itmLoadProject).isVisible = false
@@ -1086,6 +1099,7 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmImportMidi).isVisible = false
                 options_menu.findItem(R.id.itmSettings).isVisible = false
                 options_menu.findItem(R.id.itmAbout).isVisible = false
+                options_menu.findItem(R.id.itmDebug).isVisible = false
             }
         }
     }

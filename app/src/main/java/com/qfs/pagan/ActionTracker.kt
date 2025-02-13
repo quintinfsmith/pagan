@@ -41,7 +41,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
  * not every action directed through here at the moment.
  */
 class ActionTracker {
-    val DEBUG_ON = false
+    var DEBUG_ON = false
     class NoActivityException: Exception()
     enum class TrackedAction {
         ApplyUndo,
@@ -481,7 +481,7 @@ class ActionTracker {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        val (first, second) = cursor.range!!
+        val (first, second) = cursor.get_ordered_range()!!
         val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
 
@@ -535,7 +535,7 @@ class ActionTracker {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        val (first, second) = cursor.range!!
+        val (first, second) = cursor.get_ordered_range()!!
         val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
         when (cursor.ctl_level) {
@@ -1672,7 +1672,6 @@ class ActionTracker {
             ActionTracker.TrackedAction.ImportSong -> {
                 val uri_string = ActionTracker.string_from_ints(integers)
                 val uri = Uri.parse(uri_string)
-                println("importing ${uri.toString()}")
                 this.import(uri)
             }
         }
@@ -1921,4 +1920,15 @@ class ActionTracker {
     private fun _gen_string_list(int_list: List<Int>): String {
         return int_list.joinToString(", ", "listOf(", ")")
     }
+
+    fun enable_tracking() {
+        this.DEBUG_ON = true
+        this.action_queue.clear()
+    }
+
+    fun disable_tracking() {
+        this.DEBUG_ON = false
+        this.action_queue.clear()
+    }
+
 }

@@ -2852,7 +2852,6 @@ open class OpusLayerBase {
 
     open fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
-
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
         val count = repeat ?: ceil((this.beat_count - from_key.beat).toFloat() / width.toFloat()).toInt()

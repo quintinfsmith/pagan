@@ -19,17 +19,22 @@ class OpusTreeJSONInterface {
             } else {
                 map["size"] = JSONInteger(input.size)
                 val division_keys = input.divisions.keys.toList()
-                map["divisions"] = JSONList(
-                    MutableList(division_keys.size) { i: Int ->
-                        val position = division_keys[i]
-                        JSONList(
+
+                // Only add entries with data, don't want to bloat with [1, null], [2, null]...etc
+                val tmp_list = mutableListOf<JSONList>()
+                for (position in division_keys) {
+                    val tmp_entry = to_json(input.divisions[position]!!, event_generalizer_callback)
+                    if (tmp_entry != null) {
+                        tmp_list.add(JSONList(
                             mutableListOf(
                                 JSONInteger(position),
-                                to_json(input.divisions[position]!!, event_generalizer_callback)
+                                tmp_entry
                             )
-                        )
+                        ))
                     }
-                )
+                }
+
+                map["divisions"] = JSONList(tmp_list)
             }
 
             return JSONHashMap(map)

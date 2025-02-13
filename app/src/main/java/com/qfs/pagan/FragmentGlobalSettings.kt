@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -12,55 +11,10 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
-import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
 
 class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
-    private var _import_soundfont_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                if (uri.path != null) {
-                    val main = this.get_main()
-                    val soundfont_dir = main.get_soundfont_directory()
-                    val file_name = main.parse_file_name(uri)
-
-                    val new_file = File("${soundfont_dir}/$file_name")
-                    main.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                        try {
-                            new_file.outputStream().use { output_stream: FileOutputStream ->
-                                FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
-                                    input_stream.copyTo(output_stream, 4096 * 4)
-                                }
-                            }
-                        } catch (e: FileNotFoundException) {
-                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
-                        }
-                    }
-
-                    try {
-                        SoundFont(new_file.path)
-                        this._set_soundfont(new_file.name)
-                    } catch (e: Exception) {
-                        this.get_main().feedback_msg(getString(R.string.feedback_invalid_sf2_file))
-                        new_file.delete()
-                        return@registerForActivityResult
-                    }
-
-                    // Hide the warning
-                    if (main.is_soundfont_available()) {
-                        main.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
-                    }
-                } else {
-                    throw FileNotFoundException()
-                }
-            }
-        }
-    }
 
     override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentGlobalSettingsBinding {
         return FragmentGlobalSettingsBinding.inflate(inflater, container, false)
@@ -87,7 +41,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             this.interact_btnChooseSoundFont()
         }
         btnChooseSoundFont.setOnLongClickListener {
-            this.dialog_remove_soundfont()
+            this.get_main().get_action_interface().delete_soundfont()
             false
         }
 
@@ -184,7 +138,6 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     }
 
     private fun interact_btnChooseSoundFont() {
-        // TODO Track disable, set and import actions. not the popup (at least for now)
         val soundfont_dir = this.get_main().get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
@@ -197,10 +150,12 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
 
         this.get_main().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { _: Int, pair: Pair<Int, String?> ->
             val (mode, path) = pair
+            val activity = this.get_main()
+            val tracker = activity.get_action_interface()
             when (mode) {
-                0 -> this._disable_soundfont()
-                1 -> this._set_soundfont(path!!)
-                2 -> this._import_soundfont()
+                0 -> tracker.disable_soundfont()
+                1 -> tracker.set_soundfont(path!!)
+                2 -> tracker.import_soundfont()
             }
         }
     }
@@ -225,27 +180,12 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     private fun _delete_soundfont(filename: String) {
         val main = this.get_main()
         if (main.configuration.soundfont != null && main.configuration.soundfont!! == filename) {
-            this._disable_soundfont()
+            main.get_action_interface().ignore().disable_soundfont()
         }
         val soundfont_dir = main.get_soundfont_directory()
         val file = File("${soundfont_dir.absolutePath}/${filename}")
         if (file.exists()) {
             file.delete()
         }
-    }
-
-    private fun _disable_soundfont() {
-        this.get_main().get_action_interface().disable_soundfont()
-    }
-
-    private fun _set_soundfont(filename: String) {
-        this.get_main().get_action_interface().set_soundfont(filename)
-    }
-
-    private fun _import_soundfont() {
-        val intent = Intent()
-            .setType("*/*")
-            .setAction(Intent.ACTION_GET_CONTENT)
-        this._import_soundfont_launcher.launch(intent)
     }
 }

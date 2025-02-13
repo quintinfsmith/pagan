@@ -361,6 +361,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    var _import_soundfont_intent_listener = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                if (uri.path != null) {
+                    val soundfont_dir = this.get_soundfont_directory()
+                    val file_name = this.parse_file_name(uri)
+
+                    val new_file = File("${soundfont_dir}/$file_name")
+                    this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                        try {
+                            new_file.outputStream().use { output_stream: FileOutputStream ->
+                                FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
+                                    input_stream.copyTo(output_stream, 4096 * 4)
+                                }
+                            }
+                        } catch (e: FileNotFoundException) {
+                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
+                        }
+                    }
+
+                    try {
+                        SoundFont(new_file.path)
+                        this.set_soundfont(new_file.name)
+                    } catch (e: Exception) {
+                        this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
+                        new_file.delete()
+                        return@registerForActivityResult
+                    }
+
+                    // Hide the warning
+                    if (this.get_active_fragment() is FragmentGlobalSettings && this.is_soundfont_available()) {
+                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                    }
+                } else {
+                    throw FileNotFoundException()
+                }
+            }
+        }
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         this.recreate()

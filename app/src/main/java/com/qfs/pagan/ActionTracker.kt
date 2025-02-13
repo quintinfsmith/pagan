@@ -28,6 +28,7 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
+import java.io.File
 import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.max
@@ -115,7 +116,9 @@ class ActionTracker {
         SetProjectName,
         SetClipNotes,
         SetTuningTable,
-        ImportSong
+        ImportSong,
+        ImportSoundFont,
+        DeleteSoundFont
     }
 
     companion object {
@@ -1184,6 +1187,44 @@ class ActionTracker {
         activity.save_configuration()
     }
 
+    fun delete_soundfont(input_filename: String? = null) {
+        val activity = this.get_activity()
+        val soundfont_dir = activity.get_soundfont_directory()
+        val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
+
+        val soundfonts = mutableListOf<Pair<String, String>>( )
+
+        for (file in file_list) {
+            soundfonts.add(Pair(file.name, file.name))
+        }
+
+        this.dialog_popup_menu(activity.getString(R.string.dialog_remove_soundfont_title), soundfonts, stub_output = input_filename) { _: Int, filename: String ->
+            this.dialog_confirm(activity.getString(R.string.dialog_remove_soundfont_text, filename), input_filename != null) {
+                this.track(TrackedAction.DeleteSoundFont, ActionTracker.string_to_ints(filename))
+                if (activity.configuration.soundfont != null && activity.configuration.soundfont!! == input_filename) {
+                    activity.get_action_interface().ignore().disable_soundfont()
+                }
+
+                val file = File("${soundfont_dir.absolutePath}/${input_filename}")
+                if (file.exists()) {
+                    file.delete()
+                }
+            }
+        }
+    }
+
+    fun import_soundfont(uri: Uri? = null) {
+        // TODO: Track action
+        if (uri == null) {
+            val intent = Intent()
+                .setType("*/*")
+                .setAction(Intent.ACTION_GET_CONTENT)
+            this.get_activity()._import_soundfont_intent_listener.launch(intent)
+        } else {
+            TODO("would only be used for debug atm anyway.")
+        }
+    }
+
     fun set_soundfont(filename: String) {
         this.track(TrackedAction.SetSoundFont, ActionTracker.string_to_ints(filename))
 
@@ -1202,6 +1243,7 @@ class ActionTracker {
         }
     }
 
+
     fun set_project_name(project_name: String? = null) {
         val activity = this.get_activity()
         this.dialog_string_popup(activity.getString(R.string.dlg_change_name), this.get_opus_manager().project_name, project_name) { string: String ->
@@ -1211,6 +1253,18 @@ class ActionTracker {
             )
             val opus_manager = this.get_opus_manager()
             opus_manager.set_project_name(string)
+        }
+    }
+
+    /**
+     * Wrapper around MainActivity::dialog_confirm
+     * Will skip check on replay
+     */
+    private fun dialog_confirm(title: String, skip: Boolean, callback: () -> Unit) {
+        if (skip) {
+            callback()
+        } else {
+            this.get_activity().dialog_confirm(title, callback)
         }
     }
 
@@ -1670,10 +1724,18 @@ class ActionTracker {
                 )
             }
 
-            ActionTracker.TrackedAction.ImportSong -> {
-                val uri_string = ActionTracker.string_from_ints(integers)
+            TrackedAction.ImportSong -> {
+                val uri_string = string_from_ints(integers)
                 val uri = Uri.parse(uri_string)
                 this.import(uri)
+            }
+
+            TrackedAction.ImportSoundFont -> {
+                this.import_soundfont(Uri.parse(ActionTracker.string_from_ints(integers)))
+            }
+
+            TrackedAction.DeleteSoundFont -> {
+                this.delete_soundfont(ActionTracker.string_from_ints(integers))
             }
         }
     }
@@ -1860,6 +1922,7 @@ class ActionTracker {
     }
 
     fun import(uri: Uri? = null) {
+        // TODO: Track action
         val activity = this.get_activity()
         if (uri == null) {
             val intent = Intent()

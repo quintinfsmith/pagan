@@ -1201,11 +1201,11 @@ class ActionTracker {
         this.dialog_popup_menu(activity.getString(R.string.dialog_remove_soundfont_title), soundfonts, stub_output = input_filename) { _: Int, filename: String ->
             this.dialog_confirm(activity.getString(R.string.dialog_remove_soundfont_text, filename), input_filename != null) {
                 this.track(TrackedAction.DeleteSoundFont, ActionTracker.string_to_ints(filename))
-                if (activity.configuration.soundfont != null && activity.configuration.soundfont!! == input_filename) {
+                if (activity.configuration.soundfont != null && activity.configuration.soundfont!! == filename) {
                     activity.get_action_interface().ignore().disable_soundfont()
                 }
 
-                val file = File("${soundfont_dir.absolutePath}/${input_filename}")
+                val file = File("${soundfont_dir.absolutePath}/${filename}")
                 if (file.exists()) {
                     file.delete()
                 }
@@ -1697,7 +1697,6 @@ class ActionTracker {
                     ControlEventType.valueOf(string_from_ints(integers))
                 )
             }
-
             TrackedAction.SaveProject -> {
                 this.save()
             }

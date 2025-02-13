@@ -383,7 +383,7 @@ class MainActivity : AppCompatActivity() {
 
                     try {
                         SoundFont(new_file.path)
-                        this.set_soundfont(new_file.name)
+                        this.get_action_interface().ignore().set_soundfont(new_file.name)
                     } catch (e: Exception) {
                         this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
                         new_file.delete()
@@ -1581,9 +1581,6 @@ class MainActivity : AppCompatActivity() {
             // Failed to change playback_state
             return
         }
-
-
-
 
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         try {

@@ -213,6 +213,7 @@ class ActionTracker {
 
     fun attach_activity(activity: MainActivity) {
         this.activity = activity
+        this.DEBUG_ON = activity.is_debug_on()
     }
 
     fun get_activity(): MainActivity {
@@ -1921,14 +1922,7 @@ class ActionTracker {
         return int_list.joinToString(", ", "listOf(", ")")
     }
 
-    fun enable_tracking() {
-        this.DEBUG_ON = true
+    fun clear() {
         this.action_queue.clear()
     }
-
-    fun disable_tracking() {
-        this.DEBUG_ON = false
-        this.action_queue.clear()
-    }
-
 }

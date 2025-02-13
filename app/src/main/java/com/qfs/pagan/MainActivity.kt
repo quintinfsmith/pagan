@@ -448,7 +448,7 @@ class MainActivity : AppCompatActivity() {
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
-            if (this@MainActivity.get_action_interface().DEBUG_ON) {
+            if (this@MainActivity.is_debug_on()) {
                 this@MainActivity.save_actions()
             }
             this@MainActivity.save_to_backup()
@@ -756,14 +756,8 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.itmDebug -> {
                 val tracker = this.get_action_interface()
-                if (tracker.DEBUG_ON) {
-                    this.save_actions()
-                    tracker.disable_tracking()
-                    this.feedback_msg("SAVED ACTIONS")
-                } else {
-                    tracker.enable_tracking()
-                    this.feedback_msg("START TRACKING")
-                }
+                this.save_actions()
+                this.feedback_msg("SAVED ACTIONS")
 
             }
         }
@@ -1091,7 +1085,7 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
                 options_menu.findItem(R.id.itmAbout).isVisible = true
-                options_menu.findItem(R.id.itmDebug).isVisible = false
+                options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
             }
             else -> {
                 options_menu.findItem(R.id.itmLoadProject).isVisible = false
@@ -2332,6 +2326,7 @@ class MainActivity : AppCompatActivity() {
         val file_name = "$path/generated_$timestamp.json"
         val file = File(file_name)
         file.writeText(generated_code)
+        this.get_action_interface().clear()
     }
 
     fun navigate_import(uri: Uri) {
@@ -2344,5 +2339,9 @@ class MainActivity : AppCompatActivity() {
         if (fragment !is FragmentEditor) {
             this.navigate(R.id.EditorFragment)
         }
+    }
+
+    fun is_debug_on(): Boolean {
+        return this.packageName.contains("pagandev")
     }
 }

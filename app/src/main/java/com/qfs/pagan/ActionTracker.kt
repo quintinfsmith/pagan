@@ -219,7 +219,6 @@ class ActionTracker {
 
 
         fun type_from_ints(int_list: List<Int?>, first_index: Int = 0): ControlEventType {
-            println("LEN ${int_list[first_index]}")
             val name = ByteArray(int_list[first_index]!!) { i: Int ->
                 int_list[i + first_index + 1]!!.toByte()
             }.decodeToString()
@@ -2152,7 +2151,6 @@ class ActionTracker {
                                 TrackedAction.CursorSelectLineCtlRange,
                                 TrackedAction.CursorSelectLeafCtlLine -> {
                                     val str_len = integers[0]!!
-                                    println("$token")
                                     JSONList(
                                         List(integers.size - str_len - 1) { i: Int ->
                                             if (i == 0) {
@@ -2164,7 +2162,6 @@ class ActionTracker {
                                     )
                                 }
                                 else -> {
-                                    println("$token")
                                     JSONList(
                                         List(integers.size) {
                                             JSONInteger(integers[it]!!)

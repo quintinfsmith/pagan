@@ -32,7 +32,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
                // ControlTransition.Convex -> TODO()
             })
             this._transition_button.setOnClickListener {
-                val main = (this.context as MainActivity)
+                val main = this.get_main()
                 main.get_action_interface().set_ctl_transition()
             }
         }

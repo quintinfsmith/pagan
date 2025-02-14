@@ -42,7 +42,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         }
         btnChooseSoundFont.setOnLongClickListener {
             this.get_main().get_action_interface().delete_soundfont()
-            false
+            true
         }
 
         val soundfont_filename = main.configuration.soundfont
@@ -66,8 +66,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         val switch_relative_mode = view.findViewById<Switch>(R.id.sRelativeEnabled)
         switch_relative_mode.isChecked = main.configuration.relative_mode
         switch_relative_mode.setOnCheckedChangeListener { _, enabled: Boolean ->
-            main.configuration.relative_mode = enabled
-            main.save_configuration()
+            main.get_action_interface().set_relative_mode_visibility(enabled)
         }
 
         val switch_clip_release = view.findViewById<Switch>(R.id.sClipSameLineRelease)

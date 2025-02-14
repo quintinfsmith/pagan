@@ -10,7 +10,7 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.qfs.pagan"
+        applicationId "com.qfs.pagandev"
         minSdk 27
         targetSdk 35
         versionCode 94

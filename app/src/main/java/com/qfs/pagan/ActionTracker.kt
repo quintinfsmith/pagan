@@ -14,11 +14,14 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.findNavController
+import com.qfs.json.JSONBoolean
+import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.ControlTransition
@@ -28,8 +31,10 @@ import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import java.io.File
 import kotlin.concurrent.thread
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -118,7 +123,9 @@ class ActionTracker {
         SetTuningTable,
         ImportSong,
         ImportSoundFont,
-        DeleteSoundFont
+        DeleteSoundFont,
+        SetRelativeModeVisibility,
+        SetRelativeMode
     }
 
     companion object {
@@ -139,6 +146,24 @@ class ActionTracker {
                         ActionTracker.string_to_ints(string)
                     }
 
+                    // Boolean
+                    TrackedAction.GoBack,
+                    TrackedAction.SetClipNotes,
+                    TrackedAction.SetRelativeModeVisibility -> {
+                        val value = entry.get_booleann(1)
+                        listOf(
+                            if (value == null) {
+                                null
+                            } else if (value) {
+                                1
+                            } else {
+                                0
+                            }
+                        )
+                    }
+                    TrackedAction.SetTempoAtCursor -> {
+                        listOf(entry.get_float(1).toBits())
+                    }
                     TrackedAction.RepeatSelectionCtlLine,
                     TrackedAction.RepeatSelectionCtlChannel,
                     TrackedAction.RepeatSelectionCtlGlobal,
@@ -194,6 +219,7 @@ class ActionTracker {
 
 
         fun type_from_ints(int_list: List<Int?>, first_index: Int = 0): ControlEventType {
+            println("LEN ${int_list[first_index]}")
             val name = ByteArray(int_list[first_index]!!) { i: Int ->
                 int_list[i + first_index + 1]!!.toByte()
             }.decodeToString()
@@ -265,7 +291,6 @@ class ActionTracker {
             navController.popBackStack()
         }
     }
-
 
     fun move_selection_to_beat(beat_key: BeatKey) {
         this.track(
@@ -417,7 +442,6 @@ class ActionTracker {
     }
 
     fun repeat_selection_std(channel: Int, line_offset: Int, repeat: Int? = null) {
-        this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -431,6 +455,7 @@ class ActionTracker {
 
         if (first_key != second_key) {
             this.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
                 try {
                     opus_manager.overwrite_beat_range_horizontally(
                         channel,
@@ -447,6 +472,7 @@ class ActionTracker {
             }
         } else if (opus_manager.is_percussion(first_key.channel) == opus_manager.is_percussion(channel)) {
             this.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
                 try {
                     opus_manager.overwrite_line(channel, line_offset, first_key, repeat)
                 } catch (e: OpusLayerBase.InvalidOverwriteCall) {
@@ -454,6 +480,7 @@ class ActionTracker {
                 }
             }
         } else {
+            this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
             opus_manager.cursor_select_line(channel, line_offset)
         }
     }
@@ -479,7 +506,6 @@ class ActionTracker {
     }
 
     fun repeat_selection_ctl_line(type: ControlEventType, channel: Int, line_offset: Int, repeat: Int? = null) {
-        this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
 
         val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
@@ -492,6 +518,7 @@ class ActionTracker {
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
                     } else {
@@ -502,6 +529,7 @@ class ActionTracker {
 
             CtlLineLevel.Channel -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat, repeat)
                     } else {
@@ -512,6 +540,7 @@ class ActionTracker {
 
             CtlLineLevel.Global -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat, repeat)
                     } else {
@@ -520,6 +549,7 @@ class ActionTracker {
                 }
             }
             null -> {
+                this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                 opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
             }
         }
@@ -533,7 +563,6 @@ class ActionTracker {
     }
 
     fun repeat_selection_ctl_channel(type: ControlEventType, channel: Int, repeat: Int? = null) {
-        this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
 
         val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
@@ -545,6 +574,7 @@ class ActionTracker {
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                    this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_line_to_channel_overwrite_range_horizontally(type, channel, first, second, repeat)
                     } else {
@@ -554,6 +584,7 @@ class ActionTracker {
             }
             CtlLineLevel.Channel -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                    this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_channel_overwrite_range_horizontally(type, channel, first.channel, first.beat, second.beat, repeat)
                     } else {
@@ -563,6 +594,7 @@ class ActionTracker {
             }
             CtlLineLevel.Global -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                    this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_global_to_channel_overwrite_range_horizontally(type, first.channel, first.beat, second.beat, repeat)
                     } else {
@@ -571,13 +603,14 @@ class ActionTracker {
                 }
             }
             null -> {
+                this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
                 opus_manager.cursor_select_channel_ctl_line(type, channel)
             }
         }
     }
 
     fun cursor_select_global_ctl_line(type: ControlEventType) {
-        this.track(TrackedAction.CursorSelectGlobalCtlLine, listOf(type.i))
+        this.track(TrackedAction.CursorSelectGlobalCtlLine, enum_to_ints(type))
         val opus_manager = this.get_opus_manager()
         opus_manager.cursor_select_global_ctl_line(type)
     }
@@ -652,8 +685,8 @@ class ActionTracker {
     fun cursor_select_line_ctl_range(type: ControlEventType, first_key: BeatKey, second_key: BeatKey) {
         this.track(
             TrackedAction.CursorSelectLineCtlRange,
+            enum_to_ints(type) +
             listOf(
-                type.i,
                 first_key.channel,
                 first_key.line_offset,
                 first_key.beat,
@@ -1147,7 +1180,6 @@ class ActionTracker {
             return
         }
 
-        this.track(TrackedAction.SetTempoAtCursor, listOf(input_value?.toBits()))
 
         val context_menu = fragment.active_context_menu
         if (context_menu !is ContextMenuWithController<*>) {
@@ -1157,6 +1189,7 @@ class ActionTracker {
 
         val event = widget.get_event()
         this.dialog_float_input(main.getString(R.string.dlg_set_tempo), widget.min, widget.max, event.value, input_value) { new_value: Float ->
+            this.track(TrackedAction.SetTempoAtCursor, listOf(new_value.toBits()))
             val new_event = OpusTempoEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
             widget.set_event(new_event)
         }
@@ -1187,6 +1220,130 @@ class ActionTracker {
         activity.save_configuration()
     }
 
+    fun set_relative_mode_visibility(enabled: Boolean) {
+        this.track(TrackedAction.SetRelativeModeVisibility, listOf(if (enabled) 1 else 0))
+        val activity = this.get_activity()
+        activity.configuration.relative_mode = enabled
+        activity.save_configuration()
+    }
+
+    fun set_relative_mode(mode: Int) {
+        this.track(TrackedAction.SetRelativeMode, listOf(mode))
+
+        val activity = this.get_activity()
+        val opus_manager = this.get_opus_manager()
+
+        val current_tree_position = opus_manager.get_actual_position(
+            opus_manager.cursor.get_beatkey(),
+            opus_manager.cursor.get_position()
+        )
+        val current_tree = opus_manager.get_tree(
+            current_tree_position.first,
+            current_tree_position.second
+        )
+
+        val event = current_tree.get_event()
+        if (event == null) {
+            opus_manager.set_relative_mode(mode, false)
+            return
+        }
+        val radix = opus_manager.tuning_map.size
+
+        val new_value = when (event) {
+            is RelativeNoteEvent -> {
+                when (mode) {
+                    /* Abs */
+                    0 -> {
+                        try {
+                            opus_manager.convert_event_to_absolute()
+                            //val current_tree = opus_manager.get_tree()
+                            val new_event = current_tree.get_event()!!
+                            (new_event as AbsoluteNoteEvent).note
+                        } catch (e: OpusLayerBase.NoteOutOfRange) {
+                            opus_manager.set_event_at_cursor(
+                                AbsoluteNoteEvent(0, event.duration)
+                            )
+                            0
+                        }
+                    }
+                    /* + */
+                    1 -> {
+                        if (event.offset < 0) {
+                            val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
+                            opus_manager.set_event_at_cursor(new_event)
+                        }
+                        abs(event.offset)
+                    }
+                    /* - */
+                    2 -> {
+                        if (event.offset > 0) {
+                            val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
+                            opus_manager.set_event_at_cursor(new_event)
+                        }
+                        abs(event.offset)
+                    }
+
+                    else -> null
+                }
+            }
+            is AbsoluteNoteEvent -> {
+                when (mode) {
+                    /* Abs */
+                    0 -> {
+                        event.note
+                    }
+                    /* + */
+                    1 -> {
+                        val cursor = opus_manager.cursor
+                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
+                        if (value >= 0) {
+                            opus_manager.convert_event_to_relative()
+
+                            //val current_tree = opus_manager.get_tree()
+                            val new_event = current_tree.get_event()!!
+                            abs((new_event as RelativeNoteEvent).offset)
+                        } else {
+                            opus_manager.relative_mode = 1
+                            null
+                        }
+
+                    }
+                    /* - */
+                    2 -> {
+                        val cursor = opus_manager.cursor
+                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
+                        if (value <= 0) {
+                            opus_manager.convert_event_to_relative()
+
+                            //val current_tree = opus_manager.get_tree()
+                            val new_event = current_tree.get_event()!!
+                            abs((new_event as RelativeNoteEvent).offset)
+                        } else {
+                            opus_manager.relative_mode = 2
+                            null
+                        }
+                    }
+
+                    else -> null
+                }
+            }
+
+            else -> null
+        }
+
+        val nsOctave: NumberSelector = activity.findViewById(R.id.nsOctave)
+        val nsOffset: NumberSelector = activity.findViewById(R.id.nsOffset)
+        if (new_value == null) {
+            nsOctave.unset_active_button()
+            nsOffset.unset_active_button()
+        } else {
+            nsOctave.setState(new_value / radix, manual = true, surpress_callback = true)
+            nsOffset.setState(new_value % radix, manual = true, surpress_callback = true)
+        }
+
+        opus_manager.relative_mode = mode
+    }
+
     fun delete_soundfont(input_filename: String? = null) {
         val activity = this.get_activity()
         val soundfont_dir = activity.get_soundfont_directory()
@@ -1196,6 +1353,9 @@ class ActionTracker {
 
         for (file in file_list) {
             soundfonts.add(Pair(file.name, file.name))
+        }
+        if (soundfonts.isEmpty()) {
+            return
         }
 
         this.dialog_popup_menu(activity.getString(R.string.dialog_remove_soundfont_title), soundfonts, stub_output = input_filename) { _: Int, filename: String ->
@@ -1736,6 +1896,13 @@ class ActionTracker {
             TrackedAction.DeleteSoundFont -> {
                 this.delete_soundfont(ActionTracker.string_from_ints(integers))
             }
+
+            TrackedAction.SetRelativeModeVisibility -> {
+                this.set_relative_mode_visibility(integers[0] != 0)
+            }
+            TrackedAction.SetRelativeMode -> {
+                this.set_relative_mode(integers[0]!!)
+            }
         }
     }
 
@@ -1954,7 +2121,50 @@ class ActionTracker {
                                 TrackedAction.LoadProject -> {
                                     JSONString(ActionTracker.string_from_ints(integers))
                                 }
+                                // Boolean
+                                TrackedAction.GoBack,
+                                TrackedAction.SetClipNotes,
+                                TrackedAction.SetRelativeModeVisibility -> {
+                                    if (integers.isEmpty()) {
+                                        null
+                                    } else {
+                                        JSONBoolean(integers[0] != 0)
+                                    }
+                                }
+                                TrackedAction.SetTempoAtCursor -> {
+                                    JSONFloat(Float.fromBits(integers[0]!!))
+                                }
+                                TrackedAction.ShowLineController,
+                                TrackedAction.ShowChannelController -> {
+                                    JSONString(string_from_ints(integers))
+                                }
+
+                                TrackedAction.RepeatSelectionCtlLine,
+                                TrackedAction.RepeatSelectionCtlChannel,
+                                TrackedAction.RepeatSelectionCtlGlobal,
+                                TrackedAction.CursorSelectLeafCtlChannel,
+                                TrackedAction.CursorSelectLeafCtlGlobal,
+                                TrackedAction.CursorSelectGlobalCtlLine,
+                                TrackedAction.CursorSelectGlobalCtlRange,
+                                TrackedAction.CursorSelectChannelCtlLine,
+                                TrackedAction.CursorSelectChannelCtlRange,
+                                TrackedAction.CursorSelectLineCtlLine,
+                                TrackedAction.CursorSelectLineCtlRange,
+                                TrackedAction.CursorSelectLeafCtlLine -> {
+                                    val str_len = integers[0]!!
+                                    println("$token")
+                                    JSONList(
+                                        List(integers.size - str_len - 1) { i: Int ->
+                                            if (i == 0) {
+                                                JSONString(ActionTracker.type_from_ints(integers).name)
+                                            } else {
+                                                JSONInteger(integers[i + 1 + str_len]!!)
+                                            }
+                                        }
+                                    )
+                                }
                                 else -> {
+                                    println("$token")
                                     JSONList(
                                         List(integers.size) {
                                             JSONInteger(integers[it]!!)
@@ -1968,7 +2178,6 @@ class ActionTracker {
             }
         )
     }
-
 
     fun from_json(json_list: JSONList) {
         this.action_queue.clear()

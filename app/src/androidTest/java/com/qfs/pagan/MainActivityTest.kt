@@ -213,7 +213,7 @@ class MainActivityTest {
     @Test
     fun mainActivityTest() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val stream = context.assets.open("tests/tracked_actions.json")
+        val stream = context.assets.open("tests/tracked_actions_1.json")
         val bytes = ByteArray(stream.available()) { 0 }
         stream.read(bytes)
         val text = bytes.decodeToString()

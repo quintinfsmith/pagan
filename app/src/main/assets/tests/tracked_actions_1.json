@@ -1,0 +1,14 @@
+[
+    ["NewProject",null],
+    ["OpenSettings", null],
+    ["SetRelativeModeVisibility", true],
+    ["GoBack", null],
+    ["CursorSelectLeaf",[0,0,0]],
+    ["SetRelativeMode", [1]],
+    ["SetRelativeMode", [2]],
+    ["SetRelativeMode", [0]],
+    ["OpenSettings", null],
+    ["SetRelativeModeVisibility", true],
+    ["GoBack", null],
+    ["GoBack", false]
+]

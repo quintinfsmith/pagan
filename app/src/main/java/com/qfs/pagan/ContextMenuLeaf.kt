@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import kotlin.math.abs
@@ -235,114 +234,6 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
-        // TODO: Add to ActionTracker
-        val main = this.get_main()
-        val opus_manager = main.get_opus_manager()
-        val current_tree_position = opus_manager.get_actual_position(
-            opus_manager.cursor.get_beatkey(),
-            opus_manager.cursor.get_position()
-        )
-        val current_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
-
-        val event = current_tree.get_event()
-        if (event == null) {
-            val state = view.getState() ?: return
-            opus_manager.set_relative_mode(state, false)
-            return
-        }
-        val radix = opus_manager.tuning_map.size
-
-        val new_value = when (event) {
-            is RelativeNoteEvent -> {
-                when (view.getState()) {
-                    /* Abs */
-                    0 -> {
-                        try {
-                            opus_manager.convert_event_to_absolute()
-                            //val current_tree = opus_manager.get_tree()
-                            val new_event = current_tree.get_event()!!
-                            (new_event as AbsoluteNoteEvent).note
-                        } catch (e: OpusLayerBase.NoteOutOfRange) {
-                            opus_manager.set_event_at_cursor(
-                                AbsoluteNoteEvent(0, event.duration)
-                            )
-                            0
-                        }
-                    }
-                    /* + */
-                    1 -> {
-                        if (event.offset < 0) {
-                            val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
-                            opus_manager.set_event_at_cursor(new_event)
-                        }
-                        abs(event.offset)
-                    }
-                    /* - */
-                    2 -> {
-                        if (event.offset > 0) {
-                            val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
-                            opus_manager.set_event_at_cursor(new_event)
-                        }
-                        abs(event.offset)
-                    }
-
-                    else -> null
-                }
-            }
-            is AbsoluteNoteEvent -> {
-                when (view.getState()) {
-                    /* Abs */
-                    0 -> {
-                        event.note
-                    }
-                    /* + */
-                    1 -> {
-                        val cursor = opus_manager.cursor
-                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
-                        if (value >= 0) {
-                            opus_manager.convert_event_to_relative()
-
-                            //val current_tree = opus_manager.get_tree()
-                            val new_event = current_tree.get_event()!!
-                            abs((new_event as RelativeNoteEvent).offset)
-                        } else {
-                            opus_manager.relative_mode = 1
-                            null
-                        }
-
-                    }
-                    /* - */
-                    2 -> {
-                        val cursor = opus_manager.cursor
-                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
-                        if (value <= 0) {
-                            opus_manager.convert_event_to_relative()
-
-                            //val current_tree = opus_manager.get_tree()
-                            val new_event = current_tree.get_event()!!
-                            abs((new_event as RelativeNoteEvent).offset)
-                        } else {
-                            opus_manager.relative_mode = 2
-                            null
-                        }
-                    }
-
-                    else -> null
-                }
-            }
-
-            else -> null
-        }
-
-        val nsOctave: NumberSelector = main.findViewById(R.id.nsOctave)
-        val nsOffset: NumberSelector = main.findViewById(R.id.nsOffset)
-        if (new_value == null) {
-            nsOctave.unset_active_button()
-            nsOffset.unset_active_button()
-        } else {
-            nsOctave.setState(new_value / radix, manual = true, surpress_callback = true)
-            nsOffset.setState(new_value % radix, manual = true, surpress_callback = true)
-        }
-        opus_manager.relative_mode = view.getState() ?: 0
+        this.get_main().get_action_interface().set_relative_mode(view.getState() ?: return)
     }
 }

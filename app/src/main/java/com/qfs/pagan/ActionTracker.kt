@@ -217,6 +217,12 @@ class ActionTracker {
             return listOf(initial.size) + initial
         }
 
+        fun sized_string_from_ints(int_list: List<Int?>, first_index: Int = 0): String {
+            val name = ByteArray(int_list[first_index]!!) { i: Int ->
+                int_list[i + first_index + 1]!!.toByte()
+            }.decodeToString()
+            return name
+        }
 
         fun type_from_ints(int_list: List<Int?>, first_index: Int = 0): ControlEventType {
             val name = ByteArray(int_list[first_index]!!) { i: Int ->
@@ -232,6 +238,77 @@ class ActionTracker {
             return ControlTransition.valueOf(name)
         }
 
+        fun item_to_json(item: Pair<TrackedAction, List<Int?>?>): JSONList {
+            val (token, integers) = item
+            return JSONList(
+                listOf(
+                    JSONString(token.name),
+                    if (integers == null) {
+                        null
+                    } else {
+                        when (token) {
+                            // STRING
+                            TrackedAction.ShowLineController,
+                            TrackedAction.ShowChannelController,
+                            TrackedAction.SetCopyMode,
+                            TrackedAction.ImportSong,
+                            TrackedAction.SetProjectName,
+                            TrackedAction.LoadProject -> {
+                                JSONString(ActionTracker.string_from_ints(integers))
+                            }
+                            // Boolean
+                            TrackedAction.GoBack,
+                            TrackedAction.SetClipNotes,
+                            TrackedAction.SetRelativeModeVisibility -> {
+                                if (integers.isEmpty()) {
+                                    null
+                                } else {
+                                    JSONBoolean(integers[0] != 0)
+                                }
+                            }
+                            TrackedAction.SetTempoAtCursor -> {
+                                JSONFloat(Float.fromBits(integers[0]!!))
+                            }
+                            TrackedAction.ShowLineController,
+                            TrackedAction.ShowChannelController -> {
+                                JSONString(string_from_ints(integers))
+                            }
+
+                            TrackedAction.RepeatSelectionCtlLine,
+                            TrackedAction.RepeatSelectionCtlChannel,
+                            TrackedAction.RepeatSelectionCtlGlobal,
+                            TrackedAction.CursorSelectLeafCtlChannel,
+                            TrackedAction.CursorSelectLeafCtlGlobal,
+                            TrackedAction.CursorSelectGlobalCtlLine,
+                            TrackedAction.CursorSelectGlobalCtlRange,
+                            TrackedAction.CursorSelectChannelCtlLine,
+                            TrackedAction.CursorSelectChannelCtlRange,
+                            TrackedAction.CursorSelectLineCtlLine,
+                            TrackedAction.CursorSelectLineCtlRange,
+                            TrackedAction.CursorSelectLeafCtlLine -> {
+                                val str_len = integers[0]!!
+                                JSONList(
+                                    List(integers.size - str_len) { i: Int ->
+                                        if (i == 0) {
+                                            JSONString(ActionTracker.sized_string_from_ints(integers))
+                                        } else {
+                                            JSONInteger(integers[i + str_len]!!)
+                                        }
+                                    }
+                                )
+                            }
+                            else -> {
+                                JSONList(
+                                    List(integers.size) {
+                                        JSONInteger(integers[it]!!)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                )
+            )
+        }
     }
 
     var activity: MainActivity? = null
@@ -799,7 +876,7 @@ class ActionTracker {
 
         val event = context_menu.get_control_event<OpusControlEvent>().copy()
         this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: ControlTransition ->
-            this.track(TrackedAction.SetTransitionAtCursor, listOf(transition.i))
+            this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
             event.transition = transition
             context_menu.widget.set_event(event)
         }
@@ -1761,7 +1838,7 @@ class ActionTracker {
                 this.remove_line(integers[0])
             }
             TrackedAction.SetTransitionAtCursor -> {
-                this.set_ctl_transition(ControlTransition.values()[integers[0]!!])
+                this.set_ctl_transition(ControlTransition.valueOf(ActionTracker.string_from_ints(integers)))
             }
             TrackedAction.SetVolumeAtCursor -> {
                 this.set_volume(integers[0])
@@ -1816,8 +1893,22 @@ class ActionTracker {
             TrackedAction.DrawerClose -> {
                 this.drawer_close()
             }
-            TrackedAction.MergeSelectionIntoBeat -> TODO()
-            TrackedAction.SetCopyMode -> TODO()
+            TrackedAction.MergeSelectionIntoBeat -> {
+                this.merge_selection_into_beat(
+                    BeatKey(
+                        integers[0]!!,
+                        integers[1]!!,
+                        integers[2]!!
+                    )
+                )
+            }
+            TrackedAction.SetCopyMode -> {
+                this.set_copy_mode(
+                    PaganConfiguration.MoveMode.valueOf(
+                        ActionTracker.string_from_ints(integers)
+                    )
+                )
+            }
             TrackedAction.OpenSettings -> {
                 this.open_settings()
             }
@@ -2106,72 +2197,7 @@ class ActionTracker {
     fun to_json(): JSONObject {
         return JSONList(
             List(this.action_queue.size) { i: Int ->
-                val (token, integers) = this.action_queue[i]
-                JSONList(
-                    listOf(
-                        JSONString(token.name),
-                        if (integers == null) {
-                            null
-                        } else {
-                            when (token) {
-                                // STRING
-                                TrackedAction.ImportSong,
-                                TrackedAction.SetProjectName,
-                                TrackedAction.LoadProject -> {
-                                    JSONString(ActionTracker.string_from_ints(integers))
-                                }
-                                // Boolean
-                                TrackedAction.GoBack,
-                                TrackedAction.SetClipNotes,
-                                TrackedAction.SetRelativeModeVisibility -> {
-                                    if (integers.isEmpty()) {
-                                        null
-                                    } else {
-                                        JSONBoolean(integers[0] != 0)
-                                    }
-                                }
-                                TrackedAction.SetTempoAtCursor -> {
-                                    JSONFloat(Float.fromBits(integers[0]!!))
-                                }
-                                TrackedAction.ShowLineController,
-                                TrackedAction.ShowChannelController -> {
-                                    JSONString(string_from_ints(integers))
-                                }
-
-                                TrackedAction.RepeatSelectionCtlLine,
-                                TrackedAction.RepeatSelectionCtlChannel,
-                                TrackedAction.RepeatSelectionCtlGlobal,
-                                TrackedAction.CursorSelectLeafCtlChannel,
-                                TrackedAction.CursorSelectLeafCtlGlobal,
-                                TrackedAction.CursorSelectGlobalCtlLine,
-                                TrackedAction.CursorSelectGlobalCtlRange,
-                                TrackedAction.CursorSelectChannelCtlLine,
-                                TrackedAction.CursorSelectChannelCtlRange,
-                                TrackedAction.CursorSelectLineCtlLine,
-                                TrackedAction.CursorSelectLineCtlRange,
-                                TrackedAction.CursorSelectLeafCtlLine -> {
-                                    val str_len = integers[0]!!
-                                    JSONList(
-                                        List(integers.size - str_len - 1) { i: Int ->
-                                            if (i == 0) {
-                                                JSONString(ActionTracker.type_from_ints(integers).name)
-                                            } else {
-                                                JSONInteger(integers[i + 1 + str_len]!!)
-                                            }
-                                        }
-                                    )
-                                }
-                                else -> {
-                                    JSONList(
-                                        List(integers.size) {
-                                            JSONInteger(integers[it]!!)
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    )
-                )
+                ActionTracker.item_to_json(this.action_queue[i])
             }
         )
     }

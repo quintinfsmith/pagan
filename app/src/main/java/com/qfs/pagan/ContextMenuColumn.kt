@@ -53,20 +53,20 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
     }
 
     fun click_button_remove_beat() {
-        this.get_main().get_action_interface().remove_beat_at_cursor(1)
+        this.get_activity().get_action_interface().remove_beat_at_cursor(1)
     }
 
     fun long_click_button_remove_beat(): Boolean {
-        this.get_main().get_action_interface().remove_beat_at_cursor()
+        this.get_activity().get_action_interface().remove_beat_at_cursor()
         return true
     }
 
     fun click_button_insert_beat() {
-        this.get_main().get_action_interface().insert_beat_after_cursor(1)
+        this.get_activity().get_action_interface().insert_beat_after_cursor(1)
     }
 
     fun long_click_button_insert_beat(): Boolean {
-        this.get_main().get_action_interface().insert_beat_after_cursor()
+        this.get_activity().get_action_interface().insert_beat_after_cursor()
         return true
     }
 }

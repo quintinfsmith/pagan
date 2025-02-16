@@ -113,7 +113,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     }
 
     fun click_button_unset() {
-        this.get_main().get_action_interface().unset()
+        this.get_activity().get_action_interface().unset()
     }
     fun click_button_remove() {
         val opus_manager = this.get_opus_manager()
@@ -121,25 +121,25 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     }
 
     fun long_click_button_remove(): Boolean {
-        this.get_main().get_action_interface().unset_root()
+        this.get_activity().get_action_interface().unset_root()
         return false
     }
 
     fun click_button_insert() {
-        this.get_main().get_action_interface().insert_leaf(1)
+        this.get_activity().get_action_interface().insert_leaf(1)
     }
 
     fun long_click_button_insert(): Boolean {
-        this.get_main().get_action_interface().insert_leaf()
+        this.get_activity().get_action_interface().insert_leaf()
         return false
     }
 
     fun click_button_split() {
-        this.get_main().get_action_interface().split(2)
+        this.get_activity().get_action_interface().split(2)
     }
 
     fun long_click_button_split(): Boolean {
-        this.get_main().get_action_interface().split()
+        this.get_activity().get_action_interface().split()
         return false
     }
 
@@ -229,11 +229,11 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     }
 
     private fun click_button_duration() {
-        this.get_main().get_action_interface().set_ctl_duration<T>()
+        this.get_activity().get_action_interface().set_ctl_duration<T>()
     }
 
     private fun long_click_button_duration(): Boolean {
-        this.get_main().get_action_interface().set_ctl_duration<T>(1)
+        this.get_activity().get_action_interface().set_ctl_duration<T>(1)
         return true
     }
 }

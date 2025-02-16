@@ -37,11 +37,11 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         }
 
         this.button_toggle_line_control.setOnClickListener {
-            this.get_main().get_action_interface().toggle_controller_visibility()
+            this.get_activity().get_action_interface().toggle_controller_visibility()
         }
 
         this.button_remove_line_control.setOnClickListener {
-            this.get_main().get_action_interface().remove_controller()
+            this.get_activity().get_action_interface().remove_controller()
         }
 
         this.secondary.addView(this.widget as View)

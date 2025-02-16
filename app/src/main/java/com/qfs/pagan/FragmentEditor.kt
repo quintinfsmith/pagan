@@ -41,7 +41,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
     override fun onResume() {
         super.onResume()
-        val main = this.get_main()
+        val main = this.get_activity()
         main.setup_project_config_drawer()
         val opus_manager = main.get_opus_manager()
         this.keyboard_input_interface = KeyboardInputInterface(opus_manager)
@@ -69,7 +69,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // essentially dup this in onSaveInstanceState
         this.backup_position()
 
-        val main = this.get_main()
+        val main = this.get_activity()
         main.save_to_backup()
 
         val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -82,7 +82,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun backup_position() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val editor_table = main.findViewById<EditorTable>(R.id.etEditorTable)
         val (scroll_x, scroll_y) = editor_table.get_scroll_offset()
 
@@ -93,7 +93,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun restore_view_model_position() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val editor_table = main.findViewById<EditorTable?>(R.id.etEditorTable)
         editor_table.precise_scroll(
             this.view_model.scroll_x,
@@ -105,7 +105,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // Editor table gets clears onDestroy because the fragment
         // can be stopped and started without destroying
         // and if it's not destroyed onViewStateRestored won't be called
-        val main = this.get_main()
+        val main = this.get_activity()
         val editor_table = main.findViewById<EditorTable?>(R.id.etEditorTable)
         editor_table?.clear_column_map()
         editor_table?.clear()
@@ -120,7 +120,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun load_from_bkp() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
         val bytes = FileInputStream(bkp_json_path).readBytes()
@@ -129,7 +129,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     fun reload_from_bkp() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         val bkp_json_path = "${main.applicationInfo.dataDir}/.bkp.json"
         if (!File(bkp_json_path).exists()) {
@@ -143,7 +143,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
@@ -201,7 +201,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
-            val main = this.get_main()
+            val main = this.get_activity()
             main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
@@ -221,7 +221,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportMidi.name) { _, bundle: Bundle? ->
-            val main = this.get_main()
+            val main = this.get_activity()
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportMidi, bundle)
@@ -265,7 +265,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
             this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportGeneral, bundle)
-            val main = this.get_main()
+            val main = this.get_activity()
             main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
@@ -318,7 +318,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         }
                     }
 
-                    this.get_main().feedback_msg(fallback_msg)
+                    this.get_activity().feedback_msg(fallback_msg)
                 }
 
                 main.runOnUiThread {
@@ -333,7 +333,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
-            val main = this.get_main()
+            val main = this.get_activity()
             main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
@@ -356,7 +356,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         }
                     }
 
-                    this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
+                    this.get_activity().feedback_msg(getString(R.string.feedback_import_fail))
                 }
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
@@ -368,7 +368,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         setFragmentResultListener(IntentFragmentToken.MostRecent.name) { _, _ ->
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
-            val main = this.get_main()
+            val main = this.get_activity()
 
             main.loading_reticle_show(getString(R.string.reticle_msg_load_project))
 
@@ -392,7 +392,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                         }
                     }
 
-                    this.get_main().feedback_msg(getString(R.string.feedback_import_fail))
+                    this.get_activity().feedback_msg(getString(R.string.feedback_import_fail))
                 }
                 main.runOnUiThread {
                     editor_table?.visibility = View.VISIBLE
@@ -405,7 +405,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
             editor_table.clear()
 
-            val main = this.get_main()
+            val main = this.get_activity()
             main.loading_reticle_show(getString(R.string.reticle_msg_new))
             main.runOnUiThread {
                 editor_table?.visibility = View.INVISIBLE
@@ -468,7 +468,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
     }
     fun on_show_context_menus(a: View, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int): Boolean {
-        val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+        val editor_table = this.get_activity().findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.force_scroll_to_cursor_vertical()
         return false
     }
@@ -498,7 +498,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
 
     // fun scroll_to_cursor(cursor: OpusManagerCursor, force: Boolean = false) {
-    //     val opus_manager = this.get_main().get_opus_manager()
+    //     val opus_manager = this.get_activity().get_opus_manager()
     //     val y = when (cursor.mode) {
     //         OpusManagerCursor.CursorMode.Line,
     //         OpusManagerCursor.CursorMode.Single -> {
@@ -575,8 +575,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     //     }
 
     //     // If the row is out of view, scrolls to it
-    //     this.get_main().runOnUiThread {
-    //         val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+    //     this.get_activity().runOnUiThread {
+    //         val editor_table = this.get_activity().findViewById<EditorTable>(R.id.etEditorTable)
     //         editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width, force = force)
     //     }
     // }
@@ -586,7 +586,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
         this.clear_context_menu()
 
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         val channels = opus_manager.get_all_channels()
 
@@ -646,7 +646,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
         this.clear_context_menu()
 
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.cursor
         val controller_set = opus_manager.get_active_active_control_set() ?: return
@@ -714,7 +714,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     internal fun set_context_menu_column() {
-        if (this.get_main().in_playback()) {
+        if (this.get_activity().in_playback()) {
             this.clear_context_menu()
             return
         }
@@ -781,7 +781,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val scroll_bar = view.findViewById<SeekBar>(R.id.shortcut_scrollbar)!!
         val title_text = view.findViewById<TextView>(R.id.shortcut_title)!!
 
-        val opus_manager = this.get_main().get_opus_manager()
+        val opus_manager = this.get_activity().get_opus_manager()
         scroll_bar.max = opus_manager.beat_count - 1
         scroll_bar.progress = this._get_start_column()
 
@@ -800,11 +800,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         val dialog = AlertDialog.Builder(this.activity)
         dialog.setView(view)
-        this.get_main()._adjust_dialog_colors(dialog.show())
+        this.get_activity()._adjust_dialog_colors(dialog.show())
     }
 
     private fun _get_start_column(): Int {
-        val opus_manager = this.get_main().get_opus_manager()
+        val opus_manager = this.get_activity().get_opus_manager()
         val cursor = opus_manager.cursor
         return when (cursor.mode) {
             OpusManagerCursor.CursorMode.Single,
@@ -815,7 +815,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 cursor.range!!.first.beat
             }
             else -> {
-                val editor_table = this.get_main().findViewById<EditorTable>(R.id.etEditorTable)
+                val editor_table = this.get_activity().findViewById<EditorTable>(R.id.etEditorTable)
                 editor_table.get_first_visible_column_index()
             }
         }

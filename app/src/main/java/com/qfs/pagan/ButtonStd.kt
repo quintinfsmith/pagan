@@ -21,7 +21,7 @@ class ButtonStd(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
             .5f
         }
     }
-    fun get_main(): MainActivity {
+    fun get_activity(): MainActivity {
         var context = this.context
         while (context !is MainActivity) {
             context = (context as ContextThemeWrapper).baseContext

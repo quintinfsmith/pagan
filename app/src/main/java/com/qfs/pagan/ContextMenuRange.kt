@@ -28,11 +28,11 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
 
     override fun setup_interactions() {
         this.button_erase.setOnClickListener {
-            this.get_main().get_action_interface().unset()
+            this.get_activity().get_action_interface().unset()
         }
 
         this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
-            val main = this.get_main()
+            val main = this.get_activity()
             val new_mode = when (button_id) {
                 R.id.rbMoveModeMove -> PaganConfiguration.MoveMode.MOVE
                 R.id.rbMoveModeCopy -> PaganConfiguration.MoveMode.COPY
@@ -44,7 +44,7 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
     }
 
     override fun refresh() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
 
         this.radio_mode.check(when (main.configuration.move_mode) {

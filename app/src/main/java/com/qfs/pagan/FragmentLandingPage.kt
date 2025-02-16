@@ -29,24 +29,24 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
 
         btn_settings.setOnClickListener {
-            this.get_main().get_action_interface().open_settings()
+            this.get_activity().get_action_interface().open_settings()
         }
 
         btn_newProject.setOnClickListener {
-            this.get_main().get_action_interface().new_project()
+            this.get_activity().get_action_interface().new_project()
         }
 
-        val bkp_json_path = "${this.get_main().applicationInfo.dataDir}/.bkp.json"
+        val bkp_json_path = "${this.get_activity().applicationInfo.dataDir}/.bkp.json"
         if (File(bkp_json_path).exists()) {
             btn_mostRecent.setOnClickListener {
                 this.setFragmentResult(IntentFragmentToken.MostRecent.name, bundleOf())
-                this.get_main().navigate(R.id.EditorFragment)
+                this.get_activity().navigate(R.id.EditorFragment)
             }
         } else {
             btn_mostRecent.visibility = View.GONE
         }
 
-        if (this.get_main().has_projects_saved()) {
+        if (this.get_activity().has_projects_saved()) {
             //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
             // but right now i  think this is the only place this is a problem
             var lockout = false
@@ -55,7 +55,7 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
                     return@setOnClickListener
                 }
                 lockout = true
-                this.get_main().dialog_load_project()
+                this.get_activity().dialog_load_project()
                 thread {
                     Thread.sleep(1000)
                     lockout = false
@@ -67,10 +67,10 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         }
 
         btn_importMidi.setOnClickListener {
-            this.get_main().select_import_file()
+            this.get_activity().select_import_file()
         }
 
-        val main = this.get_main()
+        val main = this.get_activity()
         if (main.is_soundfont_available()) {
             this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.GONE
         }  else {
@@ -85,6 +85,6 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
 
     override fun onResume() {
         super.onResume()
-        this.get_main().set_title_text("${getString(R.string.app_name)} ${getString(R.string.app_version)}")
+        this.get_activity().set_title_text("${getString(R.string.app_name)} ${getString(R.string.app_version)}")
     }
 }

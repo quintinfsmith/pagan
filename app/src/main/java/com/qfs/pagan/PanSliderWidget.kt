@@ -6,7 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
-import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.ImageView
@@ -37,14 +36,6 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
         init {
             val that = this@PanSliderWidget
             this.relative_handle_point = (that.progress - that.min).toFloat() / (that.max - that.min).toFloat()
-        }
-
-        fun get_main_activity(): MainActivity {
-            var working_context = this@PanSliderWidget.context
-            while (working_context !is MainActivity) {
-                working_context = (working_context as ContextThemeWrapper).baseContext
-            }
-            return working_context
         }
 
         override fun onDraw(canvas: Canvas) {

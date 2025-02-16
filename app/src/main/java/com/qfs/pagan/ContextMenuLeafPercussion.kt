@@ -122,42 +122,42 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     }
 
     fun click_button_duration() {
-        this.get_main().get_action_interface().set_duration()
+        this.get_activity().get_action_interface().set_duration()
     }
 
     fun click_button_split() {
-        this.get_main().get_action_interface().split(2)
+        this.get_activity().get_action_interface().split(2)
     }
 
     fun click_button_insert() {
-        this.get_main().get_action_interface().insert_leaf(1)
+        this.get_activity().get_action_interface().insert_leaf(1)
     }
 
     fun click_button_remove() {
-        this.get_main().get_action_interface().remove_at_cursor()
+        this.get_activity().get_action_interface().remove_at_cursor()
     }
 
     fun long_click_button_split(): Boolean {
-        this.get_main().get_action_interface().split()
+        this.get_activity().get_action_interface().split()
         return true
     }
 
     fun long_click_button_insert(): Boolean {
-        this.get_main().get_action_interface().insert_leaf()
+        this.get_activity().get_action_interface().insert_leaf()
         return true
     }
 
     fun long_click_button_duration(): Boolean {
-        this.get_main().get_action_interface().set_duration(1)
+        this.get_activity().get_action_interface().set_duration(1)
         return true
     }
 
     fun long_click_button_remove(): Boolean {
-        this.get_main().get_action_interface().unset_root()
+        this.get_activity().get_action_interface().unset_root()
         return true
     }
 
     private fun click_button_unset() {
-        this.get_main().get_action_interface().toggle_percussion()
+        this.get_activity().get_action_interface().toggle_percussion()
     }
 }

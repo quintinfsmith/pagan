@@ -37,7 +37,7 @@ abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_
         }
     }
 
-    fun get_main(): MainActivity {
+    fun get_activity(): MainActivity {
         var working_context = this.context
         while (working_context !is MainActivity) {
             working_context = (working_context as ContextThemeWrapper).baseContext

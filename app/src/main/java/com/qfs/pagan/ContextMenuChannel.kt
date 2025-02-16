@@ -29,7 +29,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     }
 
     override fun refresh() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Channel) {
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
@@ -119,32 +119,32 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-            this.get_main().get_action_interface().show_hidden_channel_controller()
+            this.get_activity().get_action_interface().show_hidden_channel_controller()
         }
     }
 
     fun click_button_insert_channel() {
-        this.get_main().get_action_interface().insert_channel()
+        this.get_activity().get_action_interface().insert_channel()
     }
 
     fun long_click_button_insert_channel(): Boolean {
-        this.get_main().get_action_interface().insert_channel()
+        this.get_activity().get_action_interface().insert_channel()
         return true
     }
 
     fun click_button_remove_channel() {
-        this.get_main().get_action_interface().remove_channel()
+        this.get_activity().get_action_interface().remove_channel()
     }
 
     fun long_click_button_remove_channel(): Boolean {
-        this.get_main().get_action_interface().remove_channel()
+        this.get_activity().get_action_interface().remove_channel()
         return true
     }
 
     private fun interact_choose_instrument() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        this.get_main().get_action_interface().set_channel_instrument(cursor.channel)
+        this.get_activity().get_action_interface().set_channel_instrument(cursor.channel)
     }
 
 }

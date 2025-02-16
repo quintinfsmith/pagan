@@ -23,7 +23,7 @@ class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container:
             this.get_opus_manager().unset()
         }
         this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
-            val main = this.get_main()
+            val main = this.get_activity()
             main.configuration.move_mode = when (button_id) {
                 R.id.rbMoveModeMove -> PaganConfiguration.MoveMode.MOVE
                 R.id.rbMoveModeCopy -> PaganConfiguration.MoveMode.COPY
@@ -36,7 +36,7 @@ class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container:
     }
 
     override fun refresh() {
-        val main = this.get_main()
+        val main = this.get_activity()
         this.radio_mode.check(when (main.configuration.move_mode) {
             PaganConfiguration.MoveMode.MOVE -> R.id.rbMoveModeMove
             PaganConfiguration.MoveMode.COPY -> R.id.rbMoveModeCopy

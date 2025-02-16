@@ -48,7 +48,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     }
 
     override fun refresh() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.cursor
         if (cursor.mode != OpusManagerCursor.CursorMode.Line) {
@@ -145,31 +145,31 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-            this.get_main().get_action_interface().show_hidden_line_controller()
+            this.get_activity().get_action_interface().show_hidden_line_controller()
             //this.click_button_toggle_volume_control()
         }
     }
 
     fun click_button_insert_line() {
-        this.get_main().get_action_interface().insert_line(1)
+        this.get_activity().get_action_interface().insert_line(1)
     }
 
     fun long_click_button_insert_line(): Boolean {
-        this.get_main().get_action_interface().insert_line()
+        this.get_activity().get_action_interface().insert_line()
         return true
     }
 
     fun click_button_remove_line() {
-        this.get_main().get_action_interface().remove_line(1)
+        this.get_activity().get_action_interface().remove_line(1)
     }
 
     fun long_click_button_remove_line(): Boolean {
-        this.get_main().get_action_interface().remove_line()
+        this.get_activity().get_action_interface().remove_line()
         return true
     }
 
     private fun interact_btnChoosePercussion() {
-        this.get_main().get_action_interface().set_percussion_instrument()
+        this.get_activity().get_action_interface().set_percussion_instrument()
     }
 
     override fun get_widget(): ControlWidget<OpusVolumeEvent> {

@@ -23,7 +23,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val main = this.get_main()
+        val main = this.get_activity()
 
         if (main.is_soundfont_available()) {
             this.binding.root.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
@@ -41,7 +41,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             this.interact_btnChooseSoundFont()
         }
         btnChooseSoundFont.setOnLongClickListener {
-            this.get_main().get_action_interface().delete_soundfont()
+            this.get_activity().get_action_interface().delete_soundfont()
             true
         }
 
@@ -137,7 +137,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     }
 
     private fun interact_btnChooseSoundFont() {
-        val soundfont_dir = this.get_main().get_soundfont_directory()
+        val soundfont_dir = this.get_activity().get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
         val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), this.resources.getString(R.string.no_soundfont)) )
@@ -147,9 +147,9 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             soundfonts.add(Pair(Pair(1, file.name), file.name))
         }
 
-        this.get_main().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { _: Int, pair: Pair<Int, String?> ->
+        this.get_activity().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { _: Int, pair: Pair<Int, String?> ->
             val (mode, path) = pair
-            val activity = this.get_main()
+            val activity = this.get_activity()
             val tracker = activity.get_action_interface()
             when (mode) {
                 0 -> tracker.disable_soundfont()
@@ -160,7 +160,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     }
 
     private fun dialog_remove_soundfont() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val soundfont_dir = main.get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
@@ -177,7 +177,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     }
 
     private fun _delete_soundfont(filename: String) {
-        val main = this.get_main()
+        val main = this.get_activity()
         if (main.configuration.soundfont != null && main.configuration.soundfont!! == filename) {
             main.get_action_interface().ignore().disable_soundfont()
         }

@@ -97,7 +97,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 return@setOnClickListener
             }
 
-            this.get_main().get_action_interface().insert_leaf(1)
+            this.get_activity().get_action_interface().insert_leaf(1)
         }
 
         this.button_insert.setOnLongClickListener {
@@ -105,13 +105,13 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 return@setOnLongClickListener false
             }
 
-            this.get_main().get_action_interface().insert_leaf()
+            this.get_activity().get_action_interface().insert_leaf()
             true
         }
     }
 
     override fun refresh() {
-        val main = this.get_main()
+        val main = this.get_activity()
         val opus_manager = this.get_opus_manager()
 
         val radix = opus_manager.tuning_map.size
@@ -187,53 +187,53 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     }
 
     private fun click_button_duration() {
-        this.get_main().get_action_interface().set_duration()
+        this.get_activity().get_action_interface().set_duration()
     }
 
     private fun click_button_split() {
-        this.get_main().get_action_interface().split(2)
+        this.get_activity().get_action_interface().split(2)
     }
 
     private fun click_button_remove() {
-        val main = this.get_main()
+        val main = this.get_activity()
         main.get_action_interface().remove_at_cursor()
     }
 
     private fun long_click_button_split(): Boolean {
-        val main = this.get_main()
+        val main = this.get_activity()
         main.get_action_interface().split()
         return true
     }
 
     private fun long_click_button_duration(): Boolean {
-        val main = this.get_main()
+        val main = this.get_activity()
         main.get_action_interface().set_duration(1)
         return true
     }
 
     private fun long_click_button_remove(): Boolean {
-        val main = this.get_main()
+        val main = this.get_activity()
         main.get_action_interface().unset_root()
         return true
     }
 
     private fun click_button_unset() {
-        this.get_main().get_action_interface().unset()
+        this.get_activity().get_action_interface().unset()
     }
 
     private fun on_offset_change(view: NumberSelector) {
-        val main = this.get_main()
+        val main = this.get_activity()
         val progress = view.getState()!!
         main.get_action_interface().set_offset(progress)
     }
 
     private fun on_octave_change(view: NumberSelector) {
-        val main = this.get_main()
+        val main = this.get_activity()
         val progress = view.getState()!!
         main.get_action_interface().set_octave(progress)
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
-        this.get_main().get_action_interface().set_relative_mode(view.getState() ?: return)
+        this.get_activity().get_action_interface().set_relative_mode(view.getState() ?: return)
     }
 }

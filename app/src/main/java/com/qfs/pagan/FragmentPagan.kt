@@ -24,14 +24,16 @@ abstract class FragmentPagan<T: ViewBinding>: Fragment() {
 
     abstract fun inflate(inflater: LayoutInflater, container: ViewGroup?): T
 
-    internal fun get_main(): MainActivity {
+    internal fun get_activity(): MainActivity {
         return this.activity!! as MainActivity
     }
 
     override fun onResume() {
         super.onResume()
-        this.get_main().update_menu_options()
-        this.get_main().update_title_text()
+        this.get_activity().apply {
+            update_menu_options()
+            update_title_text()
+        }
     }
 
 

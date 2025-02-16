@@ -14,6 +14,7 @@ class ActionTrackerUnitTest {
         for (enum in ActionTracker.TrackedAction.values()) {
             val input = when (enum) {
                 // -------------- No arguments --------------
+                ActionTracker.TrackedAction.ToggleControllerVisibility,
                 ActionTracker.TrackedAction.TogglePercussionVisibility,
                 ActionTracker.TrackedAction.Unset,
                 ActionTracker.TrackedAction.UnsetRoot,
@@ -60,7 +61,6 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
                 ActionTracker.TrackedAction.SetPanAtCursor,
                 ActionTracker.TrackedAction.SetSampleRate,
-                ActionTracker.TrackedAction.ToggleControllerVisibility,
                 ActionTracker.TrackedAction.InsertLine,
                 ActionTracker.TrackedAction.RemoveLine,
                 ActionTracker.TrackedAction.InsertChannel,
@@ -190,6 +190,7 @@ class ActionTrackerUnitTest {
                 "Failed to convert ${enum.name} to json Correctly",
                 when (enum) {
                     // -------------- No arguments --------------
+                    ActionTracker.TrackedAction.ToggleControllerVisibility,
                     ActionTracker.TrackedAction.TogglePercussionVisibility,
                     ActionTracker.TrackedAction.Unset,
                     ActionTracker.TrackedAction.UnsetRoot,
@@ -235,7 +236,6 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
                     ActionTracker.TrackedAction.SetPanAtCursor,
                     ActionTracker.TrackedAction.SetSampleRate,
-                    ActionTracker.TrackedAction.ToggleControllerVisibility,
                     ActionTracker.TrackedAction.InsertLine,
                     ActionTracker.TrackedAction.RemoveLine,
                     ActionTracker.TrackedAction.InsertChannel,

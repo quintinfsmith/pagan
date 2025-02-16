@@ -83,7 +83,6 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -710,6 +709,7 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onSupportNavigateUp(): Boolean {
+        println("OK...")
         val navController = this.findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
     }
@@ -734,8 +734,7 @@ class MainActivity : AppCompatActivity() {
                 if (fragment is FragmentEditor) {
                     this.drawer_open()
                 } else {
-                    val navController = findNavController(R.id.nav_host_fragment_content_main)
-                    navController.popBackStack()
+                    this.get_action_interface().go_back()
                 }
             }
 

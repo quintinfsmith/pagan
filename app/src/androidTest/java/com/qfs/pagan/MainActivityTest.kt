@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.GravityCompat
@@ -213,7 +214,7 @@ class MainActivityTest {
     @Test
     fun mainActivityTest() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val stream = context.assets.open("tests/tracked_actions.json")
+        val stream = context.assets.open("tests/tracked_actions_1.json")
         val bytes = ByteArray(stream.available()) { 0 }
         stream.read(bytes)
         val text = bytes.decodeToString()
@@ -224,7 +225,11 @@ class MainActivityTest {
             for (i in 0 until action_list.list.size) {
                 val item = action_list.get_list(i)
                 val (token, intlist) = ActionTracker.from_json_entry(item)
-                this.run_action(token, intlist)
+                try {
+                    this.run_action(token, intlist)
+                } catch (e: Exception) {
+                    throw Exception("$i) Fail - $item")
+                }
             }
         }
     }

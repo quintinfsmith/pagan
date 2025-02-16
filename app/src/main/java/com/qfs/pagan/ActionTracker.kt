@@ -125,7 +125,8 @@ class ActionTracker {
         ImportSoundFont,
         DeleteSoundFont,
         SetRelativeModeVisibility,
-        SetRelativeMode
+        SetRelativeMode,
+        SwapLines
     }
 
     companion object {
@@ -155,16 +156,20 @@ class ActionTracker {
                     TrackedAction.GoBack,
                     TrackedAction.SetClipNotes,
                     TrackedAction.SetRelativeModeVisibility -> {
-                        val value = entry.get_booleann(1)
-                        listOf(
-                            if (value == null) {
-                                null
-                            } else if (value) {
-                                1
-                            } else {
-                                0
-                            }
-                        )
+                        if (entry.list.size == 1) {
+                            listOf()
+                        } else {
+                            val value = entry.get_booleann(1)
+                            listOf(
+                                if (value == null) {
+                                    null
+                                } else if (value) {
+                                    1
+                                } else {
+                                    0
+                                }
+                            )
+                        }
                     }
                     TrackedAction.SetTempoAtCursor -> {
                         listOf(entry.get_float(1).toBits())
@@ -420,6 +425,22 @@ class ActionTracker {
         val activity = this.get_activity()
         activity.project_move_to_copy()
         this.ignore().drawer_close()
+    }
+
+    fun swap_lines(from_channel: Int, from_line: Int, to_channel: Int, to_line: Int) {
+        this.track(TrackedAction.SwapLines, listOf(from_channel, from_line, to_channel, to_line))
+        val opus_manager = this.get_opus_manager()
+        try {
+            opus_manager.swap_lines(
+                from_channel,
+                from_line,
+                to_channel,
+                to_line
+            )
+        } catch (e: OpusLayerBase.IncompatibleChannelException) {
+            val activity = this.get_activity()
+            activity.feedback_msg(activity.getString(R.string.std_percussion_swap))
+        }
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
@@ -1579,8 +1600,8 @@ class ActionTracker {
             return
         }
 
-        this.action_queue.add(Pair(token, args))
         Log.d("PaganTracker", "Tracked $token")
+        this.action_queue.add(Pair(token, args))
     }
 
     fun get_opus_manager(): OpusManager {
@@ -1843,7 +1864,7 @@ class ActionTracker {
                 this.remove_line(integers[0])
             }
             TrackedAction.SetTransitionAtCursor -> {
-                this.set_ctl_transition(ControlTransition.valueOf(ActionTracker.string_from_ints(integers)))
+                this.set_ctl_transition(ControlTransition.valueOf(string_from_ints(integers)))
             }
             TrackedAction.SetVolumeAtCursor -> {
                 this.set_volume(integers[0])
@@ -1910,7 +1931,7 @@ class ActionTracker {
             TrackedAction.SetCopyMode -> {
                 this.set_copy_mode(
                     PaganConfiguration.MoveMode.valueOf(
-                        ActionTracker.string_from_ints(integers)
+                        string_from_ints(integers)
                     )
                 )
             }
@@ -1985,11 +2006,11 @@ class ActionTracker {
             }
 
             TrackedAction.ImportSoundFont -> {
-                this.import_soundfont(Uri.parse(ActionTracker.string_from_ints(integers)))
+                this.import_soundfont(Uri.parse(string_from_ints(integers)))
             }
 
             TrackedAction.DeleteSoundFont -> {
-                this.delete_soundfont(ActionTracker.string_from_ints(integers))
+                this.delete_soundfont(string_from_ints(integers))
             }
 
             TrackedAction.SetRelativeModeVisibility -> {
@@ -1997,6 +2018,10 @@ class ActionTracker {
             }
             TrackedAction.SetRelativeMode -> {
                 this.set_relative_mode(integers[0]!!)
+            }
+
+            TrackedAction.SwapLines -> {
+                this.swap_lines(integers[0]!!, integers[1]!!, integers[2]!!, integers[3]!!)
             }
         }
     }

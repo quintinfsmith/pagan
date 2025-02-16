@@ -30,16 +30,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
                         val (from_channel, from_line) = adapter.dragging_position!!
                         val (to_channel, to_line) = opus_manager.get_channel_and_line_offset(pointer)
                         if (from_channel != to_channel || from_line != to_line) {
-                            try {
-                                opus_manager.swap_lines(
-                                    from_channel,
-                                    from_line,
-                                    to_channel,
-                                    to_line
-                                )
-                            } catch (e: OpusLayerBase.IncompatibleChannelException) {
-                                this.get_activity().feedback_msg(context.getString(R.string.std_percussion_swap))
-                            }
+                            this.get_activity().get_action_interface().swap_lines(from_channel, from_line, to_channel, to_line)
                         }
                     }
                     adapter.stop_dragging()

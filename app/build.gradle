@@ -2,7 +2,6 @@ plugins {
     id 'com.android.application'
     id "org.jetbrains.kotlin.android" version "1.8.0"
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'
-    id "jacoco"
 }
 
 android {
@@ -18,9 +17,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    jacoco {
-        version = "0.8.12"
-    }
     buildTypes {
         release {
             minifyEnabled true
@@ -60,30 +56,3 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
-
-tasks.create(name: "unitTestCoverageReport", type: JacocoReport, dependsOn: "testDebugUnitTest") {
-    group = "Verification" // existing group containing tasks for generating linting reports etc.
-    description = "Generate Jacoco coverage reports for the debug build."
-
-    reports {
-        // human readable (written into './build/reports/jacoco/unitTestCoverageReport/html')
-        html {
-            enabled true
-        }
-        // CI-readable (written into './build/reports/jacoco/unitTestCoverageReport/unitTestCoverageReport.xml')
-        xml {
-            enabled true
-        }
-    }
-
-    // Execution data generated when running the tests against classes instrumented by the JaCoCo agent.
-    // This is enabled with 'enableUnitTestCoverage' in the 'debug' build type.
-    executionData.from = "${project.buildDir}/outputs/unit_test_code_coverage/testDebugUnitTest/testLocalDebugUnitTest.exec"
-
-    // Compiled Kotlin class files are written into build-variant-specific subdirectories of 'build/tmp/kotlin-classes'.
-    classDirectories.from = "${project.buildDir}/tmp/kotlin-classes/localDebug"
-
-    // To produce an accurate report, the bytecode is mapped back to the original source code.
-    sourceDirectories.from = "${project.projectDir}/src/main/java"
-}
-

@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id "org.jetbrains.kotlin.android" version "1.8.0"
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'
-    id "org.jetbrains.kotlinx.kover" version "0.8.0"
+    id "jacoco"
 }
 
 android {
@@ -10,21 +10,27 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.qfs.pagandev"
+        applicationId "com.qfs.pagan"
         minSdk 27
         targetSdk 35
         versionCode 94
         versionName "1.6.12"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    jacoco {
+        version = "0.8.12"
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            testCoverageEnabled true
+        }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -37,11 +43,13 @@ android {
     }
 }
 
+
 dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
     implementation 'androidx.core:core-ktx:1.15.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation "androidx.test:core:1.6.1"
     implementation 'androidx.navigation:navigation-fragment-ktx:2.8.5'
     implementation 'androidx.navigation:navigation-ui-ktx:2.8.5'
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
@@ -50,7 +58,32 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.14'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation "org.jetbrains.kotlinx:kover-gradle-plugin:0.8.0"
 }
+
+tasks.create(name: "unitTestCoverageReport", type: JacocoReport, dependsOn: "testDebugUnitTest") {
+    group = "Verification" // existing group containing tasks for generating linting reports etc.
+    description = "Generate Jacoco coverage reports for the debug build."
+
+    reports {
+        // human readable (written into './build/reports/jacoco/unitTestCoverageReport/html')
+        html {
+            enabled true
+        }
+        // CI-readable (written into './build/reports/jacoco/unitTestCoverageReport/unitTestCoverageReport.xml')
+        xml {
+            enabled true
+        }
+    }
+
+    // Execution data generated when running the tests against classes instrumented by the JaCoCo agent.
+    // This is enabled with 'enableUnitTestCoverage' in the 'debug' build type.
+    executionData.from = "${project.buildDir}/outputs/unit_test_code_coverage/testDebugUnitTest/testLocalDebugUnitTest.exec"
+
+    // Compiled Kotlin class files are written into build-variant-specific subdirectories of 'build/tmp/kotlin-classes'.
+    classDirectories.from = "${project.buildDir}/tmp/kotlin-classes/localDebug"
+
+    // To produce an accurate report, the bytecode is mapped back to the original source code.
+    sourceDirectories.from = "${project.projectDir}/src/main/java"
+}
+

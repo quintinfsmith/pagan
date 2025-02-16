@@ -25,10 +25,23 @@ data class JSONString(var value: String): JSONObject {
         val escaped_string = this.value.replace("\"", "\\\"")
         return "\"$escaped_string\""
     }
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONString && other.value == this.value)
+    }
+
+    override fun toString(): String {
+        return this.to_string()
+    }
 }
 data class JSONFloat(var value: Float): JSONObject {
     override fun to_string(): String {
         return "${this.value}"
+    }
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONFloat && other.value == this.value)
+    }
+    override fun toString(): String {
+        return this.to_string()
     }
 }
 
@@ -36,10 +49,23 @@ data class JSONInteger(var value: Int): JSONObject {
     override fun to_string(): String {
         return "${this.value}"
     }
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONInteger && other.value == this.value)
+    }
+    override fun toString(): String {
+        return this.to_string()
+    }
 }
 data class JSONBoolean(var value: Boolean): JSONObject {
     override fun to_string(): String {
         return this.value.toString()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONBoolean && other.value == this.value)
+    }
+    override fun toString(): String {
+        return this.to_string()
     }
 }
 
@@ -193,6 +219,23 @@ class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
         }
         output = "$output}"
         return output
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is JSONHashMap || other.hash_map.keys.toSet() != this.hash_map.keys.toSet()) {
+            return false
+        }
+
+        for (key in this.hash_map.keys) {
+            if (other.hash_map[key] != this.hash_map[key]) {
+                return false
+            }
+        }
+
+        return true
+    }
+    override fun toString(): String {
+        return this.to_string()
     }
 }
 
@@ -375,6 +418,22 @@ class JSONList(input_list: List<JSONObject?>? = null): JSONObject {
         return (this.list[index] as JSONList)
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (other !is JSONList || other.list.size != this.list.size) {
+            return false
+        }
+
+        for (i in this.list.indices) {
+            if (other.list[i] != this.list[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
+    override fun toString(): String {
+        return this.to_string()
+    }
 }
 
 class JSONParser {

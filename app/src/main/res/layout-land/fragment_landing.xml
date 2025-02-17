@@ -89,7 +89,7 @@
                     android:id="@+id/btnMostRecent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Open Last Project"
+                    android:text="@string/btn_landing_most_recent"
                     android:theme="@style/button_front" />
 
                 <Space

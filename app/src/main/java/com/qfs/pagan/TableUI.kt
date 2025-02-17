@@ -28,7 +28,6 @@ import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
-import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -1071,6 +1070,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.painted_layer.invalidate()
             this.painted_layer.invalidate_queued = false
         }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        // Required when android keyboard is used to input a value. eg repeating a selection.
+        // The bottom lines dont get drawn
+        this.painted_layer.invalidate()
+        super.onSizeChanged(w, h, oldw, oldh)
     }
 
 }

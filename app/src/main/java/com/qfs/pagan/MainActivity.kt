@@ -900,7 +900,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         var start_point = this.get_working_column()
-        if (start_point >= this.get_opus_manager().beat_count - 1) {
+        if (start_point >= this.get_opus_manager().length - 1) {
             start_point = 0
         }
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
@@ -928,7 +928,7 @@ class MainActivity : AppCompatActivity() {
 
         var start_point = this.get_working_column()
         val opus_manager = this.get_opus_manager()
-        if (start_point >= opus_manager.beat_count - 1) {
+        if (start_point >= opus_manager.length - 1) {
             start_point = 0
         }
 

@@ -35,7 +35,7 @@ class OpusLayerCursorUnitTest {
             assert_channel_selection(manager, i)
             for (j in channel.lines.indices) {
                 assert_line_selections(manager, i, j)
-                for (i in 0 until manager.beat_count) {
+                for (i in 0 until manager.length) {
                     assert_beat_selection(manager, i)
                 }
                 for ((type, _) in channel.lines[j].controllers.get_all()) {
@@ -55,7 +55,7 @@ class OpusLayerCursorUnitTest {
     private fun assert_beat_selection(manager: OpusManager, selected_beat: Int) {
         manager.cursor_select_column(selected_beat)
         val channels = manager.get_all_channels()
-        for (k in 0 until manager.beat_count) {
+        for (k in 0 until manager.length) {
             assertEquals(k == selected_beat, manager.is_beat_selected(k))
         }
 

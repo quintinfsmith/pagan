@@ -782,7 +782,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val title_text = view.findViewById<TextView>(R.id.shortcut_title)!!
 
         val opus_manager = this.get_activity().get_opus_manager()
-        scroll_bar.max = opus_manager.beat_count - 1
+        scroll_bar.max = opus_manager.length - 1
         scroll_bar.progress = this._get_start_column()
 
         title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)

@@ -248,7 +248,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun remove_beat(beat_index: Int, count: Int) {
         super.remove_beat(beat_index, count)
-        this.cursor_select_column(max(0, min(this.beat_count - 1, beat_index)))
+        this.cursor_select_column(max(0, min(this.length - 1, beat_index)))
     }
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
@@ -692,7 +692,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         if (this._block_cursor_selection()) {
             return
         }
-        if (beat >= this.beat_count) {
+        if (beat >= this.length) {
             return
         }
 

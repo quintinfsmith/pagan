@@ -313,8 +313,8 @@ open class OpusLayerBase {
         }
     }
 
-    var beat_count: Int = 1
-    var controllers = ActiveControlSet(beat_count, setOf(ControlEventType.Tempo))
+    var length: Int = 1
+    var controllers = ActiveControlSet(length, setOf(ControlEventType.Tempo))
     var channels: MutableList<OpusChannel> = mutableListOf()
     var percussion_channel = OpusPercussionChannel()
     var path: String? = null
@@ -572,8 +572,8 @@ open class OpusLayerBase {
      */
     fun get_beatkeys_in_range(top_left_key: BeatKey, bottom_right_key: BeatKey): List<BeatKey> {
         // No point in throwing an error if beats are out of range, so just limit them
-        top_left_key.beat = max(0, min(top_left_key.beat, this.beat_count - 1))
-        bottom_right_key.beat = max(0, min(bottom_right_key.beat, this.beat_count - 1))
+        top_left_key.beat = max(0, min(top_left_key.beat, this.length - 1))
+        bottom_right_key.beat = max(0, min(bottom_right_key.beat, this.length - 1))
 
         val output = mutableListOf<BeatKey>()
         this.get_all_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
@@ -884,7 +884,7 @@ open class OpusLayerBase {
                     working_position.removeAt(working_position.size - 1)
                     working_tree = working_tree.parent!!
                 }
-            } else if (working_beat_key.beat < this.beat_count - 1) {
+            } else if (working_beat_key.beat < this.length - 1) {
                 working_beat_key.beat += 1
                 working_position = mutableListOf()
                 working_tree = this.get_tree(working_beat_key, working_position)
@@ -1530,7 +1530,7 @@ open class OpusLayerBase {
      */
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null) {
         val new_channel = OpusChannel(uuid ?: OpusLayerBase.gen_channel_uuid())
-        new_channel.set_beat_count(this.beat_count)
+        new_channel.set_beat_count(this.length)
 
         new_channel.midi_channel = this.get_next_available_midi_channel()
 
@@ -1582,11 +1582,11 @@ open class OpusLayerBase {
      * populate the new beat with [beats_in_column]
      */
     open fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>? = null) {
-        if (beat_index > this.beat_count) {
+        if (beat_index > this.length) {
             throw IndexOutOfBoundsException()
         }
 
-        this.beat_count += 1
+        this.length += 1
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
         }
@@ -1630,16 +1630,16 @@ open class OpusLayerBase {
      * remove the beat at [beat_index] [count] times from all controllers, lines and channels.
      */
     open fun remove_beat(beat_index: Int, count: Int = 1) {
-        if (this.beat_count <= count) {
+        if (this.length <= count) {
             throw RemovingLastBeatException()
         }
-        if (beat_index >= this.beat_count) {
+        if (beat_index >= this.length) {
             throw IndexOutOfBoundsException()
         }
 
         this.blocked_check_remove_beat(beat_index, count)
 
-        val working_beat_index = min(beat_index + count - 1, this.beat_count - 1) - (count - 1)
+        val working_beat_index = min(beat_index + count - 1, this.length - 1) - (count - 1)
         if (working_beat_index < 0) {
             throw IndexOutOfBoundsException()
         }
@@ -1651,7 +1651,7 @@ open class OpusLayerBase {
         for ((_, controller) in this.controllers.get_all()) {
             controller.remove_beat(working_beat_index, count)
         }
-        this.beat_count -= count
+        this.length -= count
     }
 
     /**
@@ -1890,7 +1890,7 @@ open class OpusLayerBase {
 
     open fun controller_channel_unset_line(type: ControlEventType, channel: Int) {
         val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
-        for (beat in 0 until this.beat_count) {
+        for (beat in 0 until this.length) {
             val line_ctl_tree = controller.get_tree(beat)
             if (line_ctl_tree.is_eventless()) {
                 continue
@@ -2035,8 +2035,8 @@ open class OpusLayerBase {
 
         // Expand the song duration if necessary
         val max_beat = (end - start) + target
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2065,8 +2065,8 @@ open class OpusLayerBase {
     open fun _controller_channel_to_global_copy_range(type: ControlEventType, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
         val start = min(point_a, point_b)
         val end = max(point_a, point_b)
-        while (this.beat_count <= target_beat + (end - start)) {
-            this.insert_beat(this.beat_count)
+        while (this.length <= target_beat + (end - start)) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2097,8 +2097,8 @@ open class OpusLayerBase {
 
         // Expand the song duration if necessary
         val max_beat = (end - start) + target_beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2131,8 +2131,8 @@ open class OpusLayerBase {
         val first_beat = min(second_corner.beat, first_corner.beat)
         val second_beat = max(second_corner.beat, first_corner.beat)
         val max_beat = (second_beat - first_beat) + beat_key.beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
@@ -2175,8 +2175,8 @@ open class OpusLayerBase {
         val end = max(beat_a, beat_b)
 
         val max_beat = (end - start) + target_key.beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2206,8 +2206,8 @@ open class OpusLayerBase {
         val start = min(beat_a, beat_b)
         val end = max(beat_a, beat_b)
         val max_beat = (end - start) + target_key.beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2238,8 +2238,8 @@ open class OpusLayerBase {
         val end = max(beat_a, beat_b)
 
         val max_beat = (end - start) + target_beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2269,8 +2269,8 @@ open class OpusLayerBase {
         val end = max(beat_a, beat_b)
 
         val max_beat = (end - start) + target_beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2299,8 +2299,8 @@ open class OpusLayerBase {
         val start = min(point_a, point_b)
         val end = max(point_a, point_b)
         val max_beat = (end - start) + target_beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val overwrite_map = HashMap<Int, OpusTree<OpusControlEvent>>()
@@ -2330,8 +2330,8 @@ open class OpusLayerBase {
         val first_beat = min(first_corner.beat, second_corner.beat)
         val second_beat = max(first_corner.beat, second_corner.beat)
         val max_beat = (second_beat - first_beat) + beat_key.beat
-        while (max_beat >= this.beat_count) {
-            this.insert_beat(this.beat_count)
+        while (max_beat >= this.length) {
+            this.insert_beat(this.length)
         }
 
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
@@ -2369,8 +2369,8 @@ open class OpusLayerBase {
         val first_beat = min(first_corner.beat, second_corner.beat)
         val second_beat = max(first_corner.beat, second_corner.beat)
         val max_beat = (second_beat - first_beat) + 1 + beat_key.beat
-        if (max_beat > this.beat_count) {
-            this.insert_beats(this.beat_count, max_beat - this.beat_count)
+        if (max_beat > this.length) {
+            this.insert_beats(this.length, max_beat - this.length)
         }
 
         val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
@@ -2405,7 +2405,7 @@ open class OpusLayerBase {
 
     open fun unset_line(channel: Int, line_offset: Int) {
         val line = this.get_all_channels()[channel].lines[line_offset]
-        for (beat in 0 until this.beat_count) {
+        for (beat in 0 until this.length) {
             val tree = line.get_tree(beat)
             if (tree.is_eventless()) {
                 continue
@@ -2416,7 +2416,7 @@ open class OpusLayerBase {
 
     open fun controller_line_unset_line(type: ControlEventType, channel: Int, line_offset: Int) {
         val controller = this.get_all_channels()[channel].lines[line_offset].get_controller<OpusControlEvent>(type)
-        for (beat in 0 until this.beat_count) {
+        for (beat in 0 until this.length) {
             val line_ctl_tree = controller.get_tree(beat)
             if (line_ctl_tree.is_eventless()) {
                 continue
@@ -2427,7 +2427,7 @@ open class OpusLayerBase {
 
     open fun controller_global_unset_line(type: ControlEventType) {
         val controller = this.controllers.get_controller<OpusControlEvent>(type)
-        for (beat in 0 until this.beat_count) {
+        for (beat in 0 until this.length) {
             val line_ctl_tree = controller.get_tree(beat)
             if (line_ctl_tree.is_eventless()) {
                 continue
@@ -2667,10 +2667,10 @@ open class OpusLayerBase {
 
         // Increase song duration as needed
         val chunk_size = second_beat - first_beat + 1
-        val count = repeat ?: ceil((this.beat_count - first_beat).toFloat() / chunk_size.toFloat()).toInt()
-        val increase_count = max(0, ((count * chunk_size) + first_beat) - this.beat_count)
+        val count = repeat ?: ceil((this.length - first_beat).toFloat() / chunk_size.toFloat()).toInt()
+        val increase_count = max(0, ((count * chunk_size) + first_beat) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key, count)
@@ -2704,10 +2704,10 @@ open class OpusLayerBase {
 
         // Increase song duration as needed
         val chunk_size = end - start + 1
-        val count = repeat ?: ceil((this.beat_count - start).toFloat() / chunk_size.toFloat()).toInt()
-        val increase_count = max(0, ((count * chunk_size) + start) - this.beat_count)
+        val count = repeat ?: ceil((this.length - start).toFloat() / chunk_size.toFloat()).toInt()
+        val increase_count = max(0, ((count * chunk_size) + start) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         // Unset targets to prevent blocking
@@ -2743,10 +2743,10 @@ open class OpusLayerBase {
 
         // Increase song duration as needed
         val width = end - start + 1
-        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + start) - this.beat_count)
+        val count = repeat ?: ceil((this.length - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + start) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         // Unset targets to prevent blocking
@@ -2790,10 +2790,10 @@ open class OpusLayerBase {
 
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
-        val count = repeat ?: ceil((this.beat_count - from_key.beat).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + from_key.beat) - this.beat_count)
+        val count = repeat ?: ceil((this.length - from_key.beat).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + from_key.beat) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         // Unset Targets to prevent blocking
@@ -2824,10 +2824,10 @@ open class OpusLayerBase {
 
         // Increase song duration as needed
         val width = end - start + 1
-        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + start) - this.beat_count)
+        val count = repeat ?: ceil((this.length - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + start) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         // Unset Targets to prevent blocking
@@ -2854,10 +2854,10 @@ open class OpusLayerBase {
         val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
-        val count = repeat ?: ceil((this.beat_count - from_key.beat).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + from_key.beat) - this.beat_count)
+        val count = repeat ?: ceil((this.length - from_key.beat).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + from_key.beat) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
@@ -2892,10 +2892,10 @@ open class OpusLayerBase {
 
         // Increase song size as needed
         val width = end - start + 1
-        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + start) - this.beat_count)
+        val count = repeat ?: ceil((this.length - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + start) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         // Unset Targets to prevent blocking
@@ -2925,10 +2925,10 @@ open class OpusLayerBase {
 
         // Increase song size as needed
         val width = end - start + 1
-        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + start) - this.beat_count)
+        val count = repeat ?: ceil((this.length - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + start) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         // Unset Targets to prevent blocking
@@ -2956,10 +2956,10 @@ open class OpusLayerBase {
 
         // Increase song size as needed
         val width = end - start + 1
-        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + start) - this.beat_count)
+        val count = repeat ?: ceil((this.length - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + start) - this.length)
         if (increase_count > 0) {
-            this.insert_beats(this.beat_count, increase_count)
+            this.insert_beats(this.length, increase_count)
         }
 
         // Unset Targets first to prevent blocking
@@ -2991,8 +2991,8 @@ open class OpusLayerBase {
 
         // Increase song duration as needed
         val width = end - start + 1
-        val count = repeat ?: ceil((this.beat_count - start).toFloat() / width.toFloat()).toInt()
-        val increase_count = max(0, ((count * width) + start) - this.beat_count)
+        val count = repeat ?: ceil((this.length - start).toFloat() / width.toFloat()).toInt()
+        val increase_count = max(0, ((count * width) + start) - this.length)
         if (increase_count > 0) {
             this.insert_beats(end + 1, increase_count)
         }
@@ -3024,10 +3024,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_channel: Int, original_beat: Int, repeat: Int? = null) {
-        val adj_repeat = repeat ?: (this.beat_count - original_beat)
-        val increase_length = (adj_repeat + original_beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - original_beat)
+        val increase_length = (adj_repeat + original_beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, original_channel, original_beat)
@@ -3037,10 +3037,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, original_key: BeatKey, repeat: Int? = null) {
-        val adj_repeat = repeat ?: (this.beat_count - original_key.beat)
-        val increase_length = (adj_repeat + original_key.beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - original_key.beat)
+        val increase_length = (adj_repeat + original_key.beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, original_key)
@@ -3050,10 +3050,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_global_to_channel_overwrite_line(type: ControlEventType, target_channel: Int, beat: Int, repeat: Int? = null) {
-        val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat + beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - beat)
+        val increase_length = (adj_repeat + beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat)
@@ -3068,10 +3068,10 @@ open class OpusLayerBase {
         }
 
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
-        val adj_repeat = repeat ?: (this.beat_count - working_key.beat)
-        val increase_length = (adj_repeat + working_key.beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - working_key.beat)
+        val increase_length = (adj_repeat + working_key.beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         for (x in 0 until adj_repeat) {
@@ -3081,10 +3081,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_global_overwrite_line(type: ControlEventType, beat: Int, repeat: Int? = null) {
-        val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat + beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - beat)
+        val increase_length = (adj_repeat + beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat)
@@ -3094,10 +3094,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_channel_to_global_overwrite_line(type: ControlEventType, channel: Int, beat: Int, repeat: Int? = null) {
-        val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat + beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - beat)
+        val increase_length = (adj_repeat + beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat)
@@ -3108,10 +3108,10 @@ open class OpusLayerBase {
 
     open fun controller_line_to_global_overwrite_line(type: ControlEventType, beat_key: BeatKey, repeat: Int? = null) {
         val beat = beat_key.beat
-        val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat + beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - beat)
+        val increase_length = (adj_repeat + beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
@@ -3121,10 +3121,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_global_to_line_overwrite_line(type: ControlEventType, from_beat: Int, target_channel: Int, target_line_offset: Int, repeat: Int? = null) {
-        val adj_repeat = repeat ?: (this.beat_count - from_beat)
-        val increase_length = (adj_repeat + from_beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - from_beat)
+        val increase_length = (adj_repeat + from_beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_global_ctl_tree<OpusControlEvent>(type, from_beat)
@@ -3139,10 +3139,10 @@ open class OpusLayerBase {
     }
 
     open fun controller_channel_to_line_overwrite_line(type: ControlEventType, target_channel: Int, target_line_offset: Int, original_channel: Int, original_beat: Int, repeat: Int? = null) {
-        val adj_repeat = repeat ?: (this.beat_count - original_beat)
-        val increase_length = (adj_repeat + original_beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - original_beat)
+        val increase_length = (adj_repeat + original_beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val original_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, original_channel, original_beat)
@@ -3158,10 +3158,10 @@ open class OpusLayerBase {
 
     open fun controller_line_overwrite_line(type: ControlEventType, channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int? = null) {
         val beat = beat_key.beat
-        val adj_repeat = repeat ?: (this.beat_count - beat)
-        val increase_length = (adj_repeat + beat) - this.beat_count
+        val adj_repeat = repeat ?: (this.length - beat)
+        val increase_length = (adj_repeat + beat) - this.length
         if (increase_length > 0) {
-            this.insert_beats(this.beat_count, increase_length)
+            this.insert_beats(this.length, increase_length)
         }
 
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
@@ -3271,13 +3271,13 @@ open class OpusLayerBase {
     }
 
     open fun convert_events_in_line_to_relative(channel: Int, line_offset: Int) {
-        for (beat in 0 until this.beat_count) {
+        for (beat in 0 until this.length) {
             this.convert_events_in_tree_to_relative(BeatKey(channel, line_offset, beat), listOf())
         }
     }
 
     open fun convert_events_in_line_to_absolute(channel: Int, line_offset: Int) {
-        for (beat in 0 until this.beat_count) {
+        for (beat in 0 until this.length) {
             this.convert_events_in_tree_to_absolute(BeatKey(channel, line_offset, beat), listOf())
         }
     }
@@ -3502,7 +3502,7 @@ open class OpusLayerBase {
     }
 
     open fun set_beat_count(new_count: Int) {
-        this.beat_count = new_count
+        this.length = new_count
         for (channel in this.get_all_channels()) {
             channel.set_beat_count(new_count)
         }
@@ -3514,12 +3514,12 @@ open class OpusLayerBase {
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
-        val end_beat = end_beat_rel ?: this.beat_count
+        val end_beat = end_beat_rel ?: this.length
 
         val midi = Midi()
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
-        val max_tick = midi.get_ppqn() * (this.beat_count + 1)
+        val max_tick = midi.get_ppqn() * (this.length + 1)
         val radix = this.tuning_map.size
 
         fun <U: OpusControlEvent> apply_active_controller(controller: ActiveController<U>, gen_event_callback: (U, U?, Int) -> List<Pair<Int, MIDIEvent>>) {
@@ -3841,7 +3841,7 @@ open class OpusLayerBase {
         for (channel in this.channels) {
             channels.add(OpusChannelJSONInterface.generalize(channel))
         }
-        output["size"] = this.beat_count
+        output["size"] = this.length
         output["tuning_map"] = JSONList(MutableList(this.tuning_map.size) { i: Int ->
             JSONList(
                 mutableListOf(
@@ -3877,7 +3877,7 @@ open class OpusLayerBase {
 
     // Clear function is used for new projects
     open fun clear() {
-        this.beat_count = 0
+        this.length = 0
         this.channels.clear()
         this.path = null
         this.project_name = null
@@ -3984,7 +3984,7 @@ open class OpusLayerBase {
         for (generalized_channel in inner_map.get_list("channels").list) {
             val channel: OpusChannel = OpusChannelJSONInterface.interpret(
                 generalized_channel as JSONHashMap,
-                this.beat_count
+                this.length
             ) as OpusChannel
 
             channel.uuid = OpusLayerBase.gen_channel_uuid()
@@ -3994,7 +3994,7 @@ open class OpusLayerBase {
 
         this.percussion_channel = OpusChannelJSONInterface.interpret(
             inner_map.get_hashmap("percussion_channel"),
-            this.beat_count
+            this.length
         ) as OpusPercussionChannel
 
 
@@ -4012,7 +4012,7 @@ open class OpusLayerBase {
             inner_map.get_int("transpose_radix", tuning_map.size)
         )
 
-        this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.beat_count)
+        this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
     }
 
     fun project_change_midi(midi: Midi) {
@@ -4242,7 +4242,7 @@ open class OpusLayerBase {
         // Reduce
         all_channels.forEachIndexed { i: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             for (j in channel.lines.indices) {
-                for (k in 0 until this.beat_count) {
+                for (k in 0 until this.length) {
 
                     val beat_tree = this.get_tree(BeatKey(i, j, k), listOf())
                     val original_size = beat_tree.size
@@ -4362,7 +4362,7 @@ open class OpusLayerBase {
 
         val (y_diff, x_diff) = this.get_abs_difference(from_key, to_key)
 
-        if (this.beat_count <= beat_key.beat + x_diff) {
+        if (this.length <= beat_key.beat + x_diff) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }
 
@@ -4390,13 +4390,13 @@ open class OpusLayerBase {
             false
         } else if (this.get_channel(first_corner.channel).size <= first_corner.line_offset) {
             false
-        } else if (this.beat_count <= first_corner.beat) {
+        } else if (this.length <= first_corner.beat) {
             false
         } else if (this.channels.size + 1 <= second_corner.channel) {
             false
         } else if (this.get_channel(second_corner.channel).size <= second_corner.line_offset) {
             false
-        } else if (this.beat_count <= second_corner.beat) {
+        } else if (this.length <= second_corner.beat) {
             false
         } else {
             true
@@ -4523,7 +4523,7 @@ open class OpusLayerBase {
 
     private fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
-        return List<BeatKey>(this.beat_count - beat_key.beat) { i: Int ->
+        return List<BeatKey>(this.length - beat_key.beat) { i: Int ->
             working_key.beat = i + beat_key.beat
             working_key
         }
@@ -4591,7 +4591,7 @@ open class OpusLayerBase {
 
     open fun <T: OpusLayerBase> import_from_other(other: T) {
         this.clear()
-        this.beat_count = other.beat_count
+        this.length = other.length
         this.channels = other.channels
         this.path = other.path
         this.project_name = other.project_name
@@ -4614,7 +4614,7 @@ open class OpusLayerBase {
 
     override fun equals(other: Any?): Boolean {
         if (other !is OpusLayerBase
-            || this.beat_count != other.beat_count
+            || this.length != other.length
             || this.path != other.path
             || this.project_name != other.project_name
             || this.transpose != other.transpose
@@ -4800,7 +4800,7 @@ open class OpusLayerBase {
     }
 
     override fun hashCode(): Int {
-        var result = this.beat_count
+        var result = this.length
         result = ((result shl 5) + (result shr 27)).xor(this.controllers.hashCode())
         result = ((result shl 5) + (result shr 27)).xor(this.channels.hashCode())
         result = ((result shl 5) + (result shr 27)).xor(this.percussion_channel.hashCode())

@@ -548,7 +548,7 @@ class ActionTracker {
         val context = this.get_activity()
 
         val (first_key, second_key) = cursor.get_ordered_range()!!
-        val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
+        val default_count = ceil((opus_manager.length.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
 
         // a value of negative 1 means use default value, where a null would show the dialog
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
@@ -612,7 +612,7 @@ class ActionTracker {
         val cursor = opus_manager.cursor
 
         val (first, second) = cursor.get_ordered_range()!!
-        val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
+        val default_count = ceil((opus_manager.length.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
 
         when (cursor.ctl_level) {
@@ -669,7 +669,7 @@ class ActionTracker {
         val cursor = opus_manager.cursor
 
         val (first, second) = cursor.get_ordered_range()!!
-        val default_count = ceil((opus_manager.beat_count.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
+        val default_count = ceil((opus_manager.length.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
@@ -721,7 +721,7 @@ class ActionTracker {
         val activity = this.get_activity()
 
         val (first_key, second_key) = cursor.get_ordered_range()!!
-        val default_count = ceil((opus_manager.beat_count.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
+        val default_count = ceil((opus_manager.length.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
         // a value of negative 1 means use default value, where a null would show the dialog
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
 
@@ -1305,7 +1305,7 @@ class ActionTracker {
 
     fun remove_beat_at_cursor(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
-        this.dialog_number_input(this.get_activity().getString(R.string.dlg_remove_beats), 1, opus_manager.beat_count - 1, stub_output = repeat) { count: Int ->
+        this.dialog_number_input(this.get_activity().getString(R.string.dlg_remove_beats), 1, opus_manager.length - 1, stub_output = repeat) { count: Int ->
             this.track(TrackedAction.RemoveBeat, listOf(count))
             opus_manager.remove_beat_at_cursor(count)
         }

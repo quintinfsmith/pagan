@@ -1044,7 +1044,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun remove_beat(beat_index: Int, count: Int) {
         this.lock_ui_partial {
             this._queue_cursor_update(this.cursor.copy())
-            val original_beat_count = this.beat_count
+            val original_beat_count = this.length
             super.remove_beat(beat_index, count)
 
             val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
@@ -1065,7 +1065,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this._ui_change_bill.queue_add_column(beat_index)
 
                 // Need to find all notes that overflow into the proceding beats and queue a column refresh on those beats
-                if (beat_index > 0 && beat_index < this.beat_count) {
+                if (beat_index > 0 && beat_index < this.length) {
                     val channels = this.get_all_channels()
                     for (i in channels.indices) {
                         for (j in 0 until channels[i].lines.size) {
@@ -1277,7 +1277,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             if (new_map.size != original_map.size && mod_events) {
                 for (i in 0 until this.channels.size) {
                     for (j in 0 until this.channels[i].lines.size) {
-                        for (k in 0 until this.beat_count) {
+                        for (k in 0 until this.length) {
                             val beat_key = BeatKey(i, j, k)
                             val tree = this.get_tree(beat_key)
                             if (tree.is_eventless()) {
@@ -2266,7 +2266,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val editor_table = this.get_editor_table()
         editor_table.clear_column_map()
 
-        for (beat in 0 until this.beat_count) {
+        for (beat in 0 until this.length) {
             val column = mutableListOf<Int>()
             this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
                 for (j in channel.lines.indices) {
@@ -2310,7 +2310,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val column_updates = this.get_editor_table().add_line_to_map(
             y,
-            List(this.beat_count) { x: Int ->
+            List(this.length) { x: Int ->
                 val tree = line.beats[x]
                 tree.get_total_child_weight()
             }
@@ -2327,7 +2327,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val column_updates = this.get_editor_table().add_line_to_map(
             y,
-            List(this.beat_count) { x: Int ->
+            List(this.length) { x: Int ->
                 val tree = line.beats[x]
                 tree.get_total_child_weight()
             }
@@ -2448,7 +2448,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         activity.update_menu_options()
 
                         this._init_editor_table_width_map()
-                        editor_table.setup(this.get_row_count(), this.beat_count)
+                        editor_table.setup(this.get_row_count(), this.length)
 
                         activity.update_channel_instruments()
                         activity.populate_active_percussion_names(true)

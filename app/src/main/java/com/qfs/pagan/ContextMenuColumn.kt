@@ -19,7 +19,7 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
 
-        this.button_remove.isEnabled = opus_manager.beat_count > 1
+        this.button_remove.isEnabled = opus_manager.length > 1
     }
 
     override fun setup_interactions() {

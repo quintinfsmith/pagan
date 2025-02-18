@@ -40,7 +40,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
     fun test_new() {
         val manager = OpusManager()
         manager._project_change_new()
-        assertNotEquals(manager.beat_count, 0)
+        assertNotEquals(manager.length, 0)
     }
 
     @Test
@@ -232,7 +232,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         assertEquals(
             "Failed to return null when looking for proceding leaf after last position",
             null,
-            manager.get_proceding_leaf_position(BeatKey(0,0, manager.beat_count - 1),listOf())
+            manager.get_proceding_leaf_position(BeatKey(0,0, manager.length - 1),listOf())
         )
 
         assertEquals(
@@ -470,27 +470,27 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         val manager = OpusManager()
         manager._project_change_new()
 
-        var beats = manager.beat_count
+        var beats = manager.length
 
         manager.insert_beat(0)
-        assertEquals(beats + 1, manager.beat_count)
+        assertEquals(beats + 1, manager.length)
 
-        manager.insert_beat(manager.beat_count)
-        assertEquals(beats + 2, manager.beat_count)
+        manager.insert_beat(manager.length)
+        assertEquals(beats + 2, manager.length)
 
         assertThrows(OpusLayerBase.RemovingRootException::class.java) {
             manager.remove(BeatKey(0,0,0), listOf())
         }
 
         assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.insert_beat(manager.beat_count + 1)
+            manager.insert_beat(manager.length + 1)
         }
 
         assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.remove_beat(manager.beat_count + 1)
+            manager.remove_beat(manager.length + 1)
         }
 
-        while (manager.beat_count > 1) {
+        while (manager.length > 1) {
             manager.remove_beat(0)
         }
 
@@ -1003,7 +1003,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
 
         assertEquals(
             beat_count,
-            manager.beat_count
+            manager.length
         )
 
         assertEquals(
@@ -1220,7 +1220,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         // apply overwrite
         manager.controller_global_overwrite_line(type, 0)
 
-        for (beat in 0 until manager.beat_count) {
+        for (beat in 0 until manager.length) {
             assertEquals(
                 "Failed overwrite_global_Ctl_row",
                 manager.get_global_ctl_tree<OpusControlEvent>(type, 0),
@@ -1247,7 +1247,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             )
         }
 
-        for (beat in 3 until manager.beat_count) {
+        for (beat in 3 until manager.length) {
             assertEquals(
                 "Failed overwrite_global_Ctl_row",
                 manager.get_global_ctl_tree<OpusControlEvent>(type, 3),
@@ -1271,7 +1271,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         // apply overwrite
         manager.controller_channel_overwrite_line(type, working_channel, 0, 0)
 
-        for (beat in 0 until manager.beat_count) {
+        for (beat in 0 until manager.length) {
             assertEquals(
                 "Failed overwrite_channel_Ctl_row",
                 manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, 0),
@@ -1298,7 +1298,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             )
         }
 
-        for (beat in 3 until manager.beat_count) {
+        for (beat in 3 until manager.length) {
             assertEquals(
                 "Failed overwrite_channel_Ctl_row",
                 manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, 3),
@@ -1322,7 +1322,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         // apply overwrite
         manager.controller_line_overwrite_line(type, working_key.channel, working_key.line_offset, working_key)
 
-        for (beat in 0 until manager.beat_count) {
+        for (beat in 0 until manager.length) {
             assertEquals(
                 "Failed overwrite_line_Ctl_row",
                 manager.get_line_ctl_tree<OpusControlEvent>(type, working_key),
@@ -1349,7 +1349,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             )
         }
 
-        for (beat in working_key_b.beat until manager.beat_count) {
+        for (beat in working_key_b.beat until manager.length) {
             assertEquals(
                 "Failed overwrite_line_Ctl_row",
                 manager.get_line_ctl_tree<OpusControlEvent>(type, working_key_b),
@@ -1567,7 +1567,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         manager.controller_global_overwrite_range(type, 3, 2, 3)
-        assertEquals(5, manager.beat_count)
+        assertEquals(5, manager.length)
     }
 
     @Test
@@ -1595,7 +1595,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         manager.controller_global_move_range(type, 3, 2, 3)
-        assertEquals(5, manager.beat_count)
+        assertEquals(5, manager.length)
 
     }
 
@@ -1619,7 +1619,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         manager.controller_channel_overwrite_range(type, 0, 3, 0, 2, 3)
-        assertEquals(5, manager.beat_count)
+        assertEquals(5, manager.length)
     }
 
     @Test
@@ -1649,7 +1649,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         manager.controller_channel_move_range(type, 0, 3, 0, 2, 3)
-        assertEquals(5, manager.beat_count)
+        assertEquals(5, manager.length)
     }
 
     @Test

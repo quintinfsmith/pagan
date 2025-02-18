@@ -248,7 +248,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun scroll_to_position(x: Int? = null, y: Int? = null, offset: Float = 0f, offset_width: Float = 1f, force: Boolean = false) {
         if (x != null) {
-            if (x >= this.get_opus_manager().beat_count) {
+            if (x >= this.get_opus_manager().length) {
                 return
             } else if (! force) {
                 this._scroll_to_x(x, offset, offset_width)

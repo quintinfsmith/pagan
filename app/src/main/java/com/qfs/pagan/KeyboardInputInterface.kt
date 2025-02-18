@@ -166,7 +166,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun column(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
-                val beat = this.get_buffer_value(0, 0, opus_manager.beat_count - 1)
+                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
                 opus_manager.cursor_select_column(beat)
             }
 
@@ -175,7 +175,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
-                val beat = this.get_buffer_value(0, 0, opus_manager.beat_count - 1)
+                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
                 val new_beat_key = BeatKey(
                     opus_manager.cursor.channel,
                     opus_manager.cursor.line_offset,
@@ -186,7 +186,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun range(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
-                val beat = this.get_buffer_value(0, 0, opus_manager.beat_count - 1)
+                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
                 val new_beat_key = opus_manager.cursor.range!!.second
                 new_beat_key.beat = beat
 
@@ -202,9 +202,9 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 val default = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
                     opus_manager.cursor.beat
                 } else {
-                    opus_manager.beat_count - 1
+                    opus_manager.length - 1
                 }
-                val beat = this.get_buffer_value(default, 0, opus_manager.beat_count - 1)
+                val beat = this.get_buffer_value(default, 0, opus_manager.length - 1)
 
                 opus_manager.cursor_select_column(beat)
                 return true
@@ -430,7 +430,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
             override fun column(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
                 val movement_value = this.get_buffer_value(1, minimum=0)
-                val new_beat = min(opus_manager.beat_count - 1, opus_manager.cursor.beat + movement_value)
+                val new_beat = min(opus_manager.length - 1, opus_manager.cursor.beat + movement_value)
                 opus_manager.cursor_select_column(new_beat)
             }
 
@@ -446,7 +446,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     BeatKey(
                         opus_manager.cursor.range!!.second.channel,
                         opus_manager.cursor.range!!.second.line_offset,
-                        min(opus_manager.beat_count - 1, opus_manager.cursor.range!!.second.beat + movement_value)
+                        min(opus_manager.length - 1, opus_manager.cursor.range!!.second.beat + movement_value)
                     )
                 )
             }
@@ -459,7 +459,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     val beat_key = BeatKey(
                         opus_manager.cursor.channel,
                         opus_manager.cursor.line_offset,
-                        min(movement_value - 1, opus_manager.beat_count - 1)
+                        min(movement_value - 1, opus_manager.length - 1)
                     )
 
                     opus_manager.cursor_select(
@@ -471,7 +471,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
                 val movement_value = this.get_buffer_value(1, minimum=0)
                 val cursor = opus_manager.cursor
-                var beat = min(opus_manager.beat_count - 1, cursor.beat + movement_value)
+                var beat = min(opus_manager.length - 1, cursor.beat + movement_value)
                 opus_manager.select_first_in_beat(beat)
             }
         },
@@ -691,7 +691,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
         Pair(KeyEvent.KEYCODE_X, true) to object: CursorSpecificKeyStrokeNode(this) {
             override fun column(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, minimum=0, maximum=opus_manager.beat_count - 1)
+                val repeat = this.get_buffer_value(1, minimum=0, maximum=opus_manager.length - 1)
                 if (repeat > 0) {
                     opus_manager.remove_beat_at_cursor(repeat)
                 }

@@ -927,7 +927,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun remove_beat(beat_index: Int, count: Int) {
         this._remember {
-            val working_beat_index = min(beat_index + (count - 1), this.beat_count - 1)
+            val working_beat_index = min(beat_index + (count - 1), this.length - 1)
             val beat_cells = List(count) { i: Int ->
                 val working_list = mutableListOf<OpusTree<out InstrumentEvent>>()
                 val working_line_controller_list = mutableListOf<Triple<Pair<Int, Int>, ControlEventType, OpusTree<out OpusControlEvent>>>()

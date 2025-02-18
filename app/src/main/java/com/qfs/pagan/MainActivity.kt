@@ -634,8 +634,6 @@ class MainActivity : AppCompatActivity() {
 
         toolbar.background = null
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-
         //////////////////////////////////////////
         if (this.configuration.soundfont != null) {
             val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
@@ -675,7 +673,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.update_channel_instruments(this.get_opus_manager().channels.size)
-        this.populate_active_percussion_names(true)
         ///////////////////////////////////////////
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -717,7 +714,6 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onSupportNavigateUp(): Boolean {
-        println("OK...")
         val navController = this.findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
     }

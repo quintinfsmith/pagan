@@ -377,8 +377,8 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             }
 
             thread {
-                this.load_from_bkp()
                 try {
+                    this.load_from_bkp()
                 } catch (e: Exception) {
                     val opus_manager = main.get_opus_manager()
                     // if Not Loaded, just create new and throw a message up

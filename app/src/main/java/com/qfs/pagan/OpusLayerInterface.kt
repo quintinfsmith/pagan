@@ -1325,7 +1325,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
 
                 if (this.is_percussion(channel)) {
-                    activity?.populate_active_percussion_names()
+                    activity?.populate_active_percussion_names(true)
                 }
 
                 this._ui_change_bill.queue_refresh_channel(channel)
@@ -2451,6 +2451,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         editor_table.setup(this.get_row_count(), this.beat_count)
 
                         activity.update_channel_instruments()
+                        activity.populate_active_percussion_names(true)
                         this.withFragment {
                             if (restore_position) {
                                 it.restore_view_model_position()

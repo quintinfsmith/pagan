@@ -7,6 +7,7 @@ import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.widget.TextView
+import java.util.Locale
 import kotlin.math.max
 
 class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedNumberInput<Int>(context, attrs) {
@@ -118,7 +119,7 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
 
     fun set_value(new_value: Int) {
         this._watcher.lockout = true
-        this.setText(new_value.toString())
+        this.setText(String.format(Locale.getDefault(), "%d", new_value))
         this._watcher.lockout = false
     }
 

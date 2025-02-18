@@ -57,6 +57,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
         <TextView
+            android:clickable="true"
             android:id="@+id/btnMostRecent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,18 +73,18 @@
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/btn_landing_new"
             android:theme="@style/button_front" />
+
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
+
         <TextView
             android:clickable="true"
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/btn_landing_load"
             android:theme="@style/button_front" />
 
@@ -96,7 +97,6 @@
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/btn_landing_import"
             android:theme="@style/button_front" />
 
@@ -109,8 +109,19 @@
             android:id="@+id/btnFrontSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/btn_landing_settings"
+            android:theme="@style/button_front" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/normal_padding" />
+
+        <TextView
+            android:clickable="true"
+            android:id="@+id/btnFrontAbout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_landing_about"
             android:theme="@style/button_front" />
     </LinearLayout>
 

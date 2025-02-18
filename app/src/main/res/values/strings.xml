@@ -148,6 +148,10 @@
     <string name="menu_item_undo">undo</string>
     <string name="menu_item_playpause">Play/Pause</string>
     <string name="menu_item_playpause_midi">Play / Pause Midi output</string>
+    <string name="btn_split">Split</string>
+    <string name="btn_insert">Insert</string>
+    <string name="btn_remove">Remove</string>
+    <string name="btn_landing_about">About</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

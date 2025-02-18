@@ -51,6 +51,7 @@ dependencies {
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.test:rules:1.6.1'
+    implementation 'androidx.fragment:fragment:1.8.6'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.14'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'

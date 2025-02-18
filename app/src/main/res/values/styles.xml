@@ -144,7 +144,7 @@
     </style>
     <style name="dialog_title">
         <item name="android:textSize">22sp</item>
-        <item name="android:textFontWeight">300</item>
+        <item name="android:fontWeight">300</item>
         <item name="android:padding">5dp</item>
         <item name="android:textAlignment">center</item>
     </style>

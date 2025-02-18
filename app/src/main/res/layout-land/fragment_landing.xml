@@ -74,18 +74,20 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <Space
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="match_parent" />
 
-                <LinearLayout
-                    android:layout_weight="4"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+            <LinearLayout
+                android:layout_weight="4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
                 <TextView
+                    android:clickable="true"
                     android:id="@+id/btnMostRecent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -97,10 +99,11 @@
                     android:layout_height="@dimen/normal_padding" />
 
                 <TextView
+                    android:clickable="true"
                     android:id="@+id/btnFrontNew"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="New Project"
+                    android:text="@string/btn_landing_new"
                     android:theme="@style/button_front" />
 
                 <Space
@@ -108,10 +111,11 @@
                     android:layout_height="@dimen/normal_padding" />
 
                 <TextView
+                    android:clickable="true"
                     android:id="@+id/btnFrontLoad"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Load Project"
+                    android:text="@string/btn_landing_load"
                     android:theme="@style/button_front" />
 
                 <Space
@@ -119,10 +123,11 @@
                     android:layout_height="@dimen/normal_padding" />
 
                 <TextView
+                    android:clickable="true"
                     android:id="@+id/btnFrontImport"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Import"
+                    android:text="@string/btn_landing_load"
                     android:theme="@style/button_front" />
 
                 <Space
@@ -130,10 +135,23 @@
                     android:layout_height="@dimen/normal_padding" />
 
                 <TextView
+                    android:clickable="true"
                     android:id="@+id/btnFrontSettings"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Settings"
+                    android:text="@string/btn_landing_settings"
+                    android:theme="@style/button_front" />
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/normal_padding" />
+
+                <TextView
+                    android:clickable="true"
+                    android:id="@+id/btnFrontAbout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/btn_landing_about"
                     android:theme="@style/button_front" />
                 </LinearLayout>
             <Space

@@ -112,8 +112,8 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
-                android:theme="@style/Theme.Pagan.SeekBar"
+            <Switch
+                android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sPlaybackStereo"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
@@ -130,8 +130,8 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
-                android:theme="@style/Theme.Pagan.SeekBar"
+            <Switch
+                android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sLimitSamples"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
@@ -147,8 +147,8 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
-                android:theme="@style/Theme.Pagan.SeekBar"
+            <Switch
+                android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sClipSameLineRelease"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
@@ -164,8 +164,8 @@
                     android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
-                <androidx.appcompat.widget.SwitchCompat
-                    android:theme="@style/Theme.Pagan.SeekBar"
+                <Switch
+                    android:theme="@style/Theme.Pagan.Switch"
                     android:id="@+id/sRelativeEnabled"
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"/>

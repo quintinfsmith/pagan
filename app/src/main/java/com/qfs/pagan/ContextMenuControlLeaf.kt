@@ -122,7 +122,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
     fun long_click_button_remove(): Boolean {
         this.get_activity().get_action_interface().unset_root()
-        return false
+        return true
     }
 
     fun click_button_insert() {
@@ -131,7 +131,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
     fun long_click_button_insert(): Boolean {
         this.get_activity().get_action_interface().insert_leaf()
-        return false
+        return true
     }
 
     fun click_button_split() {
@@ -140,7 +140,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
     fun long_click_button_split(): Boolean {
         this.get_activity().get_action_interface().split()
-        return false
+        return true
     }
 
     override fun refresh() {

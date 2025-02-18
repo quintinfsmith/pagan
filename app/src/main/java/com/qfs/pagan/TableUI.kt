@@ -600,12 +600,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val tree = opus_manager.get_tree(beat_key, listOf())
                         this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                             val state = this.get_standard_leaf_state(beat_key, position)
-                            val leaf_drawable = resources.getDrawable(R.drawable.leaf)
+                            val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
                             leaf_drawable.setState(state)
                             leaf_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + line_height).toInt())
                             leaf_drawable.draw(canvas)
-
-                            val color_list = resources.getColorStateList(R.color.leaf_text_selector)
+                            val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf_text_selector)!!
                             this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)
                             this.text_paint_offset.color = color_list.getColorForState(state, Color.MAGENTA)
 
@@ -745,12 +744,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 }
 
                 // ------------------- Draw Labels ----------------------------
-                val color_list = resources.getColorStateList(R.color.column_label_text)
+                val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.column_label_text)!!
                 val state = this.get_column_label_state(i)
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
 
                 val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
-                val drawable = resources.getDrawable(R.drawable.editor_label_column)
+                val drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.editor_label_column)!!
                 drawable.setState(state)
                 drawable.setBounds(offset.toInt(), scroll_y, (offset + column_width).toInt(), (scroll_y + line_height).toInt())
                 drawable.draw(canvas)
@@ -797,12 +796,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
 
         fun process_ctl_event_layout(state: IntArray, event: OpusControlEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
-            val ctl_drawable = resources.getDrawable(R.drawable.ctl_leaf)
+            val ctl_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.ctl_leaf)!!
             ctl_drawable.setState(state)
             ctl_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + ctl_line_height).toInt())
             ctl_drawable.draw(canvas)
 
-            val color_list = resources.getColorStateList(R.color.ctl_leaf_text_selector)
+            val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.ctl_leaf_text_selector)!!
             this.text_paint_ctl.color = color_list.getColorForState(state, Color.MAGENTA)
 
             val text = when (event) {

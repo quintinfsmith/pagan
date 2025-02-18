@@ -112,7 +112,7 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <Switch
+            <androidx.appcompat.widget.SwitchCompat
                 android:theme="@style/Theme.Pagan.SeekBar"
                 android:id="@+id/sPlaybackStereo"
                 android:layout_width="wrap_content"
@@ -130,7 +130,7 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <Switch
+            <androidx.appcompat.widget.SwitchCompat
                 android:theme="@style/Theme.Pagan.SeekBar"
                 android:id="@+id/sLimitSamples"
                 android:layout_width="wrap_content"
@@ -147,7 +147,7 @@
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <Switch
+            <androidx.appcompat.widget.SwitchCompat
                 android:theme="@style/Theme.Pagan.SeekBar"
                 android:id="@+id/sClipSameLineRelease"
                 android:layout_width="wrap_content"
@@ -164,7 +164,7 @@
                     android:layout_weight="1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:theme="@style/Theme.Pagan.SeekBar"
                     android:id="@+id/sRelativeEnabled"
                     android:layout_width="wrap_content"

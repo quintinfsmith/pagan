@@ -126,6 +126,7 @@
     <string name="label_short_percussion">!%1$02d</string>
     <string name="config_label_sample_rate">%1$dHz</string>
     <string name="label_export_progress">%1$d%%</string>
+    <string name="label_export_progress_no_value">Export Progress:</string>
     <string name="label_tuning_index">%1$02d:</string>
     <string name="dlg_set_volume">Set Volume(%)</string>
     <string name="untitled_opus">Untitled</string>
@@ -152,6 +153,26 @@
     <string name="btn_insert">Insert</string>
     <string name="btn_remove">Remove</string>
     <string name="btn_landing_about">About</string>
+    <string name="cd_channel_volume">Toggle Volume Control</string>
+    <string name="cd_remove_channel">Remove Channel</string>
+    <string name="cd_insert_channel">Add Channel</string>
+    <string name="cd_show_effect_controls">Show Effect Controls</string>
+    <string name="cd_remove_line">Remove Line</string>
+    <string name="cd_insert_line">Insert Line</string>
+    <string name="cd_set_percussion_instrument">Set Percussion Instrument</string>
+    <string name="cd_save_project">Save Project</string>
+    <string name="cd_duplicate_project">Duplicate Project</string>
+    <string name="cd_delete_project">Delete Project</string>
+    <string name="cd_export_project">Export Project</string>
+    <string name="cd_set_event_duration">Set Event Duration</string>
+    <string name="cd_remove_beat">Remove Beat</string>
+    <string name="cd_insert_beat">Insert Beat</string>
+    <string name="cd_hide_control_line">Hide Control Line</string>
+    <string name="cd_remove_control_line">Remove Control Line</string>
+    <string name="cd_clear_selection">Clear Selection</string>
+    <string name="rb_mm_copy">Copy</string>
+    <string name="rb_mm_move">Move</string>
+    <string name="rb_mm_merge">Merge</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

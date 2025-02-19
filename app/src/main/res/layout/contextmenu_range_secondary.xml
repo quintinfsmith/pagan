@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.qfs.pagan.PaganTextView
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
@@ -24,7 +24,7 @@
             android:visibility="gone"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"
-            android:text="Merge"
+            android:text="@string/rb_mm_merge"
             android:layout_gravity="center_vertical"
             android:layout_height="match_parent"
             android:layout_width="wrap_content"/>
@@ -36,7 +36,7 @@
             android:id="@+id/rbMoveModeCopy"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"
-            android:text="Copy"
+            android:text="@string/rb_mm_copy"
             android:layout_gravity="center_vertical"
             android:layout_height="match_parent"
             android:layout_width="wrap_content"/>
@@ -48,7 +48,7 @@
             android:id="@+id/rbMoveModeMove"
             android:layout_margin="0dp"
             android:theme="@style/link_mode_button"
-            android:text="Move"
+            android:text="@string/rb_mm_move"
             android:layout_gravity="center_vertical"
             android:layout_height="match_parent"
             android:layout_width="wrap_content"/>

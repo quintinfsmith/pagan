@@ -48,7 +48,7 @@
                 android:text="@string/label_tuning"/>
 
             <Space
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:minWidth="@dimen/config_item_padding"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
@@ -66,7 +66,7 @@
             android:id="@+id/rvActiveChannels"
             android:paddingTop="@dimen/config_item_padding"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_weight="1" />
 
     </LinearLayout>
@@ -90,6 +90,7 @@
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/ic_baseline_save_24"
+            android:contentDescription="@string/cd_save_project"
             android:text="@string/btn_cfg_save" />
         <Space
             android:layout_weight="1"
@@ -104,6 +105,7 @@
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/ic_baseline_content_copy_24"
+            android:contentDescription="@string/cd_duplicate_project"
             android:text="@string/btn_cfg_copy" />
 
         <Space
@@ -119,6 +121,7 @@
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/ic_baseline_delete_24"
+            android:contentDescription="@string/cd_delete_project"
             android:text="@string/btn_cfg_delete" />
 
         <Space
@@ -134,6 +137,7 @@
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/export"
+            android:contentDescription="@string/cd_export_project"
             android:text="@string/btn_cfg_export" />
 
     </LinearLayout>
@@ -147,14 +151,13 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
-        <com.qfs.pagan.PaganTextView
-            android:text="Export Progress:"
+        <TextView
+            android:text="@string/label_export_progress_no_value"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"/>
-        <com.qfs.pagan.PaganTextView
+        <TextView
             android:id="@+id/tvExportProgress"
-            android:text="0%"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </LinearLayout>

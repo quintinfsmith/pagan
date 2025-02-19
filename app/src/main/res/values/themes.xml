@@ -43,7 +43,7 @@
         <item name="android:progressTint">@color/leaf_main</item>
     </style>
     <style name="Theme.Pagan.Switch">
-        <item name="android:colorControlActivated">@color/leaf_main</item>
+        <item name="colorControlActivated">@color/leaf_main</item>
     </style>
     <style name="Theme.Pagan.EditText" parent="Widget.AppCompat.EditText">
         <item name="android:textColorPrimary">@color/main_fg</item>

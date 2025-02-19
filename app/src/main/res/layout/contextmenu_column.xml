@@ -18,7 +18,7 @@
         android:layout_height="@dimen/icon_button_height"
         app:srcCompat="@drawable/remove_beat"
         android:layout_marginEnd="@dimen/number_selector_spacing"
-        android:contentDescription="Remove Beat" />
+        android:contentDescription="@string/cd_remove_beat" />
 
     <ImageView
         android:theme="@style/icon_button"
@@ -27,5 +27,5 @@
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         app:srcCompat="@drawable/insert_beat"
-        android:contentDescription="Insert Beat" />
+        android:contentDescription="@string/cd_insert_beat" />
 </LinearLayout>

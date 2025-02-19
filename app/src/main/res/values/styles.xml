@@ -142,6 +142,7 @@
     <style name="AlertDialog" >
         <item name="android:windowIsFloating">true</item>
     </style>
+
     <style name="dialog_title">
         <item name="android:textSize">22sp</item>
         <item name="android:fontWeight">300</item>

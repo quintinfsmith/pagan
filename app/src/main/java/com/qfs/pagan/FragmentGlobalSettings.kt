@@ -9,8 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
-import android.widget.Switch
 import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
 import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
 
@@ -63,13 +63,13 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             }
         }
 
-        val switch_relative_mode = view.findViewById<Switch>(R.id.sRelativeEnabled)
+        val switch_relative_mode = view.findViewById<SwitchCompat>(R.id.sRelativeEnabled)
         switch_relative_mode.isChecked = main.configuration.relative_mode
         switch_relative_mode.setOnCheckedChangeListener { _, enabled: Boolean ->
             main.get_action_interface().set_relative_mode_visibility(enabled)
         }
 
-        val switch_clip_release = view.findViewById<Switch>(/* id = */ R.id.sClipSameLineRelease)
+        val switch_clip_release = view.findViewById<SwitchCompat>(R.id.sClipSameLineRelease)
         switch_clip_release.isChecked = main.configuration.clip_same_line_release
         switch_clip_release.setOnCheckedChangeListener { _, enabled: Boolean ->
             main.get_action_interface().set_clip_same_line_notes(enabled)
@@ -100,7 +100,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         //    main.reinit_playback_device()
         //}
 
-        val sample_rate_value_text = view.findViewById<PaganTextView>(R.id.tvSampleRate)
+        val sample_rate_value_text = view.findViewById<TextView>(R.id.tvSampleRate)
         sample_rate_value_text.text = getString(R.string.config_label_sample_rate, main.configuration.sample_rate)
         val slider_playback_quality = view.findViewById<SeekBar>(R.id.sbPlaybackQuality)
         val options = listOf(

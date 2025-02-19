@@ -4,12 +4,13 @@ import android.content.res.Configuration
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RadioGroup
+import android.widget.TextView
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_range, R.layout.contextmenu_range_secondary, primary_container, secondary_container) {
     lateinit var button_erase: ImageView
     lateinit var radio_mode: RadioGroup
-    lateinit var label: PaganTextView
+    lateinit var label: TextView
 
     init {
         this.refresh()

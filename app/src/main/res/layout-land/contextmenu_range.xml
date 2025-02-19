@@ -12,9 +12,9 @@
         android:theme="@style/icon_button"
         android:src="@drawable/unset"
         android:id="@+id/btnEraseSelection"
-        android:contentDescription="Clear Selection"/>
+        android:contentDescription="@string/cd_clear_selection"/>
 
-    <com.qfs.pagan.PaganTextView
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"

@@ -5,10 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.qfs.pagan.PaganTextView
+    <TextView
         android:padding="8dp"
         android:id="@+id/tvTitle"
-        android:theme="@style/dialog_title"
+        style="@style/dialog_title"
         android:gravity="top|center_horizontal"
         android:textSize="@dimen/dropdown_title_textsize"
         android:layout_width="match_parent"

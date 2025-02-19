@@ -13,7 +13,6 @@
         android:layout_gravity="center"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
-        android:text="Split"
         android:contentDescription="@string/cd_split"
         app:srcCompat="@drawable/split"/>
 
@@ -28,7 +27,6 @@
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_insert"
-        android:text="Insert"
         app:srcCompat="@drawable/insert" />
 
     <Space
@@ -42,7 +40,6 @@
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_remove"
-        android:text="Remove"
         app:srcCompat="@drawable/remove" />
 
     <Space
@@ -53,6 +50,7 @@
     <TextView
         android:theme="@style/icon_button"
         android:id="@+id/btnDuration"
+        android:contentDescription="@string/cd_set_event_duration"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:text="" />
@@ -68,7 +66,6 @@
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_unset"
-        android:text="Unset"
         app:srcCompat="@drawable/unset" />
 
 

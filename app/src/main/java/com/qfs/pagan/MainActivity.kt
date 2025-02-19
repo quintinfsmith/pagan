@@ -1199,7 +1199,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun _build_dialog_title_view(text: String): TextView {
-        val output = PaganTextView(ContextThemeWrapper(this, R.style.dialog_title))
+        val output = TextView(ContextThemeWrapper(this, R.style.dialog_title))
         output.text = text
         return output
     }
@@ -1512,46 +1512,6 @@ class MainActivity : AppCompatActivity() {
     fun is_soundfont_available(): Boolean {
         val soundfont_dir = this.get_soundfont_directory()
         return soundfont_dir.listFiles()?.isNotEmpty() ?: false
-    }
-
-    fun dialog_set_channel_instrument(channel: Int) {
-        val sorted_keys = this._soundfont_supported_instrument_names.keys.toList().sortedBy {
-            it.first + (it.second * 128)
-        }
-
-        val opus_manager = this.get_opus_manager()
-        val is_percussion = opus_manager.is_percussion(channel)
-        val default_position = opus_manager.get_channel_instrument(channel)
-
-        val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
-        val current_instrument_supported = sorted_keys.contains(default_position)
-        for (key in sorted_keys) {
-            val name = this._soundfont_supported_instrument_names[key]
-            if (is_percussion && key.first == 128) {
-                options.add(Pair(key, "[${key.second}] $name"))
-            } else if (key.first != 128 && !is_percussion) {
-                val pairstring = "${key.first}/${key.second}"
-                options.add(Pair(key, "[$pairstring] $name"))
-            }
-        }
-
-        if (is_percussion) {
-            val use_menu_dialog = options.isNotEmpty() && (!current_instrument_supported || options.size > 1)
-
-            if (use_menu_dialog) {
-                this.dialog_popup_menu(this.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, instrument: Pair<Int, Int> ->
-                    opus_manager.channel_set_instrument(channel, instrument)
-                }
-            } else {
-                this.dialog_number_input(this.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second) { program: Int ->
-                    opus_manager.channel_set_instrument(channel, Pair(1, program))
-                }
-            }
-        } else if (options.size > 1 || !current_instrument_supported) {
-            this.dialog_popup_menu(this.getString(R.string.dropdown_choose_instrument), options, default = default_position) { _: Int, instrument: Pair<Int, Int> ->
-                opus_manager.channel_set_instrument(channel, instrument)
-            }
-        }
     }
 
     fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {

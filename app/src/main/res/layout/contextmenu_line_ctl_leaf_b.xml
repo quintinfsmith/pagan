@@ -12,5 +12,5 @@
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unset"
             android:id="@+id/btnEraseSelection"
-            android:contentDescription="Clear Selection"/>
+            android:contentDescription="@string/cd_clear_selection"/>
 </LinearLayout>

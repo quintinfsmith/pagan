@@ -14,7 +14,7 @@
             app:srcCompat="@drawable/ctl"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
-            android:contentDescription="Toggle Volume Control"/>
+            android:contentDescription="@string/cd_channel_volume"/>
         <Space
             android:layout_weight="1"
             android:layout_width="0dp"
@@ -26,7 +26,7 @@
             app:srcCompat="@drawable/remove_line"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
-            android:contentDescription="Remove Line"/>
+            android:contentDescription="@string/cd_remove_channel"/>
 
         <ImageView
             android:theme="@style/icon_button"
@@ -34,7 +34,7 @@
             app:srcCompat="@drawable/insert_line"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
-            android:contentDescription="Insert Line"/>
+            android:contentDescription="@string/cd_insert_channel"/>
 
         <Space
             android:visibility="gone"

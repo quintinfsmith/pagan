@@ -1647,7 +1647,7 @@ class MainActivity : AppCompatActivity() {
         this.configuration.soundfont = null
         this._midi_playback_device = null
         this._feedback_sample_manager = null
-
+        this.populate_supported_soundfont_instrument_names()
         this.populate_active_percussion_names()
     }
 

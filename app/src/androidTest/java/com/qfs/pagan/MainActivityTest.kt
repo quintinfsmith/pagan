@@ -15,6 +15,7 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
@@ -65,7 +66,7 @@ class MainActivityTest {
     @Test
     fun mainActivityTest() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val stream = context.assets.open("tests/tracked_actions_1.json")
+        val stream = context.assets.open("tests/generated_1739987654989.json")
         val bytes = ByteArray(stream.available()) { 0 }
         stream.read(bytes)
         val text = bytes.decodeToString()
@@ -82,6 +83,21 @@ class MainActivityTest {
                     throw Exception("$i) Fail - $item")
                 }
             }
+        }
+
+        this.with_opus_manager { opus_manager, activity ->
+            val other = OpusLayerBase()
+            val stream = context.assets.open("tests/opus_1739987654989.json")
+            val bytes = ByteArray(stream.available()) { 0 }
+            stream.read(bytes)
+            other.load(bytes)
+            val base_version = OpusLayerBase()
+            base_version.import_from_other(opus_manager)
+            other.path = opus_manager.path // Path wont be the same
+            assertEquals(
+                other.to_json().to_string(),
+                base_version.to_json().to_string()
+            )
         }
     }
 

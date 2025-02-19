@@ -4596,7 +4596,7 @@ open class OpusLayerBase {
         this.path = other.path
         this.project_name = other.project_name
         this.tuning_map = other.tuning_map.clone()
-        this.transpose = other.transpose
+        this.transpose = other.transpose.copy()
         this._cached_instrument_line_map = other._cached_instrument_line_map
         this._cached_std_line_map = other._cached_std_line_map
         this.controllers = other.controllers

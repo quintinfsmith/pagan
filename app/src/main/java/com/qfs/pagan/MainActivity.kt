@@ -690,12 +690,13 @@ class MainActivity : AppCompatActivity() {
                     if (channel_recycler.adapter == null) {
                         ChannelOptionAdapter(this@MainActivity.get_opus_manager(), channel_recycler)
                     }
+                    super.onDrawerOpened(drawerView)
+
                     val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
                     if (channel_adapter.itemCount == 0) {
                         channel_adapter.setup()
                     }
 
-                    super.onDrawerOpened(drawerView)
 
                     this@MainActivity.playback_stop()
                     this@MainActivity.playback_stop_midi_output()
@@ -1517,7 +1518,7 @@ class MainActivity : AppCompatActivity() {
     fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {
         return this._soundfont_supported_instrument_names
     }
-    private fun populate_supported_soundfont_instrument_names() {
+    fun populate_supported_soundfont_instrument_names() {
         // populate a cache of available soundfont names so se don't have to open up the soundfont data
         // every time
         this._soundfont_supported_instrument_names.clear()

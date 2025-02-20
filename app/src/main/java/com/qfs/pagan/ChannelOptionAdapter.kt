@@ -17,8 +17,19 @@ class ChannelOptionAdapter(
     private val _recycler: RecyclerView
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
     class BackLinkView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.song_config_button)) {
         var view_holder: ChannelOptionViewHolder? = null
+        override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
+            this.layoutParams.width = MATCH_PARENT
+            (this.layoutParams as ViewGroup.MarginLayoutParams).setMargins(
+                0,
+                0,
+                0,
+                this.context.resources.getDimension(R.dimen.config_item_padding).roundToInt()
+            )
+        }
     }
 
     private var _channel_count = 0
@@ -52,6 +63,10 @@ class ChannelOptionAdapter(
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F
         (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.START
 
+        // Kludge. A Recent round of linting exposed an odd bug causing buttons to not actually
+        // match the parent width when at least one of the buttons has a long label
+        btn_choose_instrument.setMaxWidth(top_view.measuredWidth - top_view.paddingEnd - top_view.paddingStart - btn_kill_channel.measuredWidth)
+
         return ChannelOptionViewHolder(top_view)
     }
 
@@ -60,6 +75,7 @@ class ChannelOptionAdapter(
     }
 
     private fun set_text(view: BackLinkView, position: Int) {
+
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
 
@@ -73,23 +89,12 @@ class ChannelOptionAdapter(
         } else {
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
-
-        (view.getChildAt(0) as TextView).text = if (!this._opus_manager.is_percussion(position)) {
+        val label_view = (view.getChildAt(0) as TextView)
+        label_view.text = if (!this._opus_manager.is_percussion(position)) {
             activity.getString(R.string.label_choose_instrument, position, label)
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
         }.trim()
-    }
-
-    override fun onViewAttachedToWindow(holder: ChannelOptionViewHolder) {
-        super.onViewAttachedToWindow(holder)
-        holder.itemView.layoutParams.width = MATCH_PARENT
-        (holder.itemView.layoutParams as ViewGroup.MarginLayoutParams).setMargins(
-            0,
-            0,
-            0,
-            holder.itemView.context.resources.getDimension(R.dimen.config_item_padding).roundToInt()
-        )
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
@@ -101,8 +106,9 @@ class ChannelOptionAdapter(
         }
 
         val remove_button = (holder.itemView as ViewGroup).getChildAt(1) as ImageView
-        val main = this.get_activity()
-        val opus_manager = main.get_opus_manager()
+        val activity = this.get_activity()
+        val opus_manager = activity.get_opus_manager()
+
         if (this._opus_manager.is_percussion(position)) {
             remove_button.setImageResource(
                 if (opus_manager.percussion_channel.visible) {
@@ -120,6 +126,8 @@ class ChannelOptionAdapter(
                 this.interact_btnRemoveChannel(holder.itemView as BackLinkView)
             }
         }
+
+
     }
 
     private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
@@ -146,7 +154,7 @@ class ChannelOptionAdapter(
 
     fun add_channel() {
         this._channel_count += 1
-        this.notifyDataSetChanged()
+        this.notifyItemRangeChanged(0, this._channel_count)
     }
 
     fun remove_channel(channel: Int) {
@@ -156,11 +164,11 @@ class ChannelOptionAdapter(
 
     fun clear() {
         this._channel_count = 0
-        this.notifyDataSetChanged()
+        this.notifyItemRangeChanged(0, this._channel_count)
     }
 
     fun setup() {
         this._channel_count = this._opus_manager.channels.size + 1
-        this.notifyDataSetChanged()
+        this.notifyItemRangeChanged(0, this._channel_count)
     }
 }

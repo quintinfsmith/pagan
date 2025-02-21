@@ -950,13 +950,12 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
                 }
             }
+
             for ((_, controller) in this.controllers.get_all()) {
                 if (controller.visible) {
                     this._ui_change_bill.queue_row_change(y++)
                 }
             }
-
-
         }
     }
 
@@ -2346,7 +2345,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             return
         }
 
-
         val abs_offset = this.get_instrument_line_index(channel, adj_line_offset)
         val row_index = this.get_actual_line_index(abs_offset)
         val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
@@ -2362,7 +2360,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
         controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveController<*>> ->
             if (controller.visible) {
-                this._add_controller_to_column_width_map(visible_row + i, controller)
+                this._add_controller_to_column_width_map(visible_row + i + 1, controller)
             }
         }
     }

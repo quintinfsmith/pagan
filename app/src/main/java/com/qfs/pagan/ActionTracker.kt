@@ -462,8 +462,7 @@ class ActionTracker {
                 if (note >= 0) {
                     this.get_activity().play_event(
                         beat_key.channel,
-                        note,
-                        (opus_manager.get_current_line_controller_event(ControlEventType.Volume, beat_key, position) as OpusVolumeEvent).value
+                        note
                     )
                 }
             }
@@ -1009,9 +1008,8 @@ class ActionTracker {
 
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
-        val volume = opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
         val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        this.get_activity().play_event(beat_key.channel, event_note, volume)
+        this.get_activity().play_event(beat_key.channel, event_note)
     }
 
     fun set_octave(new_octave: Int) {
@@ -1022,9 +1020,8 @@ class ActionTracker {
 
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
-        val volume = opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
         val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        this.get_activity().play_event(beat_key.channel, event_note, volume)
+        this.get_activity().play_event(beat_key.channel, event_note)
     }
 
     fun unset() {
@@ -1101,10 +1098,8 @@ class ActionTracker {
             opus_manager.unset()
         } else {
             opus_manager.set_percussion_event_at_cursor()
-
-            val volume = opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset)
             val event_note = opus_manager.get_percussion_instrument(beat_key.line_offset)
-            this.get_activity().play_event(beat_key.channel, event_note, volume)
+            this.get_activity().play_event(beat_key.channel, event_note)
         }
     }
 
@@ -1246,11 +1241,7 @@ class ActionTracker {
         this.dialog_popup_menu(main.getString(R.string.dropdown_choose_percussion), options, default_instrument, stub_output = value) { _: Int, value: Int ->
             this.track(TrackedAction.SetPercussionInstrument, listOf(value))
             opus_manager.set_percussion_instrument(value)
-            main.play_event(
-                opus_manager.channels.size,
-                value,
-                .8F
-            )
+            main.play_event(opus_manager.channels.size, value)
         }
     }
 

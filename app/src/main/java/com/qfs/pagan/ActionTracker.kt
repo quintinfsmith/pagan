@@ -250,7 +250,7 @@ class ActionTracker {
 
             return JSONList(
                 listOf(JSONString(token.name)) +
-                if (integers == null || integers.isEmpty()) {
+                if (integers.isNullOrEmpty()) {
                     listOf()
                 } else {
                     when (token) {

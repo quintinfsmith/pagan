@@ -11,12 +11,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
+import com.qfs.apres.event.Volume
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
+import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.VolumeController
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import org.hamcrest.Description
@@ -49,7 +53,7 @@ class MainActivityTest {
     @JvmField
     var mActivityScenarioRule = ActivityScenarioRule(MainActivity::class.java)
 
-    private fun run_action(token: ActionTracker.TrackedAction, int_list: List<Int?>) {
+    private fun run_action(token: ActionTracker.TrackedAction, int_list: List<Int?> = listOf()) {
         this.mActivityScenarioRule.scenario.onActivity { activity ->
             val tracker = activity?.get_action_interface()
             tracker?.process_queued_action(token, int_list)
@@ -99,6 +103,51 @@ class MainActivityTest {
                 base_version.to_json().to_string()
             )
         }
+    }
+
+    /**
+     * Test bugfix #55
+     */
+    @Test
+    fun test_insert_line_width_map_adjust() {
+        this.run_action(TrackedAction.NewProject)
+        this.with_opus_manager { opus_manager, activity ->
+            val editor_table  = activity.findViewById<EditorTable>(R.id.etEditorTable)
+            assertEquals(
+                List(4) { List(3) { 1 } },
+                editor_table.get_column_width_map(),
+            )
+        }
+        this.run_action(TrackedAction.CursorSelectLeaf, listOf(0,0,0))
+        this.run_action(TrackedAction.SplitLeaf, listOf(2))
+        this.run_action(TrackedAction.CursorSelectLine, listOf(0,0,0))
+        this.run_action(
+            TrackedAction.ShowLineController,
+            ActionTracker.string_to_ints("Volume")
+        )
+
+        this.with_opus_manager { opus_manager, activity ->
+            assertEquals(
+                true,
+                opus_manager.get_line_controller<OpusControlEvent>(ControlEventType.Volume, 0, 0).visible
+            )
+        }
+
+        this.run_action(TrackedAction.CursorSelectLine, listOf(0,0,0))
+        this.run_action(TrackedAction.RemoveLine, listOf(1))
+        this.run_action(TrackedAction.ApplyUndo)
+        this.run_action(TrackedAction.CursorSelectLineCtlLine,ActionTracker.enum_to_ints(ControlEventType.Volume) + listOf(0,0))
+        this.run_action(TrackedAction.ToggleControllerVisibility)
+        this.run_action(TrackedAction.ApplyUndo)
+
+        this.with_opus_manager { opus_manager, activity ->
+            val editor_table  = activity.findViewById<EditorTable>(R.id.etEditorTable)
+            assertEquals(
+                listOf(2,1,1,1),
+                editor_table.get_column_width_map()[0]
+            )
+        }
+
     }
 
     private fun childAtPosition(

@@ -88,4 +88,22 @@ Pagan is something different.
  </tr>
 </table>
 
+## Contribute
 
+Pull requests are welcome but if you're not condfident with development, feel free to create an issue 
+
+https://github.com/quintinfsmith/pagan/issues
+
+You can also email me 
+
+smith.quintin@protonmail.com 
+
+Get in touch via BlueSky 
+
+https://bsky.app/profile/quintinfsmith.bsky.social 
+
+Or if you just want to make sure I keep working on the project, you can ...
+
+<a style="text-decoration: none important!;" href="https://ko-fi.com/L4L5163ZB8">
+    <img alt="Buy Me a Coffee" style="display: block; width: 8em;" src="https://burnsomni.net/content/support_me_on_kofi_badge_beige.png"/>
+   </a>

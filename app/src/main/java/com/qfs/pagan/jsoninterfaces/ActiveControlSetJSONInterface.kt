@@ -1,7 +1,6 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.pagan.opusmanager.ActiveControllerJSONInterface.UnknownControllerException
 
@@ -50,7 +49,7 @@ class ActiveControlSetJSONInterface {
 
         fun convert_v2_to_v3(input: JSONList, beat_count: Int): JSONHashMap {
             return JSONHashMap(
-                "beat_count" to JSONInteger(beat_count),
+                "beat_count" to beat_count,
                 "controllers" to JSONList(input.list.size) { i: Int ->
                     ActiveControllerJSONInterface.convert_v2_to_v3(input.get_hashmap(i))
                 }

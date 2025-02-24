@@ -15,6 +15,11 @@ class InvalidJSON(msg: String): Exception(msg) {
     }())
 }
 class NonNullableException : Exception("Attempting to access non-nullable value which is null")
+class InvalidJSONObject(obj: Any): Exception("Not a valid JSON Object $obj")
+
+interface JSONEncodeable {
+    fun to_json(): JSONObject
+}
 
 interface JSONObject {
     fun to_string(): String
@@ -70,8 +75,23 @@ data class JSONBoolean(var value: Boolean): JSONObject {
     }
 }
 
-class JSONHashMap(vararg args: Pair<String, JSONObject?>): JSONObject {
-    val hash_map = hashMapOf(*args)
+class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
+    val hash_map = HashMap<String, JSONObject?>()
+    init {
+        for (arg in args) {
+            when (arg.second) {
+                null -> this[arg.first] = null
+                is Boolean -> this[arg.first] = arg.second as Boolean
+                is Int -> this[arg.first] = arg.second as Int
+                is Float -> this[arg.first] = arg.second as Float
+                is String -> this[arg.first] = arg.second as String
+                is JSONEncodeable -> {
+                    this[arg.first] = (arg.second as JSONEncodeable)
+                }
+                else -> throw InvalidJSONObject(arg.second!!)
+            }
+        }
+    }
 
     operator fun get(key: String): JSONObject? {
         return this.hash_map[key]
@@ -79,6 +99,10 @@ class JSONHashMap(vararg args: Pair<String, JSONObject?>): JSONObject {
 
     operator fun set(key: String, n: Nothing?) {
         this.hash_map[key] = null
+    }
+
+    operator fun set(key: String, value: JSONEncodeable) {
+        this.hash_map[key] = value.to_json()
     }
 
     operator fun set(key: String, value: JSONObject?) {

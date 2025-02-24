@@ -85,9 +85,8 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
                 is Int -> this[arg.first] = arg.second as Int
                 is Float -> this[arg.first] = arg.second as Float
                 is String -> this[arg.first] = arg.second as String
-                is JSONEncodeable -> {
-                    this[arg.first] = (arg.second as JSONEncodeable)
-                }
+                is JSONEncodeable -> this[arg.first] = (arg.second as JSONEncodeable)
+                is JSONObject -> this[arg.first] = arg.second as JSONObject
                 else -> throw InvalidJSONObject(arg.second!!)
             }
         }

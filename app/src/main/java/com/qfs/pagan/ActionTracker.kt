@@ -248,74 +248,70 @@ class ActionTracker {
         fun item_to_json(item: Pair<TrackedAction, List<Int?>?>): JSONList {
             val (token, integers) = item
 
-            return JSONList(
-                listOf(JSONString(token.name)) +
-                if (integers.isNullOrEmpty()) {
-                    listOf()
-                } else {
-                    when (token) {
-                        // STRING
-                        TrackedAction.DeleteSoundFont,
-                        TrackedAction.ImportSoundFont,
-                        TrackedAction.SetSoundFont,
-                        TrackedAction.SetTransitionAtCursor,
-                        TrackedAction.ShowLineController,
-                        TrackedAction.ShowChannelController,
-                        TrackedAction.SetCopyMode,
-                        TrackedAction.ImportSong,
-                        TrackedAction.SetProjectName,
-                        TrackedAction.LoadProject -> {
-                            listOf(JSONString(ActionTracker.string_from_ints(integers)))
-                        }
-                        // Boolean
-                        TrackedAction.GoBack,
-                        TrackedAction.SetClipNotes,
-                        TrackedAction.SetRelativeModeVisibility -> {
-                            listOf(
-                                JSONBoolean(integers[0] != 0)
-                            )
-                        }
-                        TrackedAction.SetTempoAtCursor -> {
-                            listOf(
-                                JSONFloat(Float.fromBits(integers[0]!!))
-                            )
-                        }
-                        TrackedAction.ShowLineController,
-                        TrackedAction.ShowChannelController -> {
-                            listOf(JSONString(string_from_ints(integers)))
-                        }
+            val var_args = if (!integers.isNullOrEmpty()) {
+                when (token) {
+                    // STRING
+                    TrackedAction.DeleteSoundFont,
+                    TrackedAction.ImportSoundFont,
+                    TrackedAction.SetSoundFont,
+                    TrackedAction.SetTransitionAtCursor,
+                    TrackedAction.ShowLineController,
+                    TrackedAction.ShowChannelController,
+                    TrackedAction.SetCopyMode,
+                    TrackedAction.ImportSong,
+                    TrackedAction.SetProjectName,
+                    TrackedAction.LoadProject -> {
+                        arrayOf(JSONString(ActionTracker.string_from_ints(integers)))
+                    }
+                    // Boolean
+                    TrackedAction.GoBack,
+                    TrackedAction.SetClipNotes,
+                    TrackedAction.SetRelativeModeVisibility -> {
+                        arrayOf(JSONBoolean(integers[0] != 0))
+                    }
 
-                        TrackedAction.RepeatSelectionCtlLine,
-                        TrackedAction.RepeatSelectionCtlChannel,
-                        TrackedAction.RepeatSelectionCtlGlobal,
-                        TrackedAction.CursorSelectLeafCtlChannel,
-                        TrackedAction.CursorSelectLeafCtlGlobal,
-                        TrackedAction.CursorSelectGlobalCtlLine,
-                        TrackedAction.CursorSelectGlobalCtlRange,
-                        TrackedAction.CursorSelectChannelCtlLine,
-                        TrackedAction.CursorSelectChannelCtlRange,
-                        TrackedAction.CursorSelectLineCtlLine,
-                        TrackedAction.CursorSelectLineCtlRange,
-                        TrackedAction.CursorSelectLeafCtlLine -> {
-                            val str_len = integers[0]!!
-                            List(integers.size - str_len) { i: Int ->
-                                if (i == 0) {
-                                    JSONString(ActionTracker.sized_string_from_ints(integers))
-                                } else {
-                                    JSONInteger(integers[i + str_len]!!)
-                                }
-                            }
-                        }
-                        else -> {
-                            List(integers.size) {
-                                JSONInteger(integers[it]!!)
+                    TrackedAction.SetTempoAtCursor -> {
+                        arrayOf(JSONFloat(Float.fromBits(integers[0]!!)))
+                    }
+
+                    TrackedAction.ShowLineController,
+                    TrackedAction.ShowChannelController -> {
+                        arrayOf(JSONString(string_from_ints(integers)))
+                    }
+
+                    TrackedAction.RepeatSelectionCtlLine,
+                    TrackedAction.RepeatSelectionCtlChannel,
+                    TrackedAction.RepeatSelectionCtlGlobal,
+                    TrackedAction.CursorSelectLeafCtlChannel,
+                    TrackedAction.CursorSelectLeafCtlGlobal,
+                    TrackedAction.CursorSelectGlobalCtlLine,
+                    TrackedAction.CursorSelectGlobalCtlRange,
+                    TrackedAction.CursorSelectChannelCtlLine,
+                    TrackedAction.CursorSelectChannelCtlRange,
+                    TrackedAction.CursorSelectLineCtlLine,
+                    TrackedAction.CursorSelectLineCtlRange,
+                    TrackedAction.CursorSelectLeafCtlLine -> {
+                        val str_len = integers[0]!!
+                        Array(integers.size - str_len) { i: Int ->
+                            if (i == 0) {
+                                JSONString(ActionTracker.sized_string_from_ints(integers))
+                            } else {
+                                JSONInteger(integers[i + str_len]!!)
                             }
                         }
                     }
+
+                    else -> {
+                        Array(integers.size) {
+                            JSONInteger(integers[it]!!)
+                        }
+                    }
                 }
-            )
+            } else {
+                arrayOf()
+            }
 
-
+            return JSONList(JSONString(token.name), *var_args)
         }
     }
 
@@ -327,6 +323,7 @@ class ActionTracker {
     fun attach_activity(activity: MainActivity) {
         this.activity = activity
         this.DEBUG_ON = activity.is_debug_on()
+
     }
 
     fun get_activity(): MainActivity {
@@ -2215,7 +2212,7 @@ class ActionTracker {
 
     fun to_json(): JSONObject {
         return JSONList(
-            List(this.action_queue.size) { i: Int ->
+            *Array(this.action_queue.size) { i: Int ->
                 ActionTracker.item_to_json(this.action_queue[i])
             }
         )

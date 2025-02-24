@@ -3842,24 +3842,21 @@ open class OpusLayerBase {
             channels.add(OpusChannelJSONInterface.generalize(channel))
         }
         output["size"] = this.length
-        output["tuning_map"] = JSONList(MutableList(this.tuning_map.size) { i: Int ->
+        output["tuning_map"] = JSONList(this.tuning_map.size) { i: Int ->
             JSONList(
-                mutableListOf(
-                    JSONInteger(this.tuning_map[i].first),
-                    JSONInteger(this.tuning_map[i].second)
-                )
+                JSONInteger(this.tuning_map[i].first),
+                JSONInteger(this.tuning_map[i].second)
             )
-        })
+        }
 
         output["transpose"] = JSONInteger(this.transpose.first)
         output["transpose_radix"] = JSONInteger(this.transpose.second)
         output["controllers"] = ActiveControlSetJSONInterface.to_json(this.controllers)
 
-        output["channels"] = JSONList(
-            MutableList(this.channels.size) { i: Int ->
-                OpusChannelJSONInterface.generalize(this.channels[i])
-            }
-        )
+        output["channels"] = JSONList(this.channels.size) { i: Int ->
+            OpusChannelJSONInterface.generalize(this.channels[i])
+        }
+
         output["percussion_channel"] = OpusChannelJSONInterface.generalize(this.percussion_channel)
         output["title"] = if (this.project_name == null) {
             null
@@ -3868,10 +3865,8 @@ open class OpusLayerBase {
         }
 
         return JSONHashMap(
-            hashMapOf(
-                "d" to output,
-                "v" to JSONInteger(LATEST_VERSION)
-            )
+            "d" to output,
+            "v" to JSONInteger(LATEST_VERSION)
         )
     }
 

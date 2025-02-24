@@ -3,7 +3,6 @@ package com.qfs.pagan.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
-import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.structure.OpusTree
@@ -70,27 +69,23 @@ class ActiveControllerJSONInterface {
                 }
                 events.add(
                     JSONList(
-                        mutableListOf(
-                            pair["first"],
-                            generalized_tree
-                        )
+                        pair["first"],
+                        generalized_tree
                     )
                 )
             }
 
             return JSONHashMap(
-                hashMapOf(
-                    "events" to events,
-                    "type" to JSONString(
-                        when (input.get_string("type")) {
-                            "Tempo" -> "tempo"
-                            "Volume" -> "volume"
-                            "Pan" -> "pan"
-                            else -> throw Exception() // Nothing else was implemented
-                        }
-                    ),
-                    "initial" to OpusControlEventJSONInterface.convert_v2_to_v3(input.get_hashmap("initial_value")),
-                )
+                "events" to events,
+                "type" to JSONString(
+                    when (input.get_string("type")) {
+                        "Tempo" -> "tempo"
+                        "Volume" -> "volume"
+                        "Pan" -> "pan"
+                        else -> throw Exception() // Nothing else was implemented
+                    }
+                ),
+                "initial" to OpusControlEventJSONInterface.convert_v2_to_v3(input.get_hashmap("initial_value")),
             )
         }
 
@@ -107,10 +102,8 @@ class ActiveControllerJSONInterface {
 
                 event_list.add(
                     JSONList(
-                        mutableListOf<JSONObject?>(
-                            JSONInteger(i),
-                            generalized_tree
-                        )
+                        JSONInteger(i),
+                        generalized_tree
                     )
                 )
             }

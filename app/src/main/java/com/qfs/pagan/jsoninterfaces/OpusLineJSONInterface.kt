@@ -19,10 +19,8 @@ class OpusLineJSONInterface {
 
                 beats.add(
                     JSONList(
-                        mutableListOf(
-                            JSONInteger(i),
-                            generalized_tree
-                        )
+                        JSONInteger(i),
+                        generalized_tree
                     )
                 )
             }

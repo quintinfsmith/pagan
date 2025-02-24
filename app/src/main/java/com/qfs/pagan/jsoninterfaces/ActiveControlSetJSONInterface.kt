@@ -41,25 +41,19 @@ class ActiveControlSetJSONInterface {
             output["beat_count"] = control_set.beat_count
 
             val controllers = control_set.controllers.values.toList()
-            output["controllers"] = JSONList(
-                MutableList(controllers.size) {
-                    ActiveControllerJSONInterface.to_json(controllers[it])
-                }
-            )
+            output["controllers"] = JSONList(controllers.size) {
+                ActiveControllerJSONInterface.to_json(controllers[it])
+            }
 
             return output
         }
 
         fun convert_v2_to_v3(input: JSONList, beat_count: Int): JSONHashMap {
             return JSONHashMap(
-                hashMapOf(
-                    "beat_count" to JSONInteger(beat_count),
-                    "controllers" to JSONList(
-                        MutableList(input.list.size) { i: Int ->
-                            ActiveControllerJSONInterface.convert_v2_to_v3(input.get_hashmap(i))
-                        }
-                    )
-                )
+                "beat_count" to JSONInteger(beat_count),
+                "controllers" to JSONList(input.list.size) { i: Int ->
+                    ActiveControllerJSONInterface.convert_v2_to_v3(input.get_hashmap(i))
+                }
             )
         }
     }

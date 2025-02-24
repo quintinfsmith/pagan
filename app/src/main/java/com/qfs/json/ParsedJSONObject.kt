@@ -33,6 +33,7 @@ data class JSONString(var value: String): JSONObject {
         return this.to_string()
     }
 }
+
 data class JSONFloat(var value: Float): JSONObject {
     override fun to_string(): String {
         return "${this.value}"
@@ -69,12 +70,17 @@ data class JSONBoolean(var value: Boolean): JSONObject {
     }
 }
 
-class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
-    val hash_map = input_map ?: HashMap<String, JSONObject?>()
+class JSONHashMap(vararg args: Pair<String, JSONObject?>): JSONObject {
+    val hash_map = hashMapOf(*args)
 
     operator fun get(key: String): JSONObject? {
         return this.hash_map[key]
     }
+
+    operator fun set(key: String, n: Nothing?) {
+        this.hash_map[key] = null
+    }
+
     operator fun set(key: String, value: JSONObject?) {
         this.hash_map[key] = value
     }
@@ -239,8 +245,9 @@ class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
     }
 }
 
-class JSONList(input_list: List<JSONObject?>? = null): JSONObject {
-    val list = input_list?.toMutableList() ?: mutableListOf<JSONObject?>()
+class JSONList(vararg args: JSONObject?): JSONObject {
+    constructor(size: Int, callback: (Int) -> JSONObject?): this(*Array(size) { i: Int -> callback(i) })
+    val list = args.toMutableList()
 
     override fun to_string(): String {
         var output = "["

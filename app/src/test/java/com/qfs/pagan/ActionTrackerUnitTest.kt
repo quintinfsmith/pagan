@@ -181,6 +181,11 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.SetTempoAtCursor -> {
                     Pair(enum, listOf(35f.toBits()))
                 }
+
+                ActionTracker.TrackedAction.SwapLines -> {
+                    val test_ints = arrayOf(0, 0, 1, 0)
+                    Pair(enum, listOf(0, 0, 1, 0))
+                }
             }
 
             val json_name = JSONString(enum.name)
@@ -205,14 +210,14 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.NewProject,
                     ActionTracker.TrackedAction.DisableSoundFont,
                     ActionTracker.TrackedAction.ApplyUndo -> {
-                        JSONList(listOf(json_name))
+                        JSONList(json_name)
                     }
 
                     // ------- Boolean ------------
                     ActionTracker.TrackedAction.GoBack,
                     ActionTracker.TrackedAction.SetClipNotes,
                     ActionTracker.TrackedAction.SetRelativeModeVisibility -> {
-                        JSONList(listOf(json_name, JSONBoolean(true)))
+                        JSONList(json_name, JSONBoolean(true))
                     }
 
                     // -------- Single String Argument -------------
@@ -228,7 +233,7 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.SetCopyMode,
                     ActionTracker.TrackedAction.LoadProject -> {
                         val test_string = "Some String"
-                        JSONList(listOf(json_name, JSONString(test_string)))
+                        JSONList(json_name, JSONString(test_string))
                     }
 
                     // ------- Single Int Argument ----------------
@@ -253,20 +258,20 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.SetPercussionInstrument,
                     ActionTracker.TrackedAction.SetRelativeMode,
                     ActionTracker.TrackedAction.CursorSelectColumn -> {
-                        JSONList(listOf(json_name, JSONInteger(5)))
+                        JSONList(json_name, JSONInteger(5))
                     }
 
                     ActionTracker.TrackedAction.RepeatSelectionCtlChannel,
                     ActionTracker.TrackedAction.CursorSelectGlobalCtlRange -> {
                         val string = JSONString("test")
                         val test_ints = listOf(0,1)
-                        JSONList(listOf(json_name, string) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
                     ActionTracker.TrackedAction.RepeatSelectionCtlLine,
                     ActionTracker.TrackedAction.CursorSelectChannelCtlRange -> {
                         val string = JSONString("test")
                         val test_ints = listOf(0,1,2)
-                        JSONList(listOf(json_name, string) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
                     ActionTracker.TrackedAction.CursorSelectLineCtlRange,
                     ActionTracker.TrackedAction.CursorSelectLeafCtlGlobal,
@@ -274,37 +279,37 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.CursorSelectLeafCtlLine -> {
                         val string = JSONString("test")
                         val test_ints = listOf(0,1,2,3,4,5)
-                        JSONList(listOf(json_name, string) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     ActionTracker.TrackedAction.CursorSelectLineCtlLine -> {
                         val string = JSONString("Pan")
                         val test_ints = listOf(0,1)
-                        JSONList(listOf(json_name, string) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     ActionTracker.TrackedAction.RepeatSelectionCtlGlobal,
                     ActionTracker.TrackedAction.CursorSelectChannelCtlLine -> {
                         val string = JSONString("Reverb")
                         val test_ints = listOf(0)
-                        JSONList(listOf(json_name, string) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     ActionTracker.TrackedAction.CursorSelectGlobalCtlLine -> {
                         val string = JSONString("Tempo")
-                        JSONList(listOf(json_name, string))
+                        JSONList(json_name, string)
                     }
 
                     ActionTracker.TrackedAction.CursorSelectLine -> {
                         val test_ints = listOf(0, 1)
-                        JSONList(listOf(json_name) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // --------- >= 3 int args ------------------
                     ActionTracker.TrackedAction.CursorSelectLeaf,
                     ActionTracker.TrackedAction.CursorSelectRange -> {
                         val test_ints = listOf(0, 1, 2, 3, 4, 5)
-                        JSONList(listOf(json_name) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // -------- 3 int args ----------------------
@@ -316,25 +321,31 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.MergeSelectionIntoBeat,
                     ActionTracker.TrackedAction.SetChannelInstrument -> {
                         val test_ints = listOf(4,2,6)
-                        JSONList(listOf(json_name) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     ActionTracker.TrackedAction.CopyChannelCtlToBeat,
                     ActionTracker.TrackedAction.MoveChannelCtlToBeat -> {
                         val test_ints = listOf(4,2)
-                        JSONList(listOf(json_name) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // ------------2 + 2n args ----------------
                     ActionTracker.TrackedAction.SetTuningTable -> {
                         val test_ints = listOf(0, 12, 0, 12, 1, 12, 2, 12, 3, 12, 4, 12, 5, 12, 6, 12, 7, 12, 8, 12, 9, 12, 10, 12, 11, 12)
-                        JSONList(listOf(json_name) + List(test_ints.size) { JSONInteger(test_ints[it]) })
+                        JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // ----------- Float --------------
                     ActionTracker.TrackedAction.SetTempoAtCursor -> {
-                        JSONList(listOf(json_name, JSONFloat(35f)))
+                        JSONList(json_name, JSONFloat(35f))
                     }
+
+                    ActionTracker.TrackedAction.SwapLines -> {
+                        val test_ints = arrayOf(0, 0, 1, 0)
+                        JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
+                    }
+
                 },
                 json_item
             )

@@ -3,6 +3,7 @@
     <color name="blue_sky">#5ba1d6</color>
     <color name="blue_dark">#34688F</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="link_color">#2a2a46</color>
 
     <color name="leaf_main">#765BD5</color>
     <color name="leaf_spill">#5944a3</color>

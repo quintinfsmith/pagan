@@ -79,7 +79,7 @@ class OpusManagerJSONInterface {
                         if (input.keys.contains("radix")) {
                             val channel = input.get_list("channels").get_hashmap(0)
                             val lines = channel.get_list("lines")
-                            if (lines.list[0] is JSONString) {
+                            if (lines[0] is JSONString) {
                                 0
                             } else {
                                 1

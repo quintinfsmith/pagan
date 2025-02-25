@@ -41,7 +41,7 @@ class OpusChannelJSONInterface {
         private fun _interpret_percussion(input_map: JSONHashMap, beat_count: Int): OpusPercussionChannel {
             val channel = OpusPercussionChannel()
             val input_lines = input_map.get_list("lines")
-            for (line in input_lines.list) {
+            for (line in input_lines) {
                 channel.lines.add(OpusLineJSONInterface.percussion_line(line as JSONHashMap, beat_count))
             }
 
@@ -55,7 +55,7 @@ class OpusChannelJSONInterface {
             channel.midi_bank = input_map.get_int("midi_bank")
 
             val input_lines = input_map.get_list("lines")
-            for (line in input_lines.list) {
+            for (line in input_lines) {
                 channel.lines.add(
                     OpusLineJSONInterface.opus_line(
                         line as JSONHashMap,
@@ -234,7 +234,7 @@ class OpusChannelJSONInterface {
                         }
 
                         val children = working_tree.get_listn("children") ?: JSONList()
-                        for (child in children.list) {
+                        for (child in children) {
                             if (child != null) {
                                 stack.add(child as JSONHashMap)
                             }

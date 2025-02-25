@@ -46,7 +46,7 @@ class OpusTreeJSONInterface {
                 new_tree.set_size(input.get_int("size"))
                 val divisions = input.get_listn("divisions")
                 if (divisions != null) {
-                    for (i in divisions.list.indices) {
+                    for (i in divisions.indices) {
                         val pair = divisions.get_list(i)
                         if (pair.get_hashmapn(1) != null) {
                             new_tree[pair.get_int(0)] = from_json(
@@ -69,7 +69,7 @@ class OpusTreeJSONInterface {
                 val children = input.get_listn("children")
                 if (children != null) {
                     new_tree.set_size(children.size)
-                    children.list.forEachIndexed { i: Int, child_json: JSONObject? ->
+                    children.forEachIndexed { i: Int, child_json: JSONObject? ->
                         if (child_json == null) {
                             return@forEachIndexed
                         }

@@ -9,7 +9,7 @@ class ActiveControlSetJSONInterface {
     companion object {
         fun from_json(json_obj: JSONHashMap, size: Int): ActiveControlSet {
             val control_set = ActiveControlSet(size)
-            for (json_controller in json_obj.get_listn("controllers")?.list ?: listOf()) {
+            for (json_controller in json_obj.get_listn("controllers") ?: JSONList()) {
                 val controller = when (val label = (json_controller as JSONHashMap).get_string("type")) {
                     "tempo" -> {
                         ActiveControllerJSONInterface.from_json<OpusTempoEvent>(json_controller, size)

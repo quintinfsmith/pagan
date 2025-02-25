@@ -39,7 +39,7 @@ class ActiveControllerJSONInterface {
         }
 
         private fun <T: OpusControlEvent> populate_controller(obj: JSONHashMap, controller: ActiveController<T>, converter: (JSONHashMap) -> T) {
-            for (pair in obj.get_list("events").list) {
+            for (pair in obj.get_list("events")) {
                 val index = (pair as JSONList).get_int(0)
                 val value = pair.get_hashmapn(1) ?: continue
 

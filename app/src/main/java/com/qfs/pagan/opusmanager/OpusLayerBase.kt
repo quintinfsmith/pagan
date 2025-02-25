@@ -3976,7 +3976,7 @@ open class OpusLayerBase {
         this.channels.clear()
 
         this.set_beat_count(inner_map.get_int("size"))
-        for (generalized_channel in inner_map.get_list("channels").list) {
+        for (generalized_channel in inner_map.get_list("channels")) {
             val channel: OpusChannel = OpusChannelJSONInterface.interpret(
                 generalized_channel as JSONHashMap,
                 this.length

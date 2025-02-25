@@ -68,15 +68,15 @@ class OpusManagerJSONInterface {
         }
 
         fun detect_version(input: JSONHashMap): Int {
-            return when (val map_keys = input.hash_map.keys) {
+            return when (input.keys) {
                 setOf("v", "d") -> {
                     input.get_int("v")
                 }
                 else -> {
                     // There was some time between v0 and 1 where the 'tuning_map' didn't exist, so
                     // need to check by lines
-                    if (!map_keys.contains("controllers")) {
-                        if (map_keys.contains("radix")) {
+                    if (!input.keys.contains("controllers")) {
+                        if (input.keys.contains("radix")) {
                             val channel = input.get_list("channels").get_hashmap(0)
                             val lines = channel.get_list("lines")
                             if (lines.list[0] is JSONString) {

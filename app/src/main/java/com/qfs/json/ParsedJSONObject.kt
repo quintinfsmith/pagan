@@ -77,6 +77,9 @@ data class JSONBoolean(var value: Boolean): JSONObject {
 
 class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
     val hash_map = HashMap<String, JSONObject?>()
+    val keys: Set<String>
+        get() = this.hash_map.keys
+
     init {
         for (arg in args) {
             when (arg.second) {
@@ -251,12 +254,12 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is JSONHashMap || other.hash_map.keys.toSet() != this.hash_map.keys.toSet()) {
+        if (other !is JSONHashMap || other.keys != this.keys) {
             return false
         }
 
-        for (key in this.hash_map.keys) {
-            if (other.hash_map[key] != this.hash_map[key]) {
+        for (key in this.keys) {
+            if (other[key] != this[key]) {
                 return false
             }
         }

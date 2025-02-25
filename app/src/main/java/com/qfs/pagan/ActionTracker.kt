@@ -155,7 +155,7 @@ class ActionTracker {
                     TrackedAction.GoBack,
                     TrackedAction.SetClipNotes,
                     TrackedAction.SetRelativeModeVisibility -> {
-                        if (entry.list.size == 1) {
+                        if (entry.size == 1) {
                             listOf()
                         } else {
                             val value = entry.get_booleann(1)
@@ -187,16 +187,16 @@ class ActionTracker {
                     TrackedAction.CursorSelectLeafCtlLine -> {
                         val name = entry.get_string(1)
                         val string_ints = string_to_ints(name)
-                        listOf(string_ints.size) + string_ints + List(entry.list.size - 2) { i: Int ->
+                        listOf(string_ints.size) + string_ints + List(entry.size - 2) { i: Int ->
                             entry.get_intn(i + 2)
                         }
                     }
 
                     else -> {
-                        if (entry.list.size == 1) {
+                        if (entry.size == 1) {
                             listOf()
                         } else {
-                            List(entry.list.size - 1) { i: Int ->
+                            List(entry.size - 1) { i: Int ->
                                 entry.get_intn(i + 1)
                             }
                         }
@@ -2220,7 +2220,7 @@ class ActionTracker {
 
     fun from_json(json_list: JSONList) {
         this.action_queue.clear()
-        for (i in 0 until json_list.list.size) {
+        for (i in 0 until json_list.size) {
             val entry = json_list.get_listn(i) ?: continue
             val (token, ints) = ActionTracker.from_json_entry(entry)
             this.track(token, ints)

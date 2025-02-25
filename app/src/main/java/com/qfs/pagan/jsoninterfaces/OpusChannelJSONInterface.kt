@@ -189,7 +189,7 @@ class OpusChannelJSONInterface {
         fun convert_v0_to_v1(input_map: JSONHashMap, radix: Int): JSONHashMap {
             val lines = input_map.get_list("lines")
 
-            val new_lines = JSONList(lines.list.size) { i: Int ->
+            val new_lines = JSONList(lines.size) { i: Int ->
                 val beat_splits = lines.get_string(i).split("|")
                 val working_tree = OpusTree<JSONHashMap>()
                 working_tree.set_size(beat_splits.size)
@@ -218,7 +218,7 @@ class OpusChannelJSONInterface {
             val midi_channel = input_map.get_int("midi_channel")
             val lines = input_map.get_list("lines")
 
-            val static_values = JSONList(lines.list.size) { i: Int ->
+            val static_values = JSONList(lines.size) { i: Int ->
                 if (midi_channel == 9) {
                     var static_value: Int? = null
                     val stack = mutableListOf(lines.get_hashmap(i))
@@ -256,7 +256,7 @@ class OpusChannelJSONInterface {
                 "midi_bank" to input_map["midi_bank"],
                 "midi_program" to input_map["midi_program"],
                 "line_static_values" to static_values,
-                "line_controllers" to JSONList(line_volumes.list.size) { i: Int ->
+                "line_controllers" to JSONList(line_volumes.size) { i: Int ->
                     JSONList(
                         JSONHashMap(
                             "type" to JSONString("Volume"),
@@ -284,7 +284,7 @@ class OpusChannelJSONInterface {
 
         fun convert_v2_to_v3(input_map: JSONHashMap): JSONHashMap {
             val lines = input_map.get_list("lines")
-            val beat_count = lines.get_hashmap(0).get_list("children").list.size
+            val beat_count = lines.get_hashmap(0).get_list("children").size
             val midi_channel = input_map.get_int("midi_channel")
             val new_controllers = if (input_map["channel_controllers"] != null) {
                 ActiveControlSetJSONInterface.convert_v2_to_v3(input_map["channel_controllers"] as JSONList, beat_count)
@@ -297,11 +297,11 @@ class OpusChannelJSONInterface {
                 "midi_bank" to input_map["midi_bank"],
                 "midi_program" to input_map["midi_program"],
                 "controllers" to new_controllers,
-                "lines" to JSONList(lines.list.size) { i: Int ->
+                "lines" to JSONList(lines.size) { i: Int ->
                     val child_list = lines.get_hashmap(i).get_list("children")
                     val line_controllers = input_map.get_list("line_controllers").get_list(i)
                     val beats = JSONList()
-                    for (j in 0 until child_list.list.size) {
+                    for (j in 0 until child_list.size) {
                         val generalized_beat = OpusTreeJSONInterface.convert_v1_to_v3(child_list.get_hashmapn(j)) { event_map: JSONHashMap ->
                             if (midi_channel == 9) {
                                 InstrumentEventJSONInterface.convert_v1_to_v3_percussion(event_map)

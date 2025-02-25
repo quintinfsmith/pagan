@@ -50,7 +50,7 @@ class ActiveControlSetJSONInterface {
         fun convert_v2_to_v3(input: JSONList, beat_count: Int): JSONHashMap {
             return JSONHashMap(
                 "beat_count" to beat_count,
-                "controllers" to JSONList(input.list.size) { i: Int ->
+                "controllers" to JSONList(input.size) { i: Int ->
                     ActiveControllerJSONInterface.convert_v2_to_v3(input.get_hashmap(i))
                 }
             )

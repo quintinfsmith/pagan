@@ -272,6 +272,9 @@ class JSONList(vararg args: JSONObject?): JSONObject {
     constructor(size: Int, callback: (Int) -> JSONObject?): this(*Array(size) { i: Int -> callback(i) })
     val list = args.toMutableList()
 
+    val size: Int
+        get() = this.list.size
+
     override fun to_string(): String {
         var output = "["
         for (value in this.list) {
@@ -449,7 +452,7 @@ class JSONList(vararg args: JSONObject?): JSONObject {
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is JSONList || other.list.size != this.list.size) {
+        if (other !is JSONList || other.size != this.size) {
             return false
         }
 

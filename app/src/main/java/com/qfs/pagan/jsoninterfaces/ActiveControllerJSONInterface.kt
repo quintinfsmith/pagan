@@ -59,7 +59,7 @@ class ActiveControllerJSONInterface {
             val input_children = input.get_list("children")
             val events = JSONList()
 
-            for (i in 0 until input_children.list.size) {
+            for (i in 0 until input_children.size) {
                 val pair = input_children.get_hashmap(i)
                 val generalized_tree = OpusTreeJSONInterface.convert_v1_to_v3(pair["second"] as JSONHashMap) { input_event: JSONHashMap ->
                     OpusControlEventJSONInterface.convert_v2_to_v3(input_event)

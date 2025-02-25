@@ -40,7 +40,7 @@ class OpusLineJSONInterface {
         fun percussion_line(input: JSONHashMap, size: Int): OpusLinePercussion {
             val beats = input.get_list("beats")
             val beat_list = MutableList<OpusTree<PercussionEvent>>(size) { OpusTree() }
-            for (i in 0 until beats.list.size) {
+            for (i in 0 until beats.size) {
                 val pair = beats.get_list(i)
                 val beat_index = pair.get_int(0)
                 val tree = OpusTreeJSONInterface.from_json(pair.get_hashmap(1)) { event: JSONHashMap? ->
@@ -66,7 +66,7 @@ class OpusLineJSONInterface {
             val beats = input.get_list("beats")
 
             val beat_list = MutableList<OpusTree<TunedInstrumentEvent>>(size) { OpusTree() }
-            for (i in 0 until beats.list.size) {
+            for (i in 0 until beats.size) {
                 val pair = beats.get_list(i)
                 val beat_index = pair.get_int(0)
                 val tree = OpusTreeJSONInterface.from_json(pair.get_hashmap(1)) { event: JSONHashMap? ->

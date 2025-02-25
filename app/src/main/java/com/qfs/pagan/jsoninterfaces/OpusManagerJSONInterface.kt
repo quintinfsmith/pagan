@@ -24,7 +24,7 @@ class OpusManagerJSONInterface {
                         "second" to JSONInteger(radix)
                     )
                 },
-                "channels" to JSONList(old_channels.list.size) { i: Int ->
+                "channels" to JSONList(old_channels.size) { i: Int ->
                     OpusChannelJSONInterface.convert_v0_to_v1(old_channels.get_hashmap(i), radix)
                 }
             )
@@ -61,7 +61,7 @@ class OpusManagerJSONInterface {
                         "children" to JSONList()
                     )
                 ),
-                "channels" to JSONList(channels.list.size) { i: Int ->
+                "channels" to JSONList(channels.size) { i: Int ->
                     OpusChannelJSONInterface.convert_v1_to_v2(channels.get_hashmap(i))
                 }
             )
@@ -97,7 +97,7 @@ class OpusManagerJSONInterface {
         fun convert_v2_to_v3(input_map: JSONHashMap): JSONHashMap {
             val input_channels = input_map.get_list("channels")
             val channels = JSONList()
-            for (i in 0 until input_channels.list.size - 1) {
+            for (i in 0 until input_channels.size - 1) {
                 channels.add(
                     OpusChannelJSONInterface.convert_v2_to_v3(
                         input_channels.get_hashmap(i)
@@ -105,7 +105,7 @@ class OpusManagerJSONInterface {
                 )
             }
             val input_tuning_map = input_map.get_list("tuning_map")
-            val beat_count = input_channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("children").list.size
+            val beat_count = input_channels.get_hashmap(0).get_list("lines").get_hashmap(0).get_list("children").size
 
 
             return JSONHashMap(
@@ -113,7 +113,7 @@ class OpusManagerJSONInterface {
                 "d" to JSONHashMap(
                     "size" to JSONInteger(beat_count),
                     "title" to input_map["name"],
-                    "tuning_map" to JSONList(input_tuning_map.list.size) { i: Int ->
+                    "tuning_map" to JSONList(input_tuning_map.size) { i: Int ->
                         val pair = input_tuning_map.get_hashmap(i)
                         JSONList(
                             JSONInteger(pair.get_int("first")),
@@ -124,7 +124,7 @@ class OpusManagerJSONInterface {
                     "controllers" to ActiveControlSetJSONInterface.convert_v2_to_v3(input_map["controllers"] as JSONList, beat_count),
                     "channels" to channels,
                     "percussion_channel" to OpusChannelJSONInterface.convert_v2_to_v3(
-                        input_channels.get_hashmap(input_channels.list.size - 1)
+                        input_channels.get_hashmap(input_channels.size - 1)
                     )
                 )
             )

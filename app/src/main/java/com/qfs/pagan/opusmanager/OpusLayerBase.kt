@@ -3994,7 +3994,7 @@ open class OpusLayerBase {
 
 
         val generalized_tuning_map = inner_map.get_list("tuning_map")
-        this.tuning_map = Array(generalized_tuning_map.list.size) { i: Int ->
+        this.tuning_map = Array(generalized_tuning_map.size) { i: Int ->
             val g_pair = generalized_tuning_map.get_list(i)
             Pair(
                 g_pair.get_int(0),

@@ -77,8 +77,12 @@ data class JSONBoolean(var value: Boolean): JSONObject {
 
 class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
     private val hash_map = HashMap<String, JSONObject?>()
+    val size: Int
+        get() = this.hash_map.size
     val keys: Set<String>
         get() = this.hash_map.keys
+    val values: MutableCollection<JSONObject?>
+        get() = this.hash_map.values
 
     init {
         for (arg in args) {
@@ -269,6 +273,10 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
     override fun toString(): String {
         return this.to_string()
     }
+
+    operator fun iterator(): MutableIterator<MutableMap.MutableEntry<String, JSONObject?>> {
+        return this.hash_map.iterator()
+    }
 }
 
 class JSONList(vararg args: JSONObject?): JSONObject {
@@ -277,6 +285,7 @@ class JSONList(vararg args: JSONObject?): JSONObject {
 
     val size: Int
         get() = this.list.size
+
     val indices: IntRange
         get() = this.list.indices
 
@@ -293,6 +302,7 @@ class JSONList(vararg args: JSONObject?): JSONObject {
         output = "$output]"
         return output
     }
+
     fun forEachIndexed(callback: (Int, JSONObject?) -> Unit) {
         this.list.forEachIndexed(callback)
     }

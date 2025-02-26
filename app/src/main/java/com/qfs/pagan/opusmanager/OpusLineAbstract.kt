@@ -5,6 +5,8 @@ import com.qfs.pagan.structure.OpusTree
 abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<T>>): OpusTreeArray<T>(beats) {
     class BlockedCtlTreeException(var type: ControlEventType, var e: BlockedTreeException): Exception(e.message)
     var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
+    val length: Int
+        get() = this.beats.size
 
     init {
         // Default volume to hidden

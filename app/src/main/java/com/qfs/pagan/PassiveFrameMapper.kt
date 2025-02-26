@@ -26,47 +26,20 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
+class PassiveFrameMapper(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
+    private val line_frame_maps = mutableListOf<MutableList<OpusLineFrameMap>>()
+
     private val FADE_LIMIT = _sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
     private var _simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
-    private val _handle_map = HashMap<Int, SampleHandle>() // Handle UUID::Handle
-    private val _handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
-    private val _frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
 
-    private var _setter_id_gen = 0
-    private var _setter_map = HashMap<Int,() -> Set<SampleHandle>>()
-    private var _setter_frame_map = HashMap<Int, MutableSet<Int>>()
-    private val _setter_range_map = HashMap<Int, IntRange>()
     private var _cached_frame_count: Int? = null
     private var _cached_beat_frames: Array<Int>? = null
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
     private val _volume_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::volume]
     private val _pan_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::pan]
-    private val _percussion_setter_ids = mutableSetOf<Int>()
-
-    private val line_frame_maps = mutableListOf<MutableList<OpusLineFrameMap>>()
 
     var clip_same_line_release = false
-
-    override fun get_new_handles(frame: Int): Set<SampleHandle>? {
-        // Check frame a buffer ahead to make sure frames are added as accurately as possible
-        this.check_frame(frame + this._sample_handle_manager.buffer_size)
-
-        if (!this._frame_map.containsKey(frame)) {
-            return null
-        }
-
-        val output = mutableSetOf<SampleHandle>()
-
-        if (this._frame_map.containsKey(frame)) {
-            for (uuid in this._frame_map[frame]!!) {
-                output.add(this._handle_map[uuid] ?: continue)
-            }
-        }
-
-        return output
-    }
 
     override fun get_marked_frames(): Array<Int> {
         if (!this._cached_beat_frames.isNullOrEmpty()) {
@@ -112,52 +85,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return this._cached_beat_frames!!
     }
 
-    override fun has_frames_remaining(frame: Int): Boolean {
-        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame)
-                || (this._setter_frame_map.isNotEmpty() && this._setter_frame_map.keys.maxOf { it } >= frame)
-                || this.get_marked_frames().last() >= frame
-    }
-
     override fun get_size(): Int {
         // subject to changing, really just an estimate
         return this._cached_beat_frames?.last() ?: 0
-    }
-
-    override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
-        val output = mutableSetOf<Pair<Int, SampleHandle>>()
-
-        for ((uuid, range) in this._handle_range_map) {
-            if (!range.contains(frame)) {
-                continue
-            }
-
-            val handle = this._handle_map[uuid]!!
-            output.add(Pair(range.first, handle))
-        }
-
-        // NOTE: May miss tail end of samples with long decays, but for now, for my purposes, will be fine
-        val setter_ids_to_remove = mutableSetOf<Int>()
-        for ((setter_id, range) in this._setter_range_map) {
-            if (range.contains(frame)) {
-                setter_ids_to_remove.add(setter_id)
-            }
-        }
-
-        for (setter_id in setter_ids_to_remove) {
-            val range = this._setter_range_map[setter_id] ?: continue
-            val handle_getter = this._setter_map.remove(setter_id) ?: continue
-
-            for (handle in handle_getter()) {
-                this._map_real_handle(handle, range.first)
-                output.add(Pair(this._handle_range_map[handle.uuid]!!.first, handle))
-            }
-
-            for (i in range.first until frame) {
-                this._setter_frame_map.remove(i)
-            }
-        }
-
-        return output
     }
 
     // End FrameMap Interface --------------------------

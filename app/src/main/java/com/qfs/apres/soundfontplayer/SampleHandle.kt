@@ -574,5 +574,17 @@ class SampleHandle(
             buffer.repitch(adjustment)
         }
     }
+
+    fun get_full_array(): Array<Pair<Float, Float>> {
+        if (this.release_frame == null) {
+            throw Exception("Need a release frame set to get array.")
+        }
+
+        this.set_working_frame(0)
+
+        return Array(this.release_frame!! + this.volume_envelope.frames_release) {
+            this.get_next_frame() ?: Pair(0F, 0F)
+        }
+    }
 }
 

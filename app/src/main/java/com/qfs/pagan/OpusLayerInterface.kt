@@ -25,7 +25,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-class OpusLayerInterface : OpusLayerHistory() {
+class OpusLayerInterface : OpusLayerFrameTracker() {
     class HidingNonEmptyPercussionException: Exception()
     class HidingLastChannelException: Exception()
     class MissingEditorTableException: Exception()

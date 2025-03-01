@@ -12,4 +12,8 @@ class OpusChannelFrameTracker(val sample_handle_manager: SampleHandleManager) {
     fun process_line(i: Int) {
 
     }
+
+    fun get_line(i: Int): OpusLineFrameTracker {
+        return line_trackers[i]
+    }
 }

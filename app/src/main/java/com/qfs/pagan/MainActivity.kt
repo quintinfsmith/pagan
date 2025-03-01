@@ -2026,6 +2026,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun get_playback_handle_manager(): SampleHandleManager? {
+        return this._sample_handle_manager
+    }
+
     fun in_playback(): Boolean {
         return PlaybackState.Playing in listOf(this.playback_state_soundfont, this.playback_state_midi)
     }

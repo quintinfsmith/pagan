@@ -4,7 +4,7 @@ import com.qfs.apres.soundfontplayer.SampleHandle
 import kotlin.math.max
 import kotlin.math.min
 
-class OpusLineFrameTracker() {
+class OpusLineFrameTracker {
     class IndefiniteNoteException: Exception()
 
     var generated_frames = Array(0) { 0F } // Stereo. 1 frame is 2 Floats
@@ -83,6 +83,7 @@ class OpusLineFrameTracker() {
     }
 
     fun add_handles(frame: Int, handles: Set<SampleHandle>) {
+        // TODO: Clip release
         if (!this.handle_start_map.containsKey(frame)) {
             this.handle_start_map[frame] = mutableSetOf()
         }

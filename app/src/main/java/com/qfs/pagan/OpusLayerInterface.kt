@@ -59,6 +59,9 @@ class OpusLayerInterface : OpusLayerFrameTracker() {
 
     fun attach_activity(activity: MainActivity) {
         this._activity = activity
+
+        val sample_handle_manager = activity.get_playback_handle_manager() ?: return
+        this.attach_sample_handle_manager(sample_handle_manager)
     }
 
     fun get_activity(): MainActivity? {

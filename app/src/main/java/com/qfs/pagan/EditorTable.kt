@@ -70,7 +70,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
 
-        if (y - this.table_ui.inner_scroll_view.scrollY < line_height) {
+        if (y - this.table_ui.scrollY < line_height) {
             return -1
         }
 

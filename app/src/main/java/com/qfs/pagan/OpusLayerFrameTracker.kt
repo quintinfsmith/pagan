@@ -1,16 +1,13 @@
 package com.qfs.pagan
 
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusLayerHistory
-import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
-import com.qfs.pagan.structure.OpusTree
 import kotlin.math.floor
 
 open class OpusLayerFrameTracker: OpusLayerHistory() {
@@ -24,17 +21,32 @@ open class OpusLayerFrameTracker: OpusLayerHistory() {
     override fun <T : InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         super.set_event(beat_key, position, event)
 
-        val sample_handle_manager = this.get_sample_handle_manager() ?: return
+        val frame_tracker = this.frame_tracker ?: return
 
         val line = this.get_all_channels()[beat_key.channel].get_line(beat_key.line_offset)
         val (offset, width) = line.get_leaf_offset_and_width(beat_key.beat, position)
         val midi_event = this._gen_midi_event(event, beat_key) ?: return
 
-        this.frame_tracker.set_event(midi_event, beat_key.channel, beat_key.line_offset, offset, Rational(event.duration, width))
+        frame_tracker.set_event(midi_event, beat_key.channel, beat_key.line_offset, offset, Rational(event.duration, width))
     }
 
     fun new_frame_tracker(sample_handle_manager: SampleHandleManager) {
-        this.frame_tracker = OpusFrameTracker(sample_handle_manager)
+        this.frame_tracker = null
+
+        val new_frame_tracker = OpusFrameTracker(sample_handle_manager)
+        new_frame_tracker.map_tempo_changes(this.get_global_controller(ControlEventType.Tempo))
+        new_frame_tracker.map_beat_frames(this.length)
+
+        val channels = this.get_all_channels()
+        for (c in channels.indices) {
+            val channel = channels[c]
+            new_frame_tracker.new_channel()
+            for (i in channel.lines.indices) {
+                new_frame_tracker.new_line(c)
+            }
+        }
+
+        this.frame_tracker = new_frame_tracker
     }
 
     private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey): NoteOn79? {

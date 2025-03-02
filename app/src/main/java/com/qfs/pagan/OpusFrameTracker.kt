@@ -7,15 +7,28 @@ import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.structure.OpusTree
 
 class OpusFrameTracker(val sample_handle_manager: SampleHandleManager) {
-    var beat_count = 0
+    var frame_count = 0
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
     private var _cached_beat_frames: Array<Int>? = null
 
+    val beat_count: Int
+        get() = this._cached_beat_frames?.size ?: 0
+
     val line_trackers: MutableList<MutableList<OpusLineFrameTracker>> = mutableListOf()
 
+    fun new_channel(c: Int? = null) {
+        if (c == null) {
+            this.line_trackers.add(mutableListOf())
+        } else {
+            this.line_trackers.add(c, mutableListOf())
+        }
+    }
 
-    fun new_line(channel: Int, line: Int) {
-
+    fun new_line(c: Int, l: Int? = null): OpusLineFrameTracker {
+        val new_line = OpusLineFrameTracker()
+        this.line_trackers[c].add(l ?: (this.line_trackers[c].size - 1), new_line)
+        new_line.generated_frames = Array(this.frame_count * 2) { 0F }
+        return new_line
     }
 
     fun set_event(event: NoteOn79, channel: Int, line_offset: Int, offset: Rational, duration: Rational) {
@@ -75,7 +88,7 @@ class OpusFrameTracker(val sample_handle_manager: SampleHandleManager) {
         working_position = target_start_position
         var end_frame = start_frame
         // Note: divide duration to keep in-line with 0-1 range
-        val target_end_position = target_start_position + (duration / this.beat_count.toFloat())
+        val target_end_position = target_start_position + Rational(duration.n, duration.d * this.beat_count).toFloat()
         while (tempo_index < this._tempo_ratio_map.size) {
             val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < target_end_position) {
@@ -95,7 +108,7 @@ class OpusFrameTracker(val sample_handle_manager: SampleHandleManager) {
         return Pair(start_frame, end_frame)
     }
 
-    private fun map_tempo_changes(tempo_controller: ActiveController<OpusTempoEvent>) {
+    fun map_tempo_changes(tempo_controller: ActiveController<OpusTempoEvent>) {
         var working_tempo = tempo_controller.initial_event.value
 
         this._tempo_ratio_map.add(Pair(0f, working_tempo))
@@ -132,4 +145,46 @@ class OpusFrameTracker(val sample_handle_manager: SampleHandleManager) {
             }
         }
     }
+
+    fun map_beat_frames(beat_count: Int): Array<Int> {
+        val frames_per_minute = 60F * this.sample_handle_manager.sample_rate.toFloat()
+
+        val beats = mutableListOf(0)
+
+        var working_frame = 0
+        val working_tempo = this._tempo_ratio_map[0].second
+        var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+        var tempo_index = 0
+        val frames_to_add = mutableListOf<Float>()
+        // First, just get the frame of each beat
+        for (i in 1 until beat_count + 1) {
+            val beat_position = i.toFloat() / beat_count.toFloat()
+            var working_position = (i - 1).toFloat() / beat_count.toFloat()
+
+            while (tempo_index < this._tempo_ratio_map.size) {
+                val tempo_change_position = (this._tempo_ratio_map[tempo_index].first)
+
+                if (tempo_change_position < beat_position) {
+                    frames_to_add.add(frames_per_beat * (tempo_change_position - working_position))
+
+                    working_position = tempo_change_position
+                    frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
+                    tempo_index += 1
+                } else {
+                    break
+                }
+            }
+            frames_to_add.add(frames_per_beat * (beat_position - working_position))
+            working_frame += (frames_to_add.sum() * beat_count).toInt()
+            frames_to_add.clear()
+
+            beats.add(working_frame)
+        }
+
+        this.frame_count = beats.removeAt(beats.size - 1) ?: 0
+        this._cached_beat_frames = beats.toTypedArray()
+
+        return this._cached_beat_frames!!
+    }
+
 }

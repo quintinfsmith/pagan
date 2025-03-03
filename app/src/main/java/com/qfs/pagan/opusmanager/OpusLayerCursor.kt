@@ -1111,7 +1111,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 if (this.is_percussion(first.channel) != this.is_percussion(beat_key.channel)) {
                     throw MixedInstrumentException(first, beat_key)
                 }
-                this.move_leaf(first, listOf(), beat_key, listOf())
+                this.move_beat_range(beat_key, first, first)
             }
         } else {
             throw InvalidCursorState()
@@ -1127,14 +1127,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 if (this.is_percussion(first.channel) != this.is_percussion(beat_key.channel)) {
                     throw MixedInstrumentException(first, beat_key)
                 }
-                this.replace_tree(
-                    beat_key,
-                    listOf(),
-                    this.get_tree_copy(
-                        first,
-                        listOf()
-                    )
-                )
+                this.overwrite_beat_range(beat_key, first, second)
             }
         } else {
             throw InvalidCursorState()
@@ -2122,7 +2115,11 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
             OpusManagerCursor.CursorMode.Range -> {
                 val (first, second) = this.cursor.get_ordered_range()!!
-                control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line && beat_key in this.get_beatkeys_in_range(first, second) && beat_key != this.cursor.range!!.second
+                if (this.cursor.ctl_type == null) {
+                    beat_key in this.get_beatkeys_in_range(first, second)
+                } else {
+                    control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line && beat_key in this.get_beatkeys_in_range(first, second) && beat_key != this.cursor.range!!.second
+                }
             }
             OpusManagerCursor.CursorMode.Unset -> {
                 false
@@ -2173,7 +2170,13 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val target = this.get_instrument_line_index(channel, line_offset)
                 val first = this.get_instrument_line_index(first_key.channel, first_key.line_offset)
                 val second = this.get_instrument_line_index(second_key.channel, second_key.line_offset)
-                (control_type == this.cursor.ctl_type && this.cursor.ctl_level == CtlLineLevel.Line) && (first .. second).contains(target)
+                if (this.cursor.ctl_type == null) {
+                    (first .. second).contains(target)
+                } else if (control_type == this.cursor.ctl_type) {
+                    this.cursor.ctl_level == CtlLineLevel.Line && (first .. second).contains(target)
+                } else {
+                    false
+                }
             }
         }
     }

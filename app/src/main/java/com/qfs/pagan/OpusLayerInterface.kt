@@ -2061,6 +2061,16 @@ class OpusLayerInterface : OpusLayerHistory() {
                             }
 
                             this._ui_change_bill.queue_line_label_refresh(y)
+
+                            var i = 1
+                            for ((_, controller) in this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_all()) {
+                                if (controller.visible) {
+                                    this._ui_change_bill.queue_line_label_refresh(y + i++)
+                                }
+                            }
+
+
+
                             this._ui_change_bill.queue_column_label_refresh(beat_key.beat)
 
                             coordinates_to_update.add(EditorTable.Coordinate(y, beat_key.beat))

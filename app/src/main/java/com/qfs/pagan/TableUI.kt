@@ -148,11 +148,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             tracker.merge_selection_into_beat(beat_key)
                         }
                     }
+
                     // TODO: This shouldn't be here. cursor_select should be handled in OpusLayerCursor
                     if (opus_manager.temporary_blocker == null) {
                         opus_manager.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
                     }
-
                 } catch (e: Exception) {
                     when (e) {
                         is OpusLayerBase.MixedInstrumentException -> {

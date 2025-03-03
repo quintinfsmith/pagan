@@ -1,0 +1,1 @@
+Fixed: Had to scroll to top to be able to select column.

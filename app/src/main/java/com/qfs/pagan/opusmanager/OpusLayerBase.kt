@@ -2347,20 +2347,48 @@ open class OpusLayerBase {
         }
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
+        val trees = mutableListOf<Pair<OpusTree<out InstrumentEvent>, HashMap<ControlEventType, OpusTree<OpusControlEvent>>>>()
         for (o_key in original_keys) {
-            trees.add(this.get_tree_copy(o_key))
+            val control_tree_map = HashMap<ControlEventType, OpusTree<OpusControlEvent>>()
+            for ((type, _) in this.get_all_channels()[o_key.channel].lines[o_key.line_offset].controllers.get_all()) {
+                control_tree_map[type] = this.get_line_ctl_tree_copy<OpusControlEvent>(type, o_key, listOf())
+            }
+
+            trees.add(
+                Pair(
+                    this.get_tree_copy(o_key),
+                    control_tree_map
+                )
+            )
+
         }
+
         for (i in trees.indices) {
             this.unset(target_keys[i], listOf())
+            val clear_key = target_keys[i]
+            for ((type, _) in this.get_all_channels()[clear_key.channel].lines[clear_key.line_offset].controllers.get_all()) {
+                this.controller_line_unset(type, clear_key, listOf())
+            }
         }
 
         for (i in trees.indices) {
             this.replace_tree(
                 target_keys[i],
                 null,
-                trees[i]
+                trees[i].first
             )
+
+            for ((type, ctl_tree) in trees[i].second) {
+                if (!this.has_line_controller(type, target_keys[i].channel, target_keys[i].line_offset)) {
+                    this.new_line_controller(type, target_keys[i].channel, target_keys[i].line_offset)
+                }
+                this.controller_line_replace_tree(
+                    type,
+                    target_keys[i],
+                    listOf(),
+                    ctl_tree
+                )
+            }
         }
     }
 
@@ -2385,21 +2413,49 @@ open class OpusLayerBase {
         }
 
         // First, get the trees to copy. This prevents errors if the beat_key is within the two corner range
-        val trees = mutableListOf<OpusTree<out InstrumentEvent>>()
+        val trees = mutableListOf<Pair<OpusTree<out InstrumentEvent>, HashMap<ControlEventType, OpusTree<OpusControlEvent>>>>()
         for (o_key in original_keys) {
-            trees.add(this.get_tree_copy(o_key))
+            val control_tree_map = HashMap<ControlEventType, OpusTree<OpusControlEvent>>()
+            for ((type, _) in this.get_all_channels()[o_key.channel].lines[o_key.line_offset].controllers.get_all()) {
+                control_tree_map[type] = this.get_line_ctl_tree_copy<OpusControlEvent>(type, o_key, listOf())
+            }
+
+            trees.add(
+                Pair(
+                    this.get_tree_copy(o_key),
+                    control_tree_map
+                )
+            )
+
         }
 
         for (clear_key in original_keys) {
             this.unset(clear_key, listOf())
+            for ((type, _) in this.get_all_channels()[clear_key.channel].lines[clear_key.line_offset].controllers.get_all()) {
+                this.controller_line_unset(type, clear_key, listOf())
+            }
         }
 
         for (clear_key in target_keys) {
             this.unset(clear_key, listOf())
+            for ((type, _) in this.get_all_channels()[clear_key.channel].lines[clear_key.line_offset].controllers.get_all()) {
+                this.controller_line_unset(type, clear_key, listOf())
+            }
         }
 
         for (i in target_keys.indices) {
-            this.replace_tree(target_keys[i], null, trees[i])
+            this.replace_tree(target_keys[i], null, trees[i].first)
+            for ((type, ctl_tree) in trees[i].second) {
+                if (!this.has_line_controller(type, target_keys[i].channel, target_keys[i].line_offset)) {
+                    this.new_line_controller(type, target_keys[i].channel, target_keys[i].line_offset)
+                }
+                this.controller_line_replace_tree(
+                    type,
+                    target_keys[i],
+                    listOf(),
+                    ctl_tree
+                )
+            }
         }
     }
 
@@ -2682,6 +2738,10 @@ open class OpusLayerBase {
             for (overwrite_key in key_list) {
                 if (overwrite_key != target_key) {
                     this.unset(overwrite_key, listOf())
+                    // Copy all effects as well
+                    for ((type, _) in this.get_all_channels()[overwrite_key.channel].lines[overwrite_key.line_offset].controllers.get_all()) {
+                        this.controller_line_unset(type, overwrite_key, listOf())
+                    }
                 }
             }
         }
@@ -2693,6 +2753,13 @@ open class OpusLayerBase {
             for (overwrite_key in key_list) {
                 if (target_key != overwrite_key) {
                     this.replace_tree(overwrite_key, null, this.get_tree_copy(target_key))
+                    for ((type, _) in this.get_all_channels()[target_key.channel].lines[target_key.line_offset].controllers.get_all()) {
+                        if (!this.has_line_controller(type, overwrite_key.channel, overwrite_key.line_offset)) {
+                            this.new_line_controller(type, overwrite_key.channel, overwrite_key.line_offset)
+                        }
+
+                        this.controller_line_replace_tree(type, overwrite_key, listOf(), this.get_line_ctl_tree(type, target_key, listOf()))
+                    }
                 }
             }
         }

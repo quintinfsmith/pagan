@@ -27,9 +27,14 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
+        val btn_about = view.findViewById<View>(R.id.btnFrontAbout)
 
         btn_settings.setOnClickListener {
             this.get_activity().get_action_interface().open_settings()
+        }
+
+        btn_about.setOnClickListener {
+            this.get_activity().get_action_interface().open_about()
         }
 
         btn_newProject.setOnClickListener {

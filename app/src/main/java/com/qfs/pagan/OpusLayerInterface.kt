@@ -13,7 +13,6 @@ import com.qfs.pagan.opusmanager.InstrumentEvent
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusEvent
-import com.qfs.pagan.opusmanager.OpusLayerHistory
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
@@ -61,7 +60,7 @@ class OpusLayerInterface : OpusLayerFrameTracker() {
         this._activity = activity
 
         val sample_handle_manager = activity.get_playback_handle_manager() ?: return
-        this.attach_sample_handle_manager(sample_handle_manager)
+        this.new_frame_tracker(sample_handle_manager)
     }
 
     fun get_activity(): MainActivity? {

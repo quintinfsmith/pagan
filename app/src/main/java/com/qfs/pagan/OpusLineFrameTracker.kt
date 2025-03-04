@@ -17,6 +17,34 @@ class OpusLineFrameTracker {
 
     private var queued_ranges: MutableSet<IntRange> = mutableSetOf()
 
+    var volume_map: Map<Int, Pair<Float, Float>>? = null
+
+    fun set_volume_map(new_map: Map<Int, Pair<Float, Float>>) {
+        this.volume_map = new_map
+    }
+
+    fun get_volume(frame: Int): Float {
+        if (this.volume_map == null) {
+            throw Exception("Volume Map Uninitialized")
+        }
+
+        var working_increment = 0F
+        var working_base = 0F
+        var prev_frame = 0
+
+        for ((i, pair) in this.volume_map!!) {
+            if (i <= frame) {
+                prev_frame = i
+                working_base = pair.first
+                working_increment = pair.second
+            } else {
+                break
+            }
+        }
+
+        return ((frame - prev_frame).toFloat() * working_increment) + working_base
+    }
+
     fun invalidate(from_frame: Int = 0, to_frame: Int = this.size) {
         val invalid_range = from_frame until to_frame
 

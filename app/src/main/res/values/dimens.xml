@@ -46,4 +46,6 @@
     <dimen name="text_size_ctl">12sp</dimen>
     <dimen name="octave_label_padding_y">12dp</dimen>
     <dimen name="octave_label_padding_x">3dp</dimen>
+
+    <dimen name="landing_button_space">3dp</dimen>
 </resources>

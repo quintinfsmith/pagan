@@ -49,6 +49,8 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
             }
         } else {
             btn_mostRecent.visibility = View.GONE
+            val btn_index = (btn_mostRecent.parent as ViewGroup).indexOfChild(btn_mostRecent)
+            (btn_mostRecent.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
         }
 
         if (this.get_activity().has_projects_saved()) {
@@ -69,6 +71,8 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
             btn_loadProject.visibility = View.VISIBLE
         } else {
             btn_loadProject.visibility = View.GONE
+            val btn_index = (btn_loadProject.parent as ViewGroup).indexOfChild(btn_loadProject)
+            (btn_loadProject.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {
@@ -77,7 +81,7 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
 
         val main = this.get_activity()
         if (main.is_soundfont_available()) {
-            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.GONE
+            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
         }  else {
             this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
                 val url = getString(R.string.url_fluid)

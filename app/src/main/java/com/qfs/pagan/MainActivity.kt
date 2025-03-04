@@ -1415,7 +1415,7 @@ class MainActivity : AppCompatActivity() {
         return this.view_model.opus_manager
     }
 
-    fun play_event(channel: Int, event_value: Int, velocity: Float = .8F) {
+    fun play_event(channel: Int, event_value: Int, velocity: Float = .6F) {
         if (!this._midi_interface.output_devices_connected()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()

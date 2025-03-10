@@ -44,8 +44,11 @@ Pagan is something different.
    </a>
   </td>
   <td>
-   
+        <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.paganpaid'>
+    <img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/>
+   </a>
   </td>
+
   <td>
 
   </td>

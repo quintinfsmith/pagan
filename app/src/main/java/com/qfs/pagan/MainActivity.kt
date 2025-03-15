@@ -1515,9 +1515,6 @@ class MainActivity : AppCompatActivity() {
         return soundfont_dir.listFiles()?.isNotEmpty() ?: false
     }
 
-    fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {
-        return this._soundfont_supported_instrument_names
-    }
     fun populate_supported_soundfont_instrument_names() {
         // populate a cache of available soundfont names so se don't have to open up the soundfont data
         // every time
@@ -1533,6 +1530,14 @@ class MainActivity : AppCompatActivity() {
                 this._soundfont_supported_instrument_names[Pair(0, program++)] = name
             }
         }
+    }
+
+    fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {
+        if (this._soundfont_supported_instrument_names.isEmpty()) {
+            this.populate_supported_soundfont_instrument_names()
+        }
+
+        return this._soundfont_supported_instrument_names
     }
 
     fun set_soundfont(filename: String?) {
@@ -1638,7 +1643,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        this.update_channel_instruments()
         if (this._feedback_sample_manager != null) {
             this.disconnect_feedback_device()
         }
@@ -1648,7 +1652,9 @@ class MainActivity : AppCompatActivity() {
         this.configuration.soundfont = null
         this._midi_playback_device = null
         this._feedback_sample_manager = null
-        this.populate_supported_soundfont_instrument_names()
+        this._soundfont_supported_instrument_names.clear()
+
+        this.update_channel_instruments()
         this.populate_active_percussion_names()
     }
 

@@ -70,7 +70,6 @@ class OpusLineFrameTracker {
             }
             this.queued_ranges = preserved_ranges
         }
-
     }
 
     fun generate_queued_frames() {

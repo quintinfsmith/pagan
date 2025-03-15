@@ -34,6 +34,11 @@ class OpusFrameTracker(val sample_handle_manager: SampleHandleManager, var trans
         this.midi_channel_map.add(c ?: this.midi_channel_map.size, 0)
     }
 
+    fun remove_handles(channel: Int, line_offset: Int, offset: Rational) {
+        val frame_range = this.calculate_frame_range(offset, Rational(1,1))
+        this.line_trackers[channel][line_offset].remove_handles_at_frame(frame_range.first)
+    }
+
     fun set_event(note_offset: Int, channel: Int, line_offset: Int, offset: Rational, duration: Rational) {
         val event = this._gen_midi_event(note_offset, channel, line_offset, offset) ?: return
         val handles = this.sample_handle_manager.gen_sample_handles(event)

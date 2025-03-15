@@ -126,8 +126,6 @@ class ChannelOptionAdapter(
                 this.interact_btnRemoveChannel(holder.itemView as BackLinkView)
             }
         }
-
-
     }
 
     private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {

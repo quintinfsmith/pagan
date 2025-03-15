@@ -1742,11 +1742,12 @@ class MainActivity : AppCompatActivity() {
         if (this._popup_active) {
             return
         }
-        this._popup_active = true
 
         if (options.isEmpty()) {
             return
         }
+
+        this._popup_active = true
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_menu,

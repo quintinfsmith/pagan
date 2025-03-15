@@ -1,0 +1,1 @@
+- Fixed bug where trying to change instrument without a soundfont locks out all popup dialogs.

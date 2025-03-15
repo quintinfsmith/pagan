@@ -27,9 +27,14 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
+        val btn_about = view.findViewById<View>(R.id.btnFrontAbout)
 
         btn_settings.setOnClickListener {
             this.get_activity().get_action_interface().open_settings()
+        }
+
+        btn_about.setOnClickListener {
+            this.get_activity().get_action_interface().open_about()
         }
 
         btn_newProject.setOnClickListener {
@@ -44,6 +49,8 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
             }
         } else {
             btn_mostRecent.visibility = View.GONE
+            val btn_index = (btn_mostRecent.parent as ViewGroup).indexOfChild(btn_mostRecent)
+            (btn_mostRecent.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
         }
 
         if (this.get_activity().has_projects_saved()) {
@@ -64,6 +71,8 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
             btn_loadProject.visibility = View.VISIBLE
         } else {
             btn_loadProject.visibility = View.GONE
+            val btn_index = (btn_loadProject.parent as ViewGroup).indexOfChild(btn_loadProject)
+            (btn_loadProject.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {
@@ -72,7 +81,7 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
 
         val main = this.get_activity()
         if (main.is_soundfont_available()) {
-            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.GONE
+            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
         }  else {
             this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
                 val url = getString(R.string.url_fluid)

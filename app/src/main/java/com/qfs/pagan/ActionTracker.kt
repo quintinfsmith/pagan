@@ -1120,7 +1120,8 @@ class ActionTracker {
 
     fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>? = null) {
         val activity = this.get_activity()
-        val sorted_keys = activity._soundfont_supported_instrument_names.keys.toList().sortedBy {
+        val supported_instrument_names = activity.get_supported_instrument_names()
+        val sorted_keys = supported_instrument_names.keys.toList().sortedBy {
             it.first + (it.second * 128)
         }
 
@@ -1131,7 +1132,7 @@ class ActionTracker {
         val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
         val current_instrument_supported = sorted_keys.contains(default_position)
         for (key in sorted_keys) {
-            val name = activity._soundfont_supported_instrument_names[key]
+            val name = supported_instrument_names[key]
             if (is_percussion && key.first == 128) {
                 options.add(Pair(key, "[${key.second}] $name"))
             } else if (key.first != 128 && !is_percussion) {

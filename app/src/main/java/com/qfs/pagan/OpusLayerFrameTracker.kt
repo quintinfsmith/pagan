@@ -18,6 +18,11 @@ open class OpusLayerFrameTracker: OpusLayerHistory() {
         this.set_event_handles(beat_key, position)
     }
 
+    override fun unset(beat_key: BeatKey, position: List<Int>) {
+        super.unset(beat_key, position)
+        this.remove_event_handles(beat_key, position)
+    }
+
     override fun split_tree(
         beat_key: BeatKey,
         position: List<Int>,
@@ -25,7 +30,6 @@ open class OpusLayerFrameTracker: OpusLayerHistory() {
         move_event_to_end: Boolean
     ) {
         val need_frame_track_update = this.get_tree(beat_key, position).is_event()
-
         super.split_tree(beat_key, position, splits, move_event_to_end)
 
         if (!need_frame_track_update) {
@@ -50,6 +54,7 @@ open class OpusLayerFrameTracker: OpusLayerHistory() {
 
         frame_tracker.remove_handles(beat_key.channel, beat_key.line_offset, offset)
     }
+
     private fun set_event_handles(beat_key: BeatKey, position: List<Int>) {
         val frame_tracker = this.frame_tracker ?: return
         val event = this.get_tree(beat_key, position).get_event()!!
@@ -86,8 +91,6 @@ open class OpusLayerFrameTracker: OpusLayerHistory() {
 
         this.frame_tracker = new_frame_tracker
     }
-
-
 
     private fun get_sample_handle_manager(): SampleHandleManager? {
         return this.frame_tracker?.sample_handle_manager

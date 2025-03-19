@@ -7,6 +7,8 @@ import kotlin.math.min
 class OpusLineFrameTracker {
     class IndefiniteNoteException: Exception()
 
+    private var generating: Boolean = false
+    private var mutex = Mutex()
     var generated_frames = Array(0) { 0F } // Stereo. 1 frame is 2 Floats
     val size: Int
         get() = this.generated_frames.size / 2
@@ -72,33 +74,40 @@ class OpusLineFrameTracker {
         }
     }
 
-    fun generate_queued_frames() {
-        val sorted_ranges = this.queued_ranges.sortedBy { range: IntRange ->
-            range.first
-        }
-
-        for (i_range in sorted_ranges) {
-            for (i in i_range) {
-                this.generated_frames[(i * 2)] = 0F
-                this.generated_frames[(i * 2) + 1] = 0F
+    suspend fun generate_queued_frames() {
+        this.mutex.withLock {
+            val sorted_ranges = this.queued_ranges.sortedBy { range: IntRange ->
+                range.first
             }
 
-            for (hid in this.handles.keys) { // #NONOPT
-                val (handle, h_range) = this.handles[hid]!!
-                if (i_range.contains(h_range.first)) {
-                    handle.set_working_frame(0)
-                } else if (h_range.contains(i_range.last)) {
-                    handle.set_working_frame(i_range.last - h_range.first)
-                    for (i in h_range.first .. i_range.last) {
-                        val (lv, rv) = handle.get_next_frame() ?: break
-                        this.generated_frames[(i * 2)] += rv
-                        this.generated_frames[(i * 2) + 1] += lv
+            this.generating = true
+
+            val handled_ranges = mutableSetOf<IntRange>()
+            for (i_range in sorted_ranges) {
+                for (i in i_range) {
+                    this.generated_frames[(i * 2)] = 0F
+                    this.generated_frames[(i * 2) + 1] = 0F
+                }
+
+                for (hid in this.handles.keys) { // #NONOPT
+                    val (handle, h_range) = this.handles[hid]!!
+                    if (i_range.contains(h_range.first)) {
+                        handle.set_working_frame(0)
+                    } else if (h_range.contains(i_range.last)) {
+                        handle.set_working_frame(i_range.last - h_range.first)
+                        for (i in h_range.first..i_range.last) {
+                            val (lv, rv) = handle.get_next_frame() ?: break
+                            this.generated_frames[(i * 2)] += rv
+                            this.generated_frames[(i * 2) + 1] += lv
+                        }
                     }
                 }
+                handled_ranges.add(i_range)
             }
-        }
 
-        this.queued_ranges.clear()
+            this.queued_ranges.clear()
+            this.generating = false
+        }
     }
 
     fun remove_handles_at_frame(frame: Int) {

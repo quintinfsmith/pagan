@@ -1,0 +1,6 @@
+- 'Open last project' option. Pagan will track the active project and allow you to reopen it in case you forgot to save or the app crashed.
+- long press visualization. when a note has a duration > 1, there will be a tail indicating that it exists.
+- reduced default playback sample rate to 22050hz
+- Playback ignores volume & modulation envelopes in soundfont samples during playback to increase playback quality. Exported files still consider them.
+- fixed: some row selections were noticeably slow
+- sped up import/load/new project

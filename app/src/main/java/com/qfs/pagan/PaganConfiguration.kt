@@ -1,46 +1,40 @@
 package com.qfs.pagan
 
-import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.ColorMap.Palette
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONParser
 import java.io.File
 
-@Serializable
 data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
-    var sample_rate: Int = 44100,
+    var sample_rate: Int = 22050,
     var show_percussion: Boolean = true, // Deprecated, use variable in view_model
-    var link_mode: LinkMode = LinkMode.COPY,
-    var palette: HashMap<Palette, Int>? = null,
-    var use_palette: Boolean = false,
-    var visible_line_controls: MutableSet<Pair<CtlLineLevel, ControlEventType>> = mutableSetOf(
-        Pair(CtlLineLevel.Global, ControlEventType.Tempo)
-    ),
-    var playback_sample_limit: Int? = null,
-    var playback_stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo
+    var move_mode: MoveMode = MoveMode.COPY,
+    var clip_same_line_release: Boolean = true
 ) {
-    enum class LinkMode {
+
+    enum class MoveMode {
         MOVE,
         COPY,
-        LINK,
         MERGE
     }
     companion object {
         fun from_path(path: String): PaganConfiguration {
             val file = File(path)
             return if (file.exists()) {
-                val json_content = file.readText(Charsets.UTF_8)
-                val json = Json {
-                    ignoreUnknownKeys = true
+                val string = file.readText()
+                val content = JSONParser.parse<JSONHashMap>(string)
+                if (content == null) {
+                    PaganConfiguration()
+                } else {
+                    PaganConfiguration(
+                        soundfont = content.get_stringn("soundfont"),
+                        sample_rate = content.get_intn("sample_rate") ?: 22050,
+                        relative_mode = content.get_booleann("relative_mode") ?: false,
+                        move_mode = MoveMode.valueOf(content.get_stringn("move_mode") ?: "COPY"),
+                        clip_same_line_release = content.get_booleann("clip_same_line_release") ?: true
+                    )
                 }
-
-                json.decodeFromString( json_content )
             } else {
                 PaganConfiguration()
             }
@@ -48,8 +42,18 @@ data class PaganConfiguration(
     }
 
     fun save(path: String) {
+        val json_map = this.to_json()
         val file = File(path)
-        val json_string = Json.encodeToString(this)
-        file.writeText(json_string)
+        file.writeText(json_map.to_string())
+    }
+
+    fun to_json(): JSONHashMap {
+        val output = JSONHashMap()
+        output["soundfont"] = this.soundfont
+        output["sample_rate"] = this.sample_rate
+        output["relative_mode"] = this.relative_mode
+        output["move_mode"] = this.move_mode.name
+        output["clip_same_line_release"] = this.clip_same_line_release
+        return output
     }
 }

@@ -18,6 +18,9 @@
         <item name="android:textSize">18sp</item>
         <item name="android:paddingTop">2dp</item>
         <item name="android:paddingBottom">2dp</item>
+
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
     <style name="recycler_option_instrument" parent="recycler_option_text">
@@ -25,20 +28,27 @@
     </style>
 
     <style name="recycler_option_x" parent="recycler_option_text">
+        <item name="android:tint">@color/button_text_selector</item>
         <item name="android:gravity">center</item>
+    </style>
+
+    <style name="button_labelled_inner">
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
     <style name="button">
         <item name="android:background">@drawable/button</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:clickable">true</item>
+        <item name="android:tint">@color/button_text_selector</item>
+        <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
-    <style name="button_number_selector" parent="button">
-        <item name="android:paddingLeft">-3dp</item>
-        <item name="android:paddingRight">0dp</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">3dp</item>
+    <style name="button_number_selector">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:background">@drawable/number_selector_button</item>
+        <item name="android:textColor">@color/number_select_button_text_selector</item>
     </style>
 
     <style name="icon_button" parent="button">
@@ -50,11 +60,13 @@
     </style>
 
     <style name="song_config_button" parent="button">
+        <item name="android:gravity">center</item>
         <item name="android:textSize">18sp</item>
         <item name="android:paddingStart">9dp</item>
         <item name="android:paddingEnd">12dp</item>
         <item name="android:paddingTop">5dp</item>
         <item name="android:paddingBottom">8dp</item>
+        <item name="android:foregroundTint">@color/button_text</item>
     </style>
 
     <style name="button_front" parent="@style/button">
@@ -68,11 +80,7 @@
     </style>
 
     <style name="edittext" parent="@android:style/Widget.EditText">
-        <item name="android:textSize">24sp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:clickable">true</item>
-        <item name="android:padding">0dp</item>
-        <item name="android:background">@null</item>
+        <item name="android:foregroundTint">@color/leaf_main</item>
     </style>
 
     <style name="leaf">
@@ -85,6 +93,7 @@
 
     <style name="ctl_leaf_value" parent="@android:style/Widget.TextView">
         <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/ctl_leaf_text_selector</item>
         <item name="android:background">@null</item>
         <item name="android:textStyle">normal</item>
         <item name="android:maxLines">1</item>
@@ -95,6 +104,7 @@
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@null</item>
         <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/leaf_text_selector</item>
         <item name="android:textStyle">normal</item>
         <item name="android:maxLines">1</item>
     </style>
@@ -132,9 +142,10 @@
     <style name="AlertDialog" >
         <item name="android:windowIsFloating">true</item>
     </style>
+
     <style name="dialog_title">
         <item name="android:textSize">22sp</item>
-        <item name="android:textFontWeight">300</item>
+        <item name="android:fontWeight">300</item>
         <item name="android:padding">5dp</item>
         <item name="android:textAlignment">center</item>
     </style>
@@ -148,11 +159,14 @@
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
         <item name="android:background">@drawable/editor_label_column</item>
+        <item name="android:textColor">@color/column_label_text</item>
     </style>
 
     <style name="line_label">
         <item name="android:minWidth">41dp</item>
+        <item name="android:padding">0dp</item>
         <item name="android:gravity">bottom|center_horizontal</item>
+        <item name="android:textColor">@color/line_label_text</item>
         <item name="android:background">@drawable/editor_label_line</item>
         <item name="android:layout_height">@dimen/line_height</item>
     </style>
@@ -164,6 +178,7 @@
         <item name="android:layout_height">@dimen/ctl_line_height</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
+        <item name="android:tint">@color/line_label_ctl_text</item>
     </style>
 
     <style name="column">
@@ -171,6 +186,7 @@
     </style>
 
     <style name="corner_view">
+        <item name="android:clickable">false</item>
         <item name="android:background">@drawable/corner_button</item>
         <item name="android:paddingTop">5dp</item>
         <item name="android:paddingLeft">5dp</item>
@@ -187,10 +203,11 @@
     <style name="link_mode_button">
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
-
-    </style>1G
+        <item name="android:buttonTint">@color/radio</item>
+    </style>
     <style name="progress_bar">
         <item name="android:background">#33000000</item>
+        <item name="android:indeterminateTint">@color/leaf_main</item>
     </style>
 
     <style name="tuning_map_item">
@@ -200,10 +217,46 @@
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
     </style>
 
+    <style name="control_widget">
+    </style>
+    <style name="tempo_widget_button">
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+    </style>
+    <style name="tempo_widget_button.text">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textSize">24sp</item>
+    </style>
+
+    <style name="volume_widget" parent="control_widget">
+    </style>
     <style name="volume_widget_button">
         <item name="android:textSize">20sp</item>
         <item name="android:fontFamily">monospace</item>
+    </style>
 
+    <style name="pan_widget" parent="control_widget">
+    </style>
+    <style name="pan_value">
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:fontFamily">monospace</item>
+    </style>
+    <style name="about_link">
+        <item name="android:layout_marginBottom">12dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+    <style name="about_link_title">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">24sp</item>
+    </style>
+    <style name="about_link_url">
+        <item name="android:gravity">center</item>
+    </style>
+    <style name="popup_theme">
+        <item name="android:textColor">#FF0000</item>
     </style>
 
 </resources>

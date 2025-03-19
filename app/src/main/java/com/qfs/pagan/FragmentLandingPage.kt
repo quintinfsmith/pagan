@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.qfs.pagan.databinding.FragmentLandingBinding
+import java.io.File
 import kotlin.concurrent.thread
 
 class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
@@ -21,39 +22,38 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val btn_mostRecent = view.findViewById<View>(R.id.btnMostRecent)
         val btn_newProject = view.findViewById<View>(R.id.btnFrontNew)
         val btn_loadProject = view.findViewById<View>(R.id.btnFrontLoad)
         val btn_importMidi = view.findViewById<View>(R.id.btnFrontImport)
         val btn_settings = view.findViewById<View>(R.id.btnFrontSettings)
-        val linkSource = view.findViewById<TextView>(R.id.linkSource)
-        val btn_linkLicense = view.findViewById<TextView>(R.id.linkLicense)
+        val btn_about = view.findViewById<View>(R.id.btnFrontAbout)
 
         btn_settings.setOnClickListener {
-            this.get_main().navigate(R.id.SettingsFragment)
+            this.get_activity().get_action_interface().open_settings()
         }
 
-        btn_linkLicense.setOnClickListener {
-            val stream = this.activity!!.assets.open("LICENSE")
-            val bytes = ByteArray(stream.available())
-            stream.read(bytes)
-            stream.close()
-            val text_body = bytes.toString(charset = Charsets.UTF_8)
-            this.setFragmentResult(
-                "LICENSE",
-                bundleOf(
-                    Pair("TEXT", text_body),
-                    Pair("TITLE", "GPLv3")
-                )
-            )
-            this.get_main().navigate(R.id.LicenseFragment)
+        btn_about.setOnClickListener {
+            this.get_activity().get_action_interface().open_about()
         }
 
         btn_newProject.setOnClickListener {
-            this.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-            this.get_main().navigate(R.id.EditorFragment)
+            this.get_activity().get_action_interface().new_project()
         }
 
-        if (this.get_main().has_projects_saved()) {
+        val bkp_json_path = "${this.get_activity().applicationInfo.dataDir}/.bkp.json"
+        if (File(bkp_json_path).exists()) {
+            btn_mostRecent.setOnClickListener {
+                this.setFragmentResult(IntentFragmentToken.MostRecent.name, bundleOf())
+                this.get_activity().navigate(R.id.EditorFragment)
+            }
+        } else {
+            btn_mostRecent.visibility = View.GONE
+            val btn_index = (btn_mostRecent.parent as ViewGroup).indexOfChild(btn_mostRecent)
+            (btn_mostRecent.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
+        }
+
+        if (this.get_activity().has_projects_saved()) {
             //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
             // but right now i  think this is the only place this is a problem
             var lockout = false
@@ -62,36 +62,26 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
                     return@setOnClickListener
                 }
                 lockout = true
-                this.get_main().dialog_load_project()
+                this.get_activity().dialog_load_project()
                 thread {
                     Thread.sleep(1000)
                     lockout = false
                 }
             }
-
-            btn_loadProject.setOnLongClickListener {
-                this.get_main().select_project_file()
-                true
-            }
+            btn_loadProject.visibility = View.VISIBLE
         } else {
-            btn_loadProject.setOnClickListener {
-                this.get_main().select_project_file()
-            }
+            btn_loadProject.visibility = View.GONE
+            val btn_index = (btn_loadProject.parent as ViewGroup).indexOfChild(btn_loadProject)
+            (btn_loadProject.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {
-            this.get_main().select_midi_file()
+            this.get_activity().select_import_file()
         }
 
-        linkSource.setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(getString(R.string.url_git))
-            startActivity(intent)
-        }
-
-        val main = this.get_main()
+        val main = this.get_activity()
         if (main.is_soundfont_available()) {
-            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.GONE
+            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
         }  else {
             this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
                 val url = getString(R.string.url_fluid)
@@ -104,6 +94,6 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
 
     override fun onResume() {
         super.onResume()
-        this.get_main().set_title_text("${getString(R.string.app_name)} ${getString(R.string.app_version)}")
+        this.get_activity().set_title_text("${getString(R.string.app_name)} ${getString(R.string.app_version)}")
     }
 }

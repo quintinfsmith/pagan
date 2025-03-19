@@ -1,86 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple">#765bd5</color>
-    <color name="purple_dark">#5944A3</color>
-    <color name="purple_plum">#39025A</color>
     <color name="blue_sky">#5ba1d6</color>
     <color name="blue_dark">#34688F</color>
-    <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="link_color">#2a2a46</color>
 
-
-    <color name="light_primary">#302111</color>
-    <color name="light_primary_text">#e1e1e1</color>
-    <color name="light_main_bg">#e0e0e0</color>
-    <color name="light_main_fg">#2A2A46</color>
-    <color name="light_table_lines">#DE191A1F</color>
-    <color name="light_channel_even">#C1D1E3</color>
-    <color name="light_channel_odd">@color/light_main_bg</color>
-    <color name="light_channel_even_text">@color/light_main_fg</color>
-    <color name="light_channel_odd_text">@color/light_main_fg</color>
-    <color name="light_button">#FFFFFF</color>
-    <color name="light_button_text">@color/light_main_fg</color>
-    <color name="light_button_alt">@color/light_main_fg</color>
-    <color name="light_button_alt_text">#FFFFFF</color>
-    <color name="light_button_selected">@color/leaf</color>
-    <color name="light_button_selected_text">@color/leaf_text</color>
-    <color name="light_empty_linked">#929E96</color>
-    <color name="light_empty_linked_selected">#4884ae</color>
-    <color name="light_ctl_line">#FFFFFF</color>
-    <color name="light_ctl_line_text">#101010</color>
-
-    <color name="dark_primary">#171717</color>
-    <color name="dark_primary_text">#e1e1e1</color>
-    <color name="dark_main_bg">#2d2d2d</color>
-    <color name="dark_main_fg">#e1e1e1</color>
-    <color name="dark_table_lines">#808080</color>
-    <color name="dark_channel_odd">#3d3d3d</color>
-    <color name="dark_channel_even">#232323</color>
-    <color name="dark_channel_odd_text">@color/dark_main_fg</color>
-    <color name="dark_channel_even_text">@color/dark_main_fg</color>
-    <color name="dark_button">#acacac</color>
-    <color name="dark_button_text">#000000</color>
-    <color name="dark_button_alt">#4D5058</color>
-    <color name="dark_button_alt_text">#e1e1e1</color>
-    <color name="dark_button_selected">@color/leaf</color>
-    <color name="dark_button_selected_text">@color/leaf_text</color>
-    <color name="dark_empty_linked">#657169</color>
-    <color name="dark_empty_linked_selected">#4a87b2</color>
-    <color name="dark_ctl_line">#000000</color>
-    <color name="dark_ctl_line_text">#e1e1e1</color>
-
-    <color name="leaf">@color/purple</color>
-    <color name="leaf_text">@color/black</color>
-    <color name="leaf_pressed">@color/purple_plum</color>
-    <color name="leaf_pressed_text">@color/black</color>
+    <color name="leaf_main">#765BD5</color>
+    <color name="leaf_spill">#5944a3</color>
+    <color name="leaf_text">#000000</color>
     <color name="leaf_selected">#2636b2</color>
-    <color name="leaf_selected_text">@color/white</color>
-    <color name="leaf_linked">#426f52</color>
-    <color name="leaf_linked_text">@color/black</color>
-    <color name="leaf_linked_selected">#174336</color>
-    <color name="leaf_linked_selected_text">#FFFFFF</color>
+    <color name="leaf_selected_text">#FFFFFF</color>
+    <color name="leaf_secondary">#4F5BBC</color>
+    <color name="leaf_secondary_text">#000000</color>
     <color name="leaf_invalid">#E51C3A</color>
     <color name="leaf_invalid_text">#FFFFFF</color>
     <color name="leaf_invalid_selected">#890E21</color>
     <color name="leaf_invalid_selected_text">#A27E7E</color>
 
-    <color name="ctl_leaf">#DF5CAF</color>
-    <color name="ctl_leaf_text">@color/black</color>
-    <color name="ctl_leaf_selected">#ac45a7</color>
-    <color name="ctl_leaf_selected_text">@color/white</color>
+    <color name="ctl_leaf">#CB9C10</color>
+    <color name="ctl_leaf_spill">#886E20</color>
+    <color name="ctl_leaf_text">#FF000000</color>
+    <color name="ctl_leaf_selected">#095660</color>
+    <color name="ctl_leaf_secondary">#567B80</color>
+    <color name="ctl_leaf_selected_text">#FFFFFF</color>
 
     <color name="empty_selected">@color/blue_sky</color>
     <color name="empty_selected_text">#000000</color>
+    <color name="label_selected_secondary">@color/blue_sky</color>
+    <color name="label_selected_secondary_text">#000000</color>
     <color name="ctl_line_selected">#3e6e91</color>
     <color name="ctl_line_selected_text">#e1e1e1</color>
+    <color name="label_ctl_selected_secondary">#3e6e91</color>
+    <color name="label_ctl_selected_secondary_text">#e1e1e1</color>
 
 
+    <color name="radio_unchecked">@color/main_fg</color>
+    <color name="radio_checked">@color/leaf_main</color>
 
-    <color name="channel_button_bg">#BABABA</color>
-    <color name="channel_button_fg">#2E2E2E</color>
-    <color name="table_bg">#FF2d2d2d</color>
-    <color name="interface_bg">#f0f0f0</color>
-    <color name="interface_fg">#2a2a2a</color>
+    <color name="ns_default">@color/button</color>
+    <color name="ns_default_text">@color/button_text</color>
+    <color name="ns_alt">@color/main_fg</color>
+    <color name="ns_alt_text">#FFFFFF</color>
+    <color name="ns_selected">@color/blue_sky</color>
+    <color name="ns_selected_text">#000000</color>
 
-    <color name="drop_down_bg">?attr/drop_down_bg</color>
+    <color name="primary">#171717</color>
+    <color name="primary_text">#e1e1e1</color>
+    <color name="main_bg">#e0e0e0</color>
+    <color name="main_fg">#2A2A46</color>
+    <color name="table_lines">#DE191A1F</color>
+    <color name="channel_even">#C1D1E3</color>
+    <color name="channel_even_text">@color/main_fg</color>
+    <color name="button">#FFFFFF</color>
+    <color name="button_text">@color/main_fg</color>
+    <color name="button_text_disabled">#AA2A2A46</color>
+    <color name="button_alt">@color/main_fg</color>
+    <color name="button_alt_text">#FFFFFF</color>
+    <color name="ctl_line">#FFFFFF</color>
+    <color name="ctl_line_text">#101010</color>
 </resources>

@@ -10,14 +10,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.qfs.pagan.PaganTextView
+    <TextView
         android:theme="@style/dialog_title"
         android:id="@+id/shortcut_title"
         android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="0dp"/>
 
-    <com.qfs.pagan.PaganSeekBar
+    <SeekBar
         android:id="@+id/shortcut_scrollbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

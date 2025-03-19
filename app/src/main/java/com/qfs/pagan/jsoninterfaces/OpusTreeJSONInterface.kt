@@ -13,26 +13,28 @@ class OpusTreeJSONInterface {
                 return null
             }
 
-            val map = HashMap<String, JSONObject?>()
+            val map = JSONHashMap()
             if (input.is_event()) {
                 map["event"] = event_generalizer_callback(input.get_event()!!)
             } else {
                 map["size"] = JSONInteger(input.size)
                 val division_keys = input.divisions.keys.toList()
-                map["divisions"] = JSONList(
-                    MutableList(division_keys.size) { i: Int ->
-                        val position = division_keys[i]
-                        JSONList(
-                            mutableListOf(
-                                JSONInteger(position),
-                                to_json(input.divisions[position]!!, event_generalizer_callback)
-                            )
+
+                // Only add entries with data, don't want to bloat with [1, null], [2, null]...etc
+                val tmp_list = JSONList()
+                for (position in division_keys) {
+                    val tmp_entry = to_json(input.divisions[position]!!, event_generalizer_callback)
+                    if (tmp_entry != null) {
+                        tmp_list.add(
+                            JSONList(JSONInteger(position), tmp_entry)
                         )
                     }
-                )
+                }
+
+                map["divisions"] = tmp_list
             }
 
-            return JSONHashMap(map)
+            return map
         }
 
         fun <T> from_json(input: JSONHashMap, event_generalizer_callback: (JSONHashMap?) -> T?): OpusTree<T> {
@@ -44,7 +46,7 @@ class OpusTreeJSONInterface {
                 new_tree.set_size(input.get_int("size"))
                 val divisions = input.get_listn("divisions")
                 if (divisions != null) {
-                    for (i in divisions.list.indices) {
+                    for (i in divisions.indices) {
                         val pair = divisions.get_list(i)
                         if (pair.get_hashmapn(1) != null) {
                             new_tree[pair.get_int(0)] = from_json(
@@ -66,8 +68,8 @@ class OpusTreeJSONInterface {
             } else {
                 val children = input.get_listn("children")
                 if (children != null) {
-                    new_tree.set_size(children.list.size)
-                    children.list.forEachIndexed { i: Int, child_json: JSONObject? ->
+                    new_tree.set_size(children.size)
+                    children.forEachIndexed { i: Int, child_json: JSONObject? ->
                         if (child_json == null) {
                             return@forEachIndexed
                         }
@@ -83,20 +85,18 @@ class OpusTreeJSONInterface {
                 return null
             }
 
-            val map = HashMap<String, JSONObject?>()
+            val map = JSONHashMap()
             if (input.is_event()) {
                 map["event"] = event_generalizer_callback(input.get_event()!!)
                 map["children"] = null
             } else {
                 map["event"] = null
-                map["children"] = JSONList(
-                    MutableList(input.size) { i: Int ->
-                        to_v1_json(input[i], event_generalizer_callback)
-                    }
-                )
+                map["children"] = JSONList(input.size) { i: Int ->
+                    to_v1_json(input[i], event_generalizer_callback)
+                }
             }
 
-            return JSONHashMap(map)
+            return map
         }
 
         fun convert_v1_to_v3(input: JSONHashMap?, event_converter: (JSONHashMap) -> JSONHashMap?): JSONHashMap? {
@@ -114,18 +114,14 @@ class OpusTreeJSONInterface {
             } else {
                 output.set_null("event")
                 val tmp_children = input.get_list("children")
-                output["size"] = tmp_children.list.size
-                output["divisions"] = JSONList(
-                    MutableList(tmp_children.list.size) { i: Int ->
-                        val position = i
-                        JSONList(
-                            mutableListOf(
-                                JSONInteger(position),
-                                convert_v1_to_v3(tmp_children.get_hashmapn(i), event_converter)
-                            )
-                        )
-                    }
-                )
+                output["size"] = tmp_children.size
+                output["divisions"] = JSONList(tmp_children.size) { i: Int ->
+                    val position = i
+                    JSONList(
+                        JSONInteger(position),
+                        convert_v1_to_v3(tmp_children.get_hashmapn(i), event_converter)
+                    )
+                }
             }
 
             return output

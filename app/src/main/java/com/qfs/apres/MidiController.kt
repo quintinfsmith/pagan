@@ -26,7 +26,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     var receiver = object: MidiReceiver() {
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
             val msg_list = msg!!.toMutableList()
-            msg_list.removeFirst()
+            msg_list.removeAt(0)
             val event = event_from_bytes(msg_list, 0x90.toByte()) ?: return
             if (! this@MidiController.block_physical_devices) {
                 broadcast_event(event)
@@ -173,6 +173,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         } else {
             this.midi_manager!!.devices.toList()
         }
+
         val output_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
             if (device_info.inputPortCount > 0) {

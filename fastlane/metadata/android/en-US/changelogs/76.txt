@@ -1,0 +1,4 @@
+- Fixed Crash when removing sometimes
+- Improved Automatic Mixing
+- Improved cursor behaviour on 'undo'
+

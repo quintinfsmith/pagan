@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    tools:context=".MainActivity"
     tools:ignore="MissingDefaultResource">
     <LinearLayout
         android:orientation="vertical"
@@ -17,7 +18,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-                <com.qfs.pagan.PaganTextView
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_sf"
@@ -25,7 +26,7 @@
                     android:paddingTop="@dimen/normal_padding"
                     android:paddingEnd="15dp" />
 
-                <com.qfs.pagan.ButtonStd
+                <TextView
                     android:theme="@style/song_config_button"
                     android:id="@+id/btnChooseSoundFont"
                     android:text="@string/btn_settings_sfmute"
@@ -72,15 +73,17 @@
             android:paddingBottom="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-                <com.qfs.pagan.PaganTextView
+                <TextView
+
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_playback_quality"
                     android:paddingStart="15dp"
                     android:paddingEnd="15dp" />
 
-                <com.qfs.pagan.PaganSeekBar
+                <SeekBar
                     android:id="@+id/sbPlaybackQuality"
+                    android:theme="@style/Theme.Pagan.SeekBar"
                     android:text="@string/label_settings_playback_quality"
                     android:max="5"
                     android:min="0"
@@ -88,7 +91,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content" />
 
-                <com.qfs.pagan.PaganTextView
+                <TextView
                     android:id="@+id/tvSampleRate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -103,13 +106,14 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 android:text="@string/label_settings_playback_stereo"
                 android:paddingStart="15dp"
                 android:layout_weight="1"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"/>
-            <com.qfs.pagan.PaganSwitch
+            <androidx.appcompat.widget.SwitchCompat
+                android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sPlaybackStereo"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
@@ -120,14 +124,32 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.qfs.pagan.PaganTextView
+            <TextView
                 android:text="@string/label_settings_playback_limit_samples"
                 android:paddingStart="15dp"
                 android:layout_weight="1"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"/>
-            <com.qfs.pagan.PaganSwitch
+            <androidx.appcompat.widget.SwitchCompat
+                android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sLimitSamples"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/llClipSameLineRelease"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:text="@string/label_settings_same_line_release"
+                android:paddingStart="15dp"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"/>
+            <androidx.appcompat.widget.SwitchCompat
+                android:theme="@style/Theme.Pagan.Switch"
+                android:id="@+id/sClipSameLineRelease"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
         </LinearLayout>
@@ -136,45 +158,17 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-                <com.qfs.pagan.PaganTextView
+                <TextView
                     android:text="@string/label_settings_relative"
                     android:paddingStart="15dp"
                     android:layout_weight="1"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"/>
-                <com.qfs.pagan.PaganSwitch
+                <androidx.appcompat.widget.SwitchCompat
+                    android:theme="@style/Theme.Pagan.Switch"
                     android:id="@+id/sRelativeEnabled"
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-                <com.qfs.pagan.PaganTextView
-                    android:text="Use Custom Colors"
-                    android:paddingStart="15dp"
-                    android:layout_weight="1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-                <com.qfs.pagan.PaganSwitch
-                    android:id="@+id/sCustomPalette"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"/>
-        </LinearLayout>
-        <com.qfs.pagan.ButtonStd
-            android:id="@+id/btnClearPalette"
-            android:visibility="gone"
-            android:text="Reset Custom Colors"
-            android:theme="@style/song_config_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <LinearLayout
-            android:id="@+id/llColorPalette"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

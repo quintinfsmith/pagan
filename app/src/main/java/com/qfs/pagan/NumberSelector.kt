@@ -1,10 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Typeface
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.ViewGroup
@@ -13,7 +10,6 @@ import android.widget.LinearLayout
 import android.widget.Space
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.children
-import com.qfs.pagan.ColorMap.Palette
 import kotlin.math.roundToInt
 
 class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
@@ -31,17 +27,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
         private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix, 1)
         private var _state_active: Boolean = false
-        private val _state_list: Array<IntArray> = arrayOf<IntArray>(
-            intArrayOf(R.attr.state_active),
-            intArrayOf(
-                -R.attr.state_active,
-                R.attr.state_alternate
-            ),
-            intArrayOf(
-                -R.attr.state_active,
-                -R.attr.state_alternate
-            )
-        )
 
         init {
             this.text = this._bkp_text
@@ -56,43 +41,9 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         // will cause alt_style buttons to remain in the wrong palette
         override fun onAttachedToWindow() {
             super.onAttachedToWindow()
-            this._setup_colors()
 
             // Need to Manually call this refresh otherwise colors don't show up correctly
             this.refreshDrawableState()
-        }
-
-        private fun _setup_colors() {
-            var context = this.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
-            }
-            val color_map = context.view_model.color_map
-
-            for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTintList(
-                    ColorStateList(
-                        this._state_list,
-                        intArrayOf(
-                            color_map[Palette.Selection],
-                            color_map[Palette.ButtonAlt],
-                            color_map[Palette.Button]
-                        )
-                    )
-                )
-            }
-
-            this.setTextColor(
-                ColorStateList(
-                    this._state_list,
-                    intArrayOf(
-                        color_map[Palette.SelectionText],
-                        color_map[Palette.ButtonAltText],
-                        color_map[Palette.ButtonText]
-                    )
-                )
-            )
         }
 
         override fun onCreateDrawableState(extraSpace: Int): IntArray? {

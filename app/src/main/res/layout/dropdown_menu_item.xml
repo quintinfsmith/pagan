@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:backgroundTint="@color/table_lines"
     android:paddingBottom="@dimen/stroke_leaf"
     android:layout_height="wrap_content">
-    <com.qfs.pagan.PaganTextView
+    <TextView
         android:id="@+id/tvTextView"
         android:background="#000000"
         android:textSize="@dimen/dropdown_textsize"

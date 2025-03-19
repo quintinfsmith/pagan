@@ -77,17 +77,12 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
         }
 
         val opus_manager = this.activity.get_opus_manager()
-        if (i >= opus_manager.beat_count) {
+        if (i >= opus_manager.length) {
+            this.kill()
             return
         }
 
         opus_manager.cursor_select_column(max(i, 0))
-
-        // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
-        this.activity.runOnUiThread {
-            val editor_table = this.activity.findViewById<EditorTable?>(R.id.etEditorTable)
-            editor_table?.scroll_to_position(x = max(i, 0), force = true)
-        }
     }
 
     override fun on_cancelled() {
@@ -96,11 +91,12 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
 
     fun play_opus(start_beat: Int) {
         this._first_beat_passed = false
-        (this.sample_frame_map as PlaybackFrameMap).parse_opus()
+        (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = this.activity.configuration.clip_same_line_release
+        (this.sample_frame_map as PlaybackFrameMap).parse_opus(false)
         val start_frame = this.sample_frame_map.get_marked_frames()[start_beat]
 
         // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
-        for (i in start_frame .. start_frame + buffer_size) {
+        for (i in start_frame .. start_frame + this.buffer_size) {
             (this.sample_frame_map as PlaybackFrameMap).check_frame(i)
         }
 

@@ -13,7 +13,8 @@ class OpusTree<T> {
         var parent_node: OpusTree<T>
     )
 
-    var size: Int = 0
+    private var _size: Int = 0
+    val size get() = max(1, this._size)
     var divisions = HashMap<Int, OpusTree<T>>()
     var event: T? = null
     var parent: OpusTree<T>? = null
@@ -48,13 +49,14 @@ class OpusTree<T> {
             for (key in to_delete) {
                 this.divisions.remove(key)
             }
+
         }
 
-        this.size = new_size
+        this._size = new_size
     }
 
     fun resize(new_size: Int) {
-        val factor: Double = new_size.toDouble() / this.size.toDouble()
+        val factor: Double = new_size.toDouble() / this._size.toDouble()
 
         val new_divisions = HashMap<Int, OpusTree<T>>()
         for (current_index in this.divisions.keys) {
@@ -64,7 +66,7 @@ class OpusTree<T> {
         }
 
         this.divisions = new_divisions
-        this.size = new_size
+        this._size = new_size
     }
 
     fun reduce(target_size: Int = 1) {
@@ -77,10 +79,11 @@ class OpusTree<T> {
 
         val indices: MutableList<Pair<Int, OpusTree<T>>> = mutableListOf()
         for ((key, child_node) in this.divisions) {
-            indices.add(Pair(key, child_node))
+            if (child_node.is_event()) {
+                indices.add(Pair(key, child_node))
+            }
         }
         indices.sortWith(compareBy { it.first })
-
         val place_holder: OpusTree<T> = this.copy()
         val stack = mutableListOf(
             ReducerTuple(
@@ -148,7 +151,7 @@ class OpusTree<T> {
                         )
                     )
                 } else {
-                    val (_, event_tree) = working_indices.removeFirst()
+                    val (_, event_tree) = working_indices.removeAt(0)
                     if (event_tree.is_event()) {
                         working_node.set_event(event_tree.get_event()!!)
                     }
@@ -168,7 +171,7 @@ class OpusTree<T> {
 
     fun copy(copy_func: ((event: T?) -> T?)? = null): OpusTree<T> {
         val copied = OpusTree<T>()
-        copied.size = this.size
+        copied._size = this._size
         for (key in this.divisions.keys) {
             val subdivision: OpusTree<T> = this.divisions[key] as OpusTree<T>
             val subcopy: OpusTree<T> = subdivision.copy(copy_func)
@@ -195,12 +198,12 @@ class OpusTree<T> {
         }
 
         val index = if (rel_index < 0) {
-            this.size + rel_index
+            this._size + rel_index
         } else {
             rel_index
         }
 
-        if (index >= this.size) {
+        if (index >= this._size) {
             throw InvalidGetCall()
         }
 
@@ -273,7 +276,7 @@ class OpusTree<T> {
     }
 
     fun is_leaf(): Boolean {
-        return this.event != null || (this.divisions.size == 0 && this.size == 0)
+        return this.event != null || (this.divisions.size == 0 && this._size == 0)
     }
 
     fun is_event(): Boolean {
@@ -282,7 +285,7 @@ class OpusTree<T> {
 
     operator fun set(rel_index: Int, tree: OpusTree<T>) {
         val index = if (rel_index < 0) {
-            this.size + rel_index
+            this._size + rel_index
         } else {
             rel_index
         }
@@ -292,13 +295,13 @@ class OpusTree<T> {
 
     fun set_event(event: T?) {
         this.event = event
-        this.size = 0
+        this._size = 0
         this.divisions.clear()
     }
 
     fun unset_event() {
         this.event = null
-        this.size = 0
+        this._size = 0
         this.divisions.clear()
     }
 
@@ -313,7 +316,7 @@ class OpusTree<T> {
             output.add(tree.get_index()!!)
             tree = tree.parent!!
         }
-        return output.reversed()
+        return output.asReversed()
     }
 
     fun clear_singles() {
@@ -359,7 +362,7 @@ class OpusTree<T> {
         val adj_index = index ?: this.size
         val adj_new_tree = new_tree ?: OpusTree()
 
-        this.size += 1
+        this._size += 1
         val new_indices = HashMap<Int, OpusTree<T>>()
         for (old_index in this.divisions.keys) {
             val node = this.divisions[old_index]!!
@@ -389,7 +392,7 @@ class OpusTree<T> {
             }
         }
 
-        this.size = max(this.size - 1, 0)
+        this._size = max(this._size - 1, 0)
 
         return output
     }
@@ -413,7 +416,7 @@ class OpusTree<T> {
 
     fun empty() {
         this.divisions = HashMap()
-        this.size = 0
+        this._size = 0
     }
 
     fun split(split_func: (event: T) -> Int): List<OpusTree<T>> {
@@ -441,7 +444,7 @@ class OpusTree<T> {
             for ((path, event) in events) {
                 var working_node = node
                 for ((x, size) in path) {
-                    if (working_node.size != size) {
+                    if (working_node._size != size) {
                         working_node.set_size(size)
                     }
                     working_node = working_node[x]
@@ -463,7 +466,7 @@ class OpusTree<T> {
             for ((i, node) in this.divisions) {
                 for ((path, event) in node.get_events_mapped()) {
                     val new_path = path.toMutableList()
-                    new_path.add(0, Pair(i, this.size))
+                    new_path.add(0, Pair(i, this._size))
                     output.add(Pair(new_path, event))
                 }
             }
@@ -742,7 +745,7 @@ class OpusTree<T> {
                 this.get_event() == other.get_event()
             } else if (this.is_leaf() && other.is_leaf()) {
                 true
-            } else if (other.size == this.size) {
+            } else if (other._size == this._size) {
                 var is_match = true
                 for (i in 0 until this.size) {
                     if (this[i] != other[i]) {
@@ -758,4 +761,22 @@ class OpusTree<T> {
             super.equals(other)
         }
     }
+
+    override fun hashCode(): Int {
+        return if (this.is_event()) {
+            this.get_event()!!.hashCode()
+        } else if (this.is_leaf()) {
+            0
+        } else {
+            var output = 0
+            for (i in 0 until this.size) {
+                output = (output shl 1)
+                if (this.divisions.containsKey(i)) {
+                    output = output.xor(this.divisions[i].hashCode())
+                }
+            }
+            output
+        }
+    }
+
 }

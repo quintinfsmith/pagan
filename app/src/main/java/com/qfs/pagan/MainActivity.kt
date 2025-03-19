@@ -1,11 +1,11 @@
 package com.qfs.pagan
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -15,31 +15,30 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.Cursor
 import android.graphics.Color
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.StateListDrawable
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.OpenableColumns
-import android.text.Editable
-import android.text.TextWatcher
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.WindowManager
 import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
-import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -52,17 +51,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.blue
-import androidx.core.graphics.green
-import androidx.core.graphics.red
 import androidx.core.os.bundleOf
-import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.ViewModel
-import androidx.media3.common.MimeTypes
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -82,12 +76,11 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.ColorMap.Palette
 import com.qfs.pagan.databinding.ActivityMainBinding
-import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import com.qfs.pagan.opusmanager.OpusLayerLinks
+import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.BufferedOutputStream
+import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -111,13 +104,14 @@ class MainActivity : AppCompatActivity() {
 
     class MainViewModel: ViewModel() {
         var export_handle: WavConverter? = null
-        var color_map = ColorMap()
+        var action_interface = ActionTracker()
         var opus_manager = OpusManager()
-        var show_percussion = true
 
-        fun export_wav(sample_handle_manager: SampleHandleManager, target_file: File, handler: WavConverter.ExporterEventHandler) {
+        fun export_wav(sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, handler: WavConverter.ExporterEventHandler) {
             val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
+            frame_map.clip_same_line_release = this.opus_manager.get_activity()?.configuration?.clip_same_line_release ?: true
             frame_map.parse_opus()
+
             val start_frame = frame_map.get_marked_frames()[0]
 
             // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
@@ -125,9 +119,9 @@ class MainActivity : AppCompatActivity() {
                 frame_map.check_frame(i)
             }
 
-            this.export_handle = WavConverter(sample_handle_manager) // Not accessing Cache *YET*, don't need to match buffer sizes
+            this.export_handle = WavConverter(sample_handle_manager)
 
-            this.export_handle?.export_wav(frame_map, target_file, handler)
+            this.export_handle?.export_wav(frame_map, target_output_stream, tmp_file, handler)
             this.export_handle = null
         }
 
@@ -147,14 +141,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _project_manager: ProjectManager
     lateinit var configuration: PaganConfiguration
     private lateinit var _config_path: String
-    private var integer_dialog_defaults = HashMap<String, Int>()
-    private var float_dialog_defaults = HashMap<String, Float>()
+    private var _integer_dialog_defaults = HashMap<String, Int>()
+    private var _float_dialog_defaults = HashMap<String, Float>()
     var active_percussion_names = HashMap<Int, String>()
 
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
-    private var sample_handle_manager: SampleHandleManager? = null
+    internal var _soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
+    private var _sample_handle_manager: SampleHandleManager? = null
     private var _feedback_sample_manager: SampleHandleManager? = null
     private var _midi_playback_device: PlaybackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
@@ -170,13 +165,18 @@ class MainActivity : AppCompatActivity() {
         null
     }
     private var _current_feedback_device: Int = 0
+    private var _blocker_scroll_y: Float? = null
+    private var broadcast_receiver = PaganBroadcastReceiver()
+    private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
-    val CHANNEL_ID = "com.qfs.pagan"
+    val CHANNEL_ID = "com.qfs.pagan" // TODO: Use String Resource
     private var _notification_channel: NotificationChannel? = null
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
+
+    private var _popup_active: Boolean = false
 
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
@@ -197,15 +197,28 @@ class MainActivity : AppCompatActivity() {
                     if (tmp_file.exists()) {
                         tmp_file.delete()
                     }
+
                     tmp_file.deleteOnExit()
                     val exporter_sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         44100,
-                        44100,
-                        sample_limit = this.configuration.playback_sample_limit
+                        22050
                     )
-                    this.view_model.export_wav(exporter_sample_handle_manager, tmp_file, object : WavConverter.ExporterEventHandler {
+
+                    val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return@thread
+                    val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                    val buffered_output_stream = BufferedOutputStream(output_stream)
+                    val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                    this.view_model.export_wav(exporter_sample_handle_manager, data_output_buffer, tmp_file, object : WavConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
+                        fun close_buffers() {
+                            data_output_buffer.close()
+                            buffered_output_stream.close()
+                            output_stream.close()
+                            parcel_file_descriptor.close()
+                            tmp_file.delete()
+                        }
 
                         override fun on_start() {
                             this@MainActivity.runOnUiThread {
@@ -219,46 +232,42 @@ class MainActivity : AppCompatActivity() {
                             }
                             this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_wav_feedback))
                             val builder = this@MainActivity.get_notification() ?: return
-                            this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            @SuppressLint("MissingPermission")
+                            if (this@MainActivity.has_notification_permission()) {
+                                this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            }
 
                         }
 
                         override fun on_complete() {
-                            val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return
-                            val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
-                            val buffered_output_stream = BufferedOutputStream(output_stream)
+                            this.close_buffers()
 
-                            val input_stream = tmp_file.inputStream()
-                            input_stream.copyTo(buffered_output_stream)
-                            input_stream.close()
-
-                            buffered_output_stream.close()
-                            output_stream.close()
-                            parcel_file_descriptor.close()
                             val builder = this@MainActivity.get_notification()
                             if (builder != null) {
                                 // NON functional ATM, Open file from notification
-                                //var go_to_file_intent = Intent()
-                                //go_to_file_intent.action = Intent.ACTION_VIEW
-                                //go_to_file_intent.data = uri
-                                //go_to_file_intent.type = "audio/*"
+                                val go_to_file_intent = Intent()
+                                go_to_file_intent.action = Intent.ACTION_VIEW
+                                go_to_file_intent.setDataAndType(uri, "*/*")
 
-                                //val pending_go_to_intent = PendingIntent.getActivity(
-                                //    this@MainActivity,
-                                //    1,
-                                //    go_to_file_intent,
-                                //    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
-                                //)
+                                val pending_go_to_intent = PendingIntent.getActivity(
+                                    this@MainActivity,
+                                    0,
+                                    go_to_file_intent,
+                                    PendingIntent.FLAG_IMMUTABLE
+                                )
 
                                 builder.setContentText(this@MainActivity.getString(R.string.export_wav_notification_complete))
-                                    .setProgress(0, 0, false)
                                     .clearActions()
                                     .setAutoCancel(true)
+                                    .setProgress(0, 0, false)
                                     .setTimeoutAfter(5000)
                                     .setSilent(false)
-                                    //.setContentIntent(pending_go_to_intent)
+                                    .setContentIntent(pending_go_to_intent)
 
-                                this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                                @SuppressLint("MissingPermission")
+                                if (this@MainActivity.has_notification_permission()) {
+                                    this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                                }
                             }
 
                             this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_wav_feedback_complete))
@@ -271,9 +280,12 @@ class MainActivity : AppCompatActivity() {
                                 val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
                                 btnExportProject.setImageResource(R.drawable.export)
                             }
+                            this@MainActivity._active_notification = null
                         }
 
                         override fun on_cancel() {
+                            this.close_buffers()
+
                             this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_cancelled))
                             this@MainActivity.runOnUiThread {
                                 val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress)
@@ -289,8 +301,13 @@ class MainActivity : AppCompatActivity() {
                                 .setAutoCancel(true)
                                 .setTimeoutAfter(5000)
                                 .clearActions()
-                            val notification_manager = NotificationManagerCompat.from(this@MainActivity)
-                            notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+
+                            @SuppressLint("MissingPermission")
+                            if (this@MainActivity.has_notification_permission()) {
+                                val notification_manager = NotificationManagerCompat.from(this@MainActivity)
+                                notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            }
+                            this@MainActivity._active_notification = null
                         }
 
                         override fun on_progress_update(progress: Double) {
@@ -302,9 +319,15 @@ class MainActivity : AppCompatActivity() {
 
                             val builder = this@MainActivity.get_notification() ?: return
                             builder.setProgress(100, progress_rounded, false)
-                            this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
-                        }
 
+                            @SuppressLint("MissingPermission")
+                            if (this@MainActivity.has_notification_permission()) {
+                                this.notification_manager.notify(
+                                    this@MainActivity.NOTIFICATION_ID,
+                                    builder.build()
+                                )
+                            }
+                        }
                     })
                 }
             }
@@ -316,7 +339,7 @@ class MainActivity : AppCompatActivity() {
             val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                    val json_string = OpusManagerJSONInterface.generalize(opus_manager).to_string()
+                    val json_string = opus_manager.to_json().to_string()
                     FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
                     this.feedback_msg(getString(R.string.feedback_exported))
                 }
@@ -324,21 +347,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var _import_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result?.data?.data?.also { uri ->
-                    val fragment = this.get_active_fragment()
-                    fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
-                    fragment?.setFragmentResult(
-                        IntentFragmentToken.ImportProject.name,
-                        bundleOf(Pair("URI", uri.toString()))
-                    )
-                    if (fragment !is FragmentEditor) {
-                        this.navigate(R.id.EditorFragment)
-                    }
-                }
+    internal var general_import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                this.navigate_import(uri)
             }
         }
+    }
+
 
     private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -352,20 +368,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var _import_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    var _import_soundfont_intent_listener = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
-                val fragment = this.get_active_fragment()
-                if (fragment is FragmentEditor) {
-                    fragment.project_change_flagged = true
-                }
-                fragment?.setFragmentResult(
-                    IntentFragmentToken.ImportMidi.name,
-                    bundleOf(Pair("URI", uri.toString()))
-                )
+                if (uri.path != null) {
+                    val soundfont_dir = this.get_soundfont_directory()
+                    val file_name = this.parse_file_name(uri)
 
-                if (fragment !is FragmentEditor) {
-                    this.navigate(R.id.EditorFragment)
+                    val new_file = File("${soundfont_dir}/$file_name")
+                    this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                        try {
+                            new_file.outputStream().use { output_stream: FileOutputStream ->
+                                FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
+                                    input_stream.copyTo(output_stream, 4096 * 4)
+                                }
+                            }
+                        } catch (e: FileNotFoundException) {
+                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
+                        }
+                    }
+
+                    try {
+                        SoundFont(new_file.path)
+                        this.get_action_interface().ignore().set_soundfont(new_file.name)
+                    } catch (e: Exception) {
+                        this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
+                        new_file.delete()
+                        return@registerForActivityResult
+                    }
+
+                    // Hide the warning
+                    if (this.get_active_fragment() is FragmentGlobalSettings && this.is_soundfont_available()) {
+                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                    }
+                } else {
+                    throw FileNotFoundException()
                 }
             }
         }
@@ -378,6 +415,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         this.playback_stop()
+        this.unregisterReceiver(this.broadcast_receiver)
         this.playback_stop_midi_output()
         this._midi_interface.close_connected_devices()
         this._binding.appBarMain.toolbar.hideOverflowMenu()
@@ -388,7 +426,12 @@ class MainActivity : AppCompatActivity() {
         val active_fragment = this.get_active_fragment()
         val cancel_super = if (event != null) {
             when (active_fragment) {
-                is FragmentEditor -> active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
+                is FragmentEditor ->
+                    try {
+                        active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
+                    } catch (e: Exception) {
+                        true
+                    }
                 else -> false
             }
         } else {
@@ -405,11 +448,14 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
-        this.view_model.color_map.set_fallback_palette(
-            if (this.is_night_mode()) {
-                this.get_night_palette()
+
+        registerReceiver(
+            this.broadcast_receiver,
+            this.receiver_intent_filter,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                RECEIVER_NOT_EXPORTED
             } else {
-                this.get_day_palette()
+                0
             }
         )
 
@@ -424,6 +470,9 @@ class MainActivity : AppCompatActivity() {
 
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
+        if (!opus_manager.first_load_done) {
+            return
+        }
         val path = opus_manager.path
         if (path != null) {
             val path_file = File("${applicationInfo.dataDir}/.bkp_path")
@@ -444,18 +493,21 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        this.registerReceiver(
-            object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) {
-                    when (intent?.action) {
-                        "com.qfs.pagan.CANCEL_EXPORT_WAV" -> this@MainActivity.export_wav_cancel()
-                        else -> {}
-                    }
-                }
-            },
-            IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV"),
-            RECEIVER_NOT_EXPORTED
-        )
+        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+            Log.d("pagandebug", "$paramThrowable")
+            if (this@MainActivity.is_debug_on()) {
+                this@MainActivity.save_actions()
+            }
+            this@MainActivity.save_to_backup()
+
+            val ctx = applicationContext
+            val pm = ctx.packageManager
+            val intent = pm.getLaunchIntentForPackage(ctx.packageName)
+            val mainIntent = Intent.makeRestartActivityTask(intent!!.component)
+            ctx.startActivity(mainIntent)
+            Runtime.getRuntime().exit(0)
+
+        }
 
         this._midi_interface = object : MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
@@ -480,7 +532,7 @@ class MainActivity : AppCompatActivity() {
                     // Should always be null since this can only be changed from a different menu
                     if (channel_recycler.adapter != null) {
                         val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                        channel_adapter.set_soundfont(null)
+                        channel_adapter.notify_soundfont_changed()
                     }
                     this@MainActivity.populate_active_percussion_names(true)
                 }
@@ -512,7 +564,7 @@ class MainActivity : AppCompatActivity() {
                         // Should always be null since this can only be changed from a different menu
                         if (channel_recycler.adapter != null) {
                             val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                            channel_adapter.set_soundfont(this@MainActivity._soundfont)
+                            channel_adapter.notify_soundfont_changed()
                         }
 
                         this@MainActivity.populate_active_percussion_names(true)
@@ -537,7 +589,7 @@ class MainActivity : AppCompatActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
 
-        this._project_manager = ProjectManager(this.getExternalFilesDir(null).toString())
+        this._project_manager = ProjectManager(this)
         // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
         val old_projects_dir = File("${applicationInfo.dataDir}/projects")
         if (old_projects_dir.isDirectory) {
@@ -565,40 +617,22 @@ class MainActivity : AppCompatActivity() {
             PaganConfiguration()
         }
 
-        // Temporary while i figure out why mono playback is more complicated than I assumed, force stereo & no limit on samples
-        this.configuration.playback_stereo_mode = WaveGenerator.StereoMode.Stereo
-        this.configuration.playback_sample_limit = null
-
-
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
-        setContentView(this._binding.root)
-        setSupportActionBar(this._binding.appBarMain.toolbar)
+        this.setContentView(this._binding.root)
+        this.setSupportActionBar(this._binding.appBarMain.toolbar)
+        this._binding.root.setBackgroundColor(resources.getColor(R.color.main_bg))
 
+        this.view_model.action_interface.attach_activity(this)
         this.view_model.opus_manager.attach_activity(this)
 
-        this.view_model.color_map.use_palette = this.configuration.use_palette
-        this.view_model.color_map.set_fallback_palette(
-            if (this.is_night_mode()) {
-                this.get_night_palette()
-            } else {
-                this.get_day_palette()
-            }
+        val toolbar = this._binding.appBarMain.toolbar
+        //toolbar.popupTheme = R.style.popup_theme
+        toolbar.backgroundTintList = ColorStateList(
+            arrayOf(),
+            intArrayOf(Color.BLUE)
         )
 
-        if (this.configuration.palette != null) {
-            this.view_model.color_map.set_palette(this.configuration.palette!!)
-        }
-
-        val color_map = this.view_model.color_map
-        val toolbar = this._binding.appBarMain.toolbar
-
         toolbar.background = null
-        toolbar.setTitleTextColor(color_map[Palette.TitleBarText])
-        toolbar.setBackgroundColor(color_map[Palette.TitleBar])
-        toolbar.setSubtitleTextColor(color_map[Palette.TitleBarText])
-        toolbar.overflowIcon?.setTint(color_map[Palette.TitleBarText])
-
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
 
         //////////////////////////////////////////
         if (this.configuration.soundfont != null) {
@@ -607,23 +641,28 @@ class MainActivity : AppCompatActivity() {
             if (sf_file.exists()) {
                 try {
                     this._soundfont = SoundFont(path)
-                    this.sample_handle_manager = SampleHandleManager(
+                    this.populate_supported_soundfont_instrument_names()
+                    this._sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
                         this.configuration.sample_rate,
                         this.configuration.sample_rate, // Use Large buffer
-                        sample_limit = this.configuration.playback_sample_limit
+                        ignore_lfo = true
                     )
 
                     this._midi_playback_device = PlaybackDevice(
                         this,
-                        this.sample_handle_manager!!,
-                        this.configuration.playback_stereo_mode
+                        this._sample_handle_manager!!,
+                        WaveGenerator.StereoMode.Stereo
                     )
 
                     if (!this._midi_interface.output_devices_connected()) {
+                        val buffer_size = this.configuration.sample_rate / 4
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
-                            this.configuration.sample_rate
+                            this.configuration.sample_rate,
+                            buffer_size - 2 + (if (buffer_size % 2 == 0) { 2 } else { 1 })
+                            //sample_limit = this.configuration.playback_sample_limit,
+                            //ignore_envelopes_and_lfo = true
                         )
                     }
                 } catch (e: Riff.InvalidRiff) {
@@ -633,58 +672,50 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        this.populate_active_percussion_names()
+        this.update_channel_instruments(this.get_opus_manager().channels.size)
         ///////////////////////////////////////////
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (navController.currentDestination?.id == R.id.EditorFragment) {
-                    if (this@MainActivity.get_opus_manager().cursor.mode != OpusManagerCursor.CursorMode.Unset) {
-                        this@MainActivity.get_opus_manager().cursor_clear()
-                    } else {
-                        this@MainActivity.dialog_save_project {
-                            finish()
-                        }
-                    }
-                } else {
-                    navController.popBackStack()
-                }
+                this@MainActivity.get_action_interface().go_back()
             }
         })
 
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
-        drawer_layout.addDrawerListener(object : ActionBarDrawerToggle(
-            this,
-            drawer_layout,
-            R.string.drawer_open,
-            R.string.drawer_close
-        ) {
-            override fun onDrawerOpened(drawerView: View) {
-                val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                if (channel_recycler.adapter == null) {
-                    ChannelOptionAdapter(this@MainActivity.get_opus_manager(), channel_recycler)
+        drawer_layout.addDrawerListener(
+            object : ActionBarDrawerToggle( this, drawer_layout, R.string.drawer_open, R.string.drawer_close) {
+                override fun onDrawerOpened(drawerView: View) {
+                    this@MainActivity.get_action_interface().track(ActionTracker.TrackedAction.DrawerOpen)
+                    val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+                    if (channel_recycler.adapter == null) {
+                        ChannelOptionAdapter(this@MainActivity.get_opus_manager(), channel_recycler)
+                    }
+                    super.onDrawerOpened(drawerView)
+
+                    val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+                    if (channel_adapter.itemCount == 0) {
+                        channel_adapter.setup()
+                    }
+
+
+                    this@MainActivity.playback_stop()
+                    this@MainActivity.playback_stop_midi_output()
+                    this@MainActivity.drawer_unlock() // So the drawer can be closed with a swipe
                 }
-                val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-                if (channel_adapter.itemCount == 0) {
-                    channel_adapter.setup()
+
+                override fun onDrawerClosed(drawerView: View) {
+                    this@MainActivity.get_action_interface().track(ActionTracker.TrackedAction.DrawerClose)
+                    super.onDrawerClosed(drawerView)
+                    this@MainActivity.drawer_lock() // so the drawer can't be opened with a swipe
                 }
-                super.onDrawerOpened(drawerView)
-
-                this@MainActivity.playback_stop()
-                this@MainActivity.playback_stop_midi_output()
-                this@MainActivity.drawer_unlock() // So the drawer can be closed with a swipe
             }
-
-            override fun onDrawerClosed(drawerView: View) {
-                super.onDrawerClosed(drawerView)
-                this@MainActivity.drawer_lock() // so the drawer can't be opened with a swipe
-            }
-        })
-
+        )
     }
 
+
+
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        val navController = this.findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
     }
 
@@ -708,19 +739,13 @@ class MainActivity : AppCompatActivity() {
                 if (fragment is FragmentEditor) {
                     this.drawer_open()
                 } else {
-                    val navController = findNavController(R.id.nav_host_fragment_content_main)
-                    navController.popBackStack()
+                    this.get_action_interface().go_back()
                 }
             }
 
             R.id.itmNewProject -> {
                 this.dialog_save_project {
-                    val fragment = this.get_active_fragment()
-                    fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
-                    fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-                    if (fragment !is FragmentEditor) {
-                        this.navigate(R.id.EditorFragment)
-                    }
+                    this.get_action_interface().new_project()
                 }
             }
 
@@ -732,12 +757,12 @@ class MainActivity : AppCompatActivity() {
 
             R.id.itmImportMidi -> {
                 this.dialog_save_project {
-                    this.select_midi_file()
+                    this.select_import_file()
                 }
             }
 
             R.id.itmUndo -> {
-                this.get_opus_manager().apply_undo()
+                this.get_action_interface().apply_undo()
             }
 
             R.id.itmPlay -> {
@@ -767,26 +792,29 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            R.id.itmImportProject -> {
-                this.dialog_save_project {
-                    this.select_project_file()
-                }
-            }
-
             R.id.itmSettings -> {
-                this.navigate(R.id.SettingsFragment)
+                this.get_action_interface().open_settings()
+            }
+            R.id.itmAbout -> {
+                this.get_action_interface().open_about()
+            }
+            R.id.itmDebug -> {
+                val tracker = this.get_action_interface()
+                this.save_actions()
+                this.feedback_msg("SAVED ACTIONS")
+
             }
         }
         return super.onOptionsItemSelected(item)
     }
 
-    private fun project_save() {
+    fun project_save() {
         this._project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
 
-    private fun project_delete() {
+    fun project_delete() {
         val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
         this._project_manager.delete(this.get_opus_manager())
 
@@ -799,7 +827,7 @@ class MainActivity : AppCompatActivity() {
         this.feedback_msg(resources.getString(R.string.feedback_delete, title))
     }
 
-    private fun project_move_to_copy() {
+    fun project_move_to_copy() {
         this.dialog_save_project {
             this._project_manager.move_to_copy(this.get_opus_manager())
             this.update_title_text()
@@ -812,13 +840,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun _enable_blocker_view() {
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+
         if (blocker_view != null && blocker_view.visibility != View.VISIBLE) {
-            blocker_view.setOnClickListener {
-                this.playback_stop()
-                this.playback_stop_midi_output()
+            blocker_view.setOnTouchListener { _, motion_event ->
+                /* Allow Scrolling on the y axis when scrolling in the main_recycler */
+                if (motion_event == null) {
+                } else if (motion_event.action == 1) {
+                    this._blocker_scroll_y = null
+                } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
+                } else {
+                    val fragment = this.get_active_fragment()
+                    if (fragment !is FragmentEditor) {
+                        return@setOnTouchListener false
+                    }
+                    val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+                    val scroll_view = editor_table.get_scroll_view()
+
+                    if (this._blocker_scroll_y == null) {
+                        this._blocker_scroll_y = (motion_event.y - scroll_view.y)
+                    }
+
+                    val rel_y = (motion_event.y - scroll_view.y)
+                    val delta_y = this._blocker_scroll_y!! - rel_y
+
+                    scroll_view.scrollBy(0, delta_y.toInt())
+                    this._blocker_scroll_y = rel_y
+                }
+                true
             }
+
             blocker_view.visibility = View.VISIBLE
             this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
@@ -837,7 +890,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun playback_start() {
         if (!this.update_playback_state_soundfont(PlaybackState.Queued)) {
-            this.feedback_msg("Playback Failed")
+            this.feedback_msg(getString(R.string.playback_failed))
             return
         }
 
@@ -848,7 +901,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         var start_point = this.get_working_column()
-        if (start_point >= this.get_opus_manager().beat_count - 1) {
+        if (start_point >= this.get_opus_manager().length - 1) {
             start_point = 0
         }
         // Currently, Midi2.0 output is not supported. will be needed for N-radix projects
@@ -867,7 +920,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun playback_start_midi_output() {
         if (!this.update_playback_state_midi(PlaybackState.Queued)) {
-            this.feedback_msg("Playback Failed")
+            this.feedback_msg(getString(R.string.playback_failed))
             return
         }
 
@@ -876,7 +929,7 @@ class MainActivity : AppCompatActivity() {
 
         var start_point = this.get_working_column()
         val opus_manager = this.get_opus_manager()
-        if (start_point >= opus_manager.beat_count - 1) {
+        if (start_point >= opus_manager.length - 1) {
             start_point = 0
         }
 
@@ -946,11 +999,11 @@ class MainActivity : AppCompatActivity() {
 
     // Ui Wrappers ////////////////////////////////////////////
     private fun drawer_close() {
-        findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawers()
+        this.get_action_interface().drawer_close()
     }
 
     private fun drawer_open() {
-        findViewById<DrawerLayout>(R.id.drawer_layout).openDrawer(GravityCompat.START)
+        this.get_action_interface().drawer_open()
     }
 
     fun drawer_lock() {
@@ -960,7 +1013,7 @@ class MainActivity : AppCompatActivity() {
     fun drawer_unlock() {
         try {
             this._binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-            this.findViewById<PaganDrawerLayout>(R.id.config_drawer)?.refreshDrawableState()
+            this.findViewById<LinearLayout>(R.id.config_drawer)?.refreshDrawableState()
         } catch (e: UninitializedPropertyAccessException) {
             // pass, if it's not initialized, it's not locked
         }
@@ -979,7 +1032,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (this._progress_bar == null) {
-                this._progress_bar = PaganProgressBar(this)
+                this._progress_bar = ProgressBar(ContextThemeWrapper(this, R.style.progress_bar))
             }
 
             this._progress_bar!!.isClickable = true
@@ -1034,6 +1087,7 @@ class MainActivity : AppCompatActivity() {
                     is FragmentGlobalSettings -> {
                         resources.getString(R.string.settings_fragment_label)
                     }
+                    is FragmentLicense,
                     is FragmentLandingPage -> {
                         "${getString(R.string.app_name)} ${getString(R.string.app_version)}"
                     }
@@ -1043,7 +1097,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
-        this.refresh_toolbar()
+        this._refresh_toolbar()
     }
 
     fun set_title_text(new_text: String) {
@@ -1063,33 +1117,19 @@ class MainActivity : AppCompatActivity() {
     fun update_menu_options() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         val options_menu = this._options_menu ?: return
-        options_menu.setGroupDividerEnabled(true)
-        val text_color = this.view_model.color_map[Palette.TitleBarText]
 
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is FragmentEditor -> {
                 val play_midi_visible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
-                options_menu.findItem(R.id.itmUndo).setIconTintList(ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                    intArrayOf(text_color)
-                ))
                 options_menu.findItem(R.id.itmNewProject).isVisible = true
                 options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
-                options_menu.findItem(R.id.itmPlay).setIconTintList(ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                    intArrayOf(text_color)
-                ))
                 options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
-                options_menu.findItem(R.id.itmPlayMidiOutput).setIconTintList(ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_enabled)),
-                    intArrayOf(text_color)
-                ))
-
                 options_menu.findItem(R.id.itmImportMidi).isVisible = true
-                options_menu.findItem(R.id.itmImportProject).isVisible = true
                 options_menu.findItem(R.id.itmSettings).isVisible = true
+                options_menu.findItem(R.id.itmAbout).isVisible = true
+                options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
             }
             else -> {
                 options_menu.findItem(R.id.itmLoadProject).isVisible = false
@@ -1098,8 +1138,9 @@ class MainActivity : AppCompatActivity() {
                 options_menu.findItem(R.id.itmPlay).isVisible = false
                 options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = false
                 options_menu.findItem(R.id.itmImportMidi).isVisible = false
-                options_menu.findItem(R.id.itmImportProject).isVisible = false
                 options_menu.findItem(R.id.itmSettings).isVisible = false
+                options_menu.findItem(R.id.itmAbout).isVisible = false
+                options_menu.findItem(R.id.itmDebug).isVisible = false
             }
         }
     }
@@ -1108,65 +1149,19 @@ class MainActivity : AppCompatActivity() {
         val opus_manager = this.get_opus_manager()
         val tvChangeProjectName: TextView = this.findViewById(R.id.btnChangeProjectName)
         tvChangeProjectName.setOnClickListener {
-            this.dialog_project_name()
+            this.get_action_interface().set_project_name()
         }
-
-        val radix = this.get_opus_manager().tuning_map.size
 
         //-------------------------------------------
         val btnRadix: TextView = this.findViewById(R.id.btnRadix)
         btnRadix.setOnClickListener {
-            val main_fragment = this.get_active_fragment() ?: return@setOnClickListener
-            val viewInflated: View = LayoutInflater.from(main_fragment.context)
-                .inflate(
-                    R.layout.dialog_tuning_map,
-                    main_fragment.view as ViewGroup,
-                    false
-                )
-
-            val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
-            val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
-            etTranspose.set_range(0, radix - 1)
-            etTranspose.set_value(opus_manager.transpose)
-
-            val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
-            rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
-
-
-            val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setCustomTitle(this._build_dialog_title_view(
-                     resources.getString(R.string.dlg_tuning)
-                ))
-                .setView(viewInflated)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    opus_manager.set_tuning_map_and_transpose(
-                        (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map,
-                        etTranspose.get_value() ?: 0
-                    )
-
-                    dialog.dismiss()
-                }
-                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-
-            this._adjust_dialog_colors(dialog)
-
-
-            val default_value = opus_manager.tuning_map.size
-
-            etRadix.set_value(default_value)
-            etRadix.set_range(2, 36)
-            etRadix.value_set_callback = { new_radix: Int? ->
-                rvTuningMap.reset_tuning_map(new_radix)
-                etTranspose.set_value(0)
-                etTranspose.set_range(0, (new_radix ?: 12) - 1)
-            }
+            this.get_action_interface().set_tuning_table_and_transpose()
         }
         //-------------------------------------------
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
-            opus_manager.new_channel()
+            this.get_action_interface().insert_channel(
+                opus_manager.channels.size
+            )
         }
 
         this.setup_project_config_drawer_export_button()
@@ -1174,8 +1169,7 @@ class MainActivity : AppCompatActivity() {
             if (!it.isEnabled) {
                 return@setOnClickListener
             }
-
-            this.project_save()
+            this.get_action_interface().save()
         }
         this.findViewById<View>(R.id.btnSaveProject).setOnLongClickListener {
             if (!it.isEnabled) {
@@ -1200,21 +1194,20 @@ class MainActivity : AppCompatActivity() {
 
         btnCopyProject.setOnClickListener {
             if (it.isEnabled) {
-                this.project_move_to_copy()
-                this.drawer_close()
+                this.get_action_interface().project_copy()
             }
         }
     }
 
     internal fun _build_dialog_title_view(text: String): TextView {
-        val output = PaganTextView(ContextThemeWrapper(this, R.style.dialog_title))
+        val output = TextView(ContextThemeWrapper(this, R.style.dialog_title))
         output.text = text
         return output
     }
-    internal fun _adjust_dialog_colors(dialog: AlertDialog) {
-        val color_map = this.view_model.color_map
 
-        dialog.window!!.decorView.background.setTint(color_map[Palette.Background])
+    internal fun _adjust_dialog_colors(dialog: AlertDialog) {
+        // TODO: Double check the necessity of this funcction
+        dialog.window!!.decorView.background.setTint(getColor(R.color.main_bg))
         val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
         dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
 
@@ -1223,29 +1216,28 @@ class MainActivity : AppCompatActivity() {
         dialog.getButton(DialogInterface.BUTTON_NEGATIVE).apply {
             (this.layoutParams as MarginLayoutParams).marginEnd = this@MainActivity.resources.getDimension(R.dimen.alert_padding).toInt()
             this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
+
             this.backgroundTintList = null
-            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
+            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button_alt)
+            this.setTextColor(getColor(R.color.button_alt_text))
             this.setPadding(
                 resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_top).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
             )
-            for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(color_map[Palette.ButtonAlt])
-            }
-            this.setTextColor(color_map[Palette.ButtonAltText])
         }
 
         dialog.getButton(DialogInterface.BUTTON_NEUTRAL).apply {
+            this.backgroundTintList = null
             this.background = null
-            this.setTextColor(color_map[Palette.Foreground])
+            this.setTextColor(getColor(R.color.main_fg))
         }
 
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
             this.backgroundTintList = null
             this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
+            this.setTextColor(getColor(R.color.button_text))
             this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
             this.setPadding(
                 resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
@@ -1253,11 +1245,6 @@ class MainActivity : AppCompatActivity() {
                 resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
                 resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
             )
-            for (i in 0 until (this.background as StateListDrawable).stateCount) {
-                val background = ((this.background as StateListDrawable).getStateDrawable(i) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-                background?.setTint(color_map[Palette.Button])
-            }
-            this.setTextColor(color_map[Palette.ButtonText])
         }
     }
 
@@ -1319,12 +1306,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun get_drum_options(): List<Pair<String, Int>> {
-        if (this.sample_handle_manager == null || this.is_connected_to_physical_device()) {
+        if (this._sample_handle_manager == null || this.is_connected_to_physical_device()) {
             return this._get_default_drum_options()
         }
 
         val preset = try {
-            this.sample_handle_manager!!.get_preset(9) ?: return this._get_default_drum_options()
+            this._sample_handle_manager!!.get_preset(9) ?: return this._get_default_drum_options()
         } catch (e: SoundFont.InvalidPresetIndex) {
             return this._get_default_drum_options()
         }
@@ -1349,6 +1336,34 @@ class MainActivity : AppCompatActivity() {
 
         return available_drum_keys.sortedBy {
             it.second
+        }
+    }
+
+    fun update_channel_instrument(midi_channel: Int, instrument: Pair<Int, Int>) {
+        val (midi_bank, midi_program) = instrument
+        this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
+        this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
+        if (this._feedback_sample_manager != null) {
+            this._feedback_sample_manager!!.select_bank(
+                midi_channel,
+                midi_bank,
+            )
+            this._feedback_sample_manager!!.change_program(
+                midi_channel,
+                midi_program,
+            )
+        }
+
+        // Don't need to update anything but percussion in the sample_handle_manager
+        if (this._sample_handle_manager != null) {
+            this._sample_handle_manager!!.select_bank(
+                midi_channel,
+                midi_bank
+            )
+            this._sample_handle_manager!!.change_program(
+                midi_channel,
+                midi_program
+            )
         }
     }
 
@@ -1377,44 +1392,22 @@ class MainActivity : AppCompatActivity() {
             val midi_channel = opus_manager.percussion_channel.get_midi_channel()
             val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
 
-            if (this.sample_handle_manager != null) {
-                this.sample_handle_manager!!.select_bank(
+            if (this._sample_handle_manager != null) {
+                this._sample_handle_manager!!.select_bank(
                     midi_channel,
                     midi_bank
                 )
-                this.sample_handle_manager!!.change_program(
+                this._sample_handle_manager!!.change_program(
                     midi_channel,
                     midi_program
                 )
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
-            val midi_channel = opus_channel.get_midi_channel()
-            val (midi_bank, midi_program) = opus_channel.get_instrument()
-            this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
-            this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-            if (this._feedback_sample_manager != null) {
-                this._feedback_sample_manager!!.select_bank(
-                    midi_channel,
-                    midi_bank,
-                )
-                this._feedback_sample_manager!!.change_program(
-                    midi_channel,
-                    midi_program,
-                )
-            }
-
-            // Don't need to update anything but percussion here
-            if (this.sample_handle_manager != null) {
-                this.sample_handle_manager!!.select_bank(
-                    midi_channel,
-                    midi_bank
-                )
-                this.sample_handle_manager!!.change_program(
-                    midi_channel,
-                    midi_program
-                )
-            }
+            this.update_channel_instrument(
+                opus_channel.get_midi_channel(),
+                opus_channel.get_instrument()
+            )
         }
     }
 
@@ -1422,7 +1415,7 @@ class MainActivity : AppCompatActivity() {
         return this.view_model.opus_manager
     }
 
-    fun play_event(channel: Int, event_value: Int, velocity: Int) {
+    fun play_event(channel: Int, event_value: Int, velocity: Float = .6F) {
         if (!this._midi_interface.output_devices_connected()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()
@@ -1440,10 +1433,10 @@ class MainActivity : AppCompatActivity() {
         val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
             Pair(event_value + 27, 0)
         } else {
-            val octave = event_value/ radix
+            val octave = event_value / radix
             val offset = opus_manager.tuning_map[event_value % radix]
 
-            val transpose_offset = 12.0 * opus_manager.transpose.toDouble() / radix.toDouble()
+            val transpose_offset = 12.0 * opus_manager.transpose.first.toDouble() / opus_manager.transpose.second.toDouble()
             val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
 
             val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
@@ -1461,16 +1454,14 @@ class MainActivity : AppCompatActivity() {
                 this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
             }
 
-            this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(
-                NoteOn79(
-                    index=0,
-                    channel=midi_channel,
-                    note=note,
-                    bend=bend,
-                    velocity = velocity shl 8,
-                ),
-                250
+            val event = NoteOn79(
+                index=0,
+                channel=midi_channel,
+                note=note,
+                bend=bend,
+                velocity = (velocity * 127F).toInt() shl 8,
             )
+            this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
         } else {
             try {
@@ -1478,7 +1469,7 @@ class MainActivity : AppCompatActivity() {
                     midi_channel,
                     note,
                     bend,
-                    velocity,
+                    (velocity * 127F).toInt(),
                     !opus_manager.is_tuning_standard() || !this.is_connected_to_physical_device()
                 )
             } catch (e: VirtualMidiInputDevice.DisconnectedException) {
@@ -1506,7 +1497,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val opus_manager = this.get_opus_manager()
-        opus_manager.import_midi(midi)
+        opus_manager.project_change_midi(midi)
         val filename = this.parse_file_name(Uri.parse(path))
         val new_path = this._project_manager.get_new_path()
 
@@ -1524,6 +1515,31 @@ class MainActivity : AppCompatActivity() {
         return soundfont_dir.listFiles()?.isNotEmpty() ?: false
     }
 
+    fun populate_supported_soundfont_instrument_names() {
+        // populate a cache of available soundfont names so se don't have to open up the soundfont data
+        // every time
+        this._soundfont_supported_instrument_names.clear()
+        val soundfont = this._soundfont
+        if (soundfont != null) {
+            for ((name, program, bank) in soundfont.get_available_presets()) {
+                this._soundfont_supported_instrument_names[Pair(bank, program)] = name
+            }
+        } else {
+            var program = 0
+            for (name in this.resources.getStringArray(R.array.midi_instruments)) {
+                this._soundfont_supported_instrument_names[Pair(0, program++)] = name
+            }
+        }
+    }
+
+    fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {
+        if (this._soundfont_supported_instrument_names.isEmpty()) {
+            this.populate_supported_soundfont_instrument_names()
+        }
+
+        return this._soundfont_supported_instrument_names
+    }
+
     fun set_soundfont(filename: String?) {
         if (filename == null) {
             this.disable_soundfont()
@@ -1535,16 +1551,21 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-
         val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
         try {
             this._soundfont = SoundFont(path)
         } catch (e: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
+            this.feedback_msg(getString(R.string.invalid_soundfont))
+            return
+        } catch (e: SoundFont.InvalidSoundFont) {
+            // Possible if user puts the sf2 in their files manually
             this.feedback_msg("Invalid Soundfont")
             return
         }
+
         this.configuration.soundfont = filename
+        this.populate_supported_soundfont_instrument_names()
 
         this.reinit_playback_device()
         this.connect_feedback_device()
@@ -1558,7 +1579,7 @@ class MainActivity : AppCompatActivity() {
             // Should always be null since this can only be changed from a different menu
             if (channel_recycler.adapter != null) {
                 val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                channel_adapter.set_soundfont(this._soundfont!!)
+                channel_adapter.notify_soundfont_changed()
             }
         }
     }
@@ -1622,17 +1643,18 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        this.update_channel_instruments()
         if (this._feedback_sample_manager != null) {
             this.disconnect_feedback_device()
         }
 
         this._soundfont = null
-        this.sample_handle_manager = null
+        this._sample_handle_manager = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
         this._feedback_sample_manager = null
+        this._soundfont_supported_instrument_names.clear()
 
+        this.update_channel_instruments()
         this.populate_active_percussion_names()
     }
 
@@ -1647,8 +1669,6 @@ class MainActivity : AppCompatActivity() {
 
     fun save_configuration() {
         try {
-            this.configuration.palette = this.view_model.color_map.get_palette()
-            this.configuration.use_palette = this.view_model.color_map.use_palette
             this.configuration.save(this._config_path)
         } catch (e: FileNotFoundException) {
             this.feedback_msg(resources.getString(R.string.config_file_not_found))
@@ -1665,8 +1685,6 @@ class MainActivity : AppCompatActivity() {
             this.active_percussion_names.clear()
             val drums = this.get_drum_options()
             for ((name, note) in drums) {
-                // TODO: *Maybe* Allow drum instruments below 27? not sure what the standard is.
-                //  I thought 27 was the lowest, but i'll come up with something later
                 if (note >= 27) {
                     this.active_percussion_names[note] = name
                 }
@@ -1696,7 +1714,8 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
-    private fun dialog_project_name() {
+
+    fun dialog_string_popup(title: String, default: String? = null, callback: (String) -> Unit) {
         val main_fragment = this.get_active_fragment()
 
         val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
@@ -1707,15 +1726,14 @@ class MainActivity : AppCompatActivity() {
             )
 
         val input: EditText = viewInflated.findViewById(R.id.etProjectName)
-        input.setText(this.get_opus_manager().project_name)
+        input.setText(default ?: "")
 
-        val opus_manager = this.get_opus_manager()
         this._adjust_dialog_colors(
             AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setCustomTitle(this._build_dialog_title_view(getString(R.string.dlg_change_name)))
+                .setCustomTitle(this._build_dialog_title_view(title))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    opus_manager.set_project_name(input.text.toString())
+                    callback(input.text.toString())
                     dialog.dismiss()
                 }
                 .setNeutralButton(android.R.string.cancel) { dialog, _ ->
@@ -1723,12 +1741,19 @@ class MainActivity : AppCompatActivity() {
                 }
                 .show()
         )
+
     }
 
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {
+        if (this._popup_active) {
+            return
+        }
+
         if (options.isEmpty()) {
             return
         }
+
+        this._popup_active = true
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_menu,
@@ -1743,6 +1768,9 @@ class MainActivity : AppCompatActivity() {
 
         val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
             .setView(viewInflated)
+            .setOnDismissListener {
+                this._popup_active = false
+            }
             .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
                 dialog.dismiss()
             }
@@ -1763,22 +1791,14 @@ class MainActivity : AppCompatActivity() {
         val project_list = this._project_manager.get_project_list()
 
         this.dialog_popup_menu("Load Project", project_list) { _: Int, path: String ->
-            val fragment = this.get_active_fragment() ?: return@dialog_popup_menu
-            this.loading_reticle_show(getString(R.string.reticle_msg_load_project))
-
-            fragment.setFragmentResult(
-                IntentFragmentToken.Load.name,
-                bundleOf(Pair("PATH", path))
-            )
-
-            if (fragment !is FragmentEditor) {
-                this.navigate(R.id.EditorFragment)
-            }
+            this.get_action_interface().load_project(path)
         }
     }
+
+
     // TODO: fix code duplication in dialog_float/integer_input
     internal fun dialog_float_input(title: String, min_value: Float, max_value: Float, default: Float? = null, callback: (value: Float) -> Unit ) {
-        val coerced_default_value = default ?: (this.float_dialog_defaults[title] ?: min_value)
+        val coerced_default_value = default ?: (this._float_dialog_defaults[title] ?: min_value)
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_float,
@@ -1793,7 +1813,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val output_value = number_input.get_value() ?: coerced_default_value
-                this.float_dialog_defaults[title] = output_value
+                this._float_dialog_defaults[title] = output_value
                 callback(output_value)
             }
             .setNeutralButton(android.R.string.cancel) { _, _ -> }
@@ -1816,7 +1836,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun dialog_number_input(title: String, min_value: Int, max_value: Int, default: Int? = null, callback: (value: Int) -> Unit ) {
-        val coerced_default_value = default ?: (this.integer_dialog_defaults[title] ?: min_value)
+        val coerced_default_value = default ?: (this._integer_dialog_defaults[title] ?: min_value)
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_split,
@@ -1831,7 +1851,7 @@ class MainActivity : AppCompatActivity() {
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val output_value = number_input.get_value() ?: coerced_default_value
-                this.integer_dialog_defaults[title] = output_value
+                this._integer_dialog_defaults[title] = output_value
                 callback(output_value)
             }
             .setNeutralButton(android.R.string.cancel) { _, _ -> }
@@ -1879,13 +1899,13 @@ class MainActivity : AppCompatActivity() {
             return !opus_manager.history_cache.isEmpty()
         }
 
-        val other = OpusLayerLinks()
+        val other = OpusLayerBase()
         other.load_path(opus_manager.path!!)
 
         return opus_manager != other
     }
 
-    private fun dialog_save_project(callback: () -> Unit) {
+    fun dialog_save_project(callback: (Boolean) -> Unit) {
         if (this.needs_save()) {
             this._adjust_dialog_colors(
                 AlertDialog.Builder(this, R.style.AlertDialog)
@@ -1894,16 +1914,16 @@ class MainActivity : AppCompatActivity() {
                     .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
                         this@MainActivity.project_save()
                         dialog.dismiss()
-                        callback()
+                        callback(true)
                     }
                     .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
                         dialog.dismiss()
-                        callback()
+                        callback(false)
                     }
                     .show()
             )
         } else {
-            callback()
+            callback(false)
         }
     }
 
@@ -1915,9 +1935,8 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
                 .setCustomTitle(this._build_dialog_title_view(resources.getString(R.string.dlg_delete_title, title)))
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    this@MainActivity.project_delete()
+                    this@MainActivity.get_action_interface().delete()
                     dialog.dismiss()
-                    this@MainActivity.drawer_close()
                 }
                 .setNegativeButton(android.R.string.cancel) { dialog, _ ->
                     dialog.cancel()
@@ -1926,19 +1945,10 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    fun select_midi_file() {
-        val intent = Intent()
-            .setType(MimeTypes.AUDIO_MIDI)
-            .setAction(Intent.ACTION_GET_CONTENT)
-        this._import_midi_intent_launcher.launch(intent)
+    fun select_import_file() {
+        this.get_action_interface().import()
     }
 
-    fun select_project_file() {
-        val intent = Intent()
-            .setType("application/json")
-            .setAction(Intent.ACTION_GET_CONTENT)
-        this._import_project_intent_launcher.launch(intent)
-    }
 
     fun get_default_export_name(): String {
         val now = LocalDateTime.now()
@@ -1959,7 +1969,8 @@ class MainActivity : AppCompatActivity() {
         val name = this.get_export_name()
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.type = MimeTypes.AUDIO_WAV
+        //intent.type = MimeTypes.AUDIO_WAV
+        intent.type = "audio/wav"
         intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
         this._export_wav_intent_launcher.launch(intent)
     }
@@ -1973,7 +1984,8 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.type = MimeTypes.AUDIO_MIDI
+        //intent.type = MimeTypes.AUDIO_MIDI
+        intent.type = "audio/midi"
         intent.putExtra(Intent.EXTRA_TITLE, "$name.mid")
 
         this._export_midi_intent_launcher.launch(intent)
@@ -1993,34 +2005,31 @@ class MainActivity : AppCompatActivity() {
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
         this.save_configuration()
-        this.reinit_playback_device()
+        this.set_soundfont(this.configuration.soundfont)
     }
 
     fun reinit_playback_device() {
         this._midi_playback_device?.kill()
 
         if (this.get_soundfont() != null) {
-            this.sample_handle_manager = SampleHandleManager(
+            /*
+             * TODO: Put the ignore envelope/lfo option somewhere better.
+             * I don't think it should be in apres if theres a reasonable way to avoid it
+             */
+            this._sample_handle_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
                 this.configuration.sample_rate,
-                sample_limit = this.configuration.playback_sample_limit
+                ignore_lfo = true
             )
 
             this._midi_playback_device = PlaybackDevice(
                 this,
-                this.sample_handle_manager!!,
-                this.configuration.playback_stereo_mode,
+                this._sample_handle_manager!!,
+                WaveGenerator.StereoMode.Stereo
             )
         } else {
             this._midi_playback_device = null
-        }
-    }
-
-    fun validate_percussion_visibility() {
-        val opus_manager = this.get_opus_manager()
-        if (!this.view_model.show_percussion && opus_manager.has_percussion()) {
-            this.view_model.show_percussion = true
         }
     }
 
@@ -2029,7 +2038,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun has_notification_permission(): Boolean {
-        return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED )
+        return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED )
     }
 
     private fun getNotificationPermission(): Boolean {
@@ -2085,10 +2094,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         this.disconnect_feedback_device()
+
+        val buffer_size = this.configuration.sample_rate / 2
         this._feedback_sample_manager = SampleHandleManager(
             this._soundfont!!,
-            this.configuration.sample_rate
+            this.configuration.sample_rate,
+            buffer_size - 2 + (if (buffer_size % 2 == 0) { 2 } else { 1 })
         )
+        this._current_feedback_device = 0
     }
 
     fun block_physical_midi_output() {
@@ -2106,16 +2119,21 @@ class MainActivity : AppCompatActivity() {
 
         if (this._active_notification == null) {
             this.get_notification_channel()
+
             val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
+            val intent = Intent()
+            intent.setAction(cancel_export_flag)
+            intent.setPackage(this.packageName)
+
             val pending_cancel_intent = PendingIntent.getBroadcast(
                 this,
-                0,
-                Intent( cancel_export_flag),
+                1,
+                intent,
                 PendingIntent.FLAG_IMMUTABLE
             )
 
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(this.getString(R.string.export_wav_notification_title, this.get_opus_manager().project_name))
+                .setContentTitle(this.getString(R.string.export_wav_notification_title, this.get_opus_manager().project_name ?: "Untitled Project"))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.small_logo)
                 .setSilent(true)
@@ -2147,231 +2165,81 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun dialog_color_picker(initial_color: Long, callback: (Int) -> Unit) {
-        val main_fragment = this.get_active_fragment()
-        val c = Color.toArgb(initial_color)
-
-        val viewInflated: View = LayoutInflater.from(this)
-            .inflate(
-                R.layout.color_picker,
-                main_fragment!!.view as ViewGroup,
-                false
-            )
-        val flColorDisplay = viewInflated.findViewById<FrameLayout>(R.id.flColorDisplay)
-        val sbRed = viewInflated.findViewById<SeekBar>(R.id.sbRed)
-        val sbGreen = viewInflated.findViewById<SeekBar>(R.id.sbGreen)
-        val sbBlue = viewInflated.findViewById<SeekBar>(R.id.sbBlue)
-        val rniRed = viewInflated.findViewById<RangedIntegerInput>(R.id.rniRed)
-        val rniGreen = viewInflated.findViewById<RangedIntegerInput>(R.id.rniGreen)
-        val rniBlue = viewInflated.findViewById<RangedIntegerInput>(R.id.rniBlue)
-
-        rniRed.set_value(c.red)
-        rniGreen.set_value(c.green)
-        rniBlue.set_value(c.blue)
-
-        sbRed.progress = c.red
-        sbGreen.progress = c.green
-        sbBlue.progress = c.blue
-
-        var lockout = false
-        rniRed.addTextChangedListener(object: TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun afterTextChanged(p0: Editable?) {
-                if (lockout || p0.toString().isEmpty()) {
-                    return
-                }
-                lockout = true
-                sbRed.progress = p0.toString().toInt()
-                lockout = false
-            }
-        })
-        rniGreen.addTextChangedListener(object: TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun afterTextChanged(p0: Editable?) {
-                if (lockout || p0.toString().isEmpty()) {
-                    return
-                }
-                lockout = true
-                sbGreen.progress = p0.toString().toInt()
-                lockout = false
-            }
-        })
-
-        rniBlue.addTextChangedListener(object: TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun afterTextChanged(p0: Editable?) {
-                if (lockout || p0.toString().isEmpty()) {
-                    return
-                }
-                lockout = true
-                sbBlue.progress = p0.toString().toInt()
-                lockout = false
-            }
-        })
-
-        val seekbar_listener = object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                if (lockout) {
-                    return
-                }
-                lockout = true
-                when (p0) {
-                    sbRed -> rniRed.set_value(p1)
-                    sbGreen -> rniGreen.set_value(p1)
-                    sbBlue -> rniBlue.set_value(p1)
-                }
-                flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
-                lockout = false
-            }
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(seekbar: SeekBar) { }
-        }
-
-        sbRed.setOnSeekBarChangeListener(seekbar_listener)
-        sbGreen.setOnSeekBarChangeListener(seekbar_listener)
-        sbBlue.setOnSeekBarChangeListener(seekbar_listener)
-
-
-        flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
-
-        this._adjust_dialog_colors(
-            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setView(viewInflated)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    val new_color = Color.argb(255, rniRed.get_value()!!, rniGreen.get_value()!!, rniBlue.get_value()!!)
-                    callback(new_color)
-                    dialog.dismiss()
-                }
-                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-        )
-    }
-
-    fun is_night_mode(): Boolean {
-        // defaults to night mode since it's better
-        return when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-            Configuration.UI_MODE_NIGHT_NO -> false
-            Configuration.UI_MODE_NIGHT_YES -> true
-            else -> true
-        }
-    }
-
-    fun refresh_toolbar() {
-        val color_map = this.view_model.color_map
+    private fun _refresh_toolbar() {
         val toolbar = this._binding.appBarMain.toolbar
-        val text_color = color_map[Palette.TitleBarText]
-        toolbar.setTitleTextColor(text_color)
-        toolbar.setBackgroundColor(color_map[Palette.TitleBar])
-        toolbar.setSubtitleTextColor(text_color)
-        toolbar.overflowIcon?.setTint(text_color)
-
 
         when (this.get_active_fragment()) {
             is FragmentEditor -> {
                 toolbar.setNavigationIcon(R.drawable.hamburger_32)
-                toolbar.navigationIcon?.setTint(text_color)
+                toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary_text))
             }
             is FragmentLandingPage -> {
                 toolbar.navigationIcon = null
             }
             else -> {
                 toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-                toolbar.navigationIcon?.setTint(text_color)
+                toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary_text))
             }
         }
     }
 
-    fun get_night_palette(): HashMap<Palette, Int> {
-        return hashMapOf<Palette, Int>(
-            Pair(Palette.Background, this.getColor(R.color.dark_main_bg)),
-            Pair(Palette.Foreground, this.getColor(R.color.dark_main_fg)),
-            Pair(Palette.Lines, this.getColor(R.color.dark_table_lines)),
-            Pair(Palette.Leaf, this.getColor(R.color.leaf)),
-            Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
-            Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
-            Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
-            Pair(Palette.LeafInvalidSelected, this.getColor(R.color.leaf_invalid_selected)),
-            Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
-            Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
-            Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
-            Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
-            Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
-            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
-            Pair(Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text) ),
-            Pair(Palette.LinkEmpty, this.getColor(R.color.dark_empty_linked)),
-            Pair(Palette.LinkEmptySelected, this.getColor(R.color.dark_empty_linked_selected)),
-            Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
-            Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
-            Pair(Palette.ChannelEven, this.getColor(R.color.dark_channel_even)),
-            Pair(Palette.ChannelEvenText, this.getColor(R.color.dark_channel_even_text)),
-            Pair(Palette.ChannelOdd, this.getColor(R.color.dark_channel_odd)),
-            Pair(Palette.ChannelOddText, this.getColor(R.color.dark_channel_odd_text)),
-            Pair(Palette.ColumnLabel, this.getColor(R.color.dark_main_bg)),
-            Pair(Palette.ColumnLabelText, this.getColor(R.color.dark_main_fg)),
-            Pair(Palette.Button, this.getColor(R.color.dark_button)),
-            Pair(Palette.ButtonText, this.getColor(R.color.dark_button_text)),
-            Pair(Palette.ButtonAlt, this.getColor(R.color.dark_button_alt)),
-            Pair(Palette.ButtonAltText, this.getColor(R.color.dark_button_alt_text)),
-            Pair(Palette.TitleBar, this.getColor(R.color.dark_primary)),
-            Pair(Palette.TitleBarText, this.getColor(R.color.dark_primary_text)),
-            Pair(Palette.CtlLine, this.getColor(R.color.dark_ctl_line)),
-            Pair(Palette.CtlLineText, this.getColor(R.color.dark_ctl_line_text)),
-            Pair(Palette.CtlLineSelection, this.getColor(R.color.ctl_line_selected)),
-            Pair(Palette.CtlLineSelectionText, this.getColor(R.color.ctl_line_selected_text)),
-            Pair(Palette.CtlLeaf, this.getColor(R.color.ctl_leaf)),
-            Pair(Palette.CtlLeafText, this.getColor(R.color.ctl_leaf_text)),
-            Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
-            Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
-        )
+    fun vibrate() {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = this.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.EFFECT_HEAVY_CLICK))
+        } else {
+            vibrator.vibrate(VibrationEffect.createOneShot(200, 5))
+        }
     }
 
-    private fun get_day_palette(): HashMap<Palette, Int> {
-        return hashMapOf<Palette, Int>(
-            Pair(Palette.Background, this.getColor(R.color.light_main_bg)),
-            Pair(Palette.Foreground, this.getColor(R.color.light_main_fg)),
-            Pair(Palette.Lines, this.getColor(R.color.light_table_lines)),
-            Pair(Palette.Leaf, this.getColor(R.color.leaf)),
-            Pair(Palette.LeafText, this.getColor(R.color.leaf_text)),
-            Pair(Palette.LeafInvalid, this.getColor(R.color.leaf_invalid)),
-            Pair(Palette.LeafInvalidText, this.getColor(R.color.leaf_invalid_text)),
-            Pair(Palette.LeafInvalidSelected, this.getColor(R.color.leaf_invalid_selected)),
-            Pair(Palette.LeafInvalidSelectedText, this.getColor(R.color.leaf_invalid_selected_text)),
-            Pair(Palette.LeafSelected, this.getColor(R.color.leaf_selected)),
-            Pair(Palette.LeafSelectedText, this.getColor(R.color.leaf_selected_text)),
-            Pair(Palette.Link, this.getColor(R.color.leaf_linked)),
-            Pair(Palette.LinkText, this.getColor(R.color.leaf_linked_text)),
-            Pair(Palette.LinkSelected, this.getColor(R.color.leaf_linked_selected)),
-            Pair(Palette.LinkEmpty, this.getColor(R.color.light_empty_linked)),
-            Pair(Palette.LinkEmptySelected, this.getColor(R.color.light_empty_linked_selected)),
-            Pair(Palette.LinkSelectedText, this.getColor(R.color.leaf_linked_selected_text)),
-            Pair(Palette.Selection, this.getColor(R.color.empty_selected)),
-            Pair(Palette.SelectionText, this.getColor(R.color.empty_selected_text)),
-            Pair(Palette.ChannelEven, this.getColor(R.color.light_channel_even)),
-            Pair(Palette.ChannelEvenText, this.getColor(R.color.light_channel_even_text)),
-            Pair(Palette.ChannelOdd, this.getColor(R.color.light_channel_odd)),
-            Pair(Palette.ChannelOddText, this.getColor(R.color.light_channel_odd_text)),
-            Pair(Palette.ColumnLabel, this.getColor(R.color.light_main_bg)),
-            Pair(Palette.ColumnLabelText, this.getColor(R.color.light_main_fg)),
-            Pair(Palette.Button, this.getColor(R.color.light_button)),
-            Pair(Palette.ButtonText, this.getColor(R.color.light_button_text)),
-            Pair(Palette.ButtonAlt, this.getColor(R.color.light_button_alt)),
-            Pair(Palette.ButtonAltText, this.getColor(R.color.light_button_alt_text)),
-            Pair(Palette.TitleBar, this.getColor(R.color.light_primary)),
-            Pair(Palette.TitleBarText, this.getColor(R.color.light_primary_text)),
-            Pair(Palette.CtlLine, this.getColor(R.color.light_ctl_line)),
-            Pair(Palette.CtlLineText, this.getColor(R.color.light_ctl_line_text)),
-            Pair(Palette.CtlLineSelection, this.getColor(R.color.ctl_line_selected)),
-            Pair(Palette.CtlLineSelectionText, this.getColor(R.color.ctl_line_selected_text)),
-            Pair(Palette.CtlLeaf, this.getColor(R.color.ctl_leaf)),
-            Pair(Palette.CtlLeafText, this.getColor(R.color.ctl_leaf_text)),
-            Pair(Palette.CtlLeafSelected, this.getColor(R.color.ctl_leaf_selected)),
-            Pair(Palette.CtlLeafSelectedText, this.getColor(R.color.ctl_leaf_selected_text)),
-        )
+
+    fun get_file_type(path: String): CompatibleFileType {
+        return this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+            val test_bytes = ByteArray(4)
+            FileInputStream(it.fileDescriptor).read(test_bytes)
+            if (test_bytes.contentEquals("MThd".toByteArray())) {
+                CompatibleFileType.Midi1
+            } else {
+
+                CompatibleFileType.Pagan
+            }
+        } ?: throw FileNotFoundException(path)
     }
 
+    fun get_action_interface(): ActionTracker {
+        return this.view_model.action_interface
+    }
+
+    fun save_actions() {
+        val generated_code = this.get_action_interface().to_json().to_string()
+        val path = this.getExternalFilesDir(null).toString()
+        val timestamp = System.currentTimeMillis()
+        val file_name = "$path/generated_$timestamp.json"
+        val file = File(file_name)
+        file.writeText(generated_code)
+        this.get_action_interface().clear()
+    }
+
+    fun navigate_import(uri: Uri) {
+        val fragment = this.get_active_fragment()
+        fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
+        fragment?.setFragmentResult(
+            IntentFragmentToken.ImportGeneral.name,
+            bundleOf(Pair("URI", uri.toString()))
+        )
+        if (fragment !is FragmentEditor) {
+            this.navigate(R.id.EditorFragment)
+        }
+    }
+
+    fun is_debug_on(): Boolean {
+        return this.packageName.contains("pagandev")
+    }
 }

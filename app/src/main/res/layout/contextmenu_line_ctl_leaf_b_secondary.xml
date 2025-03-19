@@ -6,9 +6,8 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
         <RadioGroup
-            android:id="@+id/rgLinkMode"
+            android:id="@+id/rgMoveMode"
             android:orientation="horizontal"
-            android:checkedButton="@id/rbLinkModeLink"
             android:layout_height="wrap_content"
             android:minHeight="41dp"
             android:layout_width="0dp"
@@ -17,8 +16,8 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"/>
-                <com.qfs.pagan.PaganRadioButton
-                    android:id="@+id/rbLinkModeCopy"
+                <RadioButton
+                    android:id="@+id/rbMoveModeCopy"
                     android:layout_margin="0dp"
                     android:theme="@style/link_mode_button"
                     android:paddingEnd="2dp"
@@ -26,13 +25,21 @@
                     android:layout_gravity="center_vertical"
                     android:layout_height="match_parent"
                     android:layout_width="wrap_content"/>
-                <com.qfs.pagan.PaganRadioButton
-                    android:id="@+id/rbLinkModeMove"
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
+                <RadioButton
+                    android:id="@+id/rbMoveModeMove"
                     android:layout_margin="0dp"
                     android:theme="@style/link_mode_button"
                     android:text="@string/label_move_ctl"
                     android:layout_gravity="center_vertical"
                     android:layout_height="match_parent"
                     android:layout_width="wrap_content"/>
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
         </RadioGroup>
 </LinearLayout>

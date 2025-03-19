@@ -7,45 +7,46 @@
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
 
-    <com.qfs.pagan.ButtonIcon
+    <ImageView
         android:id="@+id/btnInsertLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/insert_line"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
-        android:contentDescription="Insert Line" />
+        android:contentDescription="@string/cd_insert_line" />
 
-    <com.qfs.pagan.ButtonIcon
+    <ImageView
         android:id="@+id/btnRemoveLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/remove_line"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:layout_marginTop="@dimen/number_selector_spacing"
-        android:contentDescription="Remove Line" />
+        android:contentDescription="@string/cd_remove_line" />
 
-    <com.qfs.pagan.ButtonStd
+    <TextView
         android:id="@+id/btnChoosePercussion"
         android:theme="@style/choose_percussion_button"
         android:paddingTop="@dimen/number_selector_spacing"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:layout_marginTop="@dimen/number_selector_spacing"
-        android:text="Instrument..." />
+        android:contentDescription="@string/cd_set_percussion_instrument"
+        android:text="" />
 
-    <com.qfs.pagan.ButtonIcon
-        android:id="@+id/btnToggleVolCtl"
+    <ImageView
+        android:id="@+id/btnToggleChannelCtl"
         android:theme="@style/icon_button"
-        app:srcCompat="@drawable/volume_plus"
+        app:srcCompat="@drawable/ctl"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:layout_marginTop="@dimen/number_selector_spacing"
-        android:contentDescription="Toggle Volume Control"/>
+        android:contentDescription="@string/cd_show_effect_controls"/>
 
     <Space
         android:visibility="gone"
         android:id="@+id/spacer"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_width="0dp" />
 </LinearLayout>

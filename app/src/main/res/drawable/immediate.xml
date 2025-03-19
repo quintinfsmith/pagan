@@ -1,0 +1,5 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="@dimen/secondary_contextmenu_button_height" android:viewportHeight="64" android:viewportWidth="64" android:width="@dimen/secondary_contextmenu_button_height">
+      
+    <path android:fillColor="#FFFFFF" android:pathData="M28,8.036V45.821l-9.172,-7.478 -5.657,4.612 16,13.045h5.657l16,-13.045 -5.656,-4.612 -9.172,7.479V8.036Z" android:strokeColor="#00000000" android:strokeLineJoin="bevel" android:strokeWidth="0.902948"/>
+    
+</vector>

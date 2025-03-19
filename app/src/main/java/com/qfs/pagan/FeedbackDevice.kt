@@ -6,12 +6,13 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import com.qfs.apres.soundfontplayer.WaveGenerator
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 
-class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), _sample_handle_manager.sample_rate, _sample_handle_manager.buffer_size), VirtualMidiOutputDevice {
+class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), _sample_handle_manager.sample_rate, _sample_handle_manager.buffer_size, WaveGenerator.StereoMode.Mono), VirtualMidiOutputDevice {
     class ImmediateFrameMap: FrameMap {
         private val _handles = mutableSetOf<SampleHandle>()
         private val _mutex = Mutex()
@@ -32,6 +33,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
             for (handle in output) {
                 this.max_frame = max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
             }
+
             return output
         }
 
@@ -86,8 +88,12 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         val handles = this._sample_handle_manager.gen_sample_handles(event)
 
         for (handle in handles) {
-            handle.release_frame = duration_millis * this.sample_rate / 1000
-            handle.volume = (event.velocity shr 8).toFloat() * 0.2F / 128F
+            handle.set_release_frame(duration_millis * this.sample_rate / 1000)
+
+            // Remove release phase. can get noisy on things like tubular bells with long fade outs
+            handle.volume_envelope.frames_release = 0
+            handle.volume_envelope.release = 0F
+
             (this.sample_frame_map as ImmediateFrameMap).add(handle)
         }
 

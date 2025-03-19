@@ -4,7 +4,7 @@ import com.qfs.apres.Midi
 import com.qfs.apres.soundfont.SoundFont
 
 class MidiPlaybackDevice(sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(MidiFrameMap(sample_handle_manager), sample_handle_manager.sample_rate, sample_handle_manager.buffer_size) {
-    class Builder(soundfont: SoundFont, sample_rate: Int) {
+    class Builder {
         companion object {
             fun build(soundfont: SoundFont, sample_rate: Int): MidiPlaybackDevice {
                 val sample_handle_manager = SampleHandleManager(soundfont, sample_rate)

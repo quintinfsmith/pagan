@@ -1,41 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:title="playpausemidi"
+    <item android:title="@string/menu_item_playpause_midi"
         android:id="@+id/itmPlayMidiOutput"
         android:orderInCategory="0"
         app:showAsAction="always"
         android:icon="@drawable/ic_baseline_play_arrow_24"/>
-    <item android:title="playpause"
+
+    <item android:title="@string/menu_item_playpause"
         android:id="@+id/itmPlay"
         android:orderInCategory="0"
         app:showAsAction="always"
         android:icon="@drawable/ic_baseline_play_arrow_24"/>
 
-    <item android:title="undo"
+    <item android:title="@string/menu_item_undo"
         android:id="@+id/itmUndo"
         android:orderInCategory="0"
         app:showAsAction="always"
         android:icon="@drawable/ic_baseline_undo_24"/>
     <item
         android:id="@+id/itmNewProject"
-        android:title="New Project"
+        android:title="@string/menu_item_new_project"
         app:showAsAction="never"/>
     <item
         android:id="@+id/itmLoadProject"
-        android:title="Load Project"
-        app:showAsAction="never"/>
-    <item
-        android:id="@+id/itmImportProject"
-        android:title="Import Project"
+        android:title="@string/menu_item_load_project"
         app:showAsAction="never"/>
     <item
         android:id="@+id/itmImportMidi"
-        android:title="Import MIDI"
+        android:title="@string/menu_item_import"
         app:showAsAction="never"/>
     <item
         android:menuCategory="secondary"
         android:id="@+id/itmSettings"
-        android:title="Settings..."
+        android:title="@string/menu_item_settings"
+        app:showAsAction="never"/>
+    <item
+        android:menuCategory="secondary"
+        android:id="@+id/itmAbout"
+        android:title="@string/menu_item_about"
+        app:showAsAction="never"/>
+    <item
+        android:menuCategory="secondary"
+        android:id="@+id/itmDebug"
+        android:title="@string/menu_item_debug"
         app:showAsAction="never"/>
 </menu>

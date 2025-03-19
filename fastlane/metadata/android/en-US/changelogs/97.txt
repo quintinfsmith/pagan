@@ -1,0 +1,10 @@
+- Note feedback no longer using relative volume
+- Fixed mis-sizing of some cells
+- Fixed incorrect sizing of channel instrument buttons in config menu sometimes.
+- Clip overlapping/consecutive notes *on the same line* so one note doesn't fade over the next. (can be toggled in settings)
+- Fixed disabling soundfont doesn't update channel instrument names
+- Fixed wonky calculation of first visible column.
+- Fixed some crashes caused when playing malformed soundfonts.
+- Fixed bug where lines are only partially drawn when android keyboard pops up.
+- Tightened up some of the encoding when saving (slightly smaller project files).
+- Improved regression testing

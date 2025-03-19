@@ -1,0 +1,26 @@
+Added (v1.6.0):
+    In-Song volume control (line specific)
+    Audio Balance Control, (channel specific AND line specific)
+    Gaps between channels for clarity's sake
+    Double-tap a line to select channel controls (drawer menu still available)
+    Vertical Scrolling during playback
+
+Removed (v1.6.0):
+    Beat-linking functionality
+    Custom colors
+    'Click anywhere to stop' functionality. Just use the play/pause button
+
+Fixed/Improved:
+    Block ability to import any RIFF file instead of SF2. (v1.6.6)
+    Fixed bug where new beats inherit the width of proceding beats (v1.6.6)
+    Fixed a missing check that caused notes to overlap in some cases (v1.6.4)
+    Incorrect remapping of overlaps on leafs depth > 0 (v1.6.3)
+    Overlap wasn't being tracked on imported midi files. (v1.6.2)
+    Slight clicking on small samples caused by misimplementation of filter cutoff. (v1.6.0)
+    Sample Mixing Speed and Quality improved. (v1.6.0)
+
+UI Changes (v1.6.0):
+    Merged "Import Project" and "Import Midi" into single "Import" option.
+    Moved licensing and links to "About" section.
+    Changed control lines (tempo, volume, pan) color from pink/magenta to a dark yellow/orange.
+

@@ -15,9 +15,10 @@ import java.io.File
 class SoundFontPlayerUnitTest {
     fun get_soundfont(): SoundFont {
         val sffont = "FluidR3_GM_GS.sf2"
-        println( File(sffont).absolutePath)
+        println(File(sffont).absolutePath)
         return SoundFont(sffont)
     }
+
     @Test
     fun test_generator() {
         mockkStatic(AudioTrack::class) {
@@ -33,14 +34,13 @@ class SoundFontPlayerUnitTest {
             val preset_instrument = preset.get_instruments(test_on.note, test_on.velocity shl 8).first()
             val samples = preset_instrument.instrument!!.get_samples(test_on.note, test_on.velocity shl 8).toList()
             var sample_handle_generator = SampleHandleGenerator(44100, 44100)
+
             sample_handle_generator.get(
                 test_on,
                 samples.first(),
                 preset_instrument.instrument?.global_zone ?: SampleDirective(),
                 preset_instrument,
-                preset.global_zone,
-                preset.modulators.union(preset_instrument.instrument?.modulators ?: setOf()),
-                1
+                preset.global_zone
             )
 
             assertEquals(
@@ -56,7 +56,6 @@ class SoundFontPlayerUnitTest {
                 preset_instrument.instrument?.global_zone ?: SampleDirective(),
                 preset_instrument,
                 preset.global_zone,
-                preset.modulators.union(preset_instrument.instrument?.modulators ?: setOf())
             )
 
             assertEquals(

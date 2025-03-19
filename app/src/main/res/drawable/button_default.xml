@@ -50,7 +50,7 @@
             <padding
                 android:left="4dp"
                 android:bottom="4dp" />
-            <solid android:color="#000000"/>
+            <solid android:color="@color/button_selector"/>
             <corners android:radius="4dp"/>
         </shape>
     </item>

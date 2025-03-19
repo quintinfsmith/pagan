@@ -1,16 +1,12 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.graphics.drawable.LayerDrawable
-import android.graphics.drawable.StateListDrawable
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import androidx.appcompat.content.res.AppCompatResources
-import com.qfs.pagan.ColorMap.Palette
 
 
-
-class ButtonIcon(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatImageView(context, attrs) {
+class ButtonIcon(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatImageView(context, attrs) {
     init {
         this.background = AppCompatResources.getDrawable(context, R.drawable.button_icon)
     }
@@ -23,11 +19,11 @@ class ButtonIcon(context: Context, attrs: AttributeSet?): androidx.appcompat.wid
             context = (context as ContextThemeWrapper).baseContext
         }
 
-        val color_map = context.view_model.color_map
-        val index = (this.background as StateListDrawable).findStateDrawableIndex(this.drawableState)
-        val background = ((this.background as StateListDrawable).getStateDrawable(index) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
-        background?.setTint(color_map[Palette.Button])
-        this.setColorFilter(color_map[Palette.ButtonText])
+        //val color_map = context.view_model.color_map
+        //val index = (this.background as StateListDrawable).findStateDrawableIndex(this.drawableState)
+        //val background = ((this.background as StateListDrawable).getStateDrawable(index) as LayerDrawable).findDrawableByLayerId(R.id.tintable_background)
+        //background?.setTint(color_map[Palette.Button])
+        //this.setColorFilter(color_map[Palette.ButtonText])
         this.alpha = if (this.isEnabled) {
             1f
         } else {

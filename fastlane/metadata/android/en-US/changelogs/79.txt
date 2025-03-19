@@ -1,0 +1,2 @@
+- optimization to audio processing
+- fixed bug in how sustain attenuation was being applied

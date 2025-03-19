@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="normal_padding">1dp</dimen>
-    <dimen name="stroke_leaf">.5dp</dimen>
-    <dimen name="stroke_button">1dp</dimen>
-    <dimen name="stroke_corner">.5dp</dimen>
-    <dimen name="context_menu_border">2dp</dimen>
+    <dimen name="stroke_leaf">1dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
     <dimen name="ctl_line_height">30dp</dimen>
     <dimen name="base_leaf_width">41dp</dimen>
+    <dimen name="channel_gap_size">5dp</dimen>
     <dimen name="dropdown_item_padding_top">8dp</dimen>
     <dimen name="dropdown_item_padding_sides">16dp</dimen>
     <dimen name="dropdown_item_min_width">248dp</dimen>
@@ -25,25 +23,29 @@
     <dimen name="alert_button_padding_bottom">8dp</dimen>
     <dimen name="alert_button_padding_left">5dp</dimen>
     <dimen name="alert_button_padding_right">8dp</dimen>
-    <dimen name="inline_color_picker_label_padding">12dp</dimen>
-    <dimen name="inline_color_picker_button_size">41dp</dimen>
-    <dimen name="color_picker_display_height">82dp</dimen>
-    <dimen name="color_picker_display_padding">8dp</dimen>
-    <dimen name="color_picker_popup_width">400dp</dimen>
     <dimen name="icon_size">36dp</dimen>
     <dimen name="icon_button_height">50dp</dimen>
     <dimen name="icon_button_width">58dp</dimen>
     <dimen name="icon_button_padding_a">1dp</dimen>
     <dimen name="icon_button_padding_b">4dp</dimen>
-    <dimen name="volume_button_width">64dp</dimen>
+    <dimen name="channel_conf_icon_height">24dp</dimen>
 
-    <dimen name="notes_per_line">6</dimen>
     <dimen name="primary_contextmenu_padding_top">4dp</dimen>
     <dimen name="primary_contextmenu_padding_start">4dp</dimen>
     <dimen name="primary_contextmenu_padding_end">2dp</dimen>
     <dimen name="primary_contextmenu_padding_bottom">2dp</dimen>
-    <dimen name="secondary_contextmenu_padding_top">4dp</dimen>
+    <dimen name="secondary_contextmenu_padding_top">0dp</dimen>
     <dimen name="secondary_contextmenu_padding_start">4dp</dimen>
     <dimen name="secondary_contextmenu_padding_end">2dp</dimen>
     <dimen name="secondary_contextmenu_padding_bottom">2dp</dimen>
+    <dimen name="secondary_contextmenu_height">52dp</dimen>
+    <dimen name="secondary_contextmenu_button_height">42dp</dimen>
+
+    <dimen name="text_size_offset">18sp</dimen>
+    <dimen name="text_size_octave">14sp</dimen>
+    <dimen name="text_size_ctl">12sp</dimen>
+    <dimen name="octave_label_padding_y">12dp</dimen>
+    <dimen name="octave_label_padding_x">3dp</dimen>
+
+    <dimen name="landing_button_space">3dp</dimen>
 </resources>

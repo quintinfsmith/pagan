@@ -1,0 +1,5 @@
+ - Fixed transposition sometimes not working
+ - Fixed slight clicking during playback at end of some samples
+ - Fixed crash on long click insert/remove channel buttons in channel menu
+ - Fixed incorrect cursor placement after removing a leaf sometimes
+ - Fixed crash when attempting to play instruments without sample data

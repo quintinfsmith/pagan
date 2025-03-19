@@ -1,0 +1,1 @@
+Fixed some short samples not pitching correctly

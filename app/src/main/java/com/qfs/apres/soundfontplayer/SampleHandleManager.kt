@@ -7,6 +7,7 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentDirective
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
+import com.qfs.apres.soundfont.SampleType
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.max
 
@@ -14,7 +15,8 @@ class SampleHandleManager(
     var soundfont: SoundFont,
     var sample_rate: Int,
     target_buffer_size: Int = 0,
-    var sample_limit: Int? = null
+    var sample_limit: Int? = null,
+    ignore_lfo: Boolean = false
     ) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
@@ -22,7 +24,7 @@ class SampleHandleManager(
     val buffer_size: Int
 
     init {
-        val core_count = Runtime.getRuntime().availableProcessors()
+        val process_count = Runtime.getRuntime().availableProcessors() * 8
 
         val adj_target_buffer_size = max(
             target_buffer_size,
@@ -33,11 +35,12 @@ class SampleHandleManager(
             ) * 2 // too small causes clipping
         )
 
-        this.buffer_size = adj_target_buffer_size - (adj_target_buffer_size % core_count)
+        this.buffer_size = adj_target_buffer_size - (adj_target_buffer_size % process_count)
 
         this.sample_handle_generator = SampleHandleGenerator(
             this.sample_rate,
-            this.buffer_size
+            this.buffer_size,
+            ignore_lfo,
         )
     }
 
@@ -101,49 +104,53 @@ class SampleHandleManager(
             )?.toList() ?: listOf()
 
             for (sample in samples) {
+                if (sample.sample == null) {
+                    continue
+                }
                 sample_pairs.add(Pair(sample, p_instrument))
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> {
+                when (sample.sample!!.sampleType) {
+                    SampleType.Mono,
+                    SampleType.RomMono -> {
                         sample_counts[1] += 1
                         sample_counts[0] += 1
                         sample_counts[2] += 1
                     }
-                    2 -> {
+                    SampleType.Right,
+                    SampleType.RomRight -> {
                         sample_counts[2] += 1
                         sample_counts[1] += 1
                     }
-                    4 -> {
+                    SampleType.Left,
+                    SampleType.RomLeft -> {
                         sample_counts[0] += 1
                         sample_counts[1] += 1
                     }
+                    SampleType.Linked -> TODO()
+                    SampleType.RomLinked -> TODO()
                 }
                 sample_count += 1
-                if (this.sample_limit != null && sample_count >= this.sample_limit!!) {
-                    break
-                }
-            }
-
-            if (this.sample_limit != null && sample_count >= this.sample_limit!!) {
-                break
             }
         }
+
         for ((sample,p_instrument) in sample_pairs) {
-            val new_handle = this.sample_handle_generator.get(
+
+            val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
-                preset.global_zone,
-                preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> sample_counts[1]
-                    2 -> sample_counts[0]
-                    4 -> sample_counts[2]
-                    else -> continue
-                }
+                preset.global_zone
             )
-            new_handle.volume = velocity.toFloat()  / 128.toFloat()
+
+            //new_handle.volume_profile = velocity.toFloat()  * .6F / 128.toFloat()
             output.add(new_handle)
+            if (new_linked_handle != null) {
+                output.add(new_linked_handle)
+            }
+
+            if (this.sample_limit != null && output.size >= this.sample_limit!!) {
+                break
+            }
         }
 
         return output
@@ -164,47 +171,51 @@ class SampleHandleManager(
             ).toList()
 
             for (sample in samples) {
+                if (sample.sample == null) {
+                    continue
+                }
                 sample_pairs.add(Pair(sample, p_instrument))
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> {
+                when (sample.sample!!.sampleType) {
+                    SampleType.Mono,
+                    SampleType.RomMono -> {
                         sample_counts[1] += 1
                         sample_counts[0] += 1
                         sample_counts[2] += 1
                     }
-
-                    2 -> {
+                    SampleType.Right,
+                    SampleType.RomRight -> {
                         sample_counts[2] += 1
                         sample_counts[1] += 1
                     }
-
-                    4 -> {
+                    SampleType.Left,
+                    SampleType.RomLeft -> {
                         sample_counts[0] += 1
                         sample_counts[1] += 1
                     }
+                    SampleType.Linked -> TODO()
+                    SampleType.RomLinked -> TODO()
                 }
                 sample_count += 1
-                if (this.sample_limit != null && this.sample_limit!! <= sample_count) {
-                    break
-                }
             }
         }
+
         for ((sample, p_instrument) in sample_pairs) {
-            val new_handle = this.sample_handle_generator.get(
+            val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
                 p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
-                preset.global_zone,
-                preset.modulators.union(p_instrument.instrument?.modulators ?: setOf()),
-                when (sample.sample!!.sampleType and 7) {
-                    1 -> sample_counts[1]
-                    2 -> sample_counts[0]
-                    4 -> sample_counts[2]
-                    else -> continue
-                }
+                preset.global_zone
             )
-            new_handle.volume = (event.get_velocity().toFloat() / 128F)
+            //new_handle.volume_profile = (event.get_velocity().toFloat() * .6F / 128F)
             output.add(new_handle)
+            if (new_linked_handle != null) {
+                output.add(new_linked_handle)
+            }
+
+            if (this.sample_limit != null && output.size >= this.sample_limit!!) {
+                break
+            }
         }
 
         return output

@@ -1,0 +1,5 @@
+- Fixed Crash when removing sometimes
+- fixed noisy notifications when exporting multiple times
+- Improved Automatic Mixing
+- Improved cursor behaviour on 'undo'
+

@@ -24,9 +24,9 @@ abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int
             this.primary = null
         }
 
+
         this.init_properties()
         this.setup_interactions()
-        this.refresh()
     }
 
     abstract fun init_properties()
@@ -34,10 +34,10 @@ abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int
     abstract fun refresh()
 
 
-    fun get_main(): MainActivity {
+    fun get_activity(): MainActivity {
         return this.context as MainActivity
     }
     fun get_opus_manager(): OpusLayerInterface {
-        return this.get_main().get_opus_manager()
+        return this.get_activity().get_opus_manager()
     }
 }

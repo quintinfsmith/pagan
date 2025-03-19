@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 
@@ -28,7 +29,7 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
         wrapper.removeAllViews()
 
         val pair = this.tuning_map[position]
-        val number_label_view = PaganTextView(use_context)
+        val number_label_view = TextView(use_context)
         number_label_view.text = use_context.getString(R.string.label_tuning_index, position)
 
         val numerator_view = RangedIntegerInput(use_context)
@@ -37,7 +38,7 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
         numerator_view.confirm_required = false
         numerator_view.minEms = 2
 
-        val slash_view = PaganTextView(use_context)
+        val slash_view = TextView(use_context)
         slash_view.text = "/"
 
         val denominator_view = RangedIntegerInput(use_context)

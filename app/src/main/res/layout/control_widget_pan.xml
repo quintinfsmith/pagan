@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:andorid="http://schemas.android.com/tools"
+    android:theme="@style/pan_widget"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.qfs.pagan.PanSliderWidget
+        android:id="@+id/pan_slider"
+        android:layout_width="0dp"
+        andorid:layout_weight="1"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/pan_transition_type"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/pan_transition_type"
+        style="@style/icon_button"
+        android:layout_width="@dimen/secondary_contextmenu_button_height"
+        android:layout_height="@dimen/secondary_contextmenu_button_height"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

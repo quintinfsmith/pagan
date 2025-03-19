@@ -2,83 +2,91 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.view.ContextThemeWrapper
-import android.view.Gravity.CENTER
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.LinearLayout
+import android.view.View
+import android.widget.ImageView
 import android.widget.SeekBar
-import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ControlWidgetVolume(default: OpusVolumeEvent, context: Context, callback: (OpusControlEvent) -> Unit): ControlWidget(context, callback) {
-    private val _slider = PaganSeekBar(context)
-    private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
-    private val _min = 0
-    private val _max = 127
+class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, R.layout.control_widget_volume, callback) {
+    private lateinit var _slider: SeekBar
+    private lateinit var _button: ButtonLabelledIcon
+    private lateinit var _transition_button: ImageView
+    val min = 0
+    val max = 100
     private var _lockout_ui: Boolean = false
 
-    init {
-        this.orientation = HORIZONTAL
+    override fun on_inflated() {
+        this._slider = this.inner.findViewById(R.id.volume_slider)
+        this._button = this.inner.findViewById(R.id.volume_button)
+        this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
 
-        this._button.set_text(default.value.toString())
-        this._button.set_icon(R.drawable.volume)
+        this.set_text((this.working_event.value * 100).toInt())
+        this._button.set_icon(R.drawable.volume_widget)
         this._button.label.minEms = 2
 
-        this._slider.max = this._max
-        this._slider.min = this._min
-        this._slider.progress = default.value
+        if (this.is_initial_event) {
+            this._transition_button.visibility = View.GONE
+        } else {
+            this._transition_button.setImageResource(
+                when (this.working_event.transition) {
+                    ControlTransition.Instant -> R.drawable.immediate
+                    ControlTransition.Linear -> R.drawable.linear
+                }
+            )
 
-        this._button.setOnClickListener {
-            var context = this.context
-            while (context !is MainActivity) {
-                context = (context as ContextThemeWrapper).baseContext
-            }
-
-            val dlg_default = this.get_event().value
-            val dlg_title = context.getString(R.string.dlg_set_volume)
-            context.dialog_number_input(dlg_title, this._min, this._max, dlg_default) { new_value: Int ->
-                val new_event = OpusVolumeEvent(new_value)
-                this.set_event(new_event)
-                this.callback(new_event)
+            this._transition_button.setOnClickListener {
+                val main = (this.context as MainActivity)
+                main.get_action_interface().set_ctl_transition()
             }
         }
 
-        this._slider.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+        this._slider.max = this.max
+        this._slider.min = this.min
+        this._slider.progress = (this.working_event.value * this.max.toFloat()).toInt()
+
+        var context = this.context
+        while (context !is MainActivity) {
+            context = (context as ContextThemeWrapper).baseContext
+        }
+        this._button.setOnClickListener {
+            (context as MainActivity).get_action_interface().set_volume()
+        }
+
+        this._slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                if (this@ControlWidgetVolume._lockout_ui) {
+                val that = this@ControlWidgetVolume
+                if (that._lockout_ui) {
                     return
                 }
-                this@ControlWidgetVolume._lockout_ui = true
-                this@ControlWidgetVolume._button.set_text(p1.toString())
-                this@ControlWidgetVolume._lockout_ui = false
+                that._lockout_ui = true
+                that.set_text(p1)
+                that._lockout_ui = false
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                this@ControlWidgetVolume.callback(OpusVolumeEvent(seekbar.progress))
+                context.get_action_interface().set_volume(seekbar.progress)
             }
         })
-
-
-        this.addView(this._button)
-        this.addView(this._slider)
-
-        this._button.layoutParams.width = WRAP_CONTENT
-        this._button.layoutParams.height = WRAP_CONTENT
-
-        this._slider.layoutParams.width = 0
-        this._slider.layoutParams.height = MATCH_PARENT
-        (this._slider.layoutParams as LinearLayout.LayoutParams).weight = 1f
-        (this._slider.layoutParams as LinearLayout.LayoutParams).gravity = CENTER
     }
 
-    override fun get_event(): OpusVolumeEvent {
-        return OpusVolumeEvent(this._slider.progress)
+    init {
+        this.orientation = HORIZONTAL
     }
 
-    override fun set_event(event: OpusControlEvent) {
-        val value = (event as OpusVolumeEvent).value
-        this._slider.progress = value
-        this._button.set_text(value.toString())
+    fun set_text(value: Int) {
+        this._button.set_text("%03d%%".format(value))
     }
+
+    override fun on_set(event: OpusVolumeEvent) {
+        this._slider.progress = (event.value * this.max.toFloat()).toInt()
+        val value = (event.value * 100).toInt()
+        this.set_text(value)
+        this._transition_button.setImageResource(when (event.transition) {
+            ControlTransition.Instant -> R.drawable.immediate
+            ControlTransition.Linear -> R.drawable.linear
+        })
+    }
+
 }

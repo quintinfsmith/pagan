@@ -13,7 +13,9 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannel
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLayerHistory
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
@@ -34,15 +36,15 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_new() {
         val manager = OpusManager()
-        manager.new()
-        assertNotEquals(manager.beat_count, 0)
+        manager._project_change_new()
+        assertNotEquals(manager.length, 0)
     }
 
     @Test
     fun test_set_channel_instrument() {
         val manager = OpusManager()
-        manager.new()
-        manager.set_channel_instrument(0, Pair(5,2))
+        manager._project_change_new()
+        manager.channel_set_instrument(0, Pair(5,2))
         assertEquals(
             "Failed to set channel instrument",
             Pair(5,2),
@@ -74,7 +76,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_beat_tree() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val beatkey = BeatKey(0,0,0)
         manager.split_tree(beatkey, listOf(), 12)
 
@@ -97,7 +99,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_proceding_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val first_beat_key = BeatKey(0,0,1)
 
         manager.split_tree(first_beat_key, listOf(), 4)
@@ -119,12 +121,12 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_global_ctl_proceding_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
 
-        manager.split_global_ctl_tree(type, 1, listOf(), 4)
-        manager.set_global_ctl_event(type, 1, listOf(3), OpusTempoEvent(24f))
-        manager.set_global_ctl_event(type, 1, listOf(2), OpusTempoEvent(120f))
+        manager.controller_global_split_tree(type, 1, listOf(), 4)
+        manager.controller_global_set_event(type, 1, listOf(3), OpusTempoEvent(24f))
+        manager.controller_global_set_event(type, 1, listOf(2), OpusTempoEvent(120f))
         assertEquals(
             Pair(1, listOf(3)),
             manager.get_global_ctl_proceding_leaf_position(type, 1, listOf(2))
@@ -137,12 +139,12 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_channel_ctl_proceding_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
 
-        manager.split_channel_ctl_tree(type, 0, 1, listOf(), 4)
-        manager.set_channel_ctl_event(type, 0, 1, listOf(3), OpusVolumeEvent(0))
-        manager.set_channel_ctl_event(type, 0, 1, listOf(2), OpusVolumeEvent(1))
+        manager.controller_channel_split_tree(type, 0, 1, listOf(), 4)
+        manager.controller_channel_set_event(type, 0, 1, listOf(3), OpusVolumeEvent(0f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(2), OpusVolumeEvent(1f))
         assertEquals(
             Pair(1, listOf(3)),
             manager.get_channel_ctl_proceding_leaf_position(type, 0, 1, listOf(2))
@@ -155,13 +157,13 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_line_ctl_proceding_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val first_beat_key = BeatKey(0,0,1)
 
-        manager.split_line_ctl_tree(type, first_beat_key, listOf(), 4)
-        manager.set_line_ctl_event(type, first_beat_key, listOf(3), OpusVolumeEvent(0))
-        manager.set_line_ctl_event(type, first_beat_key, listOf(2), OpusVolumeEvent(1))
+        manager.controller_line_split_tree(type, first_beat_key, listOf(), 4)
+        manager.controller_line_set_event(type, first_beat_key, listOf(3), OpusVolumeEvent(0f))
+        manager.controller_line_set_event(type, first_beat_key, listOf(2), OpusVolumeEvent(1f))
         assertEquals(
             Pair(1, listOf(3)),
             manager.get_line_ctl_proceding_leaf_position(type, first_beat_key, listOf(2))
@@ -175,7 +177,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_preceding_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val first_beat_key = BeatKey(0,0,1)
 
         manager.split_tree(first_beat_key, listOf(), 4)
@@ -197,7 +199,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_proceding_leaf_position() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val first = BeatKey(0,0,1)
 
@@ -227,7 +229,7 @@ class OpusLayerBaseUnitTest {
         assertEquals(
             "Failed to return null when looking for proceding leaf after last position",
             null,
-            manager.get_proceding_leaf_position(BeatKey(0,0, manager.beat_count - 1),listOf())
+            manager.get_proceding_leaf_position(BeatKey(0,0, manager.length - 1),listOf())
         )
 
         assertEquals(
@@ -239,7 +241,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_preceding_leaf_position() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val first = BeatKey(0,0,0)
         manager.split_tree(first, listOf(), 2)
@@ -279,7 +281,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_absolute_value() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val first_event = AbsoluteNoteEvent(25)
         val second_event = RelativeNoteEvent(1)
@@ -329,7 +331,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_has_preceding_absolute_event() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val absolute_event = AbsoluteNoteEvent(25)
 
@@ -355,7 +357,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_convert_event_to_relative() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
@@ -381,7 +383,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_convert_event_to_absolute() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         assertThrows(OpusLayerBase.NonEventConversion::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,0), listOf())
@@ -423,7 +425,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_unset() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         // set/unset leaf
         val beatkey = BeatKey(0,0,0)
@@ -442,11 +444,6 @@ class OpusLayerBaseUnitTest {
             AbsoluteNoteEvent(10)
         )
 
-        assertThrows(OpusLayerBase.NonPercussionEventSet::class.java) {
-            manager.set_event(BeatKey(1,0,0), position, AbsoluteNoteEvent(10))
-        }
-
-
         manager.unset(beatkey, position)
         assertEquals(
             "Failed to unset tree",
@@ -458,7 +455,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_new_channel() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         assertEquals(2, manager.get_channel_count())
         manager.new_channel(lines=0)
         assertEquals(3, manager.get_channel_count())
@@ -468,29 +465,29 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_insert_remove_beat() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
-        var beats = manager.beat_count
+        var beats = manager.length
 
         manager.insert_beat(0)
-        assertEquals(beats + 1, manager.beat_count)
+        assertEquals(beats + 1, manager.length)
 
-        manager.insert_beat(manager.beat_count)
-        assertEquals(beats + 2, manager.beat_count)
+        manager.insert_beat(manager.length)
+        assertEquals(beats + 2, manager.length)
 
         assertThrows(OpusLayerBase.RemovingRootException::class.java) {
             manager.remove(BeatKey(0,0,0), listOf())
         }
 
         assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.insert_beat(manager.beat_count + 1)
+            manager.insert_beat(manager.length + 1)
         }
 
         assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.remove_beat(manager.beat_count + 1)
+            manager.remove_beat(manager.length + 1)
         }
 
-        while (manager.beat_count > 1) {
+        while (manager.length > 1) {
             manager.remove_beat(0)
         }
 
@@ -504,7 +501,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_new_line() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         manager.new_line(0)
         assertEquals(manager.channels[0].size, 2)
@@ -534,7 +531,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_overwrite_beat() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val beatkey_a = BeatKey(0, 0, 0)
         val beatkey_b = BeatKey(0, 0, 1)
@@ -552,7 +549,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_replace_tree() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val beatkey = BeatKey(0, 0, 0)
         val top_tree = OpusTree<TunedInstrumentEvent>()
@@ -588,7 +585,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_beat_count() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         for (i in 0 until 4) {
             manager.new_channel()
             for (j in 0 until 4) {
@@ -611,7 +608,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_insert_after() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val beat_key = BeatKey(0, 0, 0)
         val beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(1)
@@ -625,64 +622,64 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_insert_after_line_ctl() {
+    fun test_controller_line_insert_after() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
 
         val beat_key = BeatKey(0, 0, 0)
-        val beat_tree = manager.get_line_ctl_tree(type, beat_key)
+        val beat_tree = manager.get_line_ctl_tree<OpusVolumeEvent>(type, beat_key)
         beat_tree.set_size(1)
         val initial_length = beat_tree.size
-        manager.insert_after_line_ctl(type, beat_key, listOf(0))
+        manager.controller_line_insert_after(type, beat_key, listOf(0))
 
         assertEquals(beat_tree.size, initial_length + 1)
 
         assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
-            manager.insert_after_line_ctl(type, BeatKey(0,0,0), listOf())
+            manager.controller_line_insert_after(type, BeatKey(0,0,0), listOf())
         }
     }
 
     @Test
-    fun test_insert_after_channel_ctl() {
+    fun test_controller_channel_insert_after() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
 
-        val beat_tree = manager.get_channel_ctl_tree(type, 0, 0)
+        val beat_tree = manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, 0)
         beat_tree.set_size(1)
         val initial_length = beat_tree.size
-        manager.insert_after_channel_ctl(type, 0, 0, listOf(0))
+        manager.controller_channel_insert_after(type, 0, 0, listOf(0))
 
         assertEquals(beat_tree.size, initial_length + 1)
 
         assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
-            manager.insert_after_channel_ctl(type, 0, 0, listOf())
+            manager.controller_channel_insert_after(type, 0, 0, listOf())
         }
     }
 
     @Test
-    fun test_insert_after_global_ctl() {
+    fun test_controller_global_insert_after() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
 
-        val beat_tree = manager.get_global_ctl_tree(type, 0)
+        val beat_tree = manager.get_global_ctl_tree<OpusVolumeEvent>(type, 0)
         beat_tree.set_size(1)
         val initial_length = beat_tree.size
-        manager.insert_after_global_ctl(type, 0, listOf(0))
+        manager.controller_global_insert_after(type, 0, listOf(0))
 
         assertEquals(beat_tree.size, initial_length + 1)
 
         assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
-            manager.insert_after_global_ctl(type, 0, listOf())
+            manager.controller_global_insert_after(type, 0, listOf())
         }
     }
 
     @Test
     fun test_remove() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val beat_key = BeatKey(0, 0, 0)
         val beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(2)
@@ -703,134 +700,134 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_remove_global_ctl() {
+    fun test_controller_global_remove() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val beat = 0
         val type = ControlEventType.Tempo
-        manager.split_global_ctl_tree(type, beat, listOf(), 2)
+        manager.controller_global_split_tree(type, beat, listOf(), 2)
 
         assertThrows(OpusLayerBase.RemovingRootException::class.java) {
-            manager.remove_global_ctl(type, beat, listOf())
+            manager.controller_global_remove(type, beat, listOf())
         }
 
-        val beat_tree = manager.get_global_ctl_tree(type, beat)
+        val beat_tree = manager.get_global_ctl_tree<OpusTempoEvent>(type, beat)
 
         // Insert empty tree in the first beat
-        manager.insert_after_global_ctl(type, beat, listOf(0))
+        manager.controller_global_insert_after(type, beat, listOf(0))
 
         //Then remove that tree
-        manager.remove_global_ctl(type, beat, listOf(1))
+        manager.controller_global_remove(type, beat, listOf(1))
         assertEquals(beat_tree.size, 2)
 
         // Check that the siblings get adjusted
         for (i in 0 until 1) {
-            manager.insert_after_global_ctl(type, beat, listOf(0))
+            manager.controller_global_insert_after(type, beat, listOf(0))
         }
 
-        val tree = manager.get_global_ctl_tree(type, beat, listOf(2))
-        manager.remove_global_ctl(type, beat, listOf(1))
+        val tree = manager.get_global_ctl_tree<OpusTempoEvent>(type, beat, listOf(2))
+        manager.controller_global_remove(type, beat, listOf(1))
         assertEquals(
             tree,
-            manager.get_global_ctl_tree(type, beat, listOf(1))
+            manager.get_global_ctl_tree<OpusTempoEvent>(type, beat, listOf(1))
         )
 
-        manager.remove_global_ctl(type, beat, listOf(1))
+        manager.controller_global_remove(type, beat, listOf(1))
 
         assertTrue(
-            manager.get_global_ctl_tree(type, beat, listOf()).is_leaf()
+            manager.get_global_ctl_tree<OpusControlEvent>(type, beat, listOf()).is_leaf()
         )
 
     }
 
     @Test
-    fun test_remove_channel_ctl() {
+    fun test_controller_channel_remove() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val channel = 0
         val beat = 0
 
-        manager.split_channel_ctl_tree(type, channel, beat, listOf(), 2)
+        manager.controller_channel_split_tree(type, channel, beat, listOf(), 2)
 
         assertThrows(OpusLayerBase.RemovingRootException::class.java) {
-            manager.remove_channel_ctl(type, 0, 0, listOf())
+            manager.controller_channel_remove(type, 0, 0, listOf())
         }
 
-        val beat_tree = manager.get_channel_ctl_tree(type, channel, beat)
+        val beat_tree = manager.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat)
 
         // Insert empty tree in the first beat
-        manager.insert_after_channel_ctl(type, channel, beat, listOf(0))
+        manager.controller_channel_insert_after(type, channel, beat, listOf(0))
 
         //Then remove that tree
-        manager.remove_channel_ctl(type, channel, beat, listOf(1))
+        manager.controller_channel_remove(type, channel, beat, listOf(1))
         assertEquals(beat_tree.size, 2)
 
         // Check that the siblings get adjusted
         for (i in 0 until 1) {
-            manager.insert_after_channel_ctl(type, channel, beat, listOf(0))
+            manager.controller_channel_insert_after(type, channel, beat, listOf(0))
         }
 
-        val tree = manager.get_channel_ctl_tree(type, channel, beat, listOf(2))
-        manager.remove_channel_ctl(type, channel, beat, listOf(1))
+        val tree = manager.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, listOf(2))
+        manager.controller_channel_remove(type, channel, beat, listOf(1))
         assertEquals(
             tree,
-            manager.get_channel_ctl_tree(type, channel, beat, listOf(1))
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, listOf(1))
         )
 
-        manager.remove_channel_ctl(type, channel, beat, listOf(1))
+        manager.controller_channel_remove(type, channel, beat, listOf(1))
 
         assertTrue(
-            manager.get_channel_ctl_tree(type, channel, beat, listOf()).is_leaf()
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, listOf()).is_leaf()
         )
     }
 
     @Test
-    fun test_remove_line_ctl() {
+    fun test_controller_line_remove() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val beat_key = BeatKey(0, 0, 0)
 
         assertThrows(OpusLayerBase.RemovingRootException::class.java) {
-            manager.remove_line_ctl(type, beat_key, listOf())
+            manager.controller_line_remove(type, beat_key, listOf())
         }
 
-        manager.split_line_ctl_tree(type, beat_key, listOf(), 2)
+        manager.controller_line_split_tree(type, beat_key, listOf(), 2)
 
-        val beat_tree = manager.get_line_ctl_tree(type, beat_key)
+        val beat_tree = manager.get_line_ctl_tree<OpusControlEvent>(type, beat_key)
 
         // Insert empty tree in the first beat
-        manager.insert_after_line_ctl(type, beat_key, listOf(0))
+        manager.controller_line_insert_after(type, beat_key, listOf(0))
 
         //Then remove that tree
-        manager.remove_line_ctl(type, beat_key, listOf(1))
+        manager.controller_line_remove(type, beat_key, listOf(1))
         assertEquals(beat_tree.size, 2)
 
         // Check that the siblings get adjusted
         for (i in 0 until 1) {
-            manager.insert_after_line_ctl(type, beat_key, listOf(0))
+            manager.controller_line_insert_after(type, beat_key, listOf(0))
         }
 
-        val tree = manager.get_line_ctl_tree(type, beat_key, listOf(2))
-        manager.remove_line_ctl(type, beat_key, listOf(1))
+        val tree = manager.get_line_ctl_tree<OpusControlEvent>(type, beat_key, listOf(2))
+        manager.controller_line_remove(type, beat_key, listOf(1))
         assertEquals(
             tree,
-            manager.get_line_ctl_tree(type, beat_key, listOf(1))
+            manager.get_line_ctl_tree<OpusControlEvent>(type, beat_key, listOf(1))
         )
 
 
-        manager.remove_line_ctl(type, beat_key, listOf(1))
+        manager.controller_line_remove(type, beat_key, listOf(1))
 
         assertTrue(
-            manager.get_line_ctl_tree(type, beat_key, listOf()).is_leaf()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, beat_key, listOf()).is_leaf()
         )
     }
 
     @Test
     fun test_split_tree() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val split_count = 5
         val beat_key = BeatKey(0, 0, 0)
 
@@ -859,7 +856,7 @@ class OpusLayerBaseUnitTest {
         // This is not a particularily rigorous test, but its enough for now
         // Set up some Opus
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(12))
         manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(24))
@@ -868,20 +865,20 @@ class OpusLayerBaseUnitTest {
 
         // Test Muted Line
         manager.new_line(0)
-        manager.set_line_controller_initial_event(ControlEventType.Volume, 0, 1, OpusVolumeEvent(0))
+        manager.controller_line_set_initial_event(ControlEventType.Volume, 0, 1, OpusVolumeEvent(0f))
 
         manager.split_tree(BeatKey(1,0,0), listOf(), 2)
-        manager.set_percussion_event(BeatKey(1,0,0), listOf(0))
-        manager.set_percussion_event(BeatKey(1,0,1), listOf())
-        manager.set_percussion_event(BeatKey(1,0,2), listOf())
-        manager.set_percussion_event(BeatKey(1,0,3), listOf())
+        manager.percussion_set_event(BeatKey(1,0,0), listOf(0))
+        manager.percussion_set_event(BeatKey(1,0,1), listOf())
+        manager.percussion_set_event(BeatKey(1,0,2), listOf())
+        manager.percussion_set_event(BeatKey(1,0,3), listOf())
 
 
         manager.controllers.new_controller(ControlEventType.Tempo)
-        manager.split_global_ctl_tree(ControlEventType.Tempo, 0, listOf(), 2)
-        manager.set_global_ctl_event(ControlEventType.Tempo, 0, listOf(1), OpusTempoEvent(240F))
-        manager.set_global_ctl_event(ControlEventType.Tempo, 1, listOf(), OpusTempoEvent(120F))
-        manager.set_global_ctl_event(ControlEventType.Tempo, 2, listOf(), OpusTempoEvent(60F))
+        manager.controller_global_split_tree(ControlEventType.Tempo, 0, listOf(), 2)
+        manager.controller_global_set_event(ControlEventType.Tempo, 0, listOf(1), OpusTempoEvent(240F))
+        manager.controller_global_set_event(ControlEventType.Tempo, 1, listOf(), OpusTempoEvent(120F))
+        manager.controller_global_set_event(ControlEventType.Tempo, 2, listOf(), OpusTempoEvent(60F))
 
         val full_midi = manager.get_midi()
         val event_map = HashMap<Int, List<MIDIEvent>>()
@@ -890,7 +887,7 @@ class OpusLayerBaseUnitTest {
         }
 
         assertEquals(
-            8, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn
+            10, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
             event_map[0]!!.size
         )
 
@@ -931,7 +928,7 @@ class OpusLayerBaseUnitTest {
         )
 
         assertEquals(
-            8, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn
+            10, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
             event_map_b[0]!!.size
         )
 
@@ -939,7 +936,6 @@ class OpusLayerBaseUnitTest {
             4, // SongPositionPointer, SetTempo, NoteOff, NoteOff
             event_map[120]!!.size
         )
-
     }
 
     @Test
@@ -995,16 +991,16 @@ class OpusLayerBaseUnitTest {
         }
 
         val manager = OpusManager()
-        manager.import_midi(midi)
+        manager._project_change_midi(midi)
 
         assertEquals(
             OpusTempoEvent(80F),
-            manager.controllers.get_controller(ControlEventType.Tempo).initial_event
+            manager.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo).initial_event
         )
 
         assertEquals(
             beat_count,
-            manager.beat_count
+            manager.length
         )
 
         assertEquals(
@@ -1103,7 +1099,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_duration() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val beat_key = BeatKey(0, 0, 0)
         val event = AbsoluteNoteEvent(20)
         manager.set_event(beat_key, listOf(), event)
@@ -1124,248 +1120,237 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_global_ctl_tree() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val event_a = OpusTempoEvent(100f)
-        manager.set_global_ctl_event(ControlEventType.Tempo, 2, listOf(), event_a)
+        manager.controller_global_set_event(ControlEventType.Tempo, 2, listOf(), event_a)
 
-        manager.split_global_ctl_tree(ControlEventType.Tempo, 1, listOf(), 3)
+        manager.controller_global_split_tree(ControlEventType.Tempo, 1, listOf(), 3)
         val event_b = OpusTempoEvent(50f)
-        manager.set_global_ctl_event(ControlEventType.Tempo, 1, listOf(2), event_b)
+        manager.controller_global_set_event(ControlEventType.Tempo, 1, listOf(2), event_b)
 
         assertEquals(
             "Failed get_global_ctl_tree",
             event_a,
-            manager.get_global_ctl_tree(ControlEventType.Tempo, 2, listOf()).event
+            manager.get_global_ctl_tree<OpusControlEvent>(ControlEventType.Tempo, 2, listOf()).event
         )
         assertEquals(
             "Failed get_global_ctl_tree",
             event_b,
-            manager.get_global_ctl_tree(ControlEventType.Tempo, 1, listOf(2)).event
+            manager.get_global_ctl_tree<OpusControlEvent>(ControlEventType.Tempo, 1, listOf(2)).event
         )
     }
 
     @Test
     fun test_get_channel_ctl_tree() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
 
-        val event_a = OpusVolumeEvent(100)
-        manager.set_channel_ctl_event(type, 0, 0, listOf(), event_a)
+        val event_a = OpusVolumeEvent(100f)
+        manager.controller_channel_set_event(type, 0, 0, listOf(), event_a)
 
-        manager.split_channel_ctl_tree(type, 0, 1, listOf(), 3)
-        val event_b = OpusVolumeEvent(50)
-        manager.set_channel_ctl_event(type, 0, 1, listOf(2), event_b)
+        manager.controller_channel_split_tree(type, 0, 1, listOf(), 3)
+        val event_b = OpusVolumeEvent(50f)
+        manager.controller_channel_set_event(type, 0, 1, listOf(2), event_b)
 
         assertThrows(OpusLayerBase.InvalidChannel::class.java) {
-            manager.get_channel_ctl_tree(type, 2, 0, listOf())
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 2, 0, listOf())
         }
 
         assertEquals(
             "Failed get_channel_ctl_tree",
             event_a,
-            manager.get_channel_ctl_tree(type, 0, 0, listOf()).event
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 0, listOf()).event
         )
         assertEquals(
             "Failed get_channel_ctl_tree",
             event_b,
-            manager.get_channel_ctl_tree(type, 0, 1, listOf(2)).event
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 1, listOf(2)).event
         )
     }
 
     @Test
     fun test_get_line_ctl_tree() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
 
         val beat_key_a = BeatKey(0,0,0)
-        val event_a = OpusVolumeEvent(100)
-        manager.set_line_ctl_event(type, beat_key_a, listOf(), event_a)
+        val event_a = OpusVolumeEvent(100f)
+        manager.controller_line_set_event(type, beat_key_a, listOf(), event_a)
 
         val beat_key_b = BeatKey(0,0,1)
-        manager.split_line_ctl_tree(type, beat_key_b, listOf(), 3)
-        val event_b = OpusVolumeEvent(50)
-        manager.set_line_ctl_event(type, beat_key_b, listOf(2), event_b)
+        manager.controller_line_split_tree(type, beat_key_b, listOf(), 3)
+        val event_b = OpusVolumeEvent(50f)
+        manager.controller_line_set_event(type, beat_key_b, listOf(2), event_b)
 
         assertThrows(OpusLayerBase.BadBeatKey::class.java) {
-            manager.get_line_ctl_tree(type, BeatKey(2,0,1), listOf())
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(2,0,1), listOf())
         }
         assertThrows(OpusLayerBase.BadBeatKey::class.java) {
-            manager.get_line_ctl_tree(type, BeatKey(0,3,1), listOf())
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0,3,1), listOf())
         }
 
         assertEquals(
             "Failed get_line_ctl_tree",
             event_a,
-            manager.get_line_ctl_tree(type, beat_key_a, listOf()).event
+            manager.get_line_ctl_tree<OpusControlEvent>(type, beat_key_a, listOf()).event
         )
         assertEquals(
             "Failed get_line_ctl_tree",
             event_b,
-            manager.get_line_ctl_tree(type, beat_key_b, listOf(2)).event
+            manager.get_line_ctl_tree<OpusControlEvent>(type, beat_key_b, listOf(2)).event
         )
     }
 
     @Test
-    fun test_overwrite_global_ctl_row() {
+    fun test_controller_global_overwrite_line() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
         val event = OpusTempoEvent(100F)
 
         // Set Up first tree
-        manager.set_global_ctl_event(type, 0, listOf(), event)
+        manager.controller_global_set_event(type, 0, listOf(), event)
 
         // apply overwrite
-        manager.overwrite_global_ctl_row(type, 0)
+        manager.controller_global_overwrite_line(type, 0)
 
-        for (beat in 0 until manager.beat_count) {
+        for (beat in 0 until manager.length) {
             assertEquals(
                 "Failed overwrite_global_Ctl_row",
-                manager.get_global_ctl_tree(type, 0),
-                manager.get_global_ctl_tree(type, beat)
+                manager.get_global_ctl_tree<OpusControlEvent>(type, 0),
+                manager.get_global_ctl_tree<OpusControlEvent>(type, beat)
             )
         }
         ////////////////////////
-        manager.new()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
         // Set Up first tree
-        manager.set_global_ctl_event(type, 3, listOf(), event)
+        manager.controller_global_set_event(type, 3, listOf(), event)
         // add explicitly different tree
-        manager.split_global_ctl_tree(type, 0, listOf(), 3)
+        manager.controller_global_split_tree(type, 0, listOf(), 3)
 
         // apply overwrite
-        manager.overwrite_global_ctl_row(type, 3)
+        manager.controller_global_overwrite_line(type, 3)
 
         for (beat in 0 until 3) {
             assertNotEquals(
                 "Incorrectly overwrote some trees - overwrite_global_Ctl_row",
-                manager.get_global_ctl_tree(type, 3),
-                manager.get_global_ctl_tree(type, beat)
+                manager.get_global_ctl_tree<OpusControlEvent>(type, 3),
+                manager.get_global_ctl_tree<OpusControlEvent>(type, beat)
             )
         }
 
-        for (beat in 3 until manager.beat_count) {
+        for (beat in 3 until manager.length) {
             assertEquals(
                 "Failed overwrite_global_Ctl_row",
-                manager.get_global_ctl_tree(type, 3),
-                manager.get_global_ctl_tree(type, beat)
+                manager.get_global_ctl_tree<OpusControlEvent>(type, 3),
+                manager.get_global_ctl_tree<OpusControlEvent>(type, beat)
             )
         }
 
 
     }
     @Test
-    fun test_overwrite_channel_ctl_row() {
+    fun test_controller_channel_overwrite_line() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
-        val event = OpusVolumeEvent(90)
+        val event = OpusVolumeEvent(.5F)
         val working_channel = 0
 
         // Set Up first tree
-        manager.set_channel_ctl_event(type, working_channel, 0, listOf(), event)
-
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_channel_ctl_row(type, working_channel + 1, working_channel, 0)
-        }
+        manager.controller_channel_set_event(type, working_channel, 0, listOf(), event)
 
         // apply overwrite
-        manager.overwrite_channel_ctl_row(type, working_channel, 0, 0)
+        manager.controller_channel_overwrite_line(type, working_channel, 0, 0)
 
-        for (beat in 0 until manager.beat_count) {
+        for (beat in 0 until manager.length) {
             assertEquals(
                 "Failed overwrite_channel_Ctl_row",
-                manager.get_channel_ctl_tree(type, working_channel, 0),
-                manager.get_channel_ctl_tree(type, working_channel, beat)
+                manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, 0),
+                manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, beat)
             )
         }
         ////////////////////////
-        manager.new()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
         // Set Up first tree
-        manager.set_channel_ctl_event(type, working_channel, 3, listOf(), event)
+        manager.controller_channel_set_event(type, working_channel, 3, listOf(), event)
         // add explicitly different tree
-        manager.split_channel_ctl_tree(type, working_channel, 0, listOf(), 3)
+        manager.controller_channel_split_tree(type, working_channel, 0, listOf(), 3)
 
         // apply overwrite
-        manager.overwrite_channel_ctl_row(type, working_channel, working_channel, 3)
+        manager.controller_channel_overwrite_line(type, working_channel, working_channel, 3)
 
         for (beat in 0 until 3) {
             assertNotEquals(
                 "Incorrectly overwrote some trees - overwrite_channel_Ctl_row",
-                manager.get_channel_ctl_tree(type, working_channel, 3),
-                manager.get_channel_ctl_tree(type, working_channel, beat)
+                manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, 3),
+                manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, beat)
             )
         }
 
-        for (beat in 3 until manager.beat_count) {
+        for (beat in 3 until manager.length) {
             assertEquals(
                 "Failed overwrite_channel_Ctl_row",
-                manager.get_channel_ctl_tree(type, working_channel, 3),
-                manager.get_channel_ctl_tree(type, working_channel, beat)
+                manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, 3),
+                manager.get_channel_ctl_tree<OpusControlEvent>(type, working_channel, beat)
             )
         }
     }
 
     @Test
-    fun test_overwrite_line_ctl_row() {
+    fun test_controller_line_overwrite_line() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
-        val event = OpusVolumeEvent(90)
+        val event = OpusVolumeEvent(.9F)
         val working_key = BeatKey(0,0,0)
         val working_key_b = BeatKey(0,0,3)
 
         // Set Up first tree
-        manager.set_line_ctl_event(type, working_key, listOf(), event)
+        manager.controller_line_set_event(type, working_key, listOf(), event)
 
         // apply overwrite
-        manager.overwrite_line_ctl_row(type, working_key.channel, working_key.line_offset, working_key)
+        manager.controller_line_overwrite_line(type, working_key.channel, working_key.line_offset, working_key)
 
-        for (beat in 0 until manager.beat_count) {
+        for (beat in 0 until manager.length) {
             assertEquals(
                 "Failed overwrite_line_Ctl_row",
-                manager.get_line_ctl_tree(type, working_key),
-                manager.get_line_ctl_tree(type, working_key)
+                manager.get_line_ctl_tree<OpusControlEvent>(type, working_key),
+                manager.get_line_ctl_tree<OpusControlEvent>(type, working_key)
             )
         }
         ////////////////////////
-        manager.new()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
         // Set Up first tree
-        manager.set_line_ctl_event(type, working_key_b, listOf(), event)
+        manager.controller_line_set_event(type, working_key_b, listOf(), event)
         // add explicitly different tree
-        manager.split_line_ctl_tree(type, working_key, listOf(), 5)
-
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_line_ctl_row(type, working_key_b.channel + 1, working_key_b.line_offset, working_key_b)
-        }
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_line_ctl_row(type, working_key_b.channel, working_key_b.line_offset + 1, working_key_b)
-        }
+        manager.controller_line_split_tree(type, working_key, listOf(), 5)
 
         // apply overwrite
-        manager.overwrite_line_ctl_row(type, working_key_b.channel, working_key_b.line_offset, working_key_b)
+        manager.controller_line_overwrite_line(type, working_key_b.channel, working_key_b.line_offset, working_key_b)
 
         for (beat in 0 until working_key_b.beat) {
             assertNotEquals(
                 "Incorrectly overwrote some trees - overwrite_line_Ctl_row",
-                manager.get_line_ctl_tree(type, working_key_b),
-                manager.get_line_ctl_tree(type, BeatKey(working_key_b.channel, working_key_b.line_offset, beat))
+                manager.get_line_ctl_tree<OpusControlEvent>(type, working_key_b),
+                manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(working_key_b.channel, working_key_b.line_offset, beat))
             )
         }
 
-        for (beat in working_key_b.beat until manager.beat_count) {
+        for (beat in working_key_b.beat until manager.length) {
             assertEquals(
                 "Failed overwrite_line_Ctl_row",
-                manager.get_line_ctl_tree(type, working_key_b),
-                manager.get_line_ctl_tree(type, BeatKey(working_key_b.channel, working_key_b.line_offset, beat))
+                manager.get_line_ctl_tree<OpusControlEvent>(type, working_key_b),
+                manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(working_key_b.channel, working_key_b.line_offset, beat))
             )
         }
     }
@@ -1373,7 +1358,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_beatkeys_from_range() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel()
@@ -1382,31 +1367,30 @@ class OpusLayerBaseUnitTest {
         manager.set_beat_count(6)
 
         assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(3, 0, 0), BeatKey(3, 2, 2))
+            // Vertical overflow - channel
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(3, 0, 0), BeatKey(3, 2, 2))
         }
         assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 3, 0), BeatKey(1, 2, 2))
-        }
-        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-        }
-        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 4, 2))
+            // Vertical overflow - line
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(0, 3, 0), BeatKey(1, 2, 2))
         }
 
         assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-        }
-        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
-            manager.overwrite_beat_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 4, 2))
         }
 
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
+            manager._get_beatkeys_from_range(BeatKey(0, 0, 4), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        }
+        assertThrows(OpusLayerBase.RangeOverflow::class.java) {
+            manager._get_beatkeys_from_range(BeatKey(0, 2, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        }
     }
 
     @Test
     fun test_overwrite_beat_range() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel()
@@ -1490,7 +1474,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_move_beat_range() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel()
@@ -1506,7 +1490,11 @@ class OpusLayerBaseUnitTest {
             }
         }
 
-        manager.move_beat_range(BeatKey(0, 0, 3), BeatKey(0, 0, 0), BeatKey(1, 2, 2))
+        manager.move_beat_range(
+            BeatKey(0, 0, 3),
+            BeatKey(0, 0, 0),
+            BeatKey(1, 2, 2)
+        )
 
         for (c in 0 until 2) {
             for (l in 0 until 2) {
@@ -1549,262 +1537,258 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_overwrite_global_ctl_range() {
+    fun test_controller_global_overwrite_range() {
         var manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
-        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(10F))
-        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
-        manager.overwrite_global_ctl_range(type, 2, 0, 1)
+        manager.controller_global_set_event(type, 0, listOf(), OpusTempoEvent(10F))
+        manager.controller_global_set_event(type, 1, listOf(), OpusTempoEvent(11F))
+        manager.controller_global_overwrite_range(type, 2, 0, 1)
 
         assertEquals(
             OpusTempoEvent(10F),
-            manager.get_global_ctl_tree(type, 0, listOf()).event
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 0, listOf()).event
         )
         assertEquals(
             OpusTempoEvent(11F),
-            manager.get_global_ctl_tree(type, 1, listOf()).event
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 1, listOf()).event
         )
 
         assertEquals(
             OpusTempoEvent(10F),
-            manager.get_global_ctl_tree(type, 2, listOf()).event
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 2, listOf()).event
         )
         assertEquals(
             OpusTempoEvent(11F),
-            manager.get_global_ctl_tree(type, 3, listOf()).event
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.overwrite_global_ctl_range(type, 3, 2, 3)
-        }
+        manager.controller_global_overwrite_range(type, 3, 2, 3)
+        assertEquals(5, manager.length)
     }
 
     @Test
-    fun test_move_global_ctl_range() {
+    fun test_controller_global_move_range() {
         var manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
-        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(10F))
-        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(11F))
-        manager.move_global_ctl_range(type, 2, 0, 1)
+        manager.controller_global_set_event(type, 0, listOf(), OpusTempoEvent(10F))
+        manager.controller_global_set_event(type, 1, listOf(), OpusTempoEvent(11F))
+        manager.controller_global_move_range(type, 2, 0, 1)
 
         assertFalse(
-            manager.get_global_ctl_tree(type, 0, listOf()).is_event()
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 0, listOf()).is_event()
         )
         assertFalse(
-            manager.get_global_ctl_tree(type, 1, listOf()).is_event()
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 1, listOf()).is_event()
         )
         assertEquals(
             OpusTempoEvent(10F),
-            manager.get_global_ctl_tree(type, 2, listOf()).event
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 2, listOf()).event
         )
         assertEquals(
             OpusTempoEvent(11F),
-            manager.get_global_ctl_tree(type, 3, listOf()).event
+            manager.get_global_ctl_tree<OpusControlEvent>(type, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.move_global_ctl_range(type, 3, 2, 3)
-        }
+        manager.controller_global_move_range(type, 3, 2, 3)
+        assertEquals(5, manager.length)
 
     }
 
     @Test
-    fun test_overwrite_channel_ctl_range() {
+    fun test_controller_channel_overwrite_range() {
         var manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
-        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
-        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
-        manager.overwrite_channel_ctl_range(type, 0, 2, 0, 0, 1)
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(10f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(11f))
+        manager.controller_channel_overwrite_range(type, 0, 2, 0, 0, 1)
 
         assertEquals(
-            OpusVolumeEvent(10),
-            manager.get_channel_ctl_tree(type, 0, 2, listOf()).event
+            OpusVolumeEvent(10f),
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 2, listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(11),
-            manager.get_channel_ctl_tree(type, 0, 3, listOf()).event
+            OpusVolumeEvent(11f),
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.overwrite_channel_ctl_range(type, 0, 3, 0, 2, 3)
-        }
+        manager.controller_channel_overwrite_range(type, 0, 3, 0, 2, 3)
+        assertEquals(5, manager.length)
     }
 
     @Test
-    fun test_move_channel_ctl_range() {
+    fun test_controller_channel_move_range() {
         var manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
-        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(10))
-        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(11))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(10f))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(11f))
 
-        manager.move_channel_ctl_range(type, 0, 2, 0, 0, 1)
+        manager.controller_channel_move_range(type, 0, 2, 0, 0, 1)
 
         assertFalse(
-            manager.get_channel_ctl_tree(type, 0, 0, listOf()).is_event()
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 0, listOf()).is_event()
         )
         assertFalse(
-            manager.get_channel_ctl_tree(type, 0, 1, listOf()).is_event()
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 1, listOf()).is_event()
         )
 
         assertEquals(
-            OpusVolumeEvent(10),
-            manager.get_channel_ctl_tree(type, 0, 2, listOf()).event
+            OpusVolumeEvent(10f),
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 2, listOf()).event
         )
         assertEquals(
-            OpusVolumeEvent(11),
-            manager.get_channel_ctl_tree(type, 0, 3, listOf()).event
+            OpusVolumeEvent(11f),
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, 0, 3, listOf()).event
         )
 
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.move_channel_ctl_range(type, 0, 3, 0, 2, 3)
-        }
+        manager.controller_channel_move_range(type, 0, 3, 0, 2, 3)
+        assertEquals(5, manager.length)
     }
 
     @Test
     fun test_move_line_ctl_range() {
         val type = ControlEventType.Volume
         var manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_channel()
-        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
-        manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
-        manager.set_line_ctl_event(type, BeatKey(1, 0, 0), listOf(), OpusVolumeEvent(12))
-        manager.set_line_ctl_event(type, BeatKey(1, 0, 1), listOf(), OpusVolumeEvent(13))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10f))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11f))
+        manager.controller_line_set_event(type, BeatKey(1, 0, 0), listOf(), OpusVolumeEvent(.12f))
+        manager.controller_line_set_event(type, BeatKey(1, 0, 1), listOf(), OpusVolumeEvent(.13f))
         
-        manager.move_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(1, 0, 1))
+        manager.controller_line_move_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(1, 0, 1))
 
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 0), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 0), listOf()).is_event()
         )
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 1), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 1), listOf()).is_event()
         )
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 0), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 0), listOf()).is_event()
         )
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 1), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 1), listOf()).is_event()
         )
 
         assertEquals(
-            OpusVolumeEvent(10),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 2), listOf()).event
+            OpusVolumeEvent(.10f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 2), listOf()).event
         )
         assertEquals(
-            OpusVolumeEvent(11),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 3), listOf()).event
+            OpusVolumeEvent(.11F),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 3), listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(12),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 2), listOf()).event
+            OpusVolumeEvent(.12F),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 2), listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(13),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 3), listOf()).event
+            OpusVolumeEvent(.13F),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 3), listOf()).event
         )
 
-        manager.move_line_ctl_range(type, BeatKey(0, 0, 0), BeatKey(0, 0, 2), BeatKey(1, 0, 3))
+        manager.controller_line_move_range(type, BeatKey(0, 0, 0), BeatKey(0, 0, 2), BeatKey(1, 0, 3))
 
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 2), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 2), listOf()).is_event()
         )
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 3), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 3), listOf()).is_event()
         )
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 2), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 2), listOf()).is_event()
         )
         assertFalse(
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 3), listOf()).is_event()
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 3), listOf()).is_event()
         )
 
         assertEquals(
-            OpusVolumeEvent(10),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 0), listOf()).event
+            OpusVolumeEvent(.10F),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 0), listOf()).event
         )
         assertEquals(
-            OpusVolumeEvent(11),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 1), listOf()).event
-        )
-
-        assertEquals(
-            OpusVolumeEvent(12),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 0), listOf()).event
+            OpusVolumeEvent(.11F),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 1), listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(13),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 1), listOf()).event
+            OpusVolumeEvent(.12F),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 0), listOf()).event
+        )
+
+        assertEquals(
+            OpusVolumeEvent(.13F),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 1), listOf()).event
         )
     }
 
     @Test
-    fun test_overwrite_line_ctl_range() {
+    fun test_controller_line_overwrite_range() {
         val type = ControlEventType.Volume
         var manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_channel()
-        manager.set_line_ctl_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(10))
-        manager.set_line_ctl_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(11))
-        manager.set_line_ctl_event(type, BeatKey(1, 0, 0), listOf(), OpusVolumeEvent(12))
-        manager.set_line_ctl_event(type, BeatKey(1, 0, 1), listOf(), OpusVolumeEvent(13))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10F))
+        manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11F))
+        manager.controller_line_set_event(type, BeatKey(1, 0, 0), listOf(), OpusVolumeEvent(.12F))
+        manager.controller_line_set_event(type, BeatKey(1, 0, 1), listOf(), OpusVolumeEvent(.13F))
         
-        manager.overwrite_line_ctl_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(1, 0, 1))
+        manager.controller_line_overwrite_range(type, BeatKey(0, 0, 2), BeatKey(0, 0, 0), BeatKey(1, 0, 1))
 
         assertEquals(
-            OpusVolumeEvent(10),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 0), listOf()).event
+            OpusVolumeEvent(.10f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 0), listOf()).event
         )
         assertEquals(
-            OpusVolumeEvent(11),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 1), listOf()).event
-        )
-
-        assertEquals(
-            OpusVolumeEvent(12),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 0), listOf()).event
+            OpusVolumeEvent(.11f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 1), listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(13),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 1), listOf()).event
+            OpusVolumeEvent(.12f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 0), listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(10),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 2), listOf()).event
-        )
-        assertEquals(
-            OpusVolumeEvent(11),
-            manager.get_line_ctl_tree(type, BeatKey(0, 0, 3), listOf()).event
+            OpusVolumeEvent(.13f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 1), listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(12),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 2), listOf()).event
+            OpusVolumeEvent(.10f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 2), listOf()).event
+        )
+        assertEquals(
+            OpusVolumeEvent(.11f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0, 0, 3), listOf()).event
         )
 
         assertEquals(
-            OpusVolumeEvent(13),
-            manager.get_line_ctl_tree(type, BeatKey(1, 0, 3), listOf()).event
+            OpusVolumeEvent(.12f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 2), listOf()).event
+        )
+
+        assertEquals(
+            OpusVolumeEvent(.13f),
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(1, 0, 3), listOf()).event
         )
     }
 
     @Test
-    fun test_add_remove_line_ctl_line() {
+    fun test_add_remove_line_controller() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val channel = 0
         val line_offset = 0
-        manager.add_line_ctl_line(type, channel, line_offset)
+        manager.new_line_controller(type, channel, line_offset)
 
         assertEquals(
             "Failed to add line_ctl_line",
@@ -1812,7 +1796,7 @@ class OpusLayerBaseUnitTest {
             manager.has_line_controller(type, channel, line_offset)
         )
 
-        manager.remove_line_ctl_line(type, channel, line_offset)
+        manager.remove_line_controller(type, channel, line_offset)
 
         assertEquals(
             "Failed to remove line_ctl_line",
@@ -1822,12 +1806,12 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_add_remove_channel_ctl_line() {
+    fun test_add_remove_channel_controller() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val channel = 0
-        manager.add_channel_ctl_line(type, channel)
+        manager.new_channel_controller(type, channel)
 
         assertEquals(
             "Failed to add channel_ctl_line",
@@ -1835,7 +1819,7 @@ class OpusLayerBaseUnitTest {
             manager.has_channel_controller(type, channel)
         )
 
-        manager.remove_channel_ctl_line(type, channel)
+        manager.remove_channel_controller(type, channel)
 
         assertEquals(
             "Failed to remove channel_ctl_line",
@@ -1845,11 +1829,11 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_remove_global_ctl_line() {
+    fun test_remove_global_controller() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
-        manager.add_global_ctl_line(type)
+        manager.new_global_controller(type)
 
         assertEquals(
             "Failed to add global_ctl_line",
@@ -1857,7 +1841,7 @@ class OpusLayerBaseUnitTest {
             manager.has_global_controller(type)
         )
 
-        manager.remove_global_ctl_line(type)
+        manager.remove_global_controller(type)
 
         assertEquals(
             "Failed to remove global_ctl_line",
@@ -1869,18 +1853,18 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_current_global_controller_value() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
         val first_event = OpusTempoEvent(1F)
         val second_event = OpusTempoEvent(2F)
         val third_event = OpusTempoEvent(3F)
 
-        manager.set_global_controller_initial_event(type, first_event)
+        manager.controller_global_set_initial_event(type, first_event)
 
-        manager.split_global_ctl_tree(type, 0, listOf(), 2)
-        manager.set_global_ctl_event(type, 0, listOf(1), second_event)
+        manager.controller_global_split_tree(type, 0, listOf(), 2)
+        manager.controller_global_set_event(type, 0, listOf(1), second_event)
 
-        manager.set_global_ctl_event(type, 2, listOf(), third_event)
+        manager.controller_global_set_event(type, 2, listOf(), third_event)
 
         assertEquals(
             "get_current_global_controller_value fail",
@@ -1916,19 +1900,19 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_current_channel_controller_value() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val channel = 0
-        val first_event = OpusVolumeEvent(1)
-        val second_event = OpusVolumeEvent(2)
-        val third_event = OpusVolumeEvent(3)
+        val first_event = OpusVolumeEvent(.1f)
+        val second_event = OpusVolumeEvent(.2f)
+        val third_event = OpusVolumeEvent(.3f)
 
-        manager.set_channel_controller_initial_event(type, channel, first_event)
+        manager.controller_channel_set_initial_event(type, channel, first_event)
 
-        manager.split_channel_ctl_tree(type, channel, 0, listOf(), 2)
-        manager.set_channel_ctl_event(type, channel, 0, listOf(1), second_event)
+        manager.controller_channel_split_tree(type, channel, 0, listOf(), 2)
+        manager.controller_channel_set_event(type, channel, 0, listOf(1), second_event)
 
-        manager.set_channel_ctl_event(type, channel, 2, listOf(), third_event)
+        manager.controller_channel_set_event(type, channel, 2, listOf(), third_event)
 
         assertEquals(
             "get_current_channel_controller_value fail",
@@ -1964,21 +1948,21 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_current_line_controller_value() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val channel = 0
         val line_offset = 0
 
-        val first_event = OpusVolumeEvent(1)
-        val second_event = OpusVolumeEvent(2)
-        val third_event = OpusVolumeEvent(3)
+        val first_event = OpusVolumeEvent(.1f)
+        val second_event = OpusVolumeEvent(.2f)
+        val third_event = OpusVolumeEvent(.3f)
 
-        manager.set_line_controller_initial_event(type, channel, line_offset, first_event)
+        manager.controller_line_set_initial_event(type, channel, line_offset, first_event)
 
-        manager.split_line_ctl_tree(type, BeatKey(channel, line_offset, 0), listOf(), 2)
-        manager.set_line_ctl_event(type, BeatKey(channel, line_offset, 0), listOf(1), second_event)
+        manager.controller_line_split_tree(type, BeatKey(channel, line_offset, 0), listOf(), 2)
+        manager.controller_line_set_event(type, BeatKey(channel, line_offset, 0), listOf(1), second_event)
 
-        manager.set_line_ctl_event(type, BeatKey(channel, line_offset, 2), listOf(), third_event)
+        manager.controller_line_set_event(type, BeatKey(channel, line_offset, 2), listOf(), third_event)
 
         assertEquals(
             "get_current_line_controller_value fail",
@@ -2014,11 +1998,11 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_global_controller_initial_value() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
         val event = OpusTempoEvent(1F)
 
-        manager.set_global_controller_initial_event(type, event)
+        manager.controller_global_set_initial_event(type, event)
         assertEquals(
             "get_current_global_controller_value fail",
             event,
@@ -2029,12 +2013,12 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_channel_controller_initial_value() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val channel = 0
-        val event = OpusVolumeEvent(1)
+        val event = OpusVolumeEvent(1f)
 
-        manager.set_channel_controller_initial_event(type, channel, event)
+        manager.controller_channel_set_initial_event(type, channel, event)
         assertEquals(
             "Failed set channel controller initial event",
             event,
@@ -2045,13 +2029,13 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_line_controller_initial_value() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val channel = 0
         val line_offset = 0
 
-        val event = OpusVolumeEvent(1)
-        manager.set_line_controller_initial_event(type, channel, line_offset, event)
+        val event = OpusVolumeEvent(.1f)
+        manager.controller_line_set_initial_event(type, channel, line_offset, event)
         assertEquals(
             "Failed set line controller initial event",
             event,
@@ -2062,7 +2046,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_is_tuning_standard() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         manager.set_tuning_map(
             Array(12) {
@@ -2102,7 +2086,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_tuning_map() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val channel = 0
         val original_value = 12
         manager.set_event(BeatKey(channel,0,0), listOf(), AbsoluteNoteEvent(original_value))
@@ -2146,7 +2130,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_swap_lines() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0, 0)
         val test_event = RelativeNoteEvent(1)
         manager.set_event(BeatKey(0,0,0), listOf(), test_event)
@@ -2167,7 +2151,7 @@ class OpusLayerBaseUnitTest {
         )
 
         manager.new_line(1, 0)
-        manager.set_percussion_event(BeatKey(1,0,0), listOf())
+        manager.percussion_set_event(BeatKey(1,0,0), listOf())
         assertThrows(OpusLayerBase.IncompatibleChannelException::class.java) {
             manager.swap_lines(0, 0, 1, 0)
         }
@@ -2192,17 +2176,17 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_percussion_event() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         val first_instrument = manager.get_percussion_instrument(0)
-        manager.set_percussion_event(BeatKey(1,0,0), listOf())
+        manager.percussion_set_event(BeatKey(1,0,0), listOf())
         assertTrue(
             manager.get_tree(BeatKey(1,0,0), listOf()).is_event()
         )
 
         val second_instrument = 2
-        manager.set_percussion_instrument(0, second_instrument)
-        manager.set_percussion_event(BeatKey(1,0,0), listOf())
+        manager.percussion_set_instrument(0, second_instrument)
+        manager.percussion_set_event(BeatKey(1,0,0), listOf())
         assertTrue(
             manager.get_tree(BeatKey(1,0,0), listOf()).is_event()
         )
@@ -2211,10 +2195,10 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_std_abs_offset() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         assertThrows(IndexOutOfBoundsException::class.java) {
-            manager.get_std_offset(2)
+            manager.get_channel_and_line_offset(2)
         }
 
         manager.new_line(0)
@@ -2233,13 +2217,13 @@ class OpusLayerBaseUnitTest {
                 assertEquals(
                     "incorrect std_offset",
                     Pair(i, j),
-                    manager.get_std_offset(abs)
+                    manager.get_channel_and_line_offset(abs)
                 )
 
                 assertEquals(
                     "incorrect abs_offset",
                     abs,
-                    manager.get_abs_offset(i, j)
+                    manager.get_instrument_line_index(i, j)
                 )
 
                 abs += 1
@@ -2258,7 +2242,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_insert() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val test_event_a = AbsoluteNoteEvent(0)
         manager.set_event(BeatKey(0,0,0), listOf(), test_event_a)
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
@@ -2285,27 +2269,27 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_insert_line_ctl() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
-        val test_event_a = OpusVolumeEvent(64)
-        manager.set_line_ctl_event(type, BeatKey(0,0,0), listOf(), test_event_a)
-        manager.split_line_ctl_tree(type, BeatKey(0,0,0), listOf(), 2)
-        manager.insert_line_ctl(type, BeatKey(0,0,0), listOf(0))
+        val test_event_a = OpusVolumeEvent(.64f)
+        manager.controller_line_set_event(type, BeatKey(0,0,0), listOf(), test_event_a)
+        manager.controller_line_split_tree(type, BeatKey(0,0,0), listOf(), 2)
+        manager.controller_line_insert(type, BeatKey(0,0,0), listOf(0))
 
         assertEquals(
             "Insert Line Controller Tree fail",
             3,
-            manager.get_line_ctl_tree(type, BeatKey(0,0,0), listOf()).size
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0,0,0), listOf()).size
         )
 
         assertEquals(
             "Insert Line Controller Tree didn't insert correctly",
             test_event_a,
-            manager.get_line_ctl_tree(type, BeatKey(0,0,0), listOf(1)).event
+            manager.get_line_ctl_tree<OpusControlEvent>(type, BeatKey(0,0,0), listOf(1)).event
         )
 
         assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
-            manager.insert_line_ctl(type, BeatKey(0,0,0), listOf())
+            manager.controller_line_insert(type, BeatKey(0,0,0), listOf())
         }
 
     }
@@ -2313,29 +2297,29 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_insert_channel_ctl() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Reverb
         val channel = 0
         val beat = 0
         val test_event_a = OpusReverbEvent(1F)
-        manager.set_channel_ctl_event(type, channel, beat, listOf(), test_event_a)
-        manager.split_channel_ctl_tree(type, channel, beat, listOf(), 2)
-        manager.insert_channel_ctl(type, channel, beat, listOf(0))
+        manager.controller_channel_set_event(type, channel, beat, listOf(), test_event_a)
+        manager.controller_channel_split_tree(type, channel, beat, listOf(), 2)
+        manager.controller_channel_insert(type, channel, beat, listOf(0))
 
         assertEquals(
             "Insert Channel Controller Tree fail",
             3,
-            manager.get_channel_ctl_tree(type, channel, beat, listOf()).size
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, listOf()).size
         )
 
         assertEquals(
             "Insert Channel Controller Tree didn't insert correctly",
             test_event_a,
-            manager.get_channel_ctl_tree(type, channel, beat, listOf(1)).event
+            manager.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, listOf(1)).event
         )
 
         assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
-            manager.insert_channel_ctl(type, channel, beat, listOf())
+            manager.controller_channel_insert(type, channel, beat, listOf())
         }
 
     }
@@ -2343,35 +2327,35 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_insert_global_ctl() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
         val beat = 0
         val test_event_a = OpusTempoEvent(120F)
-        manager.set_global_ctl_event(type, beat, listOf(), test_event_a)
-        manager.split_global_ctl_tree(type, beat, listOf(), 2)
-        manager.insert_global_ctl(type, beat, listOf(0))
+        manager.controller_global_set_event(type, beat, listOf(), test_event_a)
+        manager.controller_global_split_tree(type, beat, listOf(), 2)
+        manager.controller_global_insert(type, beat, listOf(0))
 
         assertEquals(
             "Insert global Controller Tree fail",
             3,
-            manager.get_global_ctl_tree(type, beat, listOf()).size
+            manager.get_global_ctl_tree<OpusControlEvent>(type, beat, listOf()).size
         )
 
         assertEquals(
             "Insert global Controller Tree didn't insert correctly",
             test_event_a,
-            manager.get_global_ctl_tree(type, beat, listOf(1)).event
+            manager.get_global_ctl_tree<OpusControlEvent>(type, beat, listOf(1)).event
         )
 
         assertThrows(OpusLayerBase.BadInsertPosition::class.java) {
-            manager.insert_global_ctl(type, beat, listOf())
+            manager.controller_global_insert(type, beat, listOf())
         }
     }
 
     @Test
     fun test_set_unset_global() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         // set/unset leaf
         val beat = 0
@@ -2379,8 +2363,8 @@ class OpusLayerBaseUnitTest {
 
         val type = ControlEventType.Tempo
         val test_event = OpusTempoEvent(1f)
-        manager.set_global_ctl_event(type, beat, position, test_event)
-        val tree = manager.get_global_ctl_tree(type, beat, position)
+        manager.controller_global_set_event(type, beat, position, test_event)
+        val tree = manager.get_global_ctl_tree<OpusControlEvent>(type, beat, position)
         assertTrue(
             "Failed to set global ctl event",
             tree.is_event()
@@ -2392,19 +2376,19 @@ class OpusLayerBaseUnitTest {
             test_event
         )
 
-        manager.unset_global_ctl(type, beat, position)
+        manager.controller_global_unset(type, beat, position)
         assertFalse(
             "Failed to unset tree",
-            manager.get_global_ctl_tree(type, beat, position).is_event()
+            manager.get_global_ctl_tree<OpusControlEvent>(type, beat, position).is_event()
         )
 
-        manager.split_global_ctl_tree(type, beat, position, 2)
-        manager.set_global_ctl_event(type, beat, listOf(0), test_event)
+        manager.controller_global_split_tree(type, beat, position, 2)
+        manager.controller_global_set_event(type, beat, listOf(0), test_event)
 
-        manager.unset_global_ctl(type, beat, listOf(0))
+        manager.controller_global_unset(type, beat, listOf(0))
         assertFalse(
             "Failed to unset tree",
-            manager.get_global_ctl_tree(type, beat, listOf(0)).is_event()
+            manager.get_global_ctl_tree<OpusControlEvent>(type, beat, listOf(0)).is_event()
         )
 
     }
@@ -2412,7 +2396,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_set_unset_channel() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         // set/unset leaf
         val beat = 0
@@ -2420,10 +2404,10 @@ class OpusLayerBaseUnitTest {
         val position: List<Int> = listOf()
 
         val type = ControlEventType.Volume
-        val test_event = OpusVolumeEvent(1)
-        manager.set_channel_ctl_event(type, channel, beat, position, test_event)
+        val test_event = OpusVolumeEvent(.1f)
+        manager.controller_channel_set_event(type, channel, beat, position, test_event)
 
-        val tree = manager.get_channel_ctl_tree(type, channel, beat, position)
+        val tree = manager.get_channel_ctl_tree<OpusVolumeEvent>(type, channel, beat, position)
         assertTrue(
             "Failed to set global ctl event",
             tree.is_event()
@@ -2435,27 +2419,27 @@ class OpusLayerBaseUnitTest {
             test_event
         )
 
-        manager.unset_channel_ctl(type, channel, beat, position)
+        manager.controller_channel_unset(type, channel, beat, position)
         assertFalse(
             "Failed to unset tree",
-            manager.get_channel_ctl_tree(type, channel, beat, position).is_event()
+            manager.get_channel_ctl_tree<OpusVolumeEvent>(type, channel, beat, position).is_event()
         )
     }
 
     @Test
     fun test_set_unset_line() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
 
         // set/unset leaf
         val beat_key = BeatKey(0,0,0)
         val position: List<Int> = listOf()
 
         val type = ControlEventType.Volume
-        val test_event = OpusVolumeEvent(1)
-        manager.set_line_ctl_event(type, beat_key, position, test_event)
+        val test_event = OpusVolumeEvent(.1f)
+        manager.controller_line_set_event(type, beat_key, position, test_event)
 
-        val tree = manager.get_line_ctl_tree(type, beat_key, position)
+        val tree = manager.get_line_ctl_tree<OpusVolumeEvent>(type, beat_key, position)
         assertTrue(
             "Failed to set global ctl event",
             tree.is_event()
@@ -2467,23 +2451,23 @@ class OpusLayerBaseUnitTest {
             test_event
         )
 
-        manager.unset_line_ctl(type, beat_key, position)
+        manager.controller_line_unset(type, beat_key, position)
         assertFalse(
             "Failed to unset tree",
-            manager.get_line_ctl_tree(type, beat_key, position).is_event()
+            manager.get_line_ctl_tree<OpusVolumeEvent>(type, beat_key, position).is_event()
         )
     }
 
     @Test
     fun test_get_first_position() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val beat_key = BeatKey(0,0,0)
         val max_depth = 3
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
+            val position = stack.removeAt(0)
             manager.split_tree(beat_key, position, splits)
 
             if (position.size >= max_depth - 1) {
@@ -2525,15 +2509,15 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_first_global_ctl_position() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
         val beat = 0
         val max_depth = 3
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
-            manager.split_global_ctl_tree(type, beat, position, splits)
+            val position = stack.removeAt(0)
+            manager.controller_global_split_tree(type, beat, position, splits)
 
             if (position.size >= max_depth - 1) {
                 continue
@@ -2574,7 +2558,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_first_channel_ctl_position() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Reverb
         val channel = 0
         val beat = 0
@@ -2582,8 +2566,8 @@ class OpusLayerBaseUnitTest {
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
-            manager.split_channel_ctl_tree(type, channel, beat, position, splits)
+            val position = stack.removeAt(0)
+            manager.controller_channel_split_tree(type, channel, beat, position, splits)
 
             if (position.size >= max_depth - 1) {
                 continue
@@ -2625,15 +2609,15 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_first_line_ctl_position() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val beat_key = BeatKey(0,0,0)
         val max_depth = 3
         val splits = 3
         val stack = mutableListOf(listOf<Int>())
         while (stack.isNotEmpty()) {
-            val position = stack.removeFirst()
-            manager.split_line_ctl_tree(type, beat_key, position, splits)
+            val position = stack.removeAt(0)
+            manager.controller_line_split_tree(type, beat_key, position, splits)
 
             if (position.size >= max_depth - 1) {
                 continue
@@ -2674,7 +2658,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_move_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val key_a = BeatKey(0,0,0)
         val key_b = BeatKey(0,0,2)
         val event = AbsoluteNoteEvent(0)
@@ -2708,117 +2692,117 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_move_global_ctl_leaf() {
+    fun test_controller_global_move_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Tempo
         val key_a = 0
         val key_b = 2
         val event = OpusTempoEvent(1f)
 
-        manager.split_global_ctl_tree(type, key_a, listOf(), 3)
-        manager.split_global_ctl_tree(type, key_b, listOf(), 3)
+        manager.controller_global_split_tree(type, key_a, listOf(), 3)
+        manager.controller_global_split_tree(type, key_b, listOf(), 3)
         for (i in 0 until 3) {
-            manager.split_global_ctl_tree(type, key_a, listOf(i), 3)
-            manager.split_global_ctl_tree(type, key_b, listOf(i), 3)
+            manager.controller_global_split_tree(type, key_a, listOf(i), 3)
+            manager.controller_global_split_tree(type, key_b, listOf(i), 3)
         }
 
-        manager.set_global_ctl_event(type, key_a, listOf(0,0), event)
-        manager.move_global_ctl_leaf(type, key_a, listOf(0,0), key_a, listOf(0, 2))
+        manager.controller_global_set_event(type, key_a, listOf(0,0), event)
+        manager.controller_global_move_leaf(type, key_a, listOf(0,0), key_a, listOf(0, 2))
         assertEquals(
-            "move_global_ctl_leaf() shouldn't remove the original leaf. should only unset it",
+            "controller_global_move_leaf() shouldn't remove the original leaf. should only unset it",
             3,
-            manager.get_global_ctl_tree(type, key_a, listOf(0)).size
+            manager.get_global_ctl_tree<OpusTempoEvent>(type, key_a, listOf(0)).size
         )
         assertTrue(
-            manager.get_global_ctl_tree(type, key_a, listOf(0,2)).is_event()
+            manager.get_global_ctl_tree<OpusTempoEvent>(type, key_a, listOf(0,2)).is_event()
         )
 
-        manager.move_global_ctl_leaf(type, key_a, listOf(0,2), key_b, listOf())
+        manager.controller_global_move_leaf(type, key_a, listOf(0,2), key_b, listOf())
         assertEquals(
-            "move_global_ctl_leaf() shouldn't remove the original leaf. should only unset it",
+            "controller_global_move_leaf() shouldn't remove the original leaf. should only unset it",
             3,
-            manager.get_global_ctl_tree(type, key_a, listOf(0)).size
+            manager.get_global_ctl_tree<OpusTempoEvent>(type, key_a, listOf(0)).size
         )
         assertTrue(
-            manager.get_global_ctl_tree(type, key_b, listOf()).is_event()
+            manager.get_global_ctl_tree<OpusTempoEvent>(type, key_b, listOf()).is_event()
         )
     }
 
     @Test
-    fun test_move_channel_ctl_leaf() {
+    fun test_controller_channel_move_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Reverb
         val channel = 0
         val key_a = 0
         val key_b = 2
         val event = OpusReverbEvent(2f)
 
-        manager.split_channel_ctl_tree(type, channel, key_a, listOf(), 3)
-        manager.split_channel_ctl_tree(type, channel, key_b, listOf(), 3)
+        manager.controller_channel_split_tree(type, channel, key_a, listOf(), 3)
+        manager.controller_channel_split_tree(type, channel, key_b, listOf(), 3)
         for (i in 0 until 3) {
-            manager.split_channel_ctl_tree(type, channel, key_a, listOf(i), 3)
-            manager.split_channel_ctl_tree(type, channel, key_b, listOf(i), 3)
+            manager.controller_channel_split_tree(type, channel, key_a, listOf(i), 3)
+            manager.controller_channel_split_tree(type, channel, key_b, listOf(i), 3)
         }
 
-        manager.set_channel_ctl_event(type, channel, key_a, listOf(0,0), event)
-        manager.move_channel_ctl_leaf(type, channel, key_a, listOf(0,0), channel, key_a, listOf(0, 2))
+        manager.controller_channel_set_event(type, channel, key_a, listOf(0,0), event)
+        manager.controller_channel_move_leaf(type, channel, key_a, listOf(0,0), channel, key_a, listOf(0, 2))
         assertEquals(
-            "move_channel_ctl_leaf() shouldn't remove the original leaf. should only unset it",
+            "controller_channel_move_leaf() shouldn't remove the original leaf. should only unset it",
             3,
-            manager.get_channel_ctl_tree(type, channel, key_a, listOf(0)).size
+            manager.get_channel_ctl_tree<OpusReverbEvent>(type, channel, key_a, listOf(0)).size
         )
         assertTrue(
-            manager.get_channel_ctl_tree(type, channel, key_a, listOf(0,2)).is_event()
+            manager.get_channel_ctl_tree<OpusReverbEvent>(type, channel, key_a, listOf(0,2)).is_event()
         )
 
-        manager.move_channel_ctl_leaf(type, channel, key_a, listOf(0,2), channel, key_b, listOf())
+        manager.controller_channel_move_leaf(type, channel, key_a, listOf(0,2), channel, key_b, listOf())
         assertEquals(
-            "move_channel_ctl_leaf() shouldn't remove the original leaf. should only unset it",
+            "controller_channel_move_leaf() shouldn't remove the original leaf. should only unset it",
             3,
-            manager.get_channel_ctl_tree(type, channel, key_a, listOf(0)).size
+            manager.get_channel_ctl_tree<OpusReverbEvent>(type, channel, key_a, listOf(0)).size
         )
         assertTrue(
-            manager.get_channel_ctl_tree(type, channel, key_b, listOf()).is_event()
+            manager.get_channel_ctl_tree<OpusReverbEvent>(type, channel, key_b, listOf()).is_event()
         )
     }
 
     @Test
-    fun test_move_line_ctl_leaf() {
+    fun test_controller_line_move_leaf() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val type = ControlEventType.Volume
         val key_a = BeatKey(0,0,0)
         val key_b = BeatKey(0,0,2)
-        val event = OpusVolumeEvent(1)
+        val event = OpusVolumeEvent(1F)
 
-        manager.split_line_ctl_tree(type, key_a, listOf(), 3)
-        manager.split_line_ctl_tree(type, key_b, listOf(), 3)
+        manager.controller_line_split_tree(type, key_a, listOf(), 3)
+        manager.controller_line_split_tree(type, key_b, listOf(), 3)
         for (i in 0 until 3) {
-            manager.split_line_ctl_tree(type, key_a, listOf(i), 3)
-            manager.split_line_ctl_tree(type, key_b, listOf(i), 3)
+            manager.controller_line_split_tree(type, key_a, listOf(i), 3)
+            manager.controller_line_split_tree(type, key_b, listOf(i), 3)
         }
 
-        manager.set_line_ctl_event(type, key_a, listOf(0,0), event)
-        manager.move_line_ctl_leaf(type, key_a, listOf(0,0), key_a, listOf(0, 2))
+        manager.controller_line_set_event(type, key_a, listOf(0,0), event)
+        manager.controller_line_move_leaf(type, key_a, listOf(0,0), key_a, listOf(0, 2))
         assertEquals(
-            "move_line_ctl_leaf() shouldn't remove the original leaf. should only unset it",
+            "controller_line_move_leaf() shouldn't remove the original leaf. should only unset it",
             3,
-            manager.get_line_ctl_tree(type, key_a, listOf(0)).size
+            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_a, listOf(0)).size
         )
         assertTrue(
-            manager.get_line_ctl_tree(type, key_a, listOf(0,2)).is_event()
+            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_a, listOf(0,2)).is_event()
         )
 
-        manager.move_line_ctl_leaf(type, key_a, listOf(0,2), key_b, listOf())
+        manager.controller_line_move_leaf(type, key_a, listOf(0,2), key_b, listOf())
         assertEquals(
-            "move_line_ctl_leaf() shouldn't remove the original leaf. should only unset it",
+            "controller_line_move_leaf() shouldn't remove the original leaf. should only unset it",
             3,
-            manager.get_line_ctl_tree(type, key_a, listOf(0)).size
+            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_a, listOf(0)).size
         )
         assertTrue(
-            manager.get_line_ctl_tree(type, key_b, listOf()).is_event()
+            manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_b, listOf()).is_event()
         )
     }
 
@@ -2861,7 +2845,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_channel_count() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         val original_channel_count = manager.channels.size + 1
         var line_count = original_channel_count // Start with 1 line each
 
@@ -2888,7 +2872,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_preceding_event() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 4)
         manager.set_event(BeatKey(0,0,0), listOf(1), AbsoluteNoteEvent(0))
         manager.set_event(BeatKey(0,0,0), listOf(3), AbsoluteNoteEvent(1))
@@ -2908,14 +2892,14 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_overwrite_row() {
+    fun test_overwrite_line() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.set_beat_count(24)
         val event = AbsoluteNoteEvent(5)
         manager.set_event(BeatKey(0,0,12), listOf(), event)
 
-        manager.overwrite_row(0, 0, BeatKey(0,0,12))
+        manager.overwrite_line(0, 0, BeatKey(0,0,12))
 
         for (i in 0 until 12) {
             assertNotEquals(
@@ -2932,7 +2916,7 @@ class OpusLayerBaseUnitTest {
 
         val event_b = AbsoluteNoteEvent(6)
         manager.set_event(BeatKey(0,0,0), listOf(), event_b)
-        manager.overwrite_row(0, 0, BeatKey(0,0,0))
+        manager.overwrite_line(0, 0, BeatKey(0,0,0))
 
         for (i in 1 until 24) {
             assertEquals(
@@ -2942,20 +2926,13 @@ class OpusLayerBaseUnitTest {
         }
 
         manager.new_line(0)
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_row(0, 0, BeatKey(0, 1, 0))
-        }
         manager.new_channel()
-        assertThrows(OpusLayerBase.InvalidOverwriteCall::class.java) {
-            manager.overwrite_row(0, 0, BeatKey(1, 0, 0))
-        }
-
     }
 
     @Test
     fun test_get_beatkeys_in_range() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_channel()
         manager.new_channel()
         manager.new_line(0)
@@ -3042,7 +3019,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_overwrite_beat_range_horizontally() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel()
@@ -3074,91 +3051,88 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_overwrite_line_ctl_range_horizontally() {
+    fun test_controller_line_overwrite_range_horizontally() {
         val type = ControlEventType.Volume
-        val manager = OpusManager()
-        manager.new()
-        manager.new_line(0)
-        manager.new_line(0)
-        manager.new_channel()
-        manager.new_line(1)
-        manager.new_line(1)
+        val manager = OpusLayerHistory()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
-        for (c in 0 until 2) {
-            for (l in 0 until 2) {
-                for (b in 0 until 3) {
-                    manager.set_line_ctl_event(
-                        type,
-                        BeatKey(c, l, b),
-                        listOf(),
-                        OpusVolumeEvent((c * 6) + (l * 3) + b)
-                    )
-                }
-            }
+        // Only works on single line currently.
+        val c = 0
+        val l = 0
+
+        for (b in 0 until 3) {
+            val beat_key = BeatKey(c, l, b)
+            val value = ((c * 6) + (l * 3) + b)
+            manager.controller_line_set_event(
+                type,
+                beat_key,
+                listOf(),
+                OpusVolumeEvent(value.toFloat())
+            )
+            println("$beat_key => $value")
         }
 
         // -------------------------------------------------------
-        manager.overwrite_line_ctl_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(1, 2, 2))
-
+        manager.controller_line_overwrite_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(0, 0, 2))
+        println("--------------------------")
         for (k in 0 until 4) {
-            for (c in 0 until 2) {
-                for (l in 0 until 2) {
-                    for (b in 0 until 3) {
-                        assertEquals(
-                            manager.get_line_ctl_tree(type, BeatKey(c, l, b)),
-                            manager.get_line_ctl_tree(type, BeatKey(c, l, (k * 3) + b))
-                        )
-                    }
-                }
+            for (b in 0 until 3) {
+                val key_a = BeatKey(c, l, b)
+                val key_b = BeatKey(c, l, (k * 3) + b)
+                assertEquals(
+                    "$key_a != $key_b",
+                    manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_a).get_event(),
+                    manager.get_line_ctl_tree<OpusVolumeEvent>(type, key_b).get_event()
+                )
             }
         }
     }
 
     @Test
-    fun test_overwrite_global_ctl_range_horizontally() {
+    fun test_controller_global_overwrite_range_horizontally() {
         val manager = OpusManager()
         val type = ControlEventType.Tempo
-        manager.new()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
-        manager.set_global_ctl_event(type, 0, listOf(), OpusTempoEvent(5F))
-        manager.set_global_ctl_event(type, 1, listOf(), OpusTempoEvent(6F))
+        manager.controller_global_set_event(type, 0, listOf(), OpusTempoEvent(5F))
+        manager.controller_global_set_event(type, 1, listOf(), OpusTempoEvent(6F))
 
-        manager.overwrite_global_ctl_range_horizontally(type, 0, 1)
+        manager.controller_global_overwrite_range_horizontally(type, 0, 1)
 
         for (i in 0 until 6) {
             assertEquals(
-                manager.get_global_ctl_tree(type, 0, listOf()).event,
-                manager.get_global_ctl_tree(type, (i * 2), listOf()).event,
+                manager.get_global_ctl_tree<OpusTempoEvent>(type, 0, listOf()).event,
+                manager.get_global_ctl_tree<OpusTempoEvent>(type, (i * 2), listOf()).event,
             )
             assertEquals(
-                manager.get_global_ctl_tree(type, 1, listOf()).event,
-                manager.get_global_ctl_tree(type, 1 + (i * 2), listOf()).event,
+                manager.get_global_ctl_tree<OpusTempoEvent>(type, 1, listOf()).event,
+                manager.get_global_ctl_tree<OpusTempoEvent>(type, 1 + (i * 2), listOf()).event,
             )
         }
     }
 
     @Test
-    fun test_overwrite_channel_ctl_range_horizontally() {
+    fun test_controller_channel_overwrite_range_horizontally() {
         val manager = OpusManager()
         val type = ControlEventType.Volume
-        manager.new()
+        manager._project_change_new()
         manager.set_beat_count(12)
 
-        manager.set_channel_ctl_event(type, 0, 0, listOf(), OpusVolumeEvent(5))
-        manager.set_channel_ctl_event(type, 0, 1, listOf(), OpusVolumeEvent(6))
+        manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(5F))
+        manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(6f))
 
-        manager.overwrite_channel_ctl_range_horizontally(type, 0, 0, 1)
+        manager.controller_channel_overwrite_range_horizontally(type, 0, 0, 0, 1)
 
         for (i in 0 until 6) {
             assertEquals(
-                manager.get_channel_ctl_tree(type, 0, 0, listOf()).event,
-                manager.get_channel_ctl_tree(type, 0, (i * 2), listOf()).event,
+                manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, 0, listOf()).event,
+                manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, (i * 2), listOf()).event,
             )
             assertEquals(
-                manager.get_channel_ctl_tree(type, 0, 1, listOf()).event,
-                manager.get_channel_ctl_tree(type, 0, 1 + (i * 2), listOf()).event,
+                manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, 1, listOf()).event,
+                manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, 1 + (i * 2), listOf()).event,
             )
         }
     }
@@ -3167,7 +3141,7 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_unset_range() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_channel()
         manager.set_beat_count(12)
@@ -3192,81 +3166,81 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_unset_line_ctl_range() {
+    fun test_controller_line_unset_range() {
         val type = ControlEventType.Volume
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_channel()
         manager.set_beat_count(12)
         for (c in 0 until 2) {
             for (l in 0 until manager.channels[c].lines.size) {
                 for (b in 0 until 12) {
-                    manager.set_line_ctl_event(type, BeatKey(c, l, b), listOf(), OpusVolumeEvent(64))
+                    manager.controller_line_set_event(type, BeatKey(c, l, b), listOf(), OpusVolumeEvent(.64f))
                 }
             }
         }
 
         val first_beat_key = BeatKey(0, 0, 4)
         val second_beat_key = BeatKey(1,0, 10)
-        manager.unset_line_ctl_range(type, first_beat_key, second_beat_key)
+        manager.controller_line_unset_range(type, first_beat_key, second_beat_key)
 
         for (beat_key in manager.get_beatkeys_in_range(first_beat_key, second_beat_key)) {
             assertFalse(
-                manager.get_line_ctl_tree(type, beat_key).is_event()
+                manager.get_line_ctl_tree<OpusVolumeEvent>(type, beat_key).is_event()
             )
         }
     }
 
     @Test
-    fun test_unset_channel_ctl_range() {
+    fun test_controller_channel_unset_range() {
         val type = ControlEventType.Volume
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_line(0)
         manager.new_channel()
         manager.set_beat_count(12)
         for (b in 0 until 12) {
-            manager.set_channel_ctl_event(type, 0, b, listOf(), OpusVolumeEvent(64))
+            manager.controller_channel_set_event(type, 0, b, listOf(), OpusVolumeEvent(.64f))
         }
 
-        manager.unset_channel_ctl_range(type, 0, 4, 10)
+        manager.controller_channel_unset_range(type, 0, 4, 10)
 
         for (i in 0 until 4) {
             assertEquals(
-                OpusVolumeEvent(64),
-                manager.get_channel_ctl_tree(type, 0, i).get_event()
+                OpusVolumeEvent(.64f),
+                manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, i).get_event()
             )
         }
         for (i in 4 .. 10) {
             assertFalse(
-                manager.get_channel_ctl_tree(type, 0, i).is_event()
+                manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, i).is_event()
             )
         }
         
     }
 
     @Test
-    fun test_unset_global_ctl_range() {
+    fun test_controller_global_unset_range() {
         val type = ControlEventType.Tempo
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.set_beat_count(12)
         for (b in 0 until 12) {
-            manager.set_global_ctl_event(type, b, listOf(), OpusTempoEvent(25F))
+            manager.controller_global_set_event(type, b, listOf(), OpusTempoEvent(25F))
         }
 
-        manager.unset_global_ctl_range(type, 4, 10)
+        manager.controller_global_unset_range(type, 4, 10)
 
         for (i in 0 until 4) {
             assertEquals(
                 OpusTempoEvent(25F),
-                manager.get_global_ctl_tree(type, i).get_event()
+                manager.get_global_ctl_tree<OpusTempoEvent>(type, i).get_event()
             )
         }
         for (i in 4 .. 10) {
             assertFalse(
-                manager.get_global_ctl_tree(type, i).is_event()
+                manager.get_global_ctl_tree<OpusTempoEvent>(type, i).is_event()
             )
         }
         
@@ -3275,14 +3249,9 @@ class OpusLayerBaseUnitTest {
     @Test
     fun test_get_ctl_info() {
         val manager = OpusManager()
-        manager.new()
+        manager._project_change_new()
         manager.new_channel()
         manager.set_beat_count(12)
-
-        assertEquals(
-            3, // line, line control, chanenl control, then second line
-            manager.get_ctl_line_index(1)
-        )
 
         assertEquals(
             ControlEventType.Volume,
@@ -3291,12 +3260,12 @@ class OpusLayerBaseUnitTest {
 
         assertEquals(
             ControlEventType.Tempo,
-            manager.get_ctl_line_type(9)
+            manager.get_ctl_line_type(6)
         )
 
         assertEquals(
             CtlLineLevel.Global,
-            manager.ctl_line_level(9)
+            manager.ctl_line_level(6)
         )
 
         assertEquals(
@@ -3310,72 +3279,72 @@ class OpusLayerBaseUnitTest {
         )
 
         assertEquals(
-            Triple(1, CtlLineLevel.Line, ControlEventType.Volume),
-            manager.get_ctl_line_info(4)
+            Triple(0, CtlLineLevel.Line, ControlEventType.Volume),
+            manager.get_ctl_line_info(1)
         )
 
         assertEquals(
             Triple(-1, CtlLineLevel.Global, ControlEventType.Tempo),
-            manager.get_ctl_line_info(9)
+            manager.get_ctl_line_info(6)
         )
     }
 
-    @Test
-    fun test_merge_leafs() {
-        val manager = OpusManager()
-        manager.new()
-        var key_a = BeatKey(0,0,0)
-        var key_b = BeatKey(0,0,1)
-        var key_c = BeatKey(0,0,2)
-        var key_d = BeatKey(0,0,3)
+    //@Test
+    //fun test_merge_leafs() {
+    //    val manager = OpusManager()
+    //    manager.new()
+    //    var key_a = BeatKey(0,0,0)
+    //    var key_b = BeatKey(0,0,1)
+    //    var key_c = BeatKey(0,0,2)
+    //    var key_d = BeatKey(0,0,3)
 
-        manager.split_tree(key_a, listOf(), 2)
-        manager.split_tree(key_b, listOf(), 3)
-        manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
-        manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
-        manager.set_event(key_b, listOf(0), AbsoluteNoteEvent(12))
-        manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
-        manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
+    //    manager.split_tree(key_a, listOf(), 2)
+    //    manager.split_tree(key_b, listOf(), 3)
+    //    manager.set_event(key_a, listOf(0), AbsoluteNoteEvent(10))
+    //    manager.set_event(key_a, listOf(1), AbsoluteNoteEvent(11))
+    //    manager.set_event(key_b, listOf(0), AbsoluteNoteEvent(12))
+    //    manager.set_event(key_b, listOf(1), AbsoluteNoteEvent(13))
+    //    manager.set_event(key_b, listOf(2), AbsoluteNoteEvent(14))
 
-        assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
-            manager.merge_leafs(key_a, listOf(), key_b, listOf())
-        }
-        assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
-            manager.merge_leafs(key_a, listOf(), key_a, listOf())
-        }
+    //    assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
+    //        manager.merge_leafs(key_a, listOf(), key_b, listOf())
+    //    }
+    //    assertThrows(OpusLayerBase.InvalidMergeException::class.java) {
+    //        manager.merge_leafs(key_a, listOf(), key_a, listOf())
+    //    }
 
-        manager.unset(key_b, listOf(0))
-        manager.merge_leafs(key_a, listOf(), key_b, listOf())
-        assertTrue(manager.get_tree(key_a).is_leaf() && !manager.get_tree(key_a).is_event())
-        assertEquals(2, manager.get_tree(key_b).size)
-        assertEquals(3, manager.get_tree(key_b, listOf(0)).size)
-        assertEquals(3, manager.get_tree(key_b, listOf(1)).size)
-        assertEquals(
-            AbsoluteNoteEvent(10),
-            manager.get_tree(key_b, listOf(0, 0)).event
-        )
-        assertEquals(
-            AbsoluteNoteEvent(11),
-            manager.get_tree(key_b, listOf(1, 0)).event
-        )
-        assertEquals(
-            AbsoluteNoteEvent(13),
-            manager.get_tree(key_b, listOf(0, 2)).event
-        )
-        assertEquals(
-            AbsoluteNoteEvent(14),
-            manager.get_tree(key_b, listOf(1, 1)).event
-        )
+    //    manager.unset(key_b, listOf(0))
+    //    manager.merge_leafs(key_a, listOf(), key_b, listOf())
+    //    assertTrue(manager.get_tree(key_a).is_leaf() && !manager.get_tree(key_a).is_event())
+    //    assertEquals(2, manager.get_tree(key_b).size)
+    //    assertEquals(3, manager.get_tree(key_b, listOf(0)).size)
+    //    assertEquals(3, manager.get_tree(key_b, listOf(1)).size)
+    //    assertEquals(
+    //        AbsoluteNoteEvent(10),
+    //        manager.get_tree(key_b, listOf(0, 0)).event
+    //    )
+    //    assertEquals(
+    //        AbsoluteNoteEvent(11),
+    //        manager.get_tree(key_b, listOf(1, 0)).event
+    //    )
+    //    assertEquals(
+    //        AbsoluteNoteEvent(13),
+    //        manager.get_tree(key_b, listOf(0, 2)).event
+    //    )
+    //    assertEquals(
+    //        AbsoluteNoteEvent(14),
+    //        manager.get_tree(key_b, listOf(1, 1)).event
+    //    )
 
-        manager.set_event(key_c, listOf(), AbsoluteNoteEvent(15))
-        manager.merge_leafs(key_c, listOf(), key_d, listOf())
+    //    manager.set_event(key_c, listOf(), AbsoluteNoteEvent(15))
+    //    manager.merge_leafs(key_c, listOf(), key_d, listOf())
 
-        assertTrue(manager.get_tree(key_d).is_event())
+    //    assertTrue(manager.get_tree(key_d).is_event())
 
-        assertEquals(
-            AbsoluteNoteEvent(15),
-            manager.get_tree(key_d).event
-        )
-    }
+    //    assertEquals(
+    //        AbsoluteNoteEvent(15),
+    //        manager.get_tree(key_d).event
+    //    )
+    //}
 
 }

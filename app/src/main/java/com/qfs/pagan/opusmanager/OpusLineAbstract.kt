@@ -2,120 +2,81 @@ package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.structure.OpusTree
 
-abstract class OpusLineAbstract<T: InstrumentEvent>(var beats: MutableList<OpusTree<T>>) {
+abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<T>>): OpusTreeArray<T>(beats) {
+    class BlockedCtlTreeException(var type: ControlEventType, var e: BlockedTreeException): Exception(e.message)
     var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
 
-    fun squish(factor: Int) {
-        val new_beats = mutableListOf<OpusTree<T>>()
-        for (b in 0 until this.beats.size) {
-            if (b % factor == 0) {
-                new_beats.add(OpusTree<T>())
-            }
-            val working_beat = new_beats.last()
-            working_beat.insert(b % factor, this.beats[b])
-        }
-
-        if (this.beats.size % factor != 0) {
-            while (new_beats.last().size < factor) {
-                new_beats.last().insert(
-                    new_beats.last().size,
-                    OpusTree()
-                )
-            }
-        }
-
-        for (beat in new_beats) {
-            var is_empty = true
-
-            for (i in 0 until beat.size) {
-                if (!(beat[i].is_leaf() && beat[i].is_eventless())) {
-                    is_empty = false
-                    break
-                }
-            }
-
-            if (is_empty) {
-                beat.set_size(0)
-            }
-        }
-        this.beats = new_beats
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is OpusLineAbstract<*>) {
-            return false
-        }
-
-        for (i in 0 until this.beats.size) {
-            if (this.beats[i] != other.beats[i]) {
-                return false
-            }
-        }
-
-        return true
-    }
-
-    fun insert_beat(index: Int) {
-        this.beats.add(index, OpusTree())
-        for ((_, controller) in this.controllers.get_all()) {
-            controller.insert_beat(index)
+    init {
+        // Default volume to hidden
+        for ((_, controller) in controllers.get_all()) {
+            controller.visible = false
         }
     }
 
-    fun set_beat_count(new_beat_count: Int) {
-        val original_size = this.beats.size
-        if (new_beat_count > original_size) {
-            for (i in original_size until new_beat_count) {
-                this.beats.add(OpusTree())
-            }
-        } else if (new_beat_count < original_size) {
-            for (i in new_beat_count until original_size) {
-                this.beats.removeLast()
-            }
-        }
+    override fun insert_beat(index: Int) {
+        super.insert_beat(index)
+        this.controllers.insert_beat(index)
+    }
+
+    override fun set_beat_count(new_beat_count: Int) {
+        super.set_beat_count(new_beat_count)
         this.controllers.set_beat_count(new_beat_count)
     }
 
-    fun get_controller(type: ControlEventType): ActiveController {
+    override fun remove_beat(index: Int, count: Int) {
+        super.remove_beat(index, count)
+        for ((type, controller) in this.controllers.get_all()) {
+            try {
+                controller.remove_beat(index, count)
+            } catch (e: OpusTreeArray.BlockedTreeException) {
+                throw BlockedCtlTreeException(type, e)
+            }
+        }
+    }
+
+    fun remove_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
+        try {
+            this.get_controller<OpusControlEvent>(type).remove_node(beat, position)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
+    }
+
+    fun insert_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
+        try {
+            this.get_controller<OpusControlEvent>(type).insert(beat, position)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
+    }
+
+    fun insert_control_leaf_after(type: ControlEventType, beat: Int, position: List<Int>) {
+        try {
+            this.get_controller<OpusControlEvent>(type).insert_after(beat, position)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
+    }
+
+    fun <T: OpusControlEvent> replace_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: OpusTree<T>) {
+        try {
+            this.get_controller<T>(type).replace_tree(beat, position, tree)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
+        }
+    }
+
+    fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {
         return this.controllers.get_controller(type)
     }
 
-    fun remove_beat(index: Int) {
-        this.beats.removeAt(index)
-        for ((_, controller) in this.controllers.get_all()) {
-            controller.remove_beat(index)
+    fun <T: OpusControlEvent> set_controller_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
+        try {
+            this.get_controller<T>(type).set_event(beat, position, event)
+        } catch (e: OpusTreeArray.BlockedTreeException) {
+            throw BlockedCtlTreeException(type, e)
         }
     }
 
-    fun get_tree(beat: Int, position: List<Int>? = null): OpusTree<T> {
-        var tree = this.beats[beat]
-        if (position != null) {
-            for (i in position) {
-                tree = tree[i]
-            }
-        }
-
-        return tree
-    }
-
-    fun replace_tree(beat: Int, position: List<Int>?, tree: OpusTree<T>) {
-        val old_tree = this.get_tree(beat, position)
-        if (old_tree == tree) {
-            return // Don't waste the cycles
-        }
-        if (tree.parent != null) {
-            tree.detach()
-        }
-
-        if (old_tree.parent != null) {
-            old_tree.replace_with(tree)
-        } else {
-            tree.parent = null
-        }
-
-        if (position?.isEmpty() ?: true) {
-            this.beats[beat] = tree
-        }
-    }
 }
 

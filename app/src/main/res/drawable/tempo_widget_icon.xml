@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/secondary_contextmenu_button_height"
+    android:height="@dimen/secondary_contextmenu_button_height"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:pathData="M8.266,1.886L4.413,22.114L8.019,22.114L8.222,20.271L16.241,20.271L16.428,22.114L19.587,22.114L17.09,8.963L12.863,14.434L12.541,14.852L11.707,14.207L12.029,13.789L16.827,7.578L15.746,1.886L8.266,1.886zM16.827,7.578L17.09,8.963L21.508,3.244L21.83,2.828L20.996,2.182L20.672,2.6L16.827,7.578z"
+      android:strokeLineJoin="round"
+      android:strokeWidth="3.84344"
+      android:fillColor="#FFFFFF"
+      android:strokeLineCap="square"/>
+</vector>

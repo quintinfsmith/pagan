@@ -2,16 +2,16 @@ package com.qfs.pagan
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ProjectManager(data_dir: String) {
+class ProjectManager(val activity: MainActivity) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
+    private val data_dir = activity.getExternalFilesDir(null).toString()
     val path = "$data_dir/projects/"
     private val _cache_path = "$data_dir/project_list.json"
 
@@ -32,6 +32,7 @@ class ProjectManager(data_dir: String) {
         if (file.isFile) {
             file.delete()
         }
+
         this._untrack_path(opus_manager.path!!)
     }
 
@@ -52,7 +53,9 @@ class ProjectManager(data_dir: String) {
 
     fun save(opus_manager: OpusManager) {
         this.get_directory()
+
         opus_manager.save()
+
         // Untrack then track in order to update the project title in the cache
         this._untrack_path(opus_manager.path!!)
         this._track_path(opus_manager.path!!)
@@ -77,8 +80,7 @@ class ProjectManager(data_dir: String) {
     private fun generate_file_project_name(): String {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        // TODO: use resource string
-        return "Untitled Op. - ${now.format(formatter)}"
+        return this.activity.getString(R.string.untitled_op, now.format(formatter))
     }
 
     private fun _cache_project_list() {
@@ -96,8 +98,7 @@ class ProjectManager(data_dir: String) {
             var project_name = try {
                 this.get_file_project_name(json_file) ?: this.generate_file_project_name()
             } catch (e: Exception) {
-                // TODO: use resource string
-                "Corrupted Project"
+                this.activity.getString(R.string.corrupted_project)
             }
             project_list.add(Pair(json_file.path, project_name))
         }
@@ -111,10 +112,7 @@ class ProjectManager(data_dir: String) {
 
     private fun get_file_project_name(file: File): String? {
         val content = file.readText(Charsets.UTF_8)
-        val json_obj = JSONParser.parse(content)
-        if (json_obj !is JSONHashMap) {
-            return null
-        }
+        val json_obj = JSONParser.parse<JSONHashMap>(content) ?: return null
 
         val version = OpusManagerJSONInterface.detect_version(json_obj)
         return when (version) {

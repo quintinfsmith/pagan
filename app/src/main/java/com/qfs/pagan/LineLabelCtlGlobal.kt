@@ -3,26 +3,40 @@ package com.qfs.pagan
 import android.content.Context
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusLayerBase
 
 class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabelCtl(context, CtlLineLevel.Global, ctl_type) {
     override fun on_click() {
+        val tracker = this.get_activity().get_action_interface()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        try {
-            if (cursor.is_linking_range()) {
-                val (first, second) = cursor.range!!
-                opus_manager.overwrite_global_ctl_range_horizontally(this.ctl_type, first.beat, second.beat)
-            } else if (cursor.selecting_range) {
-                opus_manager.overwrite_global_ctl_row(this.ctl_type, cursor.beat)
-            }
-        } catch (e: OpusLayerBase.InvalidOverwriteCall) {
-            // pass
+
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_ctl_global(this.ctl_type, -1)
+        } else {
+            tracker.cursor_select_global_ctl_line(this.ctl_type)
         }
-        opus_manager.cursor_select_ctl_row_at_global(this.ctl_type)
     }
+
+    override fun on_long_click(): Boolean {
+        val tracker = this.get_activity().get_action_interface()
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
+        if (cursor.is_selecting_range()) {
+            tracker.repeat_selection_ctl_global(this.ctl_type)
+        } else {
+            tracker.cursor_select_global_ctl_line(this.ctl_type)
+        }
+
+        return true
+    }
+
     override fun is_selected(): Boolean {
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_global_control_line_selected(this.ctl_type)
+    }
+    override fun is_selected_secondary(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        return opus_manager.is_global_control_line_selected_secondary(this.ctl_type)
     }
 }

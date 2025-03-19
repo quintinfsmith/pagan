@@ -1,0 +1,2 @@
+Fixed "About" button on front page not working.
+Fixed: Had to scroll to top to be able to select column.

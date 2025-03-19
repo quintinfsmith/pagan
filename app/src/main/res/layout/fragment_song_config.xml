@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
+    android:background="@color/main_bg"
     android:id="@+id/clA"
     android:minWidth="@dimen/config_width"
     android:layout_width="wrap_content"
@@ -22,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.qfs.pagan.ButtonStd
+            <TextView
                 android:id="@+id/btnChangeProjectName"
                 android:theme="@style/song_config_button"
                 android:text="@string/btn_cfg_change_name"
@@ -39,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.qfs.pagan.ButtonStd
+            <TextView
                 android:id="@+id/btnRadix"
                 android:theme="@style/song_config_button"
                 android:layout_width="wrap_content"
@@ -47,12 +48,12 @@
                 android:text="@string/label_tuning"/>
 
             <Space
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:minWidth="@dimen/config_item_padding"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <com.qfs.pagan.ButtonStd
+            <TextView
                 android:id="@+id/btnAddChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -65,11 +66,10 @@
             android:id="@+id/rvActiveChannels"
             android:paddingTop="@dimen/config_item_padding"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_weight="1" />
 
     </LinearLayout>
-
 
     <LinearLayout
         android:paddingTop="@dimen/config_item_padding"
@@ -81,26 +81,31 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:layout_margin="-3dp"
+            style="@style/icon_button"
             android:id="@+id/btnSaveProject"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/ic_baseline_save_24"
+            android:contentDescription="@string/cd_save_project"
             android:text="@string/btn_cfg_save" />
+
         <Space
             android:layout_weight="1"
             android:minWidth="4dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:id="@+id/btnCopyProject"
+            style="@style/icon_button"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/ic_baseline_content_copy_24"
+            android:contentDescription="@string/cd_duplicate_project"
             android:text="@string/btn_cfg_copy" />
 
         <Space
@@ -109,12 +114,14 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:id="@+id/btnDeleteProject"
+            style="@style/icon_button"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/ic_baseline_delete_24"
+            android:contentDescription="@string/cd_delete_project"
             android:text="@string/btn_cfg_delete" />
 
         <Space
@@ -123,15 +130,17 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:id="@+id/btnExportProject"
+            style="@style/icon_button"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
             app:srcCompat="@drawable/export"
+            android:contentDescription="@string/cd_export_project"
             android:text="@string/btn_cfg_export" />
-
     </LinearLayout>
+
     <LinearLayout
         android:paddingTop="@dimen/config_item_padding"
         android:paddingBottom="@dimen/config_item_padding"
@@ -142,16 +151,18 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
-        <com.qfs.pagan.PaganTextView
-            android:text="Export Progress:"
+
+        <TextView
+            android:text="@string/label_export_progress_no_value"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"/>
-        <com.qfs.pagan.PaganTextView
+
+        <TextView
             android:id="@+id/tvExportProgress"
-            android:text="0%"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
     </LinearLayout>
 
 </LinearLayout>

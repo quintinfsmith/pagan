@@ -14,7 +14,12 @@ class InvalidJSON(msg: String): Exception(msg) {
         output
     }())
 }
-class NonNullableException(): Exception("Attempting to access non-nullable value which is null")
+class NonNullableException : Exception("Attempting to access non-nullable value which is null")
+class InvalidJSONObject(obj: Any): Exception("Not a valid JSON Object $obj")
+
+interface JSONEncodeable {
+    fun to_json(): JSONObject
+}
 
 interface JSONObject {
     fun to_string(): String
@@ -25,10 +30,24 @@ data class JSONString(var value: String): JSONObject {
         val escaped_string = this.value.replace("\"", "\\\"")
         return "\"$escaped_string\""
     }
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONString && other.value == this.value)
+    }
+
+    override fun toString(): String {
+        return this.to_string()
+    }
 }
+
 data class JSONFloat(var value: Float): JSONObject {
     override fun to_string(): String {
         return "${this.value}"
+    }
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONFloat && other.value == this.value)
+    }
+    override fun toString(): String {
+        return this.to_string()
     }
 }
 
@@ -36,19 +55,58 @@ data class JSONInteger(var value: Int): JSONObject {
     override fun to_string(): String {
         return "${this.value}"
     }
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONInteger && other.value == this.value)
+    }
+    override fun toString(): String {
+        return this.to_string()
+    }
 }
 data class JSONBoolean(var value: Boolean): JSONObject {
     override fun to_string(): String {
         return this.value.toString()
     }
+
+    override fun equals(other: Any?): Boolean {
+        return (other is JSONBoolean && other.value == this.value)
+    }
+    override fun toString(): String {
+        return this.to_string()
+    }
 }
 
-class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
-    val hash_map = input_map ?: HashMap<String, JSONObject?>()
+class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
+    private val hash_map = HashMap<String, JSONObject?>()
+    val keys: Set<String>
+        get() = this.hash_map.keys
+
+    init {
+        for (arg in args) {
+            when (arg.second) {
+                null -> this[arg.first] = null
+                is Boolean -> this[arg.first] = arg.second as Boolean
+                is Int -> this[arg.first] = arg.second as Int
+                is Float -> this[arg.first] = arg.second as Float
+                is String -> this[arg.first] = arg.second as String
+                is JSONEncodeable -> this[arg.first] = (arg.second as JSONEncodeable)
+                is JSONObject -> this[arg.first] = arg.second as JSONObject
+                else -> throw InvalidJSONObject(arg.second!!)
+            }
+        }
+    }
 
     operator fun get(key: String): JSONObject? {
         return this.hash_map[key]
     }
+
+    operator fun set(key: String, n: Nothing?) {
+        this.hash_map[key] = null
+    }
+
+    operator fun set(key: String, value: JSONEncodeable) {
+        this.hash_map[key] = value.to_json()
+    }
+
     operator fun set(key: String, value: JSONObject?) {
         this.hash_map[key] = value
     }
@@ -194,10 +252,33 @@ class JSONHashMap(input_map: HashMap<String, JSONObject?>? = null): JSONObject {
         output = "$output}"
         return output
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is JSONHashMap || other.keys != this.keys) {
+            return false
+        }
+
+        for (key in this.keys) {
+            if (other[key] != this[key]) {
+                return false
+            }
+        }
+
+        return true
+    }
+    override fun toString(): String {
+        return this.to_string()
+    }
 }
 
-class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
-    val list = input_list ?: mutableListOf<JSONObject?>()
+class JSONList(vararg args: JSONObject?): JSONObject {
+    constructor(size: Int, callback: (Int) -> JSONObject?): this(*Array(size) { i: Int -> callback(i) })
+    private val list = args.toMutableList()
+
+    val size: Int
+        get() = this.list.size
+    val indices: IntRange
+        get() = this.list.indices
 
     override fun to_string(): String {
         var output = "["
@@ -211,6 +292,9 @@ class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
         }
         output = "$output]"
         return output
+    }
+    fun forEachIndexed(callback: (Int, JSONObject?) -> Unit) {
+        this.list.forEachIndexed(callback)
     }
 
     fun add(value: JSONObject?) {
@@ -274,27 +358,27 @@ class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
         this.list[index] = null
     }
 
-    fun get_int(index: Int, default: Int?): Int? {
+    fun get_int(index: Int, default: Int): Int {
         if (this.list[index] == null) {
             return default
         }
         return (this.list[index] as JSONInteger).value
     }
-    fun get_string(index: Int, default: String?): String? {
+    fun get_string(index: Int, default: String): String {
         if (this.list[index] == null) {
             return default
         }
         return (this.list[index] as JSONString).value
     }
-    fun get_float(index: Int, default: Float?): Float? {
+    fun get_float(index: Int, default: Float): Float {
         if (this.list[index] == null) {
             return default
         }
         return (this.list[index] as JSONFloat).value
     }
-    fun get_boolean(index: Int, default: Boolean?): Boolean? {
+    fun get_boolean(index: Int, default: Boolean): Boolean {
         if (this.list[index] == null) {
-            return null
+            return default
         }
         return (this.list[index] as JSONBoolean).value
     }
@@ -375,11 +459,35 @@ class JSONList(input_list: MutableList<JSONObject?>? = null): JSONObject {
         return (this.list[index] as JSONList)
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (other !is JSONList || other.size != this.size) {
+            return false
+        }
+
+        for (i in this.list.indices) {
+            if (other.list[i] != this.list[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
+    override fun toString(): String {
+        return this.to_string()
+    }
+
+    operator fun iterator(): Iterator<JSONObject?> {
+        return this.list.iterator()
+    }
+
+    operator fun get(i: Int): JSONObject? {
+        return this.list[i]
+    }
 }
 
 class JSONParser {
     companion object {
-        fun parse(json_content: String): JSONObject? {
+        fun <T: JSONObject> parse(json_content: String): T? {
             var working_number: String? = null
             var working_string: String? = null
             var string_escape_flagged = false
@@ -450,14 +558,14 @@ class JSONParser {
                                 //    throw InvalidJSON(json_content, index)
                                 //}
 
-                                val to_add_object = object_stack.removeLast()
+                                val to_add_object = object_stack.removeAt(object_stack.size - 1)
                                 when (object_stack.last()) {
                                     is JSONList -> {
                                         (object_stack.last() as JSONList).add(to_add_object)
                                     }
 
                                     is JSONString -> {
-                                        val key_object = object_stack.removeLast() as JSONString
+                                        val key_object = object_stack.removeAt(object_stack.size - 1) as JSONString
                                         if (object_stack.last() is JSONHashMap) {
                                             (object_stack.last() as JSONHashMap)[key_object.value] = to_add_object
                                         }
@@ -469,13 +577,13 @@ class JSONParser {
                             }
 
                             Char(125) -> { // "}"
-                                val object_index = position_stack.removeLast()
+                                val object_index = position_stack.removeAt(position_stack.size - 1)
                                 if (object_index == object_stack.size - 1) {
                                     // Nothing to be done
                                 } else {
                                     val map_object = object_stack[object_index]
-                                    val to_add_object = object_stack.removeLast()
-                                    val to_add_key = object_stack.removeLast()
+                                    val to_add_object = object_stack.removeAt(object_stack.size - 1)
+                                    val to_add_key = object_stack.removeAt(object_stack.size - 1)
 
                                     if (map_object is JSONHashMap && to_add_key is JSONString) {
                                         map_object[to_add_key.value] = to_add_object
@@ -487,12 +595,12 @@ class JSONParser {
                             }
 
                             Char(93) -> { // "]"
-                                val object_index = position_stack.removeLast()
+                                val object_index = position_stack.removeAt(position_stack.size - 1)
                                 if (object_index == object_stack.size - 1) {
                                     // Nothing to be Done
                                 } else {
                                     val list_object = object_stack[object_index]
-                                    val to_add_object = object_stack.removeLast()
+                                    val to_add_object = object_stack.removeAt(object_stack.size - 1)
 
                                     if (list_object is JSONList) {
                                         list_object.add(to_add_object)
@@ -600,8 +708,12 @@ class JSONParser {
                 throw InvalidJSON(json_content, index)
             }
 
-
-            return object_stack.last()
+            val output = object_stack.last()
+            return if (output != null) {
+                output as T
+            } else {
+                null
+            }
         }
     }
 }

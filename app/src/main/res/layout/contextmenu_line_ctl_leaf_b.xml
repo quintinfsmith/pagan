@@ -5,12 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal">
-        <com.qfs.pagan.ButtonIcon
+        <ImageView
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
             android:layout_marginStart="@dimen/number_selector_spacing"
             android:src="@drawable/unset"
             android:id="@+id/btnEraseSelection"
-            android:contentDescription="Clear Selection"/>
+            android:contentDescription="@string/cd_clear_selection"/>
 </LinearLayout>

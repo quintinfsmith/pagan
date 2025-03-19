@@ -5,21 +5,15 @@
             <padding
                 android:top="0dp"
                 android:left="0dp"
-                android:right="0dp"
-                android:bottom="0dp" />
+                android:right="@dimen/stroke_leaf"
+                android:bottom="@dimen/stroke_leaf"/>
+            <solid android:color="@color/table_lines"/>
         </shape>
     </item>
 
-    <item android:elevation="0dp" android:id ="@+id/tintable_background">
+    <item android:id ="@+id/tintable_background">
         <shape android:shape="rectangle">
-            <solid android:width="@dimen/base_leaf_width" android:color="#000000"/>
-        </shape>
-    </item>
-
-    <item android:top="-.5dp" android:elevation="0dp" android:id="@+id/tintable_lines">
-        <shape android:shape="rectangle">
-            <solid android:color="#00000000"/>
-            <stroke android:width="@dimen/stroke_leaf" android:color="#000000"/>
+            <solid android:width="@dimen/base_leaf_width" android:color="@color/column_label_std_selector"/>
         </shape>
     </item>
 </layer-list>

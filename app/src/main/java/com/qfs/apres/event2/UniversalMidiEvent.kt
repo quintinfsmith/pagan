@@ -1,8 +1,37 @@
 package com.qfs.apres.event2
 
 import com.qfs.apres.event.GeneralMIDIEvent
+import kotlin.experimental.or
 
 abstract interface UMPEvent: GeneralMIDIEvent
+
+private infix fun Byte.shl(i: Int): Byte {
+    var n = this.toInt()
+    for (x in 0 until i) {
+        n *= 2
+    }
+    return n.toByte()
+}
+
+abstract interface FlexDataMessage: UMPEvent {
+    abstract fun get_group(): Byte
+    abstract fun get_form(): Byte
+    abstract fun get_addrs(): Byte
+    abstract fun get_channel(): Byte
+    abstract fun get_status_bank(): Byte
+    abstract fun get_status(): Byte
+
+    abstract fun get_data(): ByteArray
+
+    override fun as_bytes(): ByteArray {
+        return byteArrayOf(
+            0xD0.toByte() or this.get_group(),
+            (this.get_form() shl 6) or (this.get_addrs() shl 4) or this.get_channel(),
+            this.get_status_bank(),
+            this.get_status()
+        ) + this.get_data()
+    }
+}
 
 abstract class SystemExclusive(
     var group: Int,
@@ -85,7 +114,7 @@ class InitiateProtocolNegotiation(
 }
 
 class InitiateProtocolNegotiationResponse(
-    muid_source: Int
+    muid_source: Int,
     muid_destination: Int,
     var authority: Int,
     var preferred_protocol_types: Array<Pair<Int, Int>>
@@ -487,5 +516,40 @@ class ControlChange(
             (this.value and 0xFF).toByte()
         )
     }
+}
+
+class SetTempoMessage(var bpm: Float): FlexDataMessage {
+    override fun get_group(): Byte {
+        return 0.toByte()
+    }
+
+    override fun get_form(): Byte {
+        return 0.toByte()
+    }
+
+    override fun get_addrs(): Byte {
+        return 1.toByte()
+    }
+
+    override fun get_channel(): Byte {
+        return 0.toByte()
+    }
+
+    override fun get_status_bank(): Byte {
+        return 0.toByte()
+    }
+
+    override fun get_status(): Byte {
+        return 0.toByte()
+    }
+
+    override fun get_data(): ByteArray {
+        // deca-nano seconds per quarter note
+        val tnspqn = (6000000000.toFloat() / this.bpm).toInt()
+        return ByteArray(4) { i: Int ->
+            ((tnspqn shr i) and 0xFF).toByte()
+        }
+    }
+
 }
 

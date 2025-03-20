@@ -218,9 +218,19 @@ class MidiClipFileInterface {
                 false
             }
         }
-        fun from_bytes(bytes: ByteArray): Midi {
-        }
+        fun from_bytes(bytes: ByteArray): Midi {}
         fun to_bytes(midi: Midi): ByteArray {
+            val output = "SMF2CLIP".toByteArray().toMutableList()
+            output += listOf(0x00, 0x40, 0x00, 0x00)
+
+            val ppqn = midi.get_ppqn()
+            output.add(0x00)
+            output.add(0x30)
+            output.add((ppqn / 256).toByte())
+            output.add((ppqn % 256).toByte())
+
+
+            return output.toByteArray()
         }
     }
 }

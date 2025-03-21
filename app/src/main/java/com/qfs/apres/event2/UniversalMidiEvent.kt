@@ -550,6 +550,117 @@ class SetTempoMessage(var bpm: Float): FlexDataMessage {
             ((tnspqn shr i) and 0xFF).toByte()
         }
     }
+}
+
+class SetTimeSignatureMessage(var numerator: Int, var denominator: Int, var thirtysecondths_per_quarter: Int): FlexDataMessage {
+    override fun get_group(): Byte {
+        return 0
+    }
+
+    override fun get_form(): Byte {
+        return 0
+    }
+
+    override fun get_addrs(): Byte {
+        return 1
+    }
+
+    override fun get_channel(): Byte {
+        return 0
+    }
+
+    override fun get_status_bank(): Byte {
+        return 0
+    }
+
+    override fun get_status(): Byte {
+        return 1
+    }
+
+    override fun get_data(): ByteArray {
+        return byteArrayOf(
+            this.numerator.toByte(),
+            this.denominator.toByte(),
+            this.thirtysecondths_per_quarter.toByte(),
+            0
+        ) + ByteArray(8) { 0 }
+    }
+}
+
+class SetMetronomeMessage(
+    var clocks_per_click: Int,
+    var accent_first: Int,
+    var accent_second: Int = 0,
+    var accent_third: Int = 0,
+    var subdivision_clicks_first: Int = 0,
+    var subdivision_clicks_second: Int = 0): FlexDataMessage {
+
+    override fun get_group(): Byte {
+        return 0
+    }
+
+    override fun get_form(): Byte {
+        return 0
+    }
+
+    override fun get_addrs(): Byte {
+        return 1
+    }
+
+    override fun get_channel(): Byte {
+        return 0
+    }
+
+    override fun get_status_bank(): Byte {
+        return 0
+    }
+
+    override fun get_status(): Byte {
+        return 2
+    }
+
+    override fun get_data(): ByteArray {
+        return byteArrayOf(
+            this.clocks_per_click.toByte(),
+            this.accent_first.toByte(),
+            this.accent_second.toByte(),
+            this.accent_third.toByte(),
+            this.subdivision_clicks_first.toByte(),
+            this.subdivision_clicks_second.toByte()
+        ) + ByteArray(6) { 0 }
+    }
 
 }
 
+
+class SetKeySignatureMessage(var tonic: Int, var sharps: Int): FlexDataMessage {
+    override fun get_group(): Byte {
+        return 0
+    }
+
+    override fun get_form(): Byte {
+        return 0
+    }
+
+    override fun get_addrs(): Byte {
+        return 0
+    }
+
+    override fun get_channel(): Byte {
+        return 0
+    }
+
+    override fun get_status_bank(): Byte {
+        return 0
+    }
+
+    override fun get_status(): Byte {
+        return 5
+    }
+
+    override fun get_data(): ByteArray {
+        return byteArrayOf(
+            ((this.sharps shl 4) or (this.tonic)).toByte()
+        ) + ByteArray(11)
+    }
+}

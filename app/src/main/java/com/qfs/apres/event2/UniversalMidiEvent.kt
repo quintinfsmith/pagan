@@ -4,6 +4,7 @@ import com.qfs.apres.event.GeneralMIDIEvent
 import kotlin.experimental.or
 
 abstract interface UMPEvent: GeneralMIDIEvent
+abstract interface UtilityMessage: GeneralMIDIEvent
 
 private infix fun Byte.shl(i: Int): Byte {
     var n = this.toInt()
@@ -662,5 +663,15 @@ class SetKeySignatureMessage(var tonic: Int, var sharps: Int): FlexDataMessage {
         return byteArrayOf(
             ((this.sharps shl 4) or (this.tonic)).toByte()
         ) + ByteArray(11)
+    }
+}
+
+class DeltaClockStamp(var ticks: Int): UtilityMessage {
+    override fun as_bytes(): ByteArray {
+        return byteArrayOf(
+            0,
+            0x30,
+            (this.ticks and 0xFFFF).toByte()
+        )
     }
 }

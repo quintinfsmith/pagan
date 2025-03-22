@@ -7,8 +7,12 @@ import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event.TimeSignature
+import com.qfs.apres.event2.DeltaClockStamp
+import com.qfs.apres.event2.EndOfClip
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.event2.SetTempoMessage
+import com.qfs.apres.event2.StartOfClip
 import java.io.File
 import kotlin.experimental.or
 
@@ -219,7 +223,7 @@ class MidiClipFileInterface {
             }
         }
         fun from_bytes(bytes: ByteArray): Midi {}
-        fun to_bytes(midi: Midi): ByteArray {
+        fun to_bytes(midi: Midi, clip_index: Int = 0): ByteArray {
             val output = "SMF2CLIP".toByteArray().toMutableList()
             output += listOf(0x00, 0x40, 0x00, 0x00)
 
@@ -228,6 +232,41 @@ class MidiClipFileInterface {
             output.add(0x30)
             output.add((ppqn / 256).toByte())
             output.add((ppqn % 256).toByte())
+
+            output += SetTempoMessage(120F).as_bytes()
+            output += listOf(0x00, 0x40, 0x00, 0x00)
+            output += StartOfClip().as_bytes()
+
+
+            val ticks = midi.get_clips()[clip_index]
+
+            val clip_event_bytes = mutableListOf()
+            var has_eot = false
+            for (pair in ticks) {
+                val tick_delay = pair.first
+                val eid = pair.second
+                val working_event = midi.get_event(eid)
+                if (working_event != null) {
+                    has_eot = has_eot || (working_event is EndOfClip)
+                    clip_event_bytes += DeltaClockStamp(tick_delay)
+                    // TODO: handle v1 / ump
+                    clip_event_bytes += working_event.as_bytes().toMutableList()
+                }
+            }
+
+            // Automatically handle EndOfClipEvent Here instead of requiring it to be in the MIDIClip object
+            if (!has_eot) {
+                clip_event_bytes += DeltaClockStamp(0)
+                clip_event_bytes += EndOfClip().as_bytes().toMutableList()
+            }
+
+            // clip length in bytes
+            val clip_byte_length = clip_event_bytes.size
+            output.add((clip_byte_length shr 24).toByte())
+            output.add(((clip_byte_length shr 16) and 0xFF).toByte())
+            output.add(((clip_byte_length shr 8) and 0xFF).toByte())
+            output.add((clip_byte_length and 0xFF).toByte())
+            output += clip_event_bytes.toList()
 
 
             return output.toByteArray()

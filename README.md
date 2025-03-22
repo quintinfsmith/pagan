@@ -9,52 +9,11 @@ Pagan is something different.
 
 [![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
 
+[Manual](https://burnsomni.net/manual/pagan)
 
-<table>
- <tr>
-  <th>
-   Free Download
-  </th>
-  <th>
-   Donate
-  </th>
-  <th>
-   User Guides
-  </th>
- </tr>
- <tr>
-  <td>
-   <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/">
-    <img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" />
-   </a>
-  </td>
-  <td>
-   <a style="text-decoration: none important!;" href="https://ko-fi.com/L4L5163ZB8">
-    <img alt="Buy Me a Coffee" style="display: block; width: 8em;" src="https://burnsomni.net/content/support_me_on_kofi_badge_beige.png"/>
-   </a>
-  </td>
-  <td align="center">
-   <a style="display: inline-block;" href="https://burnsomni.net/manual/pagan">Manual</a>
-  </td>
- </tr>
- <tr>
-   <td>
-   <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'>
-    <img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/>
-   </a>
-  </td>
-  <td>
-        <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.paganpaid'>
-    <img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/>
-   </a>
-  </td>
+<a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/"><img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" /></a>
+<a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'><img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/></a>
 
-  <td>
-
-  </td>
- </tr>
- 
-</table>
 
 ## Features
 
@@ -90,23 +49,3 @@ Pagan is something different.
   </td>
  </tr>
 </table>
-
-## Contribute
-
-Pull requests are welcome but if you're not condfident with development, feel free to create an issue 
-
-https://github.com/quintinfsmith/pagan/issues
-
-You can also email me 
-
-smith.quintin@protonmail.com 
-
-Get in touch via BlueSky 
-
-https://bsky.app/profile/quintinfsmith.bsky.social 
-
-Or if you just want to make sure I keep working on the project, you can ...
-
-<a style="text-decoration: none important!;" href="https://ko-fi.com/L4L5163ZB8">
-    <img alt="Buy Me a Coffee" style="display: block; width: 8em;" src="https://burnsomni.net/content/support_me_on_kofi_badge_beige.png"/>
-   </a>

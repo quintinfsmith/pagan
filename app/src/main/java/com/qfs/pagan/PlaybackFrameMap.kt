@@ -1,6 +1,6 @@
 package com.qfs.pagan
 
-import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfontplayer.FrameMap
@@ -202,7 +202,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: MIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: SampleHandle.ProfileBuffer? = null, next_event_frame: Int? = null) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: SampleHandle.ProfileBuffer? = null, next_event_frame: Int? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -605,7 +605,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey): MIDIEvent? {
+    private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey): GeneralMIDIEvent? {
         val velocity = (this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset) * 127F).toInt()
 
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called

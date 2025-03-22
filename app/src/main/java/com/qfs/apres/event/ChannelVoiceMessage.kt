@@ -16,6 +16,11 @@ open class ChannelVoiceMessage(
         return output.toByteArray()
     }
 
+    override fun as_ump_bytes(): ByteArray {
+        val output = ByteArray(1) { 0x20 } + this.as_bytes()
+        TODO()
+    }
+
     fun get_channel(): Int {
         return this.channel
     }

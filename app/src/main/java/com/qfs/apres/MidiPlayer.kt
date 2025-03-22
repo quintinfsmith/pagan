@@ -2,7 +2,7 @@ package com.qfs.apres
 
 import android.util.Log
 import com.qfs.apres.event.AllSoundOff
-import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
@@ -96,7 +96,7 @@ class MidiPlayer: VirtualMidiInputDevice() {
         }
 
         for ((channel, index, is_midi2) in notes_on) {
-            val event: MIDIEvent = if (is_midi2) {
+            val event: GeneralMIDIEvent = if (is_midi2) {
                 NoteOff79(
                     index=index,
                     channel=channel,

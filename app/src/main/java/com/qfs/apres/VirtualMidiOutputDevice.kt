@@ -38,6 +38,7 @@ import com.qfs.apres.event.ExpressionMSB
 import com.qfs.apres.event.FootPedal
 import com.qfs.apres.event.FootPedalLSB
 import com.qfs.apres.event.FootPedalMSB
+import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.GeneralPurpose1
 import com.qfs.apres.event.GeneralPurpose1LSB
 import com.qfs.apres.event.GeneralPurpose1MSB
@@ -63,7 +64,6 @@ import com.qfs.apres.event.LocalControl
 import com.qfs.apres.event.Lyric
 import com.qfs.apres.event.MIDIClock
 import com.qfs.apres.event.MIDIContinue
-import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.MIDIStart
 import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.MTCQuarterFrame
@@ -127,7 +127,7 @@ import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 
 interface VirtualMidiOutputDevice {
-    fun receiveMessage(event: MIDIEvent) {
+    fun receiveMessage(event: GeneralMIDIEvent) {
         when (event) {
             is SequenceNumber -> this.onSequenceNumber(event)
             is Text -> this.onText(event)

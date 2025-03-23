@@ -11,7 +11,7 @@ import android.media.midi.MidiManager.TRANSPORT_MIDI_BYTE_STREAM
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
-import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.GeneralMIDIEvent
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -27,7 +27,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
             val msg_list = msg!!.toMutableList()
             msg_list.removeAt(0)
-            val event = event_from_bytes(msg_list, 0x90.toByte()) ?: return
+            val event = StandardMidiFileInterface.event_from_bytes(msg_list, 0x90.toByte()) ?: return
             if (! this@MidiController.block_physical_devices) {
                 broadcast_event(event)
             }
@@ -141,7 +141,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
-    fun broadcast_event(event: MIDIEvent) {
+    fun broadcast_event(event: GeneralMIDIEvent) {
         // Rebroadcast to listening devices
         runBlocking {
             this@MidiController.virtual_output_mutex.withLock {

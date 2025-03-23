@@ -1,6 +1,6 @@
 package com.qfs.apres
 
-import com.qfs.apres.event.MIDIEvent
+import com.qfs.apres.event.GeneralMIDIEvent
 
 abstract class VirtualMidiInputDevice {
     class DisconnectedException: Exception()
@@ -17,7 +17,7 @@ abstract class VirtualMidiInputDevice {
         return this.midi_controller != null
     }
 
-    fun send_event(event: MIDIEvent) {
+    fun send_event(event: GeneralMIDIEvent) {
         if (is_connected()) {
             this.midi_controller!!.broadcast_event(event)
         } else {

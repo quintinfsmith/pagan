@@ -300,4 +300,29 @@ class OpusFrameTracker(val sample_handle_manager: SampleHandleManager, var trans
         )
     }
 
+    fun insert_beat(i: Int, old_beat_count: Int) {
+        for (x in this._tempo_ratio_map.indices) {
+            val (position, tempo) = this._tempo_ratio_map[x]
+            val old_beat = position * old_beat_count.toFloat()
+
+            val new_position = if (i <= old_beat) {
+                (old_beat + 1) / (old_beat_count + 1).toFloat()
+            } else {
+                old_beat / (old_beat_count + 1).toFloat()
+            }
+
+            this._tempo_ratio_map[x] = Pair(new_position, tempo)
+        }
+
+        // TODO: This could be done precisely
+        this.map_beat_frames(old_beat_count + 1)
+
+
+        val frame_range = this.calculate_frame_range(Rational(i, old_beat_count + 1), Rational(1,1))!!
+        for (line_trackers in this.line_trackers) {
+            for (line_tracker in line_trackers) {
+                line_tracker.insert_frames(frame_range.second - frame_range.first, frame_range.first)
+            }
+        }
+    }
 }

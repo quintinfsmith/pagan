@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
 import com.qfs.apres.soundfontplayer.SampleHandle
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 import kotlin.math.min
 
@@ -9,9 +11,9 @@ class OpusLineFrameTracker {
 
     private var generating: Boolean = false
     private var mutex = Mutex()
-    var generated_frames = Array(0) { 0F } // Stereo. 1 frame is 2 Floats
+    var generated_frames = HashMap<Int, FloatArray>()
     val size: Int
-        get() = this.generated_frames.size / 2
+        get() = this._calc_size()
 
     var handles: HashMap<Int, Pair<SampleHandle, IntRange>> = hashMapOf()
     var handle_start_map: HashMap<Int, MutableSet<Int>> = hashMapOf() // Frame::[Uuid]
@@ -20,6 +22,11 @@ class OpusLineFrameTracker {
     private var queued_ranges: MutableSet<IntRange> = mutableSetOf()
 
     var volume_map: Map<Int, Pair<Float, Float>>? = null
+
+    private fun _calc_size(): Int {
+        var max_start_frame = this.generated_frames.keys.max()
+        return this.generated_frames[max_start_frame]!!.size + max_start_frame
+    }
 
     fun set_volume_map(new_map: Map<Int, Pair<Float, Float>>) {
         this.volume_map = new_map
@@ -84,10 +91,44 @@ class OpusLineFrameTracker {
 
             val handled_ranges = mutableSetOf<IntRange>()
             for (i_range in sorted_ranges) {
-                for (i in i_range) {
-                    this.generated_frames[(i * 2)] = 0F
-                    this.generated_frames[(i * 2) + 1] = 0F
+                val frames_to_stitch = mutableSetOf<Int>()
+                for ((start_frame, array) in this.generated_frames) {
+                    if (i_range.intersects(start_frame until start_frame + (array.size / 2))) {
+                        frames_to_stitch.add(start_frame)
+                    }
                 }
+
+                val new_frame_key: Int
+                val new_size: Int
+                val new_array: FloatArray
+                if (frames_to_stitch.isNotEmpty()) {
+                    new_frame_key = min(i_range.first, frames_to_stitch.min())
+                    new_size = (this.generated_frames[frames_to_stitch.max()]!!.size / 2) - new_frame_key
+                    new_array = FloatArray(new_size * 2) { i: Int -> 0F }
+                    for (k in frames_to_stitch) {
+                        this.generated_frames[k]!!.forEachIndexed { f: Int, frame: Float ->
+                            new_array[(k * 2) + f] = frame
+                        }
+                    }
+
+                    // TODO: Fix doubling up
+                    for (i in i_range) {
+                        val ii = i * 2
+                        new_array[(ii - new_frame_key)] = 0F
+                        new_array[((ii + 1) - new_frame_key)] = 0F
+                    }
+
+                    for (k in frames_to_stitch) {
+                        this.generated_frames.remove(k)
+                    }
+
+                } else {
+                    new_frame_key = i_range.first
+                    new_size = i_range.last() - i_range.first
+                    new_array = FloatArray(new_size * 2) { i: Int -> 0F }
+                }
+
+                this.generated_frames[new_frame_key] = new_array
 
                 for (hid in this.handles.keys) { // #NONOPT
                     val (handle, h_range) = this.handles[hid]!!
@@ -97,8 +138,9 @@ class OpusLineFrameTracker {
                         handle.set_working_frame(i_range.last - h_range.first)
                         for (i in h_range.first..i_range.last) {
                             val (lv, rv) = handle.get_next_frame() ?: break
-                            this.generated_frames[(i * 2)] += rv
-                            this.generated_frames[(i * 2) + 1] += lv
+                            val ii = (i * 2) - new_frame_key
+                            new_array[ii] += rv
+                            new_array[ii + 1] += lv
                         }
                     }
                 }
@@ -115,6 +157,7 @@ class OpusLineFrameTracker {
         for (handle_id in handles) {
             var (handle, range) = this.handles.remove(handle_id) ?: continue
             val id_set = this.handle_end_map[range.last]!!.remove(handle_id)
+            this.invalidate(range.first, range.last)
         }
     }
 
@@ -144,24 +187,55 @@ class OpusLineFrameTracker {
             max_end_frame = max(max_end_frame, end_frame)
         }
 
-        if (max_end_frame > this.size) {
-            this.add_frames(max_end_frame - this.size, this.size)
-        }
-
         this.invalidate(frame, max_end_frame)
     }
 
-    private fun add_frames(count: Int, position: Int) {
-        val a_count = count * 2
-        val a_position = position * 2
-        this.generated_frames = Array(a_count + this.generated_frames.size) { i: Int ->
-            if (i <= a_position) {
-                this.generated_frames[i]
-            } else if (i > a_position + a_count) {
-                this.generated_frames[i - a_count]
+    fun insert_frames(count: Int, position: Int) {
+        this.handle_start_map.clear()
+        this.handle_end_map.clear()
+
+        for ((uid, pair) in this.handles) {
+            val (handle, range) = pair
+            if (range.first <= position) {
+                val new_first = range.first + count
+                val new_last = range.last + count
+                this.handles[uid] = Pair(handle, new_first .. new_last)
+
+                if (!this.handle_start_map.contains(new_first)) {
+                    this.handle_start_map[new_first] = mutableSetOf()
+                }
+
+                if (!this.handle_end_map.contains(new_last)) {
+                    this.handle_end_map[new_last] = mutableSetOf()
+                }
+
+                this.handle_start_map[new_first]!!.add(uid)
+                this.handle_end_map[new_last]!!.add(uid)
             } else {
-                0F
+                if (!this.handle_start_map.contains(range.first)) {
+                    this.handle_start_map[range.first] = mutableSetOf()
+                }
+
+                if (!this.handle_end_map.contains(range.last)) {
+                    this.handle_end_map[range.last] = mutableSetOf()
+                }
+
+                this.handle_start_map[range.first]!!.add(uid)
+                this.handle_end_map[range.last]!!.add(uid)
             }
         }
+
+        val keys = this.generated_frames.keys.sorted().reversed()
+        for (frame in keys) {
+            if (frame < position) {
+                break
+            }
+
+            this.generated_frames[frame + count] = this.generated_frames.remove(frame)!!
+        }
     }
+}
+
+inline fun IntRange.intersects(other: IntRange): Boolean {
+    return this.first() in other || this.last() in other
 }

@@ -4,7 +4,9 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.InstrumentEvent
+import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerHistory
+import com.qfs.pagan.structure.OpusTree
 
 open class OpusLayerFrameTracker: OpusLayerHistory() {
     private var frame_tracker: OpusFrameTracker? = null
@@ -53,6 +55,13 @@ open class OpusLayerFrameTracker: OpusLayerHistory() {
         val (offset, _) = line.get_leaf_offset_and_width(beat_key.beat, position)
 
         frame_tracker.remove_handles(beat_key.channel, beat_key.line_offset, offset)
+    }
+
+    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+        super.insert_beat(beat_index, beats_in_column)
+        val frame_tracker = this.frame_tracker ?: return
+
+        frame_tracker.insert_beat(beat_index, this.length - 1)
     }
 
     private fun set_event_handles(beat_key: BeatKey, position: List<Int>) {

@@ -97,6 +97,7 @@ class SampleHandleManager(
         val sample_counts = arrayOf(0, 0, 0)
         val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
         var sample_count = 0
+        var xx = 0
         for (p_instrument in potential_instruments) {
             val samples = p_instrument.instrument?.get_samples(
                 event.note,

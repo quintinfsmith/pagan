@@ -288,14 +288,7 @@ class SampleHandle(
                 data_buffers = Array(original._data_buffers.size) { i: Int ->
                     var buffer = original._data_buffers[i]
                     // constructing this way allows us to skip calculating max
-                    val new_buffer = PitchedBuffer(
-                        data = buffer.data,
-                        pitch = buffer.pitch,
-                        known_max = buffer.max,
-                        range = buffer._range,
-                        is_loop = buffer.is_loop,
-                    )
-                    new_buffer.position(buffer.position())
+                    val new_buffer = buffer.copy()
                     new_buffer
                 },
                 modulators = original.modulators,
@@ -345,33 +338,33 @@ class SampleHandle(
         this.is_dead = try {
             if (release_frame == null || release_frame > frame) {
                 if (loop_points == null || frame < this._data_buffers[0].size) {
-                    this._data_buffers[0].position(frame)
+                    this._data_buffers[0].set_position(frame)
                     this._active_buffer = 0
                 } else {
-                    this._data_buffers[1].position((frame - this._data_buffers[0].size))
+                    this._data_buffers[1].set_position((frame - this._data_buffers[0].size))
                     this._active_buffer = 1
                 }
             } else if (loop_points != null && loop_points.first < loop_points.second) {
                 if (frame < this._data_buffers[0].size) {
-                    this._data_buffers[0].position(frame)
+                    this._data_buffers[0].set_position(frame)
                     this._active_buffer = 0
                 } else if (frame < this._data_buffers[1].size) {
-                    this._data_buffers[1].position(frame - this._data_buffers[0].size)
+                    this._data_buffers[1].set_position(frame - this._data_buffers[0].size)
                     this._active_buffer = 1
                 } else {
                     val remainder = frame - this.release_frame!!
                     val loop_size = (loop_points.second - loop_points.first)
                     if (remainder < loop_size) {
-                        this._data_buffers[1].position(remainder)
+                        this._data_buffers[1].set_position(remainder)
                         this._active_buffer = 1
                     } else {
                         val loop_count = (this.release_frame!! - loop_points.first) / loop_size
-                        this._data_buffers[2].position(frame - this._data_buffers[0].size - loop_count * this._data_buffers[1].size)
+                        this._data_buffers[2].set_position(frame - this._data_buffers[0].size - loop_count * this._data_buffers[1].size)
                         this._active_buffer = 2
                     }
                 }
             } else {
-                this._data_buffers[0].position(frame)
+                this._data_buffers[0].set_position(frame)
                 this._active_buffer = 0
             }
             false
@@ -491,7 +484,7 @@ class SampleHandle(
             } else {
                if (this._active_buffer == 0) {
                    this._active_buffer += 1
-                   this._get_active_data_buffer().position(0)
+                   this._get_active_data_buffer().set_position(0)
                }
             }
         }

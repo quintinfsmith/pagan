@@ -92,24 +92,10 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-
-
-class Test() {
-    val pointer: Long
-    external fun create(): Long
-    init {
-        this.pointer = create()
-    }
-
-}
-
 class MainActivity : AppCompatActivity() {
-    external fun stringFromJNI(): String
-
     companion object {
         init {
             System.loadLibrary("pagan")
-            val t = Test()
         }
     }
 
@@ -510,18 +496,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val t_start = System.nanoTime()
-        stringFromJNI()
-        val cpp_time = System.nanoTime() - t_start
+        // val t_start = System.nanoTime()
+        // val cpp_time = System.nanoTime() - t_start
 
-        val t_startb = System.nanoTime()
-        val byte_array = Array<Array<Float>>(44100) {
-            Array(10) {
-                4F
-            }
-        }
-        val kotlin_time =System.nanoTime() - t_startb
-        println("----- ${kotlin_time / cpp_time}-------------")
+        // val t_startb = System.nanoTime()
+        // val byte_array = Array<Array<Float>>(44100) {
+        //     Array(10) {
+        //         4F
+        //     }
+        // }
+        // val kotlin_time =System.nanoTime() - t_startb
+        // println("----- ${kotlin_time / cpp_time}-------------")
 
 
         super.onCreate(savedInstanceState)

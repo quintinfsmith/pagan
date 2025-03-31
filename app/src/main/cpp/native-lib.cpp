@@ -25,13 +25,12 @@ struct PitchedBuffer {
         }
 
         float get() {
-            float working_pitch = this->pitch * this->adjusted_pitch;
-            int unpitched_position = (int)((float)(this->virtual_position++) * working_pitch);
-            uint16_t output = this->get_real_frame(unpitched_position);
+            int unpitched_position = (int)((float)(this->virtual_position++) * this->adjusted_pitch);
+            jshort output = this->get_real_frame(unpitched_position);
             return static_cast<float>(output) / static_cast<float>(65535); // SHORT MAX
         }
 
-        uint16_t get_real_frame(int unpitched_position) {
+        jshort get_real_frame(int unpitched_position) {
             int range_size = this->end + 1 - this->start;
             int adj_i;
             if (this->is_loop) {

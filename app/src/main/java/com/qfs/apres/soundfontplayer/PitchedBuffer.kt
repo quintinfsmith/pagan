@@ -16,10 +16,6 @@ class PitchedBuffer(var ptr: Long) {
         )
     )
 
-    init {
-        println("PTR: $ptr")
-    }
-
     companion object {
         init {
             System.loadLibrary("pagan")
@@ -53,6 +49,11 @@ class PitchedBuffer(var ptr: Long) {
     external fun set_virtual_position(ptr: Long, new_position: Int)
     external fun get_inner(ptr: Long): Float
     external fun copy_inner(ptr: Long): Long
+    external fun free(ptr: Long)
+
+    fun destroy() {
+        this.free(this.ptr)
+    }
 
     fun get_range(): IntRange {
         var array = Array<Int>(2) { 0 }

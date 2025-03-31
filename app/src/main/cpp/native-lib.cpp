@@ -21,12 +21,12 @@ struct PitchedBuffer {
         void repitch(float new_pitch_adjustment) {
             this->pitch_adjustment = new_pitch_adjustment;
             this->adjusted_pitch = this->pitch * this->pitch_adjustment;
-            this->virtual_size = static_cast<int>(static_cast<float>(this->end + 1 - this->start) / this->adjusted_pitch);
+            this->virtual_size = (int)((float)(this->end + 1 - this->start) / this->adjusted_pitch);
         }
 
         float get() {
             float working_pitch = this->pitch * this->adjusted_pitch;
-            int unpitched_position = this->virtual_position++ * working_pitch;
+            int unpitched_position = (int)((float)this->virtual_position++ * working_pitch);
             uint16_t output = this->get_real_frame(unpitched_position);
             return static_cast<float>(output) / static_cast<float>(65535); // SHORT MAX
         }
@@ -82,6 +82,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
         int end,
         jboolean is_loop
     ) {
+
     PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
     buffer->data = env->GetShortArrayElements(data, nullptr);
     buffer->data_size = data_size;
@@ -92,8 +93,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
     buffer->is_loop = is_loop;
     buffer->virtual_position = 0;
     buffer->pitch_adjustment = 1;
-    // NOTE: May need to round
-    buffer->virtual_size = static_cast<int>(static_cast<float>(end + 1 - start) / pitch);
+    buffer->virtual_size = static_cast<int>(round(static_cast<float>(end + 1 - start) / pitch));
     buffer->adjusted_pitch = pitch;
 
     return (jlong)buffer;
@@ -157,6 +157,12 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_is_1loop(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (PitchedBuffer *)ptr_long;
     return ptr->is_loop;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_qfs_apres_soundfontplayer_PitchedBuffer_free(JNIEnv* env, jobject, jlong ptr_long) {
+    auto *ptr = (PitchedBuffer *)ptr_long;
+    free(ptr);
 }
 
 

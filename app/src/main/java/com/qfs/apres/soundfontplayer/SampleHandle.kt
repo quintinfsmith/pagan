@@ -566,5 +566,12 @@ class SampleHandle(
             buffer.repitch(adjustment)
         }
     }
+
+    // Need a destroy funciton since PitchedBuffer needs one
+    fun destroy() {
+        for (buffer in this._data_buffers) {
+            buffer.destroy()
+        }
+    }
 }
 

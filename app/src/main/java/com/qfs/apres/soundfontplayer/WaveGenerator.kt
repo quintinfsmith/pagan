@@ -56,6 +56,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     }
 
     fun generate(array: FloatArray) {
+        val start_ts = System.nanoTime()
         val buffer_size = array.size / 2
         if (buffer_size != this.buffer_size) {
             throw InvalidArraySize()
@@ -157,6 +158,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
             throw DeadException()
         }
+        println("---GEN TIME: ${System.nanoTime() - start_ts}")
     }
 
     private fun gen_partial_int_array(first_frame: Int, sample_index: Int): HashMap<Int, Pair<Float, Array<CompoundFrame>>> {

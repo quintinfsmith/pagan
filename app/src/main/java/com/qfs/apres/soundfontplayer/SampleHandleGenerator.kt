@@ -45,6 +45,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     var generated = 0
 
     fun clear() {
+        for ((_, pair) in this.sample_data_map) {
+            pair.first.destroy()
+            pair.second?.destroy()
+        }
         this.sample_data_map.clear()
     }
 
@@ -277,14 +281,20 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
     fun decache_sample_data(preset: Preset) {
         val to_remove = mutableListOf<MapKey>()
-        for ((mapkey, _) in this.sample_data_map) {
+        for ((mapkey, pair) in this.sample_data_map) {
             if (mapkey.preset == preset.hashCode()) {
                 to_remove.add(mapkey)
+                pair.first.destroy()
+                pair.second?.destroy()
             }
         }
         for (mapkey in to_remove) {
              this.sample_data_map.remove(mapkey)
         }
 
+    }
+
+    fun destroy() {
+        this.clear()
     }
 }

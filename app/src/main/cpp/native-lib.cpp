@@ -26,7 +26,7 @@ struct PitchedBuffer {
 
         float get() {
             float working_pitch = this->pitch * this->adjusted_pitch;
-            int unpitched_position = (int)((float)this->virtual_position++ * working_pitch);
+            int unpitched_position = (int)((float)(this->virtual_position++) * working_pitch);
             uint16_t output = this->get_real_frame(unpitched_position);
             return static_cast<float>(output) / static_cast<float>(65535); // SHORT MAX
         }
@@ -41,6 +41,8 @@ struct PitchedBuffer {
             } else {
                 adj_i = unpitched_position;
             };
+
+            adj_i = std::min(this->end, this->start + adj_i);
 
             return this->data[adj_i];
         }

@@ -56,6 +56,10 @@ class SampleHandleManager(
     }
 
     fun change_program(channel: Int, program: Int) {
+        // DEBUG
+        if (channel != 0) return
+
+
         val bank = if (this.preset_channel_map.containsKey(channel)) {
             this.preset_channel_map[channel]!!.first
         } else {

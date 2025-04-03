@@ -16,6 +16,7 @@ class SoundFont(file_path: String) {
     class NoIROMDeclared: Exception("Need irom declared to read from ROM")
 
     data class CachedSampleData(var data: ShortArray, var count: Int = 1)
+
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
     private var isng: String = "EMU8000"
@@ -312,7 +313,7 @@ class SoundFont(file_path: String) {
             }
         }
 
-        return output ?: throw InvalidPresetIndex(preset_index,preset_bank)
+        return output ?: throw InvalidPresetIndex(preset_index, preset_bank)
     }
 
     fun apply_sample_data(sample: Sample) {

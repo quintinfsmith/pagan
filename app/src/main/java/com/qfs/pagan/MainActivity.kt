@@ -1461,6 +1461,7 @@ class MainActivity : AppCompatActivity() {
                 bend=bend,
                 velocity = (velocity * 127F).toInt() shl 8,
             )
+
             this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
         } else {
@@ -1512,7 +1513,7 @@ class MainActivity : AppCompatActivity() {
 
     fun is_soundfont_available(): Boolean {
         val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles()?.isNotEmpty() ?: false
+        return soundfont_dir.listFiles()?.isNotEmpty() == true
     }
 
     fun populate_supported_soundfont_instrument_names() {

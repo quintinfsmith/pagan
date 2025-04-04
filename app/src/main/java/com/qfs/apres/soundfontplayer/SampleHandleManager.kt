@@ -260,4 +260,8 @@ class SampleHandleManager(
     fun get_samples_generated(): Int {
         return this.sample_handle_generator.generated
     }
+
+    fun destroy() {
+        this.sample_handle_generator.destroy()
+    }
 }

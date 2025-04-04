@@ -334,6 +334,8 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     })
+
+                    exporter_sample_handle_manager.destroy()
                 }
             }
         }
@@ -1664,12 +1666,12 @@ class MainActivity : AppCompatActivity() {
         if (this._feedback_sample_manager != null) {
             this.disconnect_feedback_device()
         }
+        this._sample_handle_manager?.destroy()
 
         this._soundfont = null
         this._sample_handle_manager = null
         this.configuration.soundfont = null
         this._midi_playback_device = null
-        this._feedback_sample_manager = null
         this._soundfont_supported_instrument_names.clear()
 
         this.update_channel_instruments()
@@ -2034,6 +2036,7 @@ class MainActivity : AppCompatActivity() {
              * TODO: Put the ignore envelope/lfo option somewhere better.
              * I don't think it should be in apres if theres a reasonable way to avoid it
              */
+            this._sample_handle_manager?.destroy()
             this._sample_handle_manager = SampleHandleManager(
                 this._soundfont!!,
                 this.configuration.sample_rate,
@@ -2103,6 +2106,7 @@ class MainActivity : AppCompatActivity() {
             device?.kill()
             this._temporary_feedback_devices[i] = null
         }
+        this._feedback_sample_manager?.destroy()
         this._feedback_sample_manager = null
     }
 
@@ -2259,5 +2263,12 @@ class MainActivity : AppCompatActivity() {
 
     fun is_debug_on(): Boolean {
         return this.packageName.contains("pagandev")
+    }
+
+    override fun onDestroy() {
+        this._sample_handle_manager?.destroy()
+        this._feedback_sample_manager?.destroy()
+        super.onDestroy()
+
     }
 }

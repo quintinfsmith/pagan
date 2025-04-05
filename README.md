@@ -1,5 +1,3 @@
-At this point, I'm no longer able to develop Pagan. If someone else wants to take it on, feel free.
-
 # Pagan, a Music Sequencer
 
 

@@ -1475,9 +1475,15 @@ class ActionTracker {
     }
 
     fun set_soundfont(filename: String) {
+        val activity = this.get_activity()
+
+        val path = "${activity.getExternalFilesDir(null)}/SoundFonts/$filename"
+        if (!File(path).isFile) {
+            return // TODO: Maybe throw exception?
+        }
+
         this.track(TrackedAction.SetSoundFont, ActionTracker.string_to_ints(filename))
 
-        val activity = this.get_activity()
         val btnChooseSoundFont = activity.findViewById<TextView>(R.id.btnChooseSoundFont)
         thread {
             activity.loading_reticle_show(activity.getString(R.string.loading_new_soundfont))
@@ -1485,7 +1491,9 @@ class ActionTracker {
 
             // Check that it set
             if (filename == activity.configuration.soundfont) {
-                btnChooseSoundFont.text = filename
+                if (btnChooseSoundFont != null) {
+                    btnChooseSoundFont.text = filename
+                }
                 activity.save_configuration()
             }
             activity.loading_reticle_hide()

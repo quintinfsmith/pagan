@@ -3,6 +3,7 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
@@ -1290,6 +1291,30 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
 
             this._ui_change_bill.queue_refresh_context_menu()
+        }
+    }
+
+    override fun to_json(): JSONHashMap {
+        val output = super.to_json()
+        val activity = this.get_activity() ?: return output
+        if (activity.configuration.soundfont != null) {
+            output.get_hashmap("d")["sf"] = activity.configuration.soundfont
+        }
+        return output
+    }
+
+    override fun _project_change_json(json_data: JSONHashMap) {
+        super._project_change_json(json_data)
+        if (!this._in_reload) {
+            val activity = this.get_activity() ?: return
+            if (! activity.configuration.use_preferred_soundfont) {
+                return
+            }
+
+            val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
+            if (sf_path != activity.configuration.soundfont) {
+                this.get_activity()?.get_action_interface()?.set_soundfont(sf_path)
+            }
         }
     }
 

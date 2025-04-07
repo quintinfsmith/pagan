@@ -99,7 +99,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     var smoothed_frame = if (smoothing_factor == 1F || weight_value == null) {
                         frame.value
                     } else {
-                        weight_value + (smoothing_factor * (frame.value - weight_value))
+                        weight_value!! + (smoothing_factor * (frame.value - weight_value!!))
                     }
                     pre_smooth_max = max(abs(frame.value), pre_smooth_max)
                     post_smooth_max = max(abs(smoothed_frame), post_smooth_max)

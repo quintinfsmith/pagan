@@ -10,7 +10,8 @@ data class PaganConfiguration(
     var sample_rate: Int = 22050,
     var show_percussion: Boolean = true, // Deprecated, use variable in view_model
     var move_mode: MoveMode = MoveMode.COPY,
-    var clip_same_line_release: Boolean = true
+    var clip_same_line_release: Boolean = true,
+    var use_preferred_soundfont: Boolean = true
 ) {
 
     enum class MoveMode {
@@ -32,7 +33,8 @@ data class PaganConfiguration(
                         sample_rate = content.get_intn("sample_rate") ?: 22050,
                         relative_mode = content.get_booleann("relative_mode") ?: false,
                         move_mode = MoveMode.valueOf(content.get_stringn("move_mode") ?: "COPY"),
-                        clip_same_line_release = content.get_booleann("clip_same_line_release") ?: true
+                        clip_same_line_release = content.get_booleann("clip_same_line_release") ?: true,
+                        use_preferred_soundfont = content.get_booleann("use_preferred_soundfont") ?: true
                     )
                 }
             } else {
@@ -54,6 +56,8 @@ data class PaganConfiguration(
         output["relative_mode"] = this.relative_mode
         output["move_mode"] = this.move_mode.name
         output["clip_same_line_release"] = this.clip_same_line_release
+        output["use_preferred_soundfont"] = this.use_preferred_soundfont
+
         return output
     }
 }

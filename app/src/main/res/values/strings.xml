@@ -173,6 +173,7 @@
     <string name="rb_mm_copy">Copy</string>
     <string name="rb_mm_move">Move</string>
     <string name="rb_mm_merge">Merge</string>
+    <string name="label_settings_use_preferred_sf">Rememeber soundfont when loading project:</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

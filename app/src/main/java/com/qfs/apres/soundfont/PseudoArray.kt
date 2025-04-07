@@ -91,4 +91,10 @@ class PseudoArray<T>(var size: Int) {
             }
         }
     }
+
+    fun merge(other: PseudoArray<T>, operation: ((T, T) -> T)? = null) {
+        for ((index, section) in other.array_sections) {
+            this.place_section(index, section, operation)
+        }
+    }
 }

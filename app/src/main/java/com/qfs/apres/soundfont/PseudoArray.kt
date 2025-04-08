@@ -97,4 +97,23 @@ class PseudoArray<T>(var size: Int) {
             this.place_section(index, section, operation)
         }
     }
+
+    fun sub_section(index: Int, size: Int): PseudoArray<T> {
+        val overlapping_indices = this.get_overlapping_sections(index, size)
+        val end = index + size
+        val output = PseudoArray<T>(size)
+
+        for (working_index in overlapping_indices) {
+            val section = this.array_sections[working_index]!!
+            if (working_index >= index && working_index + section.size <= index + size) {
+                output.place_section(working_index - index, section.toList())
+            } else if (working_index >= index) {
+                output.place_section(working_index - index, section.subList(working_index + section.size - end, section.size))
+            } else {
+                output.place_section(0, section.subList(0, index - working_index))
+            }
+        }
+
+        return output
+    }
 }

@@ -1,5 +1,8 @@
 # Pagan, a Music Sequencer
 
+[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
+
+<a href="https://burnsomni.net/manual/pagan" style="display: inline-block;">Manual</a>
 
 Step Sequencers can be limited.
 
@@ -7,31 +10,14 @@ DAWs and Notation Software can be impenetrable.
 
 Pagan is something different.
 
-[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
 
 
 
-<table>
- <tr>
-  <td>
-   
-   [Manual](https://burnsomni.net/manual/pagan)
-   
-  </td>
-<td>
- <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/"><img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" /></a>
-</td>
 
-<td>
- <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'><img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/></a>
-</td>
+<a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/"><img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" /></a>
+<a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'><img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/></a>
+<a style="diplay: inline-block; text-decoration: none important;" href="https://ko-fi.com/quintinfsmith"><img alt="Buy me a Coffee" src="http://burnsomni.net/content/support_me_on_kofi_badge_beige.png" style="display: block; height: 4em;"></a>
 
-<td>
- <a style="diplay: inline-block; text-decoration: none important;" href="https://ko-fi.com/quintinfsmith"><img alt="Buy me a Coffee" src="http://burnsomni.net/content/support_me_on_kofi_badge_beige.png" style="display: block; height: 4em;"></a>
-</td>
- </tr>
-
-</table>
 
 ## Features
 

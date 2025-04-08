@@ -6,6 +6,7 @@ package com.qfs.pagan
 
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
@@ -884,7 +885,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         manager.controller_global_set_event(ControlEventType.Tempo, 2, listOf(), OpusTempoEvent(60F))
 
         val full_midi = manager.get_midi()
-        val event_map = HashMap<Int, List<MIDIEvent>>()
+        val event_map = HashMap<Int, List<GeneralMIDIEvent>>()
         for ((position, events) in full_midi.get_all_events_grouped()) {
             event_map[position] = events
         }
@@ -920,7 +921,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         val partial_midi = manager.get_midi(1, 2)
-        val event_map_b = HashMap<Int, List<MIDIEvent>>()
+        val event_map_b = HashMap<Int, List<GeneralMIDIEvent>>()
         for ((position, events) in partial_midi.get_all_events_grouped()) {
             event_map_b[position] = events
         }

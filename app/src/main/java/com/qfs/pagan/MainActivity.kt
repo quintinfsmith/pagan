@@ -632,6 +632,11 @@ class MainActivity : AppCompatActivity() {
             intArrayOf(Color.BLUE)
         )
 
+        toolbar.setOnLongClickListener {
+            this.get_action_interface().set_project_name()
+            true
+        }
+
         toolbar.background = null
 
         //////////////////////////////////////////

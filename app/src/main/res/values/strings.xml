@@ -105,8 +105,9 @@
     <string name="reticle_msg_import_midi">Importing Midi File…</string>
     <string name="reticle_msg_start_playback">Starting Playback…</string>
     <string name="dlg_export">Export Project to…</string>
-    <string name="export_option_midi">Midi File</string>
-    <string name="export_option_wav">Wav File</string>
+    <string name="export_option_midi">MIDI File</string>
+    <string name="export_option_wav">WAV File</string>
+    <string name="export_option_json">JSON File</string>
     <string name="drum_not_found">Drum Not Found</string>
     <string name="dlg_duration">Duration</string>
     <string name="export_cancelled">Export Cancelled</string>

@@ -1274,8 +1274,9 @@ class MainActivity : AppCompatActivity() {
                         default = null
                     ) { _: Int, value: Int ->
                         when (value) {
-                            0 -> this.export_midi()
-                            1 -> this.export_wav()
+                            0 -> this.export_project()
+                            1 -> this.export_midi()
+                            2 -> this.export_wav()
                         }
                     }
                 } else {
@@ -1289,13 +1290,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun get_exportable_options(): List<Pair<Int, String>> {
-        val export_options = mutableListOf<Pair<Int, String>>()
+        val export_options = mutableListOf<Pair<Int, String>>(
+            Pair(0, getString(R.string.export_option_json))
+        )
         if (this.get_opus_manager().is_tuning_standard()) {
-            export_options.add( Pair(0, getString(R.string.export_option_midi)) )
+            export_options.add( Pair(1, getString(R.string.export_option_midi)) )
         }
 
         if (this.get_soundfont() != null) {
-            export_options.add( Pair(1, getString(R.string.export_option_wav)) )
+            export_options.add( Pair(2, getString(R.string.export_option_wav)) )
         }
 
         return export_options

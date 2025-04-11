@@ -126,7 +126,9 @@ class ActionTracker {
         DeleteSoundFont,
         SetRelativeModeVisibility,
         SetRelativeMode,
-        SwapLines
+        SwapLines,
+        ToggleMuteChannel,
+        ToggleMuteLine
     }
 
     companion object {
@@ -2018,6 +2020,14 @@ class ActionTracker {
             TrackedAction.SwapLines -> {
                 this.swap_lines(integers[0]!!, integers[1]!!, integers[2]!!, integers[3]!!)
             }
+
+            TrackedAction.ToggleMuteChannel -> {
+                this.toggle_channel_mute()
+            }
+
+            TrackedAction.ToggleMuteLine -> {
+                this.toggle_line_mute()
+            }
         }
     }
 
@@ -2114,6 +2124,30 @@ class ActionTracker {
 
             CtlLineLevel.Global,
             null -> {} // Pass
+        }
+    }
+
+    fun toggle_channel_mute() {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        this.track(TrackedAction.ToggleMuteChannel, listOf(cursor.channel))
+
+        if (opus_manager.get_all_channels()[cursor.channel].muted) {
+            opus_manager.unmute_channel(cursor.channel)
+        } else {
+            opus_manager.mute_channel(cursor.channel)
+        }
+    }
+
+    fun toggle_line_mute() {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        this.track(TrackedAction.ToggleMuteChannel, listOf(cursor.channel, cursor.line_offset))
+
+        if (opus_manager.get_all_channels()[cursor.channel].get_line(cursor.line_offset).muted) {
+            opus_manager.unmute_line(cursor.channel, cursor.line_offset)
+        } else {
+            opus_manager.mute_line(cursor.channel, cursor.line_offset)
         }
     }
 

@@ -27,6 +27,7 @@ class OpusLineJSONInterface {
 
             output["beats"] = beats
             output["controllers"] = ActiveControlSetJSONInterface.to_json(line.controllers)
+            output["muted"] = line.muted
 
             when (line) {
                 is OpusLinePercussion -> {
@@ -58,6 +59,8 @@ class OpusLineJSONInterface {
                 beat_list
             )
             output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), size)
+            output.muted = input.get_boolean("muted", false)
+
 
             return output
         }
@@ -82,6 +85,8 @@ class OpusLineJSONInterface {
 
             val output = OpusLine(beat_list)
             output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), size)
+            output.muted = input.get_boolean("muted", false)
+
             return output
         }
     }

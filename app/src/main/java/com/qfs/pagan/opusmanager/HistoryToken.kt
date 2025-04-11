@@ -38,6 +38,11 @@ enum class HistoryToken {
     SET_TUNING_MAP,
     SWAP_LINES,
     UNSET,
+    MUTE_CHANNEL,
+    MUTE_LINE,
+    UNMUTE_CHANNEL,
+    UNMUTE_LINE,
+
     // Interface
     CURSOR_SELECT,
     CURSOR_SELECT_CHANNEL,

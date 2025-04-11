@@ -15,6 +15,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_remove: ImageView
     lateinit var button_choose_instrument: TextView
     lateinit var button_toggle_controllers: ImageView
+    lateinit var button_mute: ImageView
 
     init {
         this.refresh()
@@ -25,7 +26,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_instrument = this.secondary!!.findViewById(R.id.btnChooseInstrument)
-
+        this.button_mute = primary.findViewById(R.id.btnMuteLine)
     }
 
     override fun refresh() {
@@ -75,8 +76,16 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         } else {
             this.button_toggle_controllers.visibility = View.VISIBLE
         }
-    }
 
+        val cursor = opus_manager.cursor
+        this.button_mute.setImageResource(
+            if (opus_manager.get_channel(cursor.channel).muted) {
+                R.drawable.mute
+            } else {
+                R.drawable.unmute
+            }
+        )
+    }
 
     override fun setup_interactions() {
         this.button_choose_instrument.setOnClickListener {
@@ -120,6 +129,10 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
                 return@setOnClickListener
             }
             this.get_activity().get_action_interface().show_hidden_channel_controller()
+        }
+
+        this.button_mute.setOnClickListener {
+            this.get_activity().get_action_interface().toggle_channel_mute()
         }
     }
 

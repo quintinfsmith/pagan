@@ -15,6 +15,14 @@
             android:layout_height="@dimen/icon_button_height"
             android:contentDescription="@string/cd_show_effect_controls"/>
 
+        <ImageView
+            android:id="@+id/btnMuteLine"
+            android:theme="@style/icon_button"
+            app:srcCompat="@drawable/unmute"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:contentDescription="@string/cd_line_mute"/>
+
         <Space
             android:id="@+id/spacer"
             android:layout_height="match_parent"

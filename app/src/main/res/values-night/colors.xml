@@ -21,4 +21,16 @@
     <color name="ns_default_text">@color/button_text</color>
     <color name="ns_alt">#4D5058</color>
     <color name="ns_alt_text">#e1e1e1</color>
+
+    <color name="muted_leaf_main">#7E7E7E</color>
+    <color name="muted_leaf_spill">#7E7E7E</color>
+    <color name="muted_leaf_secondary">#929292</color>
+    <color name="muted_leaf_selected">#A9A9A9</color>
+    <color name="muted_empty_selected">#A9A9A9</color>
+    <color name="muted_channel_even">#454545</color>
+
+    <color name="muted_label_selected_secondary">#A9A9A9</color>
+    <color name="muted_label_ctl_selected_secondary">@color/muted_label_selected_secondary</color>
+    <color name="muted_ctl_line_selected">@color/muted_empty_selected</color>
+    <color name="muted_ctl_line">@color/muted_channel_even</color>
 </resources>

@@ -17,6 +17,9 @@
     <color name="leaf_invalid_selected">#890E21</color>
     <color name="leaf_invalid_selected_text">#A27E7E</color>
 
+    <color name="muted_leaf_text">#000000</color>
+    <color name="muted_leaf_selected_text">#000000</color>
+
     <color name="ctl_leaf">#CB9C10</color>
     <color name="ctl_leaf_spill">#886E20</color>
     <color name="ctl_leaf_text">#FF000000</color>
@@ -60,6 +63,7 @@
     <color name="ctl_line">#FFFFFF</color>
     <color name="ctl_line_text">#101010</color>
 
+
     <color name="muted_leaf_main">#6E6E6E</color>
     <color name="muted_leaf_spill">#535353</color>
     <color name="muted_leaf_selected">#444444</color>
@@ -71,4 +75,5 @@
     <color name="muted_label_ctl_selected_secondary">@color/muted_label_selected_secondary</color>
     <color name="muted_ctl_line_selected">@color/muted_empty_selected</color>
     <color name="muted_ctl_line">@color/muted_channel_even</color>
+    <color name="muted_ctl_line_text">@color/table_lines</color>
 </resources>

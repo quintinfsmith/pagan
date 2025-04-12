@@ -11,6 +11,7 @@
     <color name="button">#acacac</color>
     <color name="button_text">#000000</color>
     <color name="button_text_disabled">#AA000000</color>
+    <color name="button_text_faded">#AA7C7C7C</color>
     <color name="button_alt">#4D5058</color>
     <color name="button_alt_text">#e1e1e1</color>
     <color name="ctl_line">#000000</color>

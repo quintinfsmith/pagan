@@ -28,7 +28,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 2)
+        val drawableState = super.onCreateDrawableState(extraSpace + 3)
         return this._build_drawable_state(drawableState)
     }
 
@@ -45,6 +45,10 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
             new_state.add(R.attr.state_focused_secondary)
         }
 
+        if (this.is_muted()) {
+            new_state.add(R.attr.state_muted)
+        }
+
         new_state.add(R.attr.state_channel_even)
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
@@ -53,6 +57,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
 
     abstract fun is_selected(): Boolean
     abstract fun is_selected_secondary(): Boolean
+    abstract fun is_muted(): Boolean
 
     fun get_label_icon(): Int {
         return when (this.ctl_type) {

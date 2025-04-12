@@ -127,8 +127,10 @@ class ActionTracker {
         SetRelativeModeVisibility,
         SetRelativeMode,
         SwapLines,
-        ToggleMuteChannel,
-        ToggleMuteLine
+        MuteChannel,
+        UnMuteChannel,
+        MuteLine,
+        UnMuteLine
     }
 
     companion object {
@@ -2021,13 +2023,19 @@ class ActionTracker {
                 this.swap_lines(integers[0]!!, integers[1]!!, integers[2]!!, integers[3]!!)
             }
 
-            TrackedAction.ToggleMuteChannel -> {
-                this.toggle_channel_mute()
+            TrackedAction.MuteChannel -> {
+                this.channel_mute(integers[0]!!)
+            }
+            TrackedAction.UnMuteChannel -> {
+                this.channel_unmute(integers[0]!!)
+            }
+            TrackedAction.MuteLine -> {
+                this.line_mute(integers[0]!!, integers[1]!!)
+            }
+            TrackedAction.UnMuteLine -> {
+                this.line_unmute(integers[0]!!, integers[1]!!)
             }
 
-            TrackedAction.ToggleMuteLine -> {
-                this.toggle_line_mute()
-            }
         }
     }
 
@@ -2127,28 +2135,42 @@ class ActionTracker {
         }
     }
 
-    fun toggle_channel_mute() {
+    fun channel_mute(channel: Int? = null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        this.track(TrackedAction.ToggleMuteChannel, listOf(cursor.channel))
+        val w_channel = channel ?: cursor.channel
 
-        if (opus_manager.get_all_channels()[cursor.channel].muted) {
-            opus_manager.unmute_channel(cursor.channel)
-        } else {
-            opus_manager.mute_channel(cursor.channel)
-        }
+        this.track(TrackedAction.MuteChannel, listOf(w_channel))
+        opus_manager.mute_channel(w_channel)
     }
 
-    fun toggle_line_mute() {
+    fun channel_unmute(channel: Int? = null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        this.track(TrackedAction.ToggleMuteChannel, listOf(cursor.channel, cursor.line_offset))
+        val w_channel = channel ?: cursor.channel
 
-        if (opus_manager.get_all_channels()[cursor.channel].get_line(cursor.line_offset).muted) {
-            opus_manager.unmute_line(cursor.channel, cursor.line_offset)
-        } else {
-            opus_manager.mute_line(cursor.channel, cursor.line_offset)
-        }
+        this.track(TrackedAction.UnMuteChannel, listOf(w_channel))
+        opus_manager.unmute_channel(w_channel)
+    }
+
+    fun line_mute(channel: Int? = null, line_offset: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val w_channel = channel ?: cursor.channel
+        val w_line_offset = line_offset ?: cursor.line_offset
+
+        this.track(TrackedAction.MuteLine, listOf(w_channel, w_line_offset))
+        opus_manager.mute_line(w_channel, w_line_offset)
+    }
+
+    fun line_unmute(channel: Int? = null, line_offset: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val w_channel = channel ?: cursor.channel
+        val w_line_offset = line_offset ?: cursor.line_offset
+
+        this.track(TrackedAction.UnMuteLine, listOf(w_channel, w_line_offset))
+        opus_manager.unmute_line(w_channel, w_line_offset)
     }
 
     fun set_clip_same_line_notes(value: Boolean) {

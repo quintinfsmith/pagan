@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CompoundButton
 import android.widget.ImageView
 import android.widget.Space
 import android.widget.TextView
@@ -100,14 +101,15 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             this.button_toggle_volume_control.visibility = View.VISIBLE
         }
 
-
+        // TODO: I don't like how I'm doing this. Should be a custom button?
         this.button_mute.setImageResource(
-            if (opus_manager.get_channel(cursor.channel).get_line(cursor.line_offset).muted) {
+            if (opus_manager.get_channel(channel).get_line(line_offset).muted) {
                 R.drawable.mute
             } else {
                 R.drawable.unmute
             }
         )
+
 
         // Show the volume control regardless of if line control is visible. redundancy is probably better.
         val controller = working_channel.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
@@ -161,7 +163,17 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         this.button_mute.setOnClickListener {
-            this.get_activity().get_action_interface().toggle_line_mute()
+            val opus_manager = this.get_opus_manager()
+            val cursor = opus_manager.cursor
+
+            val is_mute = opus_manager.get_channel(cursor.channel).get_line(cursor.line_offset).muted
+            val tracker = this.get_activity().get_action_interface()
+
+            if (is_mute) {
+                tracker.line_unmute()
+            } else {
+                tracker.line_mute()
+            }
         }
     }
 

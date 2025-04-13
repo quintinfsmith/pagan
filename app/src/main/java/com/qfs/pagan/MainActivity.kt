@@ -1424,6 +1424,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Float = .6F) {
+        if (event_value < 0) {
+            return // No sound to play
+        }
         if (!this._midi_interface.output_devices_connected()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()

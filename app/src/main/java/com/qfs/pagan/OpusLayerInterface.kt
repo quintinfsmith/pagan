@@ -930,16 +930,30 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
 
+
             var y = 0
+            var first_swapped_line = min(
+                this.get_instrument_line_index(channel_a, line_a),
+                this.get_instrument_line_index(channel_b, line_b)
+            )
+
             for (channel in this.get_all_channels()) {
                 if (!channel.visible) {
                     continue
                 }
 
-                this._ui_change_bill.queue_row_change(y++)
                 for (line in channel.lines) {
+                    if (y >= first_swapped_line) {
+                        this._ui_change_bill.queue_line_label_refresh(y)
+                    }
+
+                    this._ui_change_bill.queue_row_change(y++)
+
                     for ((_, controller) in line.controllers.get_all()) {
                         if (controller.visible) {
+                            if (y >= first_swapped_line) {
+                                this._ui_change_bill.queue_line_label_refresh(y)
+                            }
                             this._ui_change_bill.queue_row_change(y++)
                         }
                     }
@@ -947,6 +961,9 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                 for ((_, controller) in channel.controllers.get_all()) {
                     if (controller.visible) {
+                        if (y >= first_swapped_line) {
+                            this._ui_change_bill.queue_line_label_refresh(y)
+                        }
                         this._ui_change_bill.queue_row_change(y++)
                     }
                 }
@@ -954,6 +971,9 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             for ((_, controller) in this.controllers.get_all()) {
                 if (controller.visible) {
+                    if (y >= first_swapped_line) {
+                        this._ui_change_bill.queue_line_label_refresh(y)
+                    }
                     this._ui_change_bill.queue_row_change(y++)
                 }
             }

@@ -6,11 +6,25 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
     class BlockedCtlTreeException(var type: ControlEventType, var e: BlockedTreeException): Exception(e.message)
     var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
 
+    var muted = false
+
     init {
         // Default volume to hidden
         for ((_, controller) in controllers.get_all()) {
             controller.visible = false
         }
+    }
+
+    fun toggle_mute() {
+        this.muted = !this.muted
+    }
+
+    fun mute() {
+        this.muted = true
+    }
+
+    fun unmute() {
+        this.muted = false
     }
 
     override fun insert_beat(index: Int) {

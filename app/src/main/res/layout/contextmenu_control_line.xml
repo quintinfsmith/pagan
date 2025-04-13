@@ -11,6 +11,7 @@
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_hide_control_line"/>
+
     <Space
         android:layout_width="0dp"
         android:layout_weight="1"

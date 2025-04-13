@@ -39,4 +39,9 @@ class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabe
         val opus_manager = this.get_opus_manager()
         return opus_manager.is_global_control_line_selected_secondary(this.ctl_type)
     }
+
+    override fun is_muted(): Boolean {
+        return false
+    }
+
 }

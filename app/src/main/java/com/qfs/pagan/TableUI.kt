@@ -428,6 +428,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 new_state.add(R.attr.state_alternate)
             }
 
+            val working_channel = opus_manager.get_channel(beat_key.channel)
+            if (working_channel.muted || working_channel.get_line(beat_key.line_offset).muted) {
+                new_state.add(R.attr.state_muted)
+            }
+
+
             return new_state.toIntArray()
         }
 
@@ -501,6 +507,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 new_state.add(R.attr.state_focused_secondary)
             }
 
+            if (opus_manager.get_channel(channel).muted) {
+                new_state.add(R.attr.state_muted)
+            }
+
             return new_state.toIntArray()
         }
 
@@ -538,6 +548,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 new_state.add(R.attr.state_focused)
             } else if (opus_manager.is_line_control_secondary_selected(type, beat_key, position)) {
                 new_state.add(R.attr.state_focused_secondary)
+            }
+
+            val channel = opus_manager.get_channel(beat_key.channel)
+            if (channel.muted || channel.get_line(beat_key.line_offset).muted) {
+                new_state.add(R.attr.state_muted)
             }
 
             return new_state.toIntArray()

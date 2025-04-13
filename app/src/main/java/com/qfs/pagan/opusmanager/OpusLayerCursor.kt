@@ -287,6 +287,26 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_ctl_at_global(type, beat, this.get_first_position_global_ctl(type, beat, new_position))
     }
 
+    override fun mute_channel(channel: Int) {
+        super.mute_channel(channel)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun unmute_channel(channel: Int) {
+        super.unmute_channel(channel)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun mute_line(channel: Int, line_offset: Int) {
+        super.mute_line(channel, line_offset)
+        this.cursor_select_line(channel, line_offset)
+    }
+
+    override fun unmute_line(channel: Int, line_offset: Int) {
+        super.unmute_line(channel, line_offset)
+        this.cursor_select_line(channel, line_offset)
+    }
+
     /* ------------------- 2nd Order Functions ---------------------------------- */
     override fun insert_beats(beat_index: Int, count: Int) {
         super.insert_beats(beat_index, count)

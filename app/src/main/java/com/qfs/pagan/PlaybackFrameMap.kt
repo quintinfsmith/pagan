@@ -274,7 +274,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.map_pan_changes()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+            if (channel.muted) {
+                return@forEachIndexed
+            }
+
             for (l in channel.lines.indices) {
+                if (channel.get_line(l).muted)  {
+                    continue
+                }
+
                 var prev_abs_note = 0
                 for (b in 0 until this.opus_manager.length) {
                     val beat_key = BeatKey(c,l,b)
@@ -285,11 +293,16 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         val c = this.opus_manager.channels.size
-        for (l in this.opus_manager.percussion_channel.lines.indices) {
-            for (b in 0 until this.opus_manager.length) {
-                val beat_key = BeatKey(c,l,b)
-                val working_tree = this.opus_manager.get_tree(beat_key)
-                this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, 0)
+        if (!this.opus_manager.percussion_channel.muted) {
+            for (l in this.opus_manager.percussion_channel.lines.indices) {
+                if (this.opus_manager.percussion_channel.get_line(l).muted) {
+                    continue
+                }
+                for (b in 0 until this.opus_manager.length) {
+                    val beat_key = BeatKey(c, l, b)
+                    val working_tree = this.opus_manager.get_tree(beat_key)
+                    this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, 0)
+                }
             }
         }
     }

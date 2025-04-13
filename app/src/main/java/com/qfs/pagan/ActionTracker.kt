@@ -598,7 +598,12 @@ class ActionTracker {
         this.track(TrackedAction.CursorSelectLineCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset))
 
         val opus_manager = this.get_opus_manager()
-        opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
+        val cursor = opus_manager.cursor
+        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == CtlLineLevel.Line) {
+            opus_manager.cursor_select_channel(channel)
+        } else {
+            opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
+        }
     }
 
     fun repeat_selection_ctl_line(type: ControlEventType, channel: Int, line_offset: Int, repeat: Int? = null) {
@@ -655,7 +660,13 @@ class ActionTracker {
         this.track(TrackedAction.CursorSelectChannelCtlLine, enum_to_ints(type) + listOf(channel))
 
         val opus_manager = this.get_opus_manager()
-        opus_manager.cursor_select_channel_ctl_line(type, channel)
+
+        val cursor = opus_manager.cursor
+        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.ctl_level == CtlLineLevel.Channel) {
+            opus_manager.cursor_select_channel(channel)
+        } else {
+            opus_manager.cursor_select_channel_ctl_line(type, channel)
+        }
     }
 
     fun repeat_selection_ctl_channel(type: ControlEventType, channel: Int, repeat: Int? = null) {

@@ -48,25 +48,4 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_width="0dp" />
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height">
-        <Space
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"/>
-        <ImageView
-            android:id="@+id/btnMuteLine"
-            android:theme="@style/icon_button"
-            app:srcCompat="@drawable/mute"
-            android:layout_width="@dimen/icon_button_width_b"
-            android:layout_height="@dimen/icon_button_height_b"
-            android:contentDescription="@string/cd_line_mute"/>
-        <Space
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"/>
-    </LinearLayout>
 </LinearLayout>

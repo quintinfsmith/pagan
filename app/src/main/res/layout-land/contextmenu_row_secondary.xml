@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="match_parent">
+        <Space
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"/>
+        <ImageView
+            android:id="@+id/btnMuteLine"
+            android:theme="@style/icon_button"
+            app:srcCompat="@drawable/mute"
+            android:layout_width="@dimen/icon_button_width_b"
+            android:layout_height="@dimen/icon_button_height_b"
+            android:contentDescription="@string/cd_line_mute"/>
+        <Space
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"/>
+    </LinearLayout>
+
+
+
 </LinearLayout>

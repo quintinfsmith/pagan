@@ -5,8 +5,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.CompoundButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Space
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -30,7 +32,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
-        this.button_mute = primary.findViewById(R.id.btnMuteLine)
+        this.button_mute = this.secondary!!.findViewById(R.id.btnMuteLine)
 
         this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0F), true, this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
@@ -43,8 +45,10 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             )
         }
 
-        this.secondary!!.addView(this.widget_volume)
-        (this.widget_volume as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+        this.secondary.addView(this.widget_volume)
+        (this.widget_volume as View).layoutParams.width = 0
+        ((this.widget_volume as View).layoutParams as LinearLayout.LayoutParams).weight = 1f
+
         (this.widget_volume as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
 
         this.spacer = primary.findViewById(R.id.spacer)
@@ -109,7 +113,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
                 R.drawable.unmute
             }
         )
-
 
         // Show the volume control regardless of if line control is visible. redundancy is probably better.
         val controller = working_channel.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)

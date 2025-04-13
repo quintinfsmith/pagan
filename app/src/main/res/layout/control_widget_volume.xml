@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.qfs.pagan.ButtonLabelledIcon
+    <TextView
         android:id="@+id/volume_button"
         android:theme="@style/volume_widget_button"
         android:layout_width="wrap_content"

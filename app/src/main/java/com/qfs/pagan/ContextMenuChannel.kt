@@ -26,11 +26,12 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
     override fun init_properties() {
         val primary = this.primary!!
+        val secondary = this.secondary!!
         this.button_toggle_controllers = primary.findViewById(R.id.btnToggleChannelCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
-        this.button_choose_instrument = this.secondary!!.findViewById(R.id.btnChooseInstrument)
-        this.button_mute = primary.findViewById(R.id.btnMuteChannel)
+        this.button_choose_instrument = secondary.findViewById(R.id.btnChooseInstrument)
+        this.button_mute = secondary.findViewById(R.id.btnMuteChannel)
     }
 
     override fun refresh() {

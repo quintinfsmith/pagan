@@ -4,27 +4,13 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="match_parent">
-                <Space
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"/>
-                <ImageView
-                    android:id="@+id/btnMuteChannel"
-                    android:theme="@style/icon_button"
-                    app:srcCompat="@drawable/mute"
-                    android:layout_width="@dimen/icon_button_width_b"
-                    android:layout_height="@dimen/icon_button_height_b"
-                    android:contentDescription="@string/cd_channel_mute"/>
-
-                <Space
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"/>
-        </LinearLayout>
+        <ImageView
+            android:id="@+id/btnMuteChannel"
+            android:theme="@style/icon_button"
+            app:srcCompat="@drawable/mute"
+            android:layout_width="@dimen/icon_button_width_b"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/cd_channel_mute"/>
 
         <TextView
             android:layout_gravity="center"

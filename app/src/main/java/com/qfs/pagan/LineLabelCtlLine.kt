@@ -46,4 +46,10 @@ class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel
             this.line_offset
         )
     }
+
+    override fun is_muted(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        val channel = opus_manager.get_channel(this.channel)
+        return channel.muted || channel.get_line(this.line_offset).muted
+    }
 }

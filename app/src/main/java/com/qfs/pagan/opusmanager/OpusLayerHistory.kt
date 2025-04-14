@@ -657,6 +657,25 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
+                HistoryToken.MUTE_CHANNEL -> {
+                    this.mute_channel(current_node.args[0] as Int)
+                }
+                HistoryToken.UNMUTE_CHANNEL -> {
+                    this.unmute_channel(current_node.args[0] as Int)
+                }
+                HistoryToken.MUTE_LINE -> {
+                    this.mute_line(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int
+                    )
+                }
+                HistoryToken.UNMUTE_LINE -> {
+                    this.unmute_line(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int
+                    )
+                }
+
                 HistoryToken.MULTI -> { }
                 else -> {}
             }
@@ -1671,6 +1690,33 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 )
             }
             super.set_channel_visibility(channel_index, visibility)
+        }
+    }
+
+    override fun mute_channel(channel: Int) {
+        this._remember {
+            super.mute_channel(channel)
+            this.push_to_history_stack(HistoryToken.UNMUTE_CHANNEL, listOf(channel))
+        }
+    }
+
+    override fun unmute_channel(channel: Int) {
+        this._remember {
+            super.unmute_channel(channel)
+            this.push_to_history_stack(HistoryToken.MUTE_CHANNEL, listOf(channel))
+        }
+    }
+
+    override fun mute_line(channel: Int, line_offset: Int) {
+        this._remember {
+            super.mute_line(channel, line_offset)
+            this.push_to_history_stack(HistoryToken.UNMUTE_LINE, listOf(channel, line_offset))
+        }
+    }
+    override fun unmute_line(channel: Int, line_offset: Int) {
+        this._remember {
+            super.unmute_line(channel, line_offset)
+            this.push_to_history_stack(HistoryToken.MUTE_LINE, listOf(channel, line_offset))
         }
     }
 

@@ -170,5 +170,22 @@
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"/>
         </LinearLayout>
+        <LinearLayout
+            android:id="@+id/llUsePreferredSF"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:text="@string/label_settings_use_preferred_sf"
+                android:paddingStart="15dp"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"/>
+            <androidx.appcompat.widget.SwitchCompat
+                android:theme="@style/Theme.Pagan.Switch"
+                android:id="@+id/sUsePreferredSF"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"/>
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

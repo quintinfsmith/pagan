@@ -49,7 +49,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-        val drawableState = super.onCreateDrawableState(extraSpace + 2)
+        val drawableState = super.onCreateDrawableState(extraSpace + 3)
         return this._build_drawable_state(drawableState)
     }
 
@@ -65,6 +65,10 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             new_state.add(R.attr.state_focused)
         } else if (opus_manager.is_line_selected_secondary(channel, line_offset)) {
             new_state.add(R.attr.state_focused_secondary)
+        }
+
+        if (this.is_muted()) {
+            new_state.add(R.attr.state_muted)
         }
 
         mergeDrawableStates(drawableState, new_state.toIntArray())
@@ -163,5 +167,11 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     }
     fun get_opus_manager(): OpusLayerInterface {
         return (this.parent as LineLabelView).get_opus_manager()
+    }
+
+    fun is_muted(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        val channel = opus_manager.get_channel(this.channel)
+        return channel.muted || channel.get_line(this.line_offset).muted
     }
 }

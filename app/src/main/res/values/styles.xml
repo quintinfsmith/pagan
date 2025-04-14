@@ -230,7 +230,7 @@
 
     <style name="volume_widget" parent="control_widget">
     </style>
-    <style name="volume_widget_button">
+    <style name="volume_widget_button" parent="icon_button">
         <item name="android:textSize">20sp</item>
         <item name="android:fontFamily">monospace</item>
     </style>

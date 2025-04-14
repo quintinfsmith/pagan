@@ -35,9 +35,9 @@
         android:contentDescription="@string/cd_channel_volume"/>
 
     <Space
-        android:visibility="gone"
         android:id="@+id/spacer"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_width="0dp" />
+
 </LinearLayout>

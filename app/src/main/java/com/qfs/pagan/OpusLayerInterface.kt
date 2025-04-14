@@ -3,6 +3,7 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
@@ -929,16 +930,30 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
 
+
             var y = 0
+            var first_swapped_line = min(
+                this.get_instrument_line_index(channel_a, line_a),
+                this.get_instrument_line_index(channel_b, line_b)
+            )
+
             for (channel in this.get_all_channels()) {
                 if (!channel.visible) {
                     continue
                 }
 
-                this._ui_change_bill.queue_row_change(y++)
                 for (line in channel.lines) {
+                    if (y >= first_swapped_line) {
+                        this._ui_change_bill.queue_line_label_refresh(y)
+                    }
+
+                    this._ui_change_bill.queue_row_change(y++)
+
                     for ((_, controller) in line.controllers.get_all()) {
                         if (controller.visible) {
+                            if (y >= first_swapped_line) {
+                                this._ui_change_bill.queue_line_label_refresh(y)
+                            }
                             this._ui_change_bill.queue_row_change(y++)
                         }
                     }
@@ -946,6 +961,9 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                 for ((_, controller) in channel.controllers.get_all()) {
                     if (controller.visible) {
+                        if (y >= first_swapped_line) {
+                            this._ui_change_bill.queue_line_label_refresh(y)
+                        }
                         this._ui_change_bill.queue_row_change(y++)
                     }
                 }
@@ -953,6 +971,9 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             for ((_, controller) in this.controllers.get_all()) {
                 if (controller.visible) {
+                    if (y >= first_swapped_line) {
+                        this._ui_change_bill.queue_line_label_refresh(y)
+                    }
                     this._ui_change_bill.queue_row_change(y++)
                 }
             }
@@ -1290,6 +1311,30 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
 
             this._ui_change_bill.queue_refresh_context_menu()
+        }
+    }
+
+    override fun to_json(): JSONHashMap {
+        val output = super.to_json()
+        val activity = this.get_activity() ?: return output
+        if (activity.configuration.soundfont != null) {
+            output.get_hashmap("d")["sf"] = activity.configuration.soundfont
+        }
+        return output
+    }
+
+    override fun _project_change_json(json_data: JSONHashMap) {
+        super._project_change_json(json_data)
+        if (!this._in_reload) {
+            val activity = this.get_activity() ?: return
+            if (! activity.configuration.use_preferred_soundfont) {
+                return
+            }
+
+            val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
+            if (sf_path != activity.configuration.soundfont) {
+                this.get_activity()?.get_action_interface()?.set_soundfont(sf_path)
+            }
         }
     }
 

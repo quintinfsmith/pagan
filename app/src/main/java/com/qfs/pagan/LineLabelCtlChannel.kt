@@ -49,4 +49,10 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
             this.channel
         )
     }
+
+    override fun is_muted(): Boolean {
+        val opus_manager = this.get_opus_manager()
+        val channel = opus_manager.get_channel(this.channel)
+        return channel.muted
+    }
 }

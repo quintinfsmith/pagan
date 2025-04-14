@@ -134,6 +134,14 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
                 }
             }
         })
+
+
+        val switch_use_preferred_sf = view.findViewById<SwitchCompat>(R.id.sUsePreferredSF)
+        switch_use_preferred_sf.isChecked = main.configuration.use_preferred_soundfont
+        switch_use_preferred_sf.setOnCheckedChangeListener { _, enabled: Boolean ->
+            main.configuration.use_preferred_soundfont = enabled
+            main.save_configuration()
+        }
     }
 
     private fun interact_btnChooseSoundFont() {

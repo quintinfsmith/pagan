@@ -105,8 +105,9 @@
     <string name="reticle_msg_import_midi">Importing Midi File…</string>
     <string name="reticle_msg_start_playback">Starting Playback…</string>
     <string name="dlg_export">Export Project to…</string>
-    <string name="export_option_midi">Midi File</string>
-    <string name="export_option_wav">Wav File</string>
+    <string name="export_option_midi">MIDI File</string>
+    <string name="export_option_wav">WAV File</string>
+    <string name="export_option_json">JSON File</string>
     <string name="drum_not_found">Drum Not Found</string>
     <string name="dlg_duration">Duration</string>
     <string name="export_cancelled">Export Cancelled</string>
@@ -173,6 +174,9 @@
     <string name="rb_mm_copy">Copy</string>
     <string name="rb_mm_move">Move</string>
     <string name="rb_mm_merge">Merge</string>
+    <string name="label_settings_use_preferred_sf">Rememeber soundfont when loading project:</string>
+    <string name="cd_channel_mute">Mute and unmute this channel</string>
+    <string name="cd_line_mute">Mute and unmute this line</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

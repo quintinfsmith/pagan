@@ -56,6 +56,7 @@ open class OpusLayerBase {
     class EmptyPath : Exception("Path Required but not given")
     class EmptyJSONException: Exception("JSON object was NULL")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey) : Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
+    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
 
     /**
      * Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
@@ -1828,6 +1829,34 @@ open class OpusLayerBase {
         val channel = this.get_all_channels()[channel_index]
         channel.visible = visibility
         this.recache_line_maps()
+    }
+
+    /**
+     * Mute Playback of channel at [channel]
+     */
+    open fun mute_channel(channel: Int) {
+        this.get_all_channels()[channel].mute()
+    }
+
+    /**
+     * Unmute Playback of channel at [channel]
+     */
+    open fun unmute_channel(channel: Int) {
+        this.get_all_channels()[channel].unmute()
+    }
+
+    /**
+     * Mute Playback of line at [channel], [line_offset]
+     */
+    open fun mute_line(channel: Int, line_offset: Int) {
+        this.get_all_channels()[channel].get_line(line_offset).mute()
+    }
+
+    /**
+     * Unmute Playback of line at [channel], [line_offset]
+     */
+    open fun unmute_line(channel: Int, line_offset: Int) {
+        this.get_all_channels()[channel].get_line(line_offset).unmute()
     }
 
     /*
@@ -4872,7 +4901,4 @@ open class OpusLayerBase {
         result = ((result shl 5) + (result shr 27)).xor(this.tuning_map.contentHashCode())
         return result
     }
-
-    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
-
 }

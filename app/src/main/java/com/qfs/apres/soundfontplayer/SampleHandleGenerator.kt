@@ -17,7 +17,9 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var note: Int,
         var bend: Int,
         var sample: Int,
+        var sample_global: Int,
         var instrument: Int,
+        var instrument_global: Int,
         var preset: Int
     )
 
@@ -48,9 +50,9 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         this.sample_data_map.clear()
     }
 
-    fun get(event: NoteOn, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): Pair<SampleHandle, SampleHandle?> {
+    fun get(event: NoteOn, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?> {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
-        val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
+        val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, instrument_directive, preset)
         val (handle_main, handle_linked) = this.sample_data_map[map_key]!!
 
         val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
@@ -59,7 +61,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val first = SampleHandle.copy(handle_main)
         first.volume_profile = volume_profile
         first.pan_profile = pan_profile
-
 
         val linked = if (handle_linked != null) {
             val tmp = SampleHandle.copy(handle_linked)
@@ -73,8 +74,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         return Pair(first, linked)
     }
 
-    fun get(event: NoteOn79, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): Pair<SampleHandle, SampleHandle?> {
-        val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
+    fun get(event: NoteOn79, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?> {
+        val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, instrument_directive, preset)
         val (handle_main, handle_linked) = this.sample_data_map[map_key]!!
         val volume = event.velocity / (128 shl 8).toFloat()
         val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(volume, 0F))), 0)
@@ -96,8 +97,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         return Pair(first, linked)
     }
 
-    fun cache_or_create_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): MapKey {
-        val map_key = MapKey(note, bend, sample_directive.hashCode(), instrument_directive.hashCode(), global_instrument_directive.hashCode())
+    fun cache_or_create_new(note: Int, bend: Int, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): MapKey {
+        val global_sample_directive = instrument_directive.instrument?.global_zone ?: SampleDirective()
+        val global_instrument_directive = preset.global_zone
+
+        val map_key = MapKey(note, bend, sample_directive.uid, global_sample_directive.uid, instrument_directive.uid, global_instrument_directive.uid, preset.uid)
         if (!sample_data_map.contains(map_key)) {
             this.sample_data_map[map_key] = this.generate_new(note, bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
         }
@@ -278,7 +282,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     fun decache_sample_data(preset: Preset) {
         val to_remove = mutableListOf<MapKey>()
         for ((mapkey, _) in this.sample_data_map) {
-            if (mapkey.preset == preset.hashCode()) {
+            if (mapkey.preset == preset.uid) {
                 to_remove.add(mapkey)
             }
         }

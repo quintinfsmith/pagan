@@ -1587,6 +1587,8 @@ open class OpusLayerBase {
         val tmp_channel = this.channels[channel_a]
         this.channels[channel_a] = this.channels[channel_b]
         this.channels[channel_b] = tmp_channel
+
+        this.recache_line_maps()
     }
 
     /**

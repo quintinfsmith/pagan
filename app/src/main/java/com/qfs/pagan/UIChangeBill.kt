@@ -643,7 +643,6 @@ class UIChangeBill {
     }
 
     fun queue_line_label_refresh(y: Int) {
-        println("Q: $y")
         val working_tree = this.get_working_tree() ?: return
         working_tree.int_queue.add(y)
         working_tree.bill.add(BillableItem.LineLabelRefresh)

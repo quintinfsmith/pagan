@@ -131,7 +131,8 @@ class ActionTracker {
         MuteChannel,
         UnMuteChannel,
         MuteLine,
-        UnMuteLine
+        UnMuteLine,
+        ForceOrientation
     }
 
     companion object {
@@ -2061,7 +2062,9 @@ class ActionTracker {
             TrackedAction.UnMuteLine -> {
                 this.line_unmute(integers[0]!!, integers[1]!!)
             }
-
+            TrackedAction.ForceOrientation -> {
+                this.set_orientation(integers[0]!!)
+            }
         }
     }
 
@@ -2197,6 +2200,11 @@ class ActionTracker {
 
         this.track(TrackedAction.UnMuteLine, listOf(w_channel, w_line_offset))
         opus_manager.unmute_line(w_channel, w_line_offset)
+    }
+
+    fun set_orientation(value: Int) {
+        this.track(TrackedAction.ForceOrientation, listOf(value))
+        this.get_activity().set_forced_orientation(value)
     }
 
     fun set_clip_same_line_notes(value: Boolean) {

@@ -913,9 +913,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-
-
-
         var y = 0
         var first_swapped_line = min(
             this.get_instrument_line_index(channel_a, line_a),

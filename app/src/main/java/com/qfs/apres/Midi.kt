@@ -658,10 +658,10 @@ class Midi {
     }
 
     fun detect_version(): Int {
-        var output = 1
+        var output = Midi.VERSION_1
         for (event in this.events) {
             if (event is UMPEvent) {
-                output = 2
+                output = Midi.VERSION_2_CLIP
                 break
             }
         }

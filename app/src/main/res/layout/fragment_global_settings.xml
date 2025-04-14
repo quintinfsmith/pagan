@@ -198,7 +198,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:text="Screen Orientation"
+                android:text="@string/settings_screen_orientation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
             <RadioGroup
@@ -210,7 +210,7 @@
                     android:id="@+id/rbOrientationUser"
                     android:theme="@style/link_mode_button"
                     android:textColor="@color/main_fg"
-                    android:text="System"
+                    android:text="@string/settings_orientation_system"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
                 <Space
@@ -219,7 +219,7 @@
                     android:layout_height="wrap_content"/>
                 <RadioButton
                     android:id="@+id/rbOrientationLandscape"
-                    android:text="Landscape"
+                    android:text="@string/settings_orientation_landscape"
                     android:textColor="@color/main_fg"
                     android:theme="@style/link_mode_button"
                     android:layout_width="wrap_content"
@@ -232,7 +232,7 @@
                     android:id="@+id/rbOrientationPortrait"
                     android:theme="@style/link_mode_button"
                     android:textColor="@color/main_fg"
-                    android:text="Portrait"
+                    android:text="@string/settings_orientation_portrait"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
             </RadioGroup>

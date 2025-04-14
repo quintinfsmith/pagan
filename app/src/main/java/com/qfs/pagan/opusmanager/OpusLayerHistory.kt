@@ -584,6 +584,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
+                HistoryToken.SWAP_CHANNELS -> {
+                    this.swap_channels(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int
+                    )
+                }
+
                 HistoryToken.SET_GLOBAL_CTL_VISIBILITY -> {
                     this.set_global_controller_visibility(
                         current_node.args[0] as ControlEventType,
@@ -745,6 +752,16 @@ open class OpusLayerHistory: OpusLayerCursor() {
             this.push_to_history_stack(
                 HistoryToken.SWAP_LINES,
                 listOf(channel_a, line_a, channel_b, line_b)
+            )
+        }
+    }
+
+    override fun swap_channels(channel_a: Int, channel_b: Int) {
+        this._remember {
+            super.swap_channels(channel_a, channel_b)
+            this.push_to_history_stack(
+                HistoryToken.SWAP_CHANNELS,
+                listOf(channel_a, channel_b)
             )
         }
     }

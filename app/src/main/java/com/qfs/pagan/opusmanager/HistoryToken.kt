@@ -37,6 +37,7 @@ enum class HistoryToken {
     SET_TRANSPOSE,
     SET_TUNING_MAP,
     SWAP_LINES,
+    SWAP_CHANNELS,
     UNSET,
     MUTE_CHANNEL,
     MUTE_LINE,

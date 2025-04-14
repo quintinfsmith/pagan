@@ -177,6 +177,11 @@
     <string name="label_settings_use_preferred_sf">Rememeber soundfont when loading project:</string>
     <string name="cd_channel_mute">Mute and unmute this channel</string>
     <string name="cd_line_mute">Mute and unmute this line</string>
+    <string name="settings_screen_orientation">Screen Orientation</string>
+    <string name="settings_orientation_system">System</string>
+    <string name="settings_orientation_landscape">Landscape</string>
+    <string name="settings_orientation_portrait">Portrait</string>
+    <string name="can_t_move_percussion_channel">Can\'t move percussion channel.</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

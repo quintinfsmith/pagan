@@ -571,6 +571,30 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         }
     }
 
+    fun swap_mapped_channels(line_a: Int, count_a: Int, line_b: Int, count_b: Int) {
+        val (first, second) = if (line_a < line_b) {
+            Pair(
+                Pair(line_a, count_a),
+                Pair(line_b, count_b)
+            )
+        } else {
+            Pair(
+                Pair(line_b, count_b),
+                Pair(line_a, count_a)
+            )
+        }
+
+        for (i in 0 until second.second) {
+            val elm = this._column_width_map.removeAt(second.first + i)
+            this._column_width_map.add(first.first + i, elm)
+        }
+
+        for (i in 0 until first.second) {
+            val elm = this._column_width_map.removeAt(first.first + second.second)
+            this._column_width_map.add(second.first + second.second - 1, elm)
+        }
+    }
+
     fun remove_mapped_lines(y: Int, count: Int): List<Int> {
         val output = mutableListOf<Int>()
         for (j in 0 until this._column_width_map.size) {

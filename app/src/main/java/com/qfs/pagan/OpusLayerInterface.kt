@@ -912,6 +912,55 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        var y = 0
+        var first_swapped_line = min(
+            this.get_instrument_line_index(channel_a, line_a),
+            this.get_instrument_line_index(channel_b, line_b)
+        )
+
+        for (channel in this.get_all_channels()) {
+            if (!channel.visible) {
+                continue
+            }
+
+            for (line in channel.lines) {
+                if (y >= first_swapped_line) {
+                    this._ui_change_bill.queue_line_label_refresh(y)
+                }
+
+                this._ui_change_bill.queue_row_change(y++)
+
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (controller.visible) {
+                        if (y >= first_swapped_line) {
+                            this._ui_change_bill.queue_line_label_refresh(y)
+                        }
+                        this._ui_change_bill.queue_row_change(y++)
+                    }
+                }
+            }
+
+            for ((_, controller) in channel.controllers.get_all()) {
+                if (controller.visible) {
+                    if (y >= first_swapped_line) {
+                        this._ui_change_bill.queue_line_label_refresh(y)
+                    }
+                    this._ui_change_bill.queue_row_change(y++)
+                }
+            }
+        }
+
+        for ((_, controller) in this.controllers.get_all()) {
+            if (controller.visible) {
+                if (y >= first_swapped_line) {
+                    this._ui_change_bill.queue_line_label_refresh(y)
+                }
+                this._ui_change_bill.queue_row_change(y++)
+            }
+        }
+    }
+
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         this.lock_ui_partial {
             super.swap_lines(channel_a, line_a, channel_b, line_b)
@@ -929,54 +978,58 @@ class OpusLayerInterface : OpusLayerHistory() {
             )!!
 
             this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
+            this._swap_line_ui_update(channel_a, line_a, channel_b, line_b)
+        }
+    }
 
+    override fun swap_channels(channel_a: Int, channel_b: Int) {
+        this.lock_ui_partial {
+            val vis_line_a = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(channel_a, 0)
+                )
+            )!!
+            val vis_line_b = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(channel_b, 0)
+                )
+            )!!
 
-            var y = 0
-            var first_swapped_line = min(
-                this.get_instrument_line_index(channel_a, line_a),
-                this.get_instrument_line_index(channel_b, line_b)
-            )
+            super.swap_channels(channel_a, channel_b)
 
-            for (channel in this.get_all_channels()) {
-                if (!channel.visible) {
-                    continue
-                }
-
-                for (line in channel.lines) {
-                    if (y >= first_swapped_line) {
-                        this._ui_change_bill.queue_line_label_refresh(y)
-                    }
-
-                    this._ui_change_bill.queue_row_change(y++)
-
-                    for ((_, controller) in line.controllers.get_all()) {
-                        if (controller.visible) {
-                            if (y >= first_swapped_line) {
-                                this._ui_change_bill.queue_line_label_refresh(y)
-                            }
-                            this._ui_change_bill.queue_row_change(y++)
-                        }
-                    }
-                }
-
-                for ((_, controller) in channel.controllers.get_all()) {
+            var channel_a_size = 0
+            for (line in this.get_channel(channel_a).lines) {
+                channel_a_size += 1
+                for ((_, controller) in line.controllers.get_all()) {
                     if (controller.visible) {
-                        if (y >= first_swapped_line) {
-                            this._ui_change_bill.queue_line_label_refresh(y)
-                        }
-                        this._ui_change_bill.queue_row_change(y++)
+                        channel_a_size += 1
                     }
+                }
+            }
+            for ((_, controller) in this.get_channel(channel_a).controllers.get_all()) {
+                if (controller.visible) {
+                    channel_a_size += 1
                 }
             }
 
-            for ((_, controller) in this.controllers.get_all()) {
-                if (controller.visible) {
-                    if (y >= first_swapped_line) {
-                        this._ui_change_bill.queue_line_label_refresh(y)
+            var channel_b_size = 0
+            for (line in this.get_channel(channel_b).lines) {
+                channel_b_size += 1
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (controller.visible) {
+                        channel_b_size += 1
                     }
-                    this._ui_change_bill.queue_row_change(y++)
                 }
             }
+            for ((_, controller) in this.get_channel(channel_b).controllers.get_all()) {
+                if (controller.visible) {
+                    channel_b_size += 1
+                }
+            }
+
+            this.get_editor_table().swap_mapped_channels(vis_line_b, channel_a_size, vis_line_a, channel_b_size)
+            this._swap_line_ui_update(channel_a, 0, channel_b, 0)
+
         }
     }
 

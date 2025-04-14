@@ -2,12 +2,14 @@ package com.qfs.pagan
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
@@ -142,6 +144,25 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             main.configuration.use_preferred_soundfont = enabled
             main.save_configuration()
         }
+
+
+        val lock_orientation_group = view.findViewById<RadioGroup>(R.id.rgLockOrientation)
+        lock_orientation_group.check(when (main.configuration.force_orientation) {
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> R.id.rbOrientationLandscape
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT -> R.id.rbOrientationPortrait
+            else -> R.id.rbOrientationUser
+
+        })
+        lock_orientation_group.setOnCheckedChangeListener { _, value: Int ->
+            main.set_forced_orientation(
+                when (value) {
+                    R.id.rbOrientationLandscape -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    R.id.rbOrientationPortrait -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    else -> ActivityInfo.SCREEN_ORIENTATION_USER
+                }
+            )
+        }
+
     }
 
     private fun interact_btnChooseSoundFont() {

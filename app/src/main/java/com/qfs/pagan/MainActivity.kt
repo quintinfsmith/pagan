@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -634,6 +635,8 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             PaganConfiguration()
         }
+
+        this.requestedOrientation = this.configuration.force_orientation
 
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
@@ -2272,4 +2275,11 @@ class MainActivity : AppCompatActivity() {
     fun is_debug_on(): Boolean {
         return this.packageName.contains("pagandev")
     }
+
+    fun set_forced_orientation(value: Int) {
+        this.configuration.force_orientation = value
+        this.save_configuration()
+        this.requestedOrientation = value
+    }
+
 }

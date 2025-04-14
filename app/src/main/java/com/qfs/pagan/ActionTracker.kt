@@ -127,6 +127,7 @@ class ActionTracker {
         SetRelativeModeVisibility,
         SetRelativeMode,
         SwapLines,
+        SwapChannels,
         MuteChannel,
         UnMuteChannel,
         MuteLine,
@@ -439,6 +440,17 @@ class ActionTracker {
         } catch (e: OpusLayerBase.IncompatibleChannelException) {
             val activity = this.get_activity()
             activity.feedback_msg(activity.getString(R.string.std_percussion_swap))
+        }
+    }
+
+    fun swap_channels(from_channel: Int, to_channel: Int) {
+        this.track(TrackedAction.SwapChannels, listOf(from_channel, to_channel))
+        val opus_manager = this.get_opus_manager()
+        try {
+            opus_manager.swap_channels(from_channel, to_channel)
+        } catch (e: OpusLayerBase.IncompatibleChannelException) {
+            val activity = this.get_activity()
+            activity.feedback_msg(activity.getString(R.string.can_t_move_percussion_channel))
         }
     }
 
@@ -2032,6 +2044,9 @@ class ActionTracker {
 
             TrackedAction.SwapLines -> {
                 this.swap_lines(integers[0]!!, integers[1]!!, integers[2]!!, integers[3]!!)
+            }
+            TrackedAction.SwapChannels -> {
+                this.swap_channels(integers[0]!!, integers[1]!!)
             }
 
             TrackedAction.MuteChannel -> {

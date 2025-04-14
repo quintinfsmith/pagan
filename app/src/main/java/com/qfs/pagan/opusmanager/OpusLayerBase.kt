@@ -1578,6 +1578,17 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
+    open fun swap_channels(channel_a: Int, channel_b: Int) {
+        // Can't move percussion for now
+        if (this.is_percussion(channel_a) || this.is_percussion(channel_b)) {
+            throw IncompatibleChannelException(channel_a, channel_b)
+        }
+
+        val tmp_channel = this.channels[channel_a]
+        this.channels[channel_a] = this.channels[channel_b]
+        this.channels[channel_b] = tmp_channel
+    }
+
     /**
      * Insert a beat at [beat_index] into all existing controllers, channels and lines.
      * populate the new beat with [beats_in_column]

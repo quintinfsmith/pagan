@@ -161,6 +161,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(channel_a, line_a)
     }
 
+    override fun swap_channels(channel_a: Int, channel_b: Int) {
+        super.swap_channels(channel_a, channel_b)
+        this.cursor_select_channel(channel_a)
+    }
+
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
         val output = try {
             super.remove_line(channel, line_offset)
@@ -177,7 +182,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         super.new_channel(channel, lines, uuid)
-        this.cursor_select_channel(channel ?: this.channels.size - 1)
+        this.cursor_select_channel(channel ?: (this.channels.size - 1))
     }
 
     override fun new_line(channel: Int, line_offset: Int?) {

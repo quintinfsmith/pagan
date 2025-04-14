@@ -181,6 +181,7 @@
     <string name="settings_orientation_system">System</string>
     <string name="settings_orientation_landscape">Landscape</string>
     <string name="settings_orientation_portrait">Portrait</string>
+    <string name="can_t_move_percussion_channel">Can\'t move percussion channel.</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

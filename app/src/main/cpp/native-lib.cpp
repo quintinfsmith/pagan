@@ -37,6 +37,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
         int end,
         jboolean is_loop
     ) {
+
     PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
     buffer->data = env->GetShortArrayElements(data, nullptr);
     buffer->data_size = data_size;
@@ -47,8 +48,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
     buffer->is_loop = is_loop;
     buffer->virtual_position = 0;
     buffer->pitch_adjustment = 1;
-    // NOTE: May need to round
-    buffer->virtual_size = static_cast<int>(static_cast<float>(end + 1 - start) / pitch);
+    buffer->virtual_size = static_cast<int>(round(static_cast<float>(end + 1 - start) / pitch));
     buffer->adjusted_pitch = pitch;
 
     return (jlong)buffer;
@@ -112,6 +112,12 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_is_1loop(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (PitchedBuffer *)ptr_long;
     return ptr->is_loop;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_qfs_apres_soundfontplayer_PitchedBuffer_free(JNIEnv* env, jobject, jlong ptr_long) {
+    auto *ptr = (PitchedBuffer *)ptr_long;
+    free(ptr);
 }
 
 

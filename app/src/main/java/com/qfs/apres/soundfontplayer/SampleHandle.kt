@@ -298,7 +298,6 @@ class SampleHandle(
             output._active_buffer = original._active_buffer
             output.release_frame = original.release_frame
             output.kill_frame = original.kill_frame
-            output.repitch(original.pitch_adjustment)
 
             return output
         }

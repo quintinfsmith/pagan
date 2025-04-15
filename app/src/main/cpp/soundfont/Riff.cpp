@@ -8,8 +8,9 @@ struct ListChunkHeader {
     int index;
     std::string tag;
     int size;
-    std::string type
+    std::string type;
 };
+
 struct SubChunkHeader {
     int index;
     std::string tag;

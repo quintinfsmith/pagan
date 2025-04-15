@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <exception>
+#include "soundfont/Sample.cpp"
+#include "soundfont/PitchedBuffer.cpp"
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_copy_1inner(JNIEnv* env, jobject, jlong ptr_long) {

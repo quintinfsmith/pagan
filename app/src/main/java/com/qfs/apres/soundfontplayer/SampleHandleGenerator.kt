@@ -23,24 +23,24 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var preset: Int
     )
 
-    // Leaving this class in place, but max/avg aren't used anywhere for now
-    class SampleData(
-        var data: ShortArray,
-        var max: Float? = null,
-        var avg: Float? = null
-    ) {
-        var normal_factor: Float = 1F
-        init {
-            // if (this.max == null || this.avg == null) {
-            //     val tmp_array = FloatArray(this.data.size) { i: Int ->
-            //         abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
-            //     }
-            //     this.max = tmp_array.max()
-            //     this.avg = tmp_array.average().toFloat()
-            // }
-            // this.normal_factor = 1f / this.max!!
-        }
-    }
+    //// Leaving this class in place, but max/avg aren't used anywhere for now
+    //class SampleData(
+    //    var data: ShortArray,
+    //    var max: Float? = null,
+    //    var avg: Float? = null
+    //) {
+    //    var normal_factor: Float = 1F
+    //    init {
+    //        // if (this.max == null || this.avg == null) {
+    //        //     val tmp_array = FloatArray(this.data.size) { i: Int ->
+    //        //         abs(this.data[i].toFloat() / Short.MIN_VALUE.toFloat())
+    //        //     }
+    //        //     this.max = tmp_array.max()
+    //        //     this.avg = tmp_array.average().toFloat()
+    //        // }
+    //        // this.normal_factor = 1f / this.max!!
+    //    }
+    //}
 
 
     var sample_data_map = HashMap<MapKey, Pair<SampleHandle, SampleHandle?>>()
@@ -197,7 +197,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         }
         val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 100F
         val main_handle = SampleHandle(
-            data = SampleData(data),
+            data = data,
             sample_rate = sample_rate,
             pan = pan,
             pitch_shift = pitch_shift,
@@ -239,7 +239,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             Pair(
                 main_handle,
                 SampleHandle(
-                    data = SampleData(linked_sample.data!!),
+                    data = linked_sample.data!!,
                     sample_rate = main_handle.sample_rate,
                     pan = main_handle.pan,
                     pitch_shift = main_handle.pitch_shift,

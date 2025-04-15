@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfont
 
 import com.qfs.apres.soundfont.Generator.Operation
+import com.qfs.apres.soundfont.SampleType
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -54,7 +55,8 @@ class SoundFont(file_path: String) {
     }
 
     init {
-        this.riff = Riff(file_path) { riff: Riff ->
+        this.riff = Riff(file_path)
+        this.riff.with { riff: Riff ->
             if (riff.type_cc != "sfbk") {
                 throw InvalidSoundFont(file_path)
             }
@@ -149,7 +151,7 @@ class SoundFont(file_path: String) {
         val end = toUInt(shdr_bytes[offset + 24]) + (toUInt(shdr_bytes[offset + 25]) * 256) + (toUInt(shdr_bytes[offset + 26]) * 65536) + (toUInt(shdr_bytes[offset + 27]) * 16777216)
 
         //val sample_data = this.get_sample_data(start, end)!!
-        val sample_type = SoundFont.sample_type_from_int(toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256))
+        val sample_type = toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256)
         return Sample(
             sample_name,
             toUInt(shdr_bytes[offset + 28])
@@ -169,9 +171,9 @@ class SoundFont(file_path: String) {
             toUInt(shdr_bytes[offset + 40]),
             toUInt(shdr_bytes[offset + 41]),
             when (sample_type) {
-                SampleType.Right,
-                SampleType.Left,
-                SampleType.Linked -> {
+                0x0002,
+                0x0004,
+                0x0008 -> {
                     val linked_addr = toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256)
                     if (build_linked && linked_addr != 0) {
                         this.get_sample(linked_addr, false)
@@ -179,11 +181,7 @@ class SoundFont(file_path: String) {
                         null
                     }
                 }
-                SampleType.Mono,
-                SampleType.RomMono,
-                SampleType.RomRight,
-                SampleType.RomLeft,
-                SampleType.RomLinked -> null
+                else -> null
             },
             sample_type,
             data_placeholder = Pair(start, end)
@@ -306,8 +304,8 @@ class SoundFont(file_path: String) {
                     this.apply_sample_data(sample)
 
                     val linked_sample = sample.linked_sample
-                    if (linked_sample is Sample) {
-                        this.apply_sample_data(linked_sample)
+                    if (linked_sample != null) {
+                        this.apply_sample_data(Sample(linked_sample))
                     }
                 }
             }
@@ -317,20 +315,22 @@ class SoundFont(file_path: String) {
     }
 
     fun apply_sample_data(sample: Sample) {
-        sample.data = when (sample.sampleType) {
-            SampleType.RomMono,
-            SampleType.RomRight,
-            SampleType.RomLeft,
-            SampleType.RomLinked -> {
+        sample.set_data(when (sample.sample_type) {
+            0x8001,
+            0x8002,
+            0x8004,
+            0x8008 -> {
                 if (this.irom == null) {
                     throw NoIROMDeclared()
                 }
-                this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
+                val placeholder = sample.data_placeholder
+                this.read_rom_hook(placeholder.first, placeholder.second)
             }
             else -> {
-                this.get_sample_data(sample.data_placeholder.first, sample.data_placeholder.second)
+                val placeholder = sample.data_placeholder
+                this.get_sample_data(placeholder.first, placeholder.second)
             }
-        }
+        })
     }
 
     open fun read_rom_hook(start: Int, end: Int): ShortArray {

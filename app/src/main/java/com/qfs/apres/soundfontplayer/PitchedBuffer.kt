@@ -16,10 +16,6 @@ class PitchedBuffer(var ptr: Long) {
         )
     )
 
-    init {
-        println("PTR: $ptr")
-    }
-
     companion object {
         init {
             System.loadLibrary("pagan")

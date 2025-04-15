@@ -175,25 +175,21 @@ class SampleHandleManager(
                     continue
                 }
                 sample_pairs.add(Pair(sample, p_instrument))
-                when (sample.sample!!.sampleType) {
-                    SampleType.Mono,
-                    SampleType.RomMono -> {
+                when (sample.sample!!.sample_type or 0x0F) {
+                    1 -> {
                         sample_counts[1] += 1
                         sample_counts[0] += 1
                         sample_counts[2] += 1
                     }
-                    SampleType.Right,
-                    SampleType.RomRight -> {
+                    2 -> {
                         sample_counts[2] += 1
                         sample_counts[1] += 1
                     }
-                    SampleType.Left,
-                    SampleType.RomLeft -> {
+                    4 -> {
                         sample_counts[0] += 1
                         sample_counts[1] += 1
                     }
-                    SampleType.Linked -> TODO()
-                    SampleType.RomLinked -> TODO()
+                    else -> TODO()
                 }
                 sample_count += 1
             }

@@ -613,82 +613,17 @@ class SoundFont(file_path: String) {
         val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x35
 
         val working_sample = SampleDirective()
+
         for (modulator in modulators) {
             working_sample.add_modulator(modulator)
         }
 
-        generators.forEachIndexed { i, generator ->
-            when (generator.sfGenOper) {
-                0x35 -> {
-                    if (i != generators.size - 1) {
-                        throw InvalidSampleIdPosition()
-                    }
-                    working_sample.sample = this.get_sample(generator.asInt())
-                }
-                0x00 -> {
-                    working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
-                        generator.asIntSigned()
-                    } else {
-                        working_sample.sampleStartOffset!! + generator.asIntSigned()
-                    }
-                }
-                0x01 -> {
-                    working_sample.sampleEndOffset = generator.asIntSigned()
-                }
-                0x02 -> {
-                    working_sample.loopStartOffset = generator.asIntSigned()
-                }
-                0x03 -> {
-                    working_sample.loopEndOffset = generator.asIntSigned()
-                }
-                0x04 -> {
-                    working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.sampleStartOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x0C -> {
-                    working_sample.sampleEndOffset = if (working_sample.sampleEndOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.sampleEndOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x2D -> {
-                    working_sample.loopStartOffset = if (working_sample.loopStartOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.loopStartOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x2E -> { // Instrument Specific  (keynum)
-                    working_sample.keynum = generator.asInt()
-                }
-                0x2F -> { //Instrument Specific (velocity)
-                    working_sample.velocity = generator.asInt()
-                }
-                0x32 -> {
-                    working_sample.loopEndOffset = if (working_sample.loopEndOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.loopEndOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x36 -> {
-                    working_sample.sampleMode = generator.asInt()
-                }
-                0x39 -> {
-                    working_sample.exclusive_class = generator.asInt()
-                }
-                0x3A -> {
-                    working_sample.root_key = generator.asInt()
-                }
-                else -> {
-                    this.generate(working_sample, generator)
-                }
-            }
+        working_sample.apply_generators(generators)
+        if (generators.last().sfGenOper != 0x35) {
+            throw InvalidSampleIdPosition()
         }
+        working_sample.sample = this.get_sample(generators.last().asInt())
+
 
         if (is_global) {
             instrument.set_global_zone(working_sample)
@@ -704,19 +639,16 @@ class SoundFont(file_path: String) {
             working_instrument.add_modulator(modulator)
         }
 
+        working_instrument.apply_generators(generators)
+
         for (generator in generators) {
-            when (generator.sfGenOper) {
-                0x29 -> {
-                    working_instrument.instrument = this.get_instrument(generator.asInt())
-                }
-                else -> {
-                    this.generate(working_instrument, generator)
-                }
+            if (generator.sfGenOper == 0x29) {
+                working_instrument.instrument = this.get_instrument(generator.asInt())
+                break
             }
         }
 
         if (!is_global) {
-           // working_instrument.instrument = this.get_instrument(default_instrument)
             preset.add_instrument(working_instrument)
         } else {
             preset.set_global_zone(working_instrument)

@@ -2,7 +2,10 @@
 #include <iostream>
 #include <string>
 #include <exception>
-
+#include <vector>
+#include <opencl-c.h>
+#include "Generator.h"
+#include "GeneratorOperation.h"
 
 #ifndef PAGAN_GENERATED_H
 #define PAGAN_GENERATED_H
@@ -49,6 +52,138 @@ class Generated {
 
     std::optional<float> chorus;
     std::optional<float> reverb;
+
+    public:
+        void apply_generators(std::vector<Generator> generators) {
+            for (auto & generator : generators) {
+                switch (generator.sfGenOp) {
+                    case GeneratorOperation::ModLFOPitch: {
+                        this->mod_lfo_pitch = generator.get_int();
+                        break;
+                    }
+                    case GeneratorOperation::VibLFOPitch: {
+                        this->vib_lfo_pitch = generator.get_int();
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvPitch: {
+                        this->mod_env_pitch = generator.get_int_signed();
+                        break;
+                    }
+                    case GeneratorOperation::FilterCutoff: {
+                        this->filter_cutoff = generator.get_timecent() * 8.176;
+                        break;
+                    }
+                    case GeneratorOperation::FilterResonance: {
+                        this->filter_resonance = (float)generator.get_int();
+                        break;
+                    }
+                    case GeneratorOperation::ModLFOFilter: {
+                        this->mod_lfo_filter = generator.get_int();
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvFilter: {
+                        this->mod_env_filter = generator.get_int_signed();
+                        break;
+                    }
+                    case GeneratorOperation::ModLFOToVolume: {
+                        this->mod_lfo_to_volume = (float)min(1000, max(generator.get_int_signed(), 0)) / 10;
+                        break;
+                    }
+                    case GeneratorOperation::Chorus: {
+                        this->chorus = (float)generator.get_int() / 10;
+                        break;
+                    }
+                    case GeneratorOperation::Reverb: {
+                        break;
+                    }
+                    case GeneratorOperation::Pan: {
+                        break;
+                    }
+                    case GeneratorOperation::ModLFODelay: {
+                        break;
+                    }
+                    case GeneratorOperation::ModLFOFrequency: {
+                        break;
+                    }
+                    case GeneratorOperation::VibLFODelay: {
+                        break;
+                    }
+                    case GeneratorOperation::VibLFOFrequency: {
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvDelay: {
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvAttack: {
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvHold: {
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvDecay: {
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvSustain: {
+                        break;
+                    }
+                    case GeneratorOperation::ModEnvRelease: {
+                        break;
+                    }
+                    case GeneratorOperation::KeyModEnvHold: {
+                        break;
+                    }
+                    case GeneratorOperation::KeyModEnvDecay: {
+                        break;
+                    }
+                    case GeneratorOperation::VolEnvDelay: {
+                        break;
+                    }
+                    case GeneratorOperation::VolEnvAttack: {
+                        break;
+                    }
+                    case GeneratorOperation::VolEnvHold: {
+                        break;
+                    }
+                    case GeneratorOperation::VolEnvDecay: {
+                        break;
+                    }
+                    case GeneratorOperation::VolEnvSustain: {
+                        break;
+                    }
+                    case GeneratorOperation::VolEnvRelease: {
+                        break;
+                    }
+                    case GeneratorOperation::KeyVolEnvHold: {
+                        break;
+                    }
+                    case GeneratorOperation::KeyVolEnvDecay: {
+                        break;
+                    }
+                    case GeneratorOperation::KeyRange: {
+                        break;
+                    }
+                    case GeneratorOperation::VelocityRange: {
+                        break;
+                    }
+                    case GeneratorOperation::Attenuation: {
+                        break;
+                    }
+                    case GeneratorOperation::TuningFine: {
+                        break;
+                    }
+                    case GeneratorOperation::TuningCoarse: {
+                        break;
+                    }
+                    case GeneratorOperation::ScaleTuning: {
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+
+            }
+        }
 };
 
 #endif //PAGAN_GENERATED_H

@@ -1,7 +1,3 @@
-//
-// Created by pent on 4/15/25.
-//
-
 #include "Generated.h"
 class Generated {
     std::optional<std::tuple<int, int>> key_range;

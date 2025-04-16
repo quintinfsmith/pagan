@@ -3,6 +3,7 @@
 #include <string>
 #include <exception>
 
+#include "Sample.h"
 struct Sample {
     jstring name;
     jint loop_start;

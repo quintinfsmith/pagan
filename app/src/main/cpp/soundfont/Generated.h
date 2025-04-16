@@ -210,12 +210,15 @@ class Generated {
                         break;
                     }
                     default: {
+                        this->apply_generator(&generator);
                         break;
                     }
                 }
 
             }
         }
+
+        virtual void apply_generator(Generator* generator);
 };
 
 #endif //PAGAN_GENERATED_H

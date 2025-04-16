@@ -51,6 +51,7 @@ class Generator(
             }
         }
     }
+
     enum class Operation {
         ModLFOPitch,
         VibLFOPitch,

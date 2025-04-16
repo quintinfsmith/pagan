@@ -10,7 +10,7 @@ import kotlin.math.min
 import kotlin.math.pow
 
 class SampleHandle(
-    var data: SampleHandleGenerator.SampleData,
+    var data: ShortArray,
     var sample_rate: Int,
     var initial_attenuation: Float = 0F,
     val loop_points: Pair<Int, Int>?,
@@ -48,28 +48,28 @@ class SampleHandle(
     var _data_buffers: Array<PitchedBuffer> = data_buffers ?: if (this.loop_points != null && this.loop_points.first != this.loop_points.second) {
         arrayOf<PitchedBuffer>(
             PitchedBuffer(
-                data = this.data.data,
+                data = this.data,
                 pitch = this.pitch_shift,
                 range = 0 until this.loop_points.first,
                 is_loop = false
             ),
             PitchedBuffer(
-                data = this.data.data,
+                data = this.data,
                 pitch = this.pitch_shift,
                 range = this.loop_points.first until this.loop_points.second,
                 is_loop = true
             ),
             PitchedBuffer(
-                data = this.data.data,
+                data = this.data,
                 pitch = this.pitch_shift,
-                range = this.loop_points.second until this.data.data.size,
+                range = this.loop_points.second until this.data.size,
                 is_loop = false
             )
         )
     } else {
         arrayOf(
             PitchedBuffer(
-                data = this.data.data,
+                data = this.data,
                 pitch = this.pitch_shift
             )
         )

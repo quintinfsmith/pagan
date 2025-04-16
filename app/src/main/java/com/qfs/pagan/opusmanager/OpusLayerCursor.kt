@@ -158,7 +158,12 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         super.swap_lines(channel_a, line_a, channel_b, line_b)
-        this.cursor_select_line(channel_a, line_a)
+        this.cursor_select_line(channel_b, line_b)
+    }
+
+    override fun swap_channels(channel_a: Int, channel_b: Int) {
+        super.swap_channels(channel_a, channel_b)
+        this.cursor_select_channel(channel_b)
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
@@ -177,7 +182,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
         super.new_channel(channel, lines, uuid)
-        this.cursor_select_channel(channel ?: this.channels.size - 1)
+        this.cursor_select_channel(channel ?: (this.channels.size - 1))
     }
 
     override fun new_line(channel: Int, line_offset: Int?) {
@@ -285,6 +290,26 @@ open class OpusLayerCursor: OpusLayerBase() {
         val new_index = max(0, min(tree.size - 1, position.last()))
         val new_position = position.subList(0, position.size - 1) + listOf(new_index)
         this.cursor_select_ctl_at_global(type, beat, this.get_first_position_global_ctl(type, beat, new_position))
+    }
+
+    override fun mute_channel(channel: Int) {
+        super.mute_channel(channel)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun unmute_channel(channel: Int) {
+        super.unmute_channel(channel)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun mute_line(channel: Int, line_offset: Int) {
+        super.mute_line(channel, line_offset)
+        this.cursor_select_line(channel, line_offset)
+    }
+
+    override fun unmute_line(channel: Int, line_offset: Int) {
+        super.unmute_line(channel, line_offset)
+        this.cursor_select_line(channel, line_offset)
     }
 
     /* ------------------- 2nd Order Functions ---------------------------------- */

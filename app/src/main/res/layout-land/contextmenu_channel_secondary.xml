@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
+    <ImageView
+        android:id="@+id/btnMuteChannel"
+        android:theme="@style/icon_button"
+        app:srcCompat="@drawable/mute"
+        android:layout_width="@dimen/icon_button_width_b"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/cd_channel_mute"/>
+
     <TextView
         android:layout_gravity="center"
         android:ellipsize="end"
@@ -12,7 +20,7 @@
         android:id="@+id/btnChooseInstrument"
         android:textSize="18sp"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/icon_button_height"
+        android:layout_height="match_parent"
         android:textAlignment="center"
         android:text="" />
 </LinearLayout>

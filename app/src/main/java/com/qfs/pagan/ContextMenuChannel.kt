@@ -4,6 +4,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 /*
@@ -15,17 +18,20 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_remove: ImageView
     lateinit var button_choose_instrument: TextView
     lateinit var button_toggle_controllers: ImageView
+    lateinit var button_mute: ImageView
 
     init {
         this.refresh()
     }
+
     override fun init_properties() {
         val primary = this.primary!!
+        val secondary = this.secondary!!
         this.button_toggle_controllers = primary.findViewById(R.id.btnToggleChannelCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
-        this.button_choose_instrument = this.secondary!!.findViewById(R.id.btnChooseInstrument)
-
+        this.button_choose_instrument = secondary.findViewById(R.id.btnChooseInstrument)
+        this.button_mute = secondary.findViewById(R.id.btnMuteChannel)
     }
 
     override fun refresh() {
@@ -70,13 +76,22 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             show_control_toggle = true
             break
         }
+
         if (!show_control_toggle) {
             this.button_toggle_controllers.visibility = View.GONE
         } else {
             this.button_toggle_controllers.visibility = View.VISIBLE
         }
-    }
 
+        // TODO: I don't like how I'm doing this. Should be a custom button?
+        this.button_mute.setImageResource(
+            if (channel.muted) {
+                R.drawable.mute
+            } else {
+                R.drawable.unmute
+            }
+        )
+    }
 
     override fun setup_interactions() {
         this.button_choose_instrument.setOnClickListener {
@@ -120,6 +135,20 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
                 return@setOnClickListener
             }
             this.get_activity().get_action_interface().show_hidden_channel_controller()
+        }
+
+        this.button_mute.setOnClickListener {
+            val opus_manager = this.get_opus_manager()
+            val cursor = opus_manager.cursor
+
+            val is_mute = opus_manager.get_channel(cursor.channel).muted
+            val tracker = this.get_activity().get_action_interface()
+
+            if (is_mute) {
+                tracker.channel_unmute()
+            } else {
+                tracker.channel_mute()
+            }
         }
     }
 

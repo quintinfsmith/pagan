@@ -6,10 +6,19 @@ class Preset(
     var bank: Int = 0, // MIDI Bank Number
     // dwLibrary, dwGenre, dwMorphology don't do anything yet
 ) {
+
+    companion object {
+        var next_uid: Int = 0
+        fun gen_uid(): Int {
+            return next_uid++
+        }
+    }
     var instruments = HashMap<Int, InstrumentDirective>()
     var global_zone = InstrumentDirective()
     private val quick_instrument_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
     private val quick_instrument_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }
+
+    val uid = Preset.gen_uid()
 
     fun set_global_zone(new_global_zone: InstrumentDirective) {
         this.global_zone = new_global_zone

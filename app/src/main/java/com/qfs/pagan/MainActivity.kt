@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -637,6 +638,8 @@ class MainActivity : AppCompatActivity() {
             PaganConfiguration()
         }
 
+        this.requestedOrientation = this.configuration.force_orientation
+
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
         this.setSupportActionBar(this._binding.appBarMain.toolbar)
@@ -651,6 +654,11 @@ class MainActivity : AppCompatActivity() {
             arrayOf(),
             intArrayOf(Color.BLUE)
         )
+
+        toolbar.setOnLongClickListener {
+            this.get_action_interface().set_project_name()
+            true
+        }
 
         toolbar.background = null
 
@@ -1289,8 +1297,9 @@ class MainActivity : AppCompatActivity() {
                         default = null
                     ) { _: Int, value: Int ->
                         when (value) {
-                            0 -> this.export_midi()
-                            1 -> this.export_wav()
+                            0 -> this.export_project()
+                            1 -> this.export_midi()
+                            2 -> this.export_wav()
                         }
                     }
                 } else {
@@ -1304,13 +1313,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun get_exportable_options(): List<Pair<Int, String>> {
-        val export_options = mutableListOf<Pair<Int, String>>()
+        val export_options = mutableListOf<Pair<Int, String>>(
+            Pair(0, getString(R.string.export_option_json))
+        )
         if (this.get_opus_manager().is_tuning_standard()) {
-            export_options.add( Pair(0, getString(R.string.export_option_midi)) )
+            export_options.add( Pair(1, getString(R.string.export_option_midi)) )
         }
 
         if (this.get_soundfont() != null) {
-            export_options.add( Pair(1, getString(R.string.export_option_wav)) )
+            export_options.add( Pair(2, getString(R.string.export_option_wav)) )
         }
 
         return export_options
@@ -1436,6 +1447,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Float = .6F) {
+        if (event_value < 0) {
+            return // No sound to play
+        }
         if (!this._midi_interface.output_devices_connected()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()
@@ -1481,6 +1495,7 @@ class MainActivity : AppCompatActivity() {
                 bend=bend,
                 velocity = (velocity * 127F).toInt() shl 8,
             )
+
             this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
         } else {
@@ -1532,7 +1547,7 @@ class MainActivity : AppCompatActivity() {
 
     fun is_soundfont_available(): Boolean {
         val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles()?.isNotEmpty() ?: false
+        return soundfont_dir.listFiles()?.isNotEmpty() == true
     }
 
     fun populate_supported_soundfont_instrument_names() {
@@ -2271,4 +2286,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
 
     }
+
+    fun set_forced_orientation(value: Int) {
+        this.configuration.force_orientation = value
+        this.save_configuration()
+        this.requestedOrientation = value
+    }
+
 }

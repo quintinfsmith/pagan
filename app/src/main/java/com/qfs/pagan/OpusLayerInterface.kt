@@ -3,6 +3,7 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
@@ -911,6 +912,55 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        var y = 0
+        var first_swapped_line = min(
+            this.get_instrument_line_index(channel_a, line_a),
+            this.get_instrument_line_index(channel_b, line_b)
+        )
+
+        for (channel in this.get_all_channels()) {
+            if (!channel.visible) {
+                continue
+            }
+
+            for (line in channel.lines) {
+                if (y >= first_swapped_line) {
+                    this._ui_change_bill.queue_line_label_refresh(y)
+                }
+
+                this._ui_change_bill.queue_row_change(y++)
+
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (controller.visible) {
+                        if (y >= first_swapped_line) {
+                            this._ui_change_bill.queue_line_label_refresh(y)
+                        }
+                        this._ui_change_bill.queue_row_change(y++)
+                    }
+                }
+            }
+
+            for ((_, controller) in channel.controllers.get_all()) {
+                if (controller.visible) {
+                    if (y >= first_swapped_line) {
+                        this._ui_change_bill.queue_line_label_refresh(y)
+                    }
+                    this._ui_change_bill.queue_row_change(y++)
+                }
+            }
+        }
+
+        for ((_, controller) in this.controllers.get_all()) {
+            if (controller.visible) {
+                if (y >= first_swapped_line) {
+                    this._ui_change_bill.queue_line_label_refresh(y)
+                }
+                this._ui_change_bill.queue_row_change(y++)
+            }
+        }
+    }
+
     override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         this.lock_ui_partial {
             super.swap_lines(channel_a, line_a, channel_b, line_b)
@@ -928,34 +978,58 @@ class OpusLayerInterface : OpusLayerHistory() {
             )!!
 
             this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
+            this._swap_line_ui_update(channel_a, line_a, channel_b, line_b)
+        }
+    }
 
-            var y = 0
-            for (channel in this.get_all_channels()) {
-                if (!channel.visible) {
-                    continue
-                }
+    override fun swap_channels(channel_a: Int, channel_b: Int) {
+        this.lock_ui_partial {
+            val vis_line_a = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(channel_a, 0)
+                )
+            )!!
+            val vis_line_b = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(channel_b, 0)
+                )
+            )!!
 
-                this._ui_change_bill.queue_row_change(y++)
-                for (line in channel.lines) {
-                    for ((_, controller) in line.controllers.get_all()) {
-                        if (controller.visible) {
-                            this._ui_change_bill.queue_row_change(y++)
-                        }
-                    }
-                }
+            super.swap_channels(channel_a, channel_b)
 
-                for ((_, controller) in channel.controllers.get_all()) {
+            var channel_a_size = 0
+            for (line in this.get_channel(channel_a).lines) {
+                channel_a_size += 1
+                for ((_, controller) in line.controllers.get_all()) {
                     if (controller.visible) {
-                        this._ui_change_bill.queue_row_change(y++)
+                        channel_a_size += 1
                     }
                 }
             }
-
-            for ((_, controller) in this.controllers.get_all()) {
+            for ((_, controller) in this.get_channel(channel_a).controllers.get_all()) {
                 if (controller.visible) {
-                    this._ui_change_bill.queue_row_change(y++)
+                    channel_a_size += 1
                 }
             }
+
+            var channel_b_size = 0
+            for (line in this.get_channel(channel_b).lines) {
+                channel_b_size += 1
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (controller.visible) {
+                        channel_b_size += 1
+                    }
+                }
+            }
+            for ((_, controller) in this.get_channel(channel_b).controllers.get_all()) {
+                if (controller.visible) {
+                    channel_b_size += 1
+                }
+            }
+
+            this.get_editor_table().swap_mapped_channels(vis_line_b, channel_a_size, vis_line_a, channel_b_size)
+            this._swap_line_ui_update(channel_a, 0, channel_b, 0)
+
         }
     }
 
@@ -1290,6 +1364,30 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
 
             this._ui_change_bill.queue_refresh_context_menu()
+        }
+    }
+
+    override fun to_json(): JSONHashMap {
+        val output = super.to_json()
+        val activity = this.get_activity() ?: return output
+        if (activity.configuration.soundfont != null) {
+            output.get_hashmap("d")["sf"] = activity.configuration.soundfont
+        }
+        return output
+    }
+
+    override fun _project_change_json(json_data: JSONHashMap) {
+        super._project_change_json(json_data)
+        if (!this._in_reload) {
+            val activity = this.get_activity() ?: return
+            if (! activity.configuration.use_preferred_soundfont) {
+                return
+            }
+
+            val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
+            if (sf_path != activity.configuration.soundfont) {
+                this.get_activity()?.get_action_interface()?.set_soundfont(sf_path)
+            }
         }
     }
 

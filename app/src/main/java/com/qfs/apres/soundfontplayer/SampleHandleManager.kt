@@ -138,9 +138,8 @@ class SampleHandleManager(
             val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
-                p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
-                preset.global_zone
+                preset
             )
 
             //new_handle.volume_profile = velocity.toFloat()  * .6F / 128.toFloat()
@@ -204,9 +203,9 @@ class SampleHandleManager(
             val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
-                p_instrument.instrument?.global_zone ?: SampleDirective(),
+                //p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
-                preset.global_zone
+                preset
             )
             //new_handle.volume_profile = (event.get_velocity().toFloat() * .6F / 128F)
             output.add(new_handle)

@@ -44,7 +44,6 @@
         android:contentDescription="@string/cd_show_effect_controls"/>
 
     <Space
-        android:visibility="gone"
         android:id="@+id/spacer"
         android:layout_height="0dp"
         android:layout_weight="1"

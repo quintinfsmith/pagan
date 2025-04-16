@@ -3,9 +3,12 @@ package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CompoundButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Space
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -16,6 +19,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var button_remove: ImageView
     lateinit var button_choose_percussion: TextView
     lateinit var button_toggle_volume_control: ImageView
+    lateinit var button_mute: ImageView
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
 
@@ -28,6 +32,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
+        this.button_mute = this.secondary!!.findViewById(R.id.btnMuteLine)
 
         this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0F), true, this.context) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
@@ -40,8 +45,10 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             )
         }
 
-        this.secondary!!.addView(this.widget_volume)
-        (this.widget_volume as View).layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+        this.secondary.addView(this.widget_volume)
+        (this.widget_volume as View).layoutParams.width = 0
+        ((this.widget_volume as View).layoutParams as LinearLayout.LayoutParams).weight = 1f
+
         (this.widget_volume as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
 
         this.spacer = primary.findViewById(R.id.spacer)
@@ -98,6 +105,15 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             this.button_toggle_volume_control.visibility = View.VISIBLE
         }
 
+        // TODO: I don't like how I'm doing this. Should be a custom button?
+        this.button_mute.setImageResource(
+            if (opus_manager.get_channel(channel).get_line(line_offset).muted) {
+                R.drawable.mute
+            } else {
+                R.drawable.unmute
+            }
+        )
+
         // Show the volume control regardless of if line control is visible. redundancy is probably better.
         val controller = working_channel.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
         this.widget_volume.set_event(controller.initial_event, true)
@@ -147,6 +163,20 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             }
             this.get_activity().get_action_interface().show_hidden_line_controller()
             //this.click_button_toggle_volume_control()
+        }
+
+        this.button_mute.setOnClickListener {
+            val opus_manager = this.get_opus_manager()
+            val cursor = opus_manager.cursor
+
+            val is_mute = opus_manager.get_channel(cursor.channel).get_line(cursor.line_offset).muted
+            val tracker = this.get_activity().get_action_interface()
+
+            if (is_mute) {
+                tracker.line_unmute()
+            } else {
+                tracker.line_mute()
+            }
         }
     }
 

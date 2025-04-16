@@ -5,12 +5,13 @@ import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.ImageView
 import android.widget.SeekBar
+import android.widget.TextView
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, R.layout.control_widget_volume, callback) {
     private lateinit var _slider: SeekBar
-    private lateinit var _button: ButtonLabelledIcon
+    private lateinit var _button: TextView
     private lateinit var _transition_button: ImageView
     val min = 0
     val max = 100
@@ -22,8 +23,8 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
         this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
 
         this.set_text((this.working_event.value * 100).toInt())
-        this._button.set_icon(R.drawable.volume_widget)
-        this._button.label.minEms = 2
+        //this._button.set_icon(R.drawable.volume_widget)
+        this._button.minEms = 2
 
         if (this.is_initial_event) {
             this._transition_button.visibility = View.GONE
@@ -76,7 +77,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
     }
 
     fun set_text(value: Int) {
-        this._button.set_text("%03d%%".format(value))
+        this._button.text = "%03d%%".format(value)
     }
 
     override fun on_set(event: OpusVolumeEvent) {

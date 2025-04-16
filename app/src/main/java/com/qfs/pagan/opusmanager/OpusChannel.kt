@@ -36,6 +36,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
     var size: Int = 0
 
     var visible = true // Would rather have this in the Interface Layer but the code is much cleaner with it here
+    var muted = false
 
     abstract fun gen_line(): T
     open fun clear() {
@@ -346,6 +347,18 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
         result = (31 * result) + this.size
         result = (31 * result) + this.visible.hashCode()
         return result
+    }
+
+    fun toggle_mute() {
+        this.muted = !this.muted
+    }
+
+    fun mute() {
+        this.muted = true
+    }
+
+    fun unmute() {
+        this.muted = false
     }
 }
 

@@ -7,12 +7,11 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context) {
     init {
-
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
             val adapter = (view.parent.parent as LineLabelColumnLayout)
             val opus_manager = this.get_opus_manager()
@@ -29,8 +28,14 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
                     if (adapter.is_dragging()) {
                         val (from_channel, from_line) = adapter.dragging_position!!
                         val (to_channel, to_line) = opus_manager.get_channel_and_line_offset(pointer)
-                        if (from_channel != to_channel || from_line != to_line) {
-                            this.get_activity().get_action_interface().swap_lines(from_channel, from_line, to_channel, to_line)
+                        if (opus_manager.cursor.mode == CursorMode.Channel) {
+                            if (from_channel != to_channel) {
+                                this.get_activity().get_action_interface().swap_channels(from_channel, to_channel)
+                            }
+                        } else {
+                            if (from_channel != to_channel || from_line != to_line) {
+                                this.get_activity().get_action_interface().swap_lines(from_channel, from_line, to_channel, to_line)
+                            }
                         }
                     }
                     adapter.stop_dragging()

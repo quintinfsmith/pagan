@@ -1,6 +1,14 @@
 package com.qfs.apres.soundfont
 
 abstract class Generated {
+    companion object {
+        var next_uid = 0
+        fun gen_uid(): Int {
+            return next_uid++
+        }
+    }
+    val uid = Generated.gen_uid()
+
     var key_range: Pair<Int, Int>? = null
     var velocity_range: Pair<Int, Int>? = null
     var attenuation: Float? = null

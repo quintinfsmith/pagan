@@ -203,7 +203,8 @@
     <style name="link_mode_button">
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
-        <item name="android:buttonTint">@color/radio</item>
+        <item name="android:colorAccent">@color/radio</item>
+        <item name="android:colorControlActivated">@color/radio</item>
     </style>
     <style name="progress_bar">
         <item name="android:background">#33000000</item>
@@ -230,7 +231,7 @@
 
     <style name="volume_widget" parent="control_widget">
     </style>
-    <style name="volume_widget_button">
+    <style name="volume_widget_button" parent="icon_button">
         <item name="android:textSize">20sp</item>
         <item name="android:fontFamily">monospace</item>
     </style>

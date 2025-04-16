@@ -1,7 +1,6 @@
 package com.qfs.apres.soundfont
 
 import com.qfs.apres.soundfont.Generator.Operation
-import com.qfs.apres.soundfont.SampleType
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -596,10 +595,10 @@ class SoundFont(file_path: String) {
                 working_generated.attenuation = abs(generator.asIntSigned().toFloat() / 10)
             }
             Operation.TuningFine -> {
-                working_generated.tuning_semi = generator.asIntSigned()
+                working_generated.tuning_cent = generator.asIntSigned()
             }
             Operation.TuningCoarse -> {
-                working_generated.tuning_cent = generator.asIntSigned()
+                working_generated.tuning_semi = generator.asIntSigned()
             }
             Operation.ScaleTuning -> {
                 working_generated.scale_tuning = generator.asInt()

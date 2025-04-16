@@ -94,87 +94,119 @@ class Generated {
                         break;
                     }
                     case GeneratorOperation::Reverb: {
+                        this->reverb = (float)generator.get_int() / 10;
                         break;
                     }
                     case GeneratorOperation::Pan: {
+                        this->pan = (float)generator.get_int_signed() / 10;
                         break;
                     }
                     case GeneratorOperation::ModLFODelay: {
+                        this->mod_lfo_delay = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::ModLFOFrequency: {
+                        this->mod_lfo_freq = generator.get_timecent() * 8.176;
                         break;
                     }
                     case GeneratorOperation::VibLFODelay: {
+                        this->vib_lfo_delay = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::VibLFOFrequency: {
+                        this->vib_lfo_freq = generator.get_timecent() * 8.176;
                         break;
                     }
                     case GeneratorOperation::ModEnvDelay: {
+                        this->mod_env_delay = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::ModEnvAttack: {
+                        this->mod_env_attack = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::ModEnvHold: {
+                        this->mod_env_hold = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::ModEnvDecay: {
+                        this->mod_env_decay = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::ModEnvSustain: {
+                        this->mod_env_sustain = (float)min(1000, max(generator.get_int_signed(), 0)) / 10;
                         break;
                     }
                     case GeneratorOperation::ModEnvRelease: {
+                        this->mod_env_release = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::KeyModEnvHold: {
+                        this->key_mod_env_hold = generator.get_int();
                         break;
                     }
                     case GeneratorOperation::KeyModEnvDecay: {
+                        this->key_mod_env_decay = generator.get_int();
                         break;
                     }
                     case GeneratorOperation::VolEnvDelay: {
+                        this->vol_env_delay = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::VolEnvAttack: {
+                        this->vol_env_attack = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::VolEnvHold: {
+                        this->vol_env_hold = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::VolEnvDecay: {
+                        this->vol_env_decay = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::VolEnvSustain: {
+                        this->vol_env_sustain = (float)min(1000, max(generator.get_int_signed(), 0)) / 10;
                         break;
                     }
                     case GeneratorOperation::VolEnvRelease: {
+                        this->vol_env_release = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::KeyVolEnvHold: {
+                        this->key_vol_env_hold = generator.get_int();
                         break;
                     }
                     case GeneratorOperation::KeyVolEnvDecay: {
+                        this->key_vol_env_decay = generator.get_int();
                         break;
                     }
                     case GeneratorOperation::KeyRange: {
+                        this->key_range = generator.get_pair();
                         break;
                     }
                     case GeneratorOperation::VelocityRange: {
+                        this->velocity_range = generator.get_pair();
                         break;
                     }
                     case GeneratorOperation::Attenuation: {
+                        // The spec appears to indicate a value range of 0 -> 1440 centibels,
+                        // but looking at the fluid font, it has some samples with negative attenuation
+                        // I'll treat the data type as signed, but still use the absolute value since that sounds right
+                        // when I listen to the samples
+                        this->attenuation = std::abs((float)generator.get_int_signed() / 10);
                         break;
                     }
                     case GeneratorOperation::TuningFine: {
+                        this->tuning_cent = generator.get_int();
                         break;
                     }
                     case GeneratorOperation::TuningCoarse: {
+                        this->tuning_semi = generator.get_int();
                         break;
                     }
                     case GeneratorOperation::ScaleTuning: {
+                        this->scale_tuning = generator.get_int();
                         break;
                     }
                     default: {

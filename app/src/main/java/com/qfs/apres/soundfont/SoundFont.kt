@@ -596,10 +596,10 @@ class SoundFont(file_path: String) {
                 working_generated.attenuation = abs(generator.asIntSigned().toFloat() / 10)
             }
             Operation.TuningFine -> {
-                working_generated.tuning_semi = generator.asIntSigned()
+                working_generated.tuning_cent = generator.asIntSigned()
             }
             Operation.TuningCoarse -> {
-                working_generated.tuning_cent = generator.asIntSigned()
+                working_generated.tuning_semi = generator.asIntSigned()
             }
             Operation.ScaleTuning -> {
                 working_generated.scale_tuning = generator.asInt()

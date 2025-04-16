@@ -4,20 +4,6 @@
 #include <exception>
 
 #include "Sample.h"
-struct Sample {
-    jstring name;
-    jint loop_start;
-    jint loop_end;
-    jint sample_rate;
-    jint original_pitch;
-    jint pitch_correction;
-    jboolean is_linked;
-    Sample* linked_sample_ref;
-    jint sample_type;
-    jint data_placeholder_start;
-    jint data_placeholder_end;
-    jshort* data;
-};
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfont_Sample_00024Companion_create(

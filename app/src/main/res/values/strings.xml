@@ -116,6 +116,7 @@
     <string name="export_wav_notification_title">Exporting %1$s</string>
     <string name="export_wav_feedback">Exporting to wav</string>
     <string name="export_wav_feedback_complete">Done Export</string>
+    <string name="export_multi_wav_feedback">Exporting C:%1$d L:%2$d to wav</string>
     <string name="export_wav_notification_complete">Done</string>
 
     <string name="dialog_remove_soundfont_title">Choose Soundfont to Remove</string>

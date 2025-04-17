@@ -360,6 +360,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
     fun unmute() {
         this.muted = false
     }
+
 }
 
 class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {
@@ -384,6 +385,8 @@ class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, Opus
         this.midi_channel = 0
         this.midi_bank = 0
     }
+
+
 
 }
 

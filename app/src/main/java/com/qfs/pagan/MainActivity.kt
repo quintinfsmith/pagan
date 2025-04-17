@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -20,6 +19,7 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -53,6 +53,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
@@ -78,6 +79,7 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.BufferedOutputStream
@@ -108,9 +110,9 @@ class MainActivity : AppCompatActivity() {
         var action_interface = ActionTracker()
         var opus_manager = OpusManager()
 
-        fun export_wav(sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, handler: WavConverter.ExporterEventHandler) {
-            val frame_map = PlaybackFrameMap(this.opus_manager, sample_handle_manager)
-            frame_map.clip_same_line_release = this.opus_manager.get_activity()?.configuration?.clip_same_line_release ?: true
+        fun export_wav(opus_manager: OpusLayerBase, sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, configuration: PaganConfiguration? = null, handler: WavConverter.ExporterEventHandler) {
+            val frame_map = PlaybackFrameMap(opus_manager, sample_handle_manager)
+            frame_map.clip_same_line_release = configuration?.clip_same_line_release ?: true
             frame_map.parse_opus()
 
             val start_frame = frame_map.get_marked_frames()[0]
@@ -179,6 +181,217 @@ class MainActivity : AppCompatActivity() {
 
     private var _popup_active: Boolean = false
 
+    private var _export_multi_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (this._soundfont == null) {
+            // Throw Error. Currently unreachable by ui
+            return@registerForActivityResult
+        }
+
+        this.getNotificationPermission()
+        thread {
+            if (result.resultCode == RESULT_OK) {
+                result?.data?.data?.also { tree_uri ->
+                    if (this.view_model.export_handle != null) {
+                        return@thread
+                    }
+                    val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
+                    val opus_manager_copy = OpusLayerBase()
+                    opus_manager_copy.import_from_other(this.get_opus_manager())
+
+                    var line_count = 0
+                    for (channel in opus_manager_copy.get_all_channels()) {
+                        line_count += channel.lines.size
+                    }
+
+                    val export_event_handler = object : WavConverter.ExporterEventHandler {
+                        var total_line_count = line_count
+                        var working_channel = 0
+                        var working_line = 0
+                        var working_y = 0
+                        var file_uri: Uri? = null
+                        var cancelled = false
+
+                        val notification_manager = NotificationManagerCompat.from(this@MainActivity)
+                        fun update(channel: Int, line_offset: Int, y: Int, file_uri: Uri) {
+                            this.working_channel = channel
+                            this.working_line = line_offset
+                            this.working_y = y
+                            this.file_uri = file_uri
+                        }
+
+                        override fun on_start() {
+                            if (this.working_y != 0) {
+                                return
+                            }
+
+                            this@MainActivity.runOnUiThread {
+                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setImageResource(R.drawable.baseline_cancel_42)
+                                val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
+                                llExportProgress.visibility = View.VISIBLE
+
+                                val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
+                                tvExportProgress.text = "0%"
+                            }
+                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_multi_wav_feedback, this.working_channel, this.working_line))
+                            val builder = this@MainActivity.get_notification() ?: return
+                            @SuppressLint("MissingPermission")
+                            if (this@MainActivity.has_notification_permission()) {
+                                this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            }
+
+                        }
+
+                        override fun on_complete() {
+                            if (this.working_y != this.total_line_count - 1) {
+                                return
+                            }
+
+                            val builder = this@MainActivity.get_notification()
+                            if (builder != null) {
+                                // NON functional ATM, Open file from notification
+                                val go_to_file_intent = Intent()
+                                go_to_file_intent.action = Intent.ACTION_VIEW
+                                go_to_file_intent.setDataAndType(this.file_uri!!, "*/*")
+
+                                val pending_go_to_intent = PendingIntent.getActivity(
+                                    this@MainActivity,
+                                    0,
+                                    go_to_file_intent,
+                                    PendingIntent.FLAG_IMMUTABLE
+                                )
+
+                                builder.setContentText(this@MainActivity.getString(R.string.export_wav_notification_complete))
+                                    .clearActions()
+                                    .setAutoCancel(true)
+                                    .setProgress(0, 0, false)
+                                    .setTimeoutAfter(5000)
+                                    .setSilent(false)
+                                    .setContentIntent(pending_go_to_intent)
+
+                                @SuppressLint("MissingPermission")
+                                if (this@MainActivity.has_notification_permission()) {
+                                    this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                                }
+                            }
+
+                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_wav_feedback_complete))
+
+                            this@MainActivity.runOnUiThread {
+                                val llExportProgress =
+                                    this@MainActivity.findViewById<View>(R.id.llExportProgress)
+                                        ?: return@runOnUiThread
+                                llExportProgress.visibility = View.GONE
+                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setImageResource(R.drawable.export)
+                            }
+                            this@MainActivity._active_notification = null
+                        }
+
+                        override fun on_cancel() {
+                            this.cancelled = true
+                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_cancelled))
+                            this@MainActivity.runOnUiThread {
+                                val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress)
+                                    ?: return@runOnUiThread
+                                llExportProgress.visibility = View.GONE
+                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setImageResource(R.drawable.export)
+                            }
+
+                            val builder = this@MainActivity.get_notification() ?: return
+                            builder.setContentText(this@MainActivity.getString(R.string.export_cancelled))
+                                .setProgress(0, 0, false)
+                                .setAutoCancel(true)
+                                .setTimeoutAfter(5000)
+                                .clearActions()
+
+                            @SuppressLint("MissingPermission")
+                            if (this@MainActivity.has_notification_permission()) {
+                                val notification_manager = NotificationManagerCompat.from(this@MainActivity)
+                                notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
+                            }
+                            this@MainActivity._active_notification = null
+                        }
+
+                        override fun on_progress_update(progress: Double) {
+                            val progress_rounded = ((progress + this.working_y) * 100 / this.total_line_count.toDouble()).roundToInt()
+                            this@MainActivity.runOnUiThread {
+                                val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
+                                tvExportProgress.text = getString(R.string.label_export_progress, progress_rounded)
+                            }
+
+                            val builder = this@MainActivity.get_notification() ?: return
+                            builder.setProgress(100, progress_rounded, false)
+
+                            @SuppressLint("MissingPermission")
+                            if (this@MainActivity.has_notification_permission()) {
+                                this.notification_manager.notify(
+                                    this@MainActivity.NOTIFICATION_ID,
+                                    builder.build()
+                                )
+                            }
+                        }
+                    }
+
+
+                    var y = 0
+                    var c = 0
+                    outer@ for (channel in this.get_opus_manager().get_all_channels()) {
+                        var l = 0
+                        for (line in channel.lines) {
+                            val file = directory.createFile("audio/wav", "C${c}L${l}.wav") ?: continue
+                            val file_uri = file.uri
+
+                            /* TMP file is necessary since we can't easily predict the exact frame count. */
+                            val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                            if (tmp_file.exists()) {
+                                tmp_file.delete()
+                            }
+
+                            tmp_file.deleteOnExit()
+                            val exporter_sample_handle_manager = SampleHandleManager(this._soundfont!!, 44100, 22050)
+
+                            var c_b = 0
+                            for (channel_copy in opus_manager_copy.get_all_channels()) {
+                                var l_b = 0
+                                for (line_copy in channel_copy.lines) {
+                                    if (c_b == c && l_b == l) {
+                                        line_copy.unmute()
+                                    } else {
+                                        line_copy.mute()
+                                    }
+                                    l_b += 1
+                                }
+                                c_b += 1
+                            }
+
+
+                            val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(file_uri, "w") ?: return@thread
+                            val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                            val buffered_output_stream = BufferedOutputStream(output_stream)
+                            val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                            export_event_handler.update(c, l++, y++, file_uri)
+                            this.view_model.export_wav(opus_manager_copy, exporter_sample_handle_manager, data_output_buffer, tmp_file, this.configuration, export_event_handler)
+
+                            data_output_buffer.close()
+                            buffered_output_stream.close()
+                            output_stream.close()
+                            parcel_file_descriptor.close()
+                            tmp_file.delete()
+
+                            if (export_event_handler.cancelled) {
+                                break@outer
+                            }
+                        }
+                        c++
+                    }
+                }
+            }
+        }
+    }
+
     private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
@@ -211,7 +424,7 @@ class MainActivity : AppCompatActivity() {
                     val buffered_output_stream = BufferedOutputStream(output_stream)
                     val data_output_buffer = DataOutputStream(buffered_output_stream)
 
-                    this.view_model.export_wav(exporter_sample_handle_manager, data_output_buffer, tmp_file, object : WavConverter.ExporterEventHandler {
+                    this.view_model.export_wav(this.get_opus_manager(), exporter_sample_handle_manager, data_output_buffer, tmp_file, this.configuration, object : WavConverter.ExporterEventHandler {
                         val notification_manager = NotificationManagerCompat.from(this@MainActivity)
                         fun close_buffers() {
                             data_output_buffer.close()
@@ -1279,7 +1492,7 @@ class MainActivity : AppCompatActivity() {
                         when (value) {
                             0 -> this.export_project()
                             1 -> this.export_midi()
-                            2 -> this.export_wav()
+                            2 -> this.export_multi_wav() // DEBUG
                         }
                     }
                 } else {
@@ -1980,6 +2193,12 @@ class MainActivity : AppCompatActivity() {
         return base_name
     }
 
+    fun export_multi_wav() {
+        val name = this.get_export_name()
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        this._export_multi_wav_intent_launcher.launch(intent)
+    }
+
     fun export_wav() {
         val name = this.get_export_name()
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
@@ -1988,6 +2207,7 @@ class MainActivity : AppCompatActivity() {
         intent.type = "audio/wav"
         intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
         this._export_wav_intent_launcher.launch(intent)
+
     }
 
     fun export_wav_cancel() {

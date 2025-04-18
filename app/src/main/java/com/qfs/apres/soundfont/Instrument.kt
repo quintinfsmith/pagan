@@ -6,6 +6,7 @@ class Instrument(var name: String) {
 
     private val quick_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
     private val quick_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }
+
     fun set_global_zone(new_global_zone: SampleDirective) {
         this.global_zone = new_global_zone
     }
@@ -54,7 +55,6 @@ class Instrument(var name: String) {
             } else {
                 this.global_zone.velocity_range!!.first..this.global_zone.velocity_range!!.second
             }
-
             if (key_range.contains(key) && vel_range.contains(velocity)) {
                 output.add(this.global_zone)
             }

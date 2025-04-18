@@ -5,6 +5,8 @@
 #include <fstream>
 #include <utility>
 #include <vector>
+#include <string>
+
 
 class InvalidRiffException: public std::exception {};
 struct ListChunkHeader {
@@ -100,13 +102,13 @@ class Riff {
             return output;
         }
 
-        static char* get_chunk_data(std::ifstream* stream, ListChunkHeader header) {
-            return Riff::get_bytes(stream, header.index + 24, header.size);
+        static char* get_chunk_data(std::ifstream* stream, ListChunkHeader* header) {
+            return Riff::get_bytes(stream, header->index + 24, header->size);
         }
 
-        static char* get_sub_chunk_data(std::ifstream* stream, SubChunkHeader header, std::optional<int> inner_offset, std::optional<int> cropped_size) {
-            int offset = header.index + 8;
-            int size = header.size;
+        static char* get_sub_chunk_data(std::ifstream* stream, SubChunkHeader* header, std::optional<int> inner_offset, std::optional<int> cropped_size) {
+            int offset = header->index + 8;
+            int size = header->size;
             if (inner_offset.has_value()) {
                 size -= inner_offset.value();
                 offset += inner_offset.value();

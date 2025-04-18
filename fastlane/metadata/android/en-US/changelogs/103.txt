@@ -1,0 +1,8 @@
+- Can mute channels and lines without modifying volume controls. (thanks to Addie Volynska for the suggestion)
+- Added JSON to export menu. (same behavior as long-pressing save button)
+- Double-clicking effect control labels will select channel like double-clicking standard line labels.
+- When a project is loaded, the soundfont will automatically change to the the soundfont that was in use when a project was saved.
+
+- Bugfix: Swapping lines sometimes not updating line labels correctly
+- Bugfix: Crash when setting relative value below 0
+

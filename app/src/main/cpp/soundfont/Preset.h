@@ -20,11 +20,17 @@ class Preset {
     int bank;
     //val uid = Preset.gen_uid()
     private:
-        std::unordered_map<int, InstrumentDirective> instruments;
         InstrumentDirective global_zone;
         std::set<int> quick_instrument_ref_vel[128];
         std::set<int> quick_instrument_ref_key[128];
     public:
+    std::unordered_map<int, InstrumentDirective> instruments;
+        Preset(std::string name, int preset, int bank) {
+            this->name = name;
+            this->preset = preset;
+            this->bank = bank;
+        }
+
         void set_global_zone(InstrumentDirective new_zone) {
             this->global_zone = std::move(new_zone);
         }

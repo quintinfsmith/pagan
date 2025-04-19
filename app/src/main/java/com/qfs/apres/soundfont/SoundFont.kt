@@ -1,12 +1,8 @@
 package com.qfs.apres.soundfont
 
-import com.qfs.apres.soundfont.Generator.Operation
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
 class SoundFont(file_path: String) {
     class InvalidSoundFont(file_path: String): Exception("Not a soundfont $file_path")
@@ -131,10 +127,21 @@ class SoundFont(file_path: String) {
         }
     }
 
+    fun get_samples(sample_index: Int): List<Sample> {
+        val output = mutableListOf<Sample>()
 
-    fun get_sample(sample_index: Int, build_linked: Boolean = true): Sample {
+        var working_index: Int? = sample_index;
+        while (working_index != null) {
+            val (sample, linked_addr) = this.get_sample(sample_index)
+            working_index = linked_addr
+            output.add(sample)
+        }
+
+        return output
+    }
+
+    private fun get_sample(sample_index: Int): Pair<Sample, Int?> {
         val shdr_bytes = this.pdta_chunks["shdr"]!!
-
         val offset = sample_index * 46
 
         var sample_name = ""
@@ -151,39 +158,43 @@ class SoundFont(file_path: String) {
 
         //val sample_data = this.get_sample_data(start, end)!!
         val sample_type = toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256)
-        return Sample(
-            sample_name,
-            toUInt(shdr_bytes[offset + 28])
-                    + (toUInt(shdr_bytes[offset + 29]) * 256)
-                    + (toUInt(shdr_bytes[offset + 30]) * 65536)
-                    + (toUInt(shdr_bytes[offset + 31]) * 16777216)
-                    - start,
-            toUInt(shdr_bytes[offset + 32])
-                    + (toUInt(shdr_bytes[offset + 33]) * 256)
-                    + (toUInt(shdr_bytes[offset + 34]) * 65536)
-                    + (toUInt(shdr_bytes[offset + 35]) * 16777216)
-                    - start,
-            toUInt(shdr_bytes[offset + 36])
-                    + (toUInt(shdr_bytes[offset + 37]) * 256)
-                    + (toUInt(shdr_bytes[offset + 38]) * 65536)
-                    + (toUInt(shdr_bytes[offset + 39]) * 16777216),
-            toUInt(shdr_bytes[offset + 40]),
-            toUInt(shdr_bytes[offset + 41]),
+        return Pair(
+            Sample(
+                sample_name,
+                toUInt(shdr_bytes[offset + 28])
+                        + (toUInt(shdr_bytes[offset + 29]) * 256)
+                        + (toUInt(shdr_bytes[offset + 30]) * 65536)
+                        + (toUInt(shdr_bytes[offset + 31]) * 16777216)
+                        - start,
+                toUInt(shdr_bytes[offset + 32])
+                        + (toUInt(shdr_bytes[offset + 33]) * 256)
+                        + (toUInt(shdr_bytes[offset + 34]) * 65536)
+                        + (toUInt(shdr_bytes[offset + 35]) * 16777216)
+                        - start,
+                toUInt(shdr_bytes[offset + 36])
+                        + (toUInt(shdr_bytes[offset + 37]) * 256)
+                        + (toUInt(shdr_bytes[offset + 38]) * 65536)
+                        + (toUInt(shdr_bytes[offset + 39]) * 16777216),
+                toUInt(shdr_bytes[offset + 40]),
+                toUInt(shdr_bytes[offset + 41]),
+                sample_type,
+                data_placeholder = Pair(start, end)
+            ),
             when (sample_type) {
                 0x0002,
                 0x0004,
                 0x0008 -> {
                     val linked_addr = toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256)
-                    if (build_linked && linked_addr != 0) {
-                        this.get_sample(linked_addr, false)
+                    if (linked_addr != 0) {
+                        linked_addr
                     } else {
                         null
                     }
                 }
-                else -> null
-            },
-            sample_type,
-            data_placeholder = Pair(start, end)
+                else -> {
+                    null
+                }
+            }
         )
     }
 
@@ -259,6 +270,7 @@ class SoundFont(file_path: String) {
                     )
                 )
             }
+
             for ((pbag, next_pbag) in pbag_pairs) {
                 val generators_to_use: List<Generator> = this.get_preset_generators(
                     pbag.first,
@@ -285,11 +297,11 @@ class SoundFont(file_path: String) {
                 if (instrument.samples.isNotEmpty()) {
                     for (instrument_sample in instrument.samples.values) {
                         val sample = instrument_sample.sample ?: continue
-                        ordered_samples.add(sample)
+                        ordered_samples.addAll(sample)
                     }
                 } else {
                     val sample = instrument.global_zone.sample ?: continue
-                    ordered_samples.add(sample)
+                    ordered_samples.addAll(sample)
                 }
             }
 
@@ -489,23 +501,23 @@ class SoundFont(file_path: String) {
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>, modulators: List<Modulator>) {
         val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x35
 
-        val working_sample = SampleDirective()
+        val working_directive = SampleDirective()
 
         for (modulator in modulators) {
-            working_sample.add_modulator(modulator)
+            working_directive.add_modulator(modulator)
         }
 
-        working_sample.apply_generators(generators)
+        working_directive.apply_generators(generators)
         if (generators.last().sfGenOper != 0x35) {
             throw InvalidSampleIdPosition()
         }
-        working_sample.sample = this.get_sample(generators.last().asInt())
+        working_directive.sample = this.get_samples(generators.last().asInt())
 
 
         if (is_global) {
-            instrument.set_global_zone(working_sample)
+            instrument.set_global_zone(working_directive)
         } else {
-            instrument.add_sample(working_sample)
+            instrument.add_sample(working_directive)
         }
     }
 

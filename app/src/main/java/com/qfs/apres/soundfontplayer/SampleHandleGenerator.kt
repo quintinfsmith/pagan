@@ -116,7 +116,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     fun generate_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): Pair<SampleHandle, SampleHandle?> {
         var pitch_shift = 1F
 
-        val original_note = sample_directive.root_key ?: sample_directive.sample!!.originalPitch
+        val original_note = sample_directive.root_key ?: sample_directive.sample!!.first().originalPitch
 
         // 255 Means its an unpitched note and needs no correction.
         if (original_note != 255) {
@@ -125,7 +125,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                 + (instrument_directive.tuning_semi ?: 0)
                 + (global_instrument_directive.tuning_semi ?: 0)).toFloat()
 
-            val pitch_correction = sample_directive.sample!!.pitchCorrection
+            val pitch_correction = sample_directive.sample!!.first().pitchCorrection
             // Skip tuning if we can
             if (tuning_cent != 0 || tuning_semi != 0F || note != original_note || bend != 0 || pitch_correction != 0) {
                 tuning_semi += tuning_cent.toFloat() / 100F
@@ -135,8 +135,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             }
         }
 
-        if (sample_directive.sample!!.sampleRate != this.sample_rate) {
-            pitch_shift *= (sample_directive.sample!!.sampleRate.toFloat() / this.sample_rate.toFloat())
+        if (sample_directive.sample!!.first().sampleRate != this.sample_rate) {
+            pitch_shift *= (sample_directive.sample!!.first().sampleRate.toFloat() / this.sample_rate.toFloat())
         }
 
         val data = sample_directive.sample!!.data!!

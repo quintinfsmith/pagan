@@ -12,6 +12,13 @@
 class Instrument {
     std::string name;
     public:
+        std::unordered_map<int, SampleDirective> samples = {};
+        SampleDirective global_zone = SampleDirective();
+
+        Instrument(std::string name) {
+            this->name = std::move(name);
+        }
+
         void set_global_zone(SampleDirective new_zone) {
             this->global_zone = std::move(new_zone);
         }
@@ -81,8 +88,6 @@ class Instrument {
         }
 
     private:
-        std::unordered_map<int, SampleDirective> samples = {};
-        SampleDirective global_zone = SampleDirective();
         std::set<int> quick_ref_vel[128];
         std::set<int> quick_ref_key[128];
 

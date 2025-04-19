@@ -3,7 +3,7 @@ package com.qfs.apres.soundfont
 import com.qfs.apres.soundfont.SoundFont.InvalidSampleIdPosition
 
 class SampleDirective: Generated() {
-    var sample: Sample? = null
+    var sample: List<Sample>? = null
     var sampleStartOffset: Int? = null
     var sampleEndOffset: Int? = null
     var loopStartOffset: Int? = null

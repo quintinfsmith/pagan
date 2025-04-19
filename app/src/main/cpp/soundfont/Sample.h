@@ -4,6 +4,7 @@
 #include <optional>
 #ifndef PAGAN_SAMPLE_H
 #define PAGAN_SAMPLE_H
+#include "vector"
 
 struct Sample {
     std::string name;
@@ -13,8 +14,14 @@ struct Sample {
     int original_pitch;
     int pitch_correction;
     int sample_type;
+    int link_addr;
     int data_placeholder_start;
     int data_placeholder_end;
-    jshort* data;
+    std::vector<short>* data;
+    public:
+        void set_data(std::vector<short>* data) {
+            this->data = data;
+        }
+
 };
 #endif //PAGAN_SAMPLE_H

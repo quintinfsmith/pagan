@@ -10,9 +10,9 @@
 #include <unordered_map>
 
 class InstrumentDirective: public Generated {
-    std::optional<Instrument> instrument;
     //unordered_map<int, std::set<Modulator>> modulators;
     public:
+        std::optional<Instrument> instrument;
         // void add_modulator(Modulator modulator) {
         // }
 

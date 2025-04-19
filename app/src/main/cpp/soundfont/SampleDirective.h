@@ -7,7 +7,7 @@
 
 class SampleDirective : public Generated {
     public:
-        std::optional<Sample*> sample;
+        std::optional<Sample> sample;
         std::optional<int> sampleStartOffset;
         std::optional<int> sampleEndOffset;
         std::optional<int> loopStartOffset;

@@ -8,8 +8,8 @@ data class Sample(val ptr: Long) {
         sampleRate: Int,
         originalPitch: Int,
         pitchCorrection: Int,
-        linked_sample: Sample?,
         sampleType: Int,
+        link_addr: Int,
         data_placeholder: Pair<Int, Int>,
     ): this(
         create(
@@ -19,8 +19,6 @@ data class Sample(val ptr: Long) {
             sampleRate,
             originalPitch,
             pitchCorrection,
-            linked_sample != null,
-            linked_sample?.ptr ?: 0,
             sampleType,
             data_placeholder.first,
             data_placeholder.second
@@ -38,8 +36,6 @@ data class Sample(val ptr: Long) {
             sampleRate: Int,
             originalPitch: Int,
             pitchCorrection: Int,
-            is_linked: Boolean,
-            linked_sample: Long,
             sampleType: Int,
             data_placeholder_start: Int,
             data_placeholder_end: Int
@@ -49,6 +45,7 @@ data class Sample(val ptr: Long) {
 
     val name: String
         get() = this.get_name_inner(this.ptr)
+
     val data_placeholder: Pair<Int, Int>
         get() = this._get_placeholder()
 

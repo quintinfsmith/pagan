@@ -23,17 +23,18 @@ struct SubChunkHeader {
 };
 
 class Riff {
-    std::string path;
-    std::vector<ListChunkHeader> list_chunks;
-    std::vector<std::vector<SubChunkHeader>> sub_chunks;
-
     public:
+        std::string path;
+        std::vector<ListChunkHeader> list_chunks;
+        std::vector<std::vector<SubChunkHeader>> sub_chunks;
+        std::string type_cc;
+
         explicit Riff(std::string _path) {
             this->path = std::move(_path);
             this->list_chunks = {};
             this->sub_chunks = {};
 
-            std::ifstream stream(path);
+            std::ifstream stream(this->path);
 
             std::string header_check = Riff::get_string(&stream, 0, 4); // Fourcc
             if (header_check != "RIFF") {
@@ -42,7 +43,7 @@ class Riff {
             }
 
             int riff_size = Riff::get_little_endian(&stream, 4, 4);
-            std::string type_cc = Riff::get_string(&stream, 8, 4);
+            this->type_cc = Riff::get_string(&stream, 8, 4);
 
             int working_index = 12;
             while (working_index < riff_size - 4) {
@@ -77,7 +78,7 @@ class Riff {
             stream.close();
         }
 
-        static std::string get_string(std::ifstream* stream, int start, int length) {
+    static std::string get_string(std::ifstream* stream, int start, int length) {
             stream->seekg(start); char output[length];
             stream->read(output, length);
             return output;
@@ -120,4 +121,5 @@ class Riff {
 
             return Riff::get_bytes(stream, offset, size);
         }
+
 };

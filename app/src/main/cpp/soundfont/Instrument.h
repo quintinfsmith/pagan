@@ -61,7 +61,7 @@ class Instrument {
                     velocity_range = {0, 127};
                 }
 
-                if (std::get<0>(key_range) < key && std::get<1>(key_range) >= key) {
+                if (std::get<0>(key_range) < key && std::get<1>(key_range) >= key && std::get<0>(velocity_range) < velocity && std::get<1>(velocity_range) >= velocity) {
                     output.insert(&this->global_zone);
                 }
             } else {

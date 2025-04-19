@@ -74,3 +74,5 @@ Java_com_qfs_apres_soundfont_Sample_get_1name_1inner(JNIEnv* env, jobject, jlong
     auto* sample = (Sample*)ptr;
     return sample->name;
 }
+
+Sample::Sample(const std::optional<Sample> &linkedSampleRef) : linked_sample_ref(linkedSampleRef) {}

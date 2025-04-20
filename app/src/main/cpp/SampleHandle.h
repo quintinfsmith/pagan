@@ -467,7 +467,6 @@ class SampleHandle {
                 buffer.repitch(adjustment);
             }
         }
-
 };
 
 

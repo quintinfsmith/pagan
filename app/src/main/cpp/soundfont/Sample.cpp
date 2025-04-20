@@ -15,8 +15,6 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
         jint sample_rate,
         jint original_pitch,
         jint pitch_correction,
-        jboolean is_linked,
-        jlong linked_sample_ptr,
         jint sample_type,
         jint placeholder_start,
         jint placeholder_end
@@ -28,8 +26,6 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
     sample->sample_rate = sample_rate;
     sample->original_pitch = original_pitch;
     sample->pitch_correction = pitch_correction;
-    sample->is_linked = is_linked;
-    sample->linked_sample_ref = (Sample *)linked_sample_ptr;
     sample->data_placeholder_end = placeholder_end;
     sample->data_placeholder_start = placeholder_start;
 
@@ -48,17 +44,6 @@ Java_com_qfs_apres_soundfont_Sample_get_1sample_1type_1inner(JNIEnv* env, jobjec
     return sample->sample_type;
 }
 
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1linked_1sample_1inner(JNIEnv* env, jobject, jlong ptr) {
-    auto* sample = (Sample*)ptr;
-    return (jlong)sample->linked_sample_ref;
-}
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_qfs_apres_soundfont_Sample_is_1linked_1inner(JNIEnv* env, jobject, jlong ptr) {
-    auto* sample = (Sample*)ptr;
-    return sample->is_linked;
-}
-
 extern "C" JNIEXPORT jintArray JNICALL
 Java_com_qfs_apres_soundfont_Sample_get_1data_1placeholders(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
@@ -75,4 +60,3 @@ Java_com_qfs_apres_soundfont_Sample_get_1name_1inner(JNIEnv* env, jobject, jlong
     return sample->name;
 }
 
-Sample::Sample(const std::optional<Sample> &linkedSampleRef) : linked_sample_ref(linkedSampleRef) {}

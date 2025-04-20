@@ -9,7 +9,6 @@ data class Sample(val ptr: Long) {
         originalPitch: Int,
         pitchCorrection: Int,
         sampleType: Int,
-        link_addr: Int,
         data_placeholder: Pair<Int, Int>,
     ): this(
         create(
@@ -25,10 +24,6 @@ data class Sample(val ptr: Long) {
         )
     )
     companion object {
-        init {
-            System.loadLibrary("pagan")
-        }
-
         external fun create(
             name: String,
             loopStart: Int,

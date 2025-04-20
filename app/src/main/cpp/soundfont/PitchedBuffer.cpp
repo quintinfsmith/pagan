@@ -9,7 +9,6 @@ struct PitchedBuffer {
     jshort* data;
     int data_size;
     float pitch;
-    int max;
     int start;
     int end;
     bool is_loop;
@@ -17,7 +16,51 @@ struct PitchedBuffer {
     float pitch_adjustment;
     int virtual_size;
     float adjusted_pitch;
+
 public:
+    explicit  PitchedBuffer(
+        jshort* data,
+        int data_size,
+        float pitch,
+        int start,
+        int end,
+        bool is_loop,
+        int virtual_position,
+        float pitch_adjustment,
+        int virtual_size,
+        float adjusted_pitch
+    ) {
+        this->virtual_position = 0;
+        this->data = data;
+        this->data_size = data_size;
+        this->pitch = pitch;
+        this->start = start;
+        this->end = end;
+        this->is_loop = is_loop;
+        this->virtual_position = virtual_position;
+        this->pitch_adjustment = pitch_adjustment;
+        this->virtual_size = virtual_size;
+        this->adjusted_pitch = adjusted_pitch;
+    }
+    explicit PitchedBuffer(
+        jshort* data,
+        int data_size,
+        float pitch,
+        int start,
+        int end,
+        bool is_loop
+    ) {
+        this->virtual_position = 0;
+        this->data = data;
+        this->data_size = data_size;
+        this->pitch = pitch;
+        this->start = start;
+        this->end = end;
+        this->is_loop = is_loop;
+
+        this->repitch(1);
+    }
+    ~PitchedBuffer() = default;
     void repitch(float new_pitch_adjustment) {
         this->pitch_adjustment = new_pitch_adjustment;
         this->adjusted_pitch = this->pitch * this->pitch_adjustment;
@@ -46,7 +89,11 @@ public:
     }
 
     bool is_overflowing() {
-        return (this->virtual_position * this->adjusted_pitch) - this->start > this->end;
+        return (int)((float)this->virtual_position * this->adjusted_pitch) - this->start > this->end;
+    }
+
+    void set_position(int frame) {
+        this->virtual_position = frame;
     }
 };
 

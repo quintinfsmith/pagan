@@ -7,7 +7,7 @@
 #include "vector"
 
 struct Sample {
-    std::string name;
+    jstring name;
     int loop_start;
     int loop_end;
     int sample_rate;

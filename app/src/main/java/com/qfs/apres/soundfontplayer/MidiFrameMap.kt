@@ -111,7 +111,6 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         val output = mutableSetOf<SampleHandle>()
 
         for (handle in this.frames[frame] ?: setOf()) {
-            val max_volume = (handle.max_frame_value().toFloat() / Short.MAX_VALUE.toFloat())
 
             if (this.percussion_handles.contains(handle.uuid)) {
                 // Do not equalize the percussion channel

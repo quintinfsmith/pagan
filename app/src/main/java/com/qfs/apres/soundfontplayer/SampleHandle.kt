@@ -31,8 +31,6 @@ class SampleHandle(
 ) {
     var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
     val smoothing_factor: Float
-    var pitch_adjustment: Float = 1F
-
     // Calculate here so it doesn't need to be on every frame
     private val _initial_frame_factor = 1F / 10F.pow(this.initial_attenuation)
 
@@ -81,12 +79,7 @@ class SampleHandle(
         var current_value: Float = 0f
         var next_frame_trigger: Int = -1
 
-        private var index_map = HashMap<IntRange,Int>()
-
         init {
-            for (i in 1 until this.frames.size) {
-                this.index_map[this.frames[i - 1].first until this.frames[i].first] = i - 1
-            }
             if (!skip_initial_set) {
                 this.set_frame(0)
             }
@@ -164,7 +157,6 @@ class SampleHandle(
     }
 
     init {
-
         // TODO: Handle non-continuous modulators
         //for ((key, modulator) in this.modulators) {
         //    if (!modulator.source_operator.continuous) {
@@ -303,14 +295,6 @@ class SampleHandle(
         }
     }
 
-
-    fun max_frame_value(): Int {
-        var output = 0
-        for (buffer in this._data_buffers) {
-            output = max(output, buffer.max)
-        }
-        return output
-    }
 
     fun set_release_frame(frame: Int) {
         this.release_frame = frame

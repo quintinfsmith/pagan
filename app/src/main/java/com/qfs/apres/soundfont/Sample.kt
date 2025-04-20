@@ -35,7 +35,6 @@ data class Sample(val ptr: Long) {
             data_placeholder_start: Int,
             data_placeholder_end: Int
         ): Long
-
     }
 
     val name: String
@@ -46,16 +45,26 @@ data class Sample(val ptr: Long) {
 
     val sample_type: Int
         get() = this.get_sample_type_inner(this.ptr)
+    var data: ShortArray
+        get() = this.get_data_inner(this.ptr)
+        set(value) = this.set_data_inner(this.ptr, value)
 
-    val linked_sample: Long?
-        get() = if (this.is_linked_inner(this.ptr)) { this.get_linked_sample_inner(this.ptr) } else { null }
+    val sample_rate: Int
+        get() = this.get_sample_rate_inner(this.ptr)
 
+    val originalPitch: Int
+        get() = this.get_original_pitch(this.ptr)
+    val pitchCorrection: Int
+        get() = this.get_pitch_correction(this.ptr)
+
+    external fun get_original_pitch(ptr: Long): Int
+    external fun get_sample_rate_inner(ptr: Long): Int
     external fun get_sample_type_inner(ptr: Long): Int
     external fun set_data_inner(ptr: Long, data: ShortArray)
     external fun get_data_placeholders(ptr: Long): Array<Int>
-    external fun get_linked_sample_inner(ptr: Long): Long
-    external fun is_linked_inner(ptr: Long): Boolean
     external fun get_name_inner(ptr: Long): String
+    external fun get_data_inner(ptr: Long): ShortArray
+    external fun get_pitch_correction(ptr: Long): Int
 
     fun set_data(data: ShortArray) {
         this.set_data_inner(this.ptr, data)

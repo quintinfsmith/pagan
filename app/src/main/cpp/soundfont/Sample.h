@@ -1,10 +1,11 @@
 //
 // Created by pent on 4/15/25.
 //
-#include <optional>
 #ifndef PAGAN_SAMPLE_H
 #define PAGAN_SAMPLE_H
-#include "vector"
+#include <jni.h>
+#include <optional>
+#include <vector>
 
 struct Sample {
     jstring name;
@@ -17,9 +18,9 @@ struct Sample {
     int link_addr;
     int data_placeholder_start;
     int data_placeholder_end;
-    std::vector<short>* data;
+    jshortArray data;
     public:
-        void set_data(std::vector<short>* data) {
+        void set_data(jshortArray data) {
             this->data = data;
         }
 

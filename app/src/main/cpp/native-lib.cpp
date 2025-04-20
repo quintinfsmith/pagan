@@ -13,7 +13,6 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_copy_1inner(JNIEnv* env, jobjec
     buffer->data = ptr->data;
     buffer->data_size = ptr->data_size;
     buffer->pitch = ptr->pitch;
-    buffer->max = ptr->max;
     buffer->start = ptr->start;
     buffer->end = ptr->end;
     buffer->is_loop = ptr->is_loop;
@@ -42,7 +41,6 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
     buffer->data = env->GetShortArrayElements(data, nullptr);
     buffer->data_size = data_size;
     buffer->pitch = pitch;
-    buffer->max = max;
     buffer->start = start;
     buffer->end = end;
     buffer->is_loop = is_loop;
@@ -64,12 +62,6 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_get_1range_1inner(JNIEnv* env, 
     };
 
     env->SetIntArrayRegion(output, 0, 2, data);
-}
-
-extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfontplayer_PitchedBuffer_get_1max(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (PitchedBuffer *)ptr_long;
-    return ptr->max;
 }
 
 extern "C" JNIEXPORT jint JNICALL

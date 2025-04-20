@@ -9,7 +9,6 @@ class PitchedBuffer(var ptr: Long) {
             data,
             data.size,
             pitch,
-            known_max ?: max(abs(data.min().toInt()), data.max().toInt()),
             range?.first ?: 0,
             range?.last ?: data.size,
             is_loop
@@ -20,13 +19,10 @@ class PitchedBuffer(var ptr: Long) {
         init {
             System.loadLibrary("pagan")
         }
-        external fun create(data: ShortArray, data_size: Int, pitch: Float, max: Int, start: Int, end: Int, is_loop: Boolean): Long
+        external fun create(data: ShortArray, data_size: Int, pitch: Float, start: Int, end: Int, is_loop: Boolean): Long
     }
 
     class PitchedBufferOverflow : Exception()
-
-    val max: Int
-        get() = get_max(this.ptr)
 
     val size: Int
         get() = get_virtual_size(this.ptr)
@@ -39,7 +35,6 @@ class PitchedBuffer(var ptr: Long) {
     private var virtual_position: Int = 0
     var pitch_adjustment: Float = 1F
 
-    external fun get_max(ptr: Long): Int
     external fun get_range_inner(ptr: Long, output: Array<Int>)
     external fun get_virtual_size(ptr: Long): Int
     external fun is_overflowing_inner(ptr: Long): Boolean

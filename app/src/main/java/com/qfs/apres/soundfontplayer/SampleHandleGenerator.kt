@@ -43,7 +43,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     //}
 
 
-    var sample_data_map = HashMap<MapKey, Pair<SampleHandle, SampleHandle?>>()
+    var sample_data_map = HashMap<MapKey, List<SampleHandle>>()
     var generated = 0
 
     fun clear() {
@@ -113,7 +113,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         return map_key
     }
 
-    fun generate_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): Pair<SampleHandle, SampleHandle?> {
+    fun generate_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): List<SampleHandle> {
         var pitch_shift = 1F
 
         val original_note = sample_directive.root_key ?: sample_directive.sample!!.first().originalPitch
@@ -135,11 +135,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             }
         }
 
-        if (sample_directive.sample!!.first().sampleRate != this.sample_rate) {
-            pitch_shift *= (sample_directive.sample!!.first().sampleRate.toFloat() / this.sample_rate.toFloat())
+        if (sample_directive.sample!!.first().sample_rate != this.sample_rate) {
+            pitch_shift *= (sample_directive.sample!!.first().sample_rate.toFloat() / this.sample_rate.toFloat())
         }
 
-        val data = sample_directive.sample!!.data!!
         val initial_attenuation: Float = (sample_directive.attenuation ?: global_sample_directive.attenuation ?: 0F) + (instrument_directive.attenuation ?: 0F) + (global_instrument_directive.attenuation ?: 0F)
         val vol_env_sustain: Float = (sample_directive.vol_env_sustain ?: global_sample_directive.vol_env_sustain ?: 0F) + (instrument_directive.vol_env_sustain ?: 0F) + (global_instrument_directive.vol_env_sustain ?: 0F)
         val vol_env_delay = (sample_directive.vol_env_delay ?: global_sample_directive.vol_env_delay ?: 0F ) * (instrument_directive.vol_env_delay ?: 1F) * (global_instrument_directive.vol_env_delay ?: 1F)
@@ -200,77 +199,46 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             new_modulators[key] = new_modulators[key]!! + modulators
         }
         val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 100F
-        val main_handle = SampleHandle(
-            data = data,
-            sample_rate = sample_rate,
-            pan = pan,
-            pitch_shift = pitch_shift,
-            initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
-            stereo_mode = sample_directive.sample!!.sampleType,
-            loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
-                val tmp = Pair(
-                    sample_directive.sample!!.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
-                    sample_directive.sample!!.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
-                )
-                if (tmp.first == tmp.second) {
+
+        return List(sample_directive.sample!!.size) { i: Int ->
+            val working_sample = sample_directive.sample!![i];
+            SampleHandle(
+                data = working_sample.data,
+                sample_rate = sample_rate,
+                pan = pan,
+                pitch_shift = pitch_shift,
+                initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
+                stereo_mode = working_sample.sample_type,
+                loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
+                    val tmp = Pair(
+                        working_sample.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
+                        working_sample.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
+                    )
+                    if (tmp.first == tmp.second) {
+                        null
+                    } else {
+                        tmp
+                    }
+                } else {
+                    null
+                },
+                modulation_lfo = if (this.ignore_lfo) {
                     null
                 } else {
-                    tmp
-                }
-            } else {
-                null
-            },
-            modulation_lfo = if (this.ignore_lfo) {
-                null
-            } else {
-                SampleHandle.LFO(
-                    sample_rate = this.sample_rate,
-                    frequency = mod_lfo_freq,
-                    volume = mod_lfo_to_volume / 100F, // Centibels -> bels
-                    pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
-                    filter = mod_lfo_filter,
-                    delay = mod_lfo_delay
-                )
-            },
-            volume_envelope = volume_envelope,
-            modulation_envelope = modulation_envelope,
-            filter_cutoff = filter_cutoff,
-            modulators = new_modulators
-        )
-
-        return if (sample_directive.sample!!.linked_sample != null) {
-            val linked_sample = sample_directive.sample!!.linked_sample!!
-            Pair(
-                main_handle,
-                SampleHandle(
-                    data = linked_sample.data!!,
-                    sample_rate = main_handle.sample_rate,
-                    pan = main_handle.pan,
-                    pitch_shift = main_handle.pitch_shift,
-                    initial_attenuation = main_handle.initial_attenuation,
-                    stereo_mode = linked_sample.sampleType,
-                    loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
-                        val tmp = Pair(
-                            linked_sample.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
-                            linked_sample.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
-                        )
-                        if (tmp.first != tmp.second) {
-                            tmp
-                        } else {
-                            null
-                        }
-                    } else {
-                        null
-                    },
-                    modulation_lfo = main_handle.modulation_lfo,
-                    volume_envelope = volume_envelope,
-                    modulation_envelope = modulation_envelope,
-                    filter_cutoff = filter_cutoff,
-                    modulators = new_modulators
-                )
+                    SampleHandle.LFO(
+                        sample_rate = this.sample_rate,
+                        frequency = mod_lfo_freq,
+                        volume = mod_lfo_to_volume / 100F, // Centibels -> bels
+                        pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
+                        filter = mod_lfo_filter,
+                        delay = mod_lfo_delay
+                    )
+                },
+                volume_envelope = volume_envelope,
+                modulation_envelope = modulation_envelope,
+                filter_cutoff = filter_cutoff,
+                modulators = new_modulators
             )
-        } else {
-            Pair(main_handle, null)
         }
     }
 

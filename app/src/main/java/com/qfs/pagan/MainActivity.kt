@@ -2290,6 +2290,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        println("---------------DESTROY CALLED---------------------")
         this._sample_handle_manager?.destroy()
         this._feedback_sample_manager?.destroy()
         super.onDestroy()

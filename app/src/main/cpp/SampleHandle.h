@@ -56,7 +56,6 @@ class VolumeEnvelope {
             this->frames_decay = (int)(float_rate * this->decay);
             this->frames_release = (int)(float_rate * this->release);
         }
-
 };
 
 struct ProfileBufferFrame {
@@ -163,13 +162,14 @@ class ProfileBuffer {
                 }
             }
         }
-
 };
+
+int SampleHandleUUIDGen = 0;
 
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
-// TODO: UID
 class SampleHandle {
+    int uuid;
     jshort* data;
     int data_size;
     jfloat sample_rate;
@@ -213,6 +213,7 @@ class SampleHandle {
             ProfileBuffer* pan_profile,
             std::optional<std::vector<PitchedBuffer>> data_buffers
         ) {
+            this->uuid = SampleHandleUUIDGen++;
             this->data = data;
             this->data_size = data_size;
             this->sample_rate = sample_rate;
@@ -468,6 +469,5 @@ class SampleHandle {
             }
         }
 };
-
 
 #endif //PAGAN_SAMPLEHANDLE_H

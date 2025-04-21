@@ -96,7 +96,14 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_repitch_1inner(JNIEnv* env, job
 extern "C" JNIEXPORT jfloat JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_get_1inner(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (PitchedBuffer *)ptr_long;
-    return ptr->get();
+    try {
+        return ptr->get();
+    } catch (PitchedBufferOverflow& e) {
+        jclass jc = env->FindClass("com/qfs/apres/soundfontplayer/PitchedBuffer$PitchedBufferOverflow");
+        if (jc) {
+            env->ThrowNew(jc, e.what());
+        }
+    }
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

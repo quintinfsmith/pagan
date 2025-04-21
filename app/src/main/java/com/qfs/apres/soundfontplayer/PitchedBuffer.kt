@@ -35,7 +35,7 @@ class PitchedBuffer(var ptr: Long) {
     private var virtual_position: Int = 0
     var pitch_adjustment: Float = 1F
 
-    external fun get_range_inner(ptr: Long, output: Array<Int>)
+    external fun get_range_inner(ptr: Long, output: IntArray)
     external fun get_virtual_size(ptr: Long): Int
     external fun is_overflowing_inner(ptr: Long): Boolean
     external fun is_loop(ptr: Long): Boolean
@@ -51,7 +51,7 @@ class PitchedBuffer(var ptr: Long) {
     }
 
     fun get_range(): IntRange {
-        var array = Array<Int>(2) { 0 }
+        var array = IntArray(2) { 0 }
         get_range_inner(this.ptr, array)
         // TODO: Double check '..' or 'until'
         return array[0] .. array[1]

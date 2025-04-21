@@ -9,69 +9,72 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 
-class SampleHandle(
-    var data: ShortArray,
-    var sample_rate: Int,
-    var initial_attenuation: Float = 0F,
-    val loop_points: Pair<Int, Int>?,
-    var stereo_mode: Int,
+class SampleHandle(val ptr: Long) {
+    constructor(
+        data: ShortArray,
+        sample_rate: Int,
+        initial_attenuation: Float = 0F,
+        loop_points: Pair<Int, Int>?,
+        stereo_mode: Int,
 
-    var volume_envelope: VolumeEnvelope,
-    var modulation_envelope: ModulationEnvelope,
-    var modulation_lfo: LFO?,
+        volume_envelope: VolumeEnvelope,
 
-    var pitch_shift: Float = 1F,
-    var filter_cutoff: Float = 13500F,
-    var pan: Float = 0F,
-    var volume_profile: ProfileBuffer? = null,
-    var pan_profile: ProfileBuffer? = null,
-    data_buffers: Array<PitchedBuffer>? = null,
-    var modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
-    //var note_on_event: MIDIEvent
-) {
-    var RC = 1f / (this.filter_cutoff * 2f * PI.toFloat())
-    val smoothing_factor: Float
-    // Calculate here so it doesn't need to be on every frame
-    private val _initial_frame_factor = 1F / 10F.pow(this.initial_attenuation)
+        pitch_shift: Float = 1F,
+        filter_cutoff: Float = 13500F,
+        pan: Float = 0F,
+        volume_profile: ProfileBuffer? = null,
+        pan_profile: ProfileBuffer? = null,
+        data_buffers: Array<PitchedBuffer>? = null,
 
-    var previous_frame = 0f
-    var uuid: Int = SampleHandle.uuid_gen++
+        // TODO: Modulations
+        //modulation_envelope: ModulationEnvelope,
+        //modulation_lfo: LFO?,
+        //modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
+    ): this(
+        create(
+            data,
+            sample_rate,
+            initial_attenuation,
+            loop_points != null,
+            loop_points?.first ?: 0,
+            loop_points?.second ?: 0,
+            stereo_mode,
+            volume_envelope.ptr,
+            pitch_shift,
+            filter_cutoff,
+            pan,
+            volume_profile?.ptr ?: 0,
+            pan_profile?.ptr ?: 0,
+            data_buffers
 
-    var working_frame: Int = 0
-
-    var release_frame: Int? = null
-    var kill_frame: Int? = null
-    var is_dead = false
-    var _active_buffer = 0
-    var _data_buffers: Array<PitchedBuffer> = data_buffers ?: if (this.loop_points != null && this.loop_points.first != this.loop_points.second) {
-        arrayOf<PitchedBuffer>(
-            PitchedBuffer(
-                data = this.data,
-                pitch = this.pitch_shift,
-                range = 0 until this.loop_points.first,
-                is_loop = false
-            ),
-            PitchedBuffer(
-                data = this.data,
-                pitch = this.pitch_shift,
-                range = this.loop_points.first until this.loop_points.second,
-                is_loop = true
-            ),
-            PitchedBuffer(
-                data = this.data,
-                pitch = this.pitch_shift,
-                range = this.loop_points.second until this.data.size,
-                is_loop = false
-            )
+            //modulation_envelope,
+            //modulation_lfo,
+            //modulators
         )
-    } else {
-        arrayOf(
-            PitchedBuffer(
-                data = this.data,
-                pitch = this.pitch_shift
-            )
-        )
+    )
+
+    companion object {
+        external fun create(
+            data: ShortArray,
+            sample_rate: Int,
+            initial_attenuation: Float,
+
+            is_loop: Boolean,
+            loop_start: Int,
+            loop_end: Int,
+            stereo_mode: Int,
+
+            volume_envelope_ptr: Long,
+
+            pitch_shift: Float,
+            filter_cutoff: Float,
+            pan: Float,
+            volume_profile_ptr: Long,
+            pan_profile_ptr: Long,
+            data_buffers: Array<PitchedBuffer>?,
+        ): Long
     }
+
 
     class ProfileBuffer(val frames: Array<Pair<Int, Pair<Float, Float>>>, val start_frame: Int, skip_initial_set: Boolean = false) {
         var current_frame: Int = 0
@@ -156,53 +159,56 @@ class SampleHandle(
         }
     }
 
-    init {
-        // TODO: Handle non-continuous modulators
-        //for ((key, modulator) in this.modulators) {
-        //    if (!modulator.source_operator.continuous) {
-        //        when (key) {
-        //            Operation.FilterCutoff -> {
-        //            }
-        //            else -> {}
-        //        }
-        //    }
-        //}
+    class VolumeEnvelope(val ptr: Long) {
+        constructor(
+            sample_rate: Int,
+            delay: Float = 0F,
+            attack: Float = 0F,
+            hold: Float = 0F,
+            decay: Float = 0F,
+            release: Float = 0F,
+            sustain_attenuation: Float = 0F
+        ): this(
+            create(
+                sample_rate,
+                delay,
+                attack,
+                hold,
+                decay,
+                release,
+                sustain_attenuation
+            )
+        )
 
-        val dt =  (1f / this.sample_rate.toFloat())
-        this.smoothing_factor = dt / (this.RC + dt)
-        this.repitch(1F)
-    }
+        companion object {
+            external fun create(
+                sample_rate: Int,
+                delay: Float,
+                attack: Float,
+                hold: Float,
+                decay: Float,
+                release: Float,
+                sustain_attenuation: Float
+            ): Long
+        }
 
 
-    data class VolumeEnvelope(
-        var sample_rate: Int,
-        var delay: Float = 0F,
-        var attack: Float = 0F,
-        var hold: Float = 0F,
-        var decay: Float = 0F,
-        var release: Float = 0F,
-        var sustain_attenuation: Float = 0F
-    ) {
+        //sample_rate: Int,
+        //delay: Float = 0F,
+        //attack: Float = 0F,
+        //hold: Float = 0F,
+        //decay: Float = 0F,
+        //release: Float = 0F,
+        //sustain_attenuation: Float = 0F
         var frames_delay: Int = 0
         var frames_attack: Int = 0
         var frames_hold: Int = 0
         var frames_decay: Int = 0
         var frames_release: Int = 0
 
-        // Calculate here so it doesn't need to be on every frame after decay phase
-        var true_sustain_attenuation: Float = 10F.pow(this.sustain_attenuation)
-
-        init {
-            this.set_sample_rate(this.sample_rate)
-        }
-
+        external fun set_sample_rate_jni(ptr: Long, rate: Int)
         fun set_sample_rate(sample_rate: Int) {
-            this.sample_rate = sample_rate
-            this.frames_delay = (this.sample_rate.toFloat() * this.delay).toInt()
-            this.frames_attack = (this.sample_rate.toFloat() * this.attack).toInt()
-            this.frames_hold = (this.sample_rate.toFloat() * this.hold).toInt()
-            this.frames_decay = (this.sample_rate.toFloat() * this.decay).toInt()
-            this.frames_release = (this.sample_rate.toFloat() * this.release).toInt()
+            this.set_sample_rate_jni(this.ptr, sample_rate)
         }
     }
 
@@ -258,300 +264,68 @@ class SampleHandle(
         }
     }
 
-    companion object {
-        var uuid_gen = 0
-        const val MAX_VOLUME = 1F
-
-        fun copy(original: SampleHandle): SampleHandle {
-            val output = SampleHandle(
-                data = original.data,
-                sample_rate = original.sample_rate,
-                initial_attenuation = original.initial_attenuation,
-                loop_points = original.loop_points,
-                stereo_mode = original.stereo_mode,
-                volume_envelope = original.volume_envelope.copy(),
-                modulation_envelope = original.modulation_envelope.copy(),
-                modulation_lfo = original.modulation_lfo,
-                pitch_shift = original.pitch_shift,
-                filter_cutoff = original.filter_cutoff,
-                pan = original.pan,
-                volume_profile = original.volume_profile?.copy(),
-                pan_profile = original.pan_profile?.copy(),
-                data_buffers = Array(original._data_buffers.size) { i: Int ->
-                    var buffer = original._data_buffers[i]
-                    // constructing this way allows us to skip calculating max
-                    val new_buffer = buffer.copy()
-                    new_buffer
-                },
-                modulators = original.modulators,
-                //note_on_event = original.note_on_event
-            )
-
-            output._active_buffer = original._active_buffer
-            output.release_frame = original.release_frame
-            output.kill_frame = original.kill_frame
-
-            return output
-        }
+    external fun copy_jni(ptr: Long): Long
+    fun copy(): SampleHandle {
+        return SampleHandle(this.copy_jni(this.ptr))
     }
 
-
+    external fun set_release_frame_jni(ptr: Long, frame: Int)
     fun set_release_frame(frame: Int) {
-        this.release_frame = frame
+        this.set_release_frame_jni(this.ptr, frame)
     }
 
+    external fun set_working_frame_jni(ptr: Long, frame: Int)
     fun set_working_frame(frame: Int) {
-        this.working_frame = frame
-        if (this.kill_frame != null && this.working_frame >= this.kill_frame!!) {
-            this.is_dead = true
-            return
-        }
-
-        if (this.release_frame != null && this.working_frame >= this.release_frame!! + this.volume_envelope.frames_release) {
-            this.is_dead = true
-            return
-        }
-
-        this.volume_profile?.set_frame(frame)
-        this.pan_profile?.set_frame(frame)
-
-
-        val loop_points = this.loop_points
-        val release_frame = this.release_frame
-        this.is_dead = try {
-            if (release_frame == null || release_frame > frame) {
-                if (loop_points == null || frame < this._data_buffers[0].size) {
-                    this._data_buffers[0].set_position(frame)
-                    this._active_buffer = 0
-                } else {
-                    this._data_buffers[1].set_position((frame - this._data_buffers[0].size))
-                    this._active_buffer = 1
-                }
-            } else if (loop_points != null && loop_points.first < loop_points.second) {
-                if (frame < this._data_buffers[0].size) {
-                    this._data_buffers[0].set_position(frame)
-                    this._active_buffer = 0
-                } else if (frame < this._data_buffers[1].size) {
-                    this._data_buffers[1].set_position(frame - this._data_buffers[0].size)
-                    this._active_buffer = 1
-                } else {
-                    val remainder = frame - this.release_frame!!
-                    val loop_size = (loop_points.second - loop_points.first)
-                    if (remainder < loop_size) {
-                        this._data_buffers[1].set_position(remainder)
-                        this._active_buffer = 1
-                    } else {
-                        val loop_count = (this.release_frame!! - loop_points.first) / loop_size
-                        this._data_buffers[2].set_position(frame - this._data_buffers[0].size - loop_count * this._data_buffers[1].size)
-                        this._active_buffer = 2
-                    }
-                }
-            } else {
-                this._data_buffers[0].set_position(frame)
-                this._active_buffer = 0
-            }
-            false
-        } catch (e: PitchedBuffer.PitchedBufferOverflow) {
-            true
-        }
+        this.set_working_frame_jni(this.ptr, frame)
     }
 
+    external fun get_release_duration_jni(ptr: Long): Int
     fun get_release_duration(): Int {
-        return this.volume_envelope.frames_release
+        return this.get_release_duration_jni(ptr)
     }
 
-    private fun _get_active_data_buffer(): PitchedBuffer {
-        return this._data_buffers[this._active_buffer]
-    }
-
+    external fun get_next_balance_jni(ptr: Long): FloatArray
     fun get_next_balance(): Pair<Float, Float> {
-        val profile_pan = this.pan_profile?.get_next() ?: 0F
-        // TODO: Implement ROM stereo modes
-        var (left_value, right_value) = when (this.stereo_mode and 0x0F) {
-            0x01 -> {
-                Pair(
-                    if (this.pan < 0F) {
-                        1f + this.pan
-                    } else {
-                        1F // Mutes this this in the left side completely
-                    },
-                    if (this.pan > 0F) {
-                        1f - this.pan
-                    } else {
-                        1F
-                    }
-                )
-            }
-            0x02 -> {
-                Pair(
-                    0F,
-                    if (this.pan > 0F) {
-                        1f - this.pan
-                    } else {
-                        1F
-                    }
-                )
-            }
-
-            0x04 -> {
-                Pair(
-                    if (this.pan < 0F) {
-                        1f + this.pan
-                    } else {
-                        1F // Mutes this this in the left side completely
-                    },
-                    0F
-                )
-            }
-            else -> Pair(1F, 1F)
-        }
-
-        left_value = if (profile_pan < 0F) {
-            (1F + profile_pan) * left_value
-        } else {
-            left_value
-        }
-        right_value = if (profile_pan > 0F) {
-            (1F - profile_pan) * right_value
-        } else {
-            right_value
-        }
-
-        return Pair(left_value, right_value)
+        val array = this.get_next_balance_jni(this.ptr)
+        return Pair(
+            array[0],
+            array[1]
+        )
     }
 
+    external fun get_next_frame_jni(ptr: Long): FloatArray
     fun get_next_frame(): Pair<Float, Float>? {
-        if (this.is_dead) {
-            return null
-        }
-
-        val is_pressed = this.release_frame == null || this.working_frame < this.release_frame!!
-
-        if (this.working_frame < this.volume_envelope.frames_delay) {
-            this.working_frame += 1
-            this.previous_frame = 0F
-            this.volume_profile?.get_next()
-            return Pair(0F, 0F)
-        }
-
-        var frame_factor = this._initial_frame_factor
-
-        if (this.working_frame - this.volume_envelope.frames_delay < this.volume_envelope.frames_attack) {
-            // Linear Fade In
-            val r = (this.working_frame - this.volume_envelope.frames_delay).toFloat() / this.volume_envelope.frames_attack.toFloat()
-            frame_factor *= r
-        } else if (this.working_frame - this.volume_envelope.frames_attack - this.volume_envelope.frames_delay < this.volume_envelope.frames_hold) {
-            // No Oper during hold phase
-        } else if (this.volume_envelope.sustain_attenuation > 0F) {
-            val relative_frame = this.working_frame - this.volume_envelope.frames_delay - this.volume_envelope.frames_attack
-            frame_factor /= if (relative_frame < this.volume_envelope.frames_decay) {
-                val r = (relative_frame.toFloat() / this.volume_envelope.frames_decay.toFloat())
-                10F.pow(r * this.volume_envelope.sustain_attenuation)
-            } else {
-                this.volume_envelope.true_sustain_attenuation
-            }
-        }
-
-        if (this._get_active_data_buffer().is_overflowing()) {
-            if (!is_pressed || this.loop_points == null) {
-                if (this._active_buffer < this._data_buffers.size - 1) {
-                    this._active_buffer += 1
-                } else {
-                    this.is_dead = true
-                    return null
-                }
-            } else {
-               if (this._active_buffer == 0) {
-                   this._active_buffer += 1
-                   this._get_active_data_buffer().set_position(0)
-               }
-            }
-        }
-
-        if (!is_pressed) {
-            val release_frame_count = min(
-                this.volume_envelope.frames_release,
-                (Array(this._data_buffers.size) { this._data_buffers[it].size }.sum()) - this.release_frame!!
-            )
-
-            val current_position_release = this.working_frame - this.release_frame!!
-            if (current_position_release < release_frame_count) {
-                frame_factor *= 1F - (current_position_release.toFloat() / release_frame_count.toFloat())
-            } else {
-                this.is_dead = true
-                return null
-            }
-        }
-
-        // TODO: Needs testing. I think this may end up slowing too much in some cases, but i'll test it better before releasing
-        //val modulation_lfo = this.modulation_lfo
-        //if (modulation_lfo != null && modulation_lfo.delay <= this.working_frame) {
-        //    val lfo_frame = modulation_lfo.get_frame(this.working_frame)
-        //    if (lfo_frame != null) {
-        //        if (modulation_lfo.volume != 0F) {
-        //            frame_factor *= 10F.pow(modulation_lfo.volume * ((lfo_frame + 1F) / 2F))
-        //        }
-
-        //        // TODO: This is mostly functional but still getting clicking because of imperfect re-calculation of the loop points
-        //        //if (modulation_lfo.pitch != 1F) {
-        //        //    val diff = modulation_lfo.pitch - 1F
-        //        //    val new_pitch = 1F + ((lfo_frame + 1F) * diff / 2F)
-        //        //    this.repitch(new_pitch)
-        //        //}
-        //    }
-        //}
-
-        val use_volume = this.volume_profile?.get_next() ?: 1F
-
-        this.working_frame += 1
-
-        var frame_value = try {
-            this._get_active_data_buffer().get()
-        } catch (e: PitchedBuffer.PitchedBufferOverflow) {
-            return null
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            this.is_dead = true
-            return null
-        }
-
-        // Low Pass Filtering
-       // frame_value = this.previous_frame + (this.smoothing_factor * (frame_value - this.previous_frame))
-
-
-        return Pair(frame_value, frame_factor * use_volume * SampleHandle.MAX_VOLUME)
-    }
-
-    fun release_note() {
-        this.set_release_frame(this.working_frame)
-    }
-
-    fun set_kill_frame(f: Int) {
-        this.kill_frame = f
-    }
-
-    fun is_pressed(): Boolean {
-        return this.release_frame == null || this.release_frame!! < this.working_frame
-    }
-
-    fun get_duration(): Int? {
-        return if (this.release_frame == null) {
+        val frame_array = this.get_next_frame_jni(this.ptr)
+        return if (frame_array[2] == 0F) {
             null
         } else {
-            this.release_frame!! + this.get_release_duration()
+            Pair(
+                frame_array[0],
+                frame_array[1]
+            )
         }
     }
 
+    external fun release_note_jni(ptr: Long)
+    fun release_note() {
+        this.release_note(this.ptr)
+    }
+
+    external fun set_kill_frame_jni(ptr: Long, frame: Int)
+    fun set_kill_frame(f: Int) {
+        this.set_kill_frame_jni(this.ptr, f)
+    }
+
+
+    external fun repitch_jni(ptr: Long, new_pitch: Float)
     fun repitch(adjustment: Float) {
-        for (buffer in this._data_buffers) {
-            buffer.repitch(adjustment)
-        }
+        this.repitch_jni(this.ptr, adjustment)
     }
 
     // Need a destroy funciton since PitchedBuffer needs one
+    external fun destroy_jni(ptr: Long)
     fun destroy() {
-        for (buffer in this._data_buffers) {
-            buffer.destroy()
-        }
+        this.destroy_jni(this.ptr)
     }
 }
 

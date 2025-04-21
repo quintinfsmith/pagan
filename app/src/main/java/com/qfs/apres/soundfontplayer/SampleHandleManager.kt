@@ -11,11 +11,11 @@ import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.max
 
 class SampleHandleManager(
-    var soundfont: SoundFont,
-    var sample_rate: Int,
-    target_buffer_size: Int = 0,
-    var sample_limit: Int? = null,
-    ignore_lfo: Boolean = false
+        var soundfont: SoundFont,
+        var sample_rate: Int,
+        target_buffer_size: Int = 0,
+        var sample_limit: Int? = null,
+        ignore_lfo: Boolean = false
     ) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
@@ -94,7 +94,6 @@ class SampleHandleManager(
         val velocity = event.velocity shr 8
         val potential_instruments = preset.get_instruments(event.note, velocity)
         val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
-        var xx = 0
         for (p_instrument in potential_instruments) {
             val sample_directives = p_instrument.instrument?.get_samples(
                 event.note,

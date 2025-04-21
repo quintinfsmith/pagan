@@ -8,19 +8,39 @@
 #include <vector>
 
 struct Sample {
-    jstring name;
+    std::string name;
     int loop_start;
     int loop_end;
     int sample_rate;
     int original_pitch;
     int pitch_correction;
     int sample_type;
-    int link_addr;
     int data_placeholder_start;
     int data_placeholder_end;
-    jshortArray data;
+    short* data;
     public:
-        void set_data(jshortArray data) {
+        explicit Sample(
+            std::string name,
+            int loop_start,
+            int loop_end,
+            int sample_rate,
+            int original_pitch,
+            int pitch_correction,
+            int sample_type,
+            int data_placeholder_start,
+            int data_placeholder_end
+        ) {
+            this->name = name;
+            this->loop_start = loop_start;
+            this->loop_end = loop_end;
+            this->sample_rate = sample_rate;
+            this->original_pitch = original_pitch;
+            this->pitch_correction = pitch_correction;
+            this->sample_type = sample_type;
+            this->data_placeholder_start = data_placeholder_start;
+            this->data_placeholder_end = data_placeholder_end;
+        }
+        void set_data(short * data) {
             this->data = data;
         }
 

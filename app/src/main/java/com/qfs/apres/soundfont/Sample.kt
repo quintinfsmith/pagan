@@ -12,7 +12,7 @@ data class Sample(val ptr: Long) {
         data_placeholder: Pair<Int, Int>,
     ): this(
         create(
-            name,
+            name.toByteArray(),
             loopStart,
             loopEnd,
             sampleRate,
@@ -23,9 +23,10 @@ data class Sample(val ptr: Long) {
             data_placeholder.second
         )
     )
+
     companion object {
         external fun create(
-            name: String,
+            name: ByteArray,
             loopStart: Int,
             loopEnd: Int,
             sampleRate: Int,
@@ -37,14 +38,19 @@ data class Sample(val ptr: Long) {
         ): Long
     }
 
+    init {
+        println("${this.ptr}...x")
+    }
+
     val name: String
-        get() = this.get_name_inner(this.ptr)
+        get() = this.get_name_inner(this.ptr).toString()
 
     val data_placeholder: Pair<Int, Int>
         get() = this._get_placeholder()
 
     val sample_type: Int
         get() = this.get_sample_type_inner(this.ptr)
+
     var data: ShortArray
         get() = this.get_data_inner(this.ptr)
         set(value) = this.set_data_inner(this.ptr, value)
@@ -52,26 +58,47 @@ data class Sample(val ptr: Long) {
     val sample_rate: Int
         get() = this.get_sample_rate_inner(this.ptr)
 
-    val originalPitch: Int
+    val original_pitch: Int
         get() = this.get_original_pitch(this.ptr)
-    val pitchCorrection: Int
+
+    val pitch_correction: Int
         get() = this.get_pitch_correction(this.ptr)
+
+    val loop_start: Int
+        get() = this.get_loop_start(this.ptr)
+
+    val loop_end: Int
+        get() = this.get_loop_end(this.ptr)
 
     external fun get_original_pitch(ptr: Long): Int
     external fun get_sample_rate_inner(ptr: Long): Int
     external fun get_sample_type_inner(ptr: Long): Int
     external fun set_data_inner(ptr: Long, data: ShortArray)
-    external fun get_data_placeholders(ptr: Long): Array<Int>
-    external fun get_name_inner(ptr: Long): String
+    external fun jni_data_placeholders(ptr: Long): IntArray
+    external fun get_name_inner(ptr: Long): ByteArray
     external fun get_data_inner(ptr: Long): ShortArray
     external fun get_pitch_correction(ptr: Long): Int
+    external fun get_loop_start(ptr: Long): Int
+    external fun get_loop_end(ptr: Long): Int
 
     fun set_data(data: ShortArray) {
         this.set_data_inner(this.ptr, data)
     }
 
     private fun _get_placeholder(): Pair<Int, Int> {
-        val array = this.get_data_placeholders(this.ptr)
-        return Pair(array[0], array[1])
+        val pair_as_array = this.jni_data_placeholders(this.ptr)
+        return Pair(
+            pair_as_array[0],
+            pair_as_array[1]
+        )
+        //return Pair(
+        //    this.get_placeholder_start(this.ptr),
+        //    this.get_placeholder_end(this.ptr)
+        //)
     }
+
+    private fun get_data_placholders(ptr: Long) {
+
+    }
+
 }

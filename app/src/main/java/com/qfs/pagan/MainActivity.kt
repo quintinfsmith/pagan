@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -396,9 +395,9 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
+                    SoundFont(new_file.path)
+                    this.get_action_interface().ignore().set_soundfont(new_file.name)
                     try {
-                        SoundFont(new_file.path)
-                        this.get_action_interface().ignore().set_soundfont(new_file.name)
                     } catch (e: Exception) {
                         this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
                         new_file.delete()
@@ -1337,9 +1336,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun get_drum_options(): List<Pair<String, Int>> {
+        println("---AA")
         if (this._sample_handle_manager == null || this.is_connected_to_physical_device()) {
             return this._get_default_drum_options()
         }
+        println("---AB")
 
         val preset = try {
             this._sample_handle_manager!!.get_preset(9) ?: return this._get_default_drum_options()
@@ -1347,6 +1348,7 @@ class MainActivity : AppCompatActivity() {
             return this._get_default_drum_options()
         }
 
+        println("---AC")
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()
 
         for ((_, preset_instrument) in preset.instruments) {
@@ -1354,13 +1356,17 @@ class MainActivity : AppCompatActivity() {
                 continue
             }
 
-            for (sample in preset_instrument.instrument!!.samples.values) {
-                if (sample.key_range != null) {
-                    var name = sample.sample!!.name
+            println("---AD")
+            for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
+                println("---AE")
+                val key_range = sample_directive.key_range
+                if (key_range != null) {
+                    println("---AF")
+                    var name = sample_directive.sample!!.first().name
                     if (name.contains("(")) {
                         name = name.substring(0, name.indexOf("("))
                     }
-                    available_drum_keys.add(Pair(name, sample.key_range!!.first))
+                    available_drum_keys.add(Pair(name, key_range.first))
                 }
             }
         }
@@ -1408,11 +1414,12 @@ class MainActivity : AppCompatActivity() {
                     val (midi_bank, midi_program) = channel.get_instrument()
                     this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
                     this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-
+                    println("AAA")
                     this._feedback_sample_manager!!.select_bank(
                         midi_channel,
                         midi_bank,
                     )
+                    println("BB")
                     this._feedback_sample_manager!!.change_program(
                         midi_channel,
                         midi_program,
@@ -1421,17 +1428,19 @@ class MainActivity : AppCompatActivity() {
             }
             // Don't need to update anything but percussion here
             val midi_channel = opus_manager.percussion_channel.get_midi_channel()
+            println("CCC")
             val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
-
             if (this._sample_handle_manager != null) {
                 this._sample_handle_manager!!.select_bank(
                     midi_channel,
                     midi_bank
                 )
+                println("ADAD")
                 this._sample_handle_manager!!.change_program(
                     midi_channel,
                     midi_program
                 )
+                println("AXXX")
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)

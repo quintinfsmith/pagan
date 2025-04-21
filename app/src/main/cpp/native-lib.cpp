@@ -31,7 +31,6 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
         jshortArray data,
         jint data_size,
         jfloat pitch,
-        jint max,
         int start,
         int end,
         jboolean is_loop
@@ -61,7 +60,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_get_1range_1inner(JNIEnv* env, 
         ptr->end
     };
 
-    env->SetIntArrayRegion(output, 0, 2, data);
+    env->SetIntArrayRegion(output, 0, 2, (jint *)data);
 }
 
 extern "C" JNIEXPORT jint JNICALL

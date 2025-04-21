@@ -14,7 +14,7 @@ class SampleHandle(
     var sample_rate: Int,
     var initial_attenuation: Float = 0F,
     val loop_points: Pair<Int, Int>?,
-    var stereo_mode: SampleType,
+    var stereo_mode: Int,
 
     var volume_envelope: VolumeEnvelope,
     var modulation_envelope: ModulationEnvelope,
@@ -367,9 +367,8 @@ class SampleHandle(
     fun get_next_balance(): Pair<Float, Float> {
         val profile_pan = this.pan_profile?.get_next() ?: 0F
         // TODO: Implement ROM stereo modes
-        var (left_value, right_value) = when (this.stereo_mode) {
-            SampleType.RomMono,
-            SampleType.Mono -> {
+        var (left_value, right_value) = when (this.stereo_mode and 0x0F) {
+            0x01 -> {
                 Pair(
                     if (this.pan < 0F) {
                         1f + this.pan
@@ -383,8 +382,7 @@ class SampleHandle(
                     }
                 )
             }
-            SampleType.RomRight,
-            SampleType.Right -> { // 2
+            0x02 -> {
                 Pair(
                     0F,
                     if (this.pan > 0F) {
@@ -395,8 +393,7 @@ class SampleHandle(
                 )
             }
 
-            SampleType.RomLeft,
-            SampleType.Left -> { // 4
+            0x04 -> {
                 Pair(
                     if (this.pan < 0F) {
                         1f + this.pan
@@ -406,8 +403,7 @@ class SampleHandle(
                     0F
                 )
             }
-            SampleType.Linked -> TODO()
-            SampleType.RomLinked -> TODO()
+            else -> Pair(1F, 1F)
         }
 
         left_value = if (profile_pan < 0F) {

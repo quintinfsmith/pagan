@@ -47,9 +47,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     var generated = 0
 
     fun clear() {
-        for ((_, pair) in this.sample_data_map) {
-            pair.first.destroy()
-            pair.second?.destroy()
+        for ((_, samples) in this.sample_data_map) {
+            for (sample in samples) {
+                sample.destroy()
+            }
         }
         this.sample_data_map.clear()
     }
@@ -116,7 +117,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     fun generate_new(note: Int, bend: Int, sample_directive: SampleDirective, global_sample_directive: SampleDirective, instrument_directive: InstrumentDirective, global_instrument_directive: InstrumentDirective): List<SampleHandle> {
         var pitch_shift = 1F
 
-        val original_note = sample_directive.root_key ?: sample_directive.sample!!.first().originalPitch
+        val original_note = sample_directive.root_key ?: sample_directive.sample!!.first().original_pitch
 
         // 255 Means its an unpitched note and needs no correction.
         if (original_note != 255) {
@@ -125,7 +126,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                 + (instrument_directive.tuning_semi ?: 0)
                 + (global_instrument_directive.tuning_semi ?: 0)).toFloat()
 
-            val pitch_correction = sample_directive.sample!!.first().pitchCorrection
+            val pitch_correction = sample_directive.sample!!.first().pitch_correction
             // Skip tuning if we can
             if (tuning_cent != 0 || tuning_semi != 0F || note != original_note || bend != 0 || pitch_correction != 0) {
                 tuning_semi += tuning_cent.toFloat() / 100F
@@ -211,8 +212,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                 stereo_mode = working_sample.sample_type,
                 loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
                     val tmp = Pair(
-                        working_sample.loopStart + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
-                        working_sample.loopEnd + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
+                        working_sample.loop_start + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
+                        working_sample.loop_end + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
                     )
                     if (tmp.first == tmp.second) {
                         null
@@ -253,17 +254,17 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
     fun decache_sample_data(preset: Preset) {
         val to_remove = mutableListOf<MapKey>()
-        for ((mapkey, pair) in this.sample_data_map) {
+        for ((mapkey, samples) in this.sample_data_map) {
             if (mapkey.preset == preset.uid) {
                 to_remove.add(mapkey)
-                pair.first.destroy()
-                pair.second?.destroy()
+                for (sample in samples) {
+                    sample.destroy()
+                }
             }
         }
         for (mapkey in to_remove) {
              this.sample_data_map.remove(mapkey)
         }
-
     }
 
     fun destroy() {

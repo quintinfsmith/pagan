@@ -1,12 +1,8 @@
 package com.qfs.apres.soundfont
 
-import com.qfs.apres.soundfont.Generator.Operation
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
 class SoundFont(file_path: String) {
     class InvalidSoundFont(file_path: String): Exception("Not a soundfont $file_path")
@@ -55,78 +51,106 @@ class SoundFont(file_path: String) {
 
     init {
         this.riff = Riff(file_path)
-
-        if (this.riff.type_cc != "sfbk") {
-            throw InvalidSoundFont(file_path)
-        }
-
-        val info_chunk = this.riff.get_chunk_data(this.riff.list_chunks[0])
-        val pdta_chunk = this.riff.get_chunk_data(this.riff.list_chunks[2])
-        val info_offset = this.riff.list_chunks[0].index
-        for (header in this.riff.sub_chunks[0]) {
-            // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-            val header_offset = header.index + 8 - info_offset - 12
-            when (header.tag) {
-                "ifil" -> {
-                    this.ifil = Pair(
-                        toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
-                        toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
-                    )
-                }
-
-                "isng" -> {
-                    this.isng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "INAM" -> {
-                    this.inam = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "irom" -> {
-                    this.irom = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "iver" -> {
-                    this.iver = Pair(
-                        toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
-                        toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
-                    )
-                }
-
-                "ICRD" -> {
-                    this.icrd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "IENG" -> {
-                    this.ieng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "IPRD" -> {
-                    this.iprd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "ICOP" -> {
-                    this.icop = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "ICMT" -> {
-                    this.icmt = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                "ISFT" -> {
-                    this.isft = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
-                }
-
-                else -> {}
+        this.riff.with {
+            if (riff.type_cc != "sfbk") {
+                throw InvalidSoundFont(file_path)
             }
-        }
 
-        val pdta_offset = this.riff.list_chunks[2].index
-        for (header in this.riff.sub_chunks[2]) {
-            // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
-            val offset = header.index + 8 - pdta_offset - 12
-            this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
-                pdta_chunk[offset + j]
+            val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
+            val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
+            val info_offset = riff.list_chunks[0].index
+            for (header in riff.sub_chunks[0]) {
+                // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
+                val header_offset = header.index + 8 - info_offset - 12
+                when (header.tag) {
+                    "ifil" -> {
+                        this.ifil = Pair(
+                            toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
+                            toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
+                        )
+                    }
+
+                    "isng" -> {
+                        this.isng =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "INAM" -> {
+                        this.inam =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "irom" -> {
+                        this.irom =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "iver" -> {
+                        this.iver = Pair(
+                            toUInt(info_chunk[header_offset + 0]) + (toUInt(info_chunk[header_offset + 1]) * 256),
+                            toUInt(info_chunk[header_offset + 2]) + (toUInt(info_chunk[header_offset + 3]) * 256)
+                        )
+                    }
+
+                    "ICRD" -> {
+                        this.icrd =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "IENG" -> {
+                        this.ieng =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "IPRD" -> {
+                        this.iprd =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "ICOP" -> {
+                        this.icop =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "ICMT" -> {
+                        this.icmt =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    "ISFT" -> {
+                        this.isft =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
+                    }
+
+                    else -> {}
+                }
+            }
+
+            val pdta_offset = riff.list_chunks[2].index
+            for (header in riff.sub_chunks[2]) {
+                // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
+                val offset = header.index + 8 - pdta_offset - 12
+                this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
+                    pdta_chunk[offset + j]
+                }
             }
         }
     }
@@ -134,9 +158,12 @@ class SoundFont(file_path: String) {
     fun get_samples(sample_index: Int): List<Sample> {
         val output = mutableListOf<Sample>()
         var working_index = sample_index
-        while (true) {
-            val (sample, next_index) = get_sample(working_index)
+        val done_indices = mutableSetOf<Int>()
+        while (!done_indices.contains(working_index)) {
+            val (sample, next_index) = this.get_sample(working_index)
             output.add(sample)
+            done_indices.add(working_index)
+
             if (next_index != null) {
                 working_index = next_index
             } else {
@@ -291,14 +318,16 @@ class SoundFont(file_path: String) {
         }
 
         // NOW we can load all the sample data
+        println("000 ----")
         if (output != null) {
             var ordered_samples = mutableListOf<Sample>()
             for ((_, preset_instrument) in output.instruments) {
                 val instrument = preset_instrument.instrument ?: continue
 
-                if (instrument.samples.isNotEmpty()) {
-                    for (instrument_sample in instrument.samples.values) {
+                if (instrument.sample_directives.isNotEmpty()) {
+                    for (instrument_sample in instrument.sample_directives.values) {
                         val sample = instrument_sample.sample ?: continue
+                        println("001 ----")
                         ordered_samples.addAll(sample)
                     }
                 } else {
@@ -329,7 +358,8 @@ class SoundFont(file_path: String) {
             }
             this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
         } else {
-            this.get_sample_data(sample.data_placeholder.first, sample.data_placeholder.second)
+            val data_placeholder = sample.data_placeholder
+            this.get_sample_data(data_placeholder.first, data_placeholder.second)
         }
     }
 
@@ -496,7 +526,11 @@ class SoundFont(file_path: String) {
         }
 
         working_sample.apply_generators(generators)
-        working_sample.sample = this.get_samples(generators.last().asInt())
+        for (generator in generators) {
+            if (generator.sfGenOper == 0x35) {
+                working_sample.sample = this.get_samples(generators.last().asInt())
+            }
+        }
 
         if (is_global) {
             instrument.set_global_zone(working_sample)

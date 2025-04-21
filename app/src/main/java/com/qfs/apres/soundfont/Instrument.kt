@@ -1,7 +1,7 @@
 package com.qfs.apres.soundfont
 
 class Instrument(var name: String) {
-    var samples = HashMap<Int, SampleDirective>()
+    var sample_directives = HashMap<Int, SampleDirective>()
     var global_zone: SampleDirective = SampleDirective()
 
     private val quick_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
@@ -13,7 +13,7 @@ class Instrument(var name: String) {
 
     fun add_sample(sample_directive: SampleDirective) {
         val hash_code = sample_directive.hashCode()
-        this.samples[hash_code] = sample_directive
+        this.sample_directives[hash_code] = sample_directive
 
         val key_range = if (sample_directive.key_range == null) {
             0..127
@@ -38,10 +38,10 @@ class Instrument(var name: String) {
 
     fun get_samples(key: Int, velocity: Int): Set<SampleDirective> {
         val output = mutableSetOf<SampleDirective>()
-        if (this.samples.isNotEmpty()) {
+        if (this.sample_directives.isNotEmpty()) {
             val ids = this.quick_ref_vel[velocity].intersect(this.quick_ref_key[key])
             for (id in ids) {
-                output.add(this.samples[id]!!)
+                output.add(this.sample_directives[id]!!)
             }
         } else {
             val key_range = if (this.global_zone.key_range == null) {

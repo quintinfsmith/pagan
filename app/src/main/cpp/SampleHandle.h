@@ -175,16 +175,10 @@ int SampleHandleUUIDGen = 0;
 // modulation_envelope, modulation_lfo, modulators
 class SampleHandle {
     float RC;
-    float smoothing_factor;
     float initial_frame_factor;
     float previous_frame;
     // int uuid;
 
-    int working_frame;
-    std::optional<int> release_frame;
-    std::optional<int> kill_frame;
-    bool is_dead;
-    int active_buffer;
 
     public:
         int uuid;
@@ -201,6 +195,13 @@ class SampleHandle {
         ProfileBuffer* volume_profile;
         ProfileBuffer* pan_profile;
         std::vector<PitchedBuffer> data_buffers;
+        float smoothing_factor;
+
+        int working_frame;
+        std::optional<int> release_frame;
+        std::optional<int> kill_frame;
+        bool is_dead;
+        int active_buffer;
 
         explicit SampleHandle(
             jshort* data,

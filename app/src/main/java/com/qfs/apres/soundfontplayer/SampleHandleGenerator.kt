@@ -63,12 +63,12 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
         val pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
 
-        val first = SampleHandle.copy(handle_main)
+        val first = handle_main.copy()
         first.volume_profile = volume_profile
         first.pan_profile = pan_profile
 
         val linked = if (handle_linked != null) {
-            val tmp = SampleHandle.copy(handle_linked)
+            val tmp = handle_linked.copy()
             tmp.volume_profile = volume_profile
             tmp.pan_profile = pan_profile
             tmp
@@ -86,12 +86,12 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(volume, 0F))), 0)
         val pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
 
-        val first = SampleHandle.copy(handle_main)
+        val first = handle_main.copy()
         first.volume_profile = volume_profile
         first.pan_profile = pan_profile
 
         val linked = if (handle_linked != null) {
-            val tmp = SampleHandle.copy(handle_linked)
+            val tmp = handle_linked.copy()
             tmp.volume_profile = volume_profile
             tmp.pan_profile = pan_profile
             tmp
@@ -183,11 +183,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             sustain_attenuation = max(0F, min(mod_env_sustain, 1440F)) / 100F // Centibels -> bels
         )
 
-        val mod_lfo_freq: Float = (sample_directive.mod_lfo_freq ?: global_sample_directive.mod_lfo_freq ?: 0F) * (instrument_directive.mod_lfo_freq ?: 1F) * (global_instrument_directive.mod_lfo_freq ?: 1F)
-        val mod_lfo_delay: Float = (sample_directive.mod_lfo_delay ?: global_sample_directive.mod_lfo_delay ?: 0F) * (instrument_directive.mod_lfo_delay ?: 1F) * (global_instrument_directive.mod_lfo_delay ?: 1F)
-        val mod_lfo_to_volume: Float = (sample_directive.mod_lfo_to_volume ?: global_sample_directive.mod_lfo_to_volume ?: 0F ) + (instrument_directive.mod_lfo_to_volume ?: 0F) + (global_instrument_directive.mod_lfo_to_volume ?: 0F)
-        val mod_lfo_pitch: Int = (sample_directive.mod_lfo_pitch ?: global_sample_directive.mod_lfo_pitch ?: 0 ) + (instrument_directive.mod_lfo_pitch ?: 0) + (global_instrument_directive.mod_lfo_pitch ?: 0)
-        val mod_lfo_filter: Int = (sample_directive.mod_lfo_filter ?: global_sample_directive.mod_lfo_filter ?: 0 ) + (instrument_directive.mod_lfo_filter ?: 0) + (global_instrument_directive.mod_lfo_filter ?: 0)
+        // val mod_lfo_freq: Float = (sample_directive.mod_lfo_freq ?: global_sample_directive.mod_lfo_freq ?: 0F) * (instrument_directive.mod_lfo_freq ?: 1F) * (global_instrument_directive.mod_lfo_freq ?: 1F)
+        // val mod_lfo_delay: Float = (sample_directive.mod_lfo_delay ?: global_sample_directive.mod_lfo_delay ?: 0F) * (instrument_directive.mod_lfo_delay ?: 1F) * (global_instrument_directive.mod_lfo_delay ?: 1F)
+        // val mod_lfo_to_volume: Float = (sample_directive.mod_lfo_to_volume ?: global_sample_directive.mod_lfo_to_volume ?: 0F ) + (instrument_directive.mod_lfo_to_volume ?: 0F) + (global_instrument_directive.mod_lfo_to_volume ?: 0F)
+        // val mod_lfo_pitch: Int = (sample_directive.mod_lfo_pitch ?: global_sample_directive.mod_lfo_pitch ?: 0 ) + (instrument_directive.mod_lfo_pitch ?: 0) + (global_instrument_directive.mod_lfo_pitch ?: 0)
+        // val mod_lfo_filter: Int = (sample_directive.mod_lfo_filter ?: global_sample_directive.mod_lfo_filter ?: 0 ) + (instrument_directive.mod_lfo_filter ?: 0) + (global_instrument_directive.mod_lfo_filter ?: 0)
         val filter_cutoff: Float = (sample_directive.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 13500F ) * (instrument_directive.filter_cutoff ?: 1F) * (global_instrument_directive.filter_cutoff ?: 1F)
         this.generated += 1
 
@@ -223,22 +223,23 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                 } else {
                     null
                 },
-                modulation_lfo = if (this.ignore_lfo) {
-                    null
-                } else {
-                    SampleHandle.LFO(
-                        sample_rate = this.sample_rate,
-                        frequency = mod_lfo_freq,
-                        volume = mod_lfo_to_volume / 100F, // Centibels -> bels
-                        pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
-                        filter = mod_lfo_filter,
-                        delay = mod_lfo_delay
-                    )
-                },
                 volume_envelope = volume_envelope,
-                modulation_envelope = modulation_envelope,
-                filter_cutoff = filter_cutoff,
-                modulators = new_modulators
+                filter_cutoff = filter_cutoff
+
+                //modulation_lfo = if (this.ignore_lfo) {
+                //    null
+                //} else {
+                //    SampleHandle.LFO(
+                //        sample_rate = this.sample_rate,
+                //        frequency = mod_lfo_freq,
+                //        volume = mod_lfo_to_volume / 100F, // Centibels -> bels
+                //        pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
+                //        filter = mod_lfo_filter,
+                //        delay = mod_lfo_delay
+                //    )
+                //},
+                //modulation_envelope = modulation_envelope,
+                //modulators = new_modulators
             )
         }
     }

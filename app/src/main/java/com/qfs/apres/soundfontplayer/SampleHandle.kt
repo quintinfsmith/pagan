@@ -134,7 +134,19 @@ class SampleHandle(val ptr: Long) {
             ): Long
         }
 
-        external fun destroy_jni(ptr: Long)
+        external fun get_frames_release(ptr: Long): Int
+        external fun set_frames_release(ptr: Long, f: Int)
+        var frames_release: Int
+            get() = this.get_frames_release(this.ptr)
+            set(f: Int) = this.set_frames_release(this.ptr, f)
+
+        external fun get_release(ptr: Long): Float
+        external fun set_release(ptr: Long, release: Float)
+        var release: Float
+            get() = this.get_release(this.ptr)
+            set(v: Float) = set_release(ptr, v)
+
+    external fun destroy_jni(ptr: Long)
         fun destroy() {
             this.destroy_jni(this.ptr)
         }
@@ -196,14 +208,70 @@ class SampleHandle(val ptr: Long) {
         }
     }
 
+    external fun get_uuid_jni(ptr: Long): Int
+    val uuid: Int
+        get() = this.get_uuid_jni(this.ptr)
+
+    external fun get_release_frame_jni(ptr: Long): Int
+    external fun set_release_frame_jni(ptr: Long, frame: Int)
+
+    var release_frame: Int?
+        get() = this.get_release_frame()
+        set(f: Int?) = this.set_release_frame_jni(this.ptr, f ?: 0)
+
+    private fun get_release_frame(): Int? {
+        val f = this.get_release_frame_jni(this.ptr)
+        return if (f == -1) {
+            null
+        } else {
+            f
+        }
+    }
+
+    external fun get_volume_envelope_ptr(ptr: Long): Long
+    val volume_envelope: VolumeEnvelope
+        get() = this.get_volume_envelope()
+    fun get_volume_envelope(): VolumeEnvelope {
+        return VolumeEnvelope(this.get_volume_envelope_ptr(this.ptr))
+    }
+
+    external fun get_volume_profile_ptr(ptr: Long): Long
+    external fun set_volume_profile_ptr(handle: Long, new_ptr: Long)
+    var volume_profile: ProfileBuffer
+        get() = this.get_volume_profile()
+        set(new_buffer: ProfileBuffer) = this.set_volume_profile_ptr(this.ptr, new_buffer.ptr)
+    fun get_volume_profile(): ProfileBuffer {
+        return ProfileBuffer(
+            this.get_volume_profile_ptr(this.ptr)
+        )
+    }
+
+    external fun get_pan_profile_ptr(ptr: Long): Long
+    external fun set_pan_profile_ptr(handle: Long, new_ptr: Long)
+    var pan_profile: ProfileBuffer
+        get() = this.get_pan_profile()
+        set(new_buffer: ProfileBuffer) = this.set_pan_profile_ptr(this.ptr, new_buffer.ptr)
+    fun get_pan_profile(): ProfileBuffer {
+        return ProfileBuffer(
+            this.get_pan_profile_ptr(this.ptr)
+        )
+    }
+
+    external fun get_working_frame_jni(ptr: Long): Int
+    val working_frame: Int
+        get() = this.get_working_frame_jni(this.ptr)
+
+    external fun get_smoothing_factor_jni(ptr: Long): Float
+    val smoothing_factor: Float
+        get() = this.get_smoothing_factor_jni(this.ptr)
+
+    external fun is_dead_jni(ptr: Long): Boolean
+    val is_dead: Boolean
+        get() = this.is_dead_jni(this.ptr)
+
     external fun copy_jni(ptr: Long): Long
     fun copy(): SampleHandle {
         return SampleHandle(this.copy_jni(this.ptr))
-    }
-
-    external fun set_release_frame_jni(ptr: Long, frame: Int)
-    fun set_release_frame(frame: Int) {
-        this.set_release_frame_jni(this.ptr, frame)
     }
 
     external fun set_working_frame_jni(ptr: Long, frame: Int)
@@ -240,7 +308,7 @@ class SampleHandle(val ptr: Long) {
 
     external fun release_note_jni(ptr: Long)
     fun release_note() {
-        this.release_note(this.ptr)
+        this.release_note_jni(this.ptr)
     }
 
     external fun set_kill_frame_jni(ptr: Long, frame: Int)

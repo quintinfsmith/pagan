@@ -177,13 +177,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val end_frame = handle.release_frame!! + start_frame
         var sample_start_frame = start_frame
         var sample_end_frame = end_frame + handle.get_release_duration()
-
-        this._handle_range_map[handle.uuid] = sample_start_frame .. sample_end_frame
-        this._handle_map[handle.uuid] = handle
+        val uuid = handle.uuid
+        this._handle_range_map[uuid] = sample_start_frame .. sample_end_frame
+        this._handle_map[uuid] = handle
         if (!this._frame_map.containsKey(sample_start_frame)) {
             this._frame_map[sample_start_frame] = mutableSetOf()
         }
-        this._frame_map[sample_start_frame]!!.add(handle.uuid)
+        this._frame_map[sample_start_frame]!!.add(uuid)
     }
 
     fun clear() {
@@ -232,14 +232,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
-                handle.set_release_frame(end_frame - start_frame)
+                handle.release_frame = end_frame - start_frame
 
                 if (next_event_frame != null) {
                     // Remove release phase. can get noisy on things like tubular bells with long fade outs
                     //handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 11, handle.volume_envelope.frames_release)
                     //handle.volume_envelope.frames_delay = 0
-                    if (handle.volume_envelope.frames_release > this.FADE_LIMIT) {
-                        handle.volume_envelope.release = max(this.FADE_LIMIT, min(next_event_frame - end_frame, handle.volume_envelope.frames_release)).toFloat() / this._sample_handle_manager.sample_rate.toFloat()
+                    val volume_envelope = handle.volume_envelope;
+                    if (volume_envelope.frames_release > this.FADE_LIMIT) {
+                        volume_envelope.release = max(this.FADE_LIMIT, min(next_event_frame - end_frame, volume_envelope.frames_release)).toFloat() / this._sample_handle_manager.sample_rate.toFloat()
                     }
                 }
 
@@ -543,7 +544,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 this.opus_manager.get_proceding_event_position(beat_key, position)
             if (next_event_position != null) {
                 val (next_beat, next_position) = next_event_position
-                val (offset, width) = this.opus_manager.get_leaf_offset_and_width(
+                val (offset, _) = this.opus_manager.get_leaf_offset_and_width(
                     BeatKey(
                         beat_key.channel,
                         beat_key.line_offset,

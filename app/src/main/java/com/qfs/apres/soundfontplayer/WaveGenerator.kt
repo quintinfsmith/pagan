@@ -184,7 +184,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                     var (sample_handle, start_frame) = item.sample_handles[real_index]
                     if (sample_handle == null) {
-                        sample_handle = SampleHandle.copy(item.handle)
+                        sample_handle = item.handle.copy()
                         sample_handle.set_working_frame(start_frame)
                         item.sample_handles[real_index] = Pair(sample_handle, 0)
                     }
@@ -211,6 +211,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for ((key, sample_handle, index) in sample_handles_to_use) {
             output[key] = Pair(sample_handle.smoothing_factor, this.populate_partial_int_array(sample_handle, index))
         }
+
         return output
     }
 

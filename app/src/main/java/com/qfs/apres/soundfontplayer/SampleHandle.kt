@@ -58,20 +58,16 @@ class SampleHandle(val ptr: Long) {
             data: ShortArray,
             sample_rate: Int,
             initial_attenuation: Float,
-
             is_loop: Boolean,
             loop_start: Int,
             loop_end: Int,
             stereo_mode: Int,
-
             volume_envelope_ptr: Long,
-
             pitch_shift: Float,
             filter_cutoff: Float,
             pan: Float,
             volume_profile_ptr: Long,
             pan_profile_ptr: Long,
-            data_buffers: Array<PitchedBuffer>?,
         ): Long
     }
 

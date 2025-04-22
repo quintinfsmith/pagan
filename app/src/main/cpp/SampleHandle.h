@@ -169,21 +169,6 @@ int SampleHandleUUIDGen = 0;
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
 class SampleHandle {
-    int uuid;
-    jshort* data;
-    int data_size;
-    jfloat sample_rate;
-    jfloat initial_attenuation;
-    std::optional<std::tuple<int, int>>  loop_points;
-    int stereo_mode;
-    VolumeEnvelope* volume_envelope;
-    float pitch_shift;
-    float filter_cutoff;
-    float pan;
-    ProfileBuffer* volume_profile;
-    ProfileBuffer* pan_profile;
-    std::vector<PitchedBuffer> data_buffers;
-
 
     float RC;
     float smoothing_factor;
@@ -198,6 +183,21 @@ class SampleHandle {
     int active_buffer;
 
     public:
+        int uuid;
+        jshort* data;
+        int data_size;
+        jfloat sample_rate;
+        jfloat initial_attenuation;
+        std::optional<std::tuple<int, int>>  loop_points;
+        int stereo_mode;
+        VolumeEnvelope* volume_envelope;
+        float pitch_shift;
+        float filter_cutoff;
+        float pan;
+        ProfileBuffer* volume_profile;
+        ProfileBuffer* pan_profile;
+        std::vector<PitchedBuffer> data_buffers;
+
         explicit SampleHandle(
             jshort* data,
             int data_size,

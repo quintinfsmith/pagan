@@ -42,14 +42,8 @@ public:
         this->virtual_size = virtual_size;
         this->adjusted_pitch = adjusted_pitch;
     }
-    explicit PitchedBuffer(
-        jshort* data,
-        int data_size,
-        float pitch,
-        int start,
-        int end,
-        bool is_loop
-    ) {
+
+    explicit PitchedBuffer(jshort* data, int data_size, float pitch, int start, int end, bool is_loop) {
         this->virtual_position = 0;
         this->data = data;
         this->data_size = data_size;

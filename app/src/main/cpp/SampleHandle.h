@@ -12,14 +12,13 @@
 #include <cmath>
 
 class VolumeEnvelope {
-    int sample_rate;
-    float delay;
-    float attack;
-    float hold;
-    float decay;
-    float release;
-
     public:
+        int sample_rate;
+        float delay;
+        float attack;
+        float hold;
+        float decay;
+        float release;
         int frames_delay;
         int frames_attack;
         int frames_hold;
@@ -56,10 +55,19 @@ class VolumeEnvelope {
             this->frames_decay = (int)(float_rate * this->decay);
             this->frames_release = (int)(float_rate * this->release);
         }
+
+        void copy_to(VolumeEnvelope* other) {
+            other->delay = this->delay;
+            other->attack = this->attack;
+            other->hold = this->hold;
+            other->decay = this->decay;
+            other->release = this->release;
+            other->sustain_attenuation = this->sustain_attenuation;
+            other->set_sample_rate(this->sample_rate);
+        }
 };
 
 struct ProfileBufferFrame {
-
     int frame;
     float initial_value;
     float increment;
@@ -68,14 +76,14 @@ struct ProfileBufferFrame {
 class vector;
 
 class ProfileBuffer {
-    std::vector<ProfileBufferFrame> frames;
-    int current_frame;
-    int current_index;
-    float current_value;
-    int next_frame_trigger;
-    int start_frame;
-
     public:
+        std::vector<ProfileBufferFrame> frames;
+        int current_frame;
+        int current_index;
+        float current_value;
+        int next_frame_trigger;
+        int start_frame;
+
         explicit ProfileBuffer(std::vector<ProfileBufferFrame> frames, int start_frame, bool skip_initial_set) {
             this->start_frame = start_frame;
             this->frames = frames;
@@ -130,7 +138,7 @@ class ProfileBuffer {
             }
         }
 
-        ProfileBuffer copy() {
+        void copy_to(ProfileBuffer* new_buffer) {
             std::vector<ProfileBufferFrame> frames_copy;
             frames_copy.reserve(this->frames.size());
             for (auto frame: this->frames) {
@@ -142,12 +150,9 @@ class ProfileBuffer {
                     }
                 );
             }
-
-            return ProfileBuffer(
-                frames_copy,
-                this->start_frame,
-                false
-            );
+            new_buffer->frames = frames_copy;
+            new_buffer->start_frame = start_frame;
+            new_buffer->set_frame(0);
         }
 
     private:
@@ -169,7 +174,6 @@ int SampleHandleUUIDGen = 0;
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
 class SampleHandle {
-
     float RC;
     float smoothing_factor;
     float initial_frame_factor;
@@ -227,6 +231,10 @@ class SampleHandle {
             this->volume_profile = volume_profile;
             this->pan_profile = pan_profile;
 
+            this->secondary_setup(data_buffers);
+        }
+
+        void secondary_setup(std::optional<std::vector<PitchedBuffer>> data_buffers) {
             this->RC = 1 / (this->filter_cutoff * 2 * M_PI);
             this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
             this->previous_frame = 0;

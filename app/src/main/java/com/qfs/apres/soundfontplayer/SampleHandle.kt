@@ -23,9 +23,7 @@ class SampleHandle(val ptr: Long) {
         filter_cutoff: Float = 13500F,
         pan: Float = 0F,
         volume_profile: ProfileBuffer? = null,
-        pan_profile: ProfileBuffer? = null,
-        data_buffers: Array<PitchedBuffer>? = null,
-
+        pan_profile: ProfileBuffer? = null
         // TODO: Modulations
         //modulation_envelope: ModulationEnvelope,
         //modulation_lfo: LFO?,
@@ -45,8 +43,6 @@ class SampleHandle(val ptr: Long) {
             pan,
             volume_profile?.ptr ?: 0,
             pan_profile?.ptr ?: 0,
-            data_buffers
-
             //modulation_envelope,
             //modulation_lfo,
             //modulators
@@ -72,86 +68,44 @@ class SampleHandle(val ptr: Long) {
     }
 
 
-    class ProfileBuffer(val frames: Array<Pair<Int, Pair<Float, Float>>>, val start_frame: Int, skip_initial_set: Boolean = false) {
+    class ProfileBuffer(val ptr: Long) {
+        constructor(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int, skip_initial_set: Boolean = false): this(
+            intermediary_create(frames, start_frame, skip_initial_set)
+        )
+
         var current_frame: Int = 0
         var current_index: Int = 0
         var current_value: Float = 0f
         var next_frame_trigger: Int = -1
 
-        init {
-            if (!skip_initial_set) {
-                this.set_frame(0)
+        companion object {
+            fun intermediary_create(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int, skip_initial_set: Boolean): Long {
+                return create(
+                    IntArray(frames.size) { i: Int -> frames[i].first },
+                    FloatArray(frames.size) { i: Int -> frames[i].second.first },
+                    FloatArray(frames.size) {i: Int -> frames[i].second.second },
+                    start_frame,
+                    skip_initial_set
+                )
             }
+
+            external fun create(
+                frame_indices: IntArray,
+                values: FloatArray,
+                increments: FloatArray,
+                start_frame: Int,
+                skip_initial_set: Boolean
+            ): Long
         }
 
-        fun get_next(): Float {
-            val (frame, working_data) = this.frames[this.current_index]
-
-            if (frame == this.current_frame) {
-                this.current_value = working_data.first
-            } else {
-                this.current_value += working_data.second
-            }
-
-            val output = this.current_value
-
-            this._move_to_next_frame()
-
-            return output
-        }
-
-        private fun _move_to_next_frame() {
-            this.current_frame += 1
-            val current_frame = this.current_frame
-            if (current_frame == this.next_frame_trigger) {
-                if (this.current_index == this.frames.size - 1) {
-                    this.next_frame_trigger = -1
-                } else {
-                    this.next_frame_trigger = this.frames[this.current_index++].first
-                }
-            }
-        }
-
-        fun set_frame(frame: Int) {
-            val original_frame = this.current_frame
-
-            this.current_frame = frame + this.start_frame
-
-            if (original_frame == this.current_frame) {
-                return
-            } else if (original_frame < this.current_frame) {
-                while (this.current_index < this.frames.size - 1) {
-                    if (this.frames[this.current_index + 1].first <= this.current_frame) {
-                        this.current_index += 1
-                    } else {
-                        break
-                    }
-                }
-            } else {
-                while (this.current_index > 0 && this.frames[this.current_index].first > this.current_frame) {
-                    this.current_index -= 1
-                }
-            }
-
-            this.next_frame_trigger = if (this.current_index < this.frames.size - 1) {
-                this.frames[this.current_index + 1].first
-            } else {
-                -1
-            }
-
-            val working_frame = this.current_frame - 1
-            var frame_data = this.frames[this.current_index]
-            this.current_value = frame_data.second.first
-            if (frame_data.second.second != 0F) {
-                this.current_value += (working_frame - frame_data.first).toFloat() * frame_data.second.second
-            }
-        }
-
+        external fun copy_jni(ptr: Long): Long
         fun copy(): ProfileBuffer {
-            return ProfileBuffer(
-                this.frames,
-                this.start_frame
-            )
+            return ProfileBuffer(this.copy_jni(this.ptr))
+        }
+
+        external fun destroy_jni(ptr: Long)
+        fun destroy() {
+            this.destroy_jni(this.ptr)
         }
     }
 
@@ -165,15 +119,7 @@ class SampleHandle(val ptr: Long) {
             release: Float = 0F,
             sustain_attenuation: Float = 0F
         ): this(
-            create(
-                sample_rate,
-                delay,
-                attack,
-                hold,
-                decay,
-                release,
-                sustain_attenuation
-            )
+            create(sample_rate, delay, attack, hold, decay, release, sustain_attenuation)
         )
 
         companion object {
@@ -188,23 +134,9 @@ class SampleHandle(val ptr: Long) {
             ): Long
         }
 
-
-        //sample_rate: Int,
-        //delay: Float = 0F,
-        //attack: Float = 0F,
-        //hold: Float = 0F,
-        //decay: Float = 0F,
-        //release: Float = 0F,
-        //sustain_attenuation: Float = 0F
-        var frames_delay: Int = 0
-        var frames_attack: Int = 0
-        var frames_hold: Int = 0
-        var frames_decay: Int = 0
-        var frames_release: Int = 0
-
-        external fun set_sample_rate_jni(ptr: Long, rate: Int)
-        fun set_sample_rate(sample_rate: Int) {
-            this.set_sample_rate_jni(this.ptr, sample_rate)
+        external fun destroy_jni(ptr: Long)
+        fun destroy() {
+            this.destroy_jni(this.ptr)
         }
     }
 
@@ -235,6 +167,10 @@ class SampleHandle(val ptr: Long) {
             this.frames_decay = (this.sample_rate.toFloat() * this.decay).toInt()
             this.frames_release = (this.sample_rate.toFloat() * this.release).toInt()
         }
+        //external fun destroy_jni(ptr: Long)
+        //fun destroy() {
+        //    this.destroy_jni(this.ptr)
+        //}
     }
 
     class LFO(

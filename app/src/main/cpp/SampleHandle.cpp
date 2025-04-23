@@ -107,10 +107,11 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1release_1frame_1jni(JNIEnv*
     }
 }
 
-extern "C" JNIEXPORT jfloatArray JNICALL
+extern "C" JNIEXPORT jfloat JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1balance_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
-    return ptr->get_next_balance();
+    return 0;
+    //auto *ptr = (struct SampleHandle *)ptr_long;
+    //return ptr->get_next_balance();
 }
 
 extern "C" JNIEXPORT jlong JNICALL
@@ -260,24 +261,24 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companio
     jboolean skip_set
 ) {
     auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
+
     int array_length = env->GetArrayLength(indices);
+    auto* vec = (ProfileBufferFrame*)malloc(sizeof (ProfileBufferFrame) * array_length);
+
     jint* _indices = env->GetIntArrayElements(indices, 0);
     jfloat* _values = env->GetFloatArrayElements(values, 0);
     jfloat* _increments = env->GetFloatArrayElements(increments, 0);
-    std::vector<ProfileBufferFrame> frames;
-    frames.reserve(array_length);
 
     for (int i = 0; i < array_length; i++) {
-        frames.push_back(
-            ProfileBufferFrame {
-                (int)_indices[i],
-                (float)_values[i],
-                (float)_increments[i]
-            }
-        );
+        vec[i] = ProfileBufferFrame {
+            (int)_indices[i],
+            (float)_values[i],
+            (float)_increments[i]
+        };
     }
 
-    buffer->frames = std::move(frames);
+    buffer->frames = std::move(vec);
+    buffer->frame_count = array_length;
     buffer->start_frame = start_frame;
     if (!skip_set) {
         buffer->set_frame(start_frame);

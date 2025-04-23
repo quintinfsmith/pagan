@@ -50,7 +50,8 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
    // placeholder_end
    // );
     auto* sample = (Sample*)malloc(sizeof(Sample));
-    sample->name = std::move(jbytearray_to_string(env, name));
+    sample->name = "TODO";
+    //sample->name = std::move(jbytearray_to_string(env, name));
     sample->loop_start = loop_start;
     sample->loop_end = loop_end;
     sample->sample_rate = sample_rate;

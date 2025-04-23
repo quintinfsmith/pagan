@@ -178,7 +178,6 @@ class SoundFont(file_path: String) {
 
     fun get_sample(sample_index: Int): Pair<Sample, Int?> {
         val shdr_bytes = this.pdta_chunks["shdr"]!!
-
         val offset = sample_index * 46
 
         var sample_name = ""
@@ -257,6 +256,7 @@ class SoundFont(file_path: String) {
 
         val phdr_bytes= this.pdta_chunks["phdr"]!!
         // Loop through PHDR until we find the correct index/bank
+        println("GETTING>>>> (${(phdr_bytes.size / 38) - 1}")
         for (index in 0 until (phdr_bytes.size / 38) - 1) {
             val offset = index * 38
             var phdr_name = ""
@@ -277,6 +277,7 @@ class SoundFont(file_path: String) {
             }
 
             val preset = Preset(phdr_name, current_index, current_bank)
+            println("zxxx111111")
 
             val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
             val next_wPresetBagIndex = toUInt(phdr_bytes[38 + offset + 24]) + (toUInt(phdr_bytes[38 + offset + 25]) * 256)
@@ -300,6 +301,7 @@ class SoundFont(file_path: String) {
                     )
                 )
             }
+            println("zxxxx")
             for ((pbag, next_pbag) in pbag_pairs) {
                 val generators_to_use: List<Generator> = this.get_preset_generators(
                     pbag.first,
@@ -316,9 +318,9 @@ class SoundFont(file_path: String) {
             output = preset
             break
         }
+        println("GGOOT<<>>")
 
         // NOW we can load all the sample data
-        println("000 ----")
         if (output != null) {
             var ordered_samples = mutableListOf<Sample>()
             for ((_, preset_instrument) in output.instruments) {
@@ -327,7 +329,6 @@ class SoundFont(file_path: String) {
                 if (instrument.sample_directives.isNotEmpty()) {
                     for (instrument_sample in instrument.sample_directives.values) {
                         val sample = instrument_sample.sample ?: continue
-                        println("001 ----")
                         ordered_samples.addAll(sample)
                     }
                 } else {
@@ -341,12 +342,15 @@ class SoundFont(file_path: String) {
             }.toMutableList()
 
 
+            println("APPLING...")
             this.riff.with {
                 for (sample in ordered_samples) {
                     this.apply_sample_data(sample)
                 }
             }
         }
+
+        println("Preset GOT")
 
         return output ?: throw InvalidPresetIndex(preset_index, preset_bank)
     }

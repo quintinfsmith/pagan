@@ -38,10 +38,6 @@ data class Sample(val ptr: Long) {
         ): Long
     }
 
-    init {
-        println("${this.ptr}...x")
-    }
-
     val name: String
         get() = this.get_name_inner(this.ptr).toString()
 

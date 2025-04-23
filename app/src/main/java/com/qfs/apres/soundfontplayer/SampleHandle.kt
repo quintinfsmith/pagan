@@ -271,6 +271,7 @@ class SampleHandle(val ptr: Long) {
 
     external fun copy_jni(ptr: Long): Long
     fun copy(): SampleHandle {
+        println("COPYING ${this.ptr}")
         return SampleHandle(this.copy_jni(this.ptr))
     }
 
@@ -284,13 +285,11 @@ class SampleHandle(val ptr: Long) {
         return this.get_release_duration_jni(ptr)
     }
 
-    external fun get_next_balance_jni(ptr: Long): FloatArray
+    external fun get_next_balance_jni(ptr: Long): Float
     fun get_next_balance(): Pair<Float, Float> {
-        val array = this.get_next_balance_jni(this.ptr)
-        return Pair(
-            array[0],
-            array[1]
-        )
+        val v = this.get_next_balance_jni(this.ptr)
+        // TODO
+        return Pair(1F, 1F)
     }
 
     external fun get_next_frame_jni(ptr: Long): FloatArray

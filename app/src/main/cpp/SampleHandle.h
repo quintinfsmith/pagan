@@ -9,6 +9,7 @@
 #include <vector>
 #include <unordered_map>
 #include "soundfont/PitchedBuffer.cpp"
+#include "soundfont/PitchedBuffer.h"
 #include <cmath>
 
 class VolumeEnvelope {
@@ -77,7 +78,8 @@ class vector;
 
 class ProfileBuffer {
     public:
-        std::vector<ProfileBufferFrame> frames;
+        ProfileBufferFrame* frames;
+        int frame_count;
         int current_frame;
         int current_index;
         float current_value;
@@ -85,8 +87,19 @@ class ProfileBuffer {
         int start_frame;
 
         explicit ProfileBuffer(std::vector<ProfileBufferFrame> frames, int start_frame, bool skip_initial_set) {
+            this->frame_count = frames.size();
+            this->frames = (ProfileBufferFrame*)malloc(sizeof (ProfileBufferFrame) * this->frame_count);
+
+            int i = 0;
+            for (auto & frame : frames) {
+                this->frames[i++] = ProfileBufferFrame {
+                    frame.frame,
+                    frame.initial_value,
+                    frame.increment
+                };
+            }
+
             this->start_frame = start_frame;
-            this->frames = frames;
             if (!skip_initial_set) {
                 this->set_frame(0);
             }
@@ -111,7 +124,8 @@ class ProfileBuffer {
             if (original_frame == this->current_frame) {
                 return;
             } else if (original_frame < this->current_frame) {
-                while (this->current_index < this->frames.size() - 1) {
+                while (this->current_index < this->frame_count - 1) {
+
                     if (this->frames[this->current_index + 1].frame <= this->current_frame) {
                         this->current_index++;
                     } else {
@@ -124,7 +138,7 @@ class ProfileBuffer {
                 }
             }
 
-            if (this->current_index < this->frames.size() - 1) {
+            if (this->current_index < this->frame_count - 1) {
                 this->next_frame_trigger = this->frames[this->current_index + 1].frame;
             } else {
                 this->next_frame_trigger = -1;
@@ -139,19 +153,21 @@ class ProfileBuffer {
         }
 
         void copy_to(ProfileBuffer* new_buffer) {
-            std::vector<ProfileBufferFrame> frames_copy;
-            frames_copy.reserve(this->frames.size());
-            for (auto frame: this->frames) {
-                frames_copy.push_back(
-                    ProfileBufferFrame{
+            if (this->frames != 0) {
+                new_buffer->frames = (ProfileBufferFrame*)malloc(sizeof (ProfileBufferFrame) * this->frame_count);
+                new_buffer->frames = this->frames;
+                for (int i = 0; i < this->frame_count; i++) {
+                    ProfileBufferFrame frame = this->frames[i];
+                    new_buffer->frames[i] = ProfileBufferFrame {
                         frame.frame,
                         frame.initial_value,
                         frame.increment
-                    }
-                );
+                    };
+                }
+                new_buffer->frame_count = this->frame_count;
             }
-            new_buffer->frames = frames_copy;
-            new_buffer->start_frame = start_frame;
+
+            new_buffer->start_frame = this->start_frame;
             new_buffer->set_frame(0);
         }
 
@@ -479,4 +495,4 @@ class SampleHandle {
         }
 };
 
-#endif //PAGAN_SAMPLEHANDLE_H
+#endif PAGAN_SAMPLEHANDLE_H

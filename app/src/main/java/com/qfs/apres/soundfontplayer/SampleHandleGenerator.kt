@@ -58,17 +58,17 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
     fun get(event: NoteOn, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?> {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, instrument_directive, preset)
-        val (handle_main, handle_linked) = this.sample_data_map[map_key]!!
+        val handles = this.sample_data_map[map_key]!!
 
         val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
         val pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
 
-        val first = handle_main.copy()
+        val first = handles.first().copy()
         first.volume_profile = volume_profile
         first.pan_profile = pan_profile
 
-        val linked = if (handle_linked != null) {
-            val tmp = handle_linked.copy()
+        val linked = if (handles.size > 1) {
+            val tmp = handles.last().copy()
             tmp.volume_profile = volume_profile
             tmp.pan_profile = pan_profile
             tmp
@@ -81,17 +81,17 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
     fun get(event: NoteOn79, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?> {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, instrument_directive, preset)
-        val (handle_main, handle_linked) = this.sample_data_map[map_key]!!
+        val handles = this.sample_data_map[map_key]!!
         val volume = event.velocity / (128 shl 8).toFloat()
         val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(volume, 0F))), 0)
         val pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
 
-        val first = handle_main.copy()
+        val first = handles.first().copy()
         first.volume_profile = volume_profile
         first.pan_profile = pan_profile
 
-        val linked = if (handle_linked != null) {
-            val tmp = handle_linked.copy()
+        val linked = if (handles.size > 1) {
+            val tmp = handles.last().copy()
             tmp.volume_profile = volume_profile
             tmp.pan_profile = pan_profile
             tmp
@@ -107,7 +107,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val global_instrument_directive = preset.global_zone
 
         val map_key = MapKey(note, bend, sample_directive.uid, global_sample_directive.uid, instrument_directive.uid, global_instrument_directive.uid, preset.uid)
-        if (!sample_data_map.contains(map_key)) {
+        if (!this.sample_data_map.contains(map_key)) {
             this.sample_data_map[map_key] = this.generate_new(note, bend, sample_directive, global_sample_directive, instrument_directive, global_instrument_directive)
         }
 

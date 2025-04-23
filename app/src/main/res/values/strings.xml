@@ -182,6 +182,8 @@
     <string name="settings_orientation_landscape">Landscape</string>
     <string name="settings_orientation_portrait">Portrait</string>
     <string name="can_t_move_percussion_channel">Can\'t move percussion channel.</string>
+    <string name="crash_report_save">Save Crash Report?</string>
+    <string name="crash_report_desc">It helps to include this when submitting bug reports to smith.quintin@protonmail.com</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

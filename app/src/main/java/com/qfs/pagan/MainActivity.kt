@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -333,6 +332,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                val path = this.getExternalFilesDir(null).toString()
+                val file = File("$path/bkp_crashreport.log")
+                val content = file.readText()
+
+                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                    FileOutputStream(it.fileDescriptor).write(content.toByteArray())
+                    file.delete()
+                }
+            }
+        }
+    }
 
     private var _export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -492,6 +505,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        this.check_for_crash_report()
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
@@ -499,6 +513,7 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity.save_actions()
             }
             this@MainActivity.save_to_backup()
+            this@MainActivity.bkp_crash_report(paramThrowable)
 
             val ctx = applicationContext
             val pm = ctx.packageManager
@@ -2014,6 +2029,52 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra(Intent.EXTRA_TITLE, "$name.json")
 
         this._export_project_intent_launcher.launch(intent)
+    }
+
+    /**
+     * Save text file in storage of a crash report.
+     * To be copied and saved somewhere accessible on reload.
+     */
+    fun bkp_crash_report(e: Throwable) {
+        val path = this.getExternalFilesDir(null).toString()
+        val file = File("$path/bkp_crashreport.log")
+        file.writeText(e.stackTraceToString())
+    }
+
+    fun check_for_crash_report() {
+        val path = this.getExternalFilesDir(null).toString()
+        val file = File("$path/bkp_crashreport.log")
+        if (file.isFile) {
+            this._adjust_dialog_colors(
+                AlertDialog.Builder(this, R.style.AlertDialog)
+                    .setCustomTitle(this._build_dialog_title_view(getString(R.string.crash_report_save)))
+                    .setMessage(R.string.crash_report_desc)
+                    .setCancelable(true)
+                    .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                        export_crash_report()
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                        file.delete()
+                        dialog.dismiss()
+                    }
+                    .show()
+            )
+        }
+    }
+
+    fun export_crash_report() {
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        val name = "pagan.cr-${now.format(formatter)}.log"
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        //intent.type = MimeTypes.AUDIO_MIDI
+        intent.type = "text/plain"
+        intent.putExtra(Intent.EXTRA_TITLE, "$name")
+
+        this._crash_report_intent_launcher.launch(intent)
     }
 
     fun set_sample_rate(new_sample_rate: Int) {

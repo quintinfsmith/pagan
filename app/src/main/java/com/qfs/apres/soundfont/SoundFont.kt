@@ -159,6 +159,7 @@ class SoundFont(file_path: String) {
         val output = mutableListOf<Sample>()
         var working_index = sample_index
         val done_indices = mutableSetOf<Int>()
+        println("GETTING SAMPLES...")
         while (!done_indices.contains(working_index)) {
             val (sample, next_index) = this.get_sample(working_index)
             output.add(sample)
@@ -170,6 +171,7 @@ class SoundFont(file_path: String) {
                 break
             }
         }
+        println("GOT SAMPLES")
 
         return output
     }
@@ -344,7 +346,6 @@ class SoundFont(file_path: String) {
             }.toMutableList()
 
 
-            println("APPLING...")
             this.riff.with {
                 for (sample in ordered_samples) {
                     this.apply_sample_data(sample)

@@ -26,16 +26,16 @@ struct PitchedBuffer {
 
 public:
     explicit PitchedBuffer(
-            jshort* data,
-            int data_size,
-            float pitch,
-            int start,
-            int end,
-            bool is_loop,
-            int virtual_position,
-            float pitch_adjustment,
-            int virtual_size,
-            float adjusted_pitch
+        jshort* data,
+        int data_size,
+        float pitch,
+        int start,
+        int end,
+        bool is_loop,
+        int virtual_position,
+        float pitch_adjustment,
+        int virtual_size,
+        float adjusted_pitch
     ) {
         this->virtual_position = 0;
         this->data = data;
@@ -96,5 +96,19 @@ public:
     void set_position(int frame) {
         this->virtual_position = frame;
     }
+
+    void copy_to(PitchedBuffer* new_buffer) {
+        new_buffer->data = this->data;
+        new_buffer->data_size = this->data_size;
+        new_buffer->pitch = this->pitch;
+        new_buffer->start = this->start;
+        new_buffer->end = this->end;
+        new_buffer->is_loop = this->is_loop;
+        new_buffer->virtual_position = this->virtual_position;
+        new_buffer->pitch_adjustment = this->pitch_adjustment;
+        new_buffer->virtual_size = this->virtual_size;
+        new_buffer->adjusted_pitch = this->adjusted_pitch;
+    }
+
 };
 #endif //PAGAN_PITCHEDBUFFER_H

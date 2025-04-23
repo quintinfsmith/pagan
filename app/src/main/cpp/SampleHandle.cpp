@@ -3,6 +3,7 @@
 //
 
 #include "SampleHandle.h"
+#include <android/log.h>
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
@@ -150,6 +151,9 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->volume_profile = (struct ProfileBuffer *)volume_profile_ptr;
     handle->pan_profile = (struct ProfileBuffer *)pan_profile_ptr;
 
+    handle->data = env->GetShortArrayElements(data, nullptr);
+    handle->secondary_setup(nullptr, 0);
+
     return (jlong)handle;
 }
 
@@ -169,15 +173,21 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->pan = ptr->pan;
 
     new_handle->volume_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
-    ptr->volume_profile->copy_to(new_handle->volume_profile);
+    if (ptr->volume_profile != nullptr) {
+        __android_log_write(ANDROID_LOG_ERROR, "Tag", "VOLUMEPROFILE");
+        ptr->volume_profile->copy_to(new_handle->volume_profile);
+    }
 
     new_handle->pan_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
-    ptr->pan_profile->copy_to(new_handle->pan_profile);
+    if (ptr->pan_profile != nullptr) {
+        __android_log_write(ANDROID_LOG_ERROR, "Tag", "PANPROFILE");
+        ptr->pan_profile->copy_to(new_handle->pan_profile);
+    }
 
     new_handle->volume_envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
     ptr->volume_envelope->copy_to(new_handle->volume_envelope);
 
-    new_handle->secondary_setup(ptr->data_buffers);
+    new_handle->secondary_setup(ptr->data_buffers, ptr->buffer_count);
 
     return (jlong)new_handle;
 }
@@ -277,9 +287,14 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companio
         };
     }
 
-    buffer->frames = std::move(vec);
+    buffer->frames = vec;
     buffer->frame_count = array_length;
     buffer->start_frame = start_frame;
+
+    buffer->current_frame = start_frame;
+    buffer->current_index = 0;
+    buffer->current_value = 0;
+    buffer->next_frame_trigger = -1;
     if (!skip_set) {
         buffer->set_frame(start_frame);
     }

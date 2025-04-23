@@ -7,10 +7,13 @@
 
 #include <jni.h>
 #include <vector>
+#include <string>
+#include <sstream>
 #include <unordered_map>
 #include "soundfont/PitchedBuffer.cpp"
 #include "soundfont/PitchedBuffer.h"
 #include <cmath>
+#include <android/log.h>
 
 class VolumeEnvelope {
     public:
@@ -119,6 +122,7 @@ class ProfileBuffer {
         }
 
         void set_frame(int frame) {
+            __android_log_write(ANDROID_LOG_ERROR, "Tag", ("SETTING FRAME: " + std::to_string(frame)).c_str());
             int original_frame = this->current_frame;
             this->current_frame = frame + this->start_frame;
             if (original_frame == this->current_frame) {
@@ -146,6 +150,7 @@ class ProfileBuffer {
 
             int working_frame = this->current_frame - 1;
             ProfileBufferFrame frame_data = this->frames[this->current_index];
+
             this->current_value = frame_data.initial_value;
             if (frame_data.increment != 0) {
                 this->current_value += (float)(working_frame - frame_data.frame) * frame_data.increment;
@@ -200,7 +205,7 @@ class SampleHandle {
         int uuid;
         jshort* data;
         int data_size;
-        jfloat sample_rate;
+        jint sample_rate;
         jfloat initial_attenuation;
         std::optional<std::tuple<int, int>>  loop_points;
         int stereo_mode;
@@ -210,7 +215,8 @@ class SampleHandle {
         float pan;
         ProfileBuffer* volume_profile;
         ProfileBuffer* pan_profile;
-        std::vector<PitchedBuffer> data_buffers;
+        PitchedBuffer* data_buffers;
+        int buffer_count;
         float smoothing_factor;
 
         int working_frame;
@@ -232,7 +238,8 @@ class SampleHandle {
             float pan,
             ProfileBuffer* volume_profile,
             ProfileBuffer* pan_profile,
-            std::optional<std::vector<PitchedBuffer>> data_buffers
+            PitchedBuffer* data_buffers,
+            int buffer_count
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
@@ -248,10 +255,10 @@ class SampleHandle {
             this->volume_profile = volume_profile;
             this->pan_profile = pan_profile;
 
-            this->secondary_setup(data_buffers);
+            this->secondary_setup(data_buffers, buffer_count);
         }
 
-        void secondary_setup(std::optional<std::vector<PitchedBuffer>> data_buffers) {
+        void secondary_setup(PitchedBuffer* input_buffers, int count) {
             this->RC = 1 / (this->filter_cutoff * 2 * M_PI);
             this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
             this->previous_frame = 0;
@@ -261,63 +268,56 @@ class SampleHandle {
             this->is_dead = false;
             this->active_buffer = 0;
 
-            this->data_buffers.clear();
-            if (data_buffers.has_value()) {
-                for (auto buffer: data_buffers.value()) {
-                    this->data_buffers.push_back(PitchedBuffer {
-                        buffer.data,
-                        buffer.data_size,
-                        buffer.pitch,
-                        buffer.start,
-                        buffer.end,
-                        buffer.is_loop,
-                        buffer.virtual_position,
-                        buffer.pitch_adjustment,
-                        buffer.virtual_size,
-                        buffer.adjusted_pitch
-                    });
+            std::string msg = "Count: " + std::to_string(count);
+            __android_log_write(ANDROID_LOG_ERROR, "Tag", msg.c_str());
+
+            if (count > 0) {
+                this->buffer_count = count;
+                this->data_buffers = (PitchedBuffer*)malloc(sizeof(PitchedBuffer) * count);
+                for (int i = 0; i < count; i++) {
+                    PitchedBuffer buffer = input_buffers[i];
+                    this->data_buffers[i].data = buffer.data;
+                    this->data_buffers[i].data_size = buffer.data_size;
+                    this->data_buffers[i].pitch = buffer.pitch;
+                    this->data_buffers[i].start = buffer.start;
+                    this->data_buffers[i].end = buffer.end;
+                    this->data_buffers[i].is_loop = buffer.is_loop;
                 }
             } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) != std::get<1>(this->loop_points.value())) {
-                this->data_buffers.push_back(
-                  PitchedBuffer(
-                      this->data,
-                      this->data_size,
-                      this->pitch_shift,
-                      0,
-                      std::get<0>(this->loop_points.value()),
-                      true
-                  )
-                );
-                this->data_buffers.push_back(
-                  PitchedBuffer(
-                      this->data, this->data_size,
-                      this->pitch_shift,
-                      std::get<0>(this->loop_points.value()),
-                      std::get<1>(this->loop_points.value()),
-                      true
-                  )
-                );
-                this->data_buffers.push_back(
-                    PitchedBuffer(
-                        this->data, this->data_size,
-                        this->pitch_shift,
-                        std::get<1>(this->loop_points.value()),
-                        this->data_size,
-                        true
-                    )
-                );
+                this->data_buffers = (PitchedBuffer*)malloc(sizeof(PitchedBuffer) * 3);
+                this->data_buffers[0].data = this->data;
+                this->data_buffers[0].data_size = this->data_size;
+                this->data_buffers[0].pitch = this->pitch_shift;
+                this->data_buffers[0].start = 0;
+                this->data_buffers[0].end = std::get<0>(this->loop_points.value());
+                this->data_buffers[0].is_loop = false;
 
+
+                this->data_buffers[1].data = this->data;
+                this->data_buffers[1].data_size = this->data_size;
+                this->data_buffers[1].pitch = this->pitch_shift;
+                this->data_buffers[1].start = std::get<0>(this->loop_points.value());
+                this->data_buffers[1].end = std::get<1>(this->loop_points.value());
+                this->data_buffers[1].is_loop = true;
+
+                this->data_buffers[2].data = this->data;
+                this->data_buffers[2].data_size = this->data_size;
+                this->data_buffers[2].pitch = this->pitch_shift;
+                this->data_buffers[2].start = std::get<1>(this->loop_points.value());
+                this->data_buffers[2].end = this->data_size;
+                this->data_buffers[2].is_loop = false;
+
+                this->buffer_count = 3;
             } else {
-                this->data_buffers.push_back(
-                    PitchedBuffer (
-                        this->data,
-                        this->data_size,
-                        this->pitch_shift,
-                        0,
-                        this->data_size,
-                        false
-                    )
-                );
+                this->data_buffers = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                this->data_buffers[0].data = this->data;
+                this->data_buffers[0].data_size = this->data_size;
+                this->data_buffers[0].pitch = this->pitch_shift;
+                this->data_buffers[0].start = 0;
+                this->data_buffers[0].end = this->data_size;
+                this->data_buffers[0].is_loop = false;
+
+                this->buffer_count = 1;
             }
         }
 
@@ -326,6 +326,7 @@ class SampleHandle {
         void set_release_frame(int frame) {
             this->release_frame = frame;
         }
+
         void set_working_frame(int frame) {
             this->working_frame = frame;
             if (this->kill_frame.has_value() && this->working_frame >= this->kill_frame.value()) {
@@ -431,7 +432,7 @@ class SampleHandle {
 
             if (this->get_active_data_buffer()->is_overflowing()) {
                 if (!is_pressed || !this->loop_points.has_value()) {
-                    if (this->active_buffer < this->data_buffers.size() - 1) {
+                    if (this->active_buffer < this->buffer_count - 1) {
                         this->active_buffer += 1;
                     } else {
                         this->is_dead = true;
@@ -445,8 +446,8 @@ class SampleHandle {
 
             if (!is_pressed) {
                 int pos = 0;
-                for (auto buffer: this->data_buffers) {
-                    pos += buffer.virtual_size;
+                for (int i = 0; i < this->buffer_count; i++) {
+                    pos += this->data_buffers[i].virtual_size;
                 }
                 int release_frame_count = fmin(this->volume_envelope->frames_release, pos);
 
@@ -467,7 +468,7 @@ class SampleHandle {
             }
             this->working_frame += 1;
 
-            if (this->active_buffer >= this->data_buffers.size()) {
+            if (this->active_buffer >= this->buffer_count) {
                 this->is_dead = true;
                 return std::nullopt;
             }
@@ -503,8 +504,8 @@ class SampleHandle {
         }
 
         void repitch(float adjustment) {
-            for (auto buffer: this->data_buffers) {
-                buffer.repitch(adjustment);
+            for (int i = 0; i < this->buffer_count; i++) {
+                this->data_buffers[i].repitch(adjustment);
             }
         }
 };

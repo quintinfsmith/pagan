@@ -63,7 +63,9 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
                 this.midi_manager!!.registerDeviceCallback(
                     TRANSPORT_MIDI_BYTE_STREAM,
-                    { },
+                    { runnable: Runnable ->
+                        runnable.run()
+                    },
                     midi_manager_callback
                 )
             } else {
@@ -78,14 +80,14 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     open fun onDeviceAdded(device_info: MidiDeviceInfo) { }
-    open fun onDeviceRemoved(device_info: MidiDeviceInfo) {
-    }
+    open fun onDeviceRemoved(device_info: MidiDeviceInfo) { }
 
     fun open_output_devices() {
         for (device_info in this.poll_output_devices()) {
             this.open_output_device(device_info)
         }
     }
+
     fun close_output_devices() {
         for (connected_input_port in this.connected_input_ports) {
             try {

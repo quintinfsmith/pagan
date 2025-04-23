@@ -68,7 +68,11 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfont_Sample_set_1data_1inner(JNIEnv* env, jobject, jlong ptr, jshortArray data) {
     auto* sample = (Sample*)ptr;
     jshort* raw_shorts = env->GetShortArrayElements(data, 0);
-    sample->data = (short*)raw_shorts;
+    int length = env->GetArrayLength(data);
+    sample->data = (short*)malloc(sizeof(short) * length);
+    for (int i = 0; i < length; i++) {
+        sample->data[i] = raw_shorts[i];
+    }
 }
 
 extern "C" JNIEXPORT jshortArray JNICALL

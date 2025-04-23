@@ -313,8 +313,10 @@ class SoundFont(file_path: String) {
                     next_pbag.second
                 )
 
+                println("K1")
                 this.generate_preset(preset, generators_to_use, modulators_to_use)
             }
+            println("K0")
             output = preset
             break
         }

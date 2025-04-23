@@ -338,8 +338,12 @@ class SampleHandle {
                 return;
             }
 
-            this->volume_profile->set_frame(frame);
-            this->pan_profile->set_frame(frame);
+            if (this->volume_profile != 0) {
+                this->volume_profile->set_frame(frame);
+            }
+            if (this->pan_profile != 0) {
+                this->pan_profile->set_frame(frame);
+            }
 
             try {
                 if (!release_frame.has_value() || release_frame.value() > frame) {
@@ -400,7 +404,12 @@ class SampleHandle {
             if (this->working_frame < this->volume_envelope->frames_delay) {
                 this->working_frame += 1;
                 this->previous_frame = 0;
-                this->volume_profile->get_next();
+                if (this->volume_profile != 0) {
+                    this->volume_profile->get_next();
+                }
+                if (this->pan_profile != 0) {
+                    this->pan_profile->get_next();
+                }
                 return std::make_tuple(0, 0);
             }
 
@@ -450,7 +459,12 @@ class SampleHandle {
                 }
             }
 
-            float use_volume = this->volume_profile->get_next();
+            float use_volume;
+            if (this->volume_profile != 0) {
+                use_volume = this->volume_profile->get_next();
+            } else {
+                 use_volume = 1;
+            }
             this->working_frame += 1;
 
             if (this->active_buffer >= this->data_buffers.size()) {

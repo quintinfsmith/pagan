@@ -5,6 +5,7 @@
 #include "soundfont/Sample.cpp"
 #include "soundfont/PitchedBuffer.cpp"
 #include "SampleHandle.cpp"
+#include <android/log.h>
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_copy_1inner(JNIEnv* env, jobject, jlong ptr_long) {
@@ -39,7 +40,8 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
 
     PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
     buffer->data = env->GetShortArrayElements(data, nullptr);
-    buffer->data_size = data_size;
+    int d_size = env->GetArrayLength(data);
+    buffer->data_size = d_size;
     buffer->pitch = pitch;
     buffer->start = start;
     buffer->end = end;

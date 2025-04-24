@@ -552,9 +552,10 @@ class SoundFont(file_path: String) {
         for (modulator in modulators) {
             working_instrument.add_modulator(modulator)
         }
-
-        working_instrument.apply_generators(generators)
-        working_instrument.instrument = this.get_instrument(generators.last().asInt())
+        if (generators.isNotEmpty()) {
+            working_instrument.apply_generators(generators)
+            working_instrument.instrument = this.get_instrument(generators.last().asInt())
+        }
 
         if (!is_global) {
            // working_instrument.instrument = this.get_instrument(default_instrument)

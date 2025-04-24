@@ -81,7 +81,7 @@ class vector;
 
 class ProfileBuffer {
     public:
-        ProfileBufferFrame* frames;
+        ProfileBufferFrame** frames;
         int frame_count;
         int current_frame;
         int current_index;
@@ -91,15 +91,14 @@ class ProfileBuffer {
 
         explicit ProfileBuffer(std::vector<ProfileBufferFrame> frames, int start_frame, bool skip_initial_set) {
             this->frame_count = frames.size();
-            this->frames = (ProfileBufferFrame*)malloc(sizeof (ProfileBufferFrame) * this->frame_count);
+            this->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
 
             int i = 0;
             for (auto & frame : frames) {
-                this->frames[i++] = ProfileBufferFrame {
-                    frame.frame,
-                    frame.initial_value,
-                    frame.increment
-                };
+                ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
+                ptr->frame = frame.frame;
+                ptr->initial_value = frame.initial_value;
+                ptr->increment = frame.increment;
             }
 
             this->start_frame = start_frame;
@@ -109,11 +108,11 @@ class ProfileBuffer {
         }
 
         float get_next() {
-            ProfileBufferFrame bframe_data = this->frames[this->current_index];
-            if (bframe_data.frame == this->current_index) {
-                this->current_value = bframe_data.initial_value;
+            ProfileBufferFrame* bframe_data = this->frames[this->current_index];
+            if (bframe_data->frame == this->current_index) {
+                this->current_value = bframe_data->initial_value;
             } else {
-                this->current_value += bframe_data.initial_value;
+                this->current_value += bframe_data->initial_value;
             }
 
             float output = this->current_value;
@@ -122,7 +121,6 @@ class ProfileBuffer {
         }
 
         void set_frame(int frame) {
-            __android_log_write(ANDROID_LOG_ERROR, "Tag", ("SETTING FRAME: " + std::to_string(frame)).c_str());
             int original_frame = this->current_frame;
             this->current_frame = frame + this->start_frame;
             if (original_frame == this->current_frame) {
@@ -130,49 +128,54 @@ class ProfileBuffer {
             } else if (original_frame < this->current_frame) {
                 while (this->current_index < this->frame_count - 1) {
 
-                    if (this->frames[this->current_index + 1].frame <= this->current_frame) {
+                    if (this->frames[this->current_index + 1]->frame <= this->current_frame) {
                         this->current_index++;
                     } else {
                         break;
                     }
                 }
             } else {
-                while (this->current_index > 0 && this->frames[this->current_index].frame > this->current_frame) {
+                int t = this->current_index;
+                t = this->frames[this->current_index]->frame;
+                t = this->current_frame;
+                while (this->current_index > 0 && this->frames[this->current_index]->frame > this->current_frame) {
                     this->current_index -= 1;
                 }
             }
 
             if (this->current_index < this->frame_count - 1) {
-                this->next_frame_trigger = this->frames[this->current_index + 1].frame;
+                this->next_frame_trigger = this->frames[this->current_index + 1]->frame;
             } else {
                 this->next_frame_trigger = -1;
             }
 
             int working_frame = this->current_frame - 1;
-            ProfileBufferFrame frame_data = this->frames[this->current_index];
+            ProfileBufferFrame* frame_data = this->frames[this->current_index];
 
-            this->current_value = frame_data.initial_value;
-            if (frame_data.increment != 0) {
-                this->current_value += (float)(working_frame - frame_data.frame) * frame_data.increment;
+            this->current_value = frame_data->initial_value;
+            if (frame_data->increment != 0) {
+                this->current_value += (float)(working_frame - frame_data->frame) * frame_data->increment;
             }
         }
 
         void copy_to(ProfileBuffer* new_buffer) {
             if (this->frames != 0) {
-                new_buffer->frames = (ProfileBufferFrame*)malloc(sizeof (ProfileBufferFrame) * this->frame_count);
+                new_buffer->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
                 new_buffer->frames = this->frames;
                 for (int i = 0; i < this->frame_count; i++) {
-                    ProfileBufferFrame frame = this->frames[i];
-                    new_buffer->frames[i] = ProfileBufferFrame {
-                        frame.frame,
-                        frame.initial_value,
-                        frame.increment
-                    };
+                    ProfileBufferFrame* frame = this->frames[i];
+                    ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
+                    ptr->frame = frame->frame;
+                    ptr->increment = frame->increment;
+                    ptr->initial_value = frame->initial_value;
+                    new_buffer->frames[i] = ptr;
                 }
                 new_buffer->frame_count = this->frame_count;
             }
 
             new_buffer->start_frame = this->start_frame;
+            new_buffer->current_index = this->current_index;
+            new_buffer->current_frame = this->current_frame;
             new_buffer->set_frame(0);
         }
 
@@ -184,7 +187,7 @@ class ProfileBuffer {
                 if (this->current_index == this->next_frame_trigger) {
                     this->next_frame_trigger -= 1;
                 } else {
-                    this->next_frame_trigger = this->frames[this->current_index++].frame;
+                    this->next_frame_trigger = this->frames[this->current_index++]->frame;
                 }
             }
         }
@@ -244,6 +247,7 @@ class SampleHandle {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
             this->data_size = data_size;
+
             this->sample_rate = sample_rate;
             this->initial_attenuation = initial_attenuation;
             this->loop_points = loop_points;
@@ -267,9 +271,6 @@ class SampleHandle {
             this->kill_frame.reset();
             this->is_dead = false;
             this->active_buffer = 0;
-
-            std::string msg = "Count: " + std::to_string(count);
-            __android_log_write(ANDROID_LOG_ERROR, "Tag", msg.c_str());
 
             if (count > 0) {
                 this->buffer_count = count;

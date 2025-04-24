@@ -476,7 +476,7 @@ class MainActivity : AppCompatActivity() {
             this.playback_state_soundfont = PlaybackState.Ready
         }
 
-        if (this._midi_interface.output_devices_connected()) {
+        if (this.is_connected_to_physical_device()) {
             this.playback_state_midi = PlaybackState.Ready
         }
     }
@@ -524,6 +524,23 @@ class MainActivity : AppCompatActivity() {
 
         }
 
+        this._config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+        // [Re]move config file from < v1.1.2
+        val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
+        val new_config_file = File(this._config_path)
+        if (old_config_file.exists()) {
+            if (!new_config_file.exists()) {
+                old_config_file.copyTo(new_config_file)
+            }
+            old_config_file.delete()
+        }
+
+        this.configuration = try {
+            PaganConfiguration.from_path(this._config_path)
+        } catch (e: Exception) {
+            PaganConfiguration()
+        }
+
         this._midi_interface = object : MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 if (!this@MainActivity.update_playback_state_midi(PlaybackState.Ready)) {
@@ -541,6 +558,10 @@ class MainActivity : AppCompatActivity() {
 
                 this@MainActivity.runOnUiThread {
                     this@MainActivity.update_menu_options()
+                    if (!this@MainActivity.configuration.allow_midi_playback) {
+                        return@runOnUiThread
+                    }
+
                     this@MainActivity.setup_project_config_drawer_export_button()
 
                     val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -588,6 +609,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        if (!this.configuration.allow_midi_playback) {
+            this.block_physical_midi_output()
+        }
+
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
 
         // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
@@ -613,23 +638,6 @@ class MainActivity : AppCompatActivity() {
                 f.copyTo(File(new_file_name))
             }
             old_projects_dir.deleteRecursively()
-        }
-
-        this._config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
-        // [Re]move config file from < v1.1.2
-        val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
-        val new_config_file = File(this._config_path)
-        if (old_config_file.exists()) {
-            if (!new_config_file.exists()) {
-                old_config_file.copyTo(new_config_file)
-            }
-            old_config_file.delete()
-        }
-
-        this.configuration = try {
-            PaganConfiguration.from_path(this._config_path)
-        } catch (e: Exception) {
-            PaganConfiguration()
         }
 
         this.requestedOrientation = this.configuration.force_orientation
@@ -677,7 +685,7 @@ class MainActivity : AppCompatActivity() {
                         WaveGenerator.StereoMode.Stereo
                     )
 
-                    if (!this._midi_interface.output_devices_connected()) {
+                    if (!this.is_connected_to_physical_device()) {
                         val buffer_size = this.configuration.sample_rate / 4
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
@@ -718,7 +726,6 @@ class MainActivity : AppCompatActivity() {
                     if (channel_adapter.itemCount == 0) {
                         channel_adapter.setup()
                     }
-
 
                     this@MainActivity.playback_stop()
                     this@MainActivity.playback_stop_midi_output()
@@ -797,7 +804,7 @@ class MainActivity : AppCompatActivity() {
                         this.playback_stop()
                     }
 
-                    else -> {}
+                    else -> { }
                 }
             }
 
@@ -966,6 +973,7 @@ class MainActivity : AppCompatActivity() {
             this.restore_midi_playback_state()
             return
         }
+
         thread {
             try {
                 this._midi_interface.open_connected_devices()
@@ -1444,7 +1452,7 @@ class MainActivity : AppCompatActivity() {
         if (event_value < 0) {
             return // No sound to play
         }
-        if (!this._midi_interface.output_devices_connected()) {
+        if (!this.is_connected_to_physical_device()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()
                 this.update_channel_instruments()
@@ -2152,7 +2160,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun is_connected_to_physical_device(): Boolean {
-        return this._midi_interface.output_devices_connected()
+        return this.configuration.allow_midi_playback && this._midi_interface.output_devices_connected()
     }
 
     fun disconnect_feedback_device() {
@@ -2181,10 +2189,16 @@ class MainActivity : AppCompatActivity() {
 
     fun block_physical_midi_output() {
         this._midi_interface.block_physical_devices = true
+        this._midi_interface.close_connected_devices()
+        this.playback_state_midi = PlaybackState.NotReady
     }
 
     fun enable_physical_midi_output() {
         this._midi_interface.block_physical_devices = false
+        this._midi_interface.open_connected_devices()
+        if (this.is_connected_to_physical_device()) {
+            this.playback_state_midi = PlaybackState.Ready
+        }
     }
 
     fun get_notification(): NotificationCompat.Builder? {

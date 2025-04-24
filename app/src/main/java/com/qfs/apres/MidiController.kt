@@ -26,10 +26,10 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
     var receiver = object: MidiReceiver() {
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
-            val msg_list = msg!!.toMutableList()
-            msg_list.removeAt(0)
-            val event = StandardMidiFileInterface.event_from_bytes(msg_list, 0x90.toByte()) ?: return
-            if ((this@MidiController.context as MainActivity).configuration.allow_midi_playback && ! this@MidiController.block_physical_devices) {
+            if (!this@MidiController.block_physical_devices) {
+                val msg_list = msg!!.toMutableList()
+                msg_list.removeAt(0)
+                val event = StandardMidiFileInterface.event_from_bytes(msg_list, 0x90.toByte()) ?: return
                 broadcast_event(event)
             }
         }
@@ -53,7 +53,6 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                     if (device_info.inputPortCount > 0) {
                         this@MidiController.open_output_device(device_info)
                     }
-
                 }
                 this@MidiController.onDeviceAdded(device_info)
             }
@@ -61,8 +60,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                 this@MidiController.close_device(device_info)
                 this@MidiController.onDeviceRemoved(device_info)
             }
-            override fun onDeviceStatusChanged(status: MidiDeviceStatus) {
-            }
+            override fun onDeviceStatusChanged(status: MidiDeviceStatus) { }
         }
         if (this.midi_manager != null) {
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
@@ -115,7 +113,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun close_connected_devices() {
-        this.close_output_devices()
+        for (device in this.poll_input_devices()) {
+            this.close_device(device)
+        }
+        for (device in this.poll_output_devices()) {
+            this.close_device(device)
+        }
     }
 
     fun connect_virtual_input_device(device: VirtualMidiInputDevice) {
@@ -160,7 +163,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             }
         }
 
-        if ((this.context as MainActivity).configuration.allow_midi_playback && ! this.block_physical_devices) {
+        if (!this.block_physical_devices) {
             for (input_port in this.connected_input_ports) {
                 val bytes = event.as_bytes()
                 try {

@@ -1,0 +1,4 @@
+- Can now save Stacktraces if app crashes to help with fixing bugs.
+- Channels can now be swapped like lines by double tapping the line label before dragging.
+- Bugfix: Some soundfonts out of tune.
+- Bugfix: Physical midi devices not being immediately connected.

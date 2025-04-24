@@ -1026,7 +1026,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     channel_b_size += 1
                 }
             }
-
             this.get_editor_table().swap_mapped_channels(vis_line_b, channel_a_size, vis_line_a, channel_b_size)
             this._swap_line_ui_update(channel_a, 0, channel_b, 0)
 

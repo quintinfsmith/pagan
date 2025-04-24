@@ -109,11 +109,6 @@ class MidiPlayer: VirtualMidiInputDevice() {
             this.send_event(event)
         }
 
-        // if the song wasn't manually stopped, return to the start
-        if (this.playing) {
-            this.send_event(SongPositionPointer(0))
-        }
-
         for (i in 0 until 16) {
             this.send_event(AllSoundOff(i))
         }

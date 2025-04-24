@@ -618,6 +618,9 @@ class MainActivity : AppCompatActivity() {
         // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
         this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
             override fun onSongPositionPointer(event: SongPositionPointer) {
+                if (event.get_beat() >= this@MainActivity.get_opus_manager().length) {
+                    return
+                }
                 this@MainActivity.get_opus_manager().cursor_select_column(event.get_beat())
                 // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
                 this@MainActivity.runOnUiThread {
@@ -2191,13 +2194,19 @@ class MainActivity : AppCompatActivity() {
         this._midi_interface.block_physical_devices = true
         this._midi_interface.close_connected_devices()
         this.playback_state_midi = PlaybackState.NotReady
+
+        if (this._feedback_sample_manager == null) {
+            this.connect_feedback_device()
+        }
     }
 
     fun enable_physical_midi_output() {
         this._midi_interface.block_physical_devices = false
         this._midi_interface.open_connected_devices()
+        this.playback_state_midi = PlaybackState.Ready
+
         if (this.is_connected_to_physical_device()) {
-            this.playback_state_midi = PlaybackState.Ready
+            this.disconnect_feedback_device()
         }
     }
 

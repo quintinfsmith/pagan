@@ -39,8 +39,9 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
     ) {
 
     PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-    buffer->data = env->GetShortArrayElements(data, nullptr);
     int d_size = env->GetArrayLength(data);
+    buffer->data = (jshort*)malloc(sizeof(jshort) * d_size);
+    env->GetShortArrayRegion(data, 0, d_size, buffer->data);
     buffer->data_size = d_size;
     buffer->pitch = pitch;
     buffer->start = start;

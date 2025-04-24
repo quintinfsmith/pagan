@@ -218,7 +218,7 @@ class SampleHandle {
         float pan;
         ProfileBuffer* volume_profile;
         ProfileBuffer* pan_profile;
-        PitchedBuffer* data_buffers;
+        PitchedBuffer** data_buffers;
         int buffer_count;
         float smoothing_factor;
 
@@ -241,7 +241,7 @@ class SampleHandle {
             float pan,
             ProfileBuffer* volume_profile,
             ProfileBuffer* pan_profile,
-            PitchedBuffer* data_buffers,
+            PitchedBuffer** data_buffers,
             int buffer_count
         ) {
             this->uuid = SampleHandleUUIDGen++;
@@ -262,7 +262,7 @@ class SampleHandle {
             this->secondary_setup(data_buffers, buffer_count);
         }
 
-        void secondary_setup(PitchedBuffer* input_buffers, int count) {
+        void secondary_setup(PitchedBuffer** input_buffers, int count) {
             this->RC = 1 / (this->filter_cutoff * 2 * M_PI);
             this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
             this->previous_frame = 0;
@@ -274,49 +274,63 @@ class SampleHandle {
 
             if (count > 0) {
                 this->buffer_count = count;
-                this->data_buffers = (PitchedBuffer*)malloc(sizeof(PitchedBuffer) * count);
+                __android_log_write(ANDROID_LOG_ERROR, "Tag", "AAAAAA");
+                __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(count).c_str());
+                this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * count);
                 for (int i = 0; i < count; i++) {
-                    PitchedBuffer buffer = input_buffers[i];
-                    this->data_buffers[i].data = buffer.data;
-                    this->data_buffers[i].data_size = buffer.data_size;
-                    this->data_buffers[i].pitch = buffer.pitch;
-                    this->data_buffers[i].start = buffer.start;
-                    this->data_buffers[i].end = buffer.end;
-                    this->data_buffers[i].is_loop = buffer.is_loop;
+                    __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(i).c_str());
+                    PitchedBuffer* buffer = input_buffers[i];
+                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "9999");
+                    PitchedBuffer* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "8888");
+                    ptr->data = buffer->data;
+                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "7777");
+                    ptr->data_size = buffer->data_size;
+                    ptr->pitch = buffer->pitch;
+                    ptr->start = buffer->start;
+                    ptr->end = buffer->end;
+                    ptr->is_loop = buffer->is_loop;
+                    this->data_buffers[i] = ptr;
                 }
             } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) != std::get<1>(this->loop_points.value())) {
-                this->data_buffers = (PitchedBuffer*)malloc(sizeof(PitchedBuffer) * 3);
-                this->data_buffers[0].data = this->data;
-                this->data_buffers[0].data_size = this->data_size;
-                this->data_buffers[0].pitch = this->pitch_shift;
-                this->data_buffers[0].start = 0;
-                this->data_buffers[0].end = std::get<0>(this->loop_points.value());
-                this->data_buffers[0].is_loop = false;
+                __android_log_write(ANDROID_LOG_ERROR, "Tag", "BBB");
+                this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
+                PitchedBuffer* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                ptr->data = this->data;
+                ptr->data_size = this->data_size;
+                ptr->pitch = this->pitch_shift;
+                ptr->start = 0;
+                ptr->end = std::get<0>(this->loop_points.value());
+                ptr->is_loop = false;
 
+                ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                ptr->data = this->data;
+                ptr->data_size = this->data_size;
+                ptr->pitch = this->pitch_shift;
+                ptr->start = std::get<0>(this->loop_points.value());
+                ptr->end = std::get<1>(this->loop_points.value());
+                ptr->is_loop = true;
 
-                this->data_buffers[1].data = this->data;
-                this->data_buffers[1].data_size = this->data_size;
-                this->data_buffers[1].pitch = this->pitch_shift;
-                this->data_buffers[1].start = std::get<0>(this->loop_points.value());
-                this->data_buffers[1].end = std::get<1>(this->loop_points.value());
-                this->data_buffers[1].is_loop = true;
-
-                this->data_buffers[2].data = this->data;
-                this->data_buffers[2].data_size = this->data_size;
-                this->data_buffers[2].pitch = this->pitch_shift;
-                this->data_buffers[2].start = std::get<1>(this->loop_points.value());
-                this->data_buffers[2].end = this->data_size;
-                this->data_buffers[2].is_loop = false;
+                ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                ptr->data = this->data;
+                ptr->data_size = this->data_size;
+                ptr->pitch = this->pitch_shift;
+                ptr->start = std::get<1>(this->loop_points.value());
+                ptr->end = this->data_size;
+                ptr->is_loop = false;
 
                 this->buffer_count = 3;
             } else {
-                this->data_buffers = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-                this->data_buffers[0].data = this->data;
-                this->data_buffers[0].data_size = this->data_size;
-                this->data_buffers[0].pitch = this->pitch_shift;
-                this->data_buffers[0].start = 0;
-                this->data_buffers[0].end = this->data_size;
-                this->data_buffers[0].is_loop = false;
+                __android_log_write(ANDROID_LOG_ERROR, "Tag", "CCCC");
+                this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*));
+                PitchedBuffer* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+
+                ptr->data = this->data;
+                ptr->data_size = this->data_size;
+                ptr->pitch = this->pitch_shift;
+                ptr->start = 0;
+                ptr->end = this->data_size;
+                ptr->is_loop = false;
 
                 this->buffer_count = 1;
             }
@@ -349,34 +363,34 @@ class SampleHandle {
 
             try {
                 if (!release_frame.has_value() || release_frame.value() > frame) {
-                    if (!this->loop_points.has_value() || frame < this->data_buffers[0].virtual_size) {
-                        this->data_buffers[0].set_position(frame);
+                    if (!this->loop_points.has_value() || frame < this->data_buffers[0]->virtual_size) {
+                        this->data_buffers[0]->set_position(frame);
                         this->active_buffer = 0;
                     } else {
-                        this->data_buffers[1].set_position((frame - this->data_buffers[0].virtual_size));
+                        this->data_buffers[1]->set_position((frame - this->data_buffers[0]->virtual_size));
                         this->active_buffer = 1;
                     }
                 } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) < std::get<1>(this->loop_points.value())) {
-                    if (frame < this->data_buffers[0].virtual_size) {
-                        this->data_buffers[0].set_position(frame);
+                    if (frame < this->data_buffers[0]->virtual_size) {
+                        this->data_buffers[0]->set_position(frame);
                         this->active_buffer = 0;
-                    } else if (frame < this->data_buffers[1].virtual_size) {
-                        this->data_buffers[1].set_position(frame - this->data_buffers[0].virtual_size);
+                    } else if (frame < this->data_buffers[1]->virtual_size) {
+                        this->data_buffers[1]->set_position(frame - this->data_buffers[0]->virtual_size);
                         this->active_buffer = 1;
                     } else {
                         int remainder = frame - this->release_frame.value();
                         int loop_size = std::get<1>(this->loop_points.value()) - std::get<0>(this->loop_points.value());
                         if (remainder < loop_size) {
-                            this->data_buffers[1].set_position(remainder);
+                            this->data_buffers[1]->set_position(remainder);
                             this->active_buffer = 1;
                         } else {
                             int loop_count = (this->release_frame.value() - std::get<0>(this->loop_points.value())) / loop_size;
-                            this->data_buffers[2].set_position(frame - this->data_buffers[0].virtual_size - (loop_count * this->data_buffers[1].virtual_size));
+                            this->data_buffers[2]->set_position(frame - this->data_buffers[0]->virtual_size - (loop_count * this->data_buffers[1]->virtual_size));
                             this->active_buffer = 2;
                         }
                     }
                 } else {
-                    this->data_buffers[0].set_position(frame);
+                    this->data_buffers[0]->set_position(frame);
                     this->active_buffer = 0;
                 }
                 this->is_dead = false;
@@ -390,7 +404,7 @@ class SampleHandle {
         }
 
         PitchedBuffer* get_active_data_buffer() {
-            return &this->data_buffers[this->active_buffer];
+            return this->data_buffers[this->active_buffer];
         }
 
         std::tuple<float, float> get_next_balance() {
@@ -448,7 +462,7 @@ class SampleHandle {
             if (!is_pressed) {
                 int pos = 0;
                 for (int i = 0; i < this->buffer_count; i++) {
-                    pos += this->data_buffers[i].virtual_size;
+                    pos += this->data_buffers[i]->virtual_size;
                 }
                 int release_frame_count = fmin(this->volume_envelope->frames_release, pos);
 
@@ -506,7 +520,7 @@ class SampleHandle {
 
         void repitch(float adjustment) {
             for (int i = 0; i < this->buffer_count; i++) {
-                this->data_buffers[i].repitch(adjustment);
+                this->data_buffers[i]->repitch(adjustment);
             }
         }
 };

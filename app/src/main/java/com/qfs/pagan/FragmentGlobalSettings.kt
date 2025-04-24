@@ -146,7 +146,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         }
 
         val switch_enable_midi_playback = view.findViewById<SwitchCompat>(R.id.sEnableMidi)
-        switch_enable_midi_playback.isChecked = main.configuration.use_preferred_soundfont
+        switch_enable_midi_playback.isChecked = main.configuration.allow_midi_playback
         switch_enable_midi_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
             main.configuration.allow_midi_playback = enabled
             main.save_configuration()

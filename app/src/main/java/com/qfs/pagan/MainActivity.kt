@@ -1142,7 +1142,7 @@ class MainActivity : AppCompatActivity() {
 
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is FragmentEditor -> {
-                val play_midi_visible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
+                val play_midi_visible = this.configuration.allow_midi_playback && (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
                 options_menu.findItem(R.id.itmNewProject).isVisible = true

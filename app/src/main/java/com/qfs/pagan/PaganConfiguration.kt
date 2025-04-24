@@ -13,7 +13,8 @@ data class PaganConfiguration(
     var move_mode: MoveMode = MoveMode.COPY,
     var clip_same_line_release: Boolean = true,
     var use_preferred_soundfont: Boolean = true,
-    var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER
+    var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
+    var allow_midi_playback: Boolean = true
 ) {
 
     enum class MoveMode {
@@ -37,7 +38,8 @@ data class PaganConfiguration(
                         move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
                         clip_same_line_release = content.get_boolean("clip_same_line_release", true),
                         use_preferred_soundfont = content.get_boolean("use_preferred_soundfont", true),
-                        force_orientation = content.get_int("force_orientation", ActivityInfo.SCREEN_ORIENTATION_USER)
+                        force_orientation = content.get_int("force_orientation", ActivityInfo.SCREEN_ORIENTATION_USER),
+                        allow_midi_playback = content.get_boolean("allow_midi_playback", true)
                     )
                 }
             } else {
@@ -61,6 +63,7 @@ data class PaganConfiguration(
         output["clip_same_line_release"] = this.clip_same_line_release
         output["use_preferred_soundfont"] = this.use_preferred_soundfont
         output["force_orientation"] = this.force_orientation
+        output["allow_midi_playback"] = this.allow_midi_playback
 
         return output
     }

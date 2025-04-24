@@ -145,6 +145,13 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             main.save_configuration()
         }
 
+        val switch_enable_midi_playback = view.findViewById<SwitchCompat>(R.id.sEnableMidi)
+        switch_enable_midi_playback.isChecked = main.configuration.use_preferred_soundfont
+        switch_enable_midi_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
+            main.configuration.allow_midi_playback = enabled
+            main.save_configuration()
+        }
+
 
         val lock_orientation_group = view.findViewById<RadioGroup>(R.id.rgLockOrientation)
         lock_orientation_group.check(when (main.configuration.force_orientation) {

@@ -263,33 +263,23 @@ class SampleHandle {
         }
 
         void secondary_setup(PitchedBuffer** input_buffers, int count) {
+            __android_log_write(ANDROID_LOG_ERROR, "SETTING UP", std::to_string(this->uuid).c_str());
             this->RC = 1 / (this->filter_cutoff * 2 * M_PI);
             this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
             this->previous_frame = 0;
             this->working_frame = 0;
-            this->release_frame.reset();
-            this->kill_frame.reset();
+            this->release_frame = std::nullopt;
+            this->kill_frame = std::nullopt;
             this->is_dead = false;
             this->active_buffer = 0;
 
-            __android_log_write(ANDROID_LOG_ERROR, "Tag", "XXXXXXXXXXXx");
-            __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string((long)this->data).c_str());
             if (count > 0) {
                 this->buffer_count = count;
-                __android_log_write(ANDROID_LOG_ERROR, "Tag", "AAAAAA");
-                __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(count).c_str());
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * count);
                 for (int i = 0; i < count; i++) {
-                    __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(i).c_str());
                     PitchedBuffer* buffer = input_buffers[i];
-                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "9999");
                     auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "8888");
-                    __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string((long)buffer).c_str());
-                    __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string((long)buffer->data).c_str());
-                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "8888X");
                     ptr->data = buffer->data;
-                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "7777");
                     ptr->data_size = buffer->data_size;
                     ptr->pitch = buffer->pitch;
                     ptr->start = buffer->start;
@@ -298,7 +288,6 @@ class SampleHandle {
                     this->data_buffers[i] = ptr;
                 }
             } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) != std::get<1>(this->loop_points.value())) {
-                __android_log_write(ANDROID_LOG_ERROR, "Tag", "BBB");
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->data = this->data;
@@ -329,7 +318,6 @@ class SampleHandle {
 
                 this->buffer_count = 3;
             } else {
-                __android_log_write(ANDROID_LOG_ERROR, "Tag", "CCCC");
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*));
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
@@ -347,19 +335,21 @@ class SampleHandle {
         ~SampleHandle() = default;
 
         void set_release_frame(int frame) {
-            __android_log_write(ANDROID_LOG_ERROR, "Tag", "SETTING RELEASE FRAME-->");
-            __android_log_write(ANDROID_LOG_ERROR, "Tag",  std::to_string(frame).c_str());
+            __android_log_write(ANDROID_LOG_ERROR, "SETTING RF", std::to_string(frame).c_str());
             this->release_frame = frame;
         }
 
         void set_working_frame(int frame) {
             this->working_frame = frame;
             if (this->kill_frame.has_value() && this->working_frame >= this->kill_frame.value()) {
+                __android_log_write(ANDROID_LOG_ERROR, "Tag", "HANDLE KILLED (KF)");
                 this->is_dead = true;
                 return;
             }
 
             if (this->release_frame.has_value() && this->working_frame >= this->release_frame.value() + this->volume_envelope->frames_release) {
+                __android_log_write(ANDROID_LOG_ERROR, "Tag", "HANDLE KILLED (RF)");
+
                 this->is_dead = true;
                 return;
             }
@@ -492,7 +482,6 @@ class SampleHandle {
                  use_volume = 1;
             }
             this->working_frame += 1;
-
             if (this->active_buffer >= this->buffer_count) {
                 this->is_dead = true;
                 return std::nullopt;

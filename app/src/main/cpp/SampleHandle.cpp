@@ -195,6 +195,11 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
     new_handle->secondary_setup(ptr->data_buffers, ptr->buffer_count);
 
+    new_handle->working_frame = ptr->working_frame;
+    new_handle->release_frame = ptr->release_frame;
+    new_handle->kill_frame = ptr->kill_frame;
+    new_handle->is_dead = ptr->is_dead;
+
     return (jlong)new_handle;
 }
 

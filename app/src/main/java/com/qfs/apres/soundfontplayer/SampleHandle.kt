@@ -1,13 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.soundfont.Generator.Operation
-import com.qfs.apres.soundfont.Modulator
-import com.qfs.apres.soundfont.SampleType
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
 
 class SampleHandle(val ptr: Long) {
     constructor(
@@ -271,7 +264,6 @@ class SampleHandle(val ptr: Long) {
 
     external fun copy_jni(ptr: Long): Long
     fun copy(): SampleHandle {
-        println("COPYING ${this.ptr}")
         return SampleHandle(this.copy_jni(this.ptr))
     }
 

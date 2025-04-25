@@ -257,6 +257,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             var dead_count = 0
             for ((handle, _) in item.sample_handles) {
                 if (handle != null && handle.is_dead) {
+                    println("DEAD HANDLE ${handle.ptr}")
                     dead_count += 1
                 }
             }

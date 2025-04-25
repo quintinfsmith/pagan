@@ -14,7 +14,6 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_copy_1inner(JNIEnv* env, jobjec
     PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
     buffer->data = (jshort*)malloc(sizeof(jshort) * ptr->data_size);
-    for
 
     buffer->data = ptr->data;
     buffer->data_size = ptr->data_size;

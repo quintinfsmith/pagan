@@ -272,6 +272,8 @@ class SampleHandle {
             this->is_dead = false;
             this->active_buffer = 0;
 
+            __android_log_write(ANDROID_LOG_ERROR, "Tag", "XXXXXXXXXXXx");
+            __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string((long)this->data).c_str());
             if (count > 0) {
                 this->buffer_count = count;
                 __android_log_write(ANDROID_LOG_ERROR, "Tag", "AAAAAA");
@@ -281,8 +283,11 @@ class SampleHandle {
                     __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(i).c_str());
                     PitchedBuffer* buffer = input_buffers[i];
                     __android_log_write(ANDROID_LOG_ERROR, "Tag", "9999");
-                    PitchedBuffer* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                    auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                     __android_log_write(ANDROID_LOG_ERROR, "Tag", "8888");
+                    __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string((long)buffer).c_str());
+                    __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string((long)buffer->data).c_str());
+                    __android_log_write(ANDROID_LOG_ERROR, "Tag", "8888X");
                     ptr->data = buffer->data;
                     __android_log_write(ANDROID_LOG_ERROR, "Tag", "7777");
                     ptr->data_size = buffer->data_size;
@@ -295,7 +300,7 @@ class SampleHandle {
             } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) != std::get<1>(this->loop_points.value())) {
                 __android_log_write(ANDROID_LOG_ERROR, "Tag", "BBB");
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
-                PitchedBuffer* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
@@ -323,7 +328,7 @@ class SampleHandle {
             } else {
                 __android_log_write(ANDROID_LOG_ERROR, "Tag", "CCCC");
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*));
-                PitchedBuffer* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
@@ -394,16 +399,16 @@ class SampleHandle {
                     this->active_buffer = 0;
                 }
                 this->is_dead = false;
-            } catch (PitchedBufferOverflow) {
+            } catch (PitchedBufferOverflow& e) {
                 this->is_dead = true;
             }
         }
 
-        int get_release_duration() {
+        int get_release_duration() const {
             return this->volume_envelope->frames_release;
         }
 
-        PitchedBuffer* get_active_data_buffer() {
+        [[nodiscard]] PitchedBuffer* get_active_data_buffer() const {
             return this->data_buffers[this->active_buffer];
         }
 
@@ -431,7 +436,7 @@ class SampleHandle {
 
             float frame_factor = this->initial_frame_factor;
             if (this->working_frame - this->volume_envelope->frames_delay < this->volume_envelope->frames_attack) {
-                float r = (this->working_frame - (float)this->volume_envelope->frames_delay) / (float)this->volume_envelope->frames_attack;
+                float r = ((float)this->working_frame - (float)this->volume_envelope->frames_delay) / (float)this->volume_envelope->frames_attack;
                 frame_factor *= r;
             } else if (this->working_frame - this->volume_envelope->frames_attack - this->volume_envelope->frames_delay < this->volume_envelope->frames_hold) {
                 // PASS
@@ -439,7 +444,7 @@ class SampleHandle {
                 int relative_frame = this->working_frame - this->volume_envelope->frames_delay - this->volume_envelope->frames_attack;
                 if (relative_frame < this->volume_envelope->frames_decay) {
                     float r = ((float)relative_frame / (float)this->volume_envelope->frames_decay);
-                    frame_factor /= pow(10, r * this->volume_envelope->sustain_attenuation);
+                    frame_factor /= pow((float)10, r * this->volume_envelope->sustain_attenuation);
                 } else {
                     frame_factor /= this->volume_envelope->true_sustain_attenuation;
                 }
@@ -491,7 +496,7 @@ class SampleHandle {
             float frame_value;
             try {
                 frame_value = this->get_active_data_buffer()->get();
-            } catch (PitchedBufferOverflow) {
+            } catch (PitchedBufferOverflow& e) {
                 return std::nullopt;
             }
 
@@ -518,7 +523,7 @@ class SampleHandle {
             }
         }
 
-        void repitch(float adjustment) {
+        void repitch(float adjustment) const {
             for (int i = 0; i < this->buffer_count; i++) {
                 this->data_buffers[i]->repitch(adjustment);
             }

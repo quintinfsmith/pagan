@@ -78,23 +78,15 @@ public:
     uint16_t get_real_frame(int unpitched_position) {
         int range_size = this->end + 1 - this->start;
 
-       // __android_log_write(ANDROID_LOG_ERROR, "Tag", "--------");
-       // __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(range_size).c_str());
         int adj_i;
         if (this->is_loop) {
-        //    __android_log_write(ANDROID_LOG_ERROR, "Tag", "XXXXX");
             adj_i = unpitched_position % range_size;
         } else if (unpitched_position >= range_size) {
-        //    __android_log_write(ANDROID_LOG_ERROR, "Tag", "YYYY");
             throw PitchedBufferOverflow();
         } else {
-        //    __android_log_write(ANDROID_LOG_ERROR, "Tag", "ZZZZZ");
             adj_i = unpitched_position;
         };
 
-        // __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(adj_i).c_str());
-        // __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(this->data_size).c_str());
-        // __android_log_write(ANDROID_LOG_ERROR, "Tag", "......");
         return this->data[adj_i];
     }
 
@@ -106,7 +98,7 @@ public:
         this->virtual_position = frame;
     }
 
-    void copy_to(PitchedBuffer* new_buffer) {
+    void copy_to(PitchedBuffer* new_buffer) const {
         new_buffer->data = this->data;
         new_buffer->data_size = this->data_size;
         new_buffer->pitch = this->pitch;

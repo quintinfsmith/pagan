@@ -151,7 +151,13 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->volume_profile = (struct ProfileBuffer *)volume_profile_ptr;
     handle->pan_profile = (struct ProfileBuffer *)pan_profile_ptr;
 
-    handle->data = env->GetShortArrayElements(data, nullptr);
+    int data_size = env->GetArrayLength(data);
+    jshort* data_ptr_tmp = env->GetShortArrayElements(data, nullptr);
+    handle->data = (jshort *)malloc(sizeof(jshort) * data_size);
+    for (int i = 0; i < data_size; i++) {
+        handle->data[i] = data_ptr_tmp[i];
+    }
+
     handle->secondary_setup(nullptr, 0);
 
     return (jlong)handle;

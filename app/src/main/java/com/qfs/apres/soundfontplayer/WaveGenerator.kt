@@ -44,7 +44,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
     private var timeout: Int? = null
     // Using more processes than counters just in case 1 thread holds up the rest.
-    private val process_count = Runtime.getRuntime().availableProcessors() * 8
+    //private val process_count = Runtime.getRuntime().availableProcessors() * 8
+    private val process_count = 1
     private val active_sample_handle_mutex = Mutex()
     private val _cached_frame_weights = HashMap<Int, Float>() // Store 'previous frame's between chunks so smoothing can be accurately applied
 
@@ -158,6 +159,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
             throw DeadException()
         }
+
         println("---GEN TIME: ${System.nanoTime() - start_ts}")
     }
 

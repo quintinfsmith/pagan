@@ -344,6 +344,8 @@ class SampleHandle {
         ~SampleHandle() = default;
 
         void set_release_frame(int frame) {
+            __android_log_write(ANDROID_LOG_ERROR, "Tag", "SETTING RELEASE FRAME-->");
+            __android_log_write(ANDROID_LOG_ERROR, "Tag",  std::to_string(frame).c_str());
             this->release_frame = frame;
         }
 

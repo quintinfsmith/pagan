@@ -210,7 +210,7 @@ class SampleHandle(val ptr: Long) {
 
     var release_frame: Int?
         get() = this.get_release_frame()
-        set(f: Int?) = this.set_release_frame_jni(this.ptr, f ?: 0)
+        set(f) = this.set_release_frame_jni(this.ptr, f ?: 0)
 
     private fun get_release_frame(): Int? {
         val f = this.get_release_frame_jni(this.ptr)

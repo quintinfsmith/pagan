@@ -307,6 +307,7 @@ class SampleHandle {
                 ptr->start = 0;
                 ptr->end = std::get<0>(this->loop_points.value());
                 ptr->is_loop = false;
+                this->data_buffers[0] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->data = this->data;
@@ -315,6 +316,7 @@ class SampleHandle {
                 ptr->start = std::get<0>(this->loop_points.value());
                 ptr->end = std::get<1>(this->loop_points.value());
                 ptr->is_loop = true;
+                this->data_buffers[1] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->data = this->data;
@@ -323,6 +325,7 @@ class SampleHandle {
                 ptr->start = std::get<1>(this->loop_points.value());
                 ptr->end = this->data_size;
                 ptr->is_loop = false;
+                this->data_buffers[2] = ptr;
 
                 this->buffer_count = 3;
             } else {
@@ -336,7 +339,7 @@ class SampleHandle {
                 ptr->start = 0;
                 ptr->end = this->data_size;
                 ptr->is_loop = false;
-
+                this->data_buffers[0] = ptr;
                 this->buffer_count = 1;
             }
         }

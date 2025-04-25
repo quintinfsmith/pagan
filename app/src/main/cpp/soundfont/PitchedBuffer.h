@@ -71,7 +71,9 @@ public:
 
     float get() {
         float working_pitch = this->pitch * this->adjusted_pitch;
-        int unpitched_position = this->virtual_position++ * working_pitch;
+        int unpitched_position = (int)((float)this->virtual_position * working_pitch);
+        this->virtual_position += 1;
+
         uint16_t output = this->get_real_frame(unpitched_position);
         return static_cast<float>(output) / static_cast<float>(65535); // SHORT MAX
     }
@@ -82,15 +84,12 @@ public:
         int adj_i;
         if (this->is_loop) {
             adj_i = unpitched_position % range_size;
-            __android_log_write(ANDROID_LOG_ERROR, "Tag---", std::to_string(adj_i).c_str());
-            __android_log_write(ANDROID_LOG_ERROR, "Tag--B", std::to_string(this->data_size).c_str());
         } else if (unpitched_position >= range_size) {
             throw PitchedBufferOverflow();
         } else {
             adj_i = unpitched_position;
         };
 
-        __android_log_write(ANDROID_LOG_ERROR, "Tag", "CAK");
         return this->data[adj_i];
     }
 

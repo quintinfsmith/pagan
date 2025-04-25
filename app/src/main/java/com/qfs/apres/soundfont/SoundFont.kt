@@ -159,7 +159,6 @@ class SoundFont(file_path: String) {
         val output = mutableListOf<Sample>()
         var working_index = sample_index
         val done_indices = mutableSetOf<Int>()
-        println("GETTING SAMPLES...")
         while (!done_indices.contains(working_index)) {
             val (sample, next_index) = this.get_sample(working_index)
             output.add(sample)
@@ -171,7 +170,6 @@ class SoundFont(file_path: String) {
                 break
             }
         }
-        println("GOT SAMPLES")
 
         return output
     }
@@ -258,7 +256,6 @@ class SoundFont(file_path: String) {
 
         val phdr_bytes= this.pdta_chunks["phdr"]!!
         // Loop through PHDR until we find the correct index/bank
-        println("GETTING>>>> (${(phdr_bytes.size / 38) - 1}")
         for (index in 0 until (phdr_bytes.size / 38) - 1) {
             val offset = index * 38
             var phdr_name = ""
@@ -279,7 +276,6 @@ class SoundFont(file_path: String) {
             }
 
             val preset = Preset(phdr_name, current_index, current_bank)
-            println("zxxx111111")
 
             val wPresetBagIndex = toUInt(phdr_bytes[offset + 24]) + (toUInt(phdr_bytes[offset + 25]) * 256)
             val next_wPresetBagIndex = toUInt(phdr_bytes[38 + offset + 24]) + (toUInt(phdr_bytes[38 + offset + 25]) * 256)
@@ -303,7 +299,6 @@ class SoundFont(file_path: String) {
                     )
                 )
             }
-            println("zxxxx")
             for ((pbag, next_pbag) in pbag_pairs) {
                 val generators_to_use: List<Generator> = this.get_preset_generators(
                     pbag.first,
@@ -315,14 +310,11 @@ class SoundFont(file_path: String) {
                     next_pbag.second
                 )
 
-                println("K1")
                 this.generate_preset(preset, generators_to_use, modulators_to_use)
             }
-            println("K0")
             output = preset
             break
         }
-        println("GGOOT<<>>")
 
         // NOW we can load all the sample data
         if (output != null) {
@@ -352,8 +344,6 @@ class SoundFont(file_path: String) {
                 }
             }
         }
-
-        println("Preset GOT")
 
         return output ?: throw InvalidPresetIndex(preset_index, preset_bank)
     }

@@ -89,7 +89,7 @@ public:
         } else {
             adj_i = unpitched_position;
         };
-
+        adj_i = std::min(this->end, this->start + adj_i);
         return this->data[adj_i];
     }
 

@@ -187,6 +187,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     var (sample_handle, start_frame) = item.sample_handles[real_index]
                     if (sample_handle == null) {
                         sample_handle = item.handle.copy()
+                        println("INIT HANDLE, ${item.handle.uuid}, ${sample_handle.uuid}")
                         sample_handle.set_working_frame(start_frame)
                         item.sample_handles[real_index] = Pair(sample_handle, 0)
                     }
@@ -231,7 +232,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (f in range) {
             var frame_value = sample_handle.get_next_frame() ?: break
 
-
             // NOTE: It may be insufficient to limit the pan and I rather may need
             // to modify the outgoing pan relatively to the sample_handle.pan
             output[f] = CompoundFrame(
@@ -245,7 +245,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
         return output
     }
-
     private fun update_active_sample_handles(initial_frame: Int) {
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
@@ -256,10 +255,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             var dead_count = 0
             for ((handle, _) in item.sample_handles) {
+                println("${handle?.working_frame ?: "_"} ${handle?.uuid ?: "_"}+++++++++")
                 if (handle != null && handle.is_dead) {
                     dead_count += 1
                 }
             }
+            println("$dead_count / ${item.sample_handles.size} | $key / ${item.handle.uuid} | ${this._active_sample_handles.keys}......")
             if (dead_count == item.sample_handles.size) {
                 remove_set.add(key)
                 this._cached_frame_weights.remove(item.handle.uuid)

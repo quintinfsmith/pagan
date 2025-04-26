@@ -151,10 +151,10 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->volume_profile = (struct ProfileBuffer *)volume_profile_ptr;
     handle->pan_profile = (struct ProfileBuffer *)pan_profile_ptr;
 
-    int data_size = env->GetArrayLength(data);
+    handle->data_size = env->GetArrayLength(data);
     jshort* data_ptr_tmp = env->GetShortArrayElements(data, nullptr);
-    handle->data = (jshort *)malloc(sizeof(jshort) * data_size);
-    for (int i = 0; i < data_size; i++) {
+    handle->data = (jshort *)malloc(sizeof(jshort) * handle->data_size);
+    for (int i = 0; i < handle->data_size; i++) {
         handle->data[i] = data_ptr_tmp[i];
     }
 
@@ -168,7 +168,10 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     auto *ptr = (struct SampleHandle *) ptr_long;
     auto* new_handle = (SampleHandle*)malloc(sizeof(SampleHandle));
     new_handle->uuid = SampleHandleUUIDGen++;
-    new_handle->data = ptr->data;
+    new_handle->data = (jshort *)malloc(sizeof(jshort) * ptr->data_size);
+    for (int i = 0; i < ptr->data_size; i++) {
+        new_handle->data[i] = ptr->data[i];
+    }
     new_handle->data_size = ptr->data_size;
     new_handle->sample_rate = ptr->sample_rate;
     new_handle->initial_attenuation = ptr->initial_attenuation;
@@ -180,13 +183,11 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
     new_handle->volume_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
     if (ptr->volume_profile != nullptr) {
-        __android_log_write(ANDROID_LOG_ERROR, "Tag", "VOLUMEPROFILE");
         ptr->volume_profile->copy_to(new_handle->volume_profile);
     }
 
     new_handle->pan_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
     if (ptr->pan_profile != nullptr) {
-        __android_log_write(ANDROID_LOG_ERROR, "Tag", "PANPROFILE");
         ptr->pan_profile->copy_to(new_handle->pan_profile);
     }
 
@@ -195,9 +196,19 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
     new_handle->secondary_setup(ptr->data_buffers, ptr->buffer_count);
 
+    new_handle->active_buffer = ptr->active_buffer;
     new_handle->working_frame = ptr->working_frame;
-    new_handle->release_frame = ptr->release_frame;
-    new_handle->kill_frame = ptr->kill_frame;
+    if (ptr->release_frame.has_value()) {
+        new_handle->release_frame = ptr->release_frame.value();
+    } else {
+        new_handle->release_frame = std::nullopt;
+    }
+
+    if (ptr->kill_frame.has_value()) {
+        new_handle->kill_frame = ptr->kill_frame.value();
+    } else {
+        new_handle->kill_frame = std::nullopt;
+    }
     new_handle->is_dead = ptr->is_dead;
 
     return (jlong)new_handle;
@@ -254,7 +265,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_get_1frames_
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_set_1frames_1release(JNIEnv* env, jobject, jlong ptr_long, jfloat frames_release) {
+Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_set_1frames_1release(JNIEnv* env, jobject, jlong ptr_long, jint frames_release) {
     auto *ptr = (struct VolumeEnvelope *) ptr_long;
     ptr->frames_release = frames_release;
 }
@@ -342,9 +353,9 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_destroy_1jni
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct SampleHandle *) ptr_long;
-    free(ptr->volume_envelope);
-    free(ptr->pan_profile);
-    free(ptr->volume_profile);
-    free(ptr);
+    //free(ptr->volume_envelope);
+    //free(ptr->pan_profile);
+    //free(ptr->volume_profile);
+    //free(ptr);
 }
 

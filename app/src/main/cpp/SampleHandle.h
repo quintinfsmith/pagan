@@ -51,7 +51,7 @@ class VolumeEnvelope {
 
         void set_sample_rate(int sample_rate) {
             this->sample_rate = sample_rate;
-            float float_rate = (float)sample_rate;
+            auto float_rate = (float)sample_rate;
             this->frames_delay = (int)(float_rate * this->delay);
             this->frames_hold = (int)(float_rate * this->hold);
             this->frames_attack = (int)(float_rate * this->attack);
@@ -121,6 +121,10 @@ class ProfileBuffer {
         }
 
         void set_frame(int frame) {
+            if (this->frames == nullptr) {
+                return;
+            }
+
             int original_frame = this->current_frame;
             this->current_frame = frame + this->start_frame;
             if (original_frame == this->current_frame) {
@@ -135,9 +139,6 @@ class ProfileBuffer {
                     }
                 }
             } else {
-                int t = this->current_index;
-                t = this->frames[this->current_index]->frame;
-                t = this->current_frame;
                 while (this->current_index > 0 && this->frames[this->current_index]->frame > this->current_frame) {
                     this->current_index -= 1;
                 }
@@ -158,13 +159,13 @@ class ProfileBuffer {
             }
         }
 
-        void copy_to(ProfileBuffer* new_buffer) {
-            if (this->frames != 0) {
+        void copy_to(ProfileBuffer* new_buffer) const {
+            if (this->frames != nullptr) {
                 new_buffer->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
                 new_buffer->frames = this->frames;
                 for (int i = 0; i < this->frame_count; i++) {
                     ProfileBufferFrame* frame = this->frames[i];
-                    ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
+                    auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
                     ptr->frame = frame->frame;
                     ptr->increment = frame->increment;
                     ptr->initial_value = frame->initial_value;
@@ -174,6 +175,7 @@ class ProfileBuffer {
             }
 
             new_buffer->start_frame = this->start_frame;
+            new_buffer->next_frame_trigger = this->next_frame_trigger;
             new_buffer->current_index = this->current_index;
             new_buffer->current_frame = this->current_frame;
             new_buffer->set_frame(0);
@@ -200,7 +202,6 @@ int SampleHandleUUIDGen = 0;
 class SampleHandle {
     float RC;
     float initial_frame_factor;
-    float previous_frame;
     // int uuid;
 
 
@@ -263,10 +264,8 @@ class SampleHandle {
         }
 
         void secondary_setup(PitchedBuffer** input_buffers, int count) {
-            __android_log_write(ANDROID_LOG_ERROR, "SETTING UP", std::to_string(this->uuid).c_str());
             this->RC = 1 / (this->filter_cutoff * 2 * M_PI);
             this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
-            this->previous_frame = 0;
             this->working_frame = 0;
             this->release_frame = std::nullopt;
             this->kill_frame = std::nullopt;
@@ -335,7 +334,6 @@ class SampleHandle {
         ~SampleHandle() = default;
 
         void set_release_frame(int frame) {
-            __android_log_write(ANDROID_LOG_ERROR, "SETTING RF", std::to_string(frame).c_str());
             this->release_frame = frame;
         }
 
@@ -416,14 +414,13 @@ class SampleHandle {
                 return std::nullopt;
             }
 
-            bool is_pressed = !this->release_frame.has_value() || (this->working_frame < this->release_frame.value());
+            bool is_pressed = this->is_pressed();
             if (this->working_frame < this->volume_envelope->frames_delay) {
                 this->working_frame += 1;
-                this->previous_frame = 0;
-                if (this->volume_profile != 0) {
+                if (this->volume_profile != nullptr) {
                     this->volume_profile->get_next();
                 }
-                if (this->pan_profile != 0) {
+                if (this->pan_profile != nullptr) {
                     this->pan_profile->get_next();
                 }
                 return std::make_tuple(0, 0);
@@ -464,19 +461,20 @@ class SampleHandle {
                 for (int i = 0; i < this->buffer_count; i++) {
                     pos += this->data_buffers[i]->virtual_size;
                 }
-                int release_frame_count = fmin(this->volume_envelope->frames_release, pos);
+                int release_frame_count = std::min(this->volume_envelope->frames_release, pos);
 
                 int current_position_release = this->working_frame - this->release_frame.value();
                 if (current_position_release < release_frame_count) {
                     frame_factor *= 1 - ((float)current_position_release / (float)release_frame_count);
                 } else {
+                    __android_log_write(ANDROID_LOG_ERROR, "seT Rframe", "RESLEALSE");
                     this->is_dead = true;
                     return std::nullopt;
                 }
             }
 
             float use_volume;
-            if (this->volume_profile != 0) {
+            if (this->volume_profile != nullptr) {
                 use_volume = this->volume_profile->get_next();
             } else {
                  use_volume = 1;
@@ -491,6 +489,7 @@ class SampleHandle {
             try {
                 frame_value = this->get_active_data_buffer()->get();
             } catch (PitchedBufferOverflow& e) {
+                this->is_dead = true;
                 return std::nullopt;
             }
 

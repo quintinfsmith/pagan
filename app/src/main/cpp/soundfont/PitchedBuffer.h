@@ -38,7 +38,6 @@ public:
         int virtual_size,
         float adjusted_pitch
     ) {
-        this->virtual_position = 0;
         this->data = data;
         this->data_size = data_size;
         this->pitch = pitch;
@@ -74,12 +73,12 @@ public:
         int unpitched_position = (int)((float)this->virtual_position * working_pitch);
         this->virtual_position += 1;
 
-        uint16_t output = this->get_real_frame(unpitched_position);
-        return static_cast<float>(output) / static_cast<float>(65535); // SHORT MAX
+        jshort output = this->get_real_frame(unpitched_position);
+        return (float)(output) / (float)(32768); // SHORT MAX
     }
 
-    uint16_t get_real_frame(int unpitched_position) {
-        int range_size = this->end + 1 - this->start;
+    jshort get_real_frame(int unpitched_position) const {
+        int range_size = this->end - this->start;
 
         int adj_i;
         if (this->is_loop) {
@@ -89,8 +88,10 @@ public:
         } else {
             adj_i = unpitched_position;
         };
-        adj_i = std::min(this->end, this->start + adj_i);
-        return this->data[adj_i];
+        adj_i = std::min(this->end - 1, this->start + adj_i);
+        jshort output = this->data[adj_i];
+        //__android_log_write(ANDROID_LOG_ERROR, "T))))))", std::to_string(output).c_str());
+        return output;
     }
 
     bool is_overflowing() {

@@ -1,4 +1,6 @@
 #include <jni.h>
+#include <android/log.h>
+#include <string>
 #include <iostream>
 #include <string>
 #include <exception>
@@ -79,7 +81,7 @@ extern "C" JNIEXPORT jshortArray JNICALL
 Java_com_qfs_apres_soundfont_Sample_get_1data_1inner(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     jshortArray jshort_output = env->NewShortArray(sample->data_placeholder_end - sample->data_placeholder_start);
-    env->SetShortArrayRegion(jshort_output, 0, 2, (jshort *)sample->data);
+    env->SetShortArrayRegion(jshort_output, 0, sample->data_placeholder_end - sample->data_placeholder_start, (jshort *)sample->data);
     return jshort_output;
 }
 

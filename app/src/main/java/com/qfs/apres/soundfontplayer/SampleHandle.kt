@@ -22,7 +22,7 @@ class SampleHandle(val ptr: Long) {
         //modulation_lfo: LFO?,
         //modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     ): this(
-        create(
+        create_a(
             data,
             sample_rate,
             initial_attenuation,
@@ -43,6 +43,39 @@ class SampleHandle(val ptr: Long) {
     )
 
     companion object {
+        fun create_a(
+            data: ShortArray,
+            sample_rate: Int,
+            initial_attenuation: Float,
+            is_loop: Boolean,
+            loop_start: Int,
+            loop_end: Int,
+            stereo_mode: Int,
+            volume_envelope_ptr: Long,
+            pitch_shift: Float,
+            filter_cutoff: Float,
+            pan: Float,
+            volume_profile_ptr: Long,
+            pan_profile_ptr: Long,
+        ): Long {
+            println("${data.toList().subList(0, 100)}")
+            return create(
+                data,
+                sample_rate,
+                initial_attenuation,
+                is_loop,
+                loop_start,
+                loop_end,
+                stereo_mode,
+                volume_envelope_ptr,
+                pitch_shift,
+                filter_cutoff,
+                pan,
+                volume_profile_ptr,
+                pan_profile_ptr
+
+            )
+        }
         external fun create(
             data: ShortArray,
             sample_rate: Int,

@@ -4,6 +4,7 @@
 
 #include "SampleHandle.h"
 #include <android/log.h>
+#include <string>
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
@@ -119,7 +120,6 @@ extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         JNIEnv* env,
         jobject,
-
         jshortArray data,
         jint sample_rate,
         jfloat initial_attenuation,
@@ -143,6 +143,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     } else {
         handle->loop_points = std::nullopt;
     }
+
     handle->stereo_mode = stereo_mode;
     handle->volume_envelope = (struct VolumeEnvelope *)volume_envelope_ptr;
     handle->pitch_shift = pitch_shift;
@@ -176,6 +177,13 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->sample_rate = ptr->sample_rate;
     new_handle->initial_attenuation = ptr->initial_attenuation;
     new_handle->loop_points = ptr->loop_points;
+
+    if (ptr->loop_points.has_value()) {
+        __android_log_write(ANDROID_LOG_ERROR, "LOOP", std::to_string(std::get<1>(ptr->loop_points.value())).c_str());
+    } else {
+        __android_log_write(ANDROID_LOG_ERROR, "LOOP", "______");
+    }
+
     new_handle->stereo_mode = ptr->stereo_mode;
     new_handle->pitch_shift = ptr->pitch_shift;
     new_handle->filter_cutoff = ptr->filter_cutoff;

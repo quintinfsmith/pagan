@@ -229,9 +229,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             offset until output.size
         }
 
+        val tmp = mutableListOf<Float>()
         for (f in range) {
             var frame_value = sample_handle.get_next_frame() ?: break
-
+            tmp.add(frame_value.first)
             // NOTE: It may be insufficient to limit the pan and I rather may need
             // to modify the outgoing pan relatively to the sample_handle.pan
             output[f] = CompoundFrame(
@@ -240,6 +241,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 sample_handle.get_next_balance()
             )
         }
+        println(tmp.subList(0, 100))
         if (!sample_handle.is_dead) {
             sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.process_count - 1) / this.process_count))
         }

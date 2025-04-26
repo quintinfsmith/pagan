@@ -59,7 +59,7 @@ public:
         this->end = end;
         this->is_loop = is_loop;
 
-        this->repitch(1);
+        this->repitch(1.0);
     }
     ~PitchedBuffer() = default;
     void repitch(float new_pitch_adjustment) {
@@ -69,12 +69,11 @@ public:
     }
 
     float get() {
-        float working_pitch = this->pitch * this->adjusted_pitch;
-        int unpitched_position = (int)((float)this->virtual_position * working_pitch);
+        int unpitched_position = (int)((float)this->virtual_position * this->adjusted_pitch);
         this->virtual_position += 1;
 
-        jshort output = this->get_real_frame(unpitched_position);
-        return (float)(output) / (float)(32768); // SHORT MAX
+        float output = (float)this->get_real_frame(unpitched_position) / (float)16384; //SHORT MAX
+        return output;
     }
 
     jshort get_real_frame(int unpitched_position) const {
@@ -89,9 +88,7 @@ public:
             adj_i = unpitched_position;
         };
         adj_i = std::min(this->end - 1, this->start + adj_i);
-        jshort output = this->data[adj_i];
-        //__android_log_write(ANDROID_LOG_ERROR, "T))))))", std::to_string(output).c_str());
-        return output;
+        return this->data[adj_i];
     }
 
     bool is_overflowing() {

@@ -58,7 +58,6 @@ class SampleHandle(val ptr: Long) {
             volume_profile_ptr: Long,
             pan_profile_ptr: Long,
         ): Long {
-            println("${data.toList().subList(0, 100)}")
             return create(
                 data,
                 sample_rate,
@@ -318,15 +317,12 @@ class SampleHandle(val ptr: Long) {
     }
 
     external fun get_next_frame_jni(ptr: Long): FloatArray
-    fun get_next_frame(): Pair<Float, Float>? {
+    fun get_next_frame(): Float? {
         val frame_array = this.get_next_frame_jni(this.ptr)
-        return if (frame_array[2] == 0F) {
+        return if (frame_array[1] == 0F) {
             null
         } else {
-            Pair(
-                frame_array[0],
-                frame_array[1]
-            )
+            frame_array[0]
         }
     }
 

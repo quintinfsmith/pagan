@@ -50,9 +50,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
     buffer->end = end;
     buffer->is_loop = is_loop;
     buffer->virtual_position = 0;
-    buffer->pitch_adjustment = 1;
-    buffer->virtual_size = static_cast<int>(round(static_cast<float>(end + 1 - start) / pitch));
-    buffer->adjusted_pitch = pitch;
+    buffer->repitch(1);
 
     return (jlong)buffer;
 }

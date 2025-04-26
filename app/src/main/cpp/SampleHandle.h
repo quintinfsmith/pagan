@@ -278,41 +278,42 @@ class SampleHandle {
                 for (int i = 0; i < count; i++) {
                     PitchedBuffer* buffer = input_buffers[i];
                     auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-                    ptr->data = buffer->data;
-                    ptr->data_size = buffer->data_size;
-                    ptr->pitch = buffer->pitch;
-                    ptr->start = buffer->start;
-                    ptr->end = buffer->end;
-                    ptr->is_loop = buffer->is_loop;
+                    buffer->copy_to(ptr);
                     this->data_buffers[i] = ptr;
                 }
             } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) != std::get<1>(this->loop_points.value())) {
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                ptr->virtual_position = 0;
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = 0;
                 ptr->end = std::get<0>(this->loop_points.value());
                 ptr->is_loop = false;
+                ptr->pitch_adjustment = 1;
                 this->data_buffers[0] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                ptr->virtual_position = 0;
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = std::get<0>(this->loop_points.value());
                 ptr->end = std::get<1>(this->loop_points.value());
                 ptr->is_loop = true;
+                ptr->repitch(1);
                 this->data_buffers[1] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+                ptr->virtual_position = 0;
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = std::get<1>(this->loop_points.value());
                 ptr->end = this->data_size;
                 ptr->is_loop = false;
+                ptr->repitch(1);
                 this->data_buffers[2] = ptr;
 
                 this->buffer_count = 3;
@@ -320,12 +321,14 @@ class SampleHandle {
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*));
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
+                ptr->virtual_position = 0;
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = 0;
                 ptr->end = this->data_size;
                 ptr->is_loop = false;
+                ptr->repitch(1);
                 this->data_buffers[0] = ptr;
                 this->buffer_count = 1;
             }
@@ -340,22 +343,20 @@ class SampleHandle {
         void set_working_frame(int frame) {
             this->working_frame = frame;
             if (this->kill_frame.has_value() && this->working_frame >= this->kill_frame.value()) {
-                __android_log_write(ANDROID_LOG_ERROR, "Tag", "HANDLE KILLED (KF)");
                 this->is_dead = true;
                 return;
             }
 
             if (this->release_frame.has_value() && this->working_frame >= this->release_frame.value() + this->volume_envelope->frames_release) {
-                __android_log_write(ANDROID_LOG_ERROR, "Tag", "HANDLE KILLED (RF)");
 
                 this->is_dead = true;
                 return;
             }
 
-            if (this->volume_profile != 0) {
+            if (this->volume_profile != nullptr) {
                 this->volume_profile->set_frame(frame);
             }
-            if (this->pan_profile != 0) {
+            if (this->pan_profile != nullptr) {
                 this->pan_profile->set_frame(frame);
             }
 
@@ -409,7 +410,7 @@ class SampleHandle {
             // TODO
         }
 
-        std::optional<std::tuple<float, float>> get_next_frame() {
+        std::optional<float> get_next_frame() {
             if (this->is_dead) {
                 return std::nullopt;
             }
@@ -423,7 +424,7 @@ class SampleHandle {
                 if (this->pan_profile != nullptr) {
                     this->pan_profile->get_next();
                 }
-                return std::make_tuple(0, 0);
+                return 0;
             }
 
             float frame_factor = this->initial_frame_factor;
@@ -467,7 +468,6 @@ class SampleHandle {
                 if (current_position_release < release_frame_count) {
                     frame_factor *= 1 - ((float)current_position_release / (float)release_frame_count);
                 } else {
-                    __android_log_write(ANDROID_LOG_ERROR, "seT Rframe", "RESLEALSE");
                     this->is_dead = true;
                     return std::nullopt;
                 }
@@ -493,7 +493,7 @@ class SampleHandle {
                 return std::nullopt;
             }
 
-            return std::make_tuple(frame_value, frame_factor * use_volume);
+            return frame_value * use_volume;
         }
 
         void release_note() {

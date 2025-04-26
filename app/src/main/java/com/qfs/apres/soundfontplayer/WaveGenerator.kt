@@ -34,7 +34,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     data class CompoundFrame(
         val value: Float = 0F,
-        val volume: Float = 0F,
+        val volume: Float = 1F,
         val balance: Pair<Float, Float> = Pair(1F, 1F)
     )
 
@@ -187,7 +187,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     var (sample_handle, start_frame) = item.sample_handles[real_index]
                     if (sample_handle == null) {
                         sample_handle = item.handle.copy()
-                        println("INIT HANDLE, ${item.handle.uuid}, ${sample_handle.uuid}")
                         sample_handle.set_working_frame(start_frame)
                         item.sample_handles[real_index] = Pair(sample_handle, 0)
                     }
@@ -208,7 +207,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
             }
         }
-
 
         val output = HashMap<Int, Pair<Float, Array<CompoundFrame>>>()
         for ((key, sample_handle, index) in sample_handles_to_use) {
@@ -232,16 +230,15 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val tmp = mutableListOf<Float>()
         for (f in range) {
             var frame_value = sample_handle.get_next_frame() ?: break
-            tmp.add(frame_value.first)
+            tmp.add(frame_value)
             // NOTE: It may be insufficient to limit the pan and I rather may need
             // to modify the outgoing pan relatively to the sample_handle.pan
             output[f] = CompoundFrame(
-                frame_value.first,
-                frame_value.second,
+                frame_value,
+                1f,
                 sample_handle.get_next_balance()
             )
         }
-        println(tmp.subList(0, 100))
         if (!sample_handle.is_dead) {
             sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.process_count - 1) / this.process_count))
         }

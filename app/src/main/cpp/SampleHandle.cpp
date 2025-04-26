@@ -9,19 +9,18 @@
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct SampleHandle *)ptr_long;
-    std::optional<std::tuple<float, float>> frame = ptr->get_next_frame();
-    float intermediate[3];
+    std::optional<float> frame = ptr->get_next_frame();
+    float intermediate[2];
     if (frame.has_value()) {
-        intermediate[0] = std::get<0>(frame.value());
-        intermediate[1] = std::get<1>(frame.value());
-        intermediate[2] = 1;
+        intermediate[0] = frame.value();
+        intermediate[1] = 1;
     } else {
-        intermediate[2] = 0;
+        intermediate[0] = 0;
+        intermediate[1] = 0;
     }
 
-    jfloatArray output = env->NewFloatArray(3);
-    env->SetFloatArrayRegion(output, 0, 3, intermediate);
-
+    jfloatArray output = env->NewFloatArray(2);
+    env->SetFloatArrayRegion(output, 0, 2, intermediate);
     return output;
 }
 
@@ -177,12 +176,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->sample_rate = ptr->sample_rate;
     new_handle->initial_attenuation = ptr->initial_attenuation;
     new_handle->loop_points = ptr->loop_points;
-
-    if (ptr->loop_points.has_value()) {
-        __android_log_write(ANDROID_LOG_ERROR, "LOOP", std::to_string(std::get<1>(ptr->loop_points.value())).c_str());
-    } else {
-        __android_log_write(ANDROID_LOG_ERROR, "LOOP", "______");
-    }
 
     new_handle->stereo_mode = ptr->stereo_mode;
     new_handle->pitch_shift = ptr->pitch_shift;

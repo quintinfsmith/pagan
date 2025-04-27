@@ -12,7 +12,7 @@ data class Sample(val ptr: Long) {
         data_placeholder: Pair<Int, Int>,
     ): this(
         create(
-            name.toByteArray(),
+            name,
             loopStart,
             loopEnd,
             sampleRate,
@@ -26,7 +26,7 @@ data class Sample(val ptr: Long) {
 
     companion object {
         external fun create(
-            name: ByteArray,
+            name: String,
             loopStart: Int,
             loopEnd: Int,
             sampleRate: Int,
@@ -71,7 +71,7 @@ data class Sample(val ptr: Long) {
     external fun get_sample_type_inner(ptr: Long): Int
     external fun set_data_inner(ptr: Long, data: ShortArray)
     external fun jni_data_placeholders(ptr: Long): IntArray
-    external fun get_name_inner(ptr: Long): ByteArray
+    external fun get_name_inner(ptr: Long): String
     external fun get_data_inner(ptr: Long): ShortArray
     external fun get_pitch_correction(ptr: Long): Int
     external fun get_loop_start(ptr: Long): Int

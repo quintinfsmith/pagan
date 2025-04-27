@@ -245,6 +245,7 @@ class SampleHandle {
             PitchedBuffer** data_buffers,
             int buffer_count
         ) {
+
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
             this->data_size = data_size;
@@ -264,7 +265,10 @@ class SampleHandle {
         }
 
         void secondary_setup(PitchedBuffer** input_buffers, int count) {
-            this->RC = 1 / (this->filter_cutoff * 2 * M_PI);
+            this->RC = 1.0 / (filter_cutoff * M_2_PI);
+            float dt =  1.0 / this->sample_rate;
+            this->smoothing_factor = dt / (this->RC + dt);
+
             this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
             this->working_frame = 0;
             this->release_frame = std::nullopt;
@@ -408,6 +412,20 @@ class SampleHandle {
 
         std::tuple<float, float> get_next_balance() {
             // TODO
+        }
+
+        int get_next_frames(float* buffer, int target_size) {
+            int actual_size = target_size;
+            for (int i = 0; i < target_size; i++) {
+                std::optional<float> frame = this->get_next_frame();
+                if (frame.has_value()) {
+                    buffer[i] = frame.value();
+                } else {
+                    actual_size = i;
+                    break;
+                }
+            }
+            return actual_size;
         }
 
         std::optional<float> get_next_frame() {

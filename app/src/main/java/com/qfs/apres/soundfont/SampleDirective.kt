@@ -90,7 +90,6 @@ class SampleDirective: Generated() {
 
             0x36 -> {
                 this.sampleMode = generator.asInt()
-                println("SAMPLE MODE: ${this.sampleMode}")
             }
 
             0x39 -> {

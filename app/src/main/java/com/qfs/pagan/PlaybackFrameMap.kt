@@ -232,7 +232,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
-                println("SETTING HANDLE ${handle.uuid}")
                 handle.release_frame = end_frame - start_frame
 
                 if (next_event_frame != null) {

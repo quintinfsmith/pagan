@@ -7,30 +7,11 @@
 
 #include "Sample.h"
 
-std::string jbytearray_to_string(JNIEnv* env, jbyteArray input) {
-    std::string output;
-    int size = env->GetArrayLength(input);
-    jbyte* raw_jbytes = env->GetByteArrayElements(input, 0);
-
-    for (int i = 0; i < size; i++) {
-        output.push_back(raw_jbytes[i]);
-    }
-
-    return output;
-}
-
-jbyteArray string_to_jbytearray(JNIEnv * env, const std::string &native_string) {
-    int string_length = native_string.length();
-    jbyteArray arr = env->NewByteArray(string_length);
-    env->SetByteArrayRegion(arr, 0, string_length, (jbyte*)native_string.c_str());
-    return arr;
-}
-
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
         JNIEnv* env,
         jobject,
-        jbyteArray name,
+        jstring name,
         jint loop_start,
         jint loop_end,
         jint sample_rate,
@@ -40,20 +21,9 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
         jint placeholder_start,
         jint placeholder_end
 ) {
-   // Sample sample = Sample(
-   //     jbytearray_to_string(env, name),
-   //     loop_start,
-   //     loop_end,
-   //     sample_rate,
-   //     original_pitch,
-   //     pitch_correction,
-   //     sample_type,
-   // placeholder_start,
-   // placeholder_end
-   // );
     auto* sample = (Sample*)malloc(sizeof(Sample));
-    sample->name = "TODO";
-    //sample->name = std::move(jbytearray_to_string(env, name));
+    sample->name = env->GetStringUTFChars(name, nullptr);
+
     sample->loop_start = loop_start;
     sample->loop_end = loop_end;
     sample->sample_rate = sample_rate;
@@ -62,6 +32,7 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
     sample->sample_type = sample_type;
     sample->data_placeholder_start = placeholder_start;
     sample->data_placeholder_end = placeholder_end;
+
 
     return (jlong)sample;
 }
@@ -121,10 +92,10 @@ Java_com_qfs_apres_soundfont_Sample_jni_1data_1placeholders(JNIEnv* env, jobject
     return jint_output;
 }
 
-extern "C" JNIEXPORT jbyteArray JNICALL
+extern "C" JNIEXPORT jstring JNICALL
 Java_com_qfs_apres_soundfont_Sample_get_1name_1inner(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
-    return string_to_jbytearray(env, sample->name);
+    return env->NewStringUTF(sample->name);
 }
 
 extern "C" JNIEXPORT jint JNICALL

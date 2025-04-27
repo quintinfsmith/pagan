@@ -8,7 +8,7 @@
 #include <vector>
 
 struct Sample {
-    char *name;
+    const char* name;
     int loop_start;
     int loop_end;
     int sample_rate;
@@ -20,7 +20,7 @@ struct Sample {
     short* data;
     public:
         explicit Sample(
-            char* name,
+            const char* name,
             int loop_start,
             int loop_end,
             int sample_rate,

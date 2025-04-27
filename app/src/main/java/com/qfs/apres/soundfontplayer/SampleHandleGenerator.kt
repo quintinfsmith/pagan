@@ -59,7 +59,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, instrument_directive, preset)
         val handles = this.sample_data_map[map_key]!!
-
         val volume_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F))), 0)
         val pan_profile = SampleHandle.ProfileBuffer(arrayOf(Pair(0, Pair(0F,0F))), 0)
 

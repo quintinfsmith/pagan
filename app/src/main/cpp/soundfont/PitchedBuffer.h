@@ -72,7 +72,7 @@ public:
         int unpitched_position = (int)((float)this->virtual_position * this->adjusted_pitch);
         this->virtual_position += 1;
 
-        float output = (float)this->get_real_frame(unpitched_position) / (float)16384; //SHORT MAX
+        float output = (float)this->get_real_frame(unpitched_position) / (float)32768; //SHORT MAX
         return output;
     }
 
@@ -92,7 +92,7 @@ public:
     }
 
     bool is_overflowing() {
-        return (int)((float)this->virtual_position * this->adjusted_pitch) - this->start > this->end;
+        return (int)((float)this->virtual_position * this->adjusted_pitch) - this->start >= this->end;
     }
 
     void set_position(int frame) {

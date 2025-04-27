@@ -30,8 +30,6 @@ class PitchedBuffer(var ptr: Long) {
     val position: Int
         get() = get_virtual_position(this.ptr)
 
-    //var _range = range ?: 0 until data.size
-
     private var virtual_position: Int = 0
     var pitch_adjustment: Float = 1F
 

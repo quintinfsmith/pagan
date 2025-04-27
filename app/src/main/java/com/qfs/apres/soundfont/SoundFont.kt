@@ -164,7 +164,7 @@ class SoundFont(file_path: String) {
             output.add(sample)
             done_indices.add(working_index)
 
-            if (next_index != null) {
+            if (next_index != null && next_index != 0) {
                 working_index = next_index
             } else {
                 break
@@ -173,7 +173,6 @@ class SoundFont(file_path: String) {
 
         return output
     }
-
 
 
     fun get_sample(sample_index: Int): Pair<Sample, Int?> {

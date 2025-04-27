@@ -293,9 +293,9 @@ class SampleHandle(val ptr: Long) {
             frame_array[0]
         }
     }
-    external fun get_next_frames_jni(ptr: Long, size: Int): FloatArray
-    fun get_next_frames(size: Int): FloatArray {
-        return get_next_frames_jni(this.ptr, size)
+    external fun get_next_frames_jni(ptr: Long, size: Int, left_padding: Int): FloatArray
+    fun get_next_frames(left_padding: Int, size: Int): FloatArray {
+        return get_next_frames_jni(this.ptr, size, left_padding)
     }
 
     external fun release_note_jni(ptr: Long)

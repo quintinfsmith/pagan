@@ -21,6 +21,7 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
         jint placeholder_start,
         jint placeholder_end
 ) {
+
     auto* sample = (Sample*)malloc(sizeof(Sample));
     sample->name = env->GetStringUTFChars(name, nullptr);
 
@@ -32,7 +33,6 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
     sample->sample_type = sample_type;
     sample->data_placeholder_start = placeholder_start;
     sample->data_placeholder_end = placeholder_end;
-
 
     return (jlong)sample;
 }

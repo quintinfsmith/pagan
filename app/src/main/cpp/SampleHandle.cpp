@@ -25,13 +25,13 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frame_1jni(JNIEnv* en
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size) {
+Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
     auto *ptr = (struct SampleHandle *)ptr_long;
     jfloat buffer[size];
-    int actual_size = ptr->get_next_frames(buffer, size);
+    ptr->get_next_frames(buffer, size, left_padding);
 
-    jfloatArray output = env->NewFloatArray(actual_size);
-    env->SetFloatArrayRegion(output, 0, actual_size, buffer);
+    jfloatArray output = env->NewFloatArray(size);
+    env->SetFloatArrayRegion(output, 0, size, buffer);
 
     return output;
 }
@@ -209,8 +209,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
     new_handle->secondary_setup(ptr->data_buffers, ptr->buffer_count);
 
-    new_handle->active_buffer = ptr->active_buffer;
-    new_handle->working_frame = ptr->working_frame;
     if (ptr->release_frame.has_value()) {
         new_handle->release_frame = ptr->release_frame.value();
     } else {

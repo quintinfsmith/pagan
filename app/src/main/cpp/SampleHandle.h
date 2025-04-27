@@ -295,7 +295,7 @@ class SampleHandle {
                 ptr->start = 0;
                 ptr->end = std::get<0>(this->loop_points.value());
                 ptr->is_loop = false;
-                ptr->pitch_adjustment = 1;
+                ptr->repitch(1);
                 this->data_buffers[0] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
@@ -352,7 +352,6 @@ class SampleHandle {
             }
 
             if (this->release_frame.has_value() && this->working_frame >= this->release_frame.value() + this->volume_envelope->frames_release) {
-
                 this->is_dead = true;
                 return;
             }
@@ -414,9 +413,13 @@ class SampleHandle {
             // TODO
         }
 
-        int get_next_frames(float* buffer, int target_size) {
+        void get_next_frames(float* buffer, int target_size, int left_padding) {
             int actual_size = target_size;
-            for (int i = 0; i < target_size; i++) {
+            for (int i = 0; i < left_padding; i++) {
+                buffer[i] = 0;
+            }
+
+            for (int i = left_padding; i < target_size; i++) {
                 std::optional<float> frame = this->get_next_frame();
                 if (frame.has_value()) {
                     buffer[i] = frame.value();
@@ -425,7 +428,10 @@ class SampleHandle {
                     break;
                 }
             }
-            return actual_size;
+
+            for (int i = actual_size; i < target_size; i++) {
+                buffer[i] = 0;
+            }
         }
 
         std::optional<float> get_next_frame() {

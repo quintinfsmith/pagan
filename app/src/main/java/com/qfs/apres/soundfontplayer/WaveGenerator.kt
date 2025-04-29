@@ -123,11 +123,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     //array[initial_array_index + (i * 2)] += smoothed_frame * frame.balance.first
                     //array[initial_array_index + (i * 2) + 1] += smoothed_frame * frame.balance.second
                     val balance = uncompiled_array[(i * 2) + 1]
-                    if (balance > 1 || balance < -1) {
-                        println("BLANCE FUNKED $balance")
-                    }
-                    array[initial_array_index + (i * 2)] += uncompiled_array[(i * 2)]
-                    array[initial_array_index + (i * 2) + 1] += uncompiled_array[(i * 2)]
+                    array[initial_array_index + (i * 2)] += uncompiled_array[(i * 2)] * if (balance >= 0) { 1F } else { 1F + balance }
+                    array[initial_array_index + (i * 2) + 1] += uncompiled_array[(i * 2)] * if (balance <= 0) { 1F } else { 1F - balance }
                 }
 
                 latest_weights[key] = weight_value
@@ -230,6 +227,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         return chunk
     }
+
     private fun update_active_sample_handles(initial_frame: Int) {
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()

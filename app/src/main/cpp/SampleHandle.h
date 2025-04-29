@@ -112,7 +112,7 @@ class ProfileBuffer {
             if (bframe_data->frame == this->current_index) {
                 this->current_value = bframe_data->initial_value;
             } else {
-                this->current_value += bframe_data->initial_value;
+                this->current_value += bframe_data->increment;
             }
 
             float output = this->current_value;
@@ -162,7 +162,6 @@ class ProfileBuffer {
         void copy_to(ProfileBuffer* new_buffer) const {
             if (this->frames != nullptr) {
                 new_buffer->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
-                new_buffer->frames = this->frames;
                 for (int i = 0; i < this->frame_count; i++) {
                     ProfileBufferFrame* frame = this->frames[i];
                     auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
@@ -409,79 +408,55 @@ class SampleHandle {
             return this->data_buffers[this->active_buffer];
         }
 
-        std::tuple<float, float> get_next_balance() {
+        float get_next_balance() {
             float profile_pan = this->pan_profile->get_next();
-            float left_value;
-            float right_value;
+            float value;
             switch (this->stereo_mode & 0x000F) {
                 case 0x01: {
-                    if (this->pan < 0) {
-                        left_value = 1 + this->pan;
-                        right_value = 1;
-                    } else {
-                        left_value = 1;
-                        right_value = 1 - this->pan;
-                    }
+                    value = (profile_pan + this->pan) / 2;
                     break;
                 }
                 case 0x02: {
-                    left_value = 0;
-                    if (this->pan > 0) {
-                        right_value = 1 - this->pan;
-                    } else {
-                        right_value = 1;
-                    }
+                    value = (profile_pan + fmin(0, this->pan)) / 2;
                     break;
                 }
                 case 0x04: {
-                    right_value = 0;
-                    if (this->pan < 0) {
-                        left_value = 1 + this->pan;
-                    } else {
-                        left_value = 1;
-                    }
+                    value = (profile_pan + fmax(0, this->pan)) / 2;
                     break;
                 }
                 default: {
-                    // TODO: LINKED, but assume 1 for now
-                    right_value = 1;
-                    left_value = 1;
+                    // TODO: LINKED, but treat as mono for now
+                    value = (profile_pan + this->pan) / 2;
                     break;
                 }
             }
-
-            if (profile_pan < 0) {
-                left_value *= (1 + profile_pan);
-            }
-            if (profile_pan < 0) {
-                right_value *= (1 - profile_pan);
-            }
-
-            return std::make_tuple(left_value, right_value);
+            return value;
         }
 
         void get_next_frames(float* buffer, int target_size, int left_padding) {
             int actual_size = target_size;
-            for (int i = 0; i < left_padding * 2; i++) {
-                buffer[i] = 0;
+            for (int i = 0; i < left_padding; i++) {
+                buffer[i * 2] = 0;
+                buffer[(i * 2) + 1] = 0;
             }
 
-            __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(this->pan).c_str());
+            //__android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(this->pan).c_str());
             for (int i = left_padding; i < target_size; i++) {
                 std::optional<float> frame = this->get_next_frame();
-                std::tuple<float, float> working_pan = this->get_next_balance();
+                float working_pan = this->get_next_balance();
 
                 if (frame.has_value()) {
-                    buffer[(i * 2)] = frame.value() * std::get<0>(working_pan);
-                    buffer[(i * 2) + 1] = frame.value() * std::get<1>(working_pan);
+                    buffer[(i * 2)] = frame.value();
+                    buffer[(i * 2) + 1] = working_pan;
                 } else {
                     actual_size = i;
                     break;
                 }
             }
 
-            for (int i = actual_size * 2; i < target_size * 2; i++) {
-                buffer[i] = 0;
+            for (int i = actual_size; i < target_size; i++) {
+                buffer[(i * 2)] = 0;
+                buffer[(i * 2) + 1] = 0;
             }
         }
 

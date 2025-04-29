@@ -122,9 +122,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     // DEBUG
                     //array[initial_array_index + (i * 2)] += smoothed_frame * frame.balance.first
                     //array[initial_array_index + (i * 2) + 1] += smoothed_frame * frame.balance.second
-
+                    val balance = uncompiled_array[(i * 2) + 1]
+                    if (balance > 1 || balance < -1) {
+                        println("BLANCE FUNKED $balance")
+                    }
                     array[initial_array_index + (i * 2)] += uncompiled_array[(i * 2)]
-                    array[initial_array_index + (i * 2) + 1] += uncompiled_array[(i * 2) + 1]
+                    array[initial_array_index + (i * 2) + 1] += uncompiled_array[(i * 2)]
                 }
 
                 latest_weights[key] = weight_value
@@ -221,7 +224,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val output_size = this.buffer_size / this.process_count
 
         val chunk = sample_handle.get_next_frames(max(offset, 0), output_size)
-
         if (!sample_handle.is_dead) {
             sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.process_count - 1) / this.process_count))
         }

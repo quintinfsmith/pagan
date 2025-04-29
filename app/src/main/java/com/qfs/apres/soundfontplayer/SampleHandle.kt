@@ -76,7 +76,7 @@ class SampleHandle(val ptr: Long) {
                 return create(
                     IntArray(frames.size) { i: Int -> frames[i].first },
                     FloatArray(frames.size) { i: Int -> frames[i].second.first },
-                    FloatArray(frames.size) {i: Int -> frames[i].second.second },
+                    FloatArray(frames.size) { i: Int -> frames[i].second.second },
                     start_frame,
                     skip_initial_set
                 )
@@ -277,10 +277,9 @@ class SampleHandle(val ptr: Long) {
         return this.get_release_duration_jni(ptr)
     }
 
-    external fun get_next_balance_jni(ptr: Long): FloatArray
-    fun get_next_balance(): Pair<Float, Float> {
-        val v = this.get_next_balance_jni(this.ptr)
-        return Pair(v[0], v[1])
+    external fun get_next_balance_jni(ptr: Long): Float
+    fun get_next_balance(): Float {
+        return this.get_next_balance_jni(this.ptr)
     }
 
     external fun get_next_frame_jni(ptr: Long): FloatArray

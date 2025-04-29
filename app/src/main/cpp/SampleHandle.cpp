@@ -119,17 +119,10 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1release_1frame_1jni(JNIEnv*
     }
 }
 
-extern "C" JNIEXPORT jfloatArray JNICALL
+extern "C" JNIEXPORT jfloat JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1balance_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct SampleHandle *)ptr_long;
-    std::tuple<float, float> frame = ptr->get_next_balance();
-    float intermediate[2];
-    intermediate[0] = std::get<0>(frame);
-    intermediate[1] = std::get<1>(frame);
-
-    jfloatArray output = env->NewFloatArray(2);
-    env->SetFloatArrayRegion(output, 0, 2, intermediate);
-    return output;
+    return ptr->get_next_balance();
 }
 
 extern "C" JNIEXPORT jlong JNICALL

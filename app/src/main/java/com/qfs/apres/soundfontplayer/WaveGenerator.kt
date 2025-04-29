@@ -5,7 +5,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.tanh
 
@@ -82,32 +81,31 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (x in arrays.indices) {
             val separated_lines_map = arrays[x]
             val initial_array_index = array.size * x / this.process_count
-
             for ((key, pair) in separated_lines_map) {
                 // Apply the volume, pan and low-pass filter
                 val (smoothing_factor, uncompiled_array) = pair
                 var weight_value: Float? = latest_weights[key] ?: this._cached_frame_weights[key]
                 var pre_smooth_max = 0F
                 var post_smooth_max = 0F
-                val smoothed_array = FloatArray(uncompiled_array.size) { i: Int ->
-                    val frame = uncompiled_array[i]
+                // val smoothed_array = FloatArray(uncompiled_array.size) { i: Int ->
+                //     // val frame = uncompiled_array[i]
 
-                    // DEBUG
-                    //var smoothed_frame = if (smoothing_factor == 1F || weight_value == null) {
-                    //    frame.value
-                    //} else {
-                    //    weight_value!! + (smoothing_factor * (frame.value - weight_value!!))
-                    //}
+                //     // // DEBUG
+                //     // //var smoothed_frame = if (smoothing_factor == 1F || weight_value == null) {
+                //     // //    frame.value
+                //     // //} else {
+                //     // //    weight_value!! + (smoothing_factor * (frame.value - weight_value!!))
+                //     // //}
 
-                    var smoothed_frame = frame
+                //     // var smoothed_frame = frame
 
-                    pre_smooth_max = max(abs(frame), pre_smooth_max)
-                    post_smooth_max = max(abs(smoothed_frame), post_smooth_max)
+                //     // pre_smooth_max = max(abs(frame), pre_smooth_max)
+                //     // post_smooth_max = max(abs(smoothed_frame), post_smooth_max)
 
-                    weight_value = smoothed_frame
+                //     // weight_value = smoothed_frame
 
-                    smoothed_frame
-                }
+                //     // smoothed_frame
+                // }
 
                 val adj_factor = if (post_smooth_max == 0F) {
                     1F
@@ -117,16 +115,16 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                 //DEBUG
                 val volume = 1f
-                for (i in smoothed_array.indices) {
-                    val smoothed_frame = smoothed_array[i] * volume * adj_factor
+                for (i in 0 until uncompiled_array.size / 2) {
+                    //val smoothed_frame = uncompiled_array[i] * volume * adj_factor
 
                     // Adjust manual pan
                     // DEBUG
                     //array[initial_array_index + (i * 2)] += smoothed_frame * frame.balance.first
                     //array[initial_array_index + (i * 2) + 1] += smoothed_frame * frame.balance.second
 
-                    array[initial_array_index + (i * 2)] += smoothed_frame
-                    array[initial_array_index + (i * 2) + 1] += smoothed_frame
+                    array[initial_array_index + (i * 2)] += uncompiled_array[(i * 2)]
+                    array[initial_array_index + (i * 2) + 1] += uncompiled_array[(i * 2) + 1]
                 }
 
                 latest_weights[key] = weight_value

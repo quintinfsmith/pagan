@@ -462,21 +462,25 @@ class SampleHandle {
 
         void get_next_frames(float* buffer, int target_size, int left_padding) {
             int actual_size = target_size;
-            for (int i = 0; i < left_padding; i++) {
+            for (int i = 0; i < left_padding * 2; i++) {
                 buffer[i] = 0;
             }
 
+            __android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(this->pan).c_str());
             for (int i = left_padding; i < target_size; i++) {
                 std::optional<float> frame = this->get_next_frame();
+                std::tuple<float, float> working_pan = this->get_next_balance();
+
                 if (frame.has_value()) {
-                    buffer[i] = frame.value();
+                    buffer[(i * 2)] = frame.value() * std::get<0>(working_pan);
+                    buffer[(i * 2) + 1] = frame.value() * std::get<1>(working_pan);
                 } else {
                     actual_size = i;
                     break;
                 }
             }
 
-            for (int i = actual_size; i < target_size; i++) {
+            for (int i = actual_size * 2; i < target_size * 2; i++) {
                 buffer[i] = 0;
             }
         }

@@ -27,12 +27,11 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frame_1jni(JNIEnv* en
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
     auto *ptr = (struct SampleHandle *)ptr_long;
-    jfloat buffer[size];
+    jfloat buffer[size * 2];
     ptr->get_next_frames(buffer, size, left_padding);
 
-    jfloatArray output = env->NewFloatArray(size);
-    env->SetFloatArrayRegion(output, 0, size, buffer);
-
+    jfloatArray output = env->NewFloatArray(size * 2);
+    env->SetFloatArrayRegion(output, 0, size * 2, buffer);
     return output;
 }
 

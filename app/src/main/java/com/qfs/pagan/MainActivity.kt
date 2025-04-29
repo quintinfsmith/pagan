@@ -241,7 +241,6 @@ class MainActivity : AppCompatActivity() {
                             if (this@MainActivity.has_notification_permission()) {
                                 this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
                             }
-
                         }
 
                         override fun on_complete() {

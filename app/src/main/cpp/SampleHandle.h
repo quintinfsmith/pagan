@@ -410,7 +410,54 @@ class SampleHandle {
         }
 
         std::tuple<float, float> get_next_balance() {
-            // TODO
+            float profile_pan = this->pan_profile->get_next();
+            float left_value;
+            float right_value;
+            switch (this->stereo_mode & 0x000F) {
+                case 0x01: {
+                    if (this->pan < 0) {
+                        left_value = 1 + this->pan;
+                        right_value = 1;
+                    } else {
+                        left_value = 1;
+                        right_value = 1 - this->pan;
+                    }
+                    break;
+                }
+                case 0x02: {
+                    left_value = 0;
+                    if (this->pan > 0) {
+                        right_value = 1 - this->pan;
+                    } else {
+                        right_value = 1;
+                    }
+                    break;
+                }
+                case 0x04: {
+                    right_value = 0;
+                    if (this->pan < 0) {
+                        left_value = 1 + this->pan;
+                    } else {
+                        left_value = 1;
+                    }
+                    break;
+                }
+                default: {
+                    // TODO: LINKED, but assume 1 for now
+                    right_value = 1;
+                    left_value = 1;
+                    break;
+                }
+            }
+
+            if (profile_pan < 0) {
+                left_value *= (1 + profile_pan);
+            }
+            if (profile_pan < 0) {
+                right_value *= (1 - profile_pan);
+            }
+
+            return std::make_tuple(left_value, right_value);
         }
 
         void get_next_frames(float* buffer, int target_size, int left_padding) {

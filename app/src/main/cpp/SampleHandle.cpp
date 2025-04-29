@@ -120,11 +120,17 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1release_1frame_1jni(JNIEnv*
     }
 }
 
-extern "C" JNIEXPORT jfloat JNICALL
+extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1balance_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    return 0;
-    //auto *ptr = (struct SampleHandle *)ptr_long;
-    //return ptr->get_next_balance();
+    auto *ptr = (struct SampleHandle *)ptr_long;
+    std::tuple<float, float> frame = ptr->get_next_balance();
+    float intermediate[2];
+    intermediate[0] = std::get<0>(frame);
+    intermediate[1] = std::get<1>(frame);
+
+    jfloatArray output = env->NewFloatArray(2);
+    env->SetFloatArrayRegion(output, 0, 2, intermediate);
+    return output;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
@@ -256,7 +262,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_00024Compani
     jfloat release,
     jfloat sustain_attenuation
 ) {
-
     auto* envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
     envelope->delay = delay;
     envelope->attack = attack;
@@ -313,7 +318,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companio
     jfloat* _increments = env->GetFloatArrayElements(increments, 0);
 
     for (int i = 0; i < array_length; i++) {
-        ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
+        auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
         ptr->frame = (int)_indices[i];
         ptr->initial_value = (float)_values[i];
         ptr->increment = (float)_increments[i];
@@ -364,9 +369,9 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_destroy_1jni
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct SampleHandle *) ptr_long;
-    //free(ptr->volume_envelope);
-    //free(ptr->pan_profile);
-    //free(ptr->volume_profile);
-    //free(ptr);
+    free(ptr->volume_envelope);
+    free(ptr->pan_profile);
+    free(ptr->volume_profile);
+    free(ptr);
 }
 

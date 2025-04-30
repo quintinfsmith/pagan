@@ -41,6 +41,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private val _cached_frame_weights = HashMap<Int, Float>() // Store 'previous frame's between chunks so smoothing can be accurately applied
 
 
+    external fun merge_arrays(arrays: Array<FloatArray>, frame_count: Int): FloatArray
     external fun tanh_array(array: FloatArray): FloatArray
     fun generate(): FloatArray {
         val working_array = FloatArray(this.buffer_size * 2)
@@ -72,54 +73,16 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for (x in arrays.indices) {
             val separated_lines_map = arrays[x]
             val initial_array_index = working_array.size * x / this.process_count
-            for ((key, pair) in separated_lines_map) {
-                // Apply the volume, pan and low-pass filter
-                val (smoothing_factor, uncompiled_array) = pair
-                var weight_value: Float? = latest_weights[key] ?: this._cached_frame_weights[key]
-                var pre_smooth_max = 0F
-                var post_smooth_max = 0F
-                // val smoothed_array = FloatArray(uncompiled_array.size) { i: Int ->
-                //     // val frame = uncompiled_array[i]
-
-                //     // // DEBUG
-                //     // //var smoothed_frame = if (smoothing_factor == 1F || weight_value == null) {
-                //     // //    frame.value
-                //     // //} else {
-                //     // //    weight_value!! + (smoothing_factor * (frame.value - weight_value!!))
-                //     // //}
-
-                //     // var smoothed_frame = frame
-
-                //     // pre_smooth_max = max(abs(frame), pre_smooth_max)
-                //     // post_smooth_max = max(abs(smoothed_frame), post_smooth_max)
-
-                //     // weight_value = smoothed_frame
-
-                //     // smoothed_frame
-                // }
-
-                val adj_factor = if (post_smooth_max == 0F) {
-                    1F
-                } else {
-                    pre_smooth_max / post_smooth_max
-                }
-
-                //DEBUG
-                val volume = 1f
-                for (i in 0 until uncompiled_array.size / 2) {
-                    //val smoothed_frame = uncompiled_array[i] * volume * adj_factor
-
-                    // Adjust manual pan
-                    // DEBUG
-                    //array[initial_array_index + (i * 2)] += smoothed_frame * frame.balance.first
-                    //array[initial_array_index + (i * 2) + 1] += smoothed_frame * frame.balance.second
-                    val balance = uncompiled_array[(i * 2) + 1]
-                    working_array[initial_array_index + (i * 2)] += uncompiled_array[(i * 2)] * if (balance >= 0) { 1F } else { 1F + balance }
-                    working_array[initial_array_index + (i * 2) + 1] += uncompiled_array[(i * 2)] * if (balance <= 0) { 1F } else { 1F - balance }
-                }
-
-                latest_weights[key] = weight_value
+            val keys = separated_lines_map.keys.toList()
+            val arrays_to_merge = Array(keys.size) { i: Int ->
+                separated_lines_map[keys[i]]!!.second
             }
+            val merged_array = merge_arrays(arrays_to_merge, this.buffer_size / this.process_count)
+            for (i in 0 until merged_array.size / 2) {
+                working_array[initial_array_index + (i * 2)] = merged_array[i * 2]
+                working_array[initial_array_index + (i * 2) + 1] = merged_array[(i * 2) + 1]
+            }
+
         }
 
         for ((k, v) in latest_weights) {
@@ -130,27 +93,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
 
-        // Run the tanh() on all cores
-
-        //runBlocking {
-        //    val chunk_size = working_array.size / this@WaveGenerator.process_count
-        //    val tmp = Array(this@WaveGenerator.process_count) { i: Int ->
-        //        val start_index = i * chunk_size
-        //        async(Dispatchers.Default) {
-        //            for (j in 0 until chunk_size) {
-        //                working_array[start_index + j] = tanh(working_array[start_index + j])
-        //            }
-        //        }
-        //    }
-
-        //    Array(tmp.size) { i: Int ->
-        //        tmp[i].await()
-        //    }
-        //}
-
         val output_array = this.tanh_array(working_array)
 
-            this.frame += this.buffer_size
+        this.frame += this.buffer_size
 
         if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
             throw DeadException()

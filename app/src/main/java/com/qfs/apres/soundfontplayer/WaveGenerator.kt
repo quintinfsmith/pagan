@@ -92,7 +92,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             this._cached_frame_weights.put(k, v)
         }
 
-
         val output_array = this.tanh_array(working_array)
 
         this.frame += this.buffer_size
@@ -101,7 +100,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw DeadException()
         }
 
-        println("---GEN TIME: ${System.nanoTime() - start_ts}")
+        val delta = 1000000 / (System.nanoTime() - start_ts).toFloat()
+        val max_delta = this.buffer_size.toFloat() / this.sample_rate.toFloat()
+        println("---GEN TIME: $delta | $max_delta")
 
         return output_array
     }

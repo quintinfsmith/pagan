@@ -1,11 +1,10 @@
+#include "Sample.h"
 #include <jni.h>
-#include <android/log.h>
 #include <string>
 #include <iostream>
 #include <string>
 #include <exception>
 
-#include "Sample.h"
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfont_Sample_00024Companion_create(

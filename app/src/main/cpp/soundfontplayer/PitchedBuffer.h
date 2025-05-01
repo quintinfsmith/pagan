@@ -110,6 +110,6 @@ public:
         new_buffer->virtual_size = this->virtual_size;
         new_buffer->adjusted_pitch = this->adjusted_pitch;
     }
-
 };
+
 #endif //PAGAN_PITCHEDBUFFER_H

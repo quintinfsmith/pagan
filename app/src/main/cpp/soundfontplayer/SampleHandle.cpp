@@ -1,9 +1,4 @@
-//
-// Created by pent on 4/19/25.
-//
-
 #include "SampleHandle.h"
-#include <android/log.h>
 #include <string>
 
 extern "C" JNIEXPORT jfloatArray JNICALL
@@ -156,7 +151,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->stereo_mode = stereo_mode;
     handle->volume_envelope = (struct VolumeEnvelope *)volume_envelope_ptr;
     handle->pitch_shift = pitch_shift;
-    __android_log_write(ANDROID_LOG_DEBUG, "CREATE", std::to_string(handle->pitch_shift).c_str());
     handle->filter_cutoff = filter_cutoff;
     handle->pan = pan;
     handle->volume_profile = (struct ProfileBuffer *)volume_profile_ptr;
@@ -190,7 +184,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
     new_handle->stereo_mode = ptr->stereo_mode;
     new_handle->pitch_shift = ptr->pitch_shift;
-    __android_log_write(ANDROID_LOG_DEBUG, "COPY", std::to_string(ptr->pitch_shift).c_str());
     new_handle->filter_cutoff = ptr->filter_cutoff;
     new_handle->pan = ptr->pan;
 
@@ -243,123 +236,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1smoothing_1factor_1jni(JNIE
     return ptr->smoothing_factor;
 }
 
-
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_00024Companion_create(
-    JNIEnv* env,
-    jobject,
-    jint sample_rate,
-    jfloat delay,
-    jfloat attack,
-    jfloat hold,
-    jfloat decay,
-    jfloat release,
-    jfloat sustain_attenuation
-) {
-    auto* envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
-    envelope->delay = delay;
-    envelope->attack = attack;
-    envelope->hold = hold;
-    envelope->decay = decay;
-    envelope->release = release;
-    envelope->sustain_attenuation = sustain_attenuation;
-    envelope->set_sample_rate(sample_rate);
-
-    return (jlong)envelope;
-}
-
-extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_get_1frames_1release(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
-    return ptr->frames_release;
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_set_1frames_1release(JNIEnv* env, jobject, jlong ptr_long, jint frames_release) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
-    ptr->frames_release = frames_release;
-}
-
-extern "C" JNIEXPORT jfloat JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_get_1release(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
-    return ptr->release;
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_set_1release(JNIEnv* env, jobject, jlong ptr_long, jfloat new_value) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
-    ptr->set_release(new_value);
-}
-
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companion_create(
-    JNIEnv* env,
-    jobject,
-    jintArray indices,
-    jfloatArray values,
-    jfloatArray increments,
-    jint start_frame,
-    jboolean skip_set
-) {
-    auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
-
-    int array_length = env->GetArrayLength(indices);
-    auto* vec = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * array_length);
-
-    jint* _indices = env->GetIntArrayElements(indices, 0);
-    jfloat* _values = env->GetFloatArrayElements(values, 0);
-    jfloat* _increments = env->GetFloatArrayElements(increments, 0);
-
-    for (int i = 0; i < array_length; i++) {
-        auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
-        ptr->frame = (int)_indices[i];
-        ptr->initial_value = (float)_values[i];
-        ptr->increment = (float)_increments[i];
-        vec[i] = ptr;
-    }
-
-    buffer->frames = vec;
-    buffer->frame_count = array_length;
-    buffer->start_frame = start_frame;
-
-    buffer->current_frame = start_frame;
-    buffer->current_index = 0;
-    buffer->current_value = 0;
-    buffer->next_frame_trigger = -1;
-    if (!skip_set) {
-        buffer->set_frame(start_frame);
-    }
-
-    return (jlong)buffer;
-}
-
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_copy_1jni(
-        JNIEnv* env,
-        jobject,
-        jlong ptr_long
-) {
-    auto *ptr = (struct ProfileBuffer *) ptr_long;
-
-    auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
-    ptr->copy_to(buffer);
-
-    return (jlong)buffer;
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct ProfileBuffer *) ptr_long;
-    free(ptr);
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
-    free(ptr);
-}
-
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct SampleHandle *) ptr_long;
@@ -368,4 +244,3 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobjec
     free(ptr->volume_profile);
     free(ptr);
 }
-

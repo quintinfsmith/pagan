@@ -198,11 +198,11 @@ class Generated {
                         break;
                     }
                     case GeneratorOperation::TuningFine: {
-                        this->tuning_cent = generator.get_int();
+                        this->tuning_cent = generator.get_int_signed();
                         break;
                     }
                     case GeneratorOperation::TuningCoarse: {
-                        this->tuning_semi = generator.get_int();
+                        this->tuning_semi = generator.get_int_signed();
                         break;
                     }
                     case GeneratorOperation::ScaleTuning: {

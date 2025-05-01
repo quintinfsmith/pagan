@@ -156,6 +156,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->stereo_mode = stereo_mode;
     handle->volume_envelope = (struct VolumeEnvelope *)volume_envelope_ptr;
     handle->pitch_shift = pitch_shift;
+    __android_log_write(ANDROID_LOG_DEBUG, "CREATE", std::to_string(handle->pitch_shift).c_str());
     handle->filter_cutoff = filter_cutoff;
     handle->pan = pan;
     handle->volume_profile = (struct ProfileBuffer *)volume_profile_ptr;
@@ -189,6 +190,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
     new_handle->stereo_mode = ptr->stereo_mode;
     new_handle->pitch_shift = ptr->pitch_shift;
+    __android_log_write(ANDROID_LOG_DEBUG, "COPY", std::to_string(ptr->pitch_shift).c_str());
     new_handle->filter_cutoff = ptr->filter_cutoff;
     new_handle->pan = ptr->pan;
 

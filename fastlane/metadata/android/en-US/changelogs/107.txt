@@ -1,0 +1,3 @@
+Added a dialog if the app crashes to save the stacktrace. Makes it easier for me to solve problems.
+bugfix: some instruments out of tune
+bugfix: midi devices play past end of song

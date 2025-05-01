@@ -913,7 +913,7 @@ class OpusLayerBaseUnitTest {
         )
 
         assertEquals(
-            3, // SongPositionPoitner, NoteOff, NoteOff
+            2, // NoteOff, NoteOff
             event_map[480]!!.size
         )
 

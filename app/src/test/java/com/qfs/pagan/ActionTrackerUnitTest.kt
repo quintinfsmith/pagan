@@ -14,6 +14,7 @@ class ActionTrackerUnitTest {
         for (enum in ActionTracker.TrackedAction.values()) {
             val input = when (enum) {
                 // -------------- No arguments --------------
+                ActionTracker.TrackedAction.RemoveController,
                 ActionTracker.TrackedAction.ToggleControllerVisibility,
                 ActionTracker.TrackedAction.TogglePercussionVisibility,
                 ActionTracker.TrackedAction.Unset,
@@ -33,6 +34,7 @@ class ActionTrackerUnitTest {
                 }
 
                 // ------- Boolean ------------
+                ActionTracker.TrackedAction.AllowMidiPlayback,
                 ActionTracker.TrackedAction.GoBack,
                 ActionTracker.TrackedAction.SetClipNotes,
                 ActionTracker.TrackedAction.SetRelativeModeVisibility -> {
@@ -43,7 +45,6 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.SetTransitionAtCursor,
                 ActionTracker.TrackedAction.ShowLineController,
                 ActionTracker.TrackedAction.ShowChannelController,
-                ActionTracker.TrackedAction.RemoveController,
                 ActionTracker.TrackedAction.SetSoundFont,
                 ActionTracker.TrackedAction.SetProjectName,
                 ActionTracker.TrackedAction.DeleteSoundFont,
@@ -57,6 +58,9 @@ class ActionTrackerUnitTest {
                 }
 
                 // ------- Single Int Argument ----------------
+                ActionTracker.TrackedAction.MuteChannel,
+                ActionTracker.TrackedAction.UnMuteChannel,
+                ActionTracker.TrackedAction.ForceOrientation,
                 ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
                 ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
                 ActionTracker.TrackedAction.SetPanAtCursor,
@@ -144,7 +148,9 @@ class ActionTrackerUnitTest {
                 }
 
 
-
+                ActionTracker.TrackedAction.SwapChannels,
+                ActionTracker.TrackedAction.MuteLine,
+                ActionTracker.TrackedAction.UnMuteLine,
                 ActionTracker.TrackedAction.CursorSelectLine -> {
                     Pair(enum, listOf(0, 1))
                 }
@@ -186,6 +192,8 @@ class ActionTrackerUnitTest {
                     val test_ints = arrayOf(0, 0, 1, 0)
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
+
+
             }
 
             val json_name = JSONString(enum.name)
@@ -195,6 +203,7 @@ class ActionTrackerUnitTest {
                 "Failed to convert ${enum.name} to json Correctly",
                 when (enum) {
                     // -------------- No arguments --------------
+                    ActionTracker.TrackedAction.RemoveController,
                     ActionTracker.TrackedAction.ToggleControllerVisibility,
                     ActionTracker.TrackedAction.TogglePercussionVisibility,
                     ActionTracker.TrackedAction.Unset,
@@ -214,6 +223,7 @@ class ActionTrackerUnitTest {
                     }
 
                     // ------- Boolean ------------
+                    ActionTracker.TrackedAction.AllowMidiPlayback,
                     ActionTracker.TrackedAction.GoBack,
                     ActionTracker.TrackedAction.SetClipNotes,
                     ActionTracker.TrackedAction.SetRelativeModeVisibility -> {
@@ -224,7 +234,6 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.SetTransitionAtCursor,
                     ActionTracker.TrackedAction.ShowLineController,
                     ActionTracker.TrackedAction.ShowChannelController,
-                    ActionTracker.TrackedAction.RemoveController,
                     ActionTracker.TrackedAction.SetSoundFont,
                     ActionTracker.TrackedAction.SetProjectName,
                     ActionTracker.TrackedAction.DeleteSoundFont,
@@ -237,6 +246,9 @@ class ActionTrackerUnitTest {
                     }
 
                     // ------- Single Int Argument ----------------
+                    ActionTracker.TrackedAction.ForceOrientation,
+                    ActionTracker.TrackedAction.MuteChannel,
+                    ActionTracker.TrackedAction.UnMuteChannel,
                     ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
                     ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
                     ActionTracker.TrackedAction.SetPanAtCursor,
@@ -300,6 +312,9 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, string)
                     }
 
+                    ActionTracker.TrackedAction.SwapChannels,
+                    ActionTracker.TrackedAction.MuteLine,
+                    ActionTracker.TrackedAction.UnMuteLine,
                     ActionTracker.TrackedAction.CursorSelectLine -> {
                         val test_ints = listOf(0, 1)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
@@ -345,7 +360,6 @@ class ActionTrackerUnitTest {
                         val test_ints = arrayOf(0, 0, 1, 0)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
-
                 },
                 json_item
             )

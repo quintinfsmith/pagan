@@ -333,17 +333,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val path = this.getExternalFilesDir(null).toString()
+        val file = File("$path/bkp_crashreport.log")
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
-                val path = this.getExternalFilesDir(null).toString()
-                val file = File("$path/bkp_crashreport.log")
                 val content = file.readText()
-
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                     FileOutputStream(it.fileDescriptor).write(content.toByteArray())
                     file.delete()
                 }
             }
+        } else {
+            file.delete()
         }
     }
 
@@ -367,7 +368,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -1407,36 +1407,24 @@ class MainActivity : AppCompatActivity() {
     fun update_channel_instruments(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (index == null) {
-            if (this._feedback_sample_manager != null) {
+            this._feedback_sample_manager?.let { handle_manager: SampleHandleManager ->
                 for (channel in opus_manager.get_all_channels()) {
                     val midi_channel = channel.get_midi_channel()
                     val (midi_bank, midi_program) = channel.get_instrument()
                     this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
                     this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
 
-                    this._feedback_sample_manager!!.select_bank(
-                        midi_channel,
-                        midi_bank,
-                    )
-                    this._feedback_sample_manager!!.change_program(
-                        midi_channel,
-                        midi_program,
-                    )
+                    handle_manager.select_bank(midi_channel, midi_bank)
+                    handle_manager.change_program(midi_channel, midi_program)
                 }
             }
-            // Don't need to update anything but percussion here
-            val midi_channel = opus_manager.percussion_channel.get_midi_channel()
-            val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
 
-            if (this._sample_handle_manager != null) {
-                this._sample_handle_manager!!.select_bank(
-                    midi_channel,
-                    midi_bank
-                )
-                this._sample_handle_manager!!.change_program(
-                    midi_channel,
-                    midi_program
-                )
+            this._sample_handle_manager?.let { handle_manager: SampleHandleManager ->
+                // Don't need to update anything but percussion here
+                val midi_channel = opus_manager.percussion_channel.get_midi_channel()
+                val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
+                handle_manager.select_bank(midi_channel, midi_bank)
+                handle_manager.change_program(midi_channel, midi_program)
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
@@ -1488,7 +1476,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (this._feedback_sample_manager != null) {
+
+        this._feedback_sample_manager?.let { handle_manager : SampleHandleManager ->
             if (this._temporary_feedback_devices[this._current_feedback_device] == null) {
                 this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
             }
@@ -1503,7 +1492,7 @@ class MainActivity : AppCompatActivity() {
 
             this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
-        } else {
+        } ?: {
             try {
                 this._midi_feedback_dispatcher.play_note(
                     midi_channel,
@@ -1515,7 +1504,7 @@ class MainActivity : AppCompatActivity() {
             } catch (e: VirtualMidiInputDevice.DisconnectedException) {
                 // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
             }
-        }
+        }()
     }
 
     fun import_project(path: String) {
@@ -1609,12 +1598,10 @@ class MainActivity : AppCompatActivity() {
 
         this.reinit_playback_device()
         this.connect_feedback_device()
-
         this.update_channel_instruments()
         this.populate_active_percussion_names()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()
-
             val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             // Should always be null since this can only be changed from a different menu
             if (channel_recycler.adapter != null) {

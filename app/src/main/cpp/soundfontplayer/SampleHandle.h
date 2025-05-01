@@ -6,193 +6,14 @@
 #define PAGAN_SAMPLEHANDLE_H
 
 #include <jni.h>
-#include <vector>
 #include <string>
 #include <sstream>
 #include <unordered_map>
-#include "soundfont/PitchedBuffer.cpp"
-#include "soundfont/PitchedBuffer.h"
+#include "PitchedBuffer.h"
+#include "ProfileBuffer.h"
+#include "VolumeEnvelope.h"
 #include <cmath>
 #include <android/log.h>
-
-class VolumeEnvelope {
-    public:
-        int sample_rate;
-        float delay;
-        float attack;
-        float hold;
-        float decay;
-        float release;
-        int frames_delay;
-        int frames_attack;
-        int frames_hold;
-        int frames_decay;
-        int frames_release;
-        float sustain_attenuation;
-        float true_sustain_attenuation;
-
-        explicit VolumeEnvelope(
-            int sample_rate,
-            float delay,
-            float attack,
-            float hold,
-            float decay,
-            float release,
-            float sustain_attenuation
-        ) {
-            this->delay = delay;
-            this->attack = attack;
-            this->hold = hold;
-            this->decay = decay;
-            this->release = release;
-            this->sustain_attenuation = sustain_attenuation;
-            this->set_sample_rate(sample_rate);
-        }
-
-        void set_sample_rate(int sample_rate) {
-            this->sample_rate = sample_rate;
-            auto float_rate = (float)sample_rate;
-            this->frames_delay = (int)(float_rate * this->delay);
-            this->frames_hold = (int)(float_rate * this->hold);
-            this->frames_attack = (int)(float_rate * this->attack);
-            this->frames_hold = (int)(float_rate * this->hold);
-            this->frames_decay = (int)(float_rate * this->decay);
-            this->frames_release = (int)(float_rate * this->release);
-        }
-
-        void copy_to(VolumeEnvelope* other) {
-            other->delay = this->delay;
-            other->attack = this->attack;
-            other->hold = this->hold;
-            other->decay = this->decay;
-            other->release = this->release;
-            other->sustain_attenuation = this->sustain_attenuation;
-            other->set_sample_rate(this->sample_rate);
-        }
-};
-
-struct ProfileBufferFrame {
-    int frame;
-    float initial_value;
-    float increment;
-};
-
-class vector;
-
-class ProfileBuffer {
-    public:
-        ProfileBufferFrame** frames;
-        int frame_count;
-        int current_frame;
-        int current_index;
-        float current_value;
-        int next_frame_trigger;
-        int start_frame;
-
-        explicit ProfileBuffer(std::vector<ProfileBufferFrame> frames, int start_frame, bool skip_initial_set) {
-            this->frame_count = frames.size();
-            this->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
-
-            int i = 0;
-            for (auto & frame : frames) {
-                ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
-                ptr->frame = frame.frame;
-                ptr->initial_value = frame.initial_value;
-                ptr->increment = frame.increment;
-            }
-
-            this->start_frame = start_frame;
-            if (!skip_initial_set) {
-                this->set_frame(0);
-            }
-        }
-
-        float get_next() {
-            ProfileBufferFrame* bframe_data = this->frames[this->current_index];
-            if (bframe_data->frame == this->current_index) {
-                this->current_value = bframe_data->initial_value;
-            } else {
-                this->current_value += bframe_data->increment;
-            }
-
-            float output = this->current_value;
-            this->_move_to_next_frame();
-            return output;
-        }
-
-        void set_frame(int frame) {
-            if (this->frames == nullptr) {
-                return;
-            }
-
-            int original_frame = this->current_frame;
-            this->current_frame = frame + this->start_frame;
-            if (original_frame == this->current_frame) {
-                return;
-            } else if (original_frame < this->current_frame) {
-                while (this->current_index < this->frame_count - 1) {
-
-                    if (this->frames[this->current_index + 1]->frame <= this->current_frame) {
-                        this->current_index++;
-                    } else {
-                        break;
-                    }
-                }
-            } else {
-                while (this->current_index > 0 && this->frames[this->current_index]->frame > this->current_frame) {
-                    this->current_index -= 1;
-                }
-            }
-
-            if (this->current_index < this->frame_count - 1) {
-                this->next_frame_trigger = this->frames[this->current_index + 1]->frame;
-            } else {
-                this->next_frame_trigger = -1;
-            }
-
-            int working_frame = this->current_frame - 1;
-            ProfileBufferFrame* frame_data = this->frames[this->current_index];
-
-            this->current_value = frame_data->initial_value;
-            if (frame_data->increment != 0) {
-                this->current_value += (float)(working_frame - frame_data->frame) * frame_data->increment;
-            }
-        }
-
-        void copy_to(ProfileBuffer* new_buffer) const {
-            if (this->frames != nullptr) {
-                new_buffer->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
-                for (int i = 0; i < this->frame_count; i++) {
-                    ProfileBufferFrame* frame = this->frames[i];
-                    auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
-                    ptr->frame = frame->frame;
-                    ptr->increment = frame->increment;
-                    ptr->initial_value = frame->initial_value;
-                    new_buffer->frames[i] = ptr;
-                }
-                new_buffer->frame_count = this->frame_count;
-            }
-
-            new_buffer->start_frame = this->start_frame;
-            new_buffer->next_frame_trigger = this->next_frame_trigger;
-            new_buffer->current_index = this->current_index;
-            new_buffer->current_frame = this->current_frame;
-            new_buffer->set_frame(0);
-        }
-
-    private:
-        void _move_to_next_frame() {
-            this->current_frame++;
-            int working_frame = this->current_frame;
-            if (working_frame == this->next_frame_trigger) {
-                if (this->current_index == this->next_frame_trigger) {
-                    this->next_frame_trigger -= 1;
-                } else {
-                    this->next_frame_trigger = this->frames[this->current_index++]->frame;
-                }
-            }
-        }
-};
 
 int SampleHandleUUIDGen = 0;
 
@@ -202,7 +23,6 @@ class SampleHandle {
     float RC;
     float initial_frame_factor;
     // int uuid;
-
 
     public:
         int uuid;

@@ -9,7 +9,6 @@
 #include <iostream>
 #include <string>
 #include <exception>
-#include <android/log.h>
 
 class PitchedBufferOverflow : public std::exception {};
 

@@ -40,8 +40,8 @@ namespace GeneratorOperation {
     const int KeyRange = 0x2B;
     const int VelocityRange = 0x2C;
     const int Attenuation = 0x30;
-    const int TuningFine = 0x33;
-    const int TuningCoarse = 0x34;
+    const int TuningCoarse = 0x33;
+    const int TuningFine = 0x34;
     const int ScaleTuning = 0x38;
 };
 

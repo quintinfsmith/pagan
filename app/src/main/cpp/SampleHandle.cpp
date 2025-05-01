@@ -289,7 +289,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_get_1release
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_set_1release(JNIEnv* env, jobject, jlong ptr_long, jfloat new_value) {
     auto *ptr = (struct VolumeEnvelope *) ptr_long;
-    ptr->release = new_value;
+    ptr->set_release(new_value);
 }
 
 extern "C" JNIEXPORT jlong JNICALL

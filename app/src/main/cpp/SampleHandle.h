@@ -60,6 +60,11 @@ class VolumeEnvelope {
             this->frames_release = (int)(float_rate * this->release);
         }
 
+        void set_release(int release) {
+            this->release = release;
+            this->frames_release = (int)((float)sample_rate * this->release);
+        }
+
         void copy_to(VolumeEnvelope* other) {
             other->delay = this->delay;
             other->attack = this->attack;

@@ -316,9 +316,5 @@ class SampleHandle(val ptr: Long) {
     fun destroy() {
         this.destroy_jni(this.ptr)
     }
-
-    init {
-        println("NEW HANDLE: ${this.ptr}")
-    }
 }
 

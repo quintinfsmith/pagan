@@ -282,15 +282,6 @@ class SampleHandle(val ptr: Long) {
         return this.get_next_balance_jni(this.ptr)
     }
 
-    external fun get_next_frame_jni(ptr: Long): FloatArray
-    fun get_next_frame(): Float? {
-        val frame_array = this.get_next_frame_jni(this.ptr)
-        return if (frame_array[1] == 0F) {
-            null
-        } else {
-            frame_array[0]
-        }
-    }
     external fun get_next_frames_jni(ptr: Long, size: Int, left_padding: Int): FloatArray
     fun get_next_frames(left_padding: Int, size: Int): FloatArray {
         return get_next_frames_jni(this.ptr, size, left_padding)

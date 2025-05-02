@@ -116,7 +116,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         jlong pan_profile_ptr
 ) {
 
-    auto* handle = (SampleHandle *)malloc(sizeof(SampleHandle));
+    auto* handle = (SampleHandle*)malloc(sizeof(SampleHandle));
 
     handle->sample_rate = sample_rate;
     handle->initial_attenuation = initial_attenuation;
@@ -124,12 +124,30 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->loop_end = loop_end;
 
     handle->stereo_mode = stereo_mode;
-    handle->volume_envelope = (struct VolumeEnvelope *)volume_envelope_ptr;
+
+    auto* original_volume_envelope = (VolumeEnvelope*)volume_envelope_ptr;
+    handle->volume_envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
+    original_volume_envelope->copy_to(handle->volume_envelope);
+
+    if (volume_profile_ptr == 0) {
+        handle->volume_profile = nullptr;
+    } else {
+        auto *original_volume_profile = (ProfileBuffer *) volume_profile_ptr;
+        handle->volume_profile = (ProfileBuffer *) malloc(sizeof(ProfileBuffer));
+        original_volume_profile->copy_to(handle->volume_profile);
+    }
+
+    if (pan_profile_ptr == 0) {
+        handle->pan_profile = nullptr;
+    } else {
+        auto* original_pan_profile = (ProfileBuffer*)pan_profile_ptr;
+        handle->pan_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
+        original_pan_profile->copy_to(handle->pan_profile);
+    }
+
     handle->pitch_shift = pitch_shift;
     handle->filter_cutoff = filter_cutoff;
     handle->pan = pan;
-    handle->volume_profile = (struct ProfileBuffer *)volume_profile_ptr;
-    handle->pan_profile = (struct ProfileBuffer *)pan_profile_ptr;
 
     handle->data_size = env->GetArrayLength(data);
     jshort* data_ptr_tmp = env->GetShortArrayElements(data, nullptr);

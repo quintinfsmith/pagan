@@ -50,6 +50,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_qfs_apres_soundfontplayer_SampleHandl
 
 extern "C" JNIEXPORT void JNICALL Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct VolumeEnvelope *) ptr_long;
-    free(ptr);
+    delete ptr;
 }
 

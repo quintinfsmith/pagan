@@ -124,7 +124,6 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             var tuning_semi: Float = ((sample_directive.tuning_semi ?: global_sample_directive.tuning_semi ?: 0 )
                 + (instrument_directive.tuning_semi ?: 0)
                 + (global_instrument_directive.tuning_semi ?: 0)).toFloat()
-            println("TC: $tuning_cent, $tuning_semi")
             val pitch_correction = sample_directive.sample!!.first().pitch_correction
             // Skip tuning if we can
             if (tuning_cent != 0 || tuning_semi != 0F || note != original_note || bend != 0 || pitch_correction != 0) {

@@ -34,6 +34,10 @@ public:
         }
     }
 
+    ~ProfileBuffer() {
+        delete this->frames;
+    }
+
     float get_next() {
         ProfileBufferFrame* bframe_data = this->frames[this->current_index];
         if (bframe_data->frame == this->current_index) {
@@ -58,7 +62,6 @@ public:
             return;
         } else if (original_frame < this->current_frame) {
             while (this->current_index < this->frame_count - 1) {
-
                 if (this->frames[this->current_index + 1]->frame <= this->current_frame) {
                     this->current_index++;
                 } else {
@@ -78,6 +81,7 @@ public:
         }
 
         int working_frame = this->current_frame - 1;
+
         ProfileBufferFrame* frame_data = this->frames[this->current_index];
 
         this->current_value = frame_data->initial_value;

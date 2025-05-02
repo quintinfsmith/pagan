@@ -140,6 +140,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
 ) {
 
     auto* handle = (SampleHandle *)malloc(sizeof(SampleHandle));
+
     handle->sample_rate = sample_rate;
     handle->initial_attenuation = initial_attenuation;
     if (is_loop) {
@@ -239,8 +240,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1smoothing_1factor_1jni(JNIE
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct SampleHandle *) ptr_long;
-    free(ptr->volume_envelope);
-    free(ptr->pan_profile);
-    free(ptr->volume_profile);
-    free(ptr);
+    delete ptr->volume_envelope;
+    delete ptr->volume_profile;
+    delete ptr->pan_profile;
+    delete ptr;
 }

@@ -17,6 +17,7 @@ class SampleHandle(val ptr: Long) {
         pan: Float = 0F,
         volume_profile: ProfileBuffer? = null,
         pan_profile: ProfileBuffer? = null
+
         // TODO: Modulations
         //modulation_envelope: ModulationEnvelope,
         //modulation_lfo: LFO?,
@@ -139,7 +140,7 @@ class SampleHandle(val ptr: Long) {
             get() = this.get_release(this.ptr)
             set(v: Float) = set_release(ptr, v)
 
-    external fun destroy_jni(ptr: Long)
+        external fun destroy_jni(ptr: Long)
         fun destroy() {
             this.destroy_jni(this.ptr)
         }
@@ -244,6 +245,7 @@ class SampleHandle(val ptr: Long) {
     var pan_profile: ProfileBuffer
         get() = this.get_pan_profile()
         set(new_buffer: ProfileBuffer) = this.set_pan_profile_ptr(this.ptr, new_buffer.ptr)
+
     fun get_pan_profile(): ProfileBuffer {
         return ProfileBuffer(
             this.get_pan_profile_ptr(this.ptr)
@@ -306,7 +308,6 @@ class SampleHandle(val ptr: Long) {
         this.set_kill_frame_jni(this.ptr, f)
     }
 
-
     external fun repitch_jni(ptr: Long, new_pitch: Float)
     fun repitch(adjustment: Float) {
         this.repitch_jni(this.ptr, adjustment)
@@ -316,6 +317,10 @@ class SampleHandle(val ptr: Long) {
     external fun destroy_jni(ptr: Long)
     fun destroy() {
         this.destroy_jni(this.ptr)
+    }
+
+    init {
+        println("NEW HANDLE: ${this.ptr}")
     }
 }
 

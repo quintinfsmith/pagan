@@ -102,7 +102,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         val delta = 1000000 / (System.nanoTime() - start_ts).toFloat()
         val max_delta = this.buffer_size.toFloat() / this.sample_rate.toFloat()
-        println("---GEN TIME: $delta | $max_delta")
+        // println("---GEN TIME: $delta | $max_delta")
 
         return output_array
     }
@@ -186,6 +186,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
             }
             if (dead_count == item.sample_handles.size) {
+                for ((handle, _) in item.sample_handles) {
+                    if (handle != null && handle.is_dead) {
+                        handle.destroy()
+                    }
+                }
                 remove_set.add(key)
                 this._cached_frame_weights.remove(item.handle.uuid)
             }

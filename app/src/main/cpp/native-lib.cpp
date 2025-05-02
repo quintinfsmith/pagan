@@ -6,6 +6,8 @@
 
 #include "soundfont/Sample.cpp"
 #include "soundfontplayer/PitchedBuffer.cpp"
+#include "soundfontplayer/VolumeEnvelope.cpp"
+#include "soundfontplayer/ProfileBuffer.cpp"
 #include "soundfontplayer/SampleHandle.cpp"
 
 extern "C" JNIEXPORT jfloatArray JNICALL
@@ -20,6 +22,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
     env->SetFloatArrayRegion(output, 0, input_size, output_ptr);
     return output;
 }
+
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(JNIEnv* env, jobject, jobjectArray input_array, jint frames) {
     int array_count = env->GetArrayLength(input_array);

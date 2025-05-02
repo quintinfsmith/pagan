@@ -24,8 +24,6 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
     auto* sample = (Sample*)malloc(sizeof(Sample));
     sample->name = env->GetStringUTFChars(name, nullptr);
 
-    __android_log_write(ANDROID_LOG_DEBUG, sample->name, std::to_string(original_pitch).c_str());
-
     sample->loop_start = loop_start;
     sample->loop_end = loop_end;
     sample->sample_rate = sample_rate;

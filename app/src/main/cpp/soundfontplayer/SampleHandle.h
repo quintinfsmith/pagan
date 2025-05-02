@@ -17,6 +17,8 @@
 
 int SampleHandleUUIDGen = 0;
 
+class NoFrameDataException: public std::exception {};
+
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
 class SampleHandle {
@@ -30,7 +32,8 @@ class SampleHandle {
         int data_size;
         jint sample_rate;
         jfloat initial_attenuation;
-        std::optional<std::tuple<int, int>>  loop_points;
+        int loop_start;
+        int loop_end;
         int stereo_mode;
         VolumeEnvelope* volume_envelope;
         float pitch_shift;
@@ -43,8 +46,8 @@ class SampleHandle {
         float smoothing_factor;
 
         int working_frame;
-        std::optional<int> release_frame;
-        std::optional<int> kill_frame;
+        int release_frame;
+        int kill_frame;
         bool is_dead;
         int active_buffer;
 
@@ -53,7 +56,8 @@ class SampleHandle {
             int data_size,
             jfloat sample_rate,
             jfloat initial_attenuation,
-            std::optional<std::tuple<int, int>> loop_points,
+            jint loop_start,
+            jint loop_end,
             int stereo_mode,
             VolumeEnvelope* volume_envelope,
             float pitch_shift,
@@ -71,7 +75,8 @@ class SampleHandle {
 
             this->sample_rate = sample_rate;
             this->initial_attenuation = initial_attenuation;
-            this->loop_points = loop_points;
+            this->loop_end = loop_end;
+            this->loop_start = loop_start;
             this->stereo_mode = stereo_mode;
             this->volume_envelope = volume_envelope;
             this->pitch_shift = pitch_shift;
@@ -90,8 +95,8 @@ class SampleHandle {
 
             this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
             this->working_frame = 0;
-            this->release_frame = std::nullopt;
-            this->kill_frame = std::nullopt;
+            this->release_frame = -1;
+            this->kill_frame = -1;
             this->is_dead = false;
             this->active_buffer = 0;
 
@@ -104,7 +109,7 @@ class SampleHandle {
                     buffer->copy_to(ptr);
                     this->data_buffers[i] = ptr;
                 }
-            } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) != std::get<1>(this->loop_points.value())) {
+            } else if (this->loop_start > -1 && this->loop_start != this->loop_end) {
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
@@ -112,7 +117,7 @@ class SampleHandle {
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = 0;
-                ptr->end = std::get<0>(this->loop_points.value());
+                ptr->end = this->loop_start;
                 ptr->is_loop = false;
                 ptr->repitch(1);
                 this->data_buffers[0] = ptr;
@@ -122,8 +127,8 @@ class SampleHandle {
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
-                ptr->start = std::get<0>(this->loop_points.value());
-                ptr->end = std::get<1>(this->loop_points.value());
+                ptr->start = this->loop_start;
+                ptr->end = this->loop_end;
                 ptr->is_loop = true;
                 ptr->repitch(1);
                 this->data_buffers[1] = ptr;
@@ -133,7 +138,7 @@ class SampleHandle {
                 ptr->data = this->data;
                 ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
-                ptr->start = std::get<1>(this->loop_points.value());
+                ptr->start = this->loop_end;
                 ptr->end = this->data_size;
                 ptr->is_loop = false;
                 ptr->repitch(1);
@@ -165,12 +170,12 @@ class SampleHandle {
 
         void set_working_frame(int frame) {
             this->working_frame = frame;
-            if (this->kill_frame.has_value() && this->working_frame >= this->kill_frame.value()) {
+            if (this->kill_frame > -1 && this->working_frame >= this->kill_frame) {
                 this->is_dead = true;
                 return;
             }
 
-            if (this->release_frame.has_value() && this->working_frame >= this->release_frame.value() + this->volume_envelope->frames_release) {
+            if (this->release_frame > -1 && this->working_frame >= this->release_frame + this->volume_envelope->frames_release) {
                 this->is_dead = true;
                 return;
             }
@@ -183,15 +188,15 @@ class SampleHandle {
             }
 
             try {
-                if (!release_frame.has_value() || release_frame.value() > frame) {
-                    if (!this->loop_points.has_value() || frame < this->data_buffers[0]->virtual_size) {
+                if (release_frame == -1 || release_frame > frame) {
+                    if (this->loop_start == -1 || frame < this->data_buffers[0]->virtual_size) {
                         this->data_buffers[0]->set_position(frame);
                         this->active_buffer = 0;
                     } else {
                         this->data_buffers[1]->set_position((frame - this->data_buffers[0]->virtual_size));
                         this->active_buffer = 1;
                     }
-                } else if (this->loop_points.has_value() && std::get<0>(this->loop_points.value()) < std::get<1>(this->loop_points.value())) {
+                } else if (this->loop_start > -1 && this->loop_start < this->loop_end) {
                     if (frame < this->data_buffers[0]->virtual_size) {
                         this->data_buffers[0]->set_position(frame);
                         this->active_buffer = 0;
@@ -199,13 +204,13 @@ class SampleHandle {
                         this->data_buffers[1]->set_position(frame - this->data_buffers[0]->virtual_size);
                         this->active_buffer = 1;
                     } else {
-                        int remainder = frame - this->release_frame.value();
-                        int loop_size = std::get<1>(this->loop_points.value()) - std::get<0>(this->loop_points.value());
+                        int remainder = frame - this->release_frame;
+                        int loop_size = this->loop_end - this->loop_start;
                         if (remainder < loop_size) {
                             this->data_buffers[1]->set_position(remainder);
                             this->active_buffer = 1;
                         } else {
-                            int loop_count = (this->release_frame.value() - std::get<0>(this->loop_points.value())) / loop_size;
+                            int loop_count = (this->release_frame - this->loop_start) / loop_size;
                             this->data_buffers[2]->set_position(frame - this->data_buffers[0]->virtual_size - (loop_count * this->data_buffers[1]->virtual_size));
                             this->active_buffer = 2;
                         }
@@ -262,16 +267,17 @@ class SampleHandle {
 
             //__android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(this->pan).c_str());
             for (int i = left_padding; i < target_size; i++) {
-                std::optional<float> frame = this->get_next_frame();
                 float working_pan = this->get_next_balance();
-
-                if (frame.has_value()) {
-                    buffer[(i * 2)] = frame.value();
-                    buffer[(i * 2) + 1] = working_pan;
-                } else {
+                float frame;
+                try {
+                    frame = this->get_next_frame();
+                } catch (NoFrameDataException &e) {
                     actual_size = i;
                     break;
                 }
+
+                buffer[(i * 2)] = frame;
+                buffer[(i * 2) + 1] = working_pan;
             }
 
             for (int i = actual_size; i < target_size; i++) {
@@ -280,9 +286,9 @@ class SampleHandle {
             }
         }
 
-        std::optional<float> get_next_frame() {
+        float get_next_frame() {
             if (this->is_dead) {
-                return std::nullopt;
+                throw NoFrameDataException();
             }
 
             bool is_pressed = this->is_pressed();
@@ -314,12 +320,12 @@ class SampleHandle {
             }
 
             if (this->get_active_data_buffer()->is_overflowing()) {
-                if (!is_pressed || !this->loop_points.has_value()) {
+                if (!is_pressed || this->loop_start == -1) {
                     if (this->active_buffer < this->buffer_count - 1) {
                         this->active_buffer += 1;
                     } else {
                         this->is_dead = true;
-                        return std::nullopt;
+                        throw NoFrameDataException();
                     }
                 } else if (this->active_buffer == 0) {
                     this->active_buffer += 1;
@@ -334,12 +340,12 @@ class SampleHandle {
                 }
                 int release_frame_count = std::min(this->volume_envelope->frames_release, pos);
 
-                int current_position_release = this->working_frame - this->release_frame.value();
+                int current_position_release = this->working_frame - this->release_frame;
                 if (current_position_release < release_frame_count) {
                     frame_factor *= 1 - ((float)current_position_release / (float)release_frame_count);
                 } else {
                     this->is_dead = true;
-                    return std::nullopt;
+                    throw NoFrameDataException();
                 }
             }
 
@@ -352,7 +358,7 @@ class SampleHandle {
             this->working_frame += 1;
             if (this->active_buffer >= this->buffer_count) {
                 this->is_dead = true;
-                return std::nullopt;
+                throw NoFrameDataException();
             }
 
             float frame_value;
@@ -360,7 +366,7 @@ class SampleHandle {
                 frame_value = this->get_active_data_buffer()->get();
             } catch (PitchedBufferOverflow& e) {
                 this->is_dead = true;
-                return std::nullopt;
+                throw NoFrameDataException();
             }
 
             return frame_value * use_volume;
@@ -375,14 +381,14 @@ class SampleHandle {
         }
 
         bool is_pressed() {
-            return !this->release_frame.has_value() || this->release_frame.value() < this->working_frame;
+            return this->release_frame == -1 || this->release_frame < this->working_frame;
         }
 
-        std::optional<int> get_duration() {
-            if (this->release_frame.has_value()) {
-                return this->release_frame.value() + this->get_release_duration();
+        int get_duration() {
+            if (this->release_frame > -1) {
+                return this->release_frame + this->get_release_duration();
             } else {
-                return std::nullopt;
+                return -1;
             }
         }
 

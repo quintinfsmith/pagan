@@ -2,24 +2,6 @@
 #include <string>
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
-    std::optional<float> frame = ptr->get_next_frame();
-    float intermediate[2];
-    if (frame.has_value()) {
-        intermediate[0] = frame.value();
-        intermediate[1] = 1;
-    } else {
-        intermediate[0] = 0;
-        intermediate[1] = 0;
-    }
-
-    jfloatArray output = env->NewFloatArray(2);
-    env->SetFloatArrayRegion(output, 0, 2, intermediate);
-    return output;
-}
-
-extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
     auto *ptr = (struct SampleHandle *)ptr_long;
     jfloat buffer[size * 2];
@@ -107,11 +89,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1release_1duration_1jni(JNIE
 extern "C" JNIEXPORT jint JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1release_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct SampleHandle *)ptr_long;
-    if (ptr->release_frame.has_value()) {
-        return ptr->release_frame.value();
-    } else {
-        return -1;
-    }
+    return ptr->release_frame;
 }
 
 extern "C" JNIEXPORT jfloat JNICALL
@@ -127,7 +105,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         jshortArray data,
         jint sample_rate,
         jfloat initial_attenuation,
-        jboolean is_loop,
         jint loop_start,
         jint loop_end,
         jint stereo_mode,
@@ -143,11 +120,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
 
     handle->sample_rate = sample_rate;
     handle->initial_attenuation = initial_attenuation;
-    if (is_loop) {
-        handle->loop_points = std::make_tuple(loop_start, loop_end);
-    } else {
-        handle->loop_points = std::nullopt;
-    }
+    handle->loop_start = loop_start;
+    handle->loop_end = loop_end;
 
     handle->stereo_mode = stereo_mode;
     handle->volume_envelope = (struct VolumeEnvelope *)volume_envelope_ptr;
@@ -181,7 +155,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->data_size = ptr->data_size;
     new_handle->sample_rate = ptr->sample_rate;
     new_handle->initial_attenuation = ptr->initial_attenuation;
-    new_handle->loop_points = ptr->loop_points;
+    new_handle->loop_end = ptr->loop_end;
+    new_handle->loop_start = ptr->loop_start;
 
     new_handle->stereo_mode = ptr->stereo_mode;
     new_handle->pitch_shift = ptr->pitch_shift;
@@ -203,17 +178,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
     new_handle->secondary_setup(ptr->data_buffers, ptr->buffer_count);
 
-    if (ptr->release_frame.has_value()) {
-        new_handle->release_frame = ptr->release_frame.value();
-    } else {
-        new_handle->release_frame = std::nullopt;
-    }
-
-    if (ptr->kill_frame.has_value()) {
-        new_handle->kill_frame = ptr->kill_frame.value();
-    } else {
-        new_handle->kill_frame = std::nullopt;
-    }
+    new_handle->release_frame = ptr->release_frame;
+    new_handle->kill_frame = ptr->kill_frame;
     new_handle->is_dead = ptr->is_dead;
 
     return (jlong)new_handle;

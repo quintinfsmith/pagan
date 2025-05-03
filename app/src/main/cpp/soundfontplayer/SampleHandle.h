@@ -229,7 +229,7 @@ class SampleHandle {
             return this->volume_envelope->frames_release;
         }
 
-        [[nodiscard]] PitchedBuffer* get_active_data_buffer() const {
+        PitchedBuffer* get_active_data_buffer() const {
             return this->data_buffers[this->active_buffer];
         }
 
@@ -265,7 +265,6 @@ class SampleHandle {
                 buffer[(i * 2) + 1] = 0;
             }
 
-            //__android_log_write(ANDROID_LOG_ERROR, "Tag", std::to_string(this->pan).c_str());
             for (int i = left_padding; i < target_size; i++) {
                 float working_pan = this->get_next_balance();
                 float frame;
@@ -369,7 +368,7 @@ class SampleHandle {
                 throw NoFrameDataException();
             }
 
-            return frame_value * use_volume;
+            return frame_value * use_volume * frame_factor;
         }
 
         void release_note() {

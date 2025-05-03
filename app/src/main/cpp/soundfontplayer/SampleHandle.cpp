@@ -3,7 +3,7 @@
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     jfloat buffer[size * 2];
     ptr->get_next_frames(buffer, size, left_padding);
 
@@ -14,87 +14,87 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* e
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1uuid_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     return ptr->uuid;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1volume_1envelope_1ptr(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     return (jlong)ptr->volume_envelope;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1volume_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     return (jlong)ptr->volume_profile;
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1volume_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long, jlong new_ptr) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
-    auto *ptr_profile = (struct ProfileBuffer *)new_ptr;
+    auto *ptr = (SampleHandle *)ptr_long;
+    auto *ptr_profile = (ProfileBuffer *)new_ptr;
     ptr->volume_profile = ptr_profile;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1pan_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     return (jlong)ptr->pan_profile;
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1pan_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long, jlong new_ptr) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     auto *ptr_profile = (struct ProfileBuffer *)new_ptr;
     ptr->pan_profile = ptr_profile;
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1working_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long, jint frame) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     ptr->set_working_frame(frame);
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1release_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long, jint frame) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     ptr->set_release_frame(frame);
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_release_1note_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     ptr->release_note();
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1kill_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long, jint frame) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     ptr->set_kill_frame(frame);
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_repitch_1jni(JNIEnv* env, jobject, jlong ptr_long, jfloat new_pitch) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     ptr->repitch(new_pitch);
 }
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1release_1duration_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     return ptr->get_release_duration();
 }
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1release_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     return ptr->release_frame;
 }
 
 extern "C" JNIEXPORT jfloat JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1balance_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *)ptr_long;
     return ptr->get_next_balance();
 }
 
@@ -163,7 +163,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *) ptr_long;
+    auto *ptr = (SampleHandle *) ptr_long;
     auto* new_handle = (SampleHandle*)malloc(sizeof(SampleHandle));
     new_handle->uuid = SampleHandleUUIDGen++;
     new_handle->data = (jshort *)malloc(sizeof(jshort) * ptr->data_size);
@@ -205,25 +205,25 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_is_1dead_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *) ptr_long;
+    auto *ptr = (SampleHandle *) ptr_long;
     return ptr->is_dead;
 }
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1working_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *) ptr_long;
+    auto *ptr = (SampleHandle *) ptr_long;
     return ptr->working_frame;
 }
 
 extern "C" JNIEXPORT jfloat JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1smoothing_1factor_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *) ptr_long;
+    auto *ptr = (SampleHandle *) ptr_long;
     return ptr->smoothing_factor;
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct SampleHandle *) ptr_long;
+    auto *ptr = (SampleHandle *) ptr_long;
     delete ptr->volume_envelope;
     delete ptr->volume_profile;
     delete ptr->pan_profile;

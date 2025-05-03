@@ -420,7 +420,7 @@ class StandardMidiFileInterface {
                 }
             } else if (leadbyte == 0xF0) {
                 val bytedump: MutableList<Byte> = mutableListOf()
-                while (true) {
+                while (bytes.isNotEmpty()) {
                     val byte = bytes.removeAt(0)
                     if (byte.toInt() == 0xF7) {
                         break

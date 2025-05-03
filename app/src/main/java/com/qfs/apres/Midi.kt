@@ -658,10 +658,10 @@ class Midi {
     }
 
     fun detect_version(): Int {
-        var output = 1
+        var output = Midi.VERSION_1
         for (event in this.events) {
             if (event is UMPEvent) {
-                output = 2
+                output = Midi.VERSION_2_CLIP
                 break
             }
         }
@@ -747,9 +747,6 @@ class Midi {
     }
 
     fun insert_event(clip: Int, tick: Int, event: GeneralMIDIEvent): Int {
-        if (clip > 15) {
-            throw ClipOOB(clip)
-        }
         val new_event_id = this.event_id_gen
         this.event_id_gen += 1
 

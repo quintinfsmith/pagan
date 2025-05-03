@@ -132,7 +132,8 @@ class ActionTracker {
         UnMuteChannel,
         MuteLine,
         UnMuteLine,
-        ForceOrientation
+        ForceOrientation,
+        AllowMidiPlayback
     }
 
     companion object {
@@ -158,6 +159,7 @@ class ActionTracker {
                     }
 
                     // Boolean
+                    TrackedAction.AllowMidiPlayback,
                     TrackedAction.GoBack,
                     TrackedAction.SetClipNotes,
                     TrackedAction.SetRelativeModeVisibility -> {
@@ -270,6 +272,7 @@ class ActionTracker {
                         arrayOf(JSONString(ActionTracker.string_from_ints(integers)))
                     }
                     // Boolean
+                    TrackedAction.AllowMidiPlayback,
                     TrackedAction.GoBack,
                     TrackedAction.SetClipNotes,
                     TrackedAction.SetRelativeModeVisibility -> {
@@ -306,6 +309,7 @@ class ActionTracker {
                             }
                         }
                     }
+
 
                     else -> {
                         Array(integers.size) {
@@ -358,6 +362,17 @@ class ActionTracker {
         this.get_opus_manager().apply_undo()
     }
 
+    fun allow_midi_playback(value: Boolean) {
+        this.track(TrackedAction.AllowMidiPlayback, listOf(if (value) 1 else 0))
+        val activity = this.get_activity()
+        activity.configuration.allow_midi_playback = value
+        if (value) {
+            activity.enable_physical_midi_output()
+        } else {
+            activity.block_physical_midi_output()
+        }
+        activity.save_configuration()
+    }
 
     fun go_back(do_save: Boolean? = null) {
         val activity = this.get_activity()
@@ -2064,6 +2079,9 @@ class ActionTracker {
             }
             TrackedAction.ForceOrientation -> {
                 this.set_orientation(integers[0]!!)
+            }
+            TrackedAction.AllowMidiPlayback -> {
+                this.allow_midi_playback(integers[0] != 0)
             }
         }
     }

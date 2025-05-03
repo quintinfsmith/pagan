@@ -339,6 +339,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val path = this.getExternalFilesDir(null).toString()
+        val file = File("$path/bkp_crashreport.log")
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                val content = file.readText()
+                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                    FileOutputStream(it.fileDescriptor).write(content.toByteArray())
+                    file.delete()
+                }
+            }
+        } else {
+            file.delete()
+        }
+    }
 
     private var _export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -360,7 +375,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -469,7 +483,7 @@ class MainActivity : AppCompatActivity() {
             this.playback_state_soundfont = PlaybackState.Ready
         }
 
-        if (this._midi_interface.output_devices_connected()) {
+        if (this.is_connected_to_physical_device()) {
             this.playback_state_midi = PlaybackState.Ready
         }
     }
@@ -511,6 +525,7 @@ class MainActivity : AppCompatActivity() {
 
 
         super.onCreate(savedInstanceState)
+        this.check_for_crash_report()
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
@@ -518,6 +533,7 @@ class MainActivity : AppCompatActivity() {
                 this@MainActivity.save_actions()
             }
             this@MainActivity.save_to_backup()
+            this@MainActivity.bkp_crash_report(paramThrowable)
 
             val ctx = applicationContext
             val pm = ctx.packageManager
@@ -526,6 +542,23 @@ class MainActivity : AppCompatActivity() {
             ctx.startActivity(mainIntent)
             Runtime.getRuntime().exit(0)
 
+        }
+
+        this._config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+        // [Re]move config file from < v1.1.2
+        val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
+        val new_config_file = File(this._config_path)
+        if (old_config_file.exists()) {
+            if (!new_config_file.exists()) {
+                old_config_file.copyTo(new_config_file)
+            }
+            old_config_file.delete()
+        }
+
+        this.configuration = try {
+            PaganConfiguration.from_path(this._config_path)
+        } catch (e: Exception) {
+            PaganConfiguration()
         }
 
         this._midi_interface = object : MidiController(this) {
@@ -545,6 +578,10 @@ class MainActivity : AppCompatActivity() {
 
                 this@MainActivity.runOnUiThread {
                     this@MainActivity.update_menu_options()
+                    if (!this@MainActivity.configuration.allow_midi_playback) {
+                        return@runOnUiThread
+                    }
+
                     this@MainActivity.setup_project_config_drawer_export_button()
 
                     val channel_recycler = this@MainActivity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -592,11 +629,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        if (!this.configuration.allow_midi_playback) {
+            this.block_physical_midi_output()
+        }
+
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
 
         // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
         this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
             override fun onSongPositionPointer(event: SongPositionPointer) {
+                if (event.get_beat() >= this@MainActivity.get_opus_manager().length) {
+                    return
+                }
                 this@MainActivity.get_opus_manager().cursor_select_column(event.get_beat())
                 // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
                 this@MainActivity.runOnUiThread {
@@ -617,23 +661,6 @@ class MainActivity : AppCompatActivity() {
                 f.copyTo(File(new_file_name))
             }
             old_projects_dir.deleteRecursively()
-        }
-
-        this._config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
-        // [Re]move config file from < v1.1.2
-        val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
-        val new_config_file = File(this._config_path)
-        if (old_config_file.exists()) {
-            if (!new_config_file.exists()) {
-                old_config_file.copyTo(new_config_file)
-            }
-            old_config_file.delete()
-        }
-
-        this.configuration = try {
-            PaganConfiguration.from_path(this._config_path)
-        } catch (e: Exception) {
-            PaganConfiguration()
         }
 
         this.requestedOrientation = this.configuration.force_orientation
@@ -681,7 +708,7 @@ class MainActivity : AppCompatActivity() {
                         WaveGenerator.StereoMode.Stereo
                     )
 
-                    if (!this._midi_interface.output_devices_connected()) {
+                    if (!this.is_connected_to_physical_device()) {
                         val buffer_size = this.configuration.sample_rate / 4
                         this._feedback_sample_manager = SampleHandleManager(
                             this._soundfont!!,
@@ -722,7 +749,6 @@ class MainActivity : AppCompatActivity() {
                     if (channel_adapter.itemCount == 0) {
                         channel_adapter.setup()
                     }
-
 
                     this@MainActivity.playback_stop()
                     this@MainActivity.playback_stop_midi_output()
@@ -801,7 +827,7 @@ class MainActivity : AppCompatActivity() {
                         this.playback_stop()
                     }
 
-                    else -> {}
+                    else -> { }
                 }
             }
 
@@ -970,6 +996,7 @@ class MainActivity : AppCompatActivity() {
             this.restore_midi_playback_state()
             return
         }
+
         thread {
             try {
                 this._midi_interface.open_connected_devices()
@@ -1146,7 +1173,7 @@ class MainActivity : AppCompatActivity() {
 
         when (navHost?.childFragmentManager?.fragments?.get(0)) {
             is FragmentEditor -> {
-                val play_midi_visible = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
+                val play_midi_visible = this.configuration.allow_midi_playback && (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
                 options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
                 options_menu.findItem(R.id.itmUndo).isVisible = true
                 options_menu.findItem(R.id.itmNewProject).isVisible = true
@@ -1401,34 +1428,24 @@ class MainActivity : AppCompatActivity() {
     fun update_channel_instruments(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (index == null) {
-            if (this._feedback_sample_manager != null) {
+            this._feedback_sample_manager?.let { handle_manager: SampleHandleManager ->
                 for (channel in opus_manager.get_all_channels()) {
                     val midi_channel = channel.get_midi_channel()
                     val (midi_bank, midi_program) = channel.get_instrument()
                     this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
                     this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-                    this._feedback_sample_manager!!.select_bank(
-                        midi_channel,
-                        midi_bank,
-                    )
-                    this._feedback_sample_manager!!.change_program(
-                        midi_channel,
-                        midi_program,
-                    )
+
+                    handle_manager.select_bank(midi_channel, midi_bank)
+                    handle_manager.change_program(midi_channel, midi_program)
                 }
             }
-            // Don't need to update anything but percussion here
-            val midi_channel = opus_manager.percussion_channel.get_midi_channel()
-            val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
-            if (this._sample_handle_manager != null) {
-                this._sample_handle_manager!!.select_bank(
-                    midi_channel,
-                    midi_bank
-                )
-                this._sample_handle_manager!!.change_program(
-                    midi_channel,
-                    midi_program
-                )
+
+            this._sample_handle_manager?.let { handle_manager: SampleHandleManager ->
+                // Don't need to update anything but percussion here
+                val midi_channel = opus_manager.percussion_channel.get_midi_channel()
+                val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
+                handle_manager.select_bank(midi_channel, midi_bank)
+                handle_manager.change_program(midi_channel, midi_program)
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
@@ -1447,7 +1464,7 @@ class MainActivity : AppCompatActivity() {
         if (event_value < 0) {
             return // No sound to play
         }
-        if (!this._midi_interface.output_devices_connected()) {
+        if (!this.is_connected_to_physical_device()) {
             if (this._feedback_sample_manager == null) {
                 this.connect_feedback_device()
                 this.update_channel_instruments()
@@ -1480,7 +1497,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (this._feedback_sample_manager != null) {
+
+        this._feedback_sample_manager?.let { handle_manager : SampleHandleManager ->
             if (this._temporary_feedback_devices[this._current_feedback_device] == null) {
                 this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
             }
@@ -1495,7 +1513,7 @@ class MainActivity : AppCompatActivity() {
 
             this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
             this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
-        } else {
+        } ?: {
             try {
                 this._midi_feedback_dispatcher.play_note(
                     midi_channel,
@@ -1507,7 +1525,7 @@ class MainActivity : AppCompatActivity() {
             } catch (e: VirtualMidiInputDevice.DisconnectedException) {
                 // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
             }
-        }
+        }()
     }
 
     fun import_project(path: String) {
@@ -1601,12 +1619,10 @@ class MainActivity : AppCompatActivity() {
 
         this.reinit_playback_device()
         this.connect_feedback_device()
-
         this.update_channel_instruments()
         this.populate_active_percussion_names()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()
-
             val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             // Should always be null since this can only be changed from a different menu
             if (channel_recycler.adapter != null) {
@@ -2034,6 +2050,52 @@ class MainActivity : AppCompatActivity() {
         this._export_project_intent_launcher.launch(intent)
     }
 
+    /**
+     * Save text file in storage of a crash report.
+     * To be copied and saved somewhere accessible on reload.
+     */
+    fun bkp_crash_report(e: Throwable) {
+        val path = this.getExternalFilesDir(null).toString()
+        val file = File("$path/bkp_crashreport.log")
+        file.writeText(e.stackTraceToString())
+    }
+
+    fun check_for_crash_report() {
+        val path = this.getExternalFilesDir(null).toString()
+        val file = File("$path/bkp_crashreport.log")
+        if (file.isFile) {
+            this._adjust_dialog_colors(
+                AlertDialog.Builder(this, R.style.AlertDialog)
+                    .setCustomTitle(this._build_dialog_title_view(getString(R.string.crash_report_save)))
+                    .setMessage(R.string.crash_report_desc)
+                    .setCancelable(true)
+                    .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                        export_crash_report()
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                        file.delete()
+                        dialog.dismiss()
+                    }
+                    .show()
+            )
+        }
+    }
+
+    fun export_crash_report() {
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        val name = "pagan.cr-${now.format(formatter)}.log"
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        //intent.type = MimeTypes.AUDIO_MIDI
+        intent.type = "text/plain"
+        intent.putExtra(Intent.EXTRA_TITLE, "$name")
+
+        this._crash_report_intent_launcher.launch(intent)
+    }
+
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
         this.save_configuration()
@@ -2110,7 +2172,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun is_connected_to_physical_device(): Boolean {
-        return this._midi_interface.output_devices_connected()
+        return this.configuration.allow_midi_playback && this._midi_interface.output_devices_connected()
     }
 
     fun disconnect_feedback_device() {
@@ -2140,10 +2202,22 @@ class MainActivity : AppCompatActivity() {
 
     fun block_physical_midi_output() {
         this._midi_interface.block_physical_devices = true
+        this._midi_interface.close_connected_devices()
+        this.playback_state_midi = PlaybackState.NotReady
+
+        if (this._feedback_sample_manager == null) {
+            this.connect_feedback_device()
+        }
     }
 
     fun enable_physical_midi_output() {
         this._midi_interface.block_physical_devices = false
+        this._midi_interface.open_connected_devices()
+        this.playback_state_midi = PlaybackState.Ready
+
+        if (this.is_connected_to_physical_device()) {
+            this.disconnect_feedback_device()
+        }
     }
 
     fun get_notification(): NotificationCompat.Builder? {

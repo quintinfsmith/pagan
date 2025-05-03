@@ -12,8 +12,7 @@ class Instrument(var name: String) {
     }
 
     fun add_sample(sample_directive: SampleDirective) {
-        val hash_code = sample_directive.hashCode()
-        this.sample_directives[hash_code] = sample_directive
+        val uuid = sample_directive.uid
 
         val key_range = if (sample_directive.key_range == null) {
             0..127
@@ -22,7 +21,7 @@ class Instrument(var name: String) {
         }
 
         for (i in key_range) {
-            this.quick_ref_key[i].add(hash_code)
+            this.quick_ref_key[i].add(uuid)
         }
 
         val vel_range = if (sample_directive.velocity_range == null) {
@@ -32,8 +31,10 @@ class Instrument(var name: String) {
         }
 
         for (i in vel_range) {
-            this.quick_ref_vel[i].add(hash_code)
+            this.quick_ref_vel[i].add(uuid)
         }
+
+        this.sample_directives[uuid] = sample_directive
     }
 
     fun get_samples(key: Int, velocity: Int): Set<SampleDirective> {

@@ -1026,7 +1026,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     channel_b_size += 1
                 }
             }
-
             this.get_editor_table().swap_mapped_channels(vis_line_b, channel_a_size, vis_line_a, channel_b_size)
             this._swap_line_ui_update(channel_a, 0, channel_b, 0)
 
@@ -1332,16 +1331,10 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             val activity = this.get_activity()
             if (activity != null) {
-                if (is_tuning_standard && !was_tuning_standard) {
+                if (is_tuning_standard && !was_tuning_standard && activity.configuration.allow_midi_playback) {
                     activity.enable_physical_midi_output()
-                    if (activity.is_connected_to_physical_device()) {
-                        activity.disconnect_feedback_device()
-                    }
                 } else if (!is_tuning_standard && was_tuning_standard) {
                     activity.block_physical_midi_output()
-                    if (activity.is_connected_to_physical_device()) {
-                        activity.connect_feedback_device()
-                    }
                 }
             }
 

@@ -3618,12 +3618,12 @@ open class OpusLayerBase {
         this.controllers.set_beat_count(new_count)
     }
 
-    fun get_midi(start_beat: Int = 0, end_beat_rel: Int? = null): Midi {
+    fun get_midi(start_beat: Int = 0, end_beat: Int? = null): Midi {
         data class StackItem<T>(var tree: OpusTree<T>, var divisions: Int, var offset: Int, var size: Int)
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
-        val end_beat = end_beat_rel ?: this.length
+
 
         val midi = Midi()
 
@@ -3636,7 +3636,7 @@ open class OpusLayerBase {
             val initial_event = controller.get_initial_event()
             var latest_event = initial_event
 
-            for (i in start_beat until end_beat) {
+            for (i in start_beat until (end_beat ?: this.length)) {
                 val working_tree = controller.get_tree(i)
                 val stack: MutableList<StackItem<U>> = mutableListOf(StackItem(working_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn))
                 while (stack.isNotEmpty()) {
@@ -3765,7 +3765,7 @@ open class OpusLayerBase {
                                 )
                             }
 
-                            if (!(b < start_beat || b >= end_beat)) {
+                            if (!(b < start_beat || b >= (end_beat ?: this.length))) {
                                 val pseudo_event = PseudoMidiEvent(
                                     channel.midi_channel,
                                     note,
@@ -3800,7 +3800,7 @@ open class OpusLayerBase {
                         }
                     }
 
-                    if (!(b < start_beat || b >= end_beat)) {
+                    if (!(b < start_beat || b >= end_beat ?: this.length)) {
                         current_tick += midi.ppqn
                     }
                 }
@@ -3825,7 +3825,7 @@ open class OpusLayerBase {
                     if (current.tree.is_event()) {
                         val event = current.tree.get_event()!!
 
-                        if (!(b < start_beat || b >= end_beat)) {
+                        if (!(b < start_beat || b >= (end_beat ?: this.length))) {
                             val pseudo_event = PseudoMidiEvent(
                                 9,
                                 line.instrument + 27,
@@ -3859,7 +3859,7 @@ open class OpusLayerBase {
                     }
                 }
 
-                if (!(b < start_beat || b >= end_beat)) {
+                if (!(b < start_beat || b >= (end_beat ?: this.length))) {
                     current_tick += midi.ppqn
                 }
             }
@@ -3917,7 +3917,7 @@ open class OpusLayerBase {
             )
         }
 
-        for (beat in start_beat .. end_beat) {
+        for (beat in start_beat until (end_beat ?: this.length)) {
             midi.insert_event(
                 0,
                 midi.ppqn * (beat - start_beat),

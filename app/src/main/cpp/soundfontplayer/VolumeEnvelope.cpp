@@ -29,27 +29,27 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_qfs_apres_soundfontplayer_SampleHand
 }
 
 extern "C" JNIEXPORT jint JNICALL Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_get_1frames_1release(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
+    auto *ptr = (VolumeEnvelope *) ptr_long;
     return ptr->frames_release;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_set_1frames_1release(JNIEnv* env, jobject, jlong ptr_long, jint frames_release) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
+    auto *ptr = (VolumeEnvelope *) ptr_long;
     ptr->frames_release = frames_release;
 }
 
 extern "C" JNIEXPORT jfloat JNICALL Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_get_1release(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
+    auto *ptr = (VolumeEnvelope *) ptr_long;
     return ptr->release;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_set_1release(JNIEnv* env, jobject, jlong ptr_long, jfloat new_value) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
+    auto *ptr = (VolumeEnvelope *) ptr_long;
     ptr->release = new_value;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_qfs_apres_soundfontplayer_SampleHandle_00024VolumeEnvelope_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (struct VolumeEnvelope *) ptr_long;
+    auto *ptr = (VolumeEnvelope *) ptr_long;
     delete ptr;
 }
 

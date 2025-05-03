@@ -109,7 +109,6 @@ class SampleHandleManager(
         }
 
         for ((sample,p_instrument) in sample_pairs) {
-
             val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,

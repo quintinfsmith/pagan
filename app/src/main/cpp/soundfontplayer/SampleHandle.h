@@ -13,7 +13,6 @@
 #include "ProfileBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
-#include <android/log.h>
 
 int SampleHandleUUIDGen = 0;
 
@@ -337,9 +336,10 @@ class SampleHandle {
                 for (int i = 0; i < this->buffer_count; i++) {
                     pos += this->data_buffers[i]->virtual_size;
                 }
-                int release_frame_count = std::min(this->volume_envelope->frames_release, pos);
+                int release_frame_count = std::min(this->volume_envelope->frames_release, pos - this->release_frame);
 
                 int current_position_release = this->working_frame - this->release_frame;
+
                 if (current_position_release < release_frame_count) {
                     frame_factor *= 1 - ((float)current_position_release / (float)release_frame_count);
                 } else {
@@ -354,6 +354,7 @@ class SampleHandle {
             } else {
                  use_volume = 1;
             }
+
             this->working_frame += 1;
             if (this->active_buffer >= this->buffer_count) {
                 this->is_dead = true;
@@ -380,7 +381,7 @@ class SampleHandle {
         }
 
         bool is_pressed() {
-            return this->release_frame == -1 || this->release_frame < this->working_frame;
+            return this->release_frame == -1 || this->release_frame > this->working_frame;
         }
 
         int get_duration() {

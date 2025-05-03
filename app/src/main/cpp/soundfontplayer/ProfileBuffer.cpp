@@ -1,6 +1,5 @@
 #include <jni.h>
 #include <malloc.h>
-
 #include "ProfileBuffer.h"
 
 extern "C" JNIEXPORT jlong JNICALL

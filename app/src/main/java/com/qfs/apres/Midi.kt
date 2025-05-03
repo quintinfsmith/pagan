@@ -747,9 +747,6 @@ class Midi {
     }
 
     fun insert_event(clip: Int, tick: Int, event: GeneralMIDIEvent): Int {
-        if (clip > 15) {
-            throw ClipOOB(clip)
-        }
         val new_event_id = this.event_id_gen
         this.event_id_gen += 1
 

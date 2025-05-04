@@ -188,6 +188,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     fun clear() {
         this._frame_map.clear()
+
+        for ((_, handle) in this._handle_map) {
+            handle.destroy()
+        }
         this._handle_map.clear()
         this._handle_range_map.clear()
         this._tempo_ratio_map.clear()

@@ -156,6 +156,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         handle->data[i] = data_ptr_tmp[i];
     }
 
+    env->ReleaseShortArrayElements(data, data_ptr_tmp, 0);
+
     handle->secondary_setup(nullptr, 0);
 
     return (jlong)handle;
@@ -224,8 +226,5 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1smoothing_1factor_1jni(JNIE
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;
-    delete ptr->volume_envelope;
-    delete ptr->volume_profile;
-    delete ptr->pan_profile;
     delete ptr;
 }

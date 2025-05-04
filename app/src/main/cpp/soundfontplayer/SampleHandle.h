@@ -161,7 +161,16 @@ class SampleHandle {
             }
         }
 
-        ~SampleHandle() = default;
+        ~SampleHandle() {
+            for (int i = 0; i < this->buffer_count; i++) {
+                delete this->data_buffers[i];
+            }
+            delete this->data_buffers;
+            delete this->volume_envelope;
+            delete this->volume_profile;
+            delete this->pan_profile;
+            delete this->data;
+        };
 
         void set_release_frame(int frame) {
             this->release_frame = frame;

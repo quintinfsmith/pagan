@@ -308,7 +308,6 @@ class SoundFont(file_path: String) {
                     pbag.second,
                     next_pbag.second
                 )
-
                 this.generate_preset(preset, generators_to_use, modulators_to_use)
             }
             output = preset
@@ -368,6 +367,7 @@ class SoundFont(file_path: String) {
         val inst_bytes = this.pdta_chunks["inst"]!!
 
         val offset = instrument_index * 22
+
         var inst_name = ""
         for (j in 0 until 20) {
             val b = toUInt(inst_bytes[offset + j])

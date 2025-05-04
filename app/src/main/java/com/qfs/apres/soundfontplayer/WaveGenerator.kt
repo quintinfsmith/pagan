@@ -186,18 +186,17 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 }
             }
             if (dead_count == item.sample_handles.size) {
-                for ((handle, _) in item.sample_handles) {
-                    if (handle != null && handle.is_dead) {
-                        handle.destroy()
-                    }
-                }
                 remove_set.add(key)
                 this._cached_frame_weights.remove(item.handle.uuid)
             }
         }
 
         for (key in remove_set) {
-            this._active_sample_handles.remove(key)
+            val item = this._active_sample_handles.remove(key)!!
+            for ((handle, _) in item.sample_handles) {
+                handle?.destroy()
+            }
+            //item.handle.destroy()
         }
 
         for (i in 0 until this.process_count) {
@@ -272,7 +271,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     fun clear() {
         this.kill_frame = null
+        for ((_, item) in this._active_sample_handles) {
+            for ((handle, _) in item.sample_handles) {
+                handle?.destroy()
+            }
+            //item.handle.destroy()
+        }
         this._active_sample_handles.clear()
+
         this.frame = 0
         this._empty_chunks_count = 0
     }

@@ -23,6 +23,9 @@ data class Sample(val ptr: Long) {
             data_placeholder.second
         )
     )
+    init {
+        println("SAMPLE CREATED ${this.name}")
+    }
 
     companion object {
         external fun create(

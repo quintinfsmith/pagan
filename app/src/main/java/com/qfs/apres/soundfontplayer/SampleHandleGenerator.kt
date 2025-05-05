@@ -68,8 +68,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
         val linked = if (handles.size > 1) {
             val tmp = handles.last().copy()
-            tmp.volume_profile = volume_profile
-            tmp.pan_profile = pan_profile
+            tmp.volume_profile = volume_profile.copy()
+            tmp.pan_profile = pan_profile.copy()
             tmp
         } else {
             null
@@ -91,8 +91,8 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
         val linked = if (handles.size > 1) {
             val tmp = handles.last().copy()
-            tmp.volume_profile = volume_profile
-            tmp.pan_profile = pan_profile
+            tmp.volume_profile = volume_profile.copy()
+            tmp.pan_profile = pan_profile.copy()
             tmp
         } else {
             null
@@ -202,7 +202,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         return List(sample_directive.sample!!.size) { i: Int ->
             val working_sample = sample_directive.sample!![i];
             SampleHandle(
-                data = working_sample.data,
+                data = working_sample.data!!,
                 sample_rate = sample_rate,
                 pan = pan,
                 pitch_shift = pitch_shift,
@@ -253,16 +253,16 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
     fun decache_sample_data(preset: Preset) {
         val to_remove = mutableListOf<MapKey>()
-        for ((mapkey, samples) in this.sample_data_map) {
+        for ((mapkey, _) in this.sample_data_map) {
             if (mapkey.preset == preset.uid) {
                 to_remove.add(mapkey)
-                for (sample in samples) {
-                    sample.destroy()
-                }
             }
         }
+
         for (mapkey in to_remove) {
-             this.sample_data_map.remove(mapkey)
+            for (sample in this.sample_data_map.remove(mapkey)!!) {
+                sample.destroy()
+            }
         }
     }
 

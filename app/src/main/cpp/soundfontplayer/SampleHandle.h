@@ -165,10 +165,11 @@ class SampleHandle {
             for (int i = 0; i < this->buffer_count; i++) {
                 delete this->data_buffers[i];
             }
-            delete this->data_buffers;
-            delete this->volume_envelope;
+            delete[] this->data_buffers;
             delete this->volume_profile;
             delete this->pan_profile;
+
+            delete this->volume_envelope;
             delete this->data;
         };
 
@@ -191,6 +192,7 @@ class SampleHandle {
             if (this->volume_profile != nullptr) {
                 this->volume_profile->set_frame(frame);
             }
+
             if (this->pan_profile != nullptr) {
                 this->pan_profile->set_frame(frame);
             }

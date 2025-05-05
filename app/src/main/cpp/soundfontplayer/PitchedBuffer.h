@@ -60,7 +60,10 @@ public:
 
         this->repitch(1.0);
     }
+
+    // Pitched Buffer doesn't original source of data so don't destroy it here.
     ~PitchedBuffer() = default;
+
     void repitch(float new_pitch_adjustment) {
         this->pitch_adjustment = new_pitch_adjustment;
         this->adjusted_pitch = this->pitch * this->pitch_adjustment;

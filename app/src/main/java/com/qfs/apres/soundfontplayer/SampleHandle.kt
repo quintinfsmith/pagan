@@ -1,8 +1,9 @@
 package com.qfs.apres.soundfontplayer
 
+import android.util.Log
 import kotlin.math.abs
 
-class SampleHandle(val ptr: Long) {
+class SampleHandle(var ptr: Long) {
     constructor(
         data: ShortArray,
         sample_rate: Int,
@@ -43,6 +44,7 @@ class SampleHandle(val ptr: Long) {
     )
 
     companion object {
+        var ID_GEN = 0
         external fun create(
             data: ShortArray,
             sample_rate: Int,
@@ -58,7 +60,6 @@ class SampleHandle(val ptr: Long) {
             pan_profile_ptr: Long,
         ): Long
     }
-
 
     class ProfileBuffer(val ptr: Long) {
         constructor(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int, skip_initial_set: Boolean = false): this(
@@ -305,7 +306,12 @@ class SampleHandle(val ptr: Long) {
     // Need a destroy funciton since PitchedBuffer needs one
     external fun destroy_jni(ptr: Long)
     fun destroy() {
-        this.destroy_jni(this.ptr)
+        if (this.ptr.toInt() != 0) {
+            this.destroy_jni(this.ptr)
+        } else {
+            Log.e("MEMORY", "Attempting to destroy destroyed SampleHandle")
+        }
+        this.ptr = 0
     }
 }
 

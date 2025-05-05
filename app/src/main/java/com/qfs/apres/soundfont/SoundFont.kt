@@ -298,6 +298,7 @@ class SoundFont(file_path: String) {
                     )
                 )
             }
+
             for ((pbag, next_pbag) in pbag_pairs) {
                 val generators_to_use: List<Generator> = this.get_preset_generators(
                     pbag.first,
@@ -365,7 +366,6 @@ class SoundFont(file_path: String) {
     fun get_instrument(instrument_index: Int): Instrument {
         val ibag_entry_size = 4
         val inst_bytes = this.pdta_chunks["inst"]!!
-
         val offset = instrument_index * 22
 
         var inst_name = ""
@@ -543,7 +543,12 @@ class SoundFont(file_path: String) {
         }
         if (generators.isNotEmpty()) {
             working_instrument.apply_generators(generators)
-            working_instrument.instrument = this.get_instrument(generators.last().asInt())
+            for (generator in generators) {
+                if (generator.sfGenOper == 0x29) {
+                    working_instrument.instrument = this.get_instrument(generators.last().asInt())
+                    break
+                }
+            }
         }
 
         if (!is_global) {

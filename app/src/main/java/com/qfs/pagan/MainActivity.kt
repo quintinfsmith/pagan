@@ -511,19 +511,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // val t_start = System.nanoTime()
-        // val cpp_time = System.nanoTime() - t_start
-
-        // val t_startb = System.nanoTime()
-        // val byte_array = Array<Array<Float>>(44100) {
-        //     Array(10) {
-        //         4F
-        //     }
-        // }
-        // val kotlin_time =System.nanoTime() - t_startb
-        // println("----- ${kotlin_time / cpp_time}-------------")
-
-
         super.onCreate(savedInstanceState)
         this.check_for_crash_report()
 
@@ -2352,7 +2339,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        println("---------------DESTROY CALLED---------------------")
         this._sample_handle_manager?.destroy()
         this._feedback_sample_manager?.destroy()
         super.onDestroy()

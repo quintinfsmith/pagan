@@ -82,7 +82,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 working_array[initial_array_index + (i * 2)] = merged_array[i * 2]
                 working_array[initial_array_index + (i * 2) + 1] = merged_array[(i * 2) + 1]
             }
-
         }
 
         for ((k, v) in latest_weights) {
@@ -111,7 +110,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val sample_handles_to_use = mutableSetOf<Triple<Int, SampleHandle, Int>>()
         runBlocking {
             this@WaveGenerator.active_sample_handle_mutex.withLock {
-                for ((_, item) in this@WaveGenerator._active_sample_handles) {
+                for ((uuid, item) in this@WaveGenerator._active_sample_handles) {
                     if (item.first_frame >= first_frame + this@WaveGenerator.buffer_size) {
                         continue
                     }
@@ -196,7 +195,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             for ((handle, _) in item.sample_handles) {
                 handle?.destroy()
             }
-            //item.handle.destroy()
+            item.handle.destroy()
         }
 
         for (i in 0 until this.process_count) {
@@ -261,7 +260,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
                 this._active_sample_handles[(2 * handle.uuid) + 1] = ActiveHandleMapItem(
                     initial_frame + this.buffer_size,
-                    handle,
+                    handle.copy(),
                     split_handles_b,
                     0
                 )
@@ -271,11 +270,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     fun clear() {
         this.kill_frame = null
-        for ((_, item) in this._active_sample_handles) {
+        for ((uuid, item) in this._active_sample_handles) {
             for ((handle, _) in item.sample_handles) {
                 handle?.destroy()
             }
-            //item.handle.destroy()
+            item.handle.destroy()
         }
         this._active_sample_handles.clear()
 

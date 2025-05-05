@@ -98,6 +98,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1balance_1jni(JNIEnv* 
     return ptr->get_next_balance();
 }
 
+int GLOBAL_CREATED_SH_COUNT = 0;
+
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         JNIEnv* env,
@@ -160,6 +162,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
 
     handle->secondary_setup(nullptr, 0);
 
+    GLOBAL_CREATED_SH_COUNT++;
+
     return (jlong)handle;
 }
 
@@ -202,6 +206,9 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->kill_frame = ptr->kill_frame;
     new_handle->is_dead = ptr->is_dead;
 
+    GLOBAL_CREATED_SH_COUNT++;
+
+
     return (jlong)new_handle;
 }
 
@@ -226,5 +233,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1smoothing_1factor_1jni(JNIE
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;
+
+    GLOBAL_CREATED_SH_COUNT--;
+
     delete ptr;
 }

@@ -35,6 +35,9 @@ public:
     }
 
     ~ProfileBuffer() {
+        for (int i = 0; i < this->frame_count; i++) {
+            delete this->frames[i];
+        }
         delete this->frames;
     }
 

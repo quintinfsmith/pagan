@@ -18,6 +18,9 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
     for (int i = 0; i < input_size; i++) {
         output_ptr[i] = tanh(input_ptr[i]);
     }
+
+    env->ReleaseFloatArrayElements(input_array, input_ptr, 0);
+
     jfloatArray output = env->NewFloatArray(input_size);
     env->SetFloatArrayRegion(output, 0, input_size, output_ptr);
     return output;

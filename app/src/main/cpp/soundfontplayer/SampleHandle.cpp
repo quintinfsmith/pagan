@@ -1,5 +1,6 @@
 #include "SampleHandle.h"
 #include <string>
+#include <android/log.h>
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
@@ -117,8 +118,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
 ) {
 
     auto* handle = (SampleHandle*)malloc(sizeof(SampleHandle));
-    auto* data_ptr = (SampleData*)data_ptr_long;
 
+    handle->data = (SampleData*)data_ptr_long;
     handle->sample_rate = sample_rate;
     handle->initial_attenuation = initial_attenuation;
     handle->loop_start = loop_start;
@@ -149,7 +150,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->pitch_shift = pitch_shift;
     handle->filter_cutoff = filter_cutoff;
     handle->pan = pan;
-    handle->data = data_ptr;
     handle->secondary_setup(nullptr, 0);
 
     return (jlong)handle;
@@ -160,11 +160,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     auto *ptr = (SampleHandle *) ptr_long;
     auto* new_handle = (SampleHandle*)malloc(sizeof(SampleHandle));
     new_handle->uuid = SampleHandleUUIDGen++;
-    new_handle->data = (jshort *)malloc(sizeof(jshort) * ptr->data_size);
-    for (int i = 0; i < ptr->data_size; i++) {
-        new_handle->data[i] = ptr->data[i];
-    }
-    new_handle->data_size = ptr->data_size;
+    new_handle->data = ptr->data;
+
     new_handle->sample_rate = ptr->sample_rate;
     new_handle->initial_attenuation = ptr->initial_attenuation;
     new_handle->loop_end = ptr->loop_end;

@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 #include <exception>
-#include "soundfont/SampleData.h"
+#include "../soundfont/SampleData.h"
 
 class PitchedBufferOverflow : public std::exception {};
 
@@ -59,7 +59,7 @@ public:
     }
 
     // Pitched Buffer doesn't original source of data so don't destroy it here.
-    ~PitchedBuffer() = default;
+    //~PitchedBuffer() = default;
 
     void repitch(float new_pitch_adjustment) {
         this->pitch_adjustment = new_pitch_adjustment;

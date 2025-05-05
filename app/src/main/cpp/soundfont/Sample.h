@@ -3,7 +3,6 @@
 //
 #ifndef PAGAN_SAMPLE_H
 #define PAGAN_SAMPLE_H
-#include <jni.h>
 #include <optional>
 #include <vector>
 

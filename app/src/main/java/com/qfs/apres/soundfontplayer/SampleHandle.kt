@@ -1,11 +1,12 @@
 package com.qfs.apres.soundfontplayer
 
 import android.util.Log
+import com.qfs.apres.soundfont.SampleData
 import kotlin.math.abs
 
 class SampleHandle(var ptr: Long) {
     constructor(
-        data: ShortArray,
+        data: SampleData,
         sample_rate: Int,
         initial_attenuation: Float = 0F,
         loop_points: Pair<Int, Int>?,
@@ -25,7 +26,7 @@ class SampleHandle(var ptr: Long) {
         //modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     ): this(
         create(
-            data,
+            data.ptr,
             sample_rate,
             initial_attenuation,
             loop_points?.first ?: -1,
@@ -44,9 +45,8 @@ class SampleHandle(var ptr: Long) {
     )
 
     companion object {
-        var ID_GEN = 0
         external fun create(
-            data: ShortArray,
+            data_ptr: Long,
             sample_rate: Int,
             initial_attenuation: Float,
             loop_start: Int,

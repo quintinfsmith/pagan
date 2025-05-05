@@ -202,7 +202,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         return List(sample_directive.sample!!.size) { i: Int ->
             val working_sample = sample_directive.sample!![i];
             SampleHandle(
-                data = working_sample.data!!,
+                data = working_sample.data,
                 sample_rate = sample_rate,
                 pan = pan,
                 pitch_shift = pitch_shift,

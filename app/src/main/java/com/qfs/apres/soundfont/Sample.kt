@@ -8,8 +8,19 @@ data class Sample(
     var original_pitch: Int,
     var pitch_correction: Int,
     var sample_type: Int,
-    var sample_data: SampleData,
-)
+    var data: SampleData = SampleData(0),
+    var data_placeholder: Pair<Int, Int>
+) {
+
+    fun destroy() {
+        this.data.destroy()
+    }
+
+    fun set_data(new_data: SampleData) {
+        this.data.ptr = new_data.ptr
+        this.data.size = new_data.size
+    }
+}
 
 // JNI Code, needs manual memory management so leave it unused for now
 //data class Sample(val ptr: Long) {

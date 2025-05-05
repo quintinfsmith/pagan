@@ -5,7 +5,6 @@
 #ifndef PAGAN_SAMPLEHANDLE_H
 #define PAGAN_SAMPLEHANDLE_H
 
-#include <jni.h>
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -163,7 +162,6 @@ class SampleHandle {
             delete this->pan_profile;
 
             delete this->volume_envelope;
-            delete this->data;
         };
 
         void set_release_frame(int frame) {

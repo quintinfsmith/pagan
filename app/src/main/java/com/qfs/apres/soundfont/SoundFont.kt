@@ -11,7 +11,7 @@ class SoundFont(file_path: String) {
     class InvalidSampleType(i: Int): Exception("Unknown Sample Type $i")
     class NoIROMDeclared: Exception("Need irom declared to read from ROM")
 
-    data class CachedSampleData(var data: ShortArray, var count: Int = 1)
+    data class CachedSampleData(var data: SampleData, var count: Int = 1)
 
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
@@ -348,7 +348,7 @@ class SoundFont(file_path: String) {
     }
 
     fun apply_sample_data(sample: Sample) {
-        sample.data = if ((sample.sample_type and 0x8000) == 0x8000) {
+        sample.set_data(if ((sample.sample_type and 0x8000) == 0x8000) {
             if (this.irom == null) {
                 throw NoIROMDeclared()
             }
@@ -356,11 +356,12 @@ class SoundFont(file_path: String) {
         } else {
             val data_placeholder = sample.data_placeholder
             this.get_sample_data(data_placeholder.first, data_placeholder.second)
-        }
+        })
     }
 
-    open fun read_rom_hook(start: Int, end: Int): ShortArray {
-        return ShortArray(0)
+    open fun read_rom_hook(start: Int, end: Int): SampleData {
+        println("GET ROM OOK")
+        return SampleData(0)
     }
 
     fun get_instrument(instrument_index: Int): Instrument {
@@ -559,7 +560,7 @@ class SoundFont(file_path: String) {
         }
     }
 
-    private fun get_sample_data(start_index: Int, end_index: Int): ShortArray {
+    private fun get_sample_data(start_index: Int, end_index: Int): SampleData {
         val cache_key = Pair(start_index, end_index)
 
         if (this.sample_data_cache.containsKey(cache_key)) {
@@ -576,9 +577,12 @@ class SoundFont(file_path: String) {
 
         val inbuffer = ByteBuffer.wrap(smpl)
         inbuffer.order(ByteOrder.LITTLE_ENDIAN)
-        val output = ShortArray(smpl.size / 2) {
-            inbuffer.getShort()
-        }
+        val output = SampleData(0)
+        output.set_data(
+            ShortArray(smpl.size / 2) {
+                inbuffer.getShort()
+            }
+        )
 
         // TODO: support. Can be ignored and it'll just have a lower resolution
         //if (sm24 != null) {

@@ -5,6 +5,7 @@
 #ifndef PAGAN_PROFILEBUFFER_H
 #define PAGAN_PROFILEBUFFER_H
 #include "ProfileBufferFrame.h"
+#include <vector>
 
 class ProfileBuffer {
 public:

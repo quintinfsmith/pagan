@@ -8,7 +8,6 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_copy_1inner(JNIEnv* env, jobjec
     PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
     buffer->data = ptr->data;
-    buffer->data_size = ptr->data_size;
     buffer->pitch = ptr->pitch;
     buffer->start = ptr->start;
     buffer->end = ptr->end;
@@ -25,8 +24,7 @@ extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
         JNIEnv* env,
         jobject,
-        jshortArray data,
-        jint data_size,
+        jlong data_ptr_long,
         jfloat pitch,
         int start,
         int end,
@@ -34,11 +32,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
 ) {
 
     auto* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-    int d_size = env->GetArrayLength(data);
-    buffer->data = (jshort*)malloc(sizeof(jshort) * d_size);
-
-    env->GetShortArrayRegion(data, 0, d_size, buffer->data);
-    buffer->data_size = d_size;
+    buffer->data = (SampleData*)data_ptr_long;
     buffer->pitch = pitch;
     buffer->start = start;
     buffer->end = end;

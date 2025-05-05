@@ -245,7 +245,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             this._active_sample_handles[2 * handle.uuid] = ActiveHandleMapItem(
                 working_frame,
-                handle,
+                handle.copy(),
                 split_handles,
                 core
             )

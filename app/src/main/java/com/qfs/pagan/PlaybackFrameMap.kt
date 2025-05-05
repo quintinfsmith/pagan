@@ -123,16 +123,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
         val output = mutableSetOf<Pair<Int, SampleHandle>>()
-
-        for ((uuid, range) in this._handle_range_map) {
-            if (!range.contains(frame)) {
-                continue
-            }
-
-            val handle = this._handle_map[uuid]!!
-            output.add(Pair(range.first, handle))
-        }
-
         // NOTE: May miss tail end of samples with long decays, but for now, for my purposes, will be fine
         val setter_ids_to_remove = mutableSetOf<Int>()
         for ((setter_id, range) in this._setter_range_map) {

@@ -9,12 +9,12 @@
 #include <iostream>
 #include <string>
 #include <exception>
+#include "soundfont/SampleData.h"
 
 class PitchedBufferOverflow : public std::exception {};
 
 struct PitchedBuffer {
-    jshort* data;
-    int data_size;
+    SampleData* data;
     float pitch;
     int start;
     int end;
@@ -26,8 +26,7 @@ struct PitchedBuffer {
 
 public:
     explicit PitchedBuffer(
-        jshort* data,
-        int data_size,
+        SampleData* data,
         float pitch,
         int start,
         int end,
@@ -38,7 +37,6 @@ public:
         float adjusted_pitch
     ) {
         this->data = data;
-        this->data_size = data_size;
         this->pitch = pitch;
         this->start = start;
         this->end = end;
@@ -49,10 +47,9 @@ public:
         this->adjusted_pitch = adjusted_pitch;
     }
 
-    explicit PitchedBuffer(jshort* data, int data_size, float pitch, int start, int end, bool is_loop) {
+    explicit PitchedBuffer(SampleData* data, float pitch, int start, int end, bool is_loop) {
         this->virtual_position = 0;
         this->data = data;
-        this->data_size = data_size;
         this->pitch = pitch;
         this->start = start;
         this->end = end;
@@ -90,7 +87,7 @@ public:
             adj_i = unpitched_position;
         };
         adj_i = std::min(this->end - 1, this->start + adj_i);
-        return this->data[adj_i];
+        return this->data->data[adj_i];
     }
 
     bool is_overflowing() {
@@ -103,7 +100,6 @@ public:
 
     void copy_to(PitchedBuffer* new_buffer) const {
         new_buffer->data = this->data;
-        new_buffer->data_size = this->data_size;
         new_buffer->pitch = this->pitch;
         new_buffer->start = this->start;
         new_buffer->end = this->end;

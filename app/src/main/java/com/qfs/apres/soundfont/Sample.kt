@@ -8,8 +8,7 @@ data class Sample(
     var original_pitch: Int,
     var pitch_correction: Int,
     var sample_type: Int,
-    var data_placeholder: Pair<Int, Int>,
-    var data: ShortArray? = null
+    var sample_data: SampleData,
 )
 
 // JNI Code, needs manual memory management so leave it unused for now

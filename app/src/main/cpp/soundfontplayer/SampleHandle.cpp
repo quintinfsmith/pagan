@@ -98,13 +98,11 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1balance_1jni(JNIEnv* 
     return ptr->get_next_balance();
 }
 
-int GLOBAL_CREATED_SH_COUNT = 0;
-
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         JNIEnv* env,
         jobject,
-        jshortArray data,
+        jlong data_ptr_long,
         jint sample_rate,
         jfloat initial_attenuation,
         jint loop_start,
@@ -119,6 +117,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
 ) {
 
     auto* handle = (SampleHandle*)malloc(sizeof(SampleHandle));
+    auto* data_ptr = (SampleData*)data_ptr_long;
 
     handle->sample_rate = sample_rate;
     handle->initial_attenuation = initial_attenuation;
@@ -150,19 +149,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->pitch_shift = pitch_shift;
     handle->filter_cutoff = filter_cutoff;
     handle->pan = pan;
-
-    handle->data_size = env->GetArrayLength(data);
-    jshort* data_ptr_tmp = env->GetShortArrayElements(data, nullptr);
-    handle->data = (jshort *)malloc(sizeof(jshort) * handle->data_size);
-    for (int i = 0; i < handle->data_size; i++) {
-        handle->data[i] = data_ptr_tmp[i];
-    }
-
-    env->ReleaseShortArrayElements(data, data_ptr_tmp, 0);
-
+    handle->data = data_ptr;
     handle->secondary_setup(nullptr, 0);
-
-    GLOBAL_CREATED_SH_COUNT++;
 
     return (jlong)handle;
 }
@@ -206,9 +194,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->kill_frame = ptr->kill_frame;
     new_handle->is_dead = ptr->is_dead;
 
-    GLOBAL_CREATED_SH_COUNT++;
-
-
     return (jlong)new_handle;
 }
 
@@ -233,8 +218,5 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1smoothing_1factor_1jni(JNIE
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;
-
-    GLOBAL_CREATED_SH_COUNT--;
-
     delete ptr;
 }

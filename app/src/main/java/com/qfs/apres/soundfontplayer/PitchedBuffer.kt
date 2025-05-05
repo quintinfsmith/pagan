@@ -1,13 +1,11 @@
 package com.qfs.apres.soundfontplayer
 
-import kotlin.math.abs
-import kotlin.math.max
+import com.qfs.apres.soundfont.SampleData
 
 class PitchedBuffer(var ptr: Long) {
-    constructor(data: ShortArray, pitch: Float, known_max: Int? = null, range: IntRange? = null, is_loop: Boolean = false): this(
+    constructor(data: SampleData, pitch: Float, known_max: Int? = null, range: IntRange? = null, is_loop: Boolean = false): this(
         create(
-            data,
-            data.size,
+            data.ptr,
             pitch,
             range?.first ?: 0,
             range?.last ?: data.size,
@@ -19,7 +17,7 @@ class PitchedBuffer(var ptr: Long) {
         init {
             System.loadLibrary("pagan")
         }
-        external fun create(data: ShortArray, data_size: Int, pitch: Float, start: Int, end: Int, is_loop: Boolean): Long
+        external fun create(data_ptr: Long, pitch: Float, start: Int, end: Int, is_loop: Boolean): Long
     }
 
     class PitchedBufferOverflow : Exception()

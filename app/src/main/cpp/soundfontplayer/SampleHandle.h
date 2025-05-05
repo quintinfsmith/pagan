@@ -27,8 +27,7 @@ class SampleHandle {
 
     public:
         int uuid;
-        jshort* data;
-        int data_size;
+        SampleData* data;
         jint sample_rate;
         jfloat initial_attenuation;
         int loop_start;
@@ -51,8 +50,7 @@ class SampleHandle {
         int active_buffer;
 
         explicit SampleHandle(
-            jshort* data,
-            int data_size,
+            SampleData* data,
             jfloat sample_rate,
             jfloat initial_attenuation,
             jint loop_start,
@@ -70,7 +68,6 @@ class SampleHandle {
 
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
-            this->data_size = data_size;
 
             this->sample_rate = sample_rate;
             this->initial_attenuation = initial_attenuation;
@@ -113,7 +110,6 @@ class SampleHandle {
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
                 ptr->data = this->data;
-                ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = 0;
                 ptr->end = this->loop_start;
@@ -124,7 +120,6 @@ class SampleHandle {
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
                 ptr->data = this->data;
-                ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = this->loop_start;
                 ptr->end = this->loop_end;
@@ -135,10 +130,9 @@ class SampleHandle {
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
                 ptr->data = this->data;
-                ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = this->loop_end;
-                ptr->end = this->data_size;
+                ptr->end = this->data->size;
                 ptr->is_loop = false;
                 ptr->repitch(1);
                 this->data_buffers[2] = ptr;
@@ -150,10 +144,9 @@ class SampleHandle {
 
                 ptr->virtual_position = 0;
                 ptr->data = this->data;
-                ptr->data_size = this->data_size;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = 0;
-                ptr->end = this->data_size;
+                ptr->end = this->data->size;
                 ptr->is_loop = false;
                 ptr->repitch(1);
                 this->data_buffers[0] = ptr;

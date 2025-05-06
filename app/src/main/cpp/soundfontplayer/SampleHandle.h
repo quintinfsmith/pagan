@@ -23,7 +23,6 @@ class SampleHandle {
     float RC;
     float initial_frame_factor;
     // int uuid;
-    float previous_value = 0;
 
     public:
         int uuid;
@@ -48,6 +47,7 @@ class SampleHandle {
         int kill_frame;
         bool is_dead;
         int active_buffer;
+        float previous_value = 0;
 
         explicit SampleHandle(
             SampleData* data,
@@ -68,7 +68,7 @@ class SampleHandle {
 
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
-
+            this->previous_value = 0;
             this->sample_rate = sample_rate;
             this->initial_attenuation = initial_attenuation;
             this->loop_end = loop_end;

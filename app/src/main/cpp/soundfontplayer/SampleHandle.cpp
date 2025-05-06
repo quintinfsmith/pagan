@@ -150,6 +150,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->pitch_shift = pitch_shift;
     handle->filter_cutoff = filter_cutoff;
     handle->pan = pan;
+    handle->previous_value = 0;
     handle->secondary_setup(nullptr, 0);
 
     return (jlong)handle;
@@ -190,6 +191,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->release_frame = ptr->release_frame;
     new_handle->kill_frame = ptr->kill_frame;
     new_handle->is_dead = ptr->is_dead;
+    new_handle->previous_value = ptr->previous_value;
 
     return (jlong)new_handle;
 }

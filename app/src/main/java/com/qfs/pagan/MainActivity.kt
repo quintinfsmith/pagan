@@ -19,7 +19,6 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -81,6 +80,7 @@ import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
@@ -204,8 +204,28 @@ class MainActivity : AppCompatActivity() {
                     opus_manager_copy.import_from_other(this.get_opus_manager())
 
                     var line_count = 0
-                    for (channel in opus_manager_copy.get_all_channels()) {
-                        line_count += channel.lines.size
+                    val skip_lines = mutableSetOf<Pair<Int, Int>>()
+
+                    opus_manager_copy.get_all_channels().forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
+                        channel.lines.forEachIndexed line_loop@{ j: Int, line: OpusLineAbstract<*> ->
+                            if (line.muted || channel.muted) {
+                                skip_lines.add(Pair(i, j))
+                                return@line_loop
+                            }
+
+                            var skip = true
+                            for (beat in line.beats) {
+                                if (!beat.is_eventless())  {
+                                    skip = false
+                                    line_count += 1
+                                    return@channel_loop
+                                }
+                            }
+
+                            if (skip) {
+                                skip_lines.add(Pair(i, j))
+                            }
+                        }
                     }
 
                     val export_event_handler = object : WavConverter.ExporterEventHandler {
@@ -342,10 +362,15 @@ class MainActivity : AppCompatActivity() {
 
                     var y = 0
                     var c = 0
-                    outer@ for (channel in this.get_opus_manager().get_all_channels()) {
+                    outer@ for (channel in opus_manager_copy.get_all_channels()) {
                         var l = 0
                         for (line in channel.lines) {
-                            val file = directory.createFile("audio/wav", "C${c}L${l}.wav") ?: continue
+                            if (skip_lines.contains(Pair(c, l))) {
+                                l++
+                                continue
+                            }
+
+                            val file = directory.createFile("audio/wav", getString(R.string.export_wav_lines_filename, c, l)) ?: continue
                             val file_uri = file.uri
 
                             /* TMP file is necessary since we can't easily predict the exact frame count. */

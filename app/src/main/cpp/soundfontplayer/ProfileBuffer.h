@@ -51,6 +51,8 @@ public:
         }
 
         float output = this->current_value;
+
+
         this->_move_to_next_frame();
         return output;
     }
@@ -112,7 +114,7 @@ public:
         new_buffer->next_frame_trigger = this->next_frame_trigger;
         new_buffer->current_index = this->current_index;
         new_buffer->current_frame = this->current_frame;
-        new_buffer->set_frame(0);
+        new_buffer->current_value = this->current_value;
     }
 
 private:
@@ -120,8 +122,8 @@ private:
         this->current_frame++;
         int working_frame = this->current_frame;
         if (working_frame == this->next_frame_trigger) {
-            if (this->current_index == this->frame_count - 1) {
-                this->next_frame_trigger -= 1;
+            if (this->current_index >= this->frame_count - 1) {
+                this->next_frame_trigger = -1;
             } else {
                 this->next_frame_trigger = this->frames[this->current_index++]->frame;
             }

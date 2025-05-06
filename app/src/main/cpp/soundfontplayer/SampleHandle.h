@@ -23,7 +23,7 @@ class SampleHandle {
     float RC;
     float initial_frame_factor;
     // int uuid;
-    float smoothing_value = 1;
+    float previous_value = 0;
 
     public:
         int uuid;
@@ -170,7 +170,7 @@ class SampleHandle {
         }
 
         void set_working_frame(int frame) {
-            this->smoothing_value = 1;
+            this->previous_value = 0;
             this->working_frame = frame;
             if (this->kill_frame > -1 && this->working_frame >= this->kill_frame) {
                 this->is_dead = true;
@@ -263,6 +263,8 @@ class SampleHandle {
 
         void get_next_frames(float* buffer, int target_size, int left_padding) {
             int actual_size = target_size;
+
+            // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
                 buffer[i * 2] = 0;
                 buffer[(i * 2) + 1] = 0;
@@ -278,12 +280,20 @@ class SampleHandle {
                     break;
                 }
 
-                buffer[(i * 2)] = frame;
+                buffer[(i * 2)] = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
                 buffer[(i * 2) + 1] = working_pan;
+
+                this->previous_value = buffer[i * 2];
             }
 
+            // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
-                buffer[(i * 2)] = 0;
+                if (this->previous_value != 0) {
+                    buffer[i * 2] = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
+                    this->previous_value = buffer[i * 2];
+                } else {
+                    buffer[i * 2] = 0;
+                }
                 buffer[(i * 2) + 1] = 0;
             }
         }

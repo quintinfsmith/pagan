@@ -1683,10 +1683,7 @@ class MainActivity : AppCompatActivity() {
         }
         this._sample_handle_manager?.destroy()
 
-        this._soundfont?.let {
-            it.destroy()
-        }
-
+        this._soundfont?.destroy()
         this._soundfont = null
         this._sample_handle_manager = null
         this.configuration.soundfont = null

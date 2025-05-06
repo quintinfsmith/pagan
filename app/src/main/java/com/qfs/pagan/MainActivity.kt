@@ -408,9 +408,9 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                    SoundFont(new_file.path)
-                    this.get_action_interface().ignore().set_soundfont(new_file.name)
                     try {
+                        SoundFont(new_file.path)
+                        this.get_action_interface().ignore().set_soundfont(new_file.name)
                     } catch (e: Exception) {
                         this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
                         new_file.delete()
@@ -1682,6 +1682,10 @@ class MainActivity : AppCompatActivity() {
             this.disconnect_feedback_device()
         }
         this._sample_handle_manager?.destroy()
+
+        this._soundfont?.let {
+            it.destroy()
+        }
 
         this._soundfont = null
         this._sample_handle_manager = null

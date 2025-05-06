@@ -11,6 +11,7 @@ class SoundFont(file_path: String) {
     class InvalidSampleType(i: Int): Exception("Unknown Sample Type $i")
     class NoIROMDeclared: Exception("Need irom declared to read from ROM")
 
+    // TODO: Cache isn't currently being cleared when count == 0
     data class CachedSampleData(var data: SampleData, var count: Int = 1)
 
     // Mandatory INFO
@@ -605,6 +606,14 @@ class SoundFont(file_path: String) {
             )
         }
         return output
+    }
+
+    fun destroy() {
+        for ((_, data_obj) in this.sample_data_cache) {
+            if (data_obj.data.ptr != 0.toLong()) {
+                data_obj.data.destroy()
+            }
+        }
     }
 }
 

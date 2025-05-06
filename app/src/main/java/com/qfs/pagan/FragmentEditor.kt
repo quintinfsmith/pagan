@@ -271,13 +271,13 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 editor_table?.visibility = View.INVISIBLE
                 this@FragmentEditor.clear_context_menu()
             }
+
             thread {
                 val type: CompatibleFileType? = try {
                     bundle!!.getString("URI")?.let { path ->
                         main.get_file_type(path)
                     }
                 } catch (e: Exception) {
-
                     null
                 }
 
@@ -327,7 +327,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 main.loading_reticle_hide()
                 this.view_model.backup_fragment_intent = null
             }
-
         }
 
         setFragmentResultListener(IntentFragmentToken.ImportProject.name) { _, bundle: Bundle? ->

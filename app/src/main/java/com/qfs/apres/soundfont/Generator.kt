@@ -44,13 +44,14 @@ class Generator(
                 0x2B -> Operation.KeyRange
                 0x2C -> Operation.VelocityRange
                 0x30 -> Operation.Attenuation
-                0x33 -> Operation.TuningFine
-                0x34 -> Operation.TuningCoarse
+                0x33 -> Operation.TuningCoarse
+                0x34 -> Operation.TuningFine
                 0x38 -> Operation.ScaleTuning
                 else -> Operation.Unknown
             }
         }
     }
+
     enum class Operation {
         ModLFOPitch,
         VibLFOPitch,

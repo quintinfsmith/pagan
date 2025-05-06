@@ -1,0 +1,136 @@
+//
+// Created by pent on 5/1/25.
+//
+
+#ifndef PAGAN_PROFILEBUFFER_H
+#define PAGAN_PROFILEBUFFER_H
+#include "ProfileBufferFrame.h"
+#include <vector>
+
+class ProfileBuffer {
+public:
+    ProfileBufferFrame** frames;
+    int frame_count;
+    int current_frame;
+    int current_index;
+    float current_value;
+    int next_frame_trigger;
+    int start_frame;
+
+    explicit ProfileBuffer(std::vector<ProfileBufferFrame> frames, int start_frame, bool skip_initial_set) {
+        this->frame_count = frames.size();
+        this->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
+
+        int i = 0;
+        for (auto & frame : frames) {
+            ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
+            ptr->frame = frame.frame;
+            ptr->initial_value = frame.initial_value;
+            ptr->increment = frame.increment;
+        }
+
+        this->start_frame = start_frame;
+        if (!skip_initial_set) {
+            this->set_frame(0);
+        }
+    }
+
+    ~ProfileBuffer() {
+        for (int i = 0; i < this->frame_count; i++) {
+            delete this->frames[i];
+        }
+        delete this->frames;
+    }
+
+    float get_next() {
+        ProfileBufferFrame* bframe_data = this->frames[this->current_index];
+        if (bframe_data->frame == this->current_index) {
+            this->current_value = bframe_data->initial_value;
+        } else {
+            this->current_value += bframe_data->increment;
+        }
+
+        float output = this->current_value;
+
+
+        this->_move_to_next_frame();
+        return output;
+    }
+
+    void set_frame(int frame) {
+        if (this->frames == nullptr) {
+            return;
+        }
+
+        int original_frame = this->current_frame;
+        this->current_frame = frame + this->start_frame;
+        if (original_frame == this->current_frame) {
+            return;
+        } else if (original_frame < this->current_frame) {
+            while (this->current_index < this->frame_count - 1) {
+                if (this->frames[this->current_index + 1]->frame <= this->current_frame) {
+                    this->current_index++;
+                } else {
+                    break;
+                }
+            }
+        } else {
+            while (this->current_index > 0 && this->frames[this->current_index]->frame > this->current_frame) {
+                this->current_index -= 1;
+            }
+        }
+
+        if (this->current_index < this->frame_count - 1) {
+            this->next_frame_trigger = this->frames[this->current_index + 1]->frame;
+        } else {
+            this->next_frame_trigger = -1;
+        }
+
+        int working_frame = this->current_frame - 1;
+
+        ProfileBufferFrame* frame_data = this->frames[this->current_index];
+
+        this->current_value = frame_data->initial_value;
+        if (frame_data->increment != 0) {
+            this->current_value += (float)(working_frame - frame_data->frame) * frame_data->increment;
+        }
+    }
+
+    void copy_to(ProfileBuffer* new_buffer) const {
+        if (this->frames != nullptr) {
+            new_buffer->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
+            for (int i = 0; i < this->frame_count; i++) {
+                ProfileBufferFrame* frame = this->frames[i];
+                auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
+                ptr->frame = frame->frame;
+                ptr->increment = frame->increment;
+                ptr->initial_value = frame->initial_value;
+                new_buffer->frames[i] = ptr;
+            }
+            new_buffer->frame_count = this->frame_count;
+        }
+
+        new_buffer->start_frame = this->start_frame;
+        new_buffer->next_frame_trigger = this->next_frame_trigger;
+        new_buffer->current_index = this->current_index;
+        new_buffer->current_frame = this->current_frame;
+        new_buffer->current_value = this->current_value;
+    }
+
+private:
+    void _move_to_next_frame() {
+        this->current_frame++;
+        int working_frame = this->current_frame;
+        if (working_frame == this->next_frame_trigger) {
+            if (this->current_index >= this->frame_count - 1) {
+                this->next_frame_trigger = -1;
+            } else {
+                this->next_frame_trigger = this->frames[this->current_index++]->frame;
+            }
+        }
+    }
+};
+
+
+
+#endif //PAGAN_PROFILEBUFFER_H

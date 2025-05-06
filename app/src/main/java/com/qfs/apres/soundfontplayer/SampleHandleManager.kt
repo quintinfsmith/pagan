@@ -7,16 +7,15 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.InstrumentDirective
 import com.qfs.apres.soundfont.Preset
 import com.qfs.apres.soundfont.SampleDirective
-import com.qfs.apres.soundfont.SampleType
 import com.qfs.apres.soundfont.SoundFont
 import kotlin.math.max
 
 class SampleHandleManager(
-    var soundfont: SoundFont,
-    var sample_rate: Int,
-    target_buffer_size: Int = 0,
-    var sample_limit: Int? = null,
-    ignore_lfo: Boolean = false
+        var soundfont: SoundFont,
+        var sample_rate: Int,
+        target_buffer_size: Int = 0,
+        var sample_limit: Int? = null,
+        ignore_lfo: Boolean = false
     ) {
     private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
     private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
@@ -24,8 +23,6 @@ class SampleHandleManager(
     val buffer_size: Int
 
     init {
-        val process_count = Runtime.getRuntime().availableProcessors() * 8
-
         val adj_target_buffer_size = max(
             target_buffer_size,
             AudioTrack.getMinBufferSize(
@@ -35,7 +32,7 @@ class SampleHandleManager(
             ) * 2 // too small causes clipping
         )
 
-        this.buffer_size = adj_target_buffer_size - (adj_target_buffer_size % process_count)
+        this.buffer_size = adj_target_buffer_size
 
         this.sample_handle_generator = SampleHandleGenerator(
             this.sample_rate,
@@ -94,46 +91,22 @@ class SampleHandleManager(
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8
         val potential_instruments = preset.get_instruments(event.note, velocity)
-        val sample_counts = arrayOf(0, 0, 0)
         val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
-        var sample_count = 0
         for (p_instrument in potential_instruments) {
-            val samples = p_instrument.instrument?.get_samples(
+            val sample_directives = p_instrument.instrument?.get_samples(
                 event.note,
                 velocity
             )?.toList() ?: listOf()
 
-            for (sample in samples) {
-                if (sample.sample == null) {
+            for (sample_directive in sample_directives) {
+                if (sample_directive.sample == null) {
                     continue
                 }
-                sample_pairs.add(Pair(sample, p_instrument))
-                when (sample.sample!!.sampleType) {
-                    SampleType.Mono,
-                    SampleType.RomMono -> {
-                        sample_counts[1] += 1
-                        sample_counts[0] += 1
-                        sample_counts[2] += 1
-                    }
-                    SampleType.Right,
-                    SampleType.RomRight -> {
-                        sample_counts[2] += 1
-                        sample_counts[1] += 1
-                    }
-                    SampleType.Left,
-                    SampleType.RomLeft -> {
-                        sample_counts[0] += 1
-                        sample_counts[1] += 1
-                    }
-                    SampleType.Linked -> TODO()
-                    SampleType.RomLinked -> TODO()
-                }
-                sample_count += 1
+                sample_pairs.add(Pair(sample_directive, p_instrument))
             }
         }
 
         for ((sample,p_instrument) in sample_pairs) {
-
             val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
@@ -160,48 +133,25 @@ class SampleHandleManager(
         val output = mutableSetOf<SampleHandle>()
         val potential_instruments = preset.get_instruments(event.get_note(), event.get_velocity())
 
-        val sample_counts = arrayOf(0, 0, 0)
         val sample_pairs = mutableListOf<Pair<SampleDirective, InstrumentDirective>>()
-        var sample_count = 0
         for (p_instrument in potential_instruments) {
-            val samples = p_instrument.instrument!!.get_samples(
+            val sample_directives = p_instrument.instrument!!.get_samples(
                 event.get_note(),
                 event.get_velocity()
             ).toList()
 
-            for (sample in samples) {
-                if (sample.sample == null) {
+            for (sample_directive in sample_directives) {
+                if (sample_directive.sample == null) {
                     continue
                 }
-                sample_pairs.add(Pair(sample, p_instrument))
-                when (sample.sample!!.sampleType) {
-                    SampleType.Mono,
-                    SampleType.RomMono -> {
-                        sample_counts[1] += 1
-                        sample_counts[0] += 1
-                        sample_counts[2] += 1
-                    }
-                    SampleType.Right,
-                    SampleType.RomRight -> {
-                        sample_counts[2] += 1
-                        sample_counts[1] += 1
-                    }
-                    SampleType.Left,
-                    SampleType.RomLeft -> {
-                        sample_counts[0] += 1
-                        sample_counts[1] += 1
-                    }
-                    SampleType.Linked -> TODO()
-                    SampleType.RomLinked -> TODO()
-                }
-                sample_count += 1
+                sample_pairs.add(Pair(sample_directive, p_instrument))
             }
         }
 
-        for ((sample, p_instrument) in sample_pairs) {
+        for ((sample_directive, p_instrument) in sample_pairs) {
             val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
-                sample,
+                sample_directive,
                 //p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
                 preset
@@ -257,5 +207,9 @@ class SampleHandleManager(
 
     fun get_samples_generated(): Int {
         return this.sample_handle_generator.generated
+    }
+
+    fun destroy() {
+        this.sample_handle_generator.destroy()
     }
 }

@@ -1,18 +1,18 @@
 package com.qfs.apres.soundfont
 
 class Instrument(var name: String) {
-    var samples = HashMap<Int, SampleDirective>()
+    var sample_directives = HashMap<Int, SampleDirective>()
     var global_zone: SampleDirective = SampleDirective()
 
     private val quick_ref_vel = Array<MutableSet<Int>>(128) { mutableSetOf() }
     private val quick_ref_key = Array<MutableSet<Int>>(128) { mutableSetOf() }
+
     fun set_global_zone(new_global_zone: SampleDirective) {
         this.global_zone = new_global_zone
     }
 
     fun add_sample(sample_directive: SampleDirective) {
-        val hash_code = sample_directive.hashCode()
-        this.samples[hash_code] = sample_directive
+        val uuid = sample_directive.uid
 
         val key_range = if (sample_directive.key_range == null) {
             0..127
@@ -21,7 +21,7 @@ class Instrument(var name: String) {
         }
 
         for (i in key_range) {
-            this.quick_ref_key[i].add(hash_code)
+            this.quick_ref_key[i].add(uuid)
         }
 
         val vel_range = if (sample_directive.velocity_range == null) {
@@ -31,16 +31,18 @@ class Instrument(var name: String) {
         }
 
         for (i in vel_range) {
-            this.quick_ref_vel[i].add(hash_code)
+            this.quick_ref_vel[i].add(uuid)
         }
+
+        this.sample_directives[uuid] = sample_directive
     }
 
     fun get_samples(key: Int, velocity: Int): Set<SampleDirective> {
         val output = mutableSetOf<SampleDirective>()
-        if (this.samples.isNotEmpty()) {
+        if (this.sample_directives.isNotEmpty()) {
             val ids = this.quick_ref_vel[velocity].intersect(this.quick_ref_key[key])
             for (id in ids) {
-                output.add(this.samples[id]!!)
+                output.add(this.sample_directives[id]!!)
             }
         } else {
             val key_range = if (this.global_zone.key_range == null) {
@@ -54,7 +56,6 @@ class Instrument(var name: String) {
             } else {
                 this.global_zone.velocity_range!!.first..this.global_zone.velocity_range!!.second
             }
-
             if (key_range.contains(key) && vel_range.contains(velocity)) {
                 output.add(this.global_zone)
             }

@@ -7,7 +7,7 @@ import kotlinx.coroutines.sync.withLock
 import java.io.FileInputStream
 import java.io.InputStream
 
-class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)? = null) {
+class Riff(private var file_path: String) {
     class InvalidRiff(file_path: String): Exception("$file_path is not a valid Riff")
     class InputStreamClosed : Exception("Input Stream is Closed")
     data class ListChunkHeader(
@@ -76,9 +76,6 @@ class Riff(private var file_path: String, init_callback: ((riff: Riff) -> Unit)?
 
                 working_index += sub_index
                 this.sub_chunks.add(sub_chunk_list)
-            }
-            if (init_callback != null) {
-                init_callback(this)
             }
         }
     }

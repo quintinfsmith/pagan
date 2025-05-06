@@ -1,12 +1,8 @@
 package com.qfs.apres.soundfont
 
-import com.qfs.apres.soundfont.Generator.Operation
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
 class SoundFont(file_path: String) {
     class InvalidSoundFont(file_path: String): Exception("Not a soundfont $file_path")
@@ -15,7 +11,8 @@ class SoundFont(file_path: String) {
     class InvalidSampleType(i: Int): Exception("Unknown Sample Type $i")
     class NoIROMDeclared: Exception("Need irom declared to read from ROM")
 
-    data class CachedSampleData(var data: ShortArray, var count: Int = 1)
+    // TODO: Cache isn't currently being cleared when count == 0
+    data class CachedSampleData(var data: SampleData, var count: Int = 1)
 
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
@@ -54,10 +51,12 @@ class SoundFont(file_path: String) {
     }
 
     init {
-        this.riff = Riff(file_path) { riff: Riff ->
+        this.riff = Riff(file_path)
+        this.riff.with {
             if (riff.type_cc != "sfbk") {
                 throw InvalidSoundFont(file_path)
             }
+
             val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
             val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
             val info_offset = riff.list_chunks[0].index
@@ -73,15 +72,24 @@ class SoundFont(file_path: String) {
                     }
 
                     "isng" -> {
-                        this.isng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.isng =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "INAM" -> {
-                        this.inam = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.inam =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "irom" -> {
-                        this.irom = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.irom =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "iver" -> {
@@ -92,27 +100,45 @@ class SoundFont(file_path: String) {
                     }
 
                     "ICRD" -> {
-                        this.icrd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.icrd =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "IENG" -> {
-                        this.ieng = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.ieng =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "IPRD" -> {
-                        this.iprd = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.iprd =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "ICOP" -> {
-                        this.icop = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.icop =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "ICMT" -> {
-                        this.icmt = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.icmt =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     "ISFT" -> {
-                        this.isft = ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(Charsets.UTF_8)
+                        this.isft =
+                            ByteArray(header.size) { j -> info_chunk[j + header_offset] }.toString(
+                                Charsets.UTF_8
+                            )
                     }
 
                     else -> {}
@@ -130,10 +156,28 @@ class SoundFont(file_path: String) {
         }
     }
 
+    fun get_samples(sample_index: Int): List<Sample> {
+        val output = mutableListOf<Sample>()
+        var working_index = sample_index
+        val done_indices = mutableSetOf<Int>()
+        while (!done_indices.contains(working_index)) {
+            val (sample, next_index) = this.get_sample(working_index)
+            output.add(sample)
+            done_indices.add(working_index)
 
-    fun get_sample(sample_index: Int, build_linked: Boolean = true): Sample {
+            if (next_index != null && next_index != 0) {
+                working_index = next_index
+            } else {
+                break
+            }
+        }
+
+        return output
+    }
+
+
+    fun get_sample(sample_index: Int): Pair<Sample, Int?> {
         val shdr_bytes = this.pdta_chunks["shdr"]!!
-
         val offset = sample_index * 46
 
         var sample_name = ""
@@ -149,44 +193,37 @@ class SoundFont(file_path: String) {
         val end = toUInt(shdr_bytes[offset + 24]) + (toUInt(shdr_bytes[offset + 25]) * 256) + (toUInt(shdr_bytes[offset + 26]) * 65536) + (toUInt(shdr_bytes[offset + 27]) * 16777216)
 
         //val sample_data = this.get_sample_data(start, end)!!
-        val sample_type = SoundFont.sample_type_from_int(toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256))
-        return Sample(
-            sample_name,
-            toUInt(shdr_bytes[offset + 28])
-                    + (toUInt(shdr_bytes[offset + 29]) * 256)
-                    + (toUInt(shdr_bytes[offset + 30]) * 65536)
-                    + (toUInt(shdr_bytes[offset + 31]) * 16777216)
-                    - start,
-            toUInt(shdr_bytes[offset + 32])
-                    + (toUInt(shdr_bytes[offset + 33]) * 256)
-                    + (toUInt(shdr_bytes[offset + 34]) * 65536)
-                    + (toUInt(shdr_bytes[offset + 35]) * 16777216)
-                    - start,
-            toUInt(shdr_bytes[offset + 36])
-                    + (toUInt(shdr_bytes[offset + 37]) * 256)
-                    + (toUInt(shdr_bytes[offset + 38]) * 65536)
-                    + (toUInt(shdr_bytes[offset + 39]) * 16777216),
-            toUInt(shdr_bytes[offset + 40]),
-            toUInt(shdr_bytes[offset + 41]),
-            when (sample_type) {
-                SampleType.Right,
-                SampleType.Left,
-                SampleType.Linked -> {
-                    val linked_addr = toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256)
-                    if (build_linked && linked_addr != 0) {
-                        this.get_sample(linked_addr, false)
-                    } else {
-                        null
-                    }
-                }
-                SampleType.Mono,
-                SampleType.RomMono,
-                SampleType.RomRight,
-                SampleType.RomLeft,
-                SampleType.RomLinked -> null
-            },
-            sample_type,
-            data_placeholder = Pair(start, end)
+        val sample_type = toUInt(shdr_bytes[offset + 44]) + (toUInt(shdr_bytes[offset + 45]) * 256)
+        val linked_addr = when (sample_type) {
+            0x0002,
+            0x0004,
+            0x0008 -> toUInt(shdr_bytes[offset + 42]) + (toUInt(shdr_bytes[offset + 43]) * 256)
+            else -> null
+        }
+
+        return Pair(
+            Sample(
+                sample_name,
+                toUInt(shdr_bytes[offset + 28])
+                        + (toUInt(shdr_bytes[offset + 29]) * 256)
+                        + (toUInt(shdr_bytes[offset + 30]) * 65536)
+                        + (toUInt(shdr_bytes[offset + 31]) * 16777216)
+                        - start,
+                toUInt(shdr_bytes[offset + 32])
+                        + (toUInt(shdr_bytes[offset + 33]) * 256)
+                        + (toUInt(shdr_bytes[offset + 34]) * 65536)
+                        + (toUInt(shdr_bytes[offset + 35]) * 16777216)
+                        - start,
+                toUInt(shdr_bytes[offset + 36])
+                        + (toUInt(shdr_bytes[offset + 37]) * 256)
+                        + (toUInt(shdr_bytes[offset + 38]) * 65536)
+                        + (toUInt(shdr_bytes[offset + 39]) * 16777216),
+                toUInt(shdr_bytes[offset + 40]),
+                toUInt(shdr_bytes[offset + 41]),
+                sample_type,
+                data_placeholder = Pair(start, end)
+            ),
+            linked_addr
         )
     }
 
@@ -262,6 +299,7 @@ class SoundFont(file_path: String) {
                     )
                 )
             }
+
             for ((pbag, next_pbag) in pbag_pairs) {
                 val generators_to_use: List<Generator> = this.get_preset_generators(
                     pbag.first,
@@ -272,7 +310,6 @@ class SoundFont(file_path: String) {
                     pbag.second,
                     next_pbag.second
                 )
-
                 this.generate_preset(preset, generators_to_use, modulators_to_use)
             }
             output = preset
@@ -285,14 +322,14 @@ class SoundFont(file_path: String) {
             for ((_, preset_instrument) in output.instruments) {
                 val instrument = preset_instrument.instrument ?: continue
 
-                if (instrument.samples.isNotEmpty()) {
-                    for (instrument_sample in instrument.samples.values) {
+                if (instrument.sample_directives.isNotEmpty()) {
+                    for (instrument_sample in instrument.sample_directives.values) {
                         val sample = instrument_sample.sample ?: continue
-                        ordered_samples.add(sample)
+                        ordered_samples.addAll(sample)
                     }
                 } else {
                     val sample = instrument.global_zone.sample ?: continue
-                    ordered_samples.add(sample)
+                    ordered_samples.addAll(sample)
                 }
             }
 
@@ -304,11 +341,6 @@ class SoundFont(file_path: String) {
             this.riff.with {
                 for (sample in ordered_samples) {
                     this.apply_sample_data(sample)
-
-                    val linked_sample = sample.linked_sample
-                    if (linked_sample is Sample) {
-                        this.apply_sample_data(linked_sample)
-                    }
                 }
             }
         }
@@ -317,31 +349,27 @@ class SoundFont(file_path: String) {
     }
 
     fun apply_sample_data(sample: Sample) {
-        sample.data = when (sample.sampleType) {
-            SampleType.RomMono,
-            SampleType.RomRight,
-            SampleType.RomLeft,
-            SampleType.RomLinked -> {
-                if (this.irom == null) {
-                    throw NoIROMDeclared()
-                }
-                this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
+        sample.set_data(if ((sample.sample_type and 0x8000) == 0x8000) {
+            if (this.irom == null) {
+                throw NoIROMDeclared()
             }
-            else -> {
-                this.get_sample_data(sample.data_placeholder.first, sample.data_placeholder.second)
-            }
-        }
+            this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
+        } else {
+            val data_placeholder = sample.data_placeholder
+            this.get_sample_data(data_placeholder.first, data_placeholder.second)
+        })
     }
 
-    open fun read_rom_hook(start: Int, end: Int): ShortArray {
-        return ShortArray(0)
+    open fun read_rom_hook(start: Int, end: Int): SampleData {
+        println("GET ROM OOK")
+        return SampleData(0)
     }
 
     fun get_instrument(instrument_index: Int): Instrument {
         val ibag_entry_size = 4
         val inst_bytes = this.pdta_chunks["inst"]!!
-
         val offset = instrument_index * 22
+
         var inst_name = ""
         for (j in 0 until 20) {
             val b = toUInt(inst_bytes[offset + j])
@@ -487,129 +515,6 @@ class SoundFont(file_path: String) {
         return output
     }
 
-    private fun generate(working_generated: Generated, generator: Generator) {
-        when (generator.get_operation()) {
-            Operation.ModLFOPitch -> {
-                working_generated.mod_lfo_pitch = generator.asInt()
-            }
-            Operation.VibLFOPitch -> {
-                working_generated.vib_lfo_pitch = generator.asInt()
-            }
-            Operation.ModEnvPitch -> {
-                working_generated.mod_env_pitch = generator.asIntSigned()
-            }
-            Operation.FilterCutoff -> {
-                working_generated.filter_cutoff = generator.asTimecent() * 8.176f
-            }
-            Operation.FilterResonance -> {
-                working_generated.filter_resonance = generator.asInt().toFloat()
-            }
-            Operation.ModLFOFilter -> {
-                working_generated.mod_lfo_filter = generator.asInt()
-            }
-            Operation.ModEnvFilter -> {
-                working_generated.mod_env_filter = generator.asIntSigned()
-            }
-            Operation.ModLFOToVolume -> {
-                working_generated.mod_lfo_to_volume = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
-            }
-            Operation.Chorus -> {
-                working_generated.chorus = generator.asInt().toFloat() / 10F
-            }
-            Operation.Reverb -> {
-                working_generated.reverb = (generator.asInt().toFloat()) / 10F
-            }
-            Operation.Pan -> {
-                working_generated.pan = (generator.asIntSigned().toFloat()) / 10F
-            }
-            Operation.ModLFODelay -> {
-                working_generated.mod_lfo_delay = generator.asTimecent()
-            }
-            Operation.ModLFOFrequency -> {
-                working_generated.mod_lfo_freq = generator.asTimecent() * 8.176F
-            }
-            Operation.VibLFODelay -> {
-                working_generated.vib_lfo_delay = generator.asTimecent()
-            }
-            Operation.VibLFOFrequency -> {
-                working_generated.vib_lfo_freq = generator.asTimecent() * 8.176F
-            }
-            Operation.ModEnvDelay -> {
-                working_generated.mod_env_delay = generator.asTimecent()
-            }
-            Operation.ModEnvAttack-> {
-                working_generated.mod_env_attack = generator.asTimecent()
-            }
-            Operation.ModEnvHold -> {
-                working_generated.mod_env_hold = generator.asTimecent()
-            }
-            Operation.ModEnvDecay -> {
-                working_generated.mod_env_decay = generator.asTimecent()
-            }
-            Operation.ModEnvSustain -> {
-                working_generated.mod_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
-            }
-            Operation.ModEnvRelease -> {
-                working_generated.mod_env_release = generator.asTimecent()
-            }
-            Operation.KeyModEnvHold -> {
-                working_generated.key_mod_env_hold = generator.asInt()
-            }
-            Operation.KeyModEnvDecay -> {
-                working_generated.key_mod_env_decay = generator.asInt()
-            }
-            Operation.VolEnvDelay -> {
-                working_generated.vol_env_delay = generator.asTimecent()
-            }
-            Operation.VolEnvAttack -> {
-                working_generated.vol_env_attack = generator.asTimecent()
-            }
-            Operation.VolEnvHold -> {
-                working_generated.vol_env_hold = generator.asTimecent()
-            }
-            Operation.VolEnvDecay -> {
-                working_generated.vol_env_decay = generator.asTimecent()
-            }
-            Operation.VolEnvSustain -> {
-                working_generated.vol_env_sustain = min(1000, max(generator.asIntSigned(), 0)).toFloat() / 10F
-            }
-            Operation.VolEnvRelease -> {
-                working_generated.vol_env_release = generator.asTimecent()
-            }
-            Operation.KeyVolEnvHold -> {
-                working_generated.key_vol_env_hold = generator.asInt()
-            }
-            Operation.KeyVolEnvDecay -> {
-                working_generated.key_vol_env_decay = generator.asInt()
-            }
-            Operation.KeyRange -> {
-                working_generated.key_range = generator.asPair()
-            }
-            Operation.VelocityRange -> {
-                working_generated.velocity_range = generator.asPair()
-            }
-            Operation.Attenuation -> {
-                // The spec appears to indicate a value range of 0 -> 1440 centibels,
-                // but looking at the fluid font, it has some samples with negative attenuation
-                // I'll treat the data type as signed, but still use the absolute value since that sounds right
-                // when I listen to the samples
-                working_generated.attenuation = abs(generator.asIntSigned().toFloat() / 10)
-            }
-            Operation.TuningFine -> {
-                working_generated.tuning_cent = generator.asIntSigned()
-            }
-            Operation.TuningCoarse -> {
-                working_generated.tuning_semi = generator.asIntSigned()
-            }
-            Operation.ScaleTuning -> {
-                working_generated.scale_tuning = generator.asInt()
-            }
-            else -> {
-                // Unused Generator
-            }
-        }
-    }
-
     private fun generate_instrument(instrument: Instrument, generators: List<Generator>, modulators: List<Modulator>) {
         val is_global = generators.isEmpty() || generators.last().sfGenOper != 0x35
 
@@ -618,76 +523,10 @@ class SoundFont(file_path: String) {
             working_sample.add_modulator(modulator)
         }
 
-        generators.forEachIndexed { i, generator ->
-            when (generator.sfGenOper) {
-                0x35 -> {
-                    if (i != generators.size - 1) {
-                        throw InvalidSampleIdPosition()
-                    }
-                    working_sample.sample = this.get_sample(generator.asInt())
-                }
-                0x00 -> {
-                    working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
-                        generator.asIntSigned()
-                    } else {
-                        working_sample.sampleStartOffset!! + generator.asIntSigned()
-                    }
-                }
-                0x01 -> {
-                    working_sample.sampleEndOffset = generator.asIntSigned()
-                }
-                0x02 -> {
-                    working_sample.loopStartOffset = generator.asIntSigned()
-                }
-                0x03 -> {
-                    working_sample.loopEndOffset = generator.asIntSigned()
-                }
-                0x04 -> {
-                    working_sample.sampleStartOffset = if (working_sample.sampleStartOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.sampleStartOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x0C -> {
-                    working_sample.sampleEndOffset = if (working_sample.sampleEndOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.sampleEndOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x2D -> {
-                    working_sample.loopStartOffset = if (working_sample.loopStartOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.loopStartOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x2E -> { // Instrument Specific  (keynum)
-                    working_sample.keynum = generator.asInt()
-                }
-                0x2F -> { //Instrument Specific (velocity)
-                    working_sample.velocity = generator.asInt()
-                }
-                0x32 -> {
-                    working_sample.loopEndOffset = if (working_sample.loopEndOffset == null) {
-                        generator.asIntSigned() * 32768
-                    } else {
-                        working_sample.loopEndOffset!! + (generator.asIntSigned() * 32768)
-                    }
-                }
-                0x36 -> {
-                    working_sample.sampleMode = generator.asInt()
-                }
-                0x39 -> {
-                    working_sample.exclusive_class = generator.asInt()
-                }
-                0x3A -> {
-                    working_sample.root_key = generator.asInt()
-                }
-                else -> {
-                    this.generate(working_sample, generator)
-                }
+        working_sample.apply_generators(generators)
+        for (generator in generators) {
+            if (generator.sfGenOper == 0x35) {
+                working_sample.sample = this.get_samples(generators.last().asInt())
             }
         }
 
@@ -704,14 +543,12 @@ class SoundFont(file_path: String) {
         for (modulator in modulators) {
             working_instrument.add_modulator(modulator)
         }
-
-        for (generator in generators) {
-            when (generator.sfGenOper) {
-                0x29 -> {
-                    working_instrument.instrument = this.get_instrument(generator.asInt())
-                }
-                else -> {
-                    this.generate(working_instrument, generator)
+        if (generators.isNotEmpty()) {
+            working_instrument.apply_generators(generators)
+            for (generator in generators) {
+                if (generator.sfGenOper == 0x29) {
+                    working_instrument.instrument = this.get_instrument(generators.last().asInt())
+                    break
                 }
             }
         }
@@ -724,7 +561,7 @@ class SoundFont(file_path: String) {
         }
     }
 
-    private fun get_sample_data(start_index: Int, end_index: Int): ShortArray {
+    private fun get_sample_data(start_index: Int, end_index: Int): SampleData {
         val cache_key = Pair(start_index, end_index)
 
         if (this.sample_data_cache.containsKey(cache_key)) {
@@ -741,9 +578,12 @@ class SoundFont(file_path: String) {
 
         val inbuffer = ByteBuffer.wrap(smpl)
         inbuffer.order(ByteOrder.LITTLE_ENDIAN)
-        val output = ShortArray(smpl.size / 2) {
-            inbuffer.getShort()
-        }
+        val output = SampleData(0)
+        output.set_data(
+            ShortArray(smpl.size / 2) {
+                inbuffer.getShort()
+            }
+        )
 
         // TODO: support. Can be ignored and it'll just have a lower resolution
         //if (sm24 != null) {
@@ -766,6 +606,14 @@ class SoundFont(file_path: String) {
             )
         }
         return output
+    }
+
+    fun destroy() {
+        for ((_, data_obj) in this.sample_data_cache) {
+            if (data_obj.data.ptr != 0.toLong()) {
+                data_obj.data.destroy()
+            }
+        }
     }
 }
 

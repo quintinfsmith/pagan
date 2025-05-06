@@ -25,15 +25,14 @@ class Preset(
     }
 
     fun add_instrument(pinstrument: InstrumentDirective) {
-        val hash_code = pinstrument.hashCode()
-        this.instruments[hash_code] = pinstrument
+        val uuid = pinstrument.uid
         val key_range = if (pinstrument.key_range == null) {
             0..127
         } else {
             pinstrument.key_range!!.first ..pinstrument.key_range!!.second
         }
         for (i in key_range) {
-            this.quick_instrument_ref_key[i].add(hash_code)
+            this.quick_instrument_ref_key[i].add(uuid)
         }
         val vel_range = if (pinstrument.velocity_range == null) {
             0..127
@@ -42,8 +41,10 @@ class Preset(
         }
 
         for (i in vel_range) {
-            this.quick_instrument_ref_vel[i].add(hash_code)
+            this.quick_instrument_ref_vel[i].add(uuid)
         }
+
+        this.instruments[uuid] = pinstrument
     }
 
     fun get_instruments(key: Int, velocity: Int): Set<InstrumentDirective> {

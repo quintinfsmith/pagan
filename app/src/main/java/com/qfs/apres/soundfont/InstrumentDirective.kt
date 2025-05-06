@@ -10,4 +10,8 @@ class InstrumentDirective: Generated() {
         }
         this.modulators[key]!!.add(modulator)
     }
+
+    override fun apply_generator(generator: Generator) {
+        return // 0x29 is handled in SoundFont
+    }
 }

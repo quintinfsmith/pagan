@@ -1,70 +1,79 @@
 package com.qfs.apres.soundfontplayer
 
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
+import com.qfs.apres.soundfont.SampleData
 
-class PitchedBuffer(val data: ShortArray, var pitch: Float, known_max: Int? = null, range: IntRange? = null, var is_loop: Boolean = false) {
+class PitchedBuffer(var ptr: Long) {
+    constructor(data: SampleData, pitch: Float, known_max: Int? = null, range: IntRange? = null, is_loop: Boolean = false): this(
+        create(
+            data.ptr,
+            pitch,
+            range?.first ?: 0,
+            range?.last ?: data.size,
+            is_loop
+        )
+    )
+
+    companion object {
+        init {
+            System.loadLibrary("pagan")
+        }
+        external fun create(data_ptr: Long, pitch: Float, start: Int, end: Int, is_loop: Boolean): Long
+    }
+
     class PitchedBufferOverflow : Exception()
-    val max: Int
-    var _range = range ?: 0 until data.size
-    var size: Int = ((this._range.last + 1 - this._range.first).toFloat() / this.pitch).roundToInt()
+
+    val size: Int
+        get() = get_virtual_size(this.ptr)
+
+    val position: Int
+        get() = get_virtual_position(this.ptr)
 
     private var virtual_position: Int = 0
     var pitch_adjustment: Float = 1F
 
-    init {
-        this.max = known_max ?: max(abs(data.min().toInt()), data.max().toInt())
+    external fun get_range_inner(ptr: Long, output: IntArray)
+    external fun get_virtual_size(ptr: Long): Int
+    external fun is_overflowing_inner(ptr: Long): Boolean
+    external fun is_loop(ptr: Long): Boolean
+    external fun repitch_inner(ptr: Long, new_pitch_adjustment: Float)
+    external fun get_virtual_position(ptr: Long): Int
+    external fun set_virtual_position(ptr: Long, new_position: Int)
+    external fun get_inner(ptr: Long): Float
+    external fun copy_inner(ptr: Long): Long
+    external fun free(ptr: Long)
+
+    fun destroy() {
+        this.free(this.ptr)
+    }
+
+    fun get_range(): IntRange {
+        var array = IntArray(2) { 0 }
+        get_range_inner(this.ptr, array)
+        // TODO: Double check '..' or 'until'
+        return array[0] .. array[1]
     }
 
     fun is_overflowing(): Boolean {
-        return (this.virtual_position.toFloat() * this.get_calculated_pitch()).toInt() - this._range.first > this._range.last
-    }
-
-    fun get_calculated_pitch(): Float {
-        return this.pitch * this.pitch_adjustment
+        return is_overflowing_inner(this.ptr)
     }
 
     fun repitch(new_pitch_adjustment: Float) {
-        this.pitch_adjustment = new_pitch_adjustment
-        this.size = ((this._range.last + 1 - this._range.first).toFloat() / this.pitch).roundToInt()
+        repitch_inner(this.ptr, new_pitch_adjustment)
     }
 
     fun reset_pitch() {
         this.repitch(1F)
     }
 
-    fun position(): Int {
-        return this.virtual_position
-    }
-
-    fun position(index: Int) {
-        this.virtual_position = index
-    }
-
-    fun position_subtract_buffer(virtual_position: Int, buffer_to_subtract: PitchedBuffer) {
-        val to_sub = ((buffer_to_subtract._range.last + 1 - buffer_to_subtract._range.first).toFloat() / buffer_to_subtract.pitch).toInt()
-        this.virtual_position = virtual_position - to_sub
-    }
-
-    private fun _get_real_frame(i: Float): Short {
-        var range_size = this._range.last + 1 - this._range.first
-        var adj_i = min(this._range.last, this._range.first + if (this.is_loop) {
-            i.toInt() % range_size
-        } else if (i >= range_size) {
-            throw PitchedBufferOverflow()
-        } else {
-            i.toInt()
-        })
-        return this.data[adj_i]
+    fun set_position(value: Int) {
+        set_virtual_position(this.ptr, value)
     }
 
     fun get(): Float {
-        val pitch = this.get_calculated_pitch()
-        val position = (this.virtual_position++).toFloat() * pitch
-        var output = this._get_real_frame(position)
+        return get_inner(this.ptr)
+    }
 
-        return output.toFloat() / Short.MAX_VALUE.toFloat()
+    fun copy(): PitchedBuffer {
+        return PitchedBuffer(copy_inner(this.ptr))
     }
 }

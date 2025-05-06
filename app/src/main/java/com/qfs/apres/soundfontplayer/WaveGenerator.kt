@@ -1,13 +1,9 @@
 package com.qfs.apres.soundfontplayer
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.tanh
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
     enum class StereoMode {
@@ -20,21 +16,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     data class ActiveHandleMapItem(
         var first_frame: Int,
-        val handle: SampleHandle,
-        val sample_handles: Array<Pair<SampleHandle?, Int>>,
-        val first_section: Int
-    )
-
-    data class GeneratedSampleChunk(
-        var key: Int,
-        var smoothing_factor: Float,
-        var volume_array: FloatArray,
-        var chunk_data: FloatArray
+        val handle: SampleHandle
     )
 
     data class CompoundFrame(
         val value: Float = 0F,
-        val volume: Float = 0F,
+        val volume: Float = 1F,
         val balance: Pair<Float, Float> = Pair(1F, 1F)
     )
 
@@ -43,23 +30,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
     private var timeout: Int? = null
-    // Using more processes than counters just in case 1 thread holds up the rest.
-    private val process_count = Runtime.getRuntime().availableProcessors() * 8
-    private val active_sample_handle_mutex = Mutex()
-    private val _cached_frame_weights = HashMap<Int, Float>() // Store 'previous frame's between chunks so smoothing can be accurately applied
 
 
+    external fun merge_arrays(arrays: Array<FloatArray>, frame_count: Int): FloatArray
+    external fun tanh_array(array: FloatArray): FloatArray
     fun generate(): FloatArray {
-        val output_array = FloatArray(this.buffer_size * 2)
-        this.generate(output_array)
-        return output_array
-    }
-
-    fun generate(array: FloatArray) {
-        val buffer_size = array.size / 2
-        if (buffer_size != this.buffer_size) {
-            throw InvalidArraySize()
-        }
+        val working_array = FloatArray(this.buffer_size * 2)
+        val start_ts = System.nanoTime()
 
         val first_frame = this.frame
         this.update_active_sample_handles(this.frame)
@@ -69,176 +46,65 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw EmptyException()
         }
 
-        val arrays: Array<HashMap<Int, Pair<Float, Array<CompoundFrame>>>> = runBlocking {
-            val tmp = Array(this@WaveGenerator.process_count) { i: Int ->
-                async(Dispatchers.Default) {
-                    this@WaveGenerator.gen_partial_int_array(first_frame, i)
-                }
-            }
+        val separated_lines_map: HashMap<Int, Pair<Float, FloatArray>> = this@WaveGenerator.generate_sample_arrays(first_frame)
 
-            Array(tmp.size) { i: Int ->
-                tmp[i].await()
-            }
+        val keys = separated_lines_map.keys.toList()
+        val arrays_to_merge = Array(keys.size) { i: Int ->
+            separated_lines_map[keys[i]]!!.second
         }
 
-        // NOTE: We can't separate the smoothing function between coroutines,
-        // smoothing is a function series.
-        val latest_weights = HashMap<Int, Float?>()
-        for (x in arrays.indices) {
-            val separated_lines_map = arrays[x]
-            val initial_array_index = array.size * x / this.process_count
-
-            for ((key, pair) in separated_lines_map) {
-                // Apply the volume, pan and low-pass filter
-                val (smoothing_factor, uncompiled_array) = pair
-                var weight_value: Float? = latest_weights[key] ?: this._cached_frame_weights[key]
-                var pre_smooth_max = 0F
-                var post_smooth_max = 0F
-                val smoothed_array = FloatArray(uncompiled_array.size) { i: Int ->
-                    val frame = uncompiled_array[i]
-                    var smoothed_frame = if (smoothing_factor == 1F || weight_value == null) {
-                        frame.value
-                    } else {
-                        weight_value!! + (smoothing_factor * (frame.value - weight_value!!))
-                    }
-                    pre_smooth_max = max(abs(frame.value), pre_smooth_max)
-                    post_smooth_max = max(abs(smoothed_frame), post_smooth_max)
-
-                    weight_value = smoothed_frame
-
-                    smoothed_frame
-                }
-
-                val adj_factor = if (post_smooth_max == 0F) {
-                    1F
-                } else {
-                    pre_smooth_max / post_smooth_max
-                }
-
-                for (i in smoothed_array.indices) {
-                    val frame = uncompiled_array[i]
-                    val smoothed_frame = smoothed_array[i] * frame.volume * adj_factor
-
-                    // Adjust manual pan
-                    array[initial_array_index + (i * 2)] += smoothed_frame * frame.balance.first
-                    array[initial_array_index + (i * 2) + 1] += smoothed_frame * frame.balance.second
-                }
-
-                latest_weights[key] = weight_value
-            }
+        val merged_array = merge_arrays(arrays_to_merge, this.buffer_size)
+        for (i in 0 until merged_array.size / 2) {
+            working_array[(i * 2)] = merged_array[i * 2]
+            working_array[(i * 2) + 1] = merged_array[(i * 2) + 1]
         }
 
-        for ((k, v) in latest_weights) {
-            if (v == null) {
-                continue
-            }
-            this._cached_frame_weights.put(k, v)
-        }
-
-        // Run the tanh() on all cores
-        runBlocking {
-            val chunk_size = array.size / this@WaveGenerator.process_count
-            val tmp = Array(this@WaveGenerator.process_count) { i: Int ->
-                val start_index = i * chunk_size
-                async(Dispatchers.Default) {
-                    for (j in 0 until chunk_size) {
-                        array[start_index + j] = tanh(array[start_index + j])
-                    }
-                }
-            }
-
-            Array(tmp.size) { i: Int ->
-                tmp[i].await()
-            }
-        }
+        val output_array = this.tanh_array(working_array)
 
         this.frame += this.buffer_size
 
         if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
             throw DeadException()
         }
+
+        val delta = 1000000 / (System.nanoTime() - start_ts).toFloat()
+        val max_delta = this.buffer_size.toFloat() / this.sample_rate.toFloat()
+        // println("---GEN TIME: $delta | $max_delta")
+
+        return output_array
     }
 
-    private fun gen_partial_int_array(first_frame: Int, sample_index: Int): HashMap<Int, Pair<Float, Array<CompoundFrame>>> {
+    private fun generate_sample_arrays(first_frame: Int): HashMap<Int, Pair<Float, FloatArray>> {
         val sample_handles_to_use = mutableSetOf<Triple<Int, SampleHandle, Int>>()
-        runBlocking {
-            this@WaveGenerator.active_sample_handle_mutex.withLock {
-                for ((_, item) in this@WaveGenerator._active_sample_handles) {
-                    if (item.first_frame >= first_frame + this@WaveGenerator.buffer_size) {
-                        continue
-                    }
-
-                    val real_index = if (item.first_section > 0) {
-                        if ((this@WaveGenerator.process_count - item.sample_handles.size) > sample_index) {
-                            continue
+        for ((_, item) in this._active_sample_handles) {
+            if (item.first_frame >= first_frame + this.buffer_size) {
+                continue
+            }
+            if (!item.handle.is_dead) {
+                sample_handles_to_use.add(
+                    Triple(
+                        item.handle.uuid,
+                        item.handle,
+                        if ((0 until this@WaveGenerator.buffer_size).contains(item.first_frame - first_frame)) {
+                            item.first_frame - first_frame
+                        } else {
+                            0
                         }
-                        sample_index - item.first_section
-                    } else {
-                        if (item.sample_handles.size <= sample_index) {
-                            continue
-                        }
-                        sample_index
-                    }
-
-                    var (sample_handle, start_frame) = item.sample_handles[real_index]
-                    if (sample_handle == null) {
-                        sample_handle = SampleHandle.copy(item.handle)
-                        sample_handle.set_working_frame(start_frame)
-                        item.sample_handles[real_index] = Pair(sample_handle, 0)
-                    }
-
-                    if (!sample_handle.is_dead) {
-                        sample_handles_to_use.add(
-                            Triple(
-                                item.handle.uuid,
-                                sample_handle,
-                                if (real_index == 0 && (0 until this@WaveGenerator.buffer_size).contains(item.first_frame - first_frame)) {
-                                    (item.first_frame - first_frame) - (this@WaveGenerator.buffer_size * sample_index / this@WaveGenerator.process_count)
-                                } else {
-                                    0
-                                }
-                            )
-                        )
-                    }
-                }
+                    )
+                )
             }
         }
 
-
-        val output = HashMap<Int, Pair<Float, Array<CompoundFrame>>>()
-        for ((key, sample_handle, index) in sample_handles_to_use) {
-            output[key] = Pair(sample_handle.smoothing_factor, this.populate_partial_int_array(sample_handle, index))
+        val output = HashMap<Int, Pair<Float, FloatArray>>()
+        for ((key, sample_handle, left_pad) in sample_handles_to_use) {
+            output[key] = Pair(sample_handle.smoothing_factor, this.populate_partial_int_array(sample_handle, left_pad))
         }
+
         return output
     }
 
-    private fun populate_partial_int_array(sample_handle: SampleHandle, offset: Int): Array<CompoundFrame> {
-        val output = Array<CompoundFrame>(this.buffer_size / this.process_count) {
-            CompoundFrame()
-        }
-        // Assume working_int_array.size % 2 == 0
-        val range = if (offset < 0) {
-            0 until output.size
-        } else {
-            offset until output.size
-        }
-
-        for (f in range) {
-            var frame_value = sample_handle.get_next_frame() ?: break
-
-
-            // NOTE: It may be insufficient to limit the pan and I rather may need
-            // to modify the outgoing pan relatively to the sample_handle.pan
-            output[f] = CompoundFrame(
-                frame_value.first,
-                frame_value.second,
-                sample_handle.get_next_balance()
-            )
-        }
-        if (!sample_handle.is_dead) {
-            sample_handle.set_working_frame(sample_handle.working_frame + (this.buffer_size * (this.process_count - 1) / this.process_count))
-        }
-        return output
+    private fun populate_partial_int_array(sample_handle: SampleHandle, left_pad: Int): FloatArray {
+        return sample_handle.get_next_frames(left_pad, this.buffer_size)
     }
 
     private fun update_active_sample_handles(initial_frame: Int) {
@@ -249,27 +115,18 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 continue
             }
 
-            var dead_count = 0
-            for ((handle, _) in item.sample_handles) {
-                if (handle != null && handle.is_dead) {
-                    dead_count += 1
-                }
-            }
-            if (dead_count == item.sample_handles.size) {
+            if (item.handle.is_dead) {
                 remove_set.add(key)
-                this._cached_frame_weights.remove(item.handle.uuid)
             }
         }
 
         for (key in remove_set) {
-            this._active_sample_handles.remove(key)
+            this._active_sample_handles.remove(key)?.handle?.destroy()
         }
 
-        for (i in 0 until this.process_count) {
-            for (j in 0 until this.buffer_size / this.process_count) {
-                val working_frame = j + initial_frame + (i * this.buffer_size / this.process_count)
-                val handles = this.midi_frame_map.get_new_handles(working_frame) ?: continue
-                this.activate_sample_handles(handles, i, j, initial_frame)
+        for (i in 0 until this.buffer_size) {
+            this.midi_frame_map.get_new_handles(initial_frame + i)?.let {
+                this.activate_sample_handles(it, initial_frame, i)
             }
         }
 
@@ -290,54 +147,28 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             handles_adj.add(handle)
         }
 
-        this.activate_sample_handles(handles_adj.toSet(), 0, 0, frame)
+        this.activate_sample_handles(handles_adj.toSet(), frame, 0)
     }
 
-    fun activate_sample_handles(handles: Set<SampleHandle>, core: Int, frame_in_core_chunk: Int, initial_frame: Int) {
-        val base_butt_offset = (this.buffer_size / this.process_count) - frame_in_core_chunk
-
+    fun activate_sample_handles(handles: Set<SampleHandle>, initial_frame: Int, offset: Int) {
         // then populate the next active frames with upcoming sample handles
-        val working_frame = frame_in_core_chunk + initial_frame + (core * this.buffer_size / this.process_count)
         for (handle in handles) {
-            val split_handles = Array<Pair<SampleHandle?, Int>>(this.process_count - core) { k: Int ->
-                Pair(
-                    null,
-                    if (k > 0) {
-                       handle.working_frame + base_butt_offset + (this.buffer_size * (k - 1) / this.process_count)
-                    } else {
-                       handle.working_frame
-                    }
-                )
-            }
-
-            this._active_sample_handles[2 * handle.uuid] = ActiveHandleMapItem(
-                working_frame,
-                handle,
-                split_handles,
-                core
+            val new_handle = handle.copy()
+            //new_handle.set_working_frame(offset)
+            this._active_sample_handles[handle.uuid] = ActiveHandleMapItem(
+                initial_frame + offset,
+                new_handle
             )
-
-            if (core > 0) {
-                val split_handles_b = Array<Pair<SampleHandle?, Int>>(core) { k: Int ->
-                    Pair(
-                        null,
-                        handle.working_frame + base_butt_offset + (this.buffer_size * ((k - 1) + (this.process_count - core)) / this.process_count)
-                    )
-                }
-
-                this._active_sample_handles[(2 * handle.uuid) + 1] = ActiveHandleMapItem(
-                    initial_frame + this.buffer_size,
-                    handle,
-                    split_handles_b,
-                    0
-                )
-            }
         }
     }
 
     fun clear() {
         this.kill_frame = null
+        for ((uuid, item) in this._active_sample_handles) {
+            item.handle.destroy()
+        }
         this._active_sample_handles.clear()
+
         this.frame = 0
         this._empty_chunks_count = 0
     }

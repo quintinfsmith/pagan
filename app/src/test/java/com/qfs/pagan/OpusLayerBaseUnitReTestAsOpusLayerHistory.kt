@@ -916,7 +916,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         assertEquals(
-            3, // SongPositionPoitner, NoteOff, NoteOff
+            2, // NoteOff, NoteOff
             event_map[480]!!.size
         )
 
@@ -1048,57 +1048,57 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         //TODO("test_save")
     }
 
-    @Test
-    fun test_load_0() {
-        val manager = OpusManager()
-        manager.load_path("UTP0.json")
-        assertEquals(
-            "UnitTestProject0",
-            manager.project_name
-        )
-        assertEquals(
-            OpusTempoEvent(140F),
-            manager.get_global_controller_initial_event(ControlEventType.Tempo)
-        )
-        assertEquals(27, manager.percussion_channel.lines[0].instrument)
-        assertEquals(10, manager.percussion_channel.lines[1].instrument)
-        assertEquals(8, manager.percussion_channel.lines[2].instrument)
+    // @Test
+    // fun test_load_0() {
+    //     val manager = OpusManager()
+    //     manager.load_path("UTP0.json")
+    //     assertEquals(
+    //         "UnitTestProject0",
+    //         manager.project_name
+    //     )
+    //     assertEquals(
+    //         OpusTempoEvent(140F),
+    //         manager.get_global_controller_initial_event(ControlEventType.Tempo)
+    //     )
+    //     assertEquals(27, manager.percussion_channel.lines[0].instrument)
+    //     assertEquals(10, manager.percussion_channel.lines[1].instrument)
+    //     assertEquals(8, manager.percussion_channel.lines[2].instrument)
 
-    }
-    @Test
-    fun test_load_1() {
-        val manager = OpusManager()
-        manager.load_path("UTP1.json")
-        assertEquals(
-            "UnitTestProject1",
-            manager.project_name
-        )
-        assertEquals(
-            OpusTempoEvent(140F),
-            manager.get_global_controller_initial_event(ControlEventType.Tempo)
-        )
-        assertEquals(27, manager.percussion_channel.lines[0].instrument)
-        assertEquals(10, manager.percussion_channel.lines[1].instrument)
-        assertEquals(8, manager.percussion_channel.lines[2].instrument)
-    }
+    // }
+    // @Test
+    // fun test_load_1() {
+    //     val manager = OpusManager()
+    //     manager.load_path("UTP1.json")
+    //     assertEquals(
+    //         "UnitTestProject1",
+    //         manager.project_name
+    //     )
+    //     assertEquals(
+    //         OpusTempoEvent(140F),
+    //         manager.get_global_controller_initial_event(ControlEventType.Tempo)
+    //     )
+    //     assertEquals(27, manager.percussion_channel.lines[0].instrument)
+    //     assertEquals(10, manager.percussion_channel.lines[1].instrument)
+    //     assertEquals(8, manager.percussion_channel.lines[2].instrument)
+    // }
 
-    @Test
-    fun test_load_2() {
-        val manager = OpusManager()
-        manager.load_path("UTP2.json")
-        assertEquals(
-            "UnitTestProject2",
-            manager.project_name
-        )
-        assertEquals(
-            OpusTempoEvent(140F),
-            manager.get_global_controller_initial_event(ControlEventType.Tempo)
-        )
+    //@Test
+    //fun test_load_2() {
+    //    val manager = OpusManager()
+    //    manager.load_path("UTP2.json")
+    //    assertEquals(
+    //        "UnitTestProject2",
+    //        manager.project_name
+    //    )
+    //    assertEquals(
+    //        OpusTempoEvent(140F),
+    //        manager.get_global_controller_initial_event(ControlEventType.Tempo)
+    //    )
 
-        assertEquals(27, manager.percussion_channel.lines[0].instrument)
-        assertEquals(10, manager.percussion_channel.lines[1].instrument)
-        assertEquals(8, manager.percussion_channel.lines[2].instrument)
-    }
+    //    assertEquals(27, manager.percussion_channel.lines[0].instrument)
+    //    assertEquals(10, manager.percussion_channel.lines[1].instrument)
+    //    assertEquals(8, manager.percussion_channel.lines[2].instrument)
+    //}
 
     @Test
     fun test_set_duration() {

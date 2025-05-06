@@ -88,7 +88,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         val handles = this._sample_handle_manager.gen_sample_handles(event)
 
         for (handle in handles) {
-            handle.set_release_frame(duration_millis * this.sample_rate / 1000)
+            handle.release_frame = duration_millis * this.sample_rate / 1000
 
             // Remove release phase. can get noisy on things like tubular bells with long fade outs
             handle.volume_envelope.frames_release = 0

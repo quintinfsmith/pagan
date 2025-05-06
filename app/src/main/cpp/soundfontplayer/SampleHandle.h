@@ -23,6 +23,7 @@ class SampleHandle {
     float RC;
     float initial_frame_factor;
     // int uuid;
+    float smoothing_value = 1;
 
     public:
         int uuid;
@@ -169,6 +170,7 @@ class SampleHandle {
         }
 
         void set_working_frame(int frame) {
+            this->smoothing_value = 1;
             this->working_frame = frame;
             if (this->kill_frame > -1 && this->working_frame >= this->kill_frame) {
                 this->is_dead = true;

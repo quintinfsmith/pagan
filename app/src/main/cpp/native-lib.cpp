@@ -39,8 +39,16 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(JNIEnv* env, jobj
         auto working_array = reinterpret_cast<jfloatArray>(env->GetObjectArrayElement(input_array, i));
         jfloat* input_ptr = env->GetFloatArrayElements(working_array, nullptr);
         for (int j = 0; j < frames; j++) {
-            output_ptr[(j * 2)] += input_ptr[(j * 2)];
-            output_ptr[(j * 2) + 1] += input_ptr[(j * 2)];
+            float pan = input_ptr[(j * 2) + 1];
+            float left = input_ptr[(j * 2)];
+            float right = input_ptr[(j * 2)];
+            if (pan > 0) {
+                right *= (1 - pan);
+            } else {
+                left *= (1 + pan);
+            }
+            output_ptr[(j * 2)] += left;
+            output_ptr[(j * 2) + 1] += right;
         }
     }
 

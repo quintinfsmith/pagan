@@ -201,7 +201,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
                     val opus_manager_copy = OpusLayerBase()
-                    opus_manager_copy.import_from_other(this.get_opus_manager())
+                    opus_manager_copy.project_change_json(this.get_opus_manager().to_json())
 
                     var line_count = 0
                     val skip_lines = mutableSetOf<Pair<Int, Int>>()
@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                                 val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
                                 tvExportProgress.text = "0%"
                             }
-                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_multi_wav_feedback, this.working_channel, this.working_line))
+
                             val builder = this@MainActivity.get_notification() ?: return
                             @SuppressLint("MissingPermission")
                             if (this@MainActivity.has_notification_permission()) {
@@ -397,7 +397,7 @@ class MainActivity : AppCompatActivity() {
                             }
 
 
-                            val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(file_uri, "w") ?: return@thread
+                            val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(file_uri, "w") ?: continue@outer
                             val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
                             val buffered_output_stream = BufferedOutputStream(output_stream)
                             val data_output_buffer = DataOutputStream(buffered_output_stream)

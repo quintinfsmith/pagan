@@ -149,6 +149,12 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             main.get_action_interface().allow_midi_playback(enabled)
         }
 
+        val switch_allow_std_percussion = view.findViewById<SwitchCompat>(R.id.sAllowStdPercussion)
+        switch_allow_std_percussion.isChecked = main.configuration.allow_std_percussion
+        switch_allow_std_percussion.setOnCheckedChangeListener { _, enabled: Boolean ->
+            main.get_action_interface().allow_std_percussion(enabled)
+        }
+
 
         val lock_orientation_group = view.findViewById<RadioGroup>(R.id.rgLockOrientation)
         lock_orientation_group.check(when (main.configuration.force_orientation) {

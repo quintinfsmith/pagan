@@ -33,6 +33,7 @@ import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import java.io.File
+import java.util.Locale
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -134,6 +135,7 @@ class ActionTracker {
         UnMuteLine,
         ForceOrientation,
         AllowMidiPlayback,
+        AllowStdPercussion,
         AdjustSelection
     }
 
@@ -166,6 +168,7 @@ class ActionTracker {
 
                     // Boolean
                     TrackedAction.AllowMidiPlayback,
+                    TrackedAction.AllowStdPercussion,
                     TrackedAction.GoBack,
                     TrackedAction.SetClipNotes,
                     TrackedAction.SetRelativeModeVisibility -> {
@@ -288,6 +291,7 @@ class ActionTracker {
                     }
                     // Boolean
                     TrackedAction.AllowMidiPlayback,
+                    TrackedAction.AllowStdPercussion,
                     TrackedAction.GoBack,
                     TrackedAction.SetClipNotes,
                     TrackedAction.SetRelativeModeVisibility -> {
@@ -387,6 +391,14 @@ class ActionTracker {
             activity.block_physical_midi_output()
         }
         activity.save_configuration()
+    }
+
+    fun allow_std_percussion(value: Boolean) {
+        this.track(TrackedAction.AllowStdPercussion, listOf(if (value) 1 else 0))
+        val activity = this.get_activity()
+        activity.configuration.allow_std_percussion = value
+        activity.save_configuration()
+        activity.populate_supported_soundfont_instrument_names()
     }
 
     fun go_back(do_save: Boolean? = null) {
@@ -1199,13 +1211,39 @@ class ActionTracker {
 
         val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
         val current_instrument_supported = sorted_keys.contains(default_position)
+
+        fun padded_hex(i: Int): String {
+            var s = Integer.toHexString(i)
+            while (s.length < 2) {
+                s = "0$s"
+            }
+            return s.uppercase()
+        }
+
         for (key in sorted_keys) {
             val name = supported_instrument_names[key]
-            if (is_percussion && key.first == 128) {
-                options.add(Pair(key, "[${key.second}] $name"))
-            } else if (key.first != 128 && !is_percussion) {
-                val pairstring = "${key.first}/${key.second}"
-                options.add(Pair(key, "[$pairstring] $name"))
+            if (is_percussion) {
+                if (key.first == 128) {
+                    options.add(Pair(key, "${padded_hex(key.second)}] $name"))
+                }
+            } else if (key.first != 128) {
+                val pairstring = if (key.first == 0) {
+                    padded_hex(key.second)
+                } else {
+                    "${padded_hex(key.second)}.${padded_hex(key.first)}"
+                }
+                options.add(Pair(key, "$pairstring) $name"))
+            } else if (activity.configuration.allow_std_percussion) {
+                options.add(Pair(key, "${padded_hex(key.second)}] $name"))
+            }
+        }
+
+        // Separated KIts and tuned instruments. Kits are always bank 128, but the other instruments are defined by program with variants using the bank
+        options.sortBy { (key, name) ->
+            if (key.first == 128) {
+                (key.first * 128) + key.second
+            } else {
+                (key.second * 128) + key.first
             }
         }
 
@@ -2121,6 +2159,9 @@ class ActionTracker {
             }
             TrackedAction.AllowMidiPlayback -> {
                 this.allow_midi_playback(integers[0] != 0)
+            }
+            TrackedAction.AllowStdPercussion -> {
+                this.allow_std_percussion(integers[0] != 0)
             }
         }
     }

@@ -195,6 +195,7 @@
     <string name="cd_adjust_selection">Adjust Selection</string>
     <string name="dlg_project_name">Project Name:</string>
     <string name="dlg_project_notes">Project Notes:</string>
+    <string name="label_settings_allow_std_percussion">Use percussion as standard instrument</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

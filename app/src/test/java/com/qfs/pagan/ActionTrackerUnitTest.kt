@@ -35,6 +35,7 @@ class ActionTrackerUnitTest {
 
                 // ------- Boolean ------------
                 ActionTracker.TrackedAction.AllowMidiPlayback,
+                ActionTracker.TrackedAction.AllowStdPercussion,
                 ActionTracker.TrackedAction.GoBack,
                 ActionTracker.TrackedAction.SetClipNotes,
                 ActionTracker.TrackedAction.SetRelativeModeVisibility -> {
@@ -235,6 +236,7 @@ class ActionTrackerUnitTest {
 
                     // ------- Boolean ------------
                     ActionTracker.TrackedAction.AllowMidiPlayback,
+                    ActionTracker.TrackedAction.AllowStdPercussion,
                     ActionTracker.TrackedAction.GoBack,
                     ActionTracker.TrackedAction.SetClipNotes,
                     ActionTracker.TrackedAction.SetRelativeModeVisibility -> {

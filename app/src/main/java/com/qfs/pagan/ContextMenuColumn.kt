@@ -6,6 +6,7 @@ import android.widget.ImageView
 class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_column, null, primary_parent, secondary_parent) {
     lateinit var button_insert: ImageView
     lateinit var button_remove: ImageView
+    lateinit var button_adjust: ImageView
 
     init {
         this.refresh()
@@ -14,11 +15,11 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
     override fun init_properties() {
         this.button_insert = this.primary!!.findViewById(R.id.btnInsertBeat)
         this.button_remove = this.primary.findViewById(R.id.btnRemoveBeat)
+        this.button_adjust = this.primary.findViewById(R.id.btnAdjust)
     }
 
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
-
         this.button_remove.isEnabled = opus_manager.length > 1
     }
 
@@ -49,6 +50,10 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
                 return@setOnLongClickListener false
             }
             this.long_click_button_remove_beat()
+        }
+
+        this.button_adjust.setOnClickListener {
+            this.get_activity().get_action_interface().adjust_selection()
         }
     }
 

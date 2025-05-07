@@ -321,30 +321,93 @@ open class OpusLayerCursor: OpusLayerBase() {
     // ----- Cursor handled in lower order functions ^^^^^^^^^^^^ //
 
     fun offset_selection(amount: Int) {
+        val (minimum, maximum) = this.get_min_and_max_in_selection() ?: return // Null means Single or Unset, can return
+
+        val adj_amount = if (minimum + amount < 0) {
+            0 - minimum
+        } else if (maximum + amount > (8 * this.tuning_map.size) - 1) {
+            ((8 * this.tuning_map.size) - 1) - maximum
+        } else {
+            amount
+        }
+
         val cursor = this.cursor
-        when (cursor.mode) {
+        val (first, second) = when (cursor.mode) {
             OpusManagerCursor.CursorMode.Range -> {
-                val (first, second) = cursor.get_ordered_range()!!
-                this.offset_range(amount, first, second)
+                cursor.get_ordered_range()!!
             }
             OpusManagerCursor.CursorMode.Line -> {
-                val first = BeatKey(cursor.channel, cursor.line_offset, 0)
-                val second = BeatKey(cursor.channel, cursor.line_offset, this.length - 1)
-                this.offset_range(amount, first, second)
+                Pair(
+                    BeatKey(cursor.channel, cursor.line_offset, 0),
+                    BeatKey(cursor.channel, cursor.line_offset, this.length - 1)
+                )
             }
             OpusManagerCursor.CursorMode.Column -> {
-                val first = BeatKey(0, 0, cursor.beat)
-                val second = BeatKey(this.channels.size, this.percussion_channel.size -1, cursor.beat)
-                this.offset_range(amount, first, second)
+                Pair(
+                    BeatKey(0, 0, cursor.beat),
+                    BeatKey(this.channels.size, this.percussion_channel.size -1, cursor.beat)
+                )
             }
             OpusManagerCursor.CursorMode.Channel -> {
-                val first = BeatKey(this.cursor.channel, 0, 0)
-                val second = BeatKey(this.cursor.channel, this.get_channel(this.cursor.channel).lines.size - 1, this.length - 1)
-                this.offset_range(amount, first, second)
+                Pair(
+                    BeatKey(this.cursor.channel, 0, 0),
+                    BeatKey(this.cursor.channel, this.get_channel(this.cursor.channel).lines.size - 1, this.length - 1)
+                )
             }
             OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Unset -> {}
+            OpusManagerCursor.CursorMode.Unset -> {
+                return
+            }
         }
+
+        this.offset_range(adj_amount, first, second)
+    }
+
+    // Get the minimum and maximum values of the AbsoluteNoteEvents selected by the cursor
+    // We don't need to consider RelativeNoteEvents or PercussionEvents
+    fun get_min_and_max_in_selection(): Pair<Int, Int>? {
+        val cursor = this.cursor
+        val (first, second) = when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Range -> {
+                cursor.get_ordered_range()!!
+            }
+            OpusManagerCursor.CursorMode.Line -> {
+                Pair(
+                    BeatKey(cursor.channel, cursor.line_offset, 0),
+                    BeatKey(cursor.channel, cursor.line_offset, this.length - 1)
+                )
+            }
+            OpusManagerCursor.CursorMode.Column -> {
+                Pair(
+                    BeatKey(0, 0, cursor.beat),
+                    BeatKey(this.channels.size, this.percussion_channel.size -1, cursor.beat)
+                )
+            }
+            OpusManagerCursor.CursorMode.Channel -> {
+                Pair(
+                    BeatKey(this.cursor.channel, 0, 0),
+                    BeatKey(this.cursor.channel, this.get_channel(this.cursor.channel).lines.size - 1, this.length - 1)
+                )
+            }
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Unset -> {
+                return null
+            }
+        }
+
+        val radix = this.tuning_map.size
+        var minimum = radix * 8
+        var maximum = 0
+
+        for (beat_key in this.get_beatkeys_in_range(first, second)) {
+            this.get_tree(beat_key).traverse { subtree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
+                if (event is AbsoluteNoteEvent) {
+                    minimum = min(minimum, event.note)
+                    maximum = max(maximum, event.note)
+                }
+            }
+        }
+        return Pair(minimum, maximum)
     }
 
     override fun _controller_global_copy_range(type: ControlEventType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean) {

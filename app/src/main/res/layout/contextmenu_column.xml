@@ -13,6 +13,15 @@
 
     <ImageView
         android:theme="@style/icon_button"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:src="@drawable/adjust"
+        android:id="@+id/btnAdjust"
+        android:layout_marginEnd="@dimen/number_selector_spacing"
+        android:contentDescription="@string/cd_adjust_selection"/>
+
+    <ImageView
+        android:theme="@style/icon_button"
         android:id="@+id/btnRemoveBeat"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -28,4 +37,5 @@
         android:layout_height="@dimen/icon_button_height"
         app:srcCompat="@drawable/insert_beat"
         android:contentDescription="@string/cd_insert_beat" />
+
 </LinearLayout>

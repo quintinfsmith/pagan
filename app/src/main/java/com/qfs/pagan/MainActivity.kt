@@ -2158,9 +2158,9 @@ class MainActivity : AppCompatActivity() {
             }
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 val opus_manager = this.get_opus_manager()
-                val radix = opus_manager.tuning_map.size - 1
+                val radix = opus_manager.tuning_map.size
                 val octave = np_octave.value - 7
-                val offset = np_offset.value - radix
+                val offset = np_offset.value - (radix - 1)
                 val real_delta = (octave * radix) + offset
                 opus_manager.offset_selection(real_delta)
 

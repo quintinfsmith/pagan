@@ -1872,6 +1872,7 @@ open class OpusLayerBase {
         this.get_all_channels()[channel].get_line(line_offset).unmute()
     }
 
+
     /*
      * ---------------------------- 2nd Order Functions ---------------------------
      * Convenience functions. These are functions to call 1st order functions (or other 2nd order functions). This could be
@@ -1879,6 +1880,18 @@ open class OpusLayerBase {
      * achieve an ostensibly different function (eg, remove_one_of_two is actually a replace_tree where the parent is replaced by one of the children)
      * Creating repeater functions here also allows the history layer to group actions together more easily.
      */
+
+    open fun offset_range(amount: Int, first_key: BeatKey, second_key: BeatKey) {
+        for (beat_key in this.get_beatkeys_in_range(first_key, second_key)) {
+            this.get_tree(beat_key).traverse { subtree: OpusTree<out InstrumentEvent>, event: OpusEvent? ->
+                if (event != null && event is AbsoluteNoteEvent) {
+                    val new_event = event.copy()
+                    new_event.note += amount
+                    this.set_event(beat_key, subtree.get_path(), new_event)
+                }
+            }
+        }
+    }
 
     open fun controller_channel_remove_one_of_two(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         val to_replace_position = List(position.size) { i: Int ->

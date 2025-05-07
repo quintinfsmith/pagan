@@ -58,6 +58,7 @@ class ActionTrackerUnitTest {
                 }
 
                 // ------- Single Int Argument ----------------
+                ActionTracker.TrackedAction.AdjustSelection,
                 ActionTracker.TrackedAction.MuteChannel,
                 ActionTracker.TrackedAction.UnMuteChannel,
                 ActionTracker.TrackedAction.ForceOrientation,
@@ -193,7 +194,6 @@ class ActionTrackerUnitTest {
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
 
-
             }
 
             val json_name = JSONString(enum.name)
@@ -246,6 +246,7 @@ class ActionTrackerUnitTest {
                     }
 
                     // ------- Single Int Argument ----------------
+                    ActionTracker.TrackedAction.AdjustSelection,
                     ActionTracker.TrackedAction.ForceOrientation,
                     ActionTracker.TrackedAction.MuteChannel,
                     ActionTracker.TrackedAction.UnMuteChannel,
@@ -360,6 +361,7 @@ class ActionTrackerUnitTest {
                         val test_ints = arrayOf(0, 0, 1, 0)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
+
                 },
                 json_item
             )

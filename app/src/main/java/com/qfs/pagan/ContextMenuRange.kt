@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.res.Configuration
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RadioGroup
@@ -9,6 +10,7 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_range, R.layout.contextmenu_range_secondary, primary_container, secondary_container) {
     lateinit var button_erase: ImageView
+    lateinit var button_adjust: ImageView
     lateinit var radio_mode: RadioGroup
     lateinit var label: TextView
 
@@ -18,6 +20,7 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
 
     override fun init_properties() {
         this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
+        this.button_adjust = this.primary!!.findViewById(R.id.btnAdjust)
         this.label = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             this.secondary!!.findViewById(R.id.tvMoveModeLabelB)
         } else {
@@ -30,6 +33,10 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
     override fun setup_interactions() {
         this.button_erase.setOnClickListener {
             this.get_activity().get_action_interface().unset()
+        }
+
+        this.button_adjust.setOnClickListener {
+            this.get_activity().get_action_interface().adjust_selection()
         }
 
         this.radio_mode.setOnCheckedChangeListener { _: RadioGroup, button_id: Int ->
@@ -47,6 +54,24 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
     override fun refresh() {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
+
+        // NOTE: I *could* just check the endpoints of the range, but eventually if/when I change
+        // how percussion works, that'll break so check each key in selection
+
+        var is_selecting_non_percussion = false
+        val (first, second) = opus_manager.cursor.get_ordered_range()!!
+        for (beat_key in opus_manager.get_beatkeys_in_range(first, second)) {
+            if (!opus_manager.is_percussion(beat_key.channel)) {
+                is_selecting_non_percussion = true
+                break
+            }
+        }
+
+        this.button_adjust.visibility = if (is_selecting_non_percussion) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         this.radio_mode.check(when (main.configuration.move_mode) {
             PaganConfiguration.MoveMode.MOVE -> R.id.rbMoveModeMove

@@ -37,6 +37,7 @@ import android.view.WindowManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.NumberPicker
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -95,6 +96,8 @@ import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
+import androidx.core.net.toUri
+import com.qfs.pagan.ActionTracker.TrackedAction
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -1855,14 +1858,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun import_project(path: String) {
-        this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+        this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             this.get_opus_manager().load(bytes, this._project_manager.get_new_path())
         }
     }
 
     fun import_midi(path: String) {
-        val bytes = this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+        val bytes = this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
             FileInputStream(it.fileDescriptor).readBytes()
         } ?: throw InvalidMIDIFile(path)
 
@@ -1874,7 +1877,7 @@ class MainActivity : AppCompatActivity() {
 
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_midi(midi)
-        val filename = this.parse_file_name(Uri.parse(path))
+        val filename = this.parse_file_name(path.toUri())
         val new_path = this._project_manager.get_new_path()
 
         opus_manager.path = new_path
@@ -2116,7 +2119,60 @@ class MainActivity : AppCompatActivity() {
                 }
                 .show()
         )
+    }
 
+    internal fun dialog_popup_selection_offset() {
+        val view_inflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_note_offset,
+                window.decorView.rootView as ViewGroup,
+                false
+            )
+
+
+        val np_octave = view_inflated.findViewById<NumberPicker>(R.id.npOctave)
+        np_octave.maxValue = 14
+        np_octave.minValue = 0
+        np_octave.value = 7
+        np_octave.wrapSelectorWheel = false
+        np_octave.setFormatter { value: Int ->
+            "${value - 7}"
+        }
+
+        val np_offset = view_inflated.findViewById<NumberPicker>(R.id.npOffset)
+        val radix = (this.get_opus_manager().tuning_map.size - 1)
+        np_offset.maxValue = (radix * 2)
+        np_offset.minValue = 0
+        np_offset.value = radix
+        np_offset.wrapSelectorWheel = false
+        np_offset.setFormatter { value: Int ->
+            "${value - radix}"
+        }
+
+        this._popup_active = true
+        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+            .setView(view_inflated)
+            .setTitle(R.string.dialog_adjust_selection)
+            .setOnDismissListener {
+                this._popup_active = false
+            }
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                val opus_manager = this.get_opus_manager()
+                val radix = opus_manager.tuning_map.size - 1
+                val octave = np_octave.value - 7
+                val offset = np_offset.value - radix
+                val real_delta = (octave * radix) + offset
+                opus_manager.offset_selection(real_delta)
+
+                this.get_action_interface().track(TrackedAction.AdjustSelection, listOf(real_delta))
+                dialog.dismiss()
+            }
+            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
+
+        this._adjust_dialog_colors(dialog)
     }
 
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {

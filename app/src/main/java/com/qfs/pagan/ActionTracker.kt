@@ -133,7 +133,8 @@ class ActionTracker {
         MuteLine,
         UnMuteLine,
         ForceOrientation,
-        AllowMidiPlayback
+        AllowMidiPlayback,
+        AdjustSelection
     }
 
     companion object {
@@ -1064,6 +1065,16 @@ class ActionTracker {
         this.get_activity().play_event(beat_key.channel, event_note)
     }
 
+    fun adjust_selection(amount: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        if (amount == null) {
+            this.activity?.dialog_popup_selection_offset()
+        } else {
+            this.track(TrackedAction.AdjustSelection, listOf(amount))
+            opus_manager.offset_selection(amount)
+        }
+    }
+
     fun unset() {
         this.track(TrackedAction.Unset)
         val opus_manager = this.get_opus_manager()
@@ -1867,6 +1878,9 @@ class ActionTracker {
             }
             TrackedAction.SetOctave -> {
                 this.set_octave(integers[0]!!)
+            }
+            TrackedAction.AdjustSelection -> {
+                this.adjust_selection(integers[0])
             }
             TrackedAction.TogglePercussion -> {
                 this.toggle_percussion()

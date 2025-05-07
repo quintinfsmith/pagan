@@ -119,6 +119,8 @@
     <string name="export_multi_wav_feedback">Exporting C:%1$d L:%2$d to wav</string>
     <string name="export_wav_notification_complete">Done</string>
 
+
+    <string name="dialog_adjust_selection">Adjust Selection</string>
     <string name="dialog_remove_soundfont_title">Choose Soundfont to Remove</string>
     <string name="dialog_select_soundfont">Select Soundfont</string>
     <string name="dialog_remove_soundfont_text">Really Delete %1$s?</string>
@@ -190,6 +192,7 @@
     <string name="export_wav_channels_filename">%1$02d.wav</string>
     <string name="export_option_wav_lines">WAV Files (Lines)</string>
     <string name="export_option_wav_channels">WAV Files (Channels)</string>
+    <string name="cd_adjust_selection">Adjust Selection</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

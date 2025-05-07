@@ -271,6 +271,12 @@ class OpusLayerInterface : OpusLayerHistory() {
     // UI BILL Interface functions ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // BASE FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    override fun offset_range(amount: Int, first_key: BeatKey, second_key: BeatKey) {
+        this.lock_ui_partial {
+            super.offset_range(amount, first_key, second_key)
+        }
+    }
+
     override fun remove_global_controller(type: ControlEventType) {
         this.lock_ui_partial {
             if (this.is_global_ctl_visible(type)) {

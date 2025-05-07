@@ -320,6 +320,33 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     // ----- Cursor handled in lower order functions ^^^^^^^^^^^^ //
 
+    fun offset_selection(amount: Int) {
+        val cursor = this.cursor
+        when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = cursor.get_ordered_range()!!
+                this.offset_range(amount, first, second)
+            }
+            OpusManagerCursor.CursorMode.Line -> {
+                val first = BeatKey(cursor.channel, cursor.line_offset, 0)
+                val second = BeatKey(cursor.channel, cursor.line_offset, this.length - 1)
+                this.offset_range(amount, first, second)
+            }
+            OpusManagerCursor.CursorMode.Column -> {
+                val first = BeatKey(0, 0, cursor.beat)
+                val second = BeatKey(this.channels.size, this.percussion_channel.size -1, cursor.beat)
+                this.offset_range(amount, first, second)
+            }
+            OpusManagerCursor.CursorMode.Channel -> {
+                val first = BeatKey(this.cursor.channel, 0, 0)
+                val second = BeatKey(this.cursor.channel, this.get_channel(this.cursor.channel).lines.size - 1, this.length - 1)
+                this.offset_range(amount, first, second)
+            }
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Unset -> {}
+        }
+    }
+
     override fun _controller_global_copy_range(type: ControlEventType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
         super._controller_global_copy_range(type, target, point_a, point_b, unset_original)
         val position = this.get_first_position_global_ctl(type, target)

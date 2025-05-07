@@ -6,6 +6,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
     var history_cache = HistoryCache()
     private var _memory_depth = 0
 
+    override fun offset_range(amount: Int, first_key: BeatKey, second_key: BeatKey) {
+        this._remember {
+            super.offset_range(amount, first_key, second_key)
+        }
+    }
+
     override fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
         this._remember {
             super.new_line_repeat(channel, line_offset, count)

@@ -427,6 +427,11 @@ class UIChangeBill {
             stack.addAll(0, node.sub_nodes)
         }
 
+        if (queued_cursor_scroll != null) {
+            this._tree.bill.add(BillableItem.ForceScroll)
+            this._tree.int_queue.addAll(queued_cursor_scroll)
+        }
+
         if (queued_columns[0].isNotEmpty()) {
             val columns = (queued_columns[0] - queued_columns[1]).toList()
 
@@ -438,13 +443,11 @@ class UIChangeBill {
 
         if (queued_columns[1].isNotEmpty()) {
             val columns = queued_columns[1].toList()
-
             for (x in columns) {
                 this._tree.bill.add(BillableItem.ColumnChange)
                 this._tree.int_queue.add(x)
             }
-
-        } 
+        }
 
         if (queued_cells[0].isNotEmpty()) {
             val cells = (queued_cells[0] - queued_cells[1]).toList()
@@ -481,10 +484,6 @@ class UIChangeBill {
             this._tree.bill.add(queued_context_menu)
         }
 
-        if (queued_cursor_scroll != null) {
-            this._tree.bill.add(BillableItem.ForceScroll)
-            this._tree.int_queue.addAll(queued_cursor_scroll)
-        }
     }
 
     fun get_next_entry(): BillableItem? {

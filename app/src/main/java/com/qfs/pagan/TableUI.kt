@@ -30,6 +30,7 @@ import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
@@ -575,9 +576,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        override fun onDraw(canvas: Canvas) {
+        override fun draw(canvas: Canvas) {
             // TODO: deal with draw Allocations. preallocate in different function?
-            super.onDraw(canvas)
+            super.draw(canvas)
 
             val base_width = resources.getDimension(R.dimen.base_leaf_width)
             val line_height = resources.getDimension(R.dimen.line_height).toInt().toFloat()
@@ -916,6 +917,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
+
     val painted_layer = PaintedLayer(editor_table)
     private var _scroll_locked: Boolean = false
     private var queued_scroll_x: Int? = null
@@ -981,6 +983,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         return this._scroll_locked
     }
 
+
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
         super.onScrollChanged(l, t, oldl, oldt)
         this.editor_table.line_label_layout.scrollTo(l, t)
@@ -1002,10 +1005,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.queued_scroll_y = y
         } else {
             if (x != null) {
-                this.inner_scroll_view.smoothScrollTo(x, 0)
+                this.inner_scroll_view.scrollTo(x, 0)
             }
             if (y != null) {
-                this.smoothScrollTo(0, y)
+                this.scrollTo(0, y)
             }
         }
     }
@@ -1092,5 +1095,4 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.painted_layer.invalidate()
         super.onSizeChanged(w, h, oldw, oldh)
     }
-
 }

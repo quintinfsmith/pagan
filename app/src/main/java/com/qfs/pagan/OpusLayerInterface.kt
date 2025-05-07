@@ -2533,18 +2533,13 @@ class OpusLayerInterface : OpusLayerHistory() {
                             this._ui_change_bill.get_next_int()
                         )
                         val force = this._ui_change_bill.get_next_int() != 0
-                        // KLUDGE. There's probably a better way to queue the scroll
-                        thread {
-                            this.runOnUiThread {
-                                editor_table.scroll_to_position(
-                                    y = if (y == -1) null else y,
-                                    x = if (x == -1) null else x,
-                                    offset = offset.n.toFloat() / offset.d.toFloat(),
-                                    offset_width = offset_width.n.toFloat() / offset_width.d.toFloat(),
-                                    force = force
-                                )
-                            }
-                        }
+                        editor_table.scroll_to_position(
+                            y = if (y == -1) null else y,
+                            x = if (x == -1) null else x,
+                            offset = offset.n.toFloat() / offset.d.toFloat(),
+                            offset_width = offset_width.n.toFloat() / offset_width.d.toFloat(),
+                            force = force
+                        )
                     }
 
                     BillableItem.FullRefresh -> {

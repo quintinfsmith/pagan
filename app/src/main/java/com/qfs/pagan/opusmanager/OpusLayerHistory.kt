@@ -305,9 +305,16 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.SET_PROJECT_NAME -> {
                     this.set_project_name(current_node.args[0] as String)
                 }
+                HistoryToken.SET_PROJECT_NOTES -> {
+                    this.set_project_notes(current_node.args[0] as String)
+                }
 
                 HistoryToken.UNSET_PROJECT_NAME -> {
                     this.set_project_name(null)
+                }
+
+                HistoryToken.UNSET_PROJECT_NOTES -> {
+                    this.set_project_notes(null)
                 }
 
                 HistoryToken.SET_EVENT -> {
@@ -1364,6 +1371,15 @@ open class OpusLayerHistory: OpusLayerCursor() {
         super.set_project_name(new_name)
     }
 
+    override fun set_project_notes(notes: String?) {
+        if (this.project_notes == null) {
+            this.push_to_history_stack(HistoryToken.UNSET_PROJECT_NOTES, listOf())
+        } else {
+            this.push_to_history_stack(HistoryToken.SET_PROJECT_NOTES, listOf(this.project_notes!!))
+        }
+        super.set_project_notes(notes)
+    }
+
     override fun set_transpose(new_transpose: Pair<Int, Int>) {
         this.push_to_history_stack(HistoryToken.SET_TRANSPOSE, listOf(this.transpose.first, this.transpose.second))
         super.set_transpose(new_transpose)
@@ -1810,6 +1826,17 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    fun set_name_and_notes(name: String?, notes: String?) {
+        this._remember {
+            if (name != this.project_name) {
+                this.set_project_name(name)
+            }
+            if (notes != this.project_notes) {
+                this.set_project_notes(notes)
+            }
+        }
+    }
 
     // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

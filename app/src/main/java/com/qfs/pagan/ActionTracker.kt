@@ -118,7 +118,7 @@ class ActionTracker {
         SetSampleRate,
         DisableSoundFont,
         SetSoundFont,
-        SetProjectName,
+        SetProjectNameAndNotes,
         SetClipNotes,
         SetTuningTable,
         ImportSong,
@@ -144,6 +144,12 @@ class ActionTracker {
             return Pair(
                 token,
                 when (token) {
+                    TrackedAction.SetProjectNameAndNotes -> {
+                        val name = entry.get_string(1)
+                        val notes = entry.get_string(2)
+                        val name_ints = ActionTracker.string_to_ints(name)
+                        listOf(name_ints.size) + name_ints + ActionTracker.string_to_ints(notes)
+                    }
                     // STRING
                     TrackedAction.DeleteSoundFont,
                     TrackedAction.ImportSoundFont,
@@ -153,7 +159,6 @@ class ActionTracker {
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
                     TrackedAction.SetCopyMode,
-                    TrackedAction.SetProjectName,
                     TrackedAction.LoadProject -> {
                         val string = entry.get_string(1)
                         ActionTracker.string_to_ints(string)
@@ -259,6 +264,16 @@ class ActionTracker {
 
             val var_args = if (!integers.isNullOrEmpty()) {
                 when (token) {
+                    TrackedAction.SetProjectNameAndNotes -> {
+                        val name_length = integers[0]!!
+                        val name = ActionTracker.string_from_ints(integers.subList(1, name_length + 1))
+                        val notes = ActionTracker.string_from_ints(integers.subList(name_length + 1, integers.size))
+                        arrayOf(
+                            JSONString(name),
+                            JSONString(notes)
+                        )
+                    }
+
                     // STRING
                     TrackedAction.DeleteSoundFont,
                     TrackedAction.ImportSoundFont,
@@ -268,7 +283,6 @@ class ActionTracker {
                     TrackedAction.ShowChannelController,
                     TrackedAction.SetCopyMode,
                     TrackedAction.ImportSong,
-                    TrackedAction.SetProjectName,
                     TrackedAction.LoadProject -> {
                         arrayOf(JSONString(ActionTracker.string_from_ints(integers)))
                     }
@@ -1555,15 +1569,22 @@ class ActionTracker {
     }
 
 
-    fun set_project_name(project_name: String? = null) {
-        val activity = this.get_activity()
-        this.dialog_string_popup(activity.getString(R.string.dlg_change_name), this.get_opus_manager().project_name, project_name) { string: String ->
+    fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {
+        val opus_manager = this.get_opus_manager()
+        val default = Pair(opus_manager.project_name ?: "", opus_manager.project_notes ?: "")
+
+        this.dialog_name_and_notes_popup(default, project_name_and_notes) { name: String, notes: String ->
+            val name_ints = ActionTracker.string_to_ints(name)
             this.track(
-                TrackedAction.SetProjectName,
-                ActionTracker.string_to_ints(string)
+                TrackedAction.SetProjectNameAndNotes,
+                listOf(name_ints.size) + name_ints + ActionTracker.string_to_ints(notes)
             )
+
             val opus_manager = this.get_opus_manager()
-            opus_manager.set_project_name(string)
+            opus_manager.set_name_and_notes(
+                if (name == "") null else name,
+                if (notes == "") null else notes
+            )
         }
     }
 
@@ -1629,12 +1650,12 @@ class ActionTracker {
         }
     }
 
-    private fun dialog_string_popup(title: String, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
+    private fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, stub_output: Pair<String, String>? = null, callback: (String, String) -> Unit) {
         val activity = this.get_activity()
         if (stub_output != null) {
-            callback(stub_output)
+            callback(stub_output.first, stub_output.second)
         } else {
-            activity.dialog_string_popup(title, default, callback)
+            activity.dialog_name_and_notes_popup(default, callback)
         }
     }
 
@@ -2011,8 +2032,12 @@ class ActionTracker {
                 this.set_soundfont(string_from_ints(integers))
             }
 
-            TrackedAction.SetProjectName -> {
-                this.set_project_name(string_from_ints(integers))
+            TrackedAction.SetProjectNameAndNotes -> {
+                val size = integers[0]!!
+                val project_name = string_from_ints(integers.subList(1, size + 1))
+                val project_notes = string_from_ints(integers.subList(size + 1, integers.size))
+
+                this.set_project_name_and_notes(Pair(project_name, project_notes))
             }
 
             TrackedAction.ShowLineController -> {

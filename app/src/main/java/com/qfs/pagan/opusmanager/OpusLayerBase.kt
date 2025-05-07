@@ -300,6 +300,7 @@ open class OpusLayerBase {
             new_manager.new_channel()
             new_manager.set_beat_count(4)
             new_manager.set_project_name(null)
+            new_manager.set_project_notes(null)
             return new_manager
         }
 
@@ -320,6 +321,7 @@ open class OpusLayerBase {
     var percussion_channel = OpusPercussionChannel()
     var path: String? = null
     var project_name: String? = null
+    var project_notes: String? = null
     var transpose: Pair<Int, Int> = Pair(0, 12)
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
 
@@ -1682,6 +1684,13 @@ open class OpusLayerBase {
      */
     open fun set_project_name(new_name: String?) {
         this.project_name = new_name
+    }
+
+    /**
+     * Modify the project notes
+     */
+    open fun set_project_notes(notes: String?) {
+        this.project_notes = notes
     }
 
     /**
@@ -3985,6 +3994,11 @@ open class OpusLayerBase {
         } else {
             JSONString(this.project_name!!)
         }
+        output["notes"] = if (this.project_notes == null) {
+            null
+        } else {
+            JSONString(this.project_notes!!)
+        }
 
         return JSONHashMap(
             "d" to output,
@@ -4093,7 +4107,7 @@ open class OpusLayerBase {
     open fun _project_change_json(json_data: JSONHashMap) {
         val inner_map = json_data["d"] as JSONHashMap
         this.set_project_name(inner_map.get_stringn("title"))
-
+        this.set_project_notes(inner_map.get_stringn("notes"))
 
         this.channels.clear()
 

@@ -78,7 +78,6 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.MainActivity
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -1006,7 +1005,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         toolbar.setOnLongClickListener {
-            this.get_action_interface().set_project_name()
+            this.get_action_interface().set_project_name_and_notes()
             true
         }
 
@@ -1527,7 +1526,7 @@ class MainActivity : AppCompatActivity() {
         val opus_manager = this.get_opus_manager()
         val tvChangeProjectName: TextView = this.findViewById(R.id.btnChangeProjectName)
         tvChangeProjectName.setOnClickListener {
-            this.get_action_interface().set_project_name()
+            this.get_action_interface().set_project_name_and_notes()
         }
 
         //-------------------------------------------
@@ -2093,7 +2092,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    fun dialog_string_popup(title: String, default: String? = null, callback: (String) -> Unit) {
+    fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, callback: (String, String) -> Unit) {
         val main_fragment = this.get_active_fragment()
 
         val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
@@ -2103,15 +2102,17 @@ class MainActivity : AppCompatActivity() {
                 false
             )
 
-        val input: EditText = viewInflated.findViewById(R.id.etProjectName)
-        input.setText(default ?: "")
+        val project_name_input: EditText = viewInflated.findViewById(R.id.etProjectName)
+        project_name_input.setText(default?.first ?: "")
+
+        val project_notes_input: EditText = viewInflated.findViewById(R.id.etProjectNotes)
+        project_notes_input.setText(default?.second ?: "")
 
         this._adjust_dialog_colors(
             AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setCustomTitle(this._build_dialog_title_view(title))
                 .setView(viewInflated)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    callback(input.text.toString())
+                    callback(project_name_input.text.toString(), project_notes_input.text.toString())
                     dialog.dismiss()
                 }
                 .setNeutralButton(android.R.string.cancel) { dialog, _ ->

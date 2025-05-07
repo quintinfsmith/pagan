@@ -41,12 +41,23 @@ class ActionTrackerUnitTest {
                     Pair(enum, listOf(1))
                 }
 
+                // Special C
+                ActionTracker.TrackedAction.SetProjectNameAndNotes -> {
+                    val project_name = "Project Name".toByteArray()
+                    val project_notes = "Project Notes".toByteArray()
+                    Pair(
+                        enum,
+                        listOf(project_name.size)
+                            + List(project_name.size) { i: Int -> project_name[i].toInt() }
+                            + List(project_notes.size) { i: Int -> project_notes[i].toInt() }
+                    )
+                }
+
                 // -------- Single String Argument -------------
                 ActionTracker.TrackedAction.SetTransitionAtCursor,
                 ActionTracker.TrackedAction.ShowLineController,
                 ActionTracker.TrackedAction.ShowChannelController,
                 ActionTracker.TrackedAction.SetSoundFont,
-                ActionTracker.TrackedAction.SetProjectName,
                 ActionTracker.TrackedAction.DeleteSoundFont,
                 ActionTracker.TrackedAction.ImportSong,
                 ActionTracker.TrackedAction.ImportSoundFont,
@@ -230,12 +241,17 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, JSONBoolean(true))
                     }
 
+                    ActionTracker.TrackedAction.SetProjectNameAndNotes -> {
+                        val project_name = "Project Name"
+                        val project_notes = "Project Notes"
+                        JSONList(json_name, JSONString(project_name), JSONString(project_notes))
+                    }
+
                     // -------- Single String Argument -------------
                     ActionTracker.TrackedAction.SetTransitionAtCursor,
                     ActionTracker.TrackedAction.ShowLineController,
                     ActionTracker.TrackedAction.ShowChannelController,
                     ActionTracker.TrackedAction.SetSoundFont,
-                    ActionTracker.TrackedAction.SetProjectName,
                     ActionTracker.TrackedAction.DeleteSoundFont,
                     ActionTracker.TrackedAction.ImportSong,
                     ActionTracker.TrackedAction.ImportSoundFont,

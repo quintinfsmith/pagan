@@ -16,6 +16,7 @@ import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container), ContextMenuWithController<OpusVolumeEvent> {
     lateinit var button_insert: ImageView
+    lateinit var button_adjust: ImageView
     lateinit var button_remove: ImageView
     lateinit var button_choose_percussion: TextView
     lateinit var button_toggle_volume_control: ImageView
@@ -31,6 +32,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleChannelCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
+        this.button_adjust = primary.findViewById(R.id.btnAdjust)
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
         this.button_mute = this.secondary!!.findViewById(R.id.btnMuteLine)
 
@@ -87,6 +89,12 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             }
         }
 
+        this.button_adjust.visibility = if (opus_manager.is_percussion(channel)) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+
         val working_channel = opus_manager.get_channel(channel)
         this.button_remove.isEnabled = working_channel.size > 1
 
@@ -121,6 +129,10 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     }
 
     override fun setup_interactions() {
+        this.button_adjust.setOnClickListener {
+            this.get_activity().get_action_interface().adjust_selection()
+        }
+
         this.button_choose_percussion.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener

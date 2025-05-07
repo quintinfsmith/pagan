@@ -97,6 +97,8 @@ import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 import androidx.core.net.toUri
 import com.qfs.pagan.ActionTracker.TrackedAction
+import kotlin.math.max
+import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -1701,20 +1703,29 @@ class MainActivity : AppCompatActivity() {
         }
 
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()
-
         for ((_, preset_instrument) in preset.instruments) {
             if (preset_instrument.instrument == null) {
                 continue
             }
 
+            val instrument_range = preset_instrument.key_range ?: Pair(0, 127)
+
             for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
-                val key_range = sample_directive.key_range
-                if (key_range != null) {
-                    var name = sample_directive.sample!!.first().name
-                    if (name.contains("(")) {
-                        name = name.substring(0, name.indexOf("("))
+                val key_range = sample_directive.key_range ?: Pair(0, 127)
+                val usable_range = max(key_range.first, instrument_range.first).. min(key_range.second, instrument_range.second)
+
+                var name = sample_directive.sample!!.first().name
+                if (name.contains("(")) {
+                    name = name.substring(0, name.indexOf("("))
+                }
+
+                for (key in usable_range) {
+                    var use_name = if (usable_range.first != usable_range.last) {
+                        "$name - ${(key - usable_range.first) + 1}"
+                    } else {
+                        name
                     }
-                    available_drum_keys.add(Pair(name, key_range.first))
+                    available_drum_keys.add(Pair(use_name, key))
                 }
             }
         }

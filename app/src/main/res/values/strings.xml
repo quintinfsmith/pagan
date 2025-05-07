@@ -187,6 +187,9 @@
     <string name="crash_report_desc">It helps to include this when submitting bug reports to smith.quintin@protonmail.com</string>
     <string name="label_settings_enable_midi_playback">Enable Midi Playback</string>
     <string name="export_wav_lines_filename">%1$02d.%2$02d.wav</string>
+    <string name="export_wav_channels_filename">%1$02d.wav</string>
+    <string name="export_option_wav_lines">WAV Files (Lines)</string>
+    <string name="export_option_wav_channels">WAV Files (Channels)</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

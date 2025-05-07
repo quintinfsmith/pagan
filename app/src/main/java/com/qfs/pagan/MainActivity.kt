@@ -77,6 +77,7 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.pagan.MainActivity
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -186,7 +187,128 @@ class MainActivity : AppCompatActivity() {
 
     private var _popup_active: Boolean = false
 
-    private var _export_multi_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    class MultiExporterEventHandler(var activity: MainActivity, var total_count: Int): WavConverter.ExporterEventHandler {
+        var working_y = 0
+        var file_uri: Uri? = null
+        var cancelled = false
+
+        val notification_manager = NotificationManagerCompat.from(this.activity)
+
+        override fun on_start() {
+            if (this.working_y != 0) {
+                return
+            }
+
+            this.activity.runOnUiThread {
+                val btnExportProject = this.activity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                btnExportProject.setImageResource(R.drawable.baseline_cancel_42)
+                val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
+                llExportProgress.visibility = View.VISIBLE
+                val tvExportProgress = this.activity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
+                tvExportProgress.text = "0%"
+            }
+
+            val builder = this.activity.get_notification() ?: return
+            @SuppressLint("MissingPermission")
+            if (this.activity.has_notification_permission()) {
+                this.notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
+            }
+        }
+
+        override fun on_complete() {
+            if (this.working_y < this.total_count - 1) {
+                return
+            }
+
+            val builder = this.activity.get_notification()
+            if (builder != null) {
+                // NON functional ATM, Open file from notification
+                val go_to_file_intent = Intent()
+                go_to_file_intent.action = Intent.ACTION_VIEW
+                go_to_file_intent.setDataAndType(this.file_uri!!, "*/*")
+
+                val pending_go_to_intent = PendingIntent.getActivity(
+                    this.activity,
+                    0,
+                    go_to_file_intent,
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+
+                builder.setContentText(this.activity.getString(R.string.export_wav_notification_complete))
+                    .clearActions()
+                    .setAutoCancel(true)
+                    .setProgress(0, 0, false)
+                    .setTimeoutAfter(5000)
+                    .setSilent(false)
+                    .setContentIntent(pending_go_to_intent)
+
+                @SuppressLint("MissingPermission")
+                if (this.activity.has_notification_permission()) {
+                    this.notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
+                }
+            }
+
+            this.activity.feedback_msg(this.activity.getString(R.string.export_wav_feedback_complete))
+
+            this.activity.runOnUiThread {
+                val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
+                llExportProgress.visibility = View.GONE
+                val btnExportProject = this.activity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                btnExportProject.setImageResource(R.drawable.export)
+            }
+            this.activity._active_notification = null
+        }
+
+        override fun on_cancel() {
+            this.cancelled = true
+            this.activity.feedback_msg(this.activity.getString(R.string.export_cancelled))
+            this.activity.runOnUiThread {
+                val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
+                llExportProgress.visibility = View.GONE
+                val btnExportProject = this.activity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
+                btnExportProject.setImageResource(R.drawable.export)
+            }
+
+            val builder = this.activity.get_notification() ?: return
+            builder.setContentText(this.activity.getString(R.string.export_cancelled))
+                .setProgress(0, 0, false)
+                .setAutoCancel(true)
+                .setTimeoutAfter(5000)
+                .clearActions()
+
+            @SuppressLint("MissingPermission")
+            if (this.activity.has_notification_permission()) {
+                val notification_manager = NotificationManagerCompat.from(this.activity)
+                notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
+            }
+            this.activity._active_notification = null
+        }
+
+        override fun on_progress_update(progress: Double) {
+            val progress_rounded = ((progress + this.working_y) * 100.0 / this.total_count.toDouble()).roundToInt()
+            this.activity.runOnUiThread {
+                val tvExportProgress = this.activity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
+                tvExportProgress.text = this.activity.getString(R.string.label_export_progress, progress_rounded)
+            }
+
+            val builder = this.activity.get_notification() ?: return
+            builder.setProgress(100, progress_rounded, false)
+
+            @SuppressLint("MissingPermission")
+            if (this.activity.has_notification_permission()) {
+                this.notification_manager.notify(
+                    this.activity.NOTIFICATION_ID,
+                    builder.build()
+                )
+            }
+        }
+        fun update(y: Int, file_uri: Uri) {
+            this.working_y = y
+            this.file_uri = file_uri
+        }
+    }
+
+    private var _export_multi_line_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
             return@registerForActivityResult
@@ -217,156 +339,25 @@ class MainActivity : AppCompatActivity() {
                             for (beat in line.beats) {
                                 if (!beat.is_eventless())  {
                                     skip = false
-                                    line_count += 1
-                                    return@channel_loop
+                                    break
                                 }
                             }
 
                             if (skip) {
                                 skip_lines.add(Pair(i, j))
+                            } else {
+                                line_count += 1
                             }
                         }
                     }
 
-                    val export_event_handler = object : WavConverter.ExporterEventHandler {
-                        var total_line_count = line_count
-                        var working_channel = 0
-                        var working_line = 0
-                        var working_y = 0
-                        var file_uri: Uri? = null
-                        var cancelled = false
-
-                        val notification_manager = NotificationManagerCompat.from(this@MainActivity)
-                        fun update(channel: Int, line_offset: Int, y: Int, file_uri: Uri) {
-                            this.working_channel = channel
-                            this.working_line = line_offset
-                            this.working_y = y
-                            this.file_uri = file_uri
-                        }
-
-                        override fun on_start() {
-                            if (this.working_y != 0) {
-                                return
-                            }
-
-                            this@MainActivity.runOnUiThread {
-                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                                btnExportProject.setImageResource(R.drawable.baseline_cancel_42)
-                                val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
-                                llExportProgress.visibility = View.VISIBLE
-
-                                val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
-                                tvExportProgress.text = "0%"
-                            }
-
-                            val builder = this@MainActivity.get_notification() ?: return
-                            @SuppressLint("MissingPermission")
-                            if (this@MainActivity.has_notification_permission()) {
-                                this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
-                            }
-
-                        }
-
-                        override fun on_complete() {
-                            if (this.working_y != this.total_line_count - 1) {
-                                return
-                            }
-
-                            val builder = this@MainActivity.get_notification()
-                            if (builder != null) {
-                                // NON functional ATM, Open file from notification
-                                val go_to_file_intent = Intent()
-                                go_to_file_intent.action = Intent.ACTION_VIEW
-                                go_to_file_intent.setDataAndType(this.file_uri!!, "*/*")
-
-                                val pending_go_to_intent = PendingIntent.getActivity(
-                                    this@MainActivity,
-                                    0,
-                                    go_to_file_intent,
-                                    PendingIntent.FLAG_IMMUTABLE
-                                )
-
-                                builder.setContentText(this@MainActivity.getString(R.string.export_wav_notification_complete))
-                                    .clearActions()
-                                    .setAutoCancel(true)
-                                    .setProgress(0, 0, false)
-                                    .setTimeoutAfter(5000)
-                                    .setSilent(false)
-                                    .setContentIntent(pending_go_to_intent)
-
-                                @SuppressLint("MissingPermission")
-                                if (this@MainActivity.has_notification_permission()) {
-                                    this.notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
-                                }
-                            }
-
-                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_wav_feedback_complete))
-
-                            this@MainActivity.runOnUiThread {
-                                val llExportProgress =
-                                    this@MainActivity.findViewById<View>(R.id.llExportProgress)
-                                        ?: return@runOnUiThread
-                                llExportProgress.visibility = View.GONE
-                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                                btnExportProject.setImageResource(R.drawable.export)
-                            }
-                            this@MainActivity._active_notification = null
-                        }
-
-                        override fun on_cancel() {
-                            this.cancelled = true
-                            this@MainActivity.feedback_msg(this@MainActivity.getString(R.string.export_cancelled))
-                            this@MainActivity.runOnUiThread {
-                                val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress)
-                                    ?: return@runOnUiThread
-                                llExportProgress.visibility = View.GONE
-                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                                btnExportProject.setImageResource(R.drawable.export)
-                            }
-
-                            val builder = this@MainActivity.get_notification() ?: return
-                            builder.setContentText(this@MainActivity.getString(R.string.export_cancelled))
-                                .setProgress(0, 0, false)
-                                .setAutoCancel(true)
-                                .setTimeoutAfter(5000)
-                                .clearActions()
-
-                            @SuppressLint("MissingPermission")
-                            if (this@MainActivity.has_notification_permission()) {
-                                val notification_manager = NotificationManagerCompat.from(this@MainActivity)
-                                notification_manager.notify(this@MainActivity.NOTIFICATION_ID, builder.build())
-                            }
-                            this@MainActivity._active_notification = null
-                        }
-
-                        override fun on_progress_update(progress: Double) {
-                            val progress_rounded = ((progress + this.working_y) * 100 / this.total_line_count.toDouble()).roundToInt()
-                            this@MainActivity.runOnUiThread {
-                                val tvExportProgress = this@MainActivity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
-                                tvExportProgress.text = getString(R.string.label_export_progress, progress_rounded)
-                            }
-
-                            val builder = this@MainActivity.get_notification() ?: return
-                            builder.setProgress(100, progress_rounded, false)
-
-                            @SuppressLint("MissingPermission")
-                            if (this@MainActivity.has_notification_permission()) {
-                                this.notification_manager.notify(
-                                    this@MainActivity.NOTIFICATION_ID,
-                                    builder.build()
-                                )
-                            }
-                        }
-                    }
-
+                    val export_event_handler = MultiExporterEventHandler(this, line_count)
 
                     var y = 0
                     var c = 0
                     outer@ for (channel in opus_manager_copy.get_all_channels()) {
-                        var l = 0
-                        for (line in channel.lines) {
+                        for (l in channel.lines.indices) {
                             if (skip_lines.contains(Pair(c, l))) {
-                                l++
                                 continue
                             }
 
@@ -402,7 +393,7 @@ class MainActivity : AppCompatActivity() {
                             val buffered_output_stream = BufferedOutputStream(output_stream)
                             val data_output_buffer = DataOutputStream(buffered_output_stream)
 
-                            export_event_handler.update(c, l++, y++, file_uri)
+                            export_event_handler.update(y++, file_uri)
                             this.view_model.export_wav(opus_manager_copy, exporter_sample_handle_manager, data_output_buffer, tmp_file, this.configuration, export_event_handler)
 
                             data_output_buffer.close()
@@ -414,6 +405,110 @@ class MainActivity : AppCompatActivity() {
                             if (export_event_handler.cancelled) {
                                 break@outer
                             }
+                        }
+                        c++
+                    }
+                }
+            }
+        }
+    }
+
+
+    private var _export_multi_channel_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (this._soundfont == null) {
+            // Throw Error. Currently unreachable by ui
+            return@registerForActivityResult
+        }
+
+        this.getNotificationPermission()
+        thread {
+            if (result.resultCode == RESULT_OK) {
+                result?.data?.data?.also { tree_uri ->
+                    if (this.view_model.export_handle != null) {
+                        return@thread
+                    }
+                    val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
+                    val opus_manager_copy = OpusLayerBase()
+                    opus_manager_copy.project_change_json(this.get_opus_manager().to_json())
+
+                    var channel_count = 0
+                    val skip_channels = mutableSetOf<Int>()
+
+                    opus_manager_copy.get_all_channels().forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
+                        if (channel.muted) {
+                            skip_channels.add(i)
+                            return@channel_loop
+                        }
+
+                        var skip = true
+                        channel.lines.forEachIndexed line_loop@{ j: Int, line: OpusLineAbstract<*> ->
+                            if (line.muted || !skip) {
+                                return@line_loop
+                            }
+
+                            for (beat in line.beats) {
+                                if (!beat.is_eventless())  {
+                                    skip = false
+                                    return@line_loop
+                                }
+                            }
+                        }
+
+                        if (skip) {
+                            skip_channels.add(i)
+                        } else {
+                            channel_count += 1
+                        }
+                    }
+
+                    val export_event_handler = MultiExporterEventHandler(this, channel_count)
+
+                    var y = 0
+                    var c = 0
+                    outer@ for (channel in opus_manager_copy.get_all_channels()) {
+                        if (skip_channels.contains(c)) {
+                            continue
+                        }
+
+                        val file = directory.createFile("audio/wav", getString(R.string.export_wav_channels_filename, c)) ?: continue
+                        val file_uri = file.uri
+
+                        /* TMP file is necessary since we can't easily predict the exact frame count. */
+                        val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                        if (tmp_file.exists()) {
+                            tmp_file.delete()
+                        }
+
+                        tmp_file.deleteOnExit()
+                        val exporter_sample_handle_manager = SampleHandleManager(this._soundfont!!, 44100, 22050)
+
+                        var c_b = 0
+                        for (channel_copy in opus_manager_copy.get_all_channels()) {
+                            if (c_b == c) {
+                                channel_copy.unmute()
+                            } else {
+                                channel_copy.mute()
+                            }
+                            c_b += 1
+                        }
+
+
+                        val parcel_file_descriptor = applicationContext.contentResolver.openFileDescriptor(file_uri, "w") ?: continue@outer
+                        val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                        val buffered_output_stream = BufferedOutputStream(output_stream)
+                        val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                        export_event_handler.update(y++, file_uri)
+                        this.view_model.export_wav(opus_manager_copy, exporter_sample_handle_manager, data_output_buffer, tmp_file, this.configuration, export_event_handler)
+
+                        data_output_buffer.close()
+                        buffered_output_stream.close()
+                        output_stream.close()
+                        parcel_file_descriptor.close()
+                        tmp_file.delete()
+
+                        if (export_event_handler.cancelled) {
+                            break@outer
                         }
                         c++
                     }
@@ -578,6 +673,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val path = this.getExternalFilesDir(null).toString()
         val file = File("$path/bkp_crashreport.log")
@@ -1550,7 +1646,9 @@ class MainActivity : AppCompatActivity() {
                         when (value) {
                             0 -> this.export_project()
                             1 -> this.export_midi()
-                            2 -> this.export_multi_wav() // DEBUG
+                            2 -> this.export_wav() // DEBUG
+                            3 -> this.export_multi_lines_wav() // DEBUG
+                            4 -> this.export_multi_channels_wav() // DEBUG
                         }
                     }
                 } else {
@@ -1573,6 +1671,8 @@ class MainActivity : AppCompatActivity() {
 
         if (this.get_soundfont() != null) {
             export_options.add( Pair(2, getString(R.string.export_option_wav)) )
+            export_options.add( Pair(3, getString(R.string.export_option_wav_lines)) )
+            export_options.add( Pair(4, getString(R.string.export_option_wav_channels)) )
         }
 
         return export_options
@@ -2240,21 +2340,27 @@ class MainActivity : AppCompatActivity() {
         return base_name
     }
 
-    fun export_multi_wav() {
+    fun export_multi_lines_wav() {
         val name = this.get_export_name()
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        this._export_multi_wav_intent_launcher.launch(intent)
+        intent.putExtra(Intent.EXTRA_TITLE, name)
+        this._export_multi_line_wav_intent_launcher.launch(intent)
+    }
+
+    fun export_multi_channels_wav() {
+        val name = this.get_export_name()
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        intent.putExtra(Intent.EXTRA_TITLE, name)
+        this._export_multi_channel_wav_intent_launcher.launch(intent)
     }
 
     fun export_wav() {
         val name = this.get_export_name()
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        //intent.type = MimeTypes.AUDIO_WAV
         intent.type = "audio/wav"
         intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
         this._export_wav_intent_launcher.launch(intent)
-
     }
 
     fun export_wav_cancel() {

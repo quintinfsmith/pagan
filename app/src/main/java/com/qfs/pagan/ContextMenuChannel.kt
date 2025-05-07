@@ -19,6 +19,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_choose_instrument: TextView
     lateinit var button_toggle_controllers: ImageView
     lateinit var button_mute: ImageView
+    lateinit var button_adjust: ImageView
 
     init {
         this.refresh()
@@ -30,6 +31,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         this.button_toggle_controllers = primary.findViewById(R.id.btnToggleChannelCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
+        this.button_adjust = primary.findViewById(R.id.btnAdjust)
         this.button_choose_instrument = secondary.findViewById(R.id.btnChooseInstrument)
         this.button_mute = secondary.findViewById(R.id.btnMuteChannel)
     }
@@ -40,6 +42,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Channel) {
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
         }
+
 
         this.button_choose_instrument.visibility = View.VISIBLE
 
@@ -57,6 +60,11 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
         this.button_choose_instrument.text = label
 
+        this.button_adjust.visibility = if (opus_manager.is_percussion(channel_index)) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         val is_percussion = opus_manager.is_percussion(channel_index)
         this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.channels.isNotEmpty())
@@ -99,6 +107,10 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
                 return@setOnClickListener
             }
             this.interact_choose_instrument()
+        }
+
+        this.button_adjust.setOnClickListener {
+            this.get_activity().get_action_interface().adjust_selection()
         }
 
         this.button_insert.setOnLongClickListener {

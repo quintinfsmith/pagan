@@ -25,6 +25,15 @@
         android:contentDescription="@string/cd_remove_channel" />
 
     <ImageView
+        android:theme="@style/icon_button"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:layout_marginTop="@dimen/number_selector_spacing"
+        android:src="@drawable/adjust"
+        android:id="@+id/btnAdjust"
+        android:contentDescription="@string/cd_adjust_selection"/>
+
+    <ImageView
         android:visibility="gone"
         android:id="@+id/btnToggleChannelCtl"
         android:theme="@style/icon_button"

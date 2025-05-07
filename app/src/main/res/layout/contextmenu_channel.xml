@@ -21,6 +21,14 @@
             android:layout_height="match_parent"/>
 
         <ImageView
+            android:theme="@style/icon_button"
+            android:layout_width="@dimen/icon_button_width"
+            android:layout_height="@dimen/icon_button_height"
+            android:src="@drawable/adjust"
+            android:id="@+id/btnAdjust"
+            android:contentDescription="@string/cd_adjust_selection"/>
+
+        <ImageView
             android:id="@+id/btnRemoveLine"
             android:theme="@style/icon_button"
             app:srcCompat="@drawable/remove_line"

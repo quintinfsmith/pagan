@@ -17,7 +17,6 @@ import com.qfs.pagan.databinding.FragmentGlobalSettingsBinding
 import java.io.File
 
 class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
-
     override fun inflate( inflater: LayoutInflater, container: ViewGroup?): FragmentGlobalSettingsBinding {
         return FragmentGlobalSettingsBinding.inflate(inflater, container, false)
     }
@@ -132,7 +131,6 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
                 if (seekbar != null) {
                     main.get_action_interface().set_sample_rate(options[seekbar.progress])
-                    main.set_sample_rate(options[seekbar.progress])
                 }
             }
         })

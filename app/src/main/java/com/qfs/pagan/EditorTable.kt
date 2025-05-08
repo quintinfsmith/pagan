@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, attrs) {
@@ -500,8 +501,27 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                 }
             }
             // No need to force_scroll in these modes
-            OpusManagerCursor.CursorMode.Range,
-            OpusManagerCursor.CursorMode.Channel,
+            OpusManagerCursor.CursorMode.Range -> {
+                val (first, second) = cursor.get_ordered_range()!!
+                opus_manager.get_visible_row_from_ctl_line(
+                    opus_manager.get_actual_line_index(
+                        max(
+                            opus_manager.get_instrument_line_index(first.channel, first.line_offset),
+                            opus_manager.get_instrument_line_index(second.channel, second.line_offset)
+                        )
+                    )
+                )
+            }
+            OpusManagerCursor.CursorMode.Channel-> {
+                opus_manager.get_visible_row_from_ctl_line(
+                    opus_manager.get_actual_line_index(
+                        opus_manager.get_instrument_line_index(
+                            cursor.channel,
+                            opus_manager.get_channel(cursor.channel).lines.size - 1
+                        )
+                    )
+                )
+            }
             OpusManagerCursor.CursorMode.Column,
             OpusManagerCursor.CursorMode.Unset -> null
         } ?: return

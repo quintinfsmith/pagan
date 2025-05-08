@@ -97,9 +97,9 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         for ((tail, head) in this._cache_inv_blocked_tree_map) {
             if (del_range.contains(head.first)) {
                 decache.add(Pair(head.first, head.second))
-            } else if (tail.first >= index && head.first < index) {
+            } else if (tail.first >= index + count && head.first <= index) {
                 needs_recache.add(Pair(head.first, head.second))
-            } else if (head.first >= index + 1 && !needs_decrement.contains(Pair(head.first, head.second))) {
+            } else if (head.first >= index + count && !needs_decrement.contains(Pair(head.first, head.second))) {
                 needs_decrement.add(Pair(head.first, head.second))
             }
         }
@@ -116,7 +116,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         val new_cache = Array(needs_decrement.size) { i: Int ->
             val original_blocked = this._cache_blocked_tree_map.remove(needs_decrement[i])!!
             var (beat, position) = needs_decrement[i]
-            val new_beat = beat - 1
+            val new_beat = beat - count
 
             Pair(
                 Pair(new_beat, position.toList()),
@@ -129,7 +129,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                     )
 
                     Triple(
-                        original_blocked[j].first - 1,
+                        original_blocked[j].first - count,
                         original_blocked[j].second.toList(),
                         original_blocked[j].third.copy()
                     )

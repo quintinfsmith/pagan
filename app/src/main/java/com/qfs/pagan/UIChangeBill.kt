@@ -230,7 +230,6 @@ class UIChangeBill {
                                 check_range.contains(coord.y)
                             }.toSet()
 
-
                             for (coord in queued_cells[i]) {
                                 if (coord.y >= y + count) {
                                     coord.y -= count
@@ -249,7 +248,6 @@ class UIChangeBill {
 
                         queued_line_labels.clear()
                         queued_line_labels += new_queue_line_labels
-
                         this._tree.int_queue.add(y)
                         this._tree.int_queue.add(count)
                     }

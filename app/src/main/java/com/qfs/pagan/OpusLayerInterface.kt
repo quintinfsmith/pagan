@@ -1085,7 +1085,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
             val y = this.get_instrument_line_index(channel, 0)
 
-
             if (!this.is_percussion(channel) || this.percussion_channel.visible) {
                 var ctl_row = this.get_visible_row_from_ctl_line(
                     this.get_actual_line_index(y)
@@ -1200,36 +1199,33 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
 
-
         val changed_columns = this.get_editor_table().remove_mapped_lines(ctl_row, removed_row_count)
 
         return Triple(ctl_row, removed_row_count, changed_columns)
     }
 
     override fun remove_channel(channel: Int) {
-        this.lock_ui_partial {
-            if (!this._ui_change_bill.is_full_locked()) {
+        if (!this._ui_change_bill.is_full_locked()) {
+            val force_show_percussion = !this.percussion_channel.visible
+                && !this.is_percussion(channel)
+                && this.channels.size == 1
 
-                val force_show_percussion = !this.percussion_channel.visible
-                        && !this.is_percussion(channel)
-                        && this.channels.size == 1
+            if (force_show_percussion) {
+                this.make_percussion_visible()
+            }
 
-                if (force_show_percussion) {
-                    this.make_percussion_visible()
-                }
-
+            this.lock_ui_partial {
                 val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
+                println("$ctl_row, $removed_row_count, $changed_columns")
 
                 super.remove_channel(channel)
-
 
                 this._ui_change_bill.queue_remove_channel(channel)
                 this._ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
                 this._ui_change_bill.queue_column_changes(changed_columns, false)
-
-            } else {
-                super.remove_channel(channel)
             }
+        } else {
+            super.remove_channel(channel)
         }
     }
 

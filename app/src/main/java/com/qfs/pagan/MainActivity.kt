@@ -2651,7 +2651,7 @@ class MainActivity : AppCompatActivity() {
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(this.getString(R.string.export_wav_notification_title, this.get_opus_manager().project_name ?: "Untitled Project"))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.small_logo)
+                .setSmallIcon(R.drawable.small_logo_rowan)
                 .setSilent(true)
                 .addAction(R.drawable.baseline_cancel_24, this.getString(android.R.string.cancel), pending_cancel_intent)
 

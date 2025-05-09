@@ -11,8 +11,8 @@
         android:largeHeap="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/logo"
-        android:roundIcon="@mipmap/logo"
+        android:icon="@mipmap/logo_rowan"
+        android:roundIcon="@mipmap/logo_rowan_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Pagan"
         tools:targetApi="35" >

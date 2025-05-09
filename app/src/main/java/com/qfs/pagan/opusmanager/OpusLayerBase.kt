@@ -4748,6 +4748,7 @@ open class OpusLayerBase {
             || this.length != other.length
             || this.path != other.path
             || this.project_name != other.project_name
+            || this.project_notes != other.project_notes
             || this.transpose != other.transpose
             || !this.tuning_map.contentEquals(other.tuning_map)
             || this.channels.size != other.channels.size) {

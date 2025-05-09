@@ -77,8 +77,8 @@ class MainActivityTest {
 
         val action_list = JSONParser.parse<JSONList>(text)
 
-        if (action_list?.list?.isNotEmpty() == true) {
-            for (i in 0 until action_list.list.size) {
+        if (action_list?.isNotEmpty() == true) {
+            for (i in 0 until action_list.size) {
                 val item = action_list.get_list(i)
                 val (token, intlist) = ActionTracker.from_json_entry(item)
                 try {

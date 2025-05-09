@@ -11,6 +11,10 @@ import org.junit.Test
 import kotlin.math.roundToInt
 
 class SoundFontUnitTest {
+    init {
+        System.loadLibrary("pagan")
+    }
+
     fun get_soundfont(): SoundFont {
         val sffont = "FluidR3_GM_GS.sf2"
         return SoundFont(sffont)
@@ -26,7 +30,7 @@ class SoundFontUnitTest {
 
     fun get_instrument_sample(): SampleDirective {
         val samples = this.get_instrument().get_samples(20, 64).toList()
-        return if (samples[0].sample!!.name == "P200 Piano D2(L)") {
+        return if (samples[0].sample!![0].name == "P200 Piano D2(L)") {
             samples[0]
         } else {
             samples[1]
@@ -226,17 +230,17 @@ class SoundFontUnitTest {
 
     @Test
     fun test_sample_rate() {
-        val sample = this.get_instrument_sample().sample!!
+        val sample = this.get_instrument_sample().sample!![0]
         assertEquals(
             "sample rate is wrong",
             32000,
-            sample.sampleRate
+            sample.sample_rate
         )
     }
 
     @Test
     fun test_sample_size() {
-        val sample = this.get_instrument_sample().sample!!
+        val sample = this.get_instrument_sample().sample!![0]
         assertEquals(
             "sample size is wrong",
             219502,
@@ -246,11 +250,11 @@ class SoundFontUnitTest {
 
     @Test
     fun test_sample_type() {
-        val sample = this.get_instrument_sample().sample!!
+        val sample = this.get_instrument_sample().sample!![0]
         assertEquals(
             "sample type is wrong",
-            SampleType.Left,
-            sample.sampleType
+            4, // Left
+            sample.sample_type
         )
     }
 
@@ -261,19 +265,19 @@ class SoundFontUnitTest {
         val instrument = preset.get_instruments(20,64).first().instrument!!
         val samples = instrument.get_samples(20, 64).toList()
 
-        val sample = if (samples[0].sample!!.name == "Scratchgs(R)") {
-            samples[0].sample!!
-        } else {
+        val linked_sample = if (samples[0].sample!![0].name == "Scratchgs(R)") {
             samples[1].sample!!
-        }
+        } else {
+            samples[0].sample!!
+        }[0]
 
-        val compare_sample = soundfont.get_sample(1444, false)
+        val (compare_sample, _) = soundfont.get_sample(1444)
         soundfont.apply_sample_data(compare_sample)
 
         assertEquals(
             "sample link is wrong",
             compare_sample,
-            sample.linked_sample
+            linked_sample
         )
     }
 
@@ -283,7 +287,7 @@ class SoundFontUnitTest {
         val instrument = preset.get_instruments(20,64).first().instrument!!
         val samples = instrument.get_samples(20, 64).toList()
 
-        val instrument_sample = if (samples[0].sample!!.name == "Scratchgs(R)") {
+        val instrument_sample = if (samples[0].sample!![0].name == "Scratchgs(R)") {
             samples[0]
         } else {
             samples[1]

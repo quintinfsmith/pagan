@@ -13,9 +13,9 @@
 #include "VolumeEnvelope.h"
 #include <cmath>
 
-int SampleHandleUUIDGen = 0;
-
 class NoFrameDataException: public std::exception {};
+
+int SampleHandleUUIDGen = 0;
 
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
@@ -89,7 +89,7 @@ class SampleHandle {
             float dt =  1.0 / this->sample_rate;
             this->smoothing_factor = dt / (this->RC + dt);
 
-            this->initial_frame_factor = 1 / pow(10, this->initial_attenuation);
+            this->initial_frame_factor = 1 / std::pow(10, this->initial_attenuation);
             this->working_frame = 0;
             this->release_frame = -1;
             this->kill_frame = -1;
@@ -325,7 +325,7 @@ class SampleHandle {
                 int relative_frame = this->working_frame - this->volume_envelope->frames_delay - this->volume_envelope->frames_attack;
                 if (relative_frame < this->volume_envelope->frames_decay) {
                     float r = ((float)relative_frame / (float)this->volume_envelope->frames_decay);
-                    frame_factor /= pow((float)10, r * this->volume_envelope->sustain_attenuation);
+                    frame_factor /= std::pow((float)10, r * this->volume_envelope->sustain_attenuation);
                 } else {
                     frame_factor /= this->volume_envelope->true_sustain_attenuation;
                 }

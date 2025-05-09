@@ -2,7 +2,6 @@
 #include <iostream>
 #include <string>
 #include <exception>
-#include <android/log.h>
 
 #include "soundfont/SampleData.cpp"
 #include "soundfontplayer/PitchedBuffer.cpp"

@@ -1,6 +1,5 @@
 #include "SampleHandle.h"
 #include <string>
-#include <android/log.h>
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {

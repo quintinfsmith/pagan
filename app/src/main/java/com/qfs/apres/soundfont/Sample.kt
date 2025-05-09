@@ -11,6 +11,22 @@ data class Sample(
     var data: SampleData = SampleData(0),
     var data_placeholder: Pair<Int, Int>
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is Sample) {
+            return false
+        }
+
+        return (
+            this.name == other.name
+                && this.loop_end == other.loop_end
+                && this.loop_start == other.loop_start
+                && this.sample_rate == other.sample_rate
+                && this.original_pitch == other.original_pitch
+                && this.pitch_correction == other.pitch_correction
+                && this.sample_type == other.sample_type
+                && this.data_placeholder == other.data_placeholder
+        )
+    }
 
     fun destroy() {
         this.data.destroy()

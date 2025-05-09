@@ -269,6 +269,14 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
     override fun toString(): String {
         return this.to_string()
     }
+
+    fun isNotEmpty(): Boolean {
+        return this.hash_map.isNotEmpty()
+    }
+
+    fun isEmpty(): Boolean {
+        return this.hash_map.isEmpty()
+    }
 }
 
 class JSONList(vararg args: JSONObject?): JSONObject {
@@ -482,6 +490,14 @@ class JSONList(vararg args: JSONObject?): JSONObject {
 
     operator fun get(i: Int): JSONObject? {
         return this.list[i]
+    }
+
+    fun isNotEmpty(): Boolean {
+        return this.list.isNotEmpty()
+    }
+
+    fun isEmpty(): Boolean {
+        return this.list.isEmpty()
     }
 }
 

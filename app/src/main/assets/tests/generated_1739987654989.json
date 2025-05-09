@@ -57,7 +57,7 @@
   ["CursorSelectRange",2,0,3,0,0,0],
   ["RepeatSelectionStd",0,0,2],
   ["DrawerOpen"],
-  ["SetProjectName","test project"],
+  ["SetProjectNameAndNotes","test project", "A Note"],
   ["DrawerClose"],
   ["CursorSelectLeaf",1,0,2,1,0],
   ["CursorSelectLeaf",1,0,2,1,1],

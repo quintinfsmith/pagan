@@ -4,6 +4,7 @@
 
 #ifndef PAGAN_VOLUMEENVELOPE_H
 #define PAGAN_VOLUMEENVELOPE_H
+#include <cmath>
 
 class VolumeEnvelope {
 public:

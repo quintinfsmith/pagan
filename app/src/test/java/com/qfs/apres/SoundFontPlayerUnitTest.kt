@@ -13,6 +13,9 @@ import org.junit.Test
 import java.io.File
 
 class SoundFontPlayerUnitTest {
+    init {
+        System.loadLibrary("pagan")
+    }
     fun get_soundfont(): SoundFont {
         val sffont = "FluidR3_GM_GS.sf2"
         println(File(sffont).absolutePath)

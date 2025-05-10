@@ -11,15 +11,15 @@ cmake_minimum_required(VERSION 3.22.1)
 # build script scope).
 project("pagan")
 
-if (UNIX) 
-	find_package(JNI REQUIRED)
-	if (JNI_FOUND)
-	    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
-	    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
-	endif()
-	include_directories(${JAVA_INCLUDE_PATH})
-	include_directories(${JAVA_INCLUDE_PATH}/linux)
-endif (UNIX)
+# if (UNIX)
+# 	find_package(JNI REQUIRED)
+# 	if (JNI_FOUND)
+# 	    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+# 	    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+# 	endif()
+# 	include_directories(${JAVA_INCLUDE_PATH})
+# 	include_directories(${JAVA_INCLUDE_PATH}/linux)
+# endif (UNIX)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.

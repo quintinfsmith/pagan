@@ -413,4 +413,4 @@ class SampleHandle {
         }
 };
 
-#endif PAGAN_SAMPLEHANDLE_H
+#endif //PAGAN_SAMPLEHANDLE_H

@@ -410,7 +410,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 } else {
                     continue
                 }
-                var working_pan = controller.initial_event.value / 2F
+                var working_pan = controller.initial_event.value
                 val working_map = hashMapOf(0 to Pair(working_pan, 0F))
 
                 for (b in 0 until this.opus_manager.length) {
@@ -422,7 +422,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         if (working_tree.is_event()) {
                             val working_event = working_tree.get_event()!!
                             val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
-                            val event_value = working_event.value / 2F
+                            val event_value = working_event.value
                             val diff = event_value - working_pan
                             if (diff == 0f) {
                                 continue
@@ -432,7 +432,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                 ControlTransition.Instant -> {
                                     working_map[start_frame] = Pair(event_value, 0F)
                                 }
-
                                 ControlTransition.Linear -> {
                                     working_map[start_frame] = Pair(working_pan, (diff / (end_frame - start_frame).toFloat()))
                                     working_map[end_frame] = Pair(event_value, 0F)

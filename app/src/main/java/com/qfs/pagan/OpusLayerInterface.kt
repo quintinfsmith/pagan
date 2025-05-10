@@ -1216,8 +1216,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             this.lock_ui_partial {
                 val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
-                println("$ctl_row, $removed_row_count, $changed_columns")
-
                 super.remove_channel(channel)
 
                 this._ui_change_bill.queue_remove_channel(channel)

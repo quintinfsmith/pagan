@@ -6,7 +6,6 @@
 #define PAGAN_PROFILEBUFFER_H
 #include "ProfileBufferFrame.h"
 #include <vector>
-#include <android/log.h>
 
 class ProfileBuffer {
 public:
@@ -42,14 +41,13 @@ public:
 
     float get_next() {
         ProfileBufferFrame* bframe_data = this->frames[this->current_index];
-        if (bframe_data->frame == this->current_index) {
+        if (bframe_data->frame == this->current_frame) {
             this->current_value = bframe_data->initial_value;
         } else {
             this->current_value += bframe_data->increment;
         }
 
         float output = this->current_value;
-
         this->_move_to_next_frame();
         return output;
     }
@@ -62,7 +60,7 @@ public:
         this->current_frame = frame + this->start_frame;
 
         // Find the active event
-        this->current_index = -1;
+        this->current_index = 0;
         while (this->current_index < this->frame_count - 1) {
             if (this->frames[this->current_index + 1]->frame <= this->current_frame) {
                 this->current_index++;
@@ -118,7 +116,6 @@ private:
             } else {
                 int c = this->current_index;
                 this->next_frame_trigger = this->frames[this->current_index++]->frame;
-                __android_log_write(ANDROID_LOG_DEBUG, "---", (std::to_string(c) + " -- " + std::to_string(this->next_frame_trigger)).c_str());
             }
         }
     }

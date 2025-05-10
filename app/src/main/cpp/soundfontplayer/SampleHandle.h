@@ -238,26 +238,34 @@ class SampleHandle {
         float* get_next_balance() {
             float profile_pan = this->pan_profile->get_next();
             float output[2];
+            float base_value = 1;
+            float neg_base = -1 * base_value;
+            float max_value = 2;
+            float neg_max = -1 * max_value;
+
             switch (this->stereo_mode & 0x000F) {
                 case 0x01: {
-                    output[0] = fmax(0, fmin(1, .5 + (profile_pan + this->pan)));
-                    output[1] = -1 * fmax(-1, fmin(0, -.5 + (profile_pan + this->pan)));
+                    output[0] = fmax(0, fmin(max_value, base_value + (profile_pan + this->pan)));
+                    output[1] = -1 * fmax(neg_max, fmin(0, neg_base + (profile_pan + this->pan)));
                     break;
                 }
+
                 case 0x02: {
-                    output[0] = fmax(0, fmin(1, .5 + (profile_pan + this->pan)));
+                    output[0] = fmax(0, fmin(max_value, base_value + (profile_pan + this->pan)));
                     output[1] = 0;
                     break;
                 }
+
                 case 0x04: {
                     output[0] = 0;
-                    output[1] = -1 * fmax(-1, fmin(0, -.5 + (profile_pan + this->pan)));
+                    output[1] = -1 * fmax(neg_max, fmin(0, neg_base + (profile_pan + this->pan)));
                     break;
                 }
+
                 default: {
                     // TODO: LINKED, but treat as mono for now
-                    output[0] = fmax(0, fmin(1, .5 + (profile_pan + this->pan)));
-                    output[1] = -1 * fmax(-1, fmin(0, -.5 + (profile_pan + this->pan)));
+                    output[0] = fmax(0, fmin(max_value, base_value + (profile_pan + this->pan)));
+                    output[1] = -1 * fmax(neg_max, fmin(0, neg_base + (profile_pan + this->pan)));
                     break;
                 }
             }
@@ -265,7 +273,6 @@ class SampleHandle {
         }
 
         void get_next_frames(float* buffer, int target_size, int left_padding) {
-            __android_log_write(ANDROID_LOG_DEBUG, "--", std::to_string(this->stereo_mode).c_str());
             int actual_size = target_size;
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue

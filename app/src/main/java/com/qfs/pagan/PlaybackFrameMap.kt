@@ -410,7 +410,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 } else {
                     continue
                 }
-                var working_pan = controller.initial_event.value
+                var working_pan = controller.initial_event.value / 2F
                 val working_map = hashMapOf(0 to Pair(working_pan, 0F))
 
                 for (b in 0 until this.opus_manager.length) {
@@ -422,22 +422,23 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         if (working_tree.is_event()) {
                             val working_event = working_tree.get_event()!!
                             val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
-                            val diff = working_event.value - working_pan
+                            val event_value = working_event.value / 2F
+                            val diff = event_value - working_pan
                             if (diff == 0f) {
                                 continue
                             }
 
                             when (working_event.transition) {
                                 ControlTransition.Instant -> {
-                                    working_map[start_frame] = Pair(working_event.value, 0F)
+                                    working_map[start_frame] = Pair(event_value, 0F)
                                 }
 
                                 ControlTransition.Linear -> {
                                     working_map[start_frame] = Pair(working_pan, (diff / (end_frame - start_frame).toFloat()))
-                                    working_map[end_frame] = Pair(working_event.value, 0F)
+                                    working_map[end_frame] = Pair(event_value, 0F)
                                 }
                             }
-                            working_pan = working_event.value
+                            working_pan = event_value
                         } else if (!working_tree.is_leaf()) {
                             val new_width = working_item.relative_width / working_tree.size.toFloat()
                             for (i in 0 until working_tree.size) {

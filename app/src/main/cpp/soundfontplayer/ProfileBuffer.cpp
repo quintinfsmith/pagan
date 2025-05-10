@@ -2,6 +2,8 @@
 #include <malloc.h>
 #include "ProfileBuffer.h"
 
+#include <android/log.h>
+
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companion_create(
         JNIEnv* env,
@@ -9,8 +11,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companio
         jintArray indices,
         jfloatArray values,
         jfloatArray increments,
-        jint start_frame,
-        jboolean skip_set
+        jint start_frame
 ) {
     auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
 
@@ -37,9 +38,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companio
     buffer->current_index = 0;
     buffer->current_value = 0;
     buffer->next_frame_trigger = -1;
-    if (!skip_set) {
-        buffer->set_frame(start_frame);
-    }
+    buffer->set_frame(0);
 
     return (jlong)buffer;
 }

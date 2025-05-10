@@ -62,8 +62,8 @@ class SampleHandle(var ptr: Long) {
     }
 
     class ProfileBuffer(val ptr: Long) {
-        constructor(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int, skip_initial_set: Boolean = false): this(
-            intermediary_create(frames, start_frame, skip_initial_set)
+        constructor(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int): this(
+            intermediary_create(frames, start_frame)
         )
 
         var current_frame: Int = 0
@@ -72,13 +72,12 @@ class SampleHandle(var ptr: Long) {
         var next_frame_trigger: Int = -1
 
         companion object {
-            fun intermediary_create(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int, skip_initial_set: Boolean): Long {
+            fun intermediary_create(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int): Long {
                 return create(
                     IntArray(frames.size) { i: Int -> frames[i].first },
                     FloatArray(frames.size) { i: Int -> frames[i].second.first },
                     FloatArray(frames.size) { i: Int -> frames[i].second.second },
-                    start_frame,
-                    skip_initial_set
+                    start_frame
                 )
             }
 
@@ -86,8 +85,7 @@ class SampleHandle(var ptr: Long) {
                 frame_indices: IntArray,
                 values: FloatArray,
                 increments: FloatArray,
-                start_frame: Int,
-                skip_initial_set: Boolean
+                start_frame: Int
             ): Long
         }
 
@@ -278,9 +276,10 @@ class SampleHandle(var ptr: Long) {
         return this.get_release_duration_jni(ptr)
     }
 
-    external fun get_next_balance_jni(ptr: Long): Float
-    fun get_next_balance(): Float {
-        return this.get_next_balance_jni(this.ptr)
+    external fun get_next_balance_jni(ptr: Long): FloatArray
+    fun get_next_balance(): Pair<Float, Float> {
+        val array = this.get_next_balance_jni(this.ptr)
+        return Pair(array[0], array[1])
     }
 
     external fun get_next_frames_jni(ptr: Long, size: Int, left_padding: Int): FloatArray

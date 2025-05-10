@@ -65,7 +65,6 @@ class SampleHandle {
             PitchedBuffer** data_buffers,
             int buffer_count
         ) {
-
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
             this->previous_value = 0;
@@ -236,42 +235,47 @@ class SampleHandle {
             return this->data_buffers[this->active_buffer];
         }
 
-        float get_next_balance() {
+        float* get_next_balance() {
             float profile_pan = this->pan_profile->get_next();
-            float value;
+            float output[2];
             switch (this->stereo_mode & 0x000F) {
                 case 0x01: {
-                    value = (profile_pan + this->pan) / 2;
+                    output[0] = fmax(0, fmin(1, .5 + (profile_pan + this->pan)));
+                    output[1] = -1 * fmax(-1, fmin(0, -.5 + (profile_pan + this->pan)));
                     break;
                 }
                 case 0x02: {
-                    value = (profile_pan + fmin(0, this->pan)) / 2;
+                    output[0] = fmax(0, fmin(1, .5 + (profile_pan + this->pan)));
+                    output[1] = 0;
                     break;
                 }
                 case 0x04: {
-                    value = (profile_pan + fmax(0, this->pan)) / 2;
+                    output[0] = 0;
+                    output[1] = -1 * fmax(-1, fmin(0, -.5 + (profile_pan + this->pan)));
                     break;
                 }
                 default: {
                     // TODO: LINKED, but treat as mono for now
-                    value = (profile_pan + this->pan) / 2;
+                    output[0] = fmax(0, fmin(1, .5 + (profile_pan + this->pan)));
+                    output[1] = -1 * fmax(-1, fmin(0, -.5 + (profile_pan + this->pan)));
                     break;
                 }
             }
-            return value;
+            return output;
         }
 
         void get_next_frames(float* buffer, int target_size, int left_padding) {
+            __android_log_write(ANDROID_LOG_DEBUG, "--", std::to_string(this->stereo_mode).c_str());
             int actual_size = target_size;
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
-                buffer[i * 2] = 0;
-                buffer[(i * 2) + 1] = 0;
+                buffer[i * 3] = 0;
+                buffer[(i * 3) + 1] = 0;
+                buffer[(i * 3) + 2] = 0;
             }
 
             for (int i = left_padding; i < target_size; i++) {
-                float working_pan = this->get_next_balance();
                 float frame;
                 try {
                     frame = this->get_next_frame();
@@ -279,22 +283,26 @@ class SampleHandle {
                     actual_size = i;
                     break;
                 }
+                float* working_pan = this->get_next_balance();
 
-                buffer[(i * 2)] = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
-                buffer[(i * 2) + 1] = working_pan;
+                buffer[(i * 3)] = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
 
-                this->previous_value = buffer[i * 2];
+                buffer[(i * 3) + 1] = working_pan[0];
+                buffer[(i * 3) + 2] = working_pan[1];
+
+                this->previous_value = buffer[i * 3];
             }
 
             // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
                 if (this->previous_value != 0) {
-                    buffer[i * 2] = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    this->previous_value = buffer[i * 2];
+                    buffer[i * 3] = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
+                    this->previous_value = buffer[i * 3];
                 } else {
-                    buffer[i * 2] = 0;
+                    buffer[i * 3] = 0;
                 }
-                buffer[(i * 2) + 1] = 0;
+                buffer[(i * 3) + 1] = 0;
+                buffer[(i * 3) + 2] = 0;
             }
         }
 
@@ -351,9 +359,7 @@ class SampleHandle {
                     pos += this->data_buffers[i]->virtual_size;
                 }
                 int release_frame_count = std::min(this->volume_envelope->frames_release, pos - this->release_frame);
-
                 int current_position_release = this->working_frame - this->release_frame;
-
                 if (current_position_release < release_frame_count) {
                     frame_factor *= 1 - ((float)current_position_release / (float)release_frame_count);
                 } else {
@@ -366,7 +372,7 @@ class SampleHandle {
             if (this->volume_profile != nullptr) {
                 use_volume = this->volume_profile->get_next();
             } else {
-                 use_volume = 1;
+                use_volume = 1;
             }
 
             this->working_frame += 1;

@@ -197,10 +197,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             }
             new_modulators[key] = new_modulators[key]!! + modulators
         }
-        val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 100F
-
+        val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 50F
         return List(sample_directive.sample!!.size) { i: Int ->
-            val working_sample = sample_directive.sample!![i];
+            val working_sample = sample_directive.sample!![i]
+            println("$pan ${working_sample.sample_type}")
             SampleHandle(
                 data = working_sample.data,
                 sample_rate = sample_rate,

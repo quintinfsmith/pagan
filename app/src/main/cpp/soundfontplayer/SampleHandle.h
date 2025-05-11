@@ -4,7 +4,6 @@
 
 #ifndef PAGAN_SAMPLEHANDLE_H
 #define PAGAN_SAMPLEHANDLE_H
-
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -235,40 +234,49 @@ class SampleHandle {
             return this->data_buffers[this->active_buffer];
         }
 
-        float* get_next_balance() {
-            float profile_pan = this->pan_profile->get_next();
-            float output[2];
+        std::tuple<float, float> get_next_balance() {
             float base_value = 1;
             float neg_base = -1 * base_value;
             float max_value = 2;
             float neg_max = -1 * max_value;
+            float pan_sum = this->pan + this->pan_profile->get_next();
 
+            std::tuple<float, float> output;
             switch (this->stereo_mode & 0x000F) {
                 case 0x01: {
-                    output[0] = fmax(0, fmin(max_value, base_value + (profile_pan + this->pan)));
-                    output[1] = -1 * fmax(neg_max, fmin(0, neg_base + (profile_pan + this->pan)));
+                    output = std::make_tuple(
+                        fmax(0, fmin(max_value, base_value + pan_sum)),
+                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                    );
                     break;
                 }
 
                 case 0x02: {
-                    output[0] = fmax(0, fmin(max_value, base_value + (profile_pan + this->pan)));
-                    output[1] = 0;
+                    output = std::make_tuple(
+                        fmax(0, fmin(max_value, base_value + pan_sum)),
+                        0
+                    );
                     break;
                 }
 
                 case 0x04: {
-                    output[0] = 0;
-                    output[1] = -1 * fmax(neg_max, fmin(0, neg_base + (profile_pan + this->pan)));
+                    output = std::make_tuple(
+                        0,
+                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                    );
                     break;
                 }
 
                 default: {
                     // TODO: LINKED, but treat as mono for now
-                    output[0] = fmax(0, fmin(max_value, base_value + (profile_pan + this->pan)));
-                    output[1] = -1 * fmax(neg_max, fmin(0, neg_base + (profile_pan + this->pan)));
+                    output = std::make_tuple(
+                        fmax(0, fmin(max_value, base_value + pan_sum)),
+                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                    );
                     break;
                 }
             }
+
             return output;
         }
 
@@ -277,9 +285,10 @@ class SampleHandle {
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
-                buffer[i * 3] = 0;
-                buffer[(i * 3) + 1] = 0;
-                buffer[(i * 3) + 2] = 0;
+                int k = i * 3;
+                buffer[k] = 0;
+                buffer[k + 1] = 0;
+                buffer[k + 2] = 0;
             }
 
             for (int i = left_padding; i < target_size; i++) {
@@ -288,28 +297,30 @@ class SampleHandle {
                     frame = this->get_next_frame();
                 } catch (NoFrameDataException &e) {
                     actual_size = i;
+                    this->get_next_balance(); // Move profile buffer frame forward
                     break;
                 }
-                float* working_pan = this->get_next_balance();
+                std::tuple<float, float>working_pan = this->get_next_balance();
+                int k = i * 3;
 
-                buffer[(i * 3)] = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
+                buffer[k] = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
+                buffer[k + 1] = std::get<0>(working_pan);
+                buffer[k + 2] = std::get<1>(working_pan);
 
-                buffer[(i * 3) + 1] = working_pan[0];
-                buffer[(i * 3) + 2] = working_pan[1];
-
-                this->previous_value = buffer[i * 3];
+                this->previous_value = buffer[k];
             }
 
             // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
+                int k = i * 3;
                 if (this->previous_value != 0) {
-                    buffer[i * 3] = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    this->previous_value = buffer[i * 3];
+                    buffer[k] = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
+                    this->previous_value = buffer[k];
                 } else {
-                    buffer[i * 3] = 0;
+                    buffer[k] = 0;
                 }
-                buffer[(i * 3) + 1] = 0;
-                buffer[(i * 3) + 2] = 0;
+                buffer[k + 1] = 0;
+                buffer[k + 2] = 0;
             }
         }
 

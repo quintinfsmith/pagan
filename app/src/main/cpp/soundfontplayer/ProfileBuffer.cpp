@@ -2,8 +2,6 @@
 #include <malloc.h>
 #include "ProfileBuffer.h"
 
-#include <android/log.h>
-
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companion_create(
         JNIEnv* env,
@@ -50,10 +48,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_copy_1jni(
         jlong ptr_long
 ) {
     auto *ptr = (struct ProfileBuffer *) ptr_long;
-
     auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
     ptr->copy_to(buffer);
-
     return (jlong)buffer;
 }
 

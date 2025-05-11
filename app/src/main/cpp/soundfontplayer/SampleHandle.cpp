@@ -96,7 +96,11 @@ extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1balance_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleHandle *)ptr_long;
     jfloatArray output = env->NewFloatArray(2);
-    float* balance = ptr->get_next_balance();
+    std::tuple<float, float> tmp = ptr->get_next_balance();
+    float balance[2];
+    balance[0] = std::get<0>(tmp);
+    balance[1] = std::get<1>(tmp);
+
     env->SetFloatArrayRegion(output, 0, 2, balance);
     return output;
 }

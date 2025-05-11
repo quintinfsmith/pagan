@@ -97,14 +97,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         val output = HashMap<Int, Pair<Float, FloatArray>>()
         for ((key, sample_handle, left_pad) in sample_handles_to_use) {
-            output[key] = Pair(sample_handle.smoothing_factor, this.populate_partial_int_array(sample_handle, left_pad))
+            output[key] = Pair(
+                sample_handle.smoothing_factor,
+                sample_handle.get_next_frames(left_pad, this.buffer_size)
+            )
         }
 
         return output
-    }
-
-    private fun populate_partial_int_array(sample_handle: SampleHandle, left_pad: Int): FloatArray {
-        return sample_handle.get_next_frames(left_pad, this.buffer_size)
     }
 
     private fun update_active_sample_handles(initial_frame: Int) {

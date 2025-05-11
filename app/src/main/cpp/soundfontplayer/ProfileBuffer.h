@@ -60,13 +60,16 @@ public:
         this->current_frame = frame + this->start_frame;
 
         // Find the active event
-        this->current_index = 0;
+        this->current_index = -1;
         while (this->current_index < this->frame_count - 1) {
             if (this->frames[this->current_index + 1]->frame <= this->current_frame) {
                 this->current_index++;
             } else {
                 break;
             }
+        }
+        if (this->current_index == -1) {
+            this->current_index = 0;
         }
 
         // Set the next frame trigger
@@ -96,6 +99,9 @@ public:
                 new_buffer->frames[i] = ptr;
             }
             new_buffer->frame_count = this->frame_count;
+        } else {
+            new_buffer->frames = nullptr;
+            new_buffer->frame_count = 0;
         }
 
         new_buffer->start_frame = this->start_frame;
@@ -114,7 +120,6 @@ private:
             if (this->current_index >= this->frame_count - 1) {
                 this->next_frame_trigger = -1;
             } else {
-                int c = this->current_index;
                 this->next_frame_trigger = this->frames[this->current_index++]->frame;
             }
         }

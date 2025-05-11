@@ -1,0 +1,5 @@
+MASSIVE speed increase: More instruments can now be played at once with a higher sample rate before you'll see a performance hit.
+- New Logo
+- Can now shift notes in selection
+- Export channels or lines individually
+- improved pan

@@ -16,8 +16,6 @@ Pagan is something different.
 
 <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/"><img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" /></a>
 <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'><img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/></a>
-<a style="diplay: inline-block; text-decoration: none important;" href="https://ko-fi.com/quintinfsmith"><img alt="Buy me a Coffee" src="http://burnsomni.net/content/support_me_on_kofi_badge_beige.png" style="display: block; height: 4em;"></a>
-
 
 ## Features
 

@@ -239,7 +239,10 @@ class SampleHandle {
             float neg_base = -1 * base_value;
             float max_value = 2;
             float neg_max = -1 * max_value;
-            float pan_sum = this->pan + this->pan_profile->get_next();
+            float pan_sum = this->pan;
+            if (this->pan_profile != nullptr) {
+                pan_sum += this->pan_profile->get_next();
+            }
 
             std::tuple<float, float> output;
             switch (this->stereo_mode & 0x000F) {

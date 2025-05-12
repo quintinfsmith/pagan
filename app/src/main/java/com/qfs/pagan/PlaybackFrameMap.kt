@@ -3,7 +3,9 @@ package com.qfs.pagan
 import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.soundfontplayer.ControllerEventData
 import com.qfs.apres.soundfontplayer.FrameMap
+import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
@@ -41,8 +43,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private var _cached_beat_frames: Array<Int>? = null
 
     private val _tempo_ratio_map = mutableListOf<Pair<Float, Float>>()// rational position:: tempo
-    private val _volume_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::volume]
-    private val _pan_map = HashMap<Pair<Int, Int>, Array<Pair<Int, Pair<Float, Float>>>>() // (channel, line_offset)::[frame::pan]
+    private val _volume_map = HashMap<Pair<Int, Int>, ControllerEventData>()
+    private val _pan_map = HashMap<Pair<Int, Int>, ControllerEventData>()
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     var clip_same_line_release = false
@@ -196,7 +198,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, volume_profile: SampleHandle.ProfileBuffer? = null, pan_profile: SampleHandle.ProfileBuffer? = null, next_event_frame: Int? = null) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, volume_profile: ProfileBuffer? = null, pan_profile: ProfileBuffer? = null, next_event_frame: Int? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -374,6 +376,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                     working_hashmap[end_frame] =  Pair(working_event.value, 0F)
                                 }
                             }
+
                             working_volume = working_event.value
                         } else if (!working_tree.is_leaf()) {
                             val new_width = working_item.relative_width / working_tree.size.toFloat()
@@ -386,9 +389,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     }
                 }
                 val keys = working_hashmap.keys.sorted()
-                this._volume_map[Pair(c, l)] = Array(keys.size) { i: Int ->
-                    Pair(keys[i], working_hashmap[keys[i]]!!)
-                }
+
+                this._volume_map[Pair(c, l)] = ControllerEventData(
+                    Array(keys.size) { i: Int ->
+                        Pair(keys[i], working_hashmap[keys[i]]!!)
+                    }
+                )
             }
         }
     }
@@ -450,9 +456,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
 
                 val keys = working_map.keys.sorted()
-                this._pan_map[Pair(c, l)] = Array(keys.size) { i: Int ->
-                    Pair(keys[i], working_map[keys[i]]!!)
-                }
+                this._pan_map[Pair(c, l)] = ControllerEventData(
+                    Array(keys.size) { i: Int ->
+                        Pair(keys[i], working_map[keys[i]]!!)
+                    }
+                )
             }
         }
     }
@@ -581,7 +589,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // Prioritize line ctl, then use channel ctl
         val volume_key = line_pair
         val new_volume_profile = if (this._volume_map.containsKey(volume_key)) {
-            SampleHandle.ProfileBuffer(this._volume_map[volume_key]!!, start_frame)
+            ProfileBuffer(this._volume_map[volume_key]!!, start_frame)
         } else {
             null
         }
@@ -594,7 +602,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         val new_pan_profile = if (this._pan_map.containsKey(pan_key)) {
-            SampleHandle.ProfileBuffer(this._pan_map[pan_key]!!, start_frame)
+            ProfileBuffer(this._pan_map[pan_key]!!, start_frame)
         } else {
             null
         }

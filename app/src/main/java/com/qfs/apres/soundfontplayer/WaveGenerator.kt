@@ -1,10 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlin.math.max
-
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
     enum class StereoMode {
         Mono,
@@ -16,7 +11,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     data class ActiveHandleMapItem(
         var first_frame: Int,
-        val handle: SampleHandle
+        val handle: SampleHandle,
+        val merge_keys: IntArray
     )
 
     data class CompoundFrame(
@@ -32,7 +28,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var timeout: Int? = null
 
 
-    external fun merge_arrays(arrays: Array<FloatArray>, frame_count: Int): FloatArray
+    external fun merge_arrays(arrays: Array<FloatArray>, frame_count: Int, merge_keys: Array<IntArray>): FloatArray
     external fun tanh_array(array: FloatArray): FloatArray
     fun generate(): FloatArray {
         val working_array = FloatArray(this.buffer_size * 2)
@@ -46,14 +42,17 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             throw EmptyException()
         }
 
-        val separated_lines_map: HashMap<Int, Pair<Float, FloatArray>> = this@WaveGenerator.generate_sample_arrays(first_frame)
+        val separated_lines_map: HashMap<Int, Pair<FloatArray, IntArray>> = this@WaveGenerator.generate_sample_arrays(first_frame)
 
         val keys = separated_lines_map.keys.toList()
         val arrays_to_merge = Array(keys.size) { i: Int ->
+            separated_lines_map[keys[i]]!!.first
+        }
+        val layers = Array(keys.size) { i: Int ->
             separated_lines_map[keys[i]]!!.second
         }
 
-        val merged_array = merge_arrays(arrays_to_merge, this.buffer_size)
+        val merged_array = merge_arrays(arrays_to_merge, this.buffer_size, layers)
         for (i in 0 until merged_array.size / 2) {
             working_array[(i * 2)] = merged_array[i * 2]
             working_array[(i * 2) + 1] = merged_array[(i * 2) + 1]
@@ -74,8 +73,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         return output_array
     }
 
-    private fun generate_sample_arrays(first_frame: Int): HashMap<Int, Pair<Float, FloatArray>> {
-        val sample_handles_to_use = mutableSetOf<Triple<Int, SampleHandle, Int>>()
+    private fun generate_sample_arrays(first_frame: Int): HashMap<Int, Pair<FloatArray, IntArray>> {
+        val sample_handles_to_use = mutableSetOf<Triple<Int, Pair<SampleHandle, IntArray>, Int>>()
         for ((_, item) in this._active_sample_handles) {
             if (item.first_frame >= first_frame + this.buffer_size) {
                 continue
@@ -84,7 +83,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 sample_handles_to_use.add(
                     Triple(
                         item.handle.uuid,
-                        item.handle,
+                        Pair(
+                            item.handle,
+                            item.merge_keys
+                        ),
                         if ((0 until this@WaveGenerator.buffer_size).contains(item.first_frame - first_frame)) {
                             item.first_frame - first_frame
                         } else {
@@ -95,11 +97,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
         }
 
-        val output = HashMap<Int, Pair<Float, FloatArray>>()
-        for ((key, sample_handle, left_pad) in sample_handles_to_use) {
+        val output = HashMap<Int, Pair<FloatArray, IntArray>>()
+        for ((key, handle_pair, left_pad) in sample_handles_to_use) {
+            val (sample_handle, merge_keys) = handle_pair
             output[key] = Pair(
-                sample_handle.smoothing_factor,
-                sample_handle.get_next_frames(left_pad, this.buffer_size)
+                sample_handle.get_next_frames(left_pad, this.buffer_size),
+                merge_keys
             )
         }
 
@@ -137,26 +140,27 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     /* Add handles that would be active but aren't because of a jump in position */
     private fun activate_active_handles(frame: Int) {
         val handles = this.midi_frame_map.get_active_handles(frame).toList()
-        val handles_adj: MutableList<SampleHandle> = mutableListOf()
-        for ((first_frame, handle) in handles) {
+        val handles_adj: MutableList<Pair<SampleHandle, IntArray>> = mutableListOf()
+        for ((first_frame, handle_pair) in handles) {
+            val (handle, _) = handle_pair
             if (first_frame == frame) {
                 continue
             }
             handle.set_working_frame(frame - first_frame)
-            handles_adj.add(handle)
+            handles_adj.add(handle_pair)
         }
 
         this.activate_sample_handles(handles_adj.toSet(), frame, 0)
     }
 
-    fun activate_sample_handles(handles: Set<SampleHandle>, initial_frame: Int, offset: Int) {
+    fun activate_sample_handles(handles: Set<Pair<SampleHandle, IntArray>>, initial_frame: Int, offset: Int) {
         // then populate the next active frames with upcoming sample handles
-        for (handle in handles) {
+        for ((handle, merge_keys) in handles) {
             val new_handle = handle.copy()
-            //new_handle.set_working_frame(offset)
             this._active_sample_handles[handle.uuid] = ActiveHandleMapItem(
                 initial_frame + offset,
-                new_handle
+                new_handle,
+                merge_keys
             )
         }
     }

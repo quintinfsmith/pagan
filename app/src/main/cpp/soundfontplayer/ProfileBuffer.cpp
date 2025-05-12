@@ -2,36 +2,18 @@
 #include <malloc.h>
 #include "ProfileBuffer.h"
 
+#include "ControllerEventData.h"
+
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companion_create(
+Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
         JNIEnv* env,
         jobject,
-        jintArray indices,
-        jfloatArray values,
-        jfloatArray increments,
+        jlong cev_ptr,
         jint start_frame
 ) {
     auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
 
-    int array_length = env->GetArrayLength(indices);
-    auto* vec = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * array_length);
-
-    jint* _indices = env->GetIntArrayElements(indices, 0);
-    jfloat* _values = env->GetFloatArrayElements(values, 0);
-    jfloat* _increments = env->GetFloatArrayElements(increments, 0);
-
-    for (int i = 0; i < array_length; i++) {
-        auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
-        ptr->frame = (int)_indices[i];
-        ptr->initial_value = (float)_values[i];
-        ptr->increment = (float)_increments[i];
-        vec[i] = ptr;
-    }
-
-    buffer->frames = vec;
-    buffer->frame_count = array_length;
-    buffer->start_frame = start_frame;
-
+    buffer->data = (ControllerEventData *)cev_ptr;
     buffer->current_frame = start_frame;
     buffer->current_index = 0;
     buffer->current_value = 0;
@@ -42,7 +24,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_00024Companio
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_copy_1jni(
+Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(
         JNIEnv* env,
         jobject,
         jlong ptr_long
@@ -54,7 +36,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_copy_1jni(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_00024ProfileBuffer_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
+Java_com_qfs_apres_soundfontplayer_ProfileBuffer_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct ProfileBuffer *) ptr_long;
     free(ptr);
 }

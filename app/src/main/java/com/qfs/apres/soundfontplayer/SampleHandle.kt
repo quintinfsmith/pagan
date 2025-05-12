@@ -61,45 +61,6 @@ class SampleHandle(var ptr: Long) {
         ): Long
     }
 
-    class ProfileBuffer(val ptr: Long) {
-        constructor(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int): this(
-            intermediary_create(frames, start_frame)
-        )
-
-        var current_frame: Int = 0
-        var current_index: Int = 0
-        var current_value: Float = 0f
-        var next_frame_trigger: Int = -1
-
-        companion object {
-            fun intermediary_create(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int): Long {
-                return create(
-                    IntArray(frames.size) { i: Int -> frames[i].first },
-                    FloatArray(frames.size) { i: Int -> frames[i].second.first },
-                    FloatArray(frames.size) { i: Int -> frames[i].second.second },
-                    start_frame
-                )
-            }
-
-            external fun create(
-                frame_indices: IntArray,
-                values: FloatArray,
-                increments: FloatArray,
-                start_frame: Int
-            ): Long
-        }
-
-        external fun copy_jni(ptr: Long): Long
-        fun copy(): ProfileBuffer {
-            return ProfileBuffer(this.copy_jni(this.ptr))
-        }
-
-        external fun destroy_jni(ptr: Long)
-        fun destroy() {
-            this.destroy_jni(this.ptr)
-        }
-    }
-
     class VolumeEnvelope(val ptr: Long) {
         constructor(
             sample_rate: Int,

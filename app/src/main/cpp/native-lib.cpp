@@ -6,6 +6,7 @@
 #include "soundfont/SampleData.cpp"
 #include "soundfontplayer/PitchedBuffer.cpp"
 #include "soundfontplayer/VolumeEnvelope.cpp"
+#include "soundfontplayer/ControllerEventData.cpp"
 #include "soundfontplayer/ProfileBuffer.cpp"
 #include "soundfontplayer/SampleHandle.cpp"
 

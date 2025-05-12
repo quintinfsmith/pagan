@@ -179,14 +179,18 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->filter_cutoff = ptr->filter_cutoff;
     new_handle->pan = ptr->pan;
 
-    new_handle->volume_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
     if (ptr->volume_profile != nullptr) {
+        new_handle->volume_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
         ptr->volume_profile->copy_to(new_handle->volume_profile);
+    } else {
+        new_handle->volume_profile = nullptr;
     }
 
-    new_handle->pan_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
     if (ptr->pan_profile != nullptr) {
+        new_handle->pan_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
         ptr->pan_profile->copy_to(new_handle->pan_profile);
+    } else {
+        new_handle->pan_profile = nullptr;
     }
 
     new_handle->volume_envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));

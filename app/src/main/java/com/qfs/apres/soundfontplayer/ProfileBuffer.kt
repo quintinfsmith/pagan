@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 class ProfileBuffer(val ptr: Long) {
+    // TODO: Memory Management
     constructor(data: ControllerEventData, start_frame: Int): this(
         create(data.ptr, start_frame)
     )

@@ -240,6 +240,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     }
                 }
 
+
                 if (volume_profile != null) {
                     handle.volume_profile = volume_profile.copy()
                 }

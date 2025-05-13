@@ -34,6 +34,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1volume_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long, jlong new_ptr) {
     auto *ptr = (SampleHandle *)ptr_long;
     auto *ptr_profile = (ProfileBuffer *)new_ptr;
+    delete ptr->volume_profile;
     ptr->volume_profile = ptr_profile;
 }
 
@@ -47,6 +48,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1pan_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long, jlong new_ptr) {
     auto *ptr = (SampleHandle *)ptr_long;
     auto *ptr_profile = (struct ProfileBuffer *)new_ptr;
+    delete ptr->pan_profile;
     ptr->pan_profile = ptr_profile;
 }
 

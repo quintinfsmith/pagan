@@ -11,6 +11,7 @@
 #include "ProfileBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
+#include <android/log.h>
 
 class NoFrameDataException: public std::exception {};
 
@@ -248,24 +249,24 @@ class SampleHandle {
             switch (this->stereo_mode & 0x000F) {
                 case 0x01: {
                     output = std::make_tuple(
-                        fmax(0, fmin(max_value, base_value + pan_sum)),
-                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                            fmax(0, fmin(max_value, base_value + pan_sum)),
+                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
                     );
                     break;
                 }
 
                 case 0x02: {
                     output = std::make_tuple(
-                        fmax(0, fmin(max_value, base_value + pan_sum)),
-                        0
+                            fmax(0, fmin(max_value, base_value + pan_sum)),
+                            0
                     );
                     break;
                 }
 
                 case 0x04: {
                     output = std::make_tuple(
-                        0,
-                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                            0,
+                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
                     );
                     break;
                 }
@@ -273,8 +274,8 @@ class SampleHandle {
                 default: {
                     // TODO: LINKED, but treat as mono for now
                     output = std::make_tuple(
-                        fmax(0, fmin(max_value, base_value + pan_sum)),
-                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                            fmax(0, fmin(max_value, base_value + pan_sum)),
+                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
                     );
                     break;
                 }
@@ -288,10 +289,9 @@ class SampleHandle {
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
-                int k = i * 3;
-                buffer[k] = 0;
-                buffer[k + 1] = 0;
-                buffer[k + 2] = 0;
+                buffer[(i * 3)] = 0;
+                buffer[(i * 3) + 1] = 1;
+                buffer[(i * 3) + 2] = 1;
             }
 
             for (int i = left_padding; i < target_size; i++) {
@@ -303,27 +303,31 @@ class SampleHandle {
                     this->get_next_balance(); // Move profile buffer frame forward
                     break;
                 }
+
                 std::tuple<float, float>working_pan = this->get_next_balance();
-                int k = i * 3;
+                float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
 
-                buffer[k] = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
-                buffer[k + 1] = std::get<0>(working_pan);
-                buffer[k + 2] = std::get<1>(working_pan);
+                buffer[(i * 3)] = v;
+                buffer[(i * 3) + 1] = std::get<0>(working_pan);
+                buffer[(i * 3) + 2] = std::get<1>(working_pan);
 
-                this->previous_value = buffer[k];
+                this->previous_value = v;
             }
 
             // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
-                int k = i * 3;
                 if (this->previous_value != 0) {
-                    buffer[k] = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    this->previous_value = buffer[k];
+                    std::tuple<float, float>working_pan = this->get_next_balance();
+                    float v = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
+                    buffer[(i * 3)] = v;
+                    buffer[(i * 3) + 1] = std::get<0>(working_pan);
+                    buffer[(i * 3) + 2] = std::get<1>(working_pan);
+                    this->previous_value = v;
                 } else {
-                    buffer[k] = 0;
+                    buffer[(i * 3)] = 0;
+                    buffer[(i * 3) + 1] = 1;
+                    buffer[(i * 3) + 2] = 1;
                 }
-                buffer[k + 1] = 0;
-                buffer[k + 2] = 0;
             }
         }
 

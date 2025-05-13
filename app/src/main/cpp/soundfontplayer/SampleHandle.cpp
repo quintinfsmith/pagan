@@ -4,11 +4,11 @@
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
     auto *ptr = (SampleHandle *)ptr_long;
-    jfloat buffer[size * 3];
+    jfloat buffer[size * 2];
     ptr->get_next_frames(buffer, size, left_padding);
 
-    jfloatArray output = env->NewFloatArray(size * 3);
-    env->SetFloatArrayRegion(output, 0, size * 3, buffer);
+    jfloatArray output = env->NewFloatArray(size * 2);
+    env->SetFloatArrayRegion(output, 0, size * 2, buffer);
     return output;
 }
 

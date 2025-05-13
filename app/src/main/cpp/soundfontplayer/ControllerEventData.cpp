@@ -1,7 +1,6 @@
 #include <jni.h>
 #include <malloc.h>
 #include "ControllerEventData.h"
-
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
         JNIEnv* env,

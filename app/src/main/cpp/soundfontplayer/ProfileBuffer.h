@@ -48,6 +48,7 @@ public:
                 break;
             }
         }
+
         if (this->current_index == -1) {
             this->current_index = 0;
         }

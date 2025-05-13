@@ -203,12 +203,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, volume_profile: ProfileBuffer? = null, pan_profile: ProfileBuffer? = null, next_event_frame: Int? = null, merge_keys: IntArray) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, volume_guide: ControllerEventData? = null, pan_guide: ControllerEventData? = null, next_event_frame: Int? = null, merge_keys: IntArray) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
             this._setter_frame_map[start_frame] = mutableSetOf()
         }
+
         this._setter_frame_map[start_frame]!!.add(setter_id)
         this._setter_range_map[setter_id] = start_frame..end_frame
 
@@ -247,12 +248,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
 
 
-                if (volume_profile != null) {
-                    handle.volume_profile = volume_profile.copy()
+                if (volume_guide != null) {
+                    handle.volume_profile = ProfileBuffer(volume_guide, start_frame)
                 }
 
-                if (pan_profile != null) {
-                    handle.pan_profile = pan_profile.copy()
+                if (pan_guide != null) {
+                    handle.pan_profile = ProfileBuffer(pan_guide, start_frame)
                 }
 
                 handle_uuid_set.add(handle.uuid)
@@ -594,13 +595,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         )
 
         val line_pair = Pair(beat_key.channel, beat_key.line_offset)
-        // Prioritize line ctl, then use channel ctl
-        val volume_key = line_pair
-        val new_volume_profile = if (this._volume_map.containsKey(volume_key)) {
-            ProfileBuffer(this._volume_map[volume_key]!!, start_frame)
-        } else {
-            null
-        }
 
         // Prioritize line ctl, then use channel ctl
         val pan_key = if (this._pan_map.containsKey(line_pair) || !this._pan_map.containsKey(Pair(beat_key.channel, -1))) {
@@ -609,17 +603,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             Pair(beat_key.channel, -1)
         }
 
-        val new_pan_profile = if (this._pan_map.containsKey(pan_key)) {
-            ProfileBuffer(this._pan_map[pan_key]!!, start_frame)
-        } else {
-            null
-        }
-
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up
         if (start_event != null) {
             val merge_key_array = this.generate_merge_keys(beat_key.channel, beat_key.line_offset)
-            this._add_handles(start_frame, end_frame, start_event, new_volume_profile, new_pan_profile, next_event_frame, merge_key_array)
+            this._add_handles(start_frame, end_frame, start_event, this._volume_map[line_pair], this._pan_map[pan_key], next_event_frame, merge_key_array)
         }
 
         return when (event) {

@@ -192,6 +192,7 @@ class SampleHandle(var ptr: Long) {
     var volume_profile: ProfileBuffer
         get() = this.get_volume_profile()
         set(new_buffer: ProfileBuffer) = this.set_volume_profile_ptr(this.ptr, new_buffer.ptr)
+
     fun get_volume_profile(): ProfileBuffer {
         return ProfileBuffer(
             this.get_volume_profile_ptr(this.ptr)

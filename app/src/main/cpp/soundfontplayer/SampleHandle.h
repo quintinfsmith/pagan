@@ -11,7 +11,6 @@
 #include "ProfileBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
-#include <android/log.h>
 
 class NoFrameDataException: public std::exception {};
 
@@ -289,11 +288,9 @@ class SampleHandle {
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
-                buffer[(i * 3)] = 0;
-                buffer[(i * 3) + 1] = 1;
-                buffer[(i * 3) + 2] = 1;
+                buffer[(i * 2)] = 0;
+                buffer[(i * 2) + 1] = 1;
             }
-
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
                 try {
@@ -307,9 +304,8 @@ class SampleHandle {
                 std::tuple<float, float>working_pan = this->get_next_balance();
                 float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
 
-                buffer[(i * 3)] = v;
-                buffer[(i * 3) + 1] = std::get<0>(working_pan);
-                buffer[(i * 3) + 2] = std::get<1>(working_pan);
+                buffer[(i * 2)] = v * std::get<0>(working_pan);
+                buffer[(i * 2) + 1] = v * std::get<1>(working_pan);
 
                 this->previous_value = v;
             }
@@ -319,14 +315,12 @@ class SampleHandle {
                 if (this->previous_value != 0) {
                     std::tuple<float, float>working_pan = this->get_next_balance();
                     float v = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    buffer[(i * 3)] = v;
-                    buffer[(i * 3) + 1] = std::get<0>(working_pan);
-                    buffer[(i * 3) + 2] = std::get<1>(working_pan);
+                    buffer[(i * 2)] = v * std::get<0>(working_pan);
+                    buffer[(i * 2) + 1] = v * std::get<1>(working_pan);
                     this->previous_value = v;
                 } else {
-                    buffer[(i * 3)] = 0;
-                    buffer[(i * 3) + 1] = 1;
-                    buffer[(i * 3) + 2] = 1;
+                    buffer[(i * 2)] = 0;
+                    buffer[(i * 2) + 1] = 1;
                 }
             }
         }

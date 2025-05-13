@@ -62,10 +62,9 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(JNIEnv* env, jobj
 
             if (i != new_arrays_size) {
                 for (int j = 0; j < frames; j++) {
-                    int jj = j * 3;
+                    int jj = j * 2;
                     working_arrays[new_arrays_size][jj] = working_arrays[i][jj];
                     working_arrays[new_arrays_size][jj + 1] = working_arrays[i][jj + 1];
-                    working_arrays[new_arrays_size][jj + 2] = working_arrays[i][jj + 2];
                 }
             }
 
@@ -74,10 +73,9 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(JNIEnv* env, jobj
                     continue;
                 }
                 for (int j = 0; j < frames; j++) {
-                    int jj = j * 3;
+                    int jj = j * 2;
                     working_arrays[new_arrays_size][jj] += working_arrays[k][jj];
-                    working_arrays[new_arrays_size][jj + 1] *= working_arrays[k][jj + 1];
-                    working_arrays[new_arrays_size][jj + 2] *= working_arrays[k][jj + 2];
+                    working_arrays[new_arrays_size][jj + 1] += working_arrays[k][jj + 1];
                 }
             }
 
@@ -100,9 +98,8 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(JNIEnv* env, jobj
         jfloat* input_ptr = working_arrays[i];
         for (int j = 0; j < frames; j++) {
             int k = j * 2;
-            int m = j * 3;
-            output_ptr[k] += (input_ptr[m] * input_ptr[m + 1]);
-            output_ptr[k + 1] += (input_ptr[m] * input_ptr[m + 2]);
+            output_ptr[k] += input_ptr[k];
+            output_ptr[k + 1] += input_ptr[k + 1];
         }
     }
 

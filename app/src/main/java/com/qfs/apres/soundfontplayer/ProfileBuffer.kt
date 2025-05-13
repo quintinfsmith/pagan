@@ -7,7 +7,7 @@ class ProfileBuffer(val ptr: Long) {
     )
 
     companion object {
-        external fun create(ptr: Long, start_frame: Int): Long
+        external fun create(data_ptr: Long, start_frame: Int): Long
     }
 
     external fun copy_jni(ptr: Long): Long

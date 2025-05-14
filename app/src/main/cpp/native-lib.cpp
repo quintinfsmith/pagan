@@ -27,7 +27,16 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(JNIEnv* env, jobject, jobjectArray input_array, jint frames, jobjectArray merge_keys) {
+Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
+        JNIEnv* env,
+        jobject,
+        jobjectArray input_array,
+        jint frames,
+        jobjectArray merge_keys,
+        jlongArray effect_buffers,
+        jintArray buffer_layer_indices,
+        jintArray buffer_keys
+    ) {
     int array_count = env->GetArrayLength(input_array);
 
     float* working_arrays[array_count];

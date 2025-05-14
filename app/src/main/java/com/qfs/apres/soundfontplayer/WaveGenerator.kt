@@ -28,7 +28,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private var timeout: Int? = null
 
 
-    external fun merge_arrays(arrays: Array<FloatArray>, frame_count: Int, merge_keys: Array<IntArray>): FloatArray
+    external fun merge_arrays(
+        arrays: Array<FloatArray>,
+        frame_count: Int,
+        merge_keys: Array<IntArray>,
+        profile_ptrs: LongArray,
+        profile_indices: IntArray,
+        profile_keys: IntArray
+    ): FloatArray
     external fun tanh_array(array: FloatArray): FloatArray
     fun generate(): FloatArray {
         val working_array = FloatArray(this.buffer_size * 2)
@@ -52,7 +59,16 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             separated_lines_map[keys[i]]!!.second
         }
 
-        val merged_array = merge_arrays(arrays_to_merge, this.buffer_size, layers)
+        val profiles = this.midi_frame_map.get_effect_buffers()
+
+        val merged_array = merge_arrays(
+            arrays_to_merge,
+            this.buffer_size,
+            layers,
+            LongArray(profiles.size) { profiles[it].third.ptr },
+            IntArray(profiles.size) { profiles[it].first },
+            IntArray(profiles.size) { profiles[it].second }
+        )
         for (i in 0 until merged_array.size / 2) {
             working_array[(i * 2)] = merged_array[i * 2]
             working_array[(i * 2) + 1] = merged_array[(i * 2) + 1]
@@ -182,5 +198,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
           this.activate_active_handles(frame)
         }
         this.frame = frame
+        for ((_,_,buffer) in midi_frame_map.get_effect_buffers()) {
+            buffer.set_frame(this.frame)
+        }
     }
 }

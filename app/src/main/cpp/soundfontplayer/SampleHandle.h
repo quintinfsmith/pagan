@@ -35,8 +35,6 @@ class SampleHandle {
         float pitch_shift;
         float filter_cutoff;
         float pan;
-        ProfileBuffer* volume_profile;
-        ProfileBuffer* pan_profile;
         PitchedBuffer** data_buffers;
         int buffer_count;
         float smoothing_factor;
@@ -59,8 +57,6 @@ class SampleHandle {
             float pitch_shift,
             float filter_cutoff,
             float pan,
-            ProfileBuffer* volume_profile,
-            ProfileBuffer* pan_profile,
             PitchedBuffer** data_buffers,
             int buffer_count
         ) {
@@ -76,8 +72,6 @@ class SampleHandle {
             this->pitch_shift = pitch_shift;
             this->filter_cutoff = filter_cutoff;
             this->pan = pan;
-            this->volume_profile = volume_profile;
-            this->pan_profile = pan_profile;
 
             this->secondary_setup(data_buffers, buffer_count);
         }
@@ -157,8 +151,6 @@ class SampleHandle {
                 delete this->data_buffers[i];
             }
             delete[] this->data_buffers;
-            delete this->volume_profile;
-            delete this->pan_profile;
 
             delete this->volume_envelope;
         };
@@ -178,14 +170,6 @@ class SampleHandle {
             if (this->release_frame > -1 && this->working_frame >= this->release_frame + this->volume_envelope->frames_release) {
                 this->is_dead = true;
                 return;
-            }
-
-            if (this->volume_profile != nullptr) {
-                this->volume_profile->set_frame(frame);
-            }
-
-            if (this->pan_profile != nullptr) {
-                this->pan_profile->set_frame(frame);
             }
 
             try {
@@ -240,9 +224,6 @@ class SampleHandle {
             float max_value = 2;
             float neg_max = -1 * max_value;
             float pan_sum = this->pan;
-            if (this->pan_profile != nullptr) {
-                pan_sum += this->pan_profile->get_next();
-            }
 
             std::tuple<float, float> output;
             switch (this->stereo_mode & 0x000F) {
@@ -333,12 +314,6 @@ class SampleHandle {
             bool is_pressed = this->is_pressed();
             if (this->working_frame < this->volume_envelope->frames_delay) {
                 this->working_frame += 1;
-                if (this->volume_profile != nullptr) {
-                    this->volume_profile->get_next();
-                }
-                if (this->pan_profile != nullptr) {
-                    this->pan_profile->get_next();
-                }
                 return 0;
             }
 
@@ -387,13 +362,6 @@ class SampleHandle {
                 }
             }
 
-            float use_volume;
-            if (this->volume_profile != nullptr) {
-                use_volume = this->volume_profile->get_next();
-            } else {
-                use_volume = 1;
-            }
-
             this->working_frame += 1;
             if (this->active_buffer >= this->buffer_count) {
                 this->is_dead = true;
@@ -408,7 +376,7 @@ class SampleHandle {
                 throw NoFrameDataException();
             }
 
-            return frame_value * use_volume * frame_factor;
+            return frame_value * frame_factor;
         }
 
         void release_note() {

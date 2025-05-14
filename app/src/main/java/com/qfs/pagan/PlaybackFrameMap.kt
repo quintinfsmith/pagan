@@ -47,6 +47,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _pan_map = HashMap<Pair<Int, Int>, ControllerEventData>()
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
+    private val _effect_profiles = mutableListOf<Triple<Int, Int, ProfileBuffer>>()
+
     var clip_same_line_release = false
 
     override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
@@ -121,6 +123,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     override fun get_size(): Int {
         // subject to changing, really just an estimate
         return this._cached_beat_frames?.last() ?: 0
+    }
+
+    override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
+        return this._effect_profiles
     }
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, Pair<SampleHandle, IntArray>>> {
@@ -247,15 +253,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     }
                 }
 
-
-                if (volume_guide != null) {
-                    handle.volume_profile = ProfileBuffer(volume_guide, start_frame)
-                }
-
-                if (pan_guide != null) {
-                    handle.pan_profile = ProfileBuffer(pan_guide, start_frame)
-                }
-
                 handle_uuid_set.add(handle.uuid)
                 output.add(Pair(handle, merge_keys))
             }
@@ -276,8 +273,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this.map_tempo_changes()
         this.get_marked_frames()
-        this.map_volume_changes()
-        this.map_pan_changes()
+        this.setup_effect_buffers()
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             if (channel.muted) {

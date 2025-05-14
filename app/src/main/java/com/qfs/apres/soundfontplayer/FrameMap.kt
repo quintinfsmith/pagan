@@ -8,4 +8,5 @@ interface FrameMap {
     fun get_marked_frames(): Array<Int>
     fun has_frames_remaining(frame: Int): Boolean
     fun get_size(): Int
+    fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>>
 }

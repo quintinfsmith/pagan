@@ -24,34 +24,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1volume_1envelope_1ptr(JNIEn
     return (jlong)ptr->volume_envelope;
 }
 
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1volume_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (SampleHandle *)ptr_long;
-    return (jlong)ptr->volume_profile;
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1volume_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long, jlong new_ptr) {
-    auto *ptr = (SampleHandle *)ptr_long;
-    auto *ptr_profile = (ProfileBuffer *)new_ptr;
-    delete ptr->volume_profile;
-    ptr->volume_profile = ptr_profile;
-}
-
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1pan_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (SampleHandle *)ptr_long;
-    return (jlong)ptr->pan_profile;
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1pan_1profile_1ptr(JNIEnv* env, jobject, jlong ptr_long, jlong new_ptr) {
-    auto *ptr = (SampleHandle *)ptr_long;
-    auto *ptr_profile = (struct ProfileBuffer *)new_ptr;
-    delete ptr->pan_profile;
-    ptr->pan_profile = ptr_profile;
-}
-
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1working_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long, jint frame) {
     auto *ptr = (SampleHandle *)ptr_long;
@@ -120,9 +92,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         jlong volume_envelope_ptr,
         jfloat pitch_shift,
         jfloat filter_cutoff,
-        jfloat pan,
-        jlong volume_profile_ptr,
-        jlong pan_profile_ptr
+        jfloat pan
 ) {
 
     auto* handle = (SampleHandle*)malloc(sizeof(SampleHandle));
@@ -138,22 +108,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     auto* original_volume_envelope = (VolumeEnvelope*)volume_envelope_ptr;
     handle->volume_envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
     original_volume_envelope->copy_to(handle->volume_envelope);
-
-    if (volume_profile_ptr == 0) {
-        handle->volume_profile = nullptr;
-    } else {
-        auto *original_volume_profile = (ProfileBuffer *) volume_profile_ptr;
-        handle->volume_profile = (ProfileBuffer *) malloc(sizeof(ProfileBuffer));
-        original_volume_profile->copy_to(handle->volume_profile);
-    }
-
-    if (pan_profile_ptr == 0) {
-        handle->pan_profile = nullptr;
-    } else {
-        auto* original_pan_profile = (ProfileBuffer*)pan_profile_ptr;
-        handle->pan_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
-        original_pan_profile->copy_to(handle->pan_profile);
-    }
 
     handle->pitch_shift = pitch_shift;
     handle->filter_cutoff = filter_cutoff;
@@ -180,20 +134,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->pitch_shift = ptr->pitch_shift;
     new_handle->filter_cutoff = ptr->filter_cutoff;
     new_handle->pan = ptr->pan;
-
-    if (ptr->volume_profile != nullptr) {
-        new_handle->volume_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
-        ptr->volume_profile->copy_to(new_handle->volume_profile);
-    } else {
-        new_handle->volume_profile = nullptr;
-    }
-
-    if (ptr->pan_profile != nullptr) {
-        new_handle->pan_profile = (ProfileBuffer*)malloc(sizeof(ProfileBuffer));
-        ptr->pan_profile->copy_to(new_handle->pan_profile);
-    } else {
-        new_handle->pan_profile = nullptr;
-    }
 
     new_handle->volume_envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
     ptr->volume_envelope->copy_to(new_handle->volume_envelope);

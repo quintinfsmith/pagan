@@ -10,6 +10,11 @@ class ProfileBuffer(val ptr: Long) {
         external fun create(data_ptr: Long, start_frame: Int): Long
     }
 
+    external fun set_frame_jni(ptr: Long, frame: Int)
+    fun set_frame(frame: Int) {
+        this.set_frame_jni(this.ptr, frame)
+    }
+
     external fun copy_jni(ptr: Long): Long
     fun copy(): ProfileBuffer {
         return ProfileBuffer(this.copy_jni(this.ptr))

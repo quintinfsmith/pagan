@@ -33,7 +33,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         frame_count: Int,
         merge_keys: Array<IntArray>,
         profile_ptrs: LongArray,
-        profile_indices: IntArray,
+        profile_info: IntArray,
         profile_keys: IntArray
     ): FloatArray
     external fun tanh_array(array: FloatArray): FloatArray

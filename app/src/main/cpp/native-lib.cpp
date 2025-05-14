@@ -26,6 +26,29 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
     return output;
 }
 
+void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
+    // TODO: Unify with SampleHandle get_next_balance()
+    float base_value = 1;
+    float neg_base = -1 * base_value;
+    float max_value = 2;
+    float neg_max = -1 * max_value;
+
+    for (int i = 0; i < frames; i++) {
+        float pan_value = effect_buffer->get_next();
+        working_array[(i * 2)] *= fmax(0, fmin(max_value, base_value + pan_value));
+        working_array[(i * 2) + 1] *= -1 * fmax(neg_max, fmin(0, neg_base + pan_value));
+    }
+}
+
+void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames) {
+    for (int i = 0; i < frames; i++) {
+        float volume = effect_buffer->get_next();
+        working_array[(i * 2)] *= volume;
+        working_array[(i * 2) + 1] *= volume;
+    }
+}
+
+
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         JNIEnv* env,
@@ -33,9 +56,9 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         jobjectArray input_array,
         jint frames,
         jobjectArray merge_keys,
-        jlongArray effect_buffers,
-        jintArray buffer_layer_indices,
-        jintArray buffer_keys
+        jlongArray effect_buffers_input,
+        jintArray buffer_layer_indices_input,
+        jintArray buffer_keys_input
     ) {
     int array_count = env->GetArrayLength(input_array);
 
@@ -50,6 +73,13 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         auto working_keylist = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, i));
         working_keys[i] = env->GetIntArrayElements(working_keylist, nullptr);
     }
+
+    // Set up effect buffers
+    jint effect_buffer_count = env->GetArrayLength(buffer_keys_input);
+    jlong* effect_buffers = env->GetLongArrayElements(effect_buffers_input, nullptr);
+    jint* effect_keys = env->GetIntArrayElements(buffer_keys_input, nullptr);
+    jint* effect_indices = env->GetIntArrayElements(buffer_layer_indices_input, nullptr);
+
 
     int current_array_count = array_count;
     auto tmp_first_layer = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, 0));
@@ -88,11 +118,25 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 }
             }
 
+            // Apply effects
+            for (int j = 0; j < effect_buffer_count; j++) {
+                if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {
+                    continue;
+                }
+                auto* effect_buffer = (ProfileBuffer*)effect_buffers[j];
+
+                // TODO: Applying volume  & pan here for now, but this needs to be organized better
+                if (effect_buffer->data->type == 1) { // PAN
+                    apply_pan(effect_buffer, working_arrays[new_arrays_size], (int)frames);
+                } else if (effect_buffer->data->type == 2) { // VOLUME
+                    apply_volume(effect_buffer, working_arrays[new_arrays_size], (int)frames);
+                }
+            }
+
             done[done_size++] = working_keys[i][layer];
             working_keys[new_arrays_size] = working_keys[i];
             new_arrays_size++;
         }
-
         current_array_count = new_arrays_size;
     }
 

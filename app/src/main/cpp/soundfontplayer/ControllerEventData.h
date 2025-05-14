@@ -10,9 +10,11 @@
 class ControllerEventData {
 public:
     ProfileBufferFrame** frames;
+    int type;
     int frame_count;
 
-    explicit ControllerEventData(std::vector<ProfileBufferFrame> frames) {
+    explicit ControllerEventData(std::vector<ProfileBufferFrame> frames, int type) {
+        this->type = type;
         this->frame_count = frames.size();
         this->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
 
@@ -32,6 +34,7 @@ public:
     }
 
     void copy_to(ControllerEventData* new_buffer) const {
+        new_buffer->type = this->type;
         if (this->frames != nullptr) {
             new_buffer->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
             for (int i = 0; i < this->frame_count; i++) {

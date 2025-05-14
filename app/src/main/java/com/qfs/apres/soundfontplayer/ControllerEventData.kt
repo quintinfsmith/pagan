@@ -1,25 +1,24 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.soundfontplayer.ProfileBuffer
-import com.qfs.apres.soundfontplayer.ProfileBuffer.Companion.create
-
 class ControllerEventData(val ptr: Long) {
-    constructor(frames: Array<Pair<Int, Pair<Float, Float>>>): this(
-        ControllerEventData.Companion.intermediary_create(frames)
+    constructor(frames: Array<Pair<Int, Pair<Float, Float>>>, type: Int): this(
+        ControllerEventData.Companion.intermediary_create(frames, type)
     )
 
     companion object {
-        fun intermediary_create(frames: Array<Pair<Int, Pair<Float, Float>>>): Long {
+        fun intermediary_create(frames: Array<Pair<Int, Pair<Float, Float>>>, type: Int): Long {
             return create(
                 IntArray(frames.size) { i: Int -> frames[i].first },
                 FloatArray(frames.size) { i: Int -> frames[i].second.first },
-                FloatArray(frames.size) { i: Int -> frames[i].second.second }
+                FloatArray(frames.size) { i: Int -> frames[i].second.second },
+                type
             )
         }
         external fun create(
             frame_indices: IntArray,
             values: FloatArray,
-            increments: FloatArray
+            increments: FloatArray,
+            type: Int
         ): Long
     }
 }

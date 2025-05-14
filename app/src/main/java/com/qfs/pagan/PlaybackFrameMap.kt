@@ -9,7 +9,6 @@ import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.ControlTransition
@@ -18,9 +17,7 @@ import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLineAbstract
-import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.PercussionEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
@@ -209,7 +206,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, volume_guide: ControllerEventData? = null, pan_guide: ControllerEventData? = null, next_event_frame: Int? = null, merge_keys: IntArray) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, next_event_frame: Int? = null, merge_keys: IntArray) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -309,6 +306,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
+    fun setup_effect_buffers() {
+        this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
+            for ((control_type, controller) in channel.controllers.get_all()) {
+
+            }
+            channel.lines.forEachIndexed { l: Int, line: OpusLineAbstract<out InstrumentEvent> ->
+
+            }
+        }
+    }
+
     fun map_tempo_changes() {
         val controller = this.opus_manager.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
         var working_tempo = controller.initial_event.value
@@ -348,126 +356,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    private fun map_volume_changes() {
-        data class StackItem(val position: List<Int>, val tree: OpusTree<OpusVolumeEvent>?, val relative_width: Float, val relative_offset: Float)
+    // TODO: NEEDS BETTER NAME
+    private fun adjust_effect_profile_event_to_tempo(relative_start: Float, relative_end: Float, start_value: Float, end_value: Float, transition: ControlTransition): List<Triple<Pair<Int, Int>, Pair<Float, Float>, ControlTransition>> {
 
-        this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
-            for (l in channel.lines.indices) {
-                val controller = channel.lines[l].get_controller<OpusVolumeEvent>(ControlEventType.Volume)
-                var working_volume = controller.initial_event.value
-                val working_hashmap = hashMapOf(0 to Pair(working_volume, 0F))
-
-                for (b in 0 until this.opus_manager.length) {
-                    val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
-                    while (stack.isNotEmpty()) {
-                        val working_item = stack.removeAt(0)
-                        val working_tree = working_item.tree ?: continue
-
-                        if (working_tree.is_event()) {
-                            val working_event = working_tree.get_event()!!
-                            val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
-                            val diff = working_event.value - working_volume
-                            if (diff == 0F) {
-                                continue
-                            }
-
-                            when (working_event.transition) {
-                                ControlTransition.Instant -> {
-                                    working_hashmap[start_frame] = Pair(working_event.value, 0F)
-                                }
-                                ControlTransition.Linear -> {
-                                    val d = diff / (end_frame - start_frame).toFloat()
-                                    working_hashmap[start_frame] = Pair(working_volume, d)
-                                    working_hashmap[end_frame] =  Pair(working_event.value, 0F)
-                                }
-                            }
-
-                            working_volume = working_event.value
-                        } else if (!working_tree.is_leaf()) {
-                            val new_width = working_item.relative_width / working_tree.size.toFloat()
-                            for (i in 0 until working_tree.size) {
-                                val new_position = working_item.position.toMutableList()
-                                new_position.add(i)
-                                stack.add(StackItem(new_position, working_tree[i], new_width, working_item.relative_offset + (new_width * i)))
-                            }
-                        }
-                    }
-                }
-                val keys = working_hashmap.keys.sorted()
-
-                this._volume_map[Pair(c, l)] = ControllerEventData(
-                    Array(keys.size) { i: Int ->
-                        Pair(keys[i], working_hashmap[keys[i]]!!)
-                    }
-                )
-            }
-        }
-    }
-
-    private fun map_pan_changes() {
-        data class StackItem(val position: List<Int>, val tree: OpusTree<OpusPanEvent>?, val relative_width: Float, val relative_offset: Float)
-        this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
-            // Use -1 as Channel Controller index
-            val indices = listOf(-1) + channel.lines.indices
-            for (l in indices) {
-                val controller: ActiveController<OpusPanEvent> = if (l == -1) {
-                    if (channel.controllers.has_controller(ControlEventType.Pan)) {
-                        channel.controllers.get_controller(ControlEventType.Pan)
-                    } else {
-                        continue
-                    }
-                } else if (channel.lines[l].controllers.has_controller(ControlEventType.Pan)) {
-                    channel.lines[l].get_controller(ControlEventType.Pan)
-                } else {
-                    continue
-                }
-                var working_pan = controller.initial_event.value
-                val working_map = hashMapOf(0 to Pair(working_pan, 0F))
-
-                for (b in 0 until this.opus_manager.length) {
-                    val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), controller.get_tree(b), 1F, 0F))
-                    while (stack.isNotEmpty()) {
-                        val working_item = stack.removeAt(0)
-                        val working_tree = working_item.tree ?: continue
-
-                        if (working_tree.is_event()) {
-                            val working_event = working_tree.get_event()!!
-                            val (start_frame, end_frame) = this.calculate_event_frame_range(b, working_event.duration, working_item.relative_width, working_item.relative_offset)
-                            val event_value = working_event.value
-                            val diff = event_value - working_pan
-                            if (diff == 0f) {
-                                continue
-                            }
-
-                            when (working_event.transition) {
-                                ControlTransition.Instant -> {
-                                    working_map[start_frame] = Pair(event_value, 0F)
-                                }
-                                ControlTransition.Linear -> {
-                                    working_map[start_frame] = Pair(working_pan, (diff / (end_frame - start_frame).toFloat()))
-                                    working_map[end_frame] = Pair(event_value, 0F)
-                                }
-                            }
-                            working_pan = event_value
-                        } else if (!working_tree.is_leaf()) {
-                            val new_width = working_item.relative_width / working_tree.size.toFloat()
-                            for (i in 0 until working_tree.size) {
-                                val new_position = working_item.position.toMutableList()
-                                new_position.add(i)
-                                stack.add(StackItem(new_position, working_tree[i], new_width, working_item.relative_offset + (new_width * i)))
-                            }
-                        }
-                    }
-                }
-
-                val keys = working_map.keys.sorted()
-                this._pan_map[Pair(c, l)] = ControllerEventData(
-                    Array(keys.size) { i: Int ->
-                        Pair(keys[i], working_map[keys[i]]!!)
-                    }
-                )
-            }
-        }
     }
 
     private fun calculate_event_frame_range(beat: Int, duration: Int, relative_width: Float, relative_offset: Float): Pair<Int, Int> {
@@ -603,7 +494,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // of it so the rest of the song isn't messed up
         if (start_event != null) {
             val merge_key_array = this.generate_merge_keys(beat_key.channel, beat_key.line_offset)
-            this._add_handles(start_frame, end_frame, start_event, this._volume_map[line_pair], this._pan_map[pan_key], next_event_frame, merge_key_array)
+            this._add_handles(start_frame, end_frame, start_event, next_event_frame, merge_key_array)
         }
 
         return when (event) {

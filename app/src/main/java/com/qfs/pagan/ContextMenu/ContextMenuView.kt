@@ -1,7 +1,9 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import com.qfs.pagan.MainActivity
+import com.qfs.pagan.OpusLayerInterface
 
 abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int?, primary_container: ViewGroup, secondary_container: ViewGroup) {
     val primary: ViewGroup?

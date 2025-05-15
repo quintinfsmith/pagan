@@ -277,6 +277,7 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
     fun isEmpty(): Boolean {
         return this.hash_map.isEmpty()
     }
+
 }
 
 class JSONList(vararg args: JSONObject?): JSONObject {

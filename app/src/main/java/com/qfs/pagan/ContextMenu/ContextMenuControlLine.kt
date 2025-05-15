@@ -3,7 +3,6 @@ package com.qfs.pagan.ContextMenu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import com.qfs.pagan.ContextMenuView
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget
 import com.qfs.pagan.R

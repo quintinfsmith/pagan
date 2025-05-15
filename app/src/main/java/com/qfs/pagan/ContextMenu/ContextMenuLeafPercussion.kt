@@ -1,11 +1,13 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import com.qfs.pagan.R
 
-class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell_percussion, null, primary_container, secondary_container) {
+class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
+    R.layout.contextmenu_cell_percussion, null, primary_container, secondary_container) {
     lateinit var button_split: ImageView
     lateinit var button_insert: ImageView
     lateinit var button_unset: ImageView

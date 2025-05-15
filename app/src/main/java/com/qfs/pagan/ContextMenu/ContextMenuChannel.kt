@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.qfs.pagan.ContextMenuView
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.OpusManagerCursor

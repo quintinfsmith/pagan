@@ -1,20 +1,25 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CompoundButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Space
 import android.widget.TextView
-import androidx.recyclerview.widget.LinearLayoutManager
+import com.qfs.pagan.ContextMenuWithController
+import com.qfs.pagan.ControlWidget
+import com.qfs.pagan.ControlWidgetVolume
+import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container), ContextMenuWithController<OpusVolumeEvent> {
+class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
+    R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container),
+    ContextMenuWithController<OpusVolumeEvent> {
     lateinit var button_insert: ImageView
     lateinit var button_adjust: ImageView
     lateinit var button_remove: ImageView
@@ -36,7 +41,11 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
         this.button_mute = this.secondary!!.findViewById(R.id.btnMuteLine)
 
-        this.widget_volume = ControlWidgetVolume(OpusVolumeEvent(0F), true, this.context) { event: OpusControlEvent ->
+        this.widget_volume = ControlWidgetVolume(
+            OpusVolumeEvent(0F),
+            true,
+            this.context
+        ) { event: OpusControlEvent ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             opus_manager.controller_line_set_initial_event(
@@ -99,7 +108,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove.isEnabled = working_channel.size > 1
 
         var show_control_toggle = false
-        for (ctl_type in OpusLayerInterface.line_controller_domain) {
+        for (ctl_type in OpusLayerInterface.Companion.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }

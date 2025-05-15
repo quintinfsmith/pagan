@@ -1,4 +1,4 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.content.res.Configuration
 import android.view.View
@@ -6,9 +6,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RadioGroup
 import android.widget.TextView
+import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
-class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_range, R.layout.contextmenu_range_secondary, primary_container, secondary_container) {
+class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
+    R.layout.contextmenu_range, R.layout.contextmenu_range_secondary, primary_container, secondary_container) {
     lateinit var button_erase: ImageView
     lateinit var button_adjust: ImageView
     lateinit var radio_mode: RadioGroup

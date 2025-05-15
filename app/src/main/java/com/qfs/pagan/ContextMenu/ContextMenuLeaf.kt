@@ -1,15 +1,19 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import com.qfs.pagan.NumberSelector
+import com.qfs.pagan.R
+import com.qfs.pagan.RelativeOptionSelector
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import kotlin.math.abs
 
-class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_cell, null, primary_container, secondary_container) {
+class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
+    R.layout.contextmenu_cell, null, primary_container, secondary_container) {
     lateinit var button_split: ImageView
     lateinit var button_insert: ImageView
     lateinit var button_unset: ImageView

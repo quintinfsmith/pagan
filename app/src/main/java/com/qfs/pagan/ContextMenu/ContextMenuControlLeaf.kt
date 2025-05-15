@@ -6,7 +6,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isEmpty
-import com.qfs.pagan.ContextMenuView
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget
 import com.qfs.pagan.R

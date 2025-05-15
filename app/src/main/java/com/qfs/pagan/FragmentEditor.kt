@@ -21,6 +21,11 @@ import com.qfs.pagan.ContextMenu.ContextMenuColumn
 import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
 import com.qfs.pagan.ContextMenu.ContextMenuControlLeafB
 import com.qfs.pagan.ContextMenu.ContextMenuControlLine
+import com.qfs.pagan.ContextMenu.ContextMenuLeaf
+import com.qfs.pagan.ContextMenu.ContextMenuLeafPercussion
+import com.qfs.pagan.ContextMenu.ContextMenuLine
+import com.qfs.pagan.ContextMenu.ContextMenuRange
+import com.qfs.pagan.ContextMenu.ContextMenuView
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -708,7 +713,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     internal fun set_context_menu_range() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuRange>()) {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuRange>()) {
             this.active_context_menu = ContextMenuRange(
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
@@ -733,7 +738,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     internal fun set_context_menu_line() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLine>()) {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuLine>()) {
             this.active_context_menu = ContextMenuLine(
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
@@ -754,7 +759,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
 
     internal fun set_context_menu_leaf() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuLeaf>()) {
             this.active_context_menu = ContextMenuLeaf(
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)
@@ -764,7 +769,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     internal fun set_context_menu_leaf_percussion() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLeafPercussion>()) {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuLeafPercussion>()) {
             this.active_context_menu = ContextMenuLeafPercussion(
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuSecondary)

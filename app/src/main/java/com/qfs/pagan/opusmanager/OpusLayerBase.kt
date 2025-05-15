@@ -324,6 +324,7 @@ open class OpusLayerBase {
     var project_notes: String? = null
     var transpose: Pair<Int, Int> = Pair(0, 12)
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
+    var marked_sections = HashMap<Int, String>()
 
     private var _cached_instrument_line_map = mutableListOf<Pair<Int, Int>>()
     private var _cached_std_line_map = HashMap<Pair<Int, Int>, Int>()
@@ -422,7 +423,7 @@ open class OpusLayerBase {
         return try {
             this.get_global_ctl_tree<OpusControlEvent>(ctl_type, beat, position)
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -434,7 +435,7 @@ open class OpusLayerBase {
         return try {
             this.get_channel_ctl_tree<OpusControlEvent>(ctl_type, channel, beat, position)
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -446,7 +447,7 @@ open class OpusLayerBase {
         return try {
             this.get_line_ctl_tree<OpusControlEvent>(ctl_type, beat_key, position)
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -1602,6 +1603,8 @@ open class OpusLayerBase {
             throw IndexOutOfBoundsException()
         }
 
+
+
         this.length += 1
         for (channel in this.channels) {
             channel.insert_beat(beat_index)
@@ -1612,6 +1615,13 @@ open class OpusLayerBase {
 
         if (beats_in_column != null) {
             this._apply_column_trees(beat_index, beats_in_column)
+        }
+
+        val tag_beats = this.marked_sections.keys.reversed()
+        for (tag in tag_beats) {
+            if (tag >= beat_index) {
+                this.marked_sections[tag + 1] = this.marked_sections.remove(tag)!!
+            }
         }
     }
 
@@ -1667,6 +1677,16 @@ open class OpusLayerBase {
         for ((_, controller) in this.controllers.get_all()) {
             controller.remove_beat(working_beat_index, count)
         }
+
+        val tag_beats = this.marked_sections.keys
+        for (tag in tag_beats) {
+            if (tag > beat_index) {
+                this.marked_sections[tag - 1] = this.marked_sections.remove(tag)!!
+            } else if (tag == beat_index) {
+                this.remove_tagged_section(tag)
+            }
+        }
+
         this.length -= count
     }
 
@@ -3979,6 +3999,11 @@ open class OpusLayerBase {
                 JSONInteger(this.tuning_map[i].second)
             )
         }
+        val tags = JSONHashMap()
+        for ((beat, tag) in this.marked_sections) {
+            tags[beat.toString()] = tag
+        }
+        output["tags"] = tags
 
         output["transpose"] = JSONInteger(this.transpose.first)
         output["transpose_radix"] = JSONInteger(this.transpose.second)
@@ -4008,6 +4033,7 @@ open class OpusLayerBase {
 
     // Clear function is used for new projects
     open fun clear() {
+        this.marked_sections.clear()
         this.length = 0
         this.channels.clear()
         this.path = null
@@ -4024,6 +4050,18 @@ open class OpusLayerBase {
         this._cached_ctl_map_line.clear()
         this._cached_ctl_map_channel.clear()
         this._cached_ctl_map_global.clear()
+    }
+
+    open fun tag_section(beat: Int, title: String) {
+        this.marked_sections[beat] = title
+    }
+
+    open fun remove_tagged_section(beat: Int) {
+        this.marked_sections.remove(beat)
+    }
+
+    fun is_beat_tagged(beat: Int): Boolean {
+        return this.marked_sections.containsKey(beat)
     }
 
     /* Needs to be called by interface after new()/load()/import_midi() */
@@ -4108,6 +4146,13 @@ open class OpusLayerBase {
         val inner_map = json_data["d"] as JSONHashMap
         this.set_project_name(inner_map.get_stringn("title"))
         this.set_project_notes(inner_map.get_stringn("notes"))
+        this.marked_sections.clear()
+        val tags = inner_map.get_hashmapn("tags")
+        if (tags != null) {
+            for (key in tags.keys) {
+                this.marked_sections[key.toInt()] = tags.get_string(key)
+            }
+        }
 
         this.channels.clear()
 

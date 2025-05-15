@@ -21,6 +21,7 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
+import com.qfs.pagan.ContextMenu.ContextMenuRange
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey

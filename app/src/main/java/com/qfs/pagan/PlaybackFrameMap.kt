@@ -9,6 +9,7 @@ import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.opusmanager.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.ControlTransition
@@ -187,6 +188,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     fun clear() {
+        for ((_, _, profile) in this._effect_profiles) {
+            profile.destroy(true) // Destroy the buffer AND the data
+        }
+        this._effect_profiles.clear()
         this._frame_map.clear()
 
         for ((_, handle) in this._handle_map) {
@@ -306,14 +311,72 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
+    private fun convert_controller_to_event_data(type_key: Int, controller: ActiveController<*>): ControllerEventData {
+        val controller_profile = controller.generate_profile()
+
+        val control_event_data = HashMap<Int, Pair<Float, Float>>( )
+        for (entry in controller_profile.values) {
+            for ((frame, pair) in this.adjust_effect_profile_event_to_tempo(entry.third, entry.first.first, entry.first.second, entry.second.first, entry.second.second)) {
+                control_event_data[frame] = pair
+            }
+        }
+        val keys = control_event_data.keys.sorted()
+        val array = Array(control_event_data.size) { i: Int ->
+            Pair(keys[i], control_event_data[keys[i]]!!)
+        }
+        return ControllerEventData(array, type_key)
+    }
+
+    private fun get_control_type_key(control_type: ControlEventType): Int? {
+        return when (control_type) {
+            ControlEventType.Pan -> 1
+            ControlEventType.Volume -> 2
+            ControlEventType.Reverb -> 3
+            ControlEventType.Tempo -> null
+        }
+    }
+
     fun setup_effect_buffers() {
         this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
             for ((control_type, controller) in channel.controllers.get_all()) {
-
+                val control_type_key = this.get_control_type_key(control_type) ?: continue
+                this._effect_profiles.add(
+                    Triple(
+                        1, // layer (channel)
+                        this.generate_merge_keys(c, -1)[1], // key
+                        ProfileBuffer(
+                            this.convert_controller_to_event_data(control_type_key, controller)
+                        )
+                    )
+                )
             }
             channel.lines.forEachIndexed { l: Int, line: OpusLineAbstract<out InstrumentEvent> ->
-
+                for ((control_type, controller) in line.controllers.get_all()) {
+                    val control_type_key = this.get_control_type_key(control_type) ?: continue
+                    this._effect_profiles.add(
+                        Triple(
+                            0, // layer ( line)
+                            this.generate_merge_keys(c, l)[0], // key
+                            ProfileBuffer(
+                                this.convert_controller_to_event_data(control_type_key, controller)
+                            )
+                        )
+                    )
+                }
             }
+        }
+
+        for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
+            val control_type_key = this.get_control_type_key(control_type) ?: continue
+            this._effect_profiles.add(
+                Triple(
+                    2, // layer (global)
+                    0,
+                    ProfileBuffer(
+                        this.convert_controller_to_event_data(control_type_key, controller)
+                    )
+                )
+            )
         }
     }
 
@@ -357,8 +420,93 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     // TODO: NEEDS BETTER NAME
-    private fun adjust_effect_profile_event_to_tempo(relative_start: Float, relative_end: Float, start_value: Float, end_value: Float, transition: ControlTransition): List<Triple<Pair<Int, Int>, Pair<Float, Float>, ControlTransition>> {
+    private fun adjust_effect_profile_event_to_tempo(transition: ControlTransition, relative_start: Float, relative_end: Float, start_value: Float, end_value: Float): List<Pair<Int, Pair<Float, Float>>> {
+        val output = mutableListOf<Pair<Int, Pair<Float, Float>>>()
 
+        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
+        // Find the tempo active at the beginning of the beat
+        var working_position = (relative_start * this.opus_manager.length).toInt().toFloat() / this.opus_manager.length
+        var working_tempo = 0f
+        var tempo_index = 0
+
+        for (i in this._tempo_ratio_map.size - 1 downTo 0) {
+            val (absolute_offset, tempo) = this._tempo_ratio_map[i]
+            if (absolute_offset <= working_position) {
+                working_tempo = tempo
+                tempo_index = i
+                break
+            }
+        }
+        var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+
+        // Calculate Start Position
+        val i = (relative_start * this.opus_manager.length)
+        var start_frame = this._cached_beat_frames!![i.toInt()]
+
+        while (tempo_index < this._tempo_ratio_map.size) {
+            val tempo_change_position = this._tempo_ratio_map[tempo_index].first
+            if (tempo_change_position < relative_start) {
+                start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt() * this.opus_manager.length
+
+                working_position = tempo_change_position
+                frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
+
+                tempo_index += 1
+            } else {
+                break
+            }
+        }
+
+        start_frame += (frames_per_beat * (relative_start - working_position)).toInt() * this.opus_manager.length
+
+        if (transition == ControlTransition.Instant) {
+            return listOf(
+                Pair(start_frame, Pair(end_value, 0F))
+            )
+        }
+
+        // Calculate End Position
+        working_position = relative_start
+        var end_frame = start_frame
+        var working_value = start_value
+        // Note: divide duration to keep in-line with 0-1 range
+
+        while (tempo_index < this._tempo_ratio_map.size) {
+            val tempo_change_position = this._tempo_ratio_map[tempo_index].first
+            if (tempo_change_position < relative_end) {
+                val next_end_frame = end_frame + (frames_per_beat * (tempo_change_position - working_position)).toInt() * this.opus_manager.length
+
+                val (next_value, increment) = if (start_value != end_value && next_end_frame != end_frame) {
+                    val p = (tempo_change_position - relative_start) / (relative_end - relative_start)
+                    val n = (end_value - start_value) * p
+                    Pair(n + start_value, n / (next_end_frame - end_frame))
+                } else {
+                     Pair(working_value, 0F)
+                }
+
+                output.add(Pair(end_frame, Pair(working_value, increment)))
+
+                working_value = next_value
+                end_frame = next_end_frame
+
+                working_position = tempo_change_position
+                frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
+                tempo_index += 1
+            } else {
+                break
+            }
+        }
+
+        val next_end_frame = end_frame + (frames_per_beat * (relative_end - working_position)).toInt() * this.opus_manager.length
+        val increment = if (start_value != end_value && next_end_frame != end_frame) {
+            (end_value - working_value) / (next_end_frame - end_frame).toFloat()
+        } else {
+            0F
+        }
+
+        output.add(Pair(end_frame, Pair(working_value, increment)))
+
+        return output
     }
 
     private fun calculate_event_frame_range(beat: Int, duration: Int, relative_width: Float, relative_offset: Float): Pair<Int, Int> {

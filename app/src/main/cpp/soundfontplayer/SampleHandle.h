@@ -218,6 +218,7 @@ class SampleHandle {
             return this->data_buffers[this->active_buffer];
         }
 
+        // TODO: Calculate on init
         std::tuple<float, float> get_next_balance() {
             float base_value = 1;
             float neg_base = -1 * base_value;

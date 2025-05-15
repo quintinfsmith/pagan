@@ -59,43 +59,31 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, instrument_directive, preset)
         val handles = this.sample_data_map[map_key]!!
-        val data = ControllerEventData(
-            arrayOf(Pair(0, Pair(event.get_velocity() / 128F, 0F)))
+
+        return Pair(
+            handles.first().copy(),
+            if (handles.size > 1) {
+                val tmp = handles.last().copy()
+                tmp
+            } else {
+                null
+            }
         )
-
-        val first = handles.first().copy()
-        first.volume_profile = ProfileBuffer(data, 0)
-
-        val linked = if (handles.size > 1) {
-            val tmp = handles.last().copy()
-            tmp.volume_profile = ProfileBuffer(data, 0)
-            tmp
-        } else {
-            null
-        }
-
-        return Pair(first, linked)
     }
 
     fun get(event: NoteOn79, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?> {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, instrument_directive, preset)
         val handles = this.sample_data_map[map_key]!!
-        val volume = event.velocity / (128 shl 8).toFloat()
 
-        val data = ControllerEventData(arrayOf(Pair(0, Pair(volume, 0F))))
-
-        val first = handles.first().copy()
-        first.volume_profile = ProfileBuffer(data, 0)
-
-        val linked = if (handles.size > 1) {
-            val tmp = handles.last().copy()
-            tmp.volume_profile = ProfileBuffer(data, 0)
-            tmp
-        } else {
-            null
-        }
-
-        return Pair(first, linked)
+        return Pair(
+            handles.first().copy(),
+            if (handles.size > 1) {
+                val tmp = handles.last().copy()
+                tmp
+            } else {
+                null
+            }
+        )
     }
 
     fun cache_or_create_new(note: Int, bend: Int, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): MapKey {

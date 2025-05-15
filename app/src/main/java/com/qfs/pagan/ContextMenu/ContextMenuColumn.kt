@@ -1,7 +1,9 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.qfs.pagan.ContextMenuView
+import com.qfs.pagan.R
 
 class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_column, null, primary_parent, secondary_parent) {
     lateinit var button_insert: ImageView

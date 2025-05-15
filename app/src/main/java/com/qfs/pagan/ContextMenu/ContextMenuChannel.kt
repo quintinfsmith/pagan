@@ -1,19 +1,20 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.widget.SwitchCompat
-import androidx.core.content.ContextCompat
-import androidx.core.widget.ImageViewCompat
+import com.qfs.pagan.ContextMenuView
+import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 /*
     CHANNEL_CTLS. Channel controls are not currently considered in playback, so I'll comment out the controls for a future release
 */
 
-class ContextMenuChannel(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_channel, R.layout.contextmenu_channel_secondary, primary_container, secondary_container) {
+class ContextMenuChannel(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
+    R.layout.contextmenu_channel, R.layout.contextmenu_channel_secondary, primary_container, secondary_container) {
     lateinit var button_insert: ImageView
     lateinit var button_remove: ImageView
     lateinit var button_choose_instrument: TextView
@@ -77,7 +78,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         )
 
         var show_control_toggle = false
-        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
+        for (ctl_type in OpusLayerInterface.Companion.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
                 continue
             }

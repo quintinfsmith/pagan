@@ -1,12 +1,18 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.qfs.pagan.ContextMenuView
+import com.qfs.pagan.ContextMenuWithController
+import com.qfs.pagan.ControlWidget
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 
-class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent), ContextMenuWithController<T> {
+class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(
+    R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent),
+    ContextMenuWithController<T> {
     lateinit var button_toggle_line_control: ImageView
     lateinit var button_remove_line_control: ImageView
     init {

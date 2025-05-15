@@ -35,8 +35,6 @@ class SampleHandle {
         float pitch_shift;
         float filter_cutoff;
         float pan;
-        ProfileBuffer* volume_profile;
-        ProfileBuffer* pan_profile;
         PitchedBuffer** data_buffers;
         int buffer_count;
         float smoothing_factor;
@@ -59,8 +57,6 @@ class SampleHandle {
             float pitch_shift,
             float filter_cutoff,
             float pan,
-            ProfileBuffer* volume_profile,
-            ProfileBuffer* pan_profile,
             PitchedBuffer** data_buffers,
             int buffer_count
         ) {
@@ -76,8 +72,6 @@ class SampleHandle {
             this->pitch_shift = pitch_shift;
             this->filter_cutoff = filter_cutoff;
             this->pan = pan;
-            this->volume_profile = volume_profile;
-            this->pan_profile = pan_profile;
 
             this->secondary_setup(data_buffers, buffer_count);
         }
@@ -157,8 +151,6 @@ class SampleHandle {
                 delete this->data_buffers[i];
             }
             delete[] this->data_buffers;
-            delete this->volume_profile;
-            delete this->pan_profile;
 
             delete this->volume_envelope;
         };
@@ -178,14 +170,6 @@ class SampleHandle {
             if (this->release_frame > -1 && this->working_frame >= this->release_frame + this->volume_envelope->frames_release) {
                 this->is_dead = true;
                 return;
-            }
-
-            if (this->volume_profile != nullptr) {
-                this->volume_profile->set_frame(frame);
-            }
-
-            if (this->pan_profile != nullptr) {
-                this->pan_profile->set_frame(frame);
             }
 
             try {
@@ -239,30 +223,30 @@ class SampleHandle {
             float neg_base = -1 * base_value;
             float max_value = 2;
             float neg_max = -1 * max_value;
-            float pan_sum = this->pan + this->pan_profile->get_next();
+            float pan_sum = this->pan;
 
             std::tuple<float, float> output;
             switch (this->stereo_mode & 0x000F) {
                 case 0x01: {
                     output = std::make_tuple(
-                        fmax(0, fmin(max_value, base_value + pan_sum)),
-                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                            fmax(0, fmin(max_value, base_value + pan_sum)),
+                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
                     );
                     break;
                 }
 
                 case 0x02: {
                     output = std::make_tuple(
-                        fmax(0, fmin(max_value, base_value + pan_sum)),
-                        0
+                            fmax(0, fmin(max_value, base_value + pan_sum)),
+                            0
                     );
                     break;
                 }
 
                 case 0x04: {
                     output = std::make_tuple(
-                        0,
-                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                            0,
+                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
                     );
                     break;
                 }
@@ -270,8 +254,8 @@ class SampleHandle {
                 default: {
                     // TODO: LINKED, but treat as mono for now
                     output = std::make_tuple(
-                        fmax(0, fmin(max_value, base_value + pan_sum)),
-                        -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                            fmax(0, fmin(max_value, base_value + pan_sum)),
+                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
                     );
                     break;
                 }
@@ -285,12 +269,9 @@ class SampleHandle {
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
-                int k = i * 3;
-                buffer[k] = 0;
-                buffer[k + 1] = 0;
-                buffer[k + 2] = 0;
+                buffer[(i * 2)] = 0;
+                buffer[(i * 2) + 1] = 1;
             }
-
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
                 try {
@@ -300,27 +281,28 @@ class SampleHandle {
                     this->get_next_balance(); // Move profile buffer frame forward
                     break;
                 }
+
                 std::tuple<float, float>working_pan = this->get_next_balance();
-                int k = i * 3;
+                float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
 
-                buffer[k] = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
-                buffer[k + 1] = std::get<0>(working_pan);
-                buffer[k + 2] = std::get<1>(working_pan);
+                buffer[(i * 2)] = v * std::get<0>(working_pan);
+                buffer[(i * 2) + 1] = v * std::get<1>(working_pan);
 
-                this->previous_value = buffer[k];
+                this->previous_value = v;
             }
 
             // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
-                int k = i * 3;
                 if (this->previous_value != 0) {
-                    buffer[k] = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    this->previous_value = buffer[k];
+                    std::tuple<float, float>working_pan = this->get_next_balance();
+                    float v = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
+                    buffer[(i * 2)] = v * std::get<0>(working_pan);
+                    buffer[(i * 2) + 1] = v * std::get<1>(working_pan);
+                    this->previous_value = v;
                 } else {
-                    buffer[k] = 0;
+                    buffer[(i * 2)] = 0;
+                    buffer[(i * 2) + 1] = 1;
                 }
-                buffer[k + 1] = 0;
-                buffer[k + 2] = 0;
             }
         }
 
@@ -332,12 +314,6 @@ class SampleHandle {
             bool is_pressed = this->is_pressed();
             if (this->working_frame < this->volume_envelope->frames_delay) {
                 this->working_frame += 1;
-                if (this->volume_profile != nullptr) {
-                    this->volume_profile->get_next();
-                }
-                if (this->pan_profile != nullptr) {
-                    this->pan_profile->get_next();
-                }
                 return 0;
             }
 
@@ -386,13 +362,6 @@ class SampleHandle {
                 }
             }
 
-            float use_volume;
-            if (this->volume_profile != nullptr) {
-                use_volume = this->volume_profile->get_next();
-            } else {
-                use_volume = 1;
-            }
-
             this->working_frame += 1;
             if (this->active_buffer >= this->buffer_count) {
                 this->is_dead = true;
@@ -407,7 +376,7 @@ class SampleHandle {
                 throw NoFrameDataException();
             }
 
-            return frame_value * use_volume * frame_factor;
+            return frame_value * frame_factor;
         }
 
         void release_note() {

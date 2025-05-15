@@ -1,10 +1,14 @@
-package com.qfs.pagan
+package com.qfs.pagan.ContextMenu
 
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RadioGroup
+import com.qfs.pagan.ContextMenuView
+import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.R
 
-class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_line_ctl_leaf_b, R.layout.contextmenu_line_ctl_leaf_b_secondary, primary_container, secondary_container) {
+class ContextMenuControlLeafB(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
+    R.layout.contextmenu_line_ctl_leaf_b, R.layout.contextmenu_line_ctl_leaf_b_secondary, primary_container, secondary_container) {
     lateinit var button_erase: ImageView
     lateinit var radio_mode: RadioGroup
 

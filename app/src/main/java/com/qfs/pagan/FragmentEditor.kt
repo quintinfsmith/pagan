@@ -16,6 +16,11 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import com.qfs.pagan.ContextMenu.ContextMenuChannel
+import com.qfs.pagan.ContextMenu.ContextMenuColumn
+import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
+import com.qfs.pagan.ContextMenu.ContextMenuControlLeafB
+import com.qfs.pagan.ContextMenu.ContextMenuControlLine
 import com.qfs.pagan.databinding.FragmentMainBinding
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel

@@ -103,12 +103,12 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         return frame < this.final_frame
     }
 
-    override fun get_new_handles(frame: Int): Set<SampleHandle>? {
+    override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
         if (!this.frames.containsKey(frame)) {
             return null
         }
 
-        val output = mutableSetOf<SampleHandle>()
+        val output = mutableSetOf<Pair<SampleHandle, IntArray>>()
 
         for (handle in this.frames[frame] ?: setOf()) {
 
@@ -117,13 +117,13 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
             } else {
                 //handle.volume_profile *= min((1F / this.max_overlap.toFloat()) / max_volume, 1F)
             }
-            output.add(handle)
+            output.add(Pair(handle, intArrayOf()))
         }
 
         return output
     }
 
-    override fun get_active_handles(frame: Int): Set<Pair<Int, SampleHandle>> {
+    override fun get_active_handles(frame: Int): Set<Pair<Int, Pair<SampleHandle, IntArray>>> {
         // TODO: implement
         return setOf()
     }

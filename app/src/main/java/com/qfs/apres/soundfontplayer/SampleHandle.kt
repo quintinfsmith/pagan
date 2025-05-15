@@ -11,14 +11,10 @@ class SampleHandle(var ptr: Long) {
         initial_attenuation: Float = 0F,
         loop_points: Pair<Int, Int>?,
         stereo_mode: Int,
-
         volume_envelope: VolumeEnvelope,
-
         pitch_shift: Float = 1F,
         filter_cutoff: Float = 13500F,
         pan: Float = 0F,
-        volume_profile: ProfileBuffer? = null,
-        pan_profile: ProfileBuffer? = null
 
         // TODO: Modulations
         //modulation_envelope: ModulationEnvelope,
@@ -35,9 +31,7 @@ class SampleHandle(var ptr: Long) {
             volume_envelope.ptr,
             pitch_shift,
             filter_cutoff,
-            pan,
-            volume_profile?.ptr ?: 0,
-            pan_profile?.ptr ?: 0,
+            pan
             //modulation_envelope,
             //modulation_lfo,
             //modulators
@@ -55,49 +49,8 @@ class SampleHandle(var ptr: Long) {
             volume_envelope_ptr: Long,
             pitch_shift: Float,
             filter_cutoff: Float,
-            pan: Float,
-            volume_profile_ptr: Long,
-            pan_profile_ptr: Long,
+            pan: Float
         ): Long
-    }
-
-    class ProfileBuffer(val ptr: Long) {
-        constructor(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int): this(
-            intermediary_create(frames, start_frame)
-        )
-
-        var current_frame: Int = 0
-        var current_index: Int = 0
-        var current_value: Float = 0f
-        var next_frame_trigger: Int = -1
-
-        companion object {
-            fun intermediary_create(frames: Array<Pair<Int, Pair<Float, Float>>>, start_frame: Int): Long {
-                return create(
-                    IntArray(frames.size) { i: Int -> frames[i].first },
-                    FloatArray(frames.size) { i: Int -> frames[i].second.first },
-                    FloatArray(frames.size) { i: Int -> frames[i].second.second },
-                    start_frame
-                )
-            }
-
-            external fun create(
-                frame_indices: IntArray,
-                values: FloatArray,
-                increments: FloatArray,
-                start_frame: Int
-            ): Long
-        }
-
-        external fun copy_jni(ptr: Long): Long
-        fun copy(): ProfileBuffer {
-            return ProfileBuffer(this.copy_jni(this.ptr))
-        }
-
-        external fun destroy_jni(ptr: Long)
-        fun destroy() {
-            this.destroy_jni(this.ptr)
-        }
     }
 
     class VolumeEnvelope(val ptr: Long) {
@@ -224,29 +177,6 @@ class SampleHandle(var ptr: Long) {
         get() = this.get_volume_envelope()
     fun get_volume_envelope(): VolumeEnvelope {
         return VolumeEnvelope(this.get_volume_envelope_ptr(this.ptr))
-    }
-
-    external fun get_volume_profile_ptr(ptr: Long): Long
-    external fun set_volume_profile_ptr(handle: Long, new_ptr: Long)
-    var volume_profile: ProfileBuffer
-        get() = this.get_volume_profile()
-        set(new_buffer: ProfileBuffer) = this.set_volume_profile_ptr(this.ptr, new_buffer.ptr)
-    fun get_volume_profile(): ProfileBuffer {
-        return ProfileBuffer(
-            this.get_volume_profile_ptr(this.ptr)
-        )
-    }
-
-    external fun get_pan_profile_ptr(ptr: Long): Long
-    external fun set_pan_profile_ptr(handle: Long, new_ptr: Long)
-    var pan_profile: ProfileBuffer
-        get() = this.get_pan_profile()
-        set(new_buffer: ProfileBuffer) = this.set_pan_profile_ptr(this.ptr, new_buffer.ptr)
-
-    fun get_pan_profile(): ProfileBuffer {
-        return ProfileBuffer(
-            this.get_pan_profile_ptr(this.ptr)
-        )
     }
 
     external fun get_working_frame_jni(ptr: Long): Int

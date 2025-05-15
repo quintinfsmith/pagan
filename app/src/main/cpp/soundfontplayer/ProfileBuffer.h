@@ -8,6 +8,7 @@
 #include <vector>
 #include "ControllerEventData.h"
 
+#include <android/log.h>
 class ProfileBuffer {
 public:
     ControllerEventData* data;
@@ -33,7 +34,7 @@ public:
     }
 
     void set_frame(int frame) {
-        if (this->data->frames == nullptr) {
+        if (this->data == nullptr || this->data->frames == nullptr) {
             return;
         }
         // First set the working frame
@@ -83,10 +84,11 @@ private:
         this->current_frame++;
         int working_frame = this->current_frame;
         if (working_frame == this->next_frame_trigger) {
+            this->current_index += 1;
             if (this->current_index >= this->data->frame_count - 1) {
                 this->next_frame_trigger = -1;
             } else {
-                this->next_frame_trigger = this->data->frames[this->current_index++]->frame;
+                this->next_frame_trigger = this->data->frames[this->current_index + 1]->frame;
             }
         }
     }

@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <malloc.h>
 #include "ControllerEventData.h"
+
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
         JNIEnv* env,
@@ -11,8 +12,6 @@ Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
         jint type
 ) {
     auto* data_container = (ControllerEventData *)malloc(sizeof(ControllerEventData));
-    data_container->type = type;
-
     int array_length = env->GetArrayLength(indices);
     auto* vec = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * array_length);
 
@@ -30,6 +29,8 @@ Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
 
     data_container->frames = vec;
     data_container->frame_count = array_length;
+
+    data_container->type = type;
 
     return (jlong)data_container;
 }

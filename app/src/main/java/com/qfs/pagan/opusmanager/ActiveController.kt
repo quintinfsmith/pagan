@@ -1,6 +1,7 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.structure.OpusTree
+import java.time.Instant
 
 
 class ControllerProfile() {
@@ -29,9 +30,11 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
 
         var working_value = this.initial_event.to_float()
         val output = ControllerProfile()
+
         val size = this.beat_count()
+        val default_size = 1F / size.toFloat()
         for (b in 0 until size) {
-            val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), this.get_tree(b), 1F, 0F))
+            val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), this.get_tree(b), default_size, 0F))
             while (stack.isNotEmpty()) {
                 val working_item = stack.removeAt(0)
                 val working_tree = working_item.tree ?: continue
@@ -48,6 +51,11 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
 
                     output.add(start_position, end_position, working_value, working_event.to_float(), working_event.transition)
                     working_value = working_event.to_float()
+
+                    if (working_event.transition != ControlTransition.Instant) {
+                        output.add(end_position, end_position, 0f, working_value, ControlTransition.Instant)
+                    }
+
                 } else if (!working_tree.is_leaf()) {
                     val new_width = working_item.relative_width / working_tree.size.toFloat()
                     for (i in 0 until working_tree.size) {
@@ -57,6 +65,10 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
                     }
                 }
             }
+        }
+
+        if (output.values.isEmpty()) {
+            output.add(0f, 0f, 0f, working_value, ControlTransition.Instant)
         }
 
         return output

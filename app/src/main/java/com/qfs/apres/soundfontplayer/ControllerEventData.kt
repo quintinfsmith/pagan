@@ -14,11 +14,6 @@ class ControllerEventData(val ptr: Long) {
                 type
             )
         }
-        external fun create(
-            frame_indices: IntArray,
-            values: FloatArray,
-            increments: FloatArray,
-            type: Int
-        ): Long
+        external fun create(frame_indices: IntArray, values: FloatArray, increments: FloatArray, type: Int): Long
     }
 }

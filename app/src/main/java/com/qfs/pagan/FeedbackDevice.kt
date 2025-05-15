@@ -5,6 +5,7 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Sample
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
+import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
@@ -50,6 +51,11 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         override fun get_size(): Int {
             // Not used in feedback
             return 0
+        }
+
+        override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
+            //TODO("Not yet implemented")
+            return listOf()
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, Pair<SampleHandle, IntArray>>> {

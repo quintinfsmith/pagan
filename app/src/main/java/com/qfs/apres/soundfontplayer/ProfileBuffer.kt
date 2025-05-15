@@ -2,7 +2,7 @@ package com.qfs.apres.soundfontplayer
 
 class ProfileBuffer(val ptr: Long) {
     // TODO: Memory Management
-    constructor(data: ControllerEventData, start_frame: Int): this(
+    constructor(data: ControllerEventData, start_frame: Int = 0): this(
         create(data.ptr, start_frame)
     )
 
@@ -20,9 +20,9 @@ class ProfileBuffer(val ptr: Long) {
         return ProfileBuffer(this.copy_jni(this.ptr))
     }
 
-    external fun destroy_jni(ptr: Long)
-    fun destroy() {
-        this.destroy_jni(this.ptr)
+    external fun destroy_jni(ptr: Long, deep: Boolean)
+    fun destroy(deep: Boolean = false) {
+        this.destroy_jni(this.ptr, deep)
     }
 }
 

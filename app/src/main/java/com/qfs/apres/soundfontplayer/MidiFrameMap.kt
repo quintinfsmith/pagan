@@ -18,6 +18,10 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         return this.final_frame
     }
 
+    override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
+        TODO("Not yet implemented")
+    }
+
     fun clear() {
         this.frames.clear()
         this.final_frame = 0

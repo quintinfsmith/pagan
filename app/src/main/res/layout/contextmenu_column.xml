@@ -5,6 +5,22 @@
     android:layout_height="match_parent"
     android:id="@+id/llContextCol"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ImageView
+        android:theme="@style/icon_button"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:src="@drawable/tag"
+        android:id="@+id/btnTag"
+        android:layout_marginEnd="@dimen/number_selector_spacing"
+        android:contentDescription="@string/cd_mark_section"/>
+    <ImageView
+        android:theme="@style/icon_button"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:src="@drawable/untag"
+        android:id="@+id/btnUntag"
+        android:layout_marginEnd="@dimen/number_selector_spacing"
+        android:contentDescription="@string/cd_remove_section_mark"/>
 
     <Space
         android:layout_width="0dp"

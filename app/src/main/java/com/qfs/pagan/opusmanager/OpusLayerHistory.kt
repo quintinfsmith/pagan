@@ -696,6 +696,19 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
+                HistoryToken.TAG_SECTION -> {
+                    this.tag_section(
+                        current_node.args[0] as Int,
+                        checked_cast<String>(current_node.args[1])
+                    )
+                }
+
+                HistoryToken.UNTAG_SECTION -> {
+                    this.remove_tagged_section(
+                        current_node.args[0] as Int
+                    )
+                }
+
                 HistoryToken.MULTI -> { }
                 else -> {}
             }
@@ -1822,6 +1835,37 @@ open class OpusLayerHistory: OpusLayerCursor() {
     override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
         this._remember {
             super.toggle_channel_controller_visibility(type, channel_index)
+        }
+    }
+
+    override fun tag_section(beat: Int, title: String?) {
+        this._remember {
+            val original_title = if (this.is_beat_tagged(beat)) {
+                this.marked_sections[beat]
+            } else {
+                null
+            }
+
+            super.tag_section(beat, title)
+
+            if (original_title == null) {
+                this.push_to_history_stack(HistoryToken.UNTAG_SECTION, listOf(beat))
+            } else {
+                this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, title!!))
+            }
+        }
+    }
+
+    override fun remove_tagged_section(beat: Int) {
+        val original_title = if (this.is_beat_tagged(beat)) {
+            this.marked_sections[beat]
+        } else {
+            null
+        }
+
+        super.remove_tagged_section(beat)
+        if (original_title != null) {
+            this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, original_title))
         }
     }
 

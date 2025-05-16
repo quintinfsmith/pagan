@@ -318,6 +318,16 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_column(beat_index)
     }
 
+    override fun remove_tagged_section(beat: Int) {
+        super.remove_tagged_section(beat)
+        this.cursor_select_column(beat)
+    }
+
+    override fun tag_section(beat: Int, title: String?) {
+        super.tag_section(beat, title)
+        this.cursor_select_column(beat)
+    }
+
     // ----- Cursor handled in lower order functions ^^^^^^^^^^^^ //
 
     fun offset_selection(amount: Int) {

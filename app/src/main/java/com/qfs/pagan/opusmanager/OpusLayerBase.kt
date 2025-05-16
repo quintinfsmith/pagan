@@ -324,7 +324,7 @@ open class OpusLayerBase {
     var project_notes: String? = null
     var transpose: Pair<Int, Int> = Pair(0, 12)
     var tuning_map: Array<Pair<Int, Int>> = Array(12) { i: Int -> Pair(i, 12) }
-    var marked_sections = HashMap<Int, String>()
+    var marked_sections = HashMap<Int, String?>()
 
     private var _cached_instrument_line_map = mutableListOf<Pair<Int, Int>>()
     private var _cached_std_line_map = HashMap<Pair<Int, Int>, Int>()
@@ -1678,7 +1678,7 @@ open class OpusLayerBase {
             controller.remove_beat(working_beat_index, count)
         }
 
-        val tag_beats = this.marked_sections.keys
+        val tag_beats = this.marked_sections.keys.toList()
         for (tag in tag_beats) {
             if (tag > beat_index) {
                 this.marked_sections[tag - 1] = this.marked_sections.remove(tag)!!
@@ -4052,7 +4052,7 @@ open class OpusLayerBase {
         this._cached_ctl_map_global.clear()
     }
 
-    open fun tag_section(beat: Int, title: String) {
+    open fun tag_section(beat: Int, title: String?) {
         this.marked_sections[beat] = title
     }
 
@@ -4150,7 +4150,7 @@ open class OpusLayerBase {
         val tags = inner_map.get_hashmapn("tags")
         if (tags != null) {
             for (key in tags.keys) {
-                this.marked_sections[key.toInt()] = tags.get_string(key)
+                this.marked_sections[key.toInt()] = tags.get_stringn(key)
             }
         }
 

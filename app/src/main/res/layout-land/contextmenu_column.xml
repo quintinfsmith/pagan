@@ -33,6 +33,22 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_adjust_selection"/>
 
+    <ImageView
+        android:theme="@style/icon_button"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:src="@drawable/tag"
+        android:id="@+id/btnTag"
+        android:layout_marginTop="@dimen/number_selector_spacing"
+        android:contentDescription="@string/cd_mark_section"/>
 
+    <ImageView
+        android:theme="@style/icon_button"
+        android:layout_width="@dimen/icon_button_width"
+        android:layout_height="@dimen/icon_button_height"
+        android:src="@drawable/untag"
+        android:id="@+id/btnUntag"
+        android:layout_marginTop="@dimen/number_selector_spacing"
+        android:contentDescription="@string/cd_remove_section_mark"/>
 
 </LinearLayout>

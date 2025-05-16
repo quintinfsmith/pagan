@@ -137,7 +137,9 @@ class ActionTracker {
         ForceOrientation,
         AllowMidiPlayback,
         AllowStdPercussion,
-        AdjustSelection
+        AdjustSelection,
+        TagColumn,
+        UntagColumn
     }
 
     companion object {
@@ -190,6 +192,17 @@ class ActionTracker {
                     }
                     TrackedAction.SetTempoAtCursor -> {
                         listOf(entry.get_float(1).toBits())
+                    }
+                    TrackedAction.UntagColumn -> {
+                        listOf(entry.get_int(1))
+                    }
+                    TrackedAction.TagColumn -> {
+                        val title = entry.get_stringn(2)
+                        listOf(entry.get_int(1)) + if (title == null) {
+                            listOf()
+                        } else {
+                            string_to_ints(title)
+                        }
                     }
                     TrackedAction.RepeatSelectionCtlLine,
                     TrackedAction.RepeatSelectionCtlChannel,
@@ -308,6 +321,21 @@ class ActionTracker {
                         arrayOf(JSONString(string_from_ints(integers)))
                     }
 
+                    TrackedAction.TagColumn -> {
+                        arrayOf(
+                            JSONInteger(integers[0]!!),
+                            if (integers.size > 1) {
+                                JSONString(string_from_ints(integers.subList(1, 0)))
+                            } else {
+                                null
+                            }
+                        )
+                    }
+
+                    TrackedAction.UntagColumn -> {
+                        arrayOf(JSONInteger(integers[0]!!))
+                    }
+
                     TrackedAction.RepeatSelectionCtlLine,
                     TrackedAction.RepeatSelectionCtlChannel,
                     TrackedAction.RepeatSelectionCtlGlobal,
@@ -329,7 +357,6 @@ class ActionTracker {
                             }
                         }
                     }
-
 
                     else -> {
                         Array(integers.size) {
@@ -1689,6 +1716,15 @@ class ActionTracker {
         }
     }
 
+    private fun dialog_text_popup(title: String, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
+        val activity = this.get_activity()
+        if (stub_output != null) {
+            callback(stub_output)
+        } else {
+            activity.dialog_text_popup(title, default, callback)
+        }
+    }
+
     private fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, stub_output: Pair<String, String>? = null, callback: (String, String) -> Unit) {
         val activity = this.get_activity()
         if (stub_output != null) {
@@ -2164,6 +2200,17 @@ class ActionTracker {
             TrackedAction.AllowStdPercussion -> {
                 this.allow_std_percussion(integers[0] != 0)
             }
+
+            TrackedAction.TagColumn -> {
+                if (integers.size > 1) {
+                    this.tag_column(integers[0]!!, string_from_ints(integers.subList(1, integers.size)))
+                } else {
+                    this.tag_column(integers[0]!!, null, true)
+                }
+            }
+            TrackedAction.UntagColumn -> {
+                this.untag_column(integers[0]!!)
+            }
         }
     }
 
@@ -2299,6 +2346,35 @@ class ActionTracker {
 
         this.track(TrackedAction.UnMuteLine, listOf(w_channel, w_line_offset))
         opus_manager.unmute_line(w_channel, w_line_offset)
+    }
+
+    fun tag_column(beat: Int? = null, description: String? = null, force_null_description: Boolean = false) {
+        val opus_manager = this.get_opus_manager()
+        val use_beat = beat ?: opus_manager.cursor.beat
+
+        if (force_null_description && description == null) {
+            val integers = mutableListOf(use_beat)
+            this.track(TrackedAction.TagColumn, integers)
+            opus_manager.tag_section(use_beat, null)
+            return
+        }
+
+        this.dialog_text_popup(this.get_activity().getString(R.string.dialog_mark_section), opus_manager.marked_sections[use_beat], description) { result: String ->
+            val integers = mutableListOf(use_beat)
+            for (byte in result.toByteArray()) {
+                integers.add(byte.toInt())
+            }
+
+            this.track(TrackedAction.TagColumn, integers)
+            opus_manager.tag_section(use_beat, if (result == "") null else result)
+        }
+    }
+
+    fun untag_column(beat: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        val use_beat = beat ?: opus_manager.cursor.beat
+        this.track(TrackedAction.UntagColumn, listOf(use_beat))
+        opus_manager.remove_tagged_section(use_beat)
     }
 
     fun set_orientation(value: Int) {

@@ -118,7 +118,7 @@
     <string name="export_wav_feedback_complete">Done Export</string>
     <string name="export_multi_wav_feedback">Exporting C:%1$d L:%2$d to wav</string>
     <string name="export_wav_notification_complete">Done</string>
-
+    <string name="jump_to_section">Jump to section…</string>
 
     <string name="dialog_adjust_selection">Adjust Selection</string>
     <string name="dialog_remove_soundfont_title">Choose Soundfont to Remove</string>
@@ -196,6 +196,10 @@
     <string name="dlg_project_name">Project Name:</string>
     <string name="dlg_project_notes">Project Notes:</string>
     <string name="label_settings_allow_std_percussion">Use percussion as standard instrument</string>
+    <string name="cd_mark_section">Tag Section</string>
+    <string name="cd_remove_section_mark">Remove Section Tag</string>
+    <string name="dialog_mark_section">Tag Section</string>
+    <string name="section_spinner_item">Tag %1$d</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

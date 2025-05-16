@@ -21,7 +21,7 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
         this.button_remove = this.primary.findViewById(R.id.btnRemoveBeat)
         this.button_adjust = this.primary.findViewById(R.id.btnAdjust)
         this.button_tag = this.primary.findViewById(R.id.btnTag)
-        this.button_untag = this.primary.findViewById(R.id.btnUnTag)
+        this.button_untag = this.primary.findViewById(R.id.btnUntag)
     }
 
     override fun refresh() {
@@ -68,10 +68,22 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
         }
 
         this.button_tag.setOnClickListener {
-            this.get_activity().get_action_interface().tag_column()
+            val activity = this.get_activity()
+            val opus_manager = activity.get_opus_manager()
+            if (opus_manager.is_beat_tagged(opus_manager.cursor.beat)) {
+                activity.get_action_interface().tag_column()
+            } else {
+                activity.get_action_interface().tag_column(null, null, true)
+            }
         }
+
         this.button_untag.setOnClickListener {
             this.get_activity().get_action_interface().untag_column()
+        }
+
+        this.button_tag.setOnLongClickListener {
+            this.get_activity().get_action_interface().tag_column()
+            true
         }
     }
 

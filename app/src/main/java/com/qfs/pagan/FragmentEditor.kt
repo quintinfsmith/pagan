@@ -6,8 +6,12 @@ import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.view.GravityCompat
 import androidx.core.view.isEmpty
@@ -16,6 +20,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import com.google.android.material.navigation.NavigationBarView
 import com.qfs.pagan.ContextMenu.ContextMenuChannel
 import com.qfs.pagan.ContextMenu.ContextMenuColumn
 import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
@@ -789,8 +794,10 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
         val scroll_bar = view.findViewById<SeekBar>(R.id.shortcut_scrollbar)!!
         val title_text = view.findViewById<TextView>(R.id.shortcut_title)!!
+        val spinner = view.findViewById<Spinner>(R.id.shortcut_spinner)!!
 
-        val opus_manager = this.get_activity().get_opus_manager()
+        val activity = this.get_activity()
+        val opus_manager = activity.get_opus_manager()
         scroll_bar.max = opus_manager.length - 1
         scroll_bar.progress = this._get_start_column()
 
@@ -807,9 +814,35 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }
         })
 
-        val dialog = AlertDialog.Builder(this.activity)
-        dialog.setView(view)
-        this.get_activity()._adjust_dialog_colors(dialog.show())
+        val dialog_builder = AlertDialog.Builder(activity)
+        dialog_builder.setView(view)
+        val dialog = dialog_builder.show()
+        this.get_activity()._adjust_dialog_colors(dialog)
+
+        if (opus_manager.marked_sections.isEmpty()) {
+            spinner.visibility = View.GONE
+        } else {
+            spinner.visibility = View.VISIBLE
+            val keys = opus_manager.marked_sections.keys.toList().sorted()
+            val items = List(keys.size + 1) { i: Int ->
+                if (i == 0) {
+                    activity.getString(R.string.jump_to_section)
+                } else {
+                    opus_manager.marked_sections[keys[i - 1]] ?: getString(R.string.section_spinner_item, i)
+                }
+            }
+
+            spinner.adapter = ArrayAdapter<String>(activity, android.R.layout.simple_spinner_dropdown_item, items)
+            spinner.onItemSelectedListener = object: OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    if (position > 0) {
+                        opus_manager.cursor_select_column(keys[position - 1])
+                        dialog.dismiss()
+                    }
+                }
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            }
+        }
     }
 
     private fun _get_start_column(): Int {

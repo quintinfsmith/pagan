@@ -42,6 +42,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val text_paint_octave = Paint()
         val text_paint_ctl = Paint()
         val text_paint_column = Paint()
+        val tagged_paint_column = Paint()
         var touch_position_x = 0F
         var touch_position_y = 0F
 
@@ -63,10 +64,16 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.text_paint_ctl.color = ContextCompat.getColor(context, R.color.ctl_leaf_text_selector)
             this.text_paint_ctl.isAntiAlias = true
 
-            this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
+            //this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_column.isFakeBoldText = true
             this.text_paint_column.isAntiAlias = true
             this.text_paint_column.strokeWidth = 3F
+            this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
+
+            this.tagged_paint_column.style = Paint.Style.STROKE
+            this.tagged_paint_column.strokeWidth = 3F
+            this.tagged_paint_column.isAntiAlias = true
+            this.tagged_paint_column.isDither = true
 
             this.setWillNotDraw(false)
 
@@ -760,9 +767,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 }
 
                 // ------------------- Draw Labels ----------------------------
+                val viewable_width = horizontal_scroll_view.measuredWidth
                 val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.column_label_text)!!
                 val state = this.get_column_label_state(i)
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
+
 
                 val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
                 val drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.editor_label_column)!!
@@ -772,10 +781,32 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
                 val column_text = "$i"
                 val bounds = Rect()
+
                 this.text_paint_column.getTextBounds(column_text, 0, column_text.length, bounds)
 
+                if (opus_manager.is_beat_tagged(i)) {
+                    this.tagged_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
+                    val x = if (column_width > viewable_width) {
+                        if (offset <= scroll_x && offset + column_width >= scroll_x + viewable_width) {
+                            (scroll_x + ((viewable_width - bounds.width()) / 2)).toFloat()
+                        } else if (offset <= scroll_x) {
+                            offset + column_width - ((viewable_width + bounds.width()) / 2)
+                        } else {
+                            offset + ((viewable_width - bounds.width()) / 2)
+                        }
+                    } else {
+                        offset + ((column_width - bounds.width()) / 2)
+                    }
+                    val y = scroll_y + ((line_height - bounds.height()) / 2)
+                    canvas.drawOval(
+                        x - 20F,
+                        y - 10F,
+                        x + bounds.width() + 20F,
+                        y + bounds.height() + 10F,
+                        this.tagged_paint_column
+                    )
+                }
 
-                val viewable_width = horizontal_scroll_view.measuredWidth
                 canvas.drawText(
                     "$i",
                     // Keep the column number of huge columns on screen

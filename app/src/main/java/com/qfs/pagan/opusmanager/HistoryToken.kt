@@ -45,6 +45,8 @@ enum class HistoryToken {
     MUTE_LINE,
     UNMUTE_CHANNEL,
     UNMUTE_LINE,
+    TAG_SECTION,
+    UNTAG_SECTION,
 
     // Interface
     CURSOR_SELECT,

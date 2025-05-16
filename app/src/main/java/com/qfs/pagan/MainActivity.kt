@@ -2102,6 +2102,33 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
+    fun dialog_text_popup(title: String, default: String? = null, callback: (String) -> Unit) {
+        val main_fragment = this.get_active_fragment()
+
+        val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
+            .inflate(
+                R.layout.text_input,
+                main_fragment.view as ViewGroup,
+                false
+            )
+
+        val text_input: EditText = viewInflated.findViewById(R.id.etText)
+        text_input.setText(default ?: "")
+
+        this._adjust_dialog_colors(
+            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+                .setView(viewInflated)
+                .setTitle(title)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    callback(text_input.text.toString())
+                    dialog.dismiss()
+                }
+                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+        )
+    }
 
     fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, callback: (String, String) -> Unit) {
         val main_fragment = this.get_active_fragment()

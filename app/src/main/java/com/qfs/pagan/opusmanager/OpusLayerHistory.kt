@@ -1851,7 +1851,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
             if (original_title == null) {
                 this.push_to_history_stack(HistoryToken.UNTAG_SECTION, listOf(beat))
             } else {
-                this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, title!!))
+                this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, original_title!!))
             }
         }
     }

@@ -699,7 +699,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.TAG_SECTION -> {
                     this.tag_section(
                         current_node.args[0] as Int,
-                        checked_cast<String>(current_node.args[1])
+                        if (current_node.args.size > 1) {
+                            checked_cast<String>(current_node.args[1])
+                        } else {
+                            null
+                        }
                     )
                 }
 
@@ -1857,15 +1861,16 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     override fun remove_tagged_section(beat: Int) {
-        val original_title = if (this.is_beat_tagged(beat)) {
-            this.marked_sections[beat]
-        } else {
-            null
-        }
+        val was_tagged = this.is_beat_tagged(beat)
+        val original_title = this.marked_sections[beat]
 
         super.remove_tagged_section(beat)
-        if (original_title != null) {
-            this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, original_title))
+        if (was_tagged) {
+            if (original_title == null) {
+                this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat))
+            } else {
+                this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, original_title))
+            }
         }
     }
 

@@ -9,7 +9,7 @@
 
     <ImageButton
         android:id="@+id/btnSplit"
-        android:theme="@style/icon_button"
+        style="@style/icon_button"
         android:layout_gravity="center"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -23,7 +23,7 @@
 
     <ImageButton
         android:id="@+id/btnInsert"
-        android:theme="@style/icon_button"
+        style="@style/icon_button"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_insert"
@@ -48,7 +48,7 @@
         android:layout_width="0dp"/>
 
     <TextView
-        android:theme="@style/icon_button"
+        style="@style/icon_button"
         android:id="@+id/btnDuration"
         android:contentDescription="@string/cd_set_event_duration"
         android:layout_width="@dimen/icon_button_width"
@@ -61,7 +61,7 @@
         android:layout_width="0dp"/>
 
     <ImageButton
-        android:theme="@style/icon_button"
+        style="@style/icon_button"
         android:id="@+id/btnUnset"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"

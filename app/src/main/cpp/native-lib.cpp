@@ -27,16 +27,10 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
 }
 
 void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
-    // TODO: Unify with SampleHandle get_next_balance()
-    float base_value = 1;
-    float neg_base = -1 * base_value;
-    float max_value = 2;
-    float neg_max = -1 * max_value;
-
     for (int i = 0; i < frames; i++) {
         float pan_value = effect_buffer->get_next();
-        working_array[(i * 2)] *= fmax(0, fmin(max_value, base_value + pan_value));
-        working_array[(i * 2) + 1] *= -1 * fmax(neg_max, fmin(0, neg_base + pan_value));
+        working_array[(i * 2)] *= 1 + pan_value;
+        working_array[(i * 2) + 1] *= (-1 + pan_value) * -1;
     }
 }
 
@@ -79,7 +73,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     jlong* effect_buffers = env->GetLongArrayElements(effect_buffers_input, nullptr);
     jint* effect_keys = env->GetIntArrayElements(buffer_keys_input, nullptr);
     jint* effect_indices = env->GetIntArrayElements(buffer_layer_indices_input, nullptr);
-
 
     int current_array_count = array_count;
     auto tmp_first_layer = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, 0));

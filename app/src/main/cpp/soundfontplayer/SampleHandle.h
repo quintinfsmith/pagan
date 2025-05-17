@@ -219,35 +219,29 @@ class SampleHandle {
         }
 
         // TODO: Calculate on init
-        std::tuple<float, float> get_next_balance() {
-            float base_value = 1;
-            float neg_base = -1 * base_value;
-            float max_value = 2;
-            float neg_max = -1 * max_value;
-            float pan_sum = this->pan;
-
+        std::tuple<float, float> get_balance() {
             std::tuple<float, float> output;
             switch (this->stereo_mode & 0x000F) {
                 case 0x01: {
                     output = std::make_tuple(
-                            fmax(0, fmin(max_value, base_value + pan_sum)),
-                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                        1 + this->pan,
+                        -1 * (-1 + this->pan)
                     );
                     break;
                 }
 
                 case 0x02: {
                     output = std::make_tuple(
-                            fmax(0, fmin(max_value, base_value + pan_sum)),
-                            0
+                        1 + this->pan,
+                        0
                     );
                     break;
                 }
 
                 case 0x04: {
                     output = std::make_tuple(
-                            0,
-                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                        0,
+                        -1 * (-1 + this->pan)
                     );
                     break;
                 }
@@ -255,8 +249,8 @@ class SampleHandle {
                 default: {
                     // TODO: LINKED, but treat as mono for now
                     output = std::make_tuple(
-                            fmax(0, fmin(max_value, base_value + pan_sum)),
-                            -1 * fmax(neg_max, fmin(0, neg_base + pan_sum))
+                            1 + this->pan,
+                            -1 * (-1 + this->pan)
                     );
                     break;
                 }
@@ -267,11 +261,12 @@ class SampleHandle {
 
         void get_next_frames(float* buffer, int target_size, int left_padding) {
             int actual_size = target_size;
+            std::tuple<float, float> working_pan = this->get_balance();
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
                 buffer[(i * 2)] = 0;
-                buffer[(i * 2) + 1] = 1;
+                buffer[(i * 2) + 1] = 0;
             }
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
@@ -279,11 +274,9 @@ class SampleHandle {
                     frame = this->get_next_frame();
                 } catch (NoFrameDataException &e) {
                     actual_size = i;
-                    this->get_next_balance(); // Move profile buffer frame forward
                     break;
                 }
 
-                std::tuple<float, float>working_pan = this->get_next_balance();
                 float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
 
                 buffer[(i * 2)] = v * std::get<0>(working_pan);
@@ -295,14 +288,13 @@ class SampleHandle {
             // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
                 if (this->previous_value != 0) {
-                    std::tuple<float, float>working_pan = this->get_next_balance();
                     float v = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
                     buffer[(i * 2)] = v * std::get<0>(working_pan);
                     buffer[(i * 2) + 1] = v * std::get<1>(working_pan);
                     this->previous_value = v;
                 } else {
                     buffer[(i * 2)] = 0;
-                    buffer[(i * 2) + 1] = 1;
+                    buffer[(i * 2) + 1] = 0;
                 }
             }
         }

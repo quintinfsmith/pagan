@@ -7,7 +7,7 @@
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
 
-    <ImageView
+    <ImageButton
         android:id="@+id/btnInsertLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/insert_line"
@@ -15,7 +15,7 @@
         android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_insert_line" />
 
-    <ImageView
+    <ImageButton
         android:id="@+id/btnRemoveLine"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/remove_line"
@@ -24,7 +24,7 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_remove_line" />
 
-    <ImageView
+    <ImageButton
         android:theme="@style/icon_button"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -43,7 +43,7 @@
         android:contentDescription="@string/cd_set_percussion_instrument"
         android:text="" />
 
-    <ImageView
+    <ImageButton
         android:id="@+id/btnToggleChannelCtl"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/ctl"

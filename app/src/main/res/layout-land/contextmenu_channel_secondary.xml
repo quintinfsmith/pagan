@@ -4,7 +4,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ImageView
+    <ImageButton
         android:id="@+id/btnMuteChannel"
         android:theme="@style/icon_button"
         app:srcCompat="@drawable/mute"

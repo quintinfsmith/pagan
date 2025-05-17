@@ -16,7 +16,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"/>
 
-        <ImageView
+        <ImageButton
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
@@ -25,7 +25,7 @@
             android:id="@+id/btnAdjust"
             android:contentDescription="@string/cd_adjust_selection"/>
 
-        <ImageView
+        <ImageButton
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"

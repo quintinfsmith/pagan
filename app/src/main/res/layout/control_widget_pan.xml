@@ -17,7 +17,7 @@
         app:layout_constraintEnd_toStartOf="@+id/pan_transition_type"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ImageView
+    <ImageButton
         android:id="@+id/pan_transition_type"
         style="@style/icon_button"
         android:layout_width="@dimen/secondary_contextmenu_button_height"

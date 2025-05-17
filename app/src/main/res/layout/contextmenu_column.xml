@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:id="@+id/llContextCol"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <ImageView
+    <ImageButton
         android:theme="@style/icon_button"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -13,7 +13,7 @@
         android:id="@+id/btnTag"
         android:layout_marginEnd="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_mark_section"/>
-    <ImageView
+    <ImageButton
         android:theme="@style/icon_button"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -27,7 +27,7 @@
         android:layout_weight="1"
         android:layout_height="wrap_content"/>
 
-    <ImageView
+    <ImageButton
         android:theme="@style/icon_button"
         android:layout_width="@dimen/icon_button_width"
         android:layout_height="@dimen/icon_button_height"
@@ -36,7 +36,7 @@
         android:layout_marginEnd="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_adjust_selection"/>
 
-    <ImageView
+    <ImageButton
         android:theme="@style/icon_button"
         android:id="@+id/btnRemoveBeat"
         android:layout_width="@dimen/icon_button_width"
@@ -45,7 +45,7 @@
         android:layout_marginEnd="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_remove_beat" />
 
-    <ImageView
+    <ImageButton
         android:theme="@style/icon_button"
         android:id="@+id/btnInsertBeat"
         android:layout_gravity="center"

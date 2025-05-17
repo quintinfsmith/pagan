@@ -6,7 +6,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-        <ImageView
+        <ImageButton
             android:visibility="gone"
             android:id="@+id/btnToggleChannelCtl"
             android:theme="@style/icon_button"
@@ -20,7 +20,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <ImageButton
             android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
@@ -28,7 +28,7 @@
             android:id="@+id/btnAdjust"
             android:contentDescription="@string/cd_adjust_selection"/>
 
-        <ImageView
+        <ImageButton
             android:id="@+id/btnRemoveLine"
             android:theme="@style/icon_button"
             app:srcCompat="@drawable/remove_line"
@@ -36,7 +36,7 @@
             android:layout_height="@dimen/icon_button_height"
             android:contentDescription="@string/cd_remove_channel"/>
 
-        <ImageView
+        <ImageButton
             android:theme="@style/icon_button"
             android:id="@+id/btnInsertLine"
             app:srcCompat="@drawable/insert_line"

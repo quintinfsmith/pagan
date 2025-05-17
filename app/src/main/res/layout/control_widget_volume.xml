@@ -25,7 +25,7 @@
         app:layout_constraintEnd_toStartOf="@+id/volume_transition_button"
         app:layout_constraintStart_toEndOf="@+id/volume_button" />
 
-    <ImageView
+    <ImageButton
         android:id="@+id/volume_transition_button"
         android:layout_width="@dimen/secondary_contextmenu_button_height"
         android:layout_height="@dimen/secondary_contextmenu_button_height"

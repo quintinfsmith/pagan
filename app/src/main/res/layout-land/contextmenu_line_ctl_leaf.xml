@@ -7,7 +7,7 @@
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageView
+    <ImageButton
         android:id="@+id/btnSplit"
         style="@style/icon_button"
         android:layout_gravity="center"
@@ -17,7 +17,7 @@
 
         app:srcCompat="@drawable/split"/>
 
-    <ImageView
+    <ImageButton
         android:id="@+id/btnInsert"
         style="@style/icon_button"
         android:layout_width="@dimen/icon_button_width"
@@ -26,7 +26,7 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/insert" />
 
-    <ImageView
+    <ImageButton
         style="@style/icon_button"
         android:id="@+id/btnRemove"
         android:layout_width="@dimen/icon_button_width"
@@ -35,7 +35,7 @@
         android:layout_marginTop="@dimen/number_selector_spacing"
         app:srcCompat="@drawable/remove" />
 
-    <ImageView
+    <ImageButton
         style="@style/icon_button"
         android:id="@+id/btnUnset"
         android:layout_width="@dimen/icon_button_width"

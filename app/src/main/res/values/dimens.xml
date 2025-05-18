@@ -55,5 +55,5 @@
     <dimen name="context_icon_size">32dp</dimen>
     <dimen name="contextmenu_icon_corner">16dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
-    <dimen name="config_icon_size">32dp</dimen>
+    <dimen name="config_icon_size">24dp</dimen>
 </resources>

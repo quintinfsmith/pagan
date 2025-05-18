@@ -3,13 +3,17 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import kotlin.math.roundToInt
 
 class ChannelOptionAdapter(
@@ -17,20 +21,6 @@ class ChannelOptionAdapter(
     private val _recycler: RecyclerView
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-
-    class BackLinkView(context: Context): LinearLayout(ContextThemeWrapper(context, R.style.song_config_button)) {
-        var view_holder: ChannelOptionViewHolder? = null
-        override fun onAttachedToWindow() {
-            super.onAttachedToWindow()
-            this.layoutParams.width = MATCH_PARENT
-            (this.layoutParams as ViewGroup.MarginLayoutParams).setMargins(
-                0,
-                0,
-                0,
-                this.context.resources.getDimension(R.dimen.config_item_padding).roundToInt()
-            )
-        }
-    }
 
     private var _channel_count = 0
     init {
@@ -48,37 +38,23 @@ class ChannelOptionAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelOptionViewHolder {
-        var context = parent.context
-        while (context !is MainActivity) {
-            context = (context as ContextThemeWrapper).baseContext
-        }
+        val wrapper: View = LayoutInflater.from(parent.context)
+            .inflate(
+                R.layout.config_channel_item,
+                parent,
+                false
+            )
 
-        val top_view = BackLinkView(ContextThemeWrapper(parent.context, R.style.recycler_option))
-        val btn_choose_instrument = TextView(ContextThemeWrapper(parent.context, R.style.recycler_option_instrument))
-        val btn_kill_channel = ImageView(ContextThemeWrapper(parent.context, R.style.recycler_option_x))
-        top_view.addView(btn_choose_instrument)
-        top_view.addView(btn_kill_channel)
-
-        btn_choose_instrument.layoutParams.width = 0
-        (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).weight = 1F
-        (btn_choose_instrument.layoutParams as LinearLayout.LayoutParams).gravity = Gravity.START
-
-        // Kludge. A Recent round of linting exposed an odd bug causing buttons to not actually
-        // match the parent width when at least one of the buttons has a long label
-        btn_choose_instrument.setMaxWidth(top_view.measuredWidth - top_view.paddingEnd - top_view.paddingStart - btn_kill_channel.measuredWidth)
-
-        return ChannelOptionViewHolder(top_view)
+        return ChannelOptionViewHolder(wrapper)
     }
 
     fun get_activity(): MainActivity {
         return this._recycler.context as MainActivity
     }
 
-    private fun set_text(view: BackLinkView, position: Int) {
-
+    private fun set_text(view: MaterialButton, position: Int) {
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
-
         val curChannel = opus_manager.get_channel(position)
 
         val defaults = activity.resources.getStringArray(R.array.midi_instruments)
@@ -89,8 +65,8 @@ class ChannelOptionAdapter(
         } else {
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
-        val label_view = (view.getChildAt(0) as TextView)
-        label_view.text = if (!this._opus_manager.is_percussion(position)) {
+
+        view.text = if (!this._opus_manager.is_percussion(position)) {
             activity.getString(R.string.label_choose_instrument, position, label)
         } else {
             activity.getString(R.string.label_choose_instrument_percussion, label)
@@ -98,14 +74,16 @@ class ChannelOptionAdapter(
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
-        (holder.itemView as BackLinkView).view_holder = holder
-        this.set_text(holder.itemView as BackLinkView, position)
+        val wrapper = holder.itemView
+        val option_button = wrapper.findViewById<MaterialButton>(R.id.btnLabel)
+        val remove_button = wrapper.findViewById<ImageView>(R.id.btnClose)
+
+        this.set_text(option_button, position)
 
         (holder.itemView as ViewGroup).getChildAt(0).setOnClickListener {
-            this.interact_btnChooseInstrument(holder.itemView as BackLinkView)
+            this.interact_btnChooseInstrument(position)
         }
 
-        val remove_button = (holder.itemView as ViewGroup).getChildAt(1) as ImageView
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
 
@@ -118,28 +96,26 @@ class ChannelOptionAdapter(
                 }
             )
             remove_button.setOnClickListener {
-                this.interact_btnTogglePercussionVisibility(holder.itemView as BackLinkView)
+                this.interact_btnTogglePercussionVisibility()
             }
         } else {
             remove_button.setImageResource(R.drawable.delete_channel)
             remove_button.setOnClickListener {
-                this.interact_btnRemoveChannel(holder.itemView as BackLinkView)
+                this.interact_btnRemoveChannel(position)
             }
         }
     }
 
-    private fun interact_btnTogglePercussionVisibility(view: BackLinkView) {
+    private fun interact_btnTogglePercussionVisibility() {
         this.get_activity().get_action_interface().toggle_percussion_visibility()
     }
 
-    private fun interact_btnRemoveChannel(view: BackLinkView) {
-        val x = view.view_holder?.bindingAdapterPosition ?: return
-        this.get_activity().get_action_interface().remove_channel(x)
+    private fun interact_btnRemoveChannel(c: Int) {
+        this.get_activity().get_action_interface().remove_channel(c)
     }
 
-    private fun interact_btnChooseInstrument(view: BackLinkView) {
-        val channel = view.view_holder?.bindingAdapterPosition ?: return
-        this.get_activity().get_action_interface().set_channel_instrument(channel)
+    private fun interact_btnChooseInstrument(c: Int) {
+        this.get_activity().get_action_interface().set_channel_instrument(c)
     }
 
     override fun getItemCount(): Int {

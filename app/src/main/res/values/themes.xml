@@ -10,6 +10,8 @@
         <item name="colorPrimaryDark">@color/primary</item>
         <item name="android:textColorPrimary">@color/primary_text</item>
 
+        <item name="colorSurface">@color/primary</item>
+
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="actionOverflowMenuStyle">@style/overflow_menu</item>
         <item name="actionOverflowButtonStyle">@style/overflow_button</item>
@@ -34,6 +36,7 @@
     <style name="overflow_button" parent="Widget.Material3.Search.ActionButton.Overflow">
         <item name="android:tint">@color/primary_text</item>
     </style>
+
     <style name="Theme.Pagan.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

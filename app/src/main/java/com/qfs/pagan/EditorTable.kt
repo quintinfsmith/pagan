@@ -2,6 +2,9 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
@@ -20,18 +23,18 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     //private val _row_height_map = mutableListOf<Int>()
     val line_label_layout = LineLabelColumnLayout(this)
     internal var table_ui = TableUI(this)
-    private val _spacer = CornerView(context)
+    private val _spacer: LinearLayout = LayoutInflater.from(context).inflate(R.layout.corner, this, false) as LinearLayout
     private val _first_column = LinearLayout(context, attrs)
 
     init {
-        this._spacer.getChildAt(0).setOnClickListener {
+        this._spacer.setOnClickListener {
             val fragment = this.get_activity().get_active_fragment()
             if (fragment is FragmentEditor) {
                 fragment.shortcut_dialog()
             }
         }
 
-        this._spacer.getChildAt(0).setOnLongClickListener {
+        this._spacer.setOnLongClickListener {
             this.get_opus_manager().cursor_select_column(0)
             true
         }

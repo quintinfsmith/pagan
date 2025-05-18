@@ -1,9 +1,11 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.drawable.shapes.RoundRectShape
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -76,8 +78,7 @@ class ChannelOptionAdapter(
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
         val wrapper = holder.itemView
         val option_button = wrapper.findViewById<MaterialButton>(R.id.btnLabel)
-        val remove_button = wrapper.findViewById<ImageView>(R.id.btnClose)
-
+        val remove_button = wrapper.findViewById<MaterialButton>(R.id.btnClose)
         this.set_text(option_button, position)
 
         option_button.setOnClickListener {
@@ -88,7 +89,7 @@ class ChannelOptionAdapter(
         val opus_manager = activity.get_opus_manager()
 
         if (this._opus_manager.is_percussion(position)) {
-            remove_button.setImageResource(
+            remove_button.setIconResource(
                 if (opus_manager.percussion_channel.visible) {
                     R.drawable.show_percussion
                 } else {
@@ -96,7 +97,7 @@ class ChannelOptionAdapter(
                 }
             )
         } else {
-            remove_button.setImageResource(R.drawable.delete_channel)
+            remove_button.setIconResource(R.drawable.delete_channel)
         }
         remove_button.setOnClickListener {
             if (this._opus_manager.is_percussion(holder.layoutPosition)) {

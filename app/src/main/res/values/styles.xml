@@ -20,8 +20,8 @@
     </style>
 
     <style name="recycler_option_instrument" parent="recycler_option_text">
-        <item name="android:paddingStart">0dp</item>
-        <item name="android:paddingEnd">0dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
     </style>
 
     <style name="recycler_option_x" parent="recycler_option_text">

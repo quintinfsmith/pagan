@@ -20,7 +20,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
-import com.google.android.material.navigation.NavigationBarView
 import com.qfs.pagan.ContextMenu.ContextMenuChannel
 import com.qfs.pagan.ContextMenu.ContextMenuColumn
 import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
@@ -814,7 +813,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }
         })
 
-        val dialog_builder = AlertDialog.Builder(activity)
+        val dialog_builder = AlertDialog.Builder(activity, R.style.Theme_Pagan_Dialog)
         dialog_builder.setView(view)
         val dialog = dialog_builder.show()
 

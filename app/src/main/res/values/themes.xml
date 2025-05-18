@@ -10,7 +10,9 @@
         <item name="colorPrimaryDark">@color/primary</item>
         <item name="android:textColorPrimary">@color/primary_text</item>
 
-        <item name="colorSurface">@color/primary</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceContainer">@color/surface_container</item>
 
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="actionOverflowMenuStyle">@style/overflow_menu</item>
@@ -31,7 +33,6 @@
     </style>
 
     <style name="overflow_menu" parent="Widget.Material3.PopupMenu.ListPopupWindow">
-        <item name="android:popupBackground">@drawable/toolbar_overflow_menu</item>
     </style>
     <style name="overflow_button" parent="Widget.Material3.Search.ActionButton.Overflow">
         <item name="android:tint">@color/primary_text</item>
@@ -52,7 +53,8 @@
     </style>
     <style name="Theme.Pagan.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="android:windowIsFloating">true</item>
-        <item name="android:background">@color/main_bg</item>
+        <item name="android:background">?attr/colorSurfaceContainer</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="materialAlertDialogTitleTextStyle">@style/Theme.Pagan.Dialog.Title</item>
         <item name="materialAlertDialogBodyTextStyle">@style/Theme.Pagan.Dialog.Text</item>
         <item name="android:buttonBarPositiveButtonStyle">@style/Theme.Pagan.Dialog.PositiveButton</item>

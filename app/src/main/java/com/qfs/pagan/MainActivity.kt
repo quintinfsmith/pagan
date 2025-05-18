@@ -7,14 +7,11 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.Cursor
-import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
@@ -32,7 +29,6 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.MarginLayoutParams
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.ImageView
@@ -47,11 +43,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
@@ -63,6 +59,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -78,6 +75,7 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -93,13 +91,10 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.floor
-import kotlin.math.roundToInt
-import com.qfs.pagan.OpusLayerInterface as OpusManager
-import androidx.core.net.toUri
-import com.google.android.material.button.MaterialButton
-import com.qfs.pagan.ActionTracker.TrackedAction
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
+import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -1001,11 +996,6 @@ class MainActivity : AppCompatActivity() {
         this.view_model.opus_manager.attach_activity(this)
 
         val toolbar = this._binding.appBarMain.toolbar
-        //toolbar.popupTheme = R.style.popup_theme
-        toolbar.backgroundTintList = ColorStateList(
-            arrayOf(),
-            intArrayOf(Color.BLUE)
-        )
 
         toolbar.setOnLongClickListener {
             this.get_action_interface().set_project_name_and_notes()

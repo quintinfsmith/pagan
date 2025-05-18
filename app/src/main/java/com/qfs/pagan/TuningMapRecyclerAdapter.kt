@@ -29,7 +29,7 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
         wrapper.removeAllViews()
 
         val pair = this.tuning_map[position]
-        val number_label_view = TextView(use_context)
+        val number_label_view = TextView(ContextThemeWrapper(use_context, R.style.tuning_map_item_label))
         number_label_view.text = use_context.getString(R.string.label_tuning_index, position)
 
         val numerator_view = RangedIntegerInput(use_context)
@@ -48,9 +48,6 @@ class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerV
         denominator_view.minEms = 2
 
         wrapper.addView(number_label_view)
-        number_label_view.layoutParams.width = 0
-        (number_label_view.layoutParams as LinearLayout.LayoutParams).weight = 1f
-
         wrapper.addView(numerator_view)
         wrapper.addView(slash_view)
         wrapper.addView(denominator_view)

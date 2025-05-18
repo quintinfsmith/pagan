@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="app_bar">
+        <item name="textColor">#FF0000</item>
+    </style>
     <style name="recycler_option" parent="button">
         <item name="android:gravity">center</item>
         <item name="android:clickable">true</item>
@@ -211,9 +214,14 @@
 
     <style name="tuning_map_item">
         <item name="android:gravity">center</item>
-        <item name="android:paddingStart">8dp</item>
-        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
+    </style>
+    <style name="tuning_map_item_label">
+        <item name="android:paddingEnd">24dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">18sp</item>
     </style>
 
     <style name="control_widget">

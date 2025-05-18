@@ -6,11 +6,6 @@
     android:layout_marginEnd="@dimen/primary_contextmenu_padding_start"
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
-        <Space
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"/>
-
         <Button
             android:id="@+id/btnSplit"
             style="@style/contextmenu_button"
@@ -18,9 +13,8 @@
             app:icon="@drawable/split"/>
 
         <Space
-            android:layout_weight="1"
             android:layout_width="match_parent"
-            android:layout_height="0dp"/>
+            android:layout_height="2dp"/>
 
         <Button
             android:id="@+id/btnInsert"
@@ -29,9 +23,8 @@
             app:icon="@drawable/insert" />
 
         <Space
-            android:layout_weight="1"
             android:layout_width="match_parent"
-            android:layout_height="0dp"/>
+            android:layout_height="2dp"/>
 
         <Button
             android:id="@+id/btnRemove"
@@ -40,19 +33,18 @@
             app:icon="@drawable/remove" />
 
         <Space
-            android:layout_weight="1"
             android:layout_width="match_parent"
-            android:layout_height="0dp"/>
+            android:layout_height="2dp"/>
 
         <Button
             android:id="@+id/btnUnset"
             style="@style/contextmenu_button"
             android:contentDescription="@string/cd_unset"
             app:icon="@drawable/unset" />
+
         <Space
-            android:layout_weight="1"
             android:layout_width="match_parent"
-            android:layout_height="0dp"/>
+            android:layout_height="2dp"/>
 
         <Button
             android:contentDescription="@string/cd_set_event_duration"
@@ -61,9 +53,4 @@
             android:layout_height="wrap_content"
             android:id="@+id/btnDuration"
             style="@style/contextmenu_button"/>
-
-        <Space
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"/>
 </LinearLayout>

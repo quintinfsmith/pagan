@@ -80,8 +80,8 @@ class ChannelOptionAdapter(
 
         this.set_text(option_button, position)
 
-        (holder.itemView as ViewGroup).getChildAt(0).setOnClickListener {
-            this.interact_btnChooseInstrument(position)
+        option_button.setOnClickListener {
+            this.interact_btnChooseInstrument(holder.layoutPosition)
         }
 
         val activity = this.get_activity()
@@ -95,13 +95,14 @@ class ChannelOptionAdapter(
                     R.drawable.hide_percussion
                 }
             )
-            remove_button.setOnClickListener {
-                this.interact_btnTogglePercussionVisibility()
-            }
         } else {
             remove_button.setImageResource(R.drawable.delete_channel)
-            remove_button.setOnClickListener {
-                this.interact_btnRemoveChannel(position)
+        }
+        remove_button.setOnClickListener {
+            if (this._opus_manager.is_percussion(holder.layoutPosition)) {
+                this.interact_btnTogglePercussionVisibility()
+            } else {
+                this.interact_btnRemoveChannel(holder.layoutPosition)
             }
         }
     }
@@ -132,13 +133,13 @@ class ChannelOptionAdapter(
     }
 
     fun remove_channel(channel: Int) {
+        this.notifyItemRangeChanged(channel, this._channel_count)
         this._channel_count -= 1
-        this.notifyItemRemoved(channel)
     }
 
     fun clear() {
-        this._channel_count = 0
         this.notifyItemRangeChanged(0, this._channel_count)
+        this._channel_count = 0
     }
 
     fun setup() {

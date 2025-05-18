@@ -1322,17 +1322,16 @@ class ActionTracker {
     }
 
     fun remove_channel(index: Int? = null) {
-        this.track(TrackedAction.RemoveChannel, listOf(index ?: - 1))
-
+        this.track(TrackedAction.RemoveChannel, listOf(index ?: 0))
         val opus_manager = this.get_opus_manager()
-        if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+        if (opus_manager.is_percussion(index ?: 0)) {
             try {
-                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
+                opus_manager.toggle_channel_visibility(index ?: 0)
             } catch (e: OpusLayerInterface.HidingLastChannelException) {
                 // pass
             }
         } else if (opus_manager.channels.isNotEmpty()) {
-            opus_manager.remove_channel(opus_manager.cursor.channel)
+            opus_manager.remove_channel(index ?: 0)
         }
     }
 

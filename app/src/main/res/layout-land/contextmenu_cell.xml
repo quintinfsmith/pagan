@@ -23,11 +23,6 @@
                 android:layout_height="match_parent"
                 android:layout_marginEnd="@dimen/primary_contextmenu_padding_start">
 
-                <Space
-                    android:layout_weight="1"
-                    android:layout_height="0dp"
-                    android:layout_width="@dimen/icon_spacing"/>
-
                 <Button
                     android:id="@+id/btnSplit"
                     android:contentDescription="@string/cd_split"
@@ -35,9 +30,8 @@
                     app:icon="@drawable/split"/>
 
                 <Space
-                    android:layout_weight="1"
-                    android:layout_height="0dp"
-                    android:layout_width="@dimen/icon_spacing"/>
+                    android:layout_height="2dp"
+                    android:layout_width="wrap_content"/>
 
                 <Button
                     android:id="@+id/btnInsert"
@@ -46,9 +40,8 @@
                     app:icon="@drawable/insert" />
 
                 <Space
-                    android:layout_weight="1"
-                    android:layout_height="0dp"
-                    android:layout_width="@dimen/icon_spacing"/>
+                    android:layout_height="2dp"
+                    android:layout_width="wrap_content"/>
 
                 <Button
                     android:id="@+id/btnRemove"
@@ -57,9 +50,8 @@
                     app:icon="@drawable/remove" />
 
                 <Space
-                    android:layout_weight="1"
-                    android:layout_height="0dp"
-                    android:layout_width="@dimen/icon_spacing"/>
+                    android:layout_height="2dp"
+                    android:layout_width="wrap_content"/>
 
                 <Button
                     android:id="@+id/btnUnset"
@@ -68,9 +60,8 @@
                     app:icon="@drawable/unset"/>
 
                 <Space
-                    android:layout_weight="1"
-                    android:layout_height="0dp"
-                    android:layout_width="@dimen/icon_spacing"/>
+                    android:layout_height="2dp"
+                    android:layout_width="wrap_content"/>
 
                 <Button
                     android:id="@+id/btnDuration"
@@ -79,11 +70,6 @@
                     style="@style/contextmenu_button"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"/>
-
-                <Space
-                    android:layout_weight="1"
-                    android:layout_height="0dp"
-                    android:layout_width="@dimen/icon_spacing"/>
             </LinearLayout>
 
             <com.qfs.pagan.NumberSelector

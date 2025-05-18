@@ -8,11 +8,6 @@
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
 
-    <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_width="match_parent" />
-
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnInsertLine"
@@ -20,8 +15,7 @@
         android:contentDescription="@string/cd_insert_channel" />
 
     <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="2dp"
         android:layout_width="match_parent" />
 
     <Button
@@ -31,19 +25,17 @@
         android:contentDescription="@string/cd_remove_channel" />
 
     <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="2dp"
         android:layout_width="match_parent" />
 
     <Button
         style="@style/contextmenu_button"
-        android:src="@drawable/adjust"
+        app:icon="@drawable/adjust"
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
 
     <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="2dp"
         android:layout_width="match_parent" />
 
     <Button

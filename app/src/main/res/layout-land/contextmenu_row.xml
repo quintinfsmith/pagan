@@ -7,12 +7,6 @@
     android:layout_marginEnd="@dimen/primary_contextmenu_padding_start"
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
-
-    <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_width="0dp" />
-
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnInsertLine"
@@ -20,9 +14,8 @@
         android:contentDescription="@string/cd_insert_line" />
 
     <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_width="0dp" />
+        android:layout_height="2dp"
+        android:layout_width="match_parent" />
 
     <Button
         style="@style/contextmenu_button"
@@ -31,9 +24,8 @@
         android:contentDescription="@string/cd_remove_line" />
 
     <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_width="0dp" />
+        android:layout_height="2dp"
+        android:layout_width="match_parent" />
 
     <Button
         style="@style/contextmenu_button"
@@ -51,20 +43,14 @@
         android:text="" />
 
     <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_width="0dp" />
+        android:layout_height="2dp"
+        android:layout_width="match_parent" />
 
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnToggleChannelCtl"
         app:icon="@drawable/ctl"
         android:contentDescription="@string/cd_show_effect_controls"/>
-
-    <Space
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_width="0dp" />
 
     <Space
         android:id="@+id/spacer"

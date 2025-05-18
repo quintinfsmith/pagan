@@ -1585,49 +1585,6 @@ class MainActivity : AppCompatActivity() {
         return output
     }
 
-    internal fun _adjust_dialog_colors(dialog: AlertDialog) {
-        // TODO: Double check the necessity of this funcction
-        dialog.window!!.decorView.background.setTint(getColor(R.color.main_bg))
-        val padding = this.resources.getDimension(R.dimen.alert_padding).roundToInt()
-        dialog.window!!.decorView.setPadding(padding, padding, padding, padding)
-
-        val resources = this.resources
-
-        dialog.getButton(DialogInterface.BUTTON_NEGATIVE).apply {
-            (this.layoutParams as MarginLayoutParams).marginEnd = this@MainActivity.resources.getDimension(R.dimen.alert_padding).toInt()
-            this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
-
-            this.backgroundTintList = null
-            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button_alt)
-            this.setTextColor(getColor(R.color.button_alt_text))
-            this.setPadding(
-                resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
-                resources.getDimension(R.dimen.alert_button_padding_top).roundToInt(),
-                resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
-                resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
-            )
-        }
-
-        dialog.getButton(DialogInterface.BUTTON_NEUTRAL).apply {
-            this.backgroundTintList = null
-            this.background = null
-            this.setTextColor(getColor(R.color.main_fg))
-        }
-
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).apply {
-            this.backgroundTintList = null
-            this.background = AppCompatResources.getDrawable(this@MainActivity, R.drawable.button)
-            this.setTextColor(getColor(R.color.button_text))
-            this.layoutParams.height = resources.getDimension(R.dimen.alert_button_height).roundToInt()
-            this.setPadding(
-                resources.getDimension(R.dimen.alert_button_padding_left).roundToInt(),
-                resources.getDimension(R.dimen.alert_button_padding_top).roundToInt(),
-                resources.getDimension(R.dimen.alert_button_padding_right).roundToInt(),
-                resources.getDimension(R.dimen.alert_button_padding_bottom).roundToInt()
-            )
-        }
-    }
-
     internal fun setup_project_config_drawer_export_button() {
         val export_options = this.get_exportable_options()
         val export_button = this.findViewById<MaterialButton>(R.id.btnExportProject) ?: return
@@ -2116,19 +2073,17 @@ class MainActivity : AppCompatActivity() {
         val text_input: EditText = viewInflated.findViewById(R.id.etText)
         text_input.setText(default ?: "")
 
-        this._adjust_dialog_colors(
-            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setView(viewInflated)
-                .setTitle(title)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    callback(text_input.text.toString())
-                    dialog.dismiss()
-                }
-                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-        )
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setView(viewInflated)
+            .setTitle(title)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                callback(text_input.text.toString())
+                dialog.dismiss()
+            }
+            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
     }
 
     fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, callback: (String, String) -> Unit) {
@@ -2147,18 +2102,16 @@ class MainActivity : AppCompatActivity() {
         val project_notes_input: EditText = viewInflated.findViewById(R.id.etProjectNotes)
         project_notes_input.setText(default?.second ?: "")
 
-        this._adjust_dialog_colors(
-            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setView(viewInflated)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    callback(project_name_input.text.toString(), project_notes_input.text.toString())
-                    dialog.dismiss()
-                }
-                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-        )
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                callback(project_name_input.text.toString(), project_notes_input.text.toString())
+                dialog.dismiss()
+            }
+            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
     }
 
     internal fun dialog_popup_selection_offset() {
@@ -2168,7 +2121,6 @@ class MainActivity : AppCompatActivity() {
                 window.decorView.rootView as ViewGroup,
                 false
             )
-
 
         val np_octave = view_inflated.findViewById<NumberPicker>(R.id.npOctave)
         np_octave.maxValue = 14
@@ -2190,7 +2142,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         this._popup_active = true
-        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setView(view_inflated)
             .setTitle(R.string.dialog_adjust_selection)
             .setOnDismissListener {
@@ -2211,8 +2163,6 @@ class MainActivity : AppCompatActivity() {
                 dialog.cancel()
             }
             .show()
-
-        this._adjust_dialog_colors(dialog)
     }
 
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {
@@ -2233,11 +2183,8 @@ class MainActivity : AppCompatActivity() {
             )
 
         val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
-        val title_view = viewInflated.findViewById<TextView>(R.id.tvTitle)
-
-        title_view.text = title
-
-        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+        val dialog = AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle(title)
             .setView(viewInflated)
             .setOnDismissListener {
                 this._popup_active = false
@@ -2246,9 +2193,6 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .show()
-
-        this._adjust_dialog_colors(dialog)
-
 
         val adapter = PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
             dialog.dismiss()
@@ -2279,7 +2223,7 @@ class MainActivity : AppCompatActivity() {
 
         val number_input = viewInflated.findViewById<RangedFloatInput>(R.id.etNumber)
 
-        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
+        val dialog = AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setCustomTitle(this._build_dialog_title_view(title))
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -2289,7 +2233,6 @@ class MainActivity : AppCompatActivity() {
             }
             .setNeutralButton(android.R.string.cancel) { _, _ -> }
             .show()
-        this._adjust_dialog_colors(dialog)
 
         number_input.set_range(min_value, max_value)
         number_input.setText("$coerced_default_value")
@@ -2317,8 +2260,8 @@ class MainActivity : AppCompatActivity() {
 
         val number_input = viewInflated.findViewById<RangedIntegerInput>(R.id.etNumber)
 
-        val dialog = AlertDialog.Builder(this, R.style.AlertDialog)
-            .setCustomTitle(this._build_dialog_title_view(title))
+        val dialog = AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle(title)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val output_value = number_input.get_value() ?: coerced_default_value
@@ -2327,7 +2270,6 @@ class MainActivity : AppCompatActivity() {
             }
             .setNeutralButton(android.R.string.cancel) { _, _ -> }
             .show()
-        this._adjust_dialog_colors(dialog)
 
         number_input.set_range(min_value, max_value)
         number_input.setText("$coerced_default_value")
@@ -2345,9 +2287,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun dialog_confirm(title: String, callback: () -> Unit) {
-        this._adjust_dialog_colors(
-        AlertDialog.Builder(this, R.style.AlertDialog)
-            .setCustomTitle(this._build_dialog_title_view(title))
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle(title)
             .setCancelable(true)
             .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
                 dialog.dismiss()
@@ -2357,7 +2298,6 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .show()
-        )
     }
 
     private fun needs_save(): Boolean {
@@ -2378,21 +2318,19 @@ class MainActivity : AppCompatActivity() {
 
     fun dialog_save_project(callback: (Boolean) -> Unit) {
         if (this.needs_save()) {
-            this._adjust_dialog_colors(
-                AlertDialog.Builder(this, R.style.AlertDialog)
-                    .setCustomTitle(this._build_dialog_title_view(getString(R.string.dialog_save_warning_title)))
-                    .setCancelable(true)
-                    .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
-                        this@MainActivity.project_save()
-                        dialog.dismiss()
-                        callback(true)
-                    }
-                    .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
-                        dialog.dismiss()
-                        callback(false)
-                    }
-                    .show()
-            )
+            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+                .setTitle(R.string.dialog_save_warning_title)
+                .setCancelable(true)
+                .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                    this@MainActivity.project_save()
+                    dialog.dismiss()
+                    callback(true)
+                }
+                .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                    dialog.dismiss()
+                    callback(false)
+                }
+                .show()
         } else {
             callback(false)
         }
@@ -2402,18 +2340,17 @@ class MainActivity : AppCompatActivity() {
         val main_fragment = this.get_active_fragment()
 
         val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
-        this._adjust_dialog_colors(
-            AlertDialog.Builder(main_fragment!!.context, R.style.AlertDialog)
-                .setCustomTitle(this._build_dialog_title_view(resources.getString(R.string.dlg_delete_title, title)))
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    this@MainActivity.get_action_interface().delete()
-                    dialog.dismiss()
-                }
-                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-        )
+
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle(resources.getString(R.string.dlg_delete_title, title))
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                this@MainActivity.get_action_interface().delete()
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
     }
 
     fun select_import_file() {
@@ -2500,21 +2437,19 @@ class MainActivity : AppCompatActivity() {
         val path = this.getExternalFilesDir(null).toString()
         val file = File("$path/bkp_crashreport.log")
         if (file.isFile) {
-            this._adjust_dialog_colors(
-                AlertDialog.Builder(this, R.style.AlertDialog)
-                    .setCustomTitle(this._build_dialog_title_view(getString(R.string.crash_report_save)))
-                    .setMessage(R.string.crash_report_desc)
-                    .setCancelable(true)
-                    .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
-                        export_crash_report()
-                        dialog.dismiss()
-                    }
-                    .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
-                        file.delete()
-                        dialog.dismiss()
-                    }
-                    .show()
-            )
+            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+               .setTitle(R.string.crash_report_save)
+                .setMessage(R.string.crash_report_desc)
+                .setCancelable(true)
+                .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                    export_crash_report()
+                    dialog.dismiss()
+                }
+                .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                    file.delete()
+                    dialog.dismiss()
+                }
+                .show()
         }
     }
 

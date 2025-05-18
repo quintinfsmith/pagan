@@ -1,36 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
+    android:padding="@dimen/dialog_name_and_notes_padding"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <TextView
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/dlg_project_name"/>
+        android:theme="@style/Theme.Pagan.EditText">
 
-    <EditText
-        android:gravity="left|top"
-        android:id="@+id/etProjectName"
-        android:theme="@style/Theme.Pagan.EditText"
+        <com.google.android.material.textfield.TextInputEditText
+            android:gravity="left|top"
+            android:id="@+id/etProjectName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/dlg_project_name"
+            android:inputType="textShortMessage" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dialog_name_and_notes_padding"/>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textShortMessage" />
+        android:theme="@style/Theme.Pagan.EditText">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/dlg_project_notes"/>
+        <com.google.android.material.textfield.TextInputEditText
+            android:gravity="left|top"
+            android:inputType="textMultiLine"
+            android:minLines="5"
+            android:minEms="32"
+            android:hint="@string/dlg_project_notes"
+            android:id="@+id/etProjectNotes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </com.google.android.material.textfield.TextInputLayout>
 
-    <EditText
-        android:gravity="left|top"
-        android:inputType="textMultiLine"
-        android:paddingTop="0dp"
-        android:minLines="5"
-        android:minEms="32"
-        android:id="@+id/etProjectNotes"
-        android:theme="@style/Theme.Pagan.EditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
 
 </LinearLayout>

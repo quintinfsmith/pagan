@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -2415,10 +2416,8 @@ class ActionTracker {
         rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
 
 
-        val dialog = AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-            .setCustomTitle(activity._build_dialog_title_view(
-                activity.resources.getString(R.string.dlg_tuning)
-            ))
+        AlertDialog.Builder(activity, R.style.Theme_Pagan_Dialog)
+            .setTitle(R.string.dlg_tuning)
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 val tuning_map = (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
@@ -2431,9 +2430,6 @@ class ActionTracker {
                 dialog.cancel()
             }
             .show()
-
-        activity._adjust_dialog_colors(dialog)
-
 
         val default_value = opus_manager.tuning_map.size
 

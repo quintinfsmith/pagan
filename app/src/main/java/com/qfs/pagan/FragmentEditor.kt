@@ -817,7 +817,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val dialog_builder = AlertDialog.Builder(activity)
         dialog_builder.setView(view)
         val dialog = dialog_builder.show()
-        this.get_activity()._adjust_dialog_colors(dialog)
 
         if (opus_manager.marked_sections.isEmpty()) {
             spinner.visibility = View.GONE

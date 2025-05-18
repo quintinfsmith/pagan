@@ -4,16 +4,6 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <TextView
-        android:padding="8dp"
-        android:id="@+id/tvTitle"
-        style="@style/dialog_title"
-        android:gravity="top|center_horizontal"
-        android:textSize="@dimen/dropdown_title_textsize"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
     <com.qfs.pagan.PopupMenuRecyclerView
         android:id="@+id/rvOptions"
         android:paddingBottom="8dp"

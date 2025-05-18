@@ -193,8 +193,8 @@
     <string name="export_option_wav_lines">WAV Files (Lines)</string>
     <string name="export_option_wav_channels">WAV Files (Channels)</string>
     <string name="cd_adjust_selection">Adjust Selection</string>
-    <string name="dlg_project_name">Project Name:</string>
-    <string name="dlg_project_notes">Project Notes:</string>
+    <string name="dlg_project_name">Project Name</string>
+    <string name="dlg_project_notes">Project Notes</string>
     <string name="label_settings_allow_std_percussion">Use percussion as standard instrument</string>
     <string name="cd_mark_section">Tag Section</string>
     <string name="cd_remove_section_mark">Remove Section Tag</string>

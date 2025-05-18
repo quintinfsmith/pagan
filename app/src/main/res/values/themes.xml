@@ -50,9 +50,37 @@
     </style>
     <style name="Theme.Pagan.Button" parent="ThemeOverlay.Material3.Button">
     </style>
-    <style name="Theme.Pagan.EditText" parent="Widget.AppCompat.EditText">
-        <item name="android:textColorPrimary">@color/main_fg</item>
-        <item name="android:colorAccent">@color/leaf_main</item>
-        <item name="android:colorControlActivated">@color/leaf_main</item>
+    <style name="Theme.Pagan.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:background">@color/main_bg</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/Theme.Pagan.Dialog.Title</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/Theme.Pagan.Dialog.Text</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/Theme.Pagan.Dialog.PositiveButton</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/Theme.Pagan.Dialog.NegativeButton</item>
+        <item name="android:buttonBarNeutralButtonStyle">@style/Theme.Pagan.Dialog.NeutralButton</item>
+        <item name="android:editTextStyle">@style/Theme.Pagan.EditText</item>
     </style>
+
+    <style name="Theme.Pagan.EditText" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="colorPrimary">@color/empty_selected</item>
+        <item name="android:textColorPrimary">@color/main_fg</item>
+        <item name="android:textColor">@color/main_fg</item>
+        <item name="android:editTextColor">@color/main_fg</item>
+        <item name="colorControlActivated">@color/empty_selected</item>
+        <item name="colorOutline">@color/main_fg</item>
+        <item name="cornerSize">12dp</item>
+        <item name="cornerFamily">rounded</item>
+    </style>
+    <style name="Theme.Pagan.Dialog.Title" parent="MaterialAlertDialog.Material3.Title.Text">
+    </style>
+    <style name="Theme.Pagan.Dialog.Text" parent="MaterialAlertDialog.Material3.Body.Text">
+    </style>
+    <style name="Theme.Pagan.Dialog.PositiveButton" parent="Theme.Pagan.Button">
+    </style>
+    <style name="Theme.Pagan.Dialog.NegativeButton" parent="Theme.Pagan.Button"> </style>
+    <style name="Theme.Pagan.Dialog.NeutralButton" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/main_fg</item>
+        <item name="colorOutline">@color/main_fg</item>
+    </style>
+
 </resources>

@@ -14,24 +14,16 @@
         <item name="android:paddingBottom">0dp</item>
     </style>
 
-    <style name="recycler_option_text">
+    <style name="recycler_option_instrument" parent="Widget.Material3.Button.IconButton.Filled">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Material3.Corner.Left</item>
         <item name="android:textSize">16sp</item>
         <item name="android:inset">0dp</item>
     </style>
 
-    <style name="recycler_option_instrument" parent="recycler_option_text">
-        <item name="android:paddingStart">12dp</item>
-        <item name="android:paddingEnd">12dp</item>
-    </style>
-
-    <style name="recycler_option_x" parent="recycler_option_text">
-        <item name="android:padding">8dp</item>
-        <item name="android:paddingStart">0dp</item>
-        <item name="android:paddingEnd">0dp</item>
-        <item name="android:layout_width">38dp</item>
-        <item name="iconPadding">0dp</item>
-        <item name="iconSize">@dimen/config_icon_size</item>
-        <item name="iconGravity">textStart</item>
+    <style name="recycler_option_x" parent="Widget.Material3.Button.IconButton.Filled">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Material3.Corner.Right</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_width">wrap_content</item>
     </style>
 
     <style name="button_labelled_inner">
@@ -60,7 +52,7 @@
         <item name="android:textSize">18sp</item>
     </style>
 
-    <style name="song_config_button" parent="Theme.Pagan.Button">
+    <style name="song_config_button" parent="Widget.Material3.Button.IconButton.Filled">
         <item name="android:layout_width">@dimen/config_button_width</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:inset">0dp</item>
@@ -75,7 +67,7 @@
         <item name="android:padding">10sp</item>
     </style>
 
-    <style name="contextmenu_button">
+    <style name="contextmenu_button" parent="Widget.Material3.Button.IconButton.Filled">
         <item name="android:layout_width">@dimen/icon_button_width</item>
         <item name="android:layout_height">@dimen/icon_button_height</item>
         <item name="android:inset">0dp</item>
@@ -97,10 +89,6 @@
         <item name="iconPadding">0dp</item>
         <item name="iconSize">@dimen/context_icon_size</item>
         <item name="iconGravity">textStart</item>
-    </style>
-
-    <style name="edittext" parent="@android:style/Widget.EditText">
-        <item name="android:foregroundTint">@color/leaf_main</item>
     </style>
 
     <style name="leaf">
@@ -151,17 +139,6 @@
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:padding">8dp</item>
-    </style>
-
-    <style name="AlertDialog.PositiveButton">
-    </style>
-
-    <style name="AlertDialog.NegativeButton">
-    </style>
-
-    <style name="AlertDialog" >
-        <item name="android:windowIsFloating">true</item>
-        <item name="android:textColorPrimary">@color/main_fg</item>
     </style>
 
     <style name="dialog_title">

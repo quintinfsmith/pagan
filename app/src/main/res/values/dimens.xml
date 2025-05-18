@@ -32,6 +32,7 @@
     <dimen name="icon_button_padding_b">4dp</dimen>
     <dimen name="channel_conf_icon_height">24dp</dimen>
 
+    <dimen name="icon_spacing">4dp</dimen>
     <dimen name="primary_contextmenu_padding_top">4dp</dimen>
     <dimen name="primary_contextmenu_padding_start">4dp</dimen>
     <dimen name="primary_contextmenu_padding_end">2dp</dimen>
@@ -51,4 +52,8 @@
     <dimen name="octave_label_padding_x">3dp</dimen>
 
     <dimen name="landing_button_space">3dp</dimen>
+    <dimen name="context_icon_size">32dp</dimen>
+    <dimen name="contextmenu_icon_corner">16dp</dimen>
+    <dimen name="config_icon_corner">10dp</dimen>
+    <dimen name="config_icon_size">32dp</dimen>
 </resources>

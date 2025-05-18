@@ -4,22 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/llContextCol"
+    android:layout_marginBottom="@dimen/primary_contextmenu_padding_top"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:src="@drawable/tag"
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/tag"
         android:id="@+id/btnTag"
-        android:layout_marginEnd="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_mark_section"/>
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:src="@drawable/untag"
+
+    <Space
+        android:layout_width="2dp"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/untag"
         android:id="@+id/btnUntag"
-        android:layout_marginEnd="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_remove_section_mark"/>
 
     <Space
@@ -27,31 +27,29 @@
         android:layout_weight="1"
         android:layout_height="wrap_content"/>
 
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:src="@drawable/adjust"
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/adjust"
         android:id="@+id/btnAdjust"
-        android:layout_marginEnd="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_adjust_selection"/>
 
-    <ImageButton
-        android:theme="@style/icon_button"
+    <Space
+        android:layout_width="2dp"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnRemoveBeat"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        app:srcCompat="@drawable/remove_beat"
-        android:layout_marginEnd="@dimen/number_selector_spacing"
+        app:icon="@drawable/remove_beat"
         android:contentDescription="@string/cd_remove_beat" />
 
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:id="@+id/btnInsertBeat"
-        android:layout_gravity="center"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        app:srcCompat="@drawable/insert_beat"
-        android:contentDescription="@string/cd_insert_beat" />
+    <Space
+        android:layout_width="2dp"
+        android:layout_height="wrap_content"/>
 
+    <Button
+        style="@style/contextmenu_button"
+        android:id="@+id/btnInsertBeat"
+        app:icon="@drawable/insert_beat"
+        android:contentDescription="@string/cd_insert_beat" />
 </LinearLayout>

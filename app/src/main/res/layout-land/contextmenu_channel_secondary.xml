@@ -4,19 +4,22 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ImageButton
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnMuteChannel"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/mute"
-        android:layout_width="@dimen/icon_button_width_b"
+        app:icon="@drawable/mute"
         android:layout_height="match_parent"
         android:contentDescription="@string/cd_channel_mute"/>
 
-    <TextView
+    <Space
+        android:layout_height="match_parent"
+        android:layout_width="2dp" />
+
+    <Button
+        style="@style/contextmenu_button"
         android:layout_gravity="center"
         android:ellipsize="end"
         android:maxLines="1"
-        android:theme="@style/button"
         android:id="@+id/btnChooseInstrument"
         android:textSize="18sp"
         android:layout_width="match_parent"

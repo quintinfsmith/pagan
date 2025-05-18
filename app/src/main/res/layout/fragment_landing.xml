@@ -56,73 +56,67 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnMostRecent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_most_recent"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_most_recent"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_new"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_new"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_load"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_load"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_import"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_import"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_settings"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_settings"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontAbout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_about"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_about"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

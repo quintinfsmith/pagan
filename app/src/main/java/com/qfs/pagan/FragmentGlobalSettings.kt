@@ -77,7 +77,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         }
 
 
-        //val switch_stereo_playback = view.findViewById<Switch>(R.id.sPlaybackStereo)
+        //val switch_stereo_playback = view.findViewById<SwitchCompat>(R.id.sPlaybackStereo)
         //switch_stereo_playback.isChecked = main.configuration.playback_stereo_mode == WaveGenerator.StereoMode.Stereo
         //switch_stereo_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
         //    main.configuration.playback_stereo_mode = if (enabled) {
@@ -89,7 +89,7 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         //    main.reinit_playback_device()
         //}
 
-        //val switch_limit_samples = view.findViewById<Switch>(R.id.sLimitSamples)
+        //val switch_limit_samples = view.findViewById<SwitchCompat>(R.id.sLimitSamples)
         //switch_limit_samples.isChecked = main.configuration.playback_sample_limit != null
         //switch_limit_samples.setOnCheckedChangeListener { _, enabled: Boolean ->
         //    main.configuration.playback_sample_limit = if (enabled) {

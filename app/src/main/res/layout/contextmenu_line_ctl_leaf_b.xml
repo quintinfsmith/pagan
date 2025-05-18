@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
         <ImageButton
-            android:theme="@style/icon_button"
             android:layout_width="@dimen/icon_button_width"
             android:layout_height="@dimen/icon_button_height"
             android:layout_marginStart="@dimen/number_selector_spacing"

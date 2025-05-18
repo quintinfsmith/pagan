@@ -23,9 +23,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
+            <Button
                 android:id="@+id/btnChangeProjectName"
-                android:theme="@style/song_config_button"
+                style="@style/song_config_button"
                 android:text="@string/btn_cfg_change_name"
                 android:maxLines="1"
                 android:layout_width="0dp"
@@ -40,9 +40,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <TextView
+            <Button
                 android:id="@+id/btnRadix"
-                android:theme="@style/song_config_button"
+                style="@style/song_config_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/label_tuning"/>
@@ -53,13 +53,13 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <TextView
+            <Button
                 android:id="@+id/btnAddChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/btn_cfg_add_channel"
                 android:layout_gravity="end"
-                android:theme="@style/song_config_button"/>
+                style="@style/song_config_button"/>
         </LinearLayout>
 
         <com.qfs.pagan.ChannelOptionRecycler
@@ -81,16 +81,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
 
-        <ImageView
+        <Button
             android:layout_margin="-3dp"
-            style="@style/icon_button"
+            style="@style/song_config_button"
             android:id="@+id/btnSaveProject"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            app:srcCompat="@drawable/ic_baseline_save_24"
-            android:contentDescription="@string/cd_save_project"
-            android:text="@string/btn_cfg_save" />
+            app:icon="@drawable/ic_baseline_save_24"
+            android:contentDescription="@string/cd_save_project"/>
 
         <Space
             android:layout_weight="1"
@@ -98,15 +97,14 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <Button
             android:id="@+id/btnCopyProject"
-            style="@style/icon_button"
+            style="@style/song_config_button"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            app:srcCompat="@drawable/ic_baseline_content_copy_24"
-            android:contentDescription="@string/cd_duplicate_project"
-            android:text="@string/btn_cfg_copy" />
+            app:icon="@drawable/ic_baseline_content_copy_24"
+            android:contentDescription="@string/cd_duplicate_project"/>
 
         <Space
             android:layout_weight="1"
@@ -114,15 +112,14 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <Button
             android:id="@+id/btnDeleteProject"
-            style="@style/icon_button"
+            style="@style/song_config_button"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            app:srcCompat="@drawable/ic_baseline_delete_24"
-            android:contentDescription="@string/cd_delete_project"
-            android:text="@string/btn_cfg_delete" />
+            app:icon="@drawable/ic_baseline_delete_24"
+            android:contentDescription="@string/cd_delete_project"/>
 
         <Space
             android:layout_weight="1"
@@ -130,15 +127,14 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"/>
 
-        <ImageView
+        <Button
             android:id="@+id/btnExportProject"
-            style="@style/icon_button"
+            style="@style/song_config_button"
             android:maxLines="1"
             android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            app:srcCompat="@drawable/export"
-            android:contentDescription="@string/cd_export_project"
-            android:text="@string/btn_cfg_export" />
+            app:icon="@drawable/export"
+            android:contentDescription="@string/cd_export_project"/>
     </LinearLayout>
 
     <LinearLayout

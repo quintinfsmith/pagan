@@ -3,10 +3,13 @@ package com.qfs.pagan.ContextMenu
 import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Space
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget
 import com.qfs.pagan.ControlWidgetVolume
@@ -20,12 +23,12 @@ import com.qfs.pagan.opusmanager.OpusVolumeEvent
 class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container),
     ContextMenuWithController<OpusVolumeEvent> {
-    lateinit var button_insert: ImageView
-    lateinit var button_adjust: ImageView
-    lateinit var button_remove: ImageView
-    lateinit var button_choose_percussion: TextView
-    lateinit var button_toggle_volume_control: ImageView
-    lateinit var button_mute: ImageView
+    lateinit var button_insert: Button
+    lateinit var button_adjust: Button
+    lateinit var button_remove: Button
+    lateinit var button_choose_percussion: Button
+    lateinit var button_toggle_volume_control: Button
+    lateinit var button_mute: Button
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
 
@@ -39,6 +42,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_adjust = primary.findViewById(R.id.btnAdjust)
         this.button_choose_percussion = primary.findViewById(R.id.btnChoosePercussion)
+        this.spacer = primary.findViewById<Space>(R.id.spacer)
         this.button_mute = this.secondary!!.findViewById(R.id.btnMuteLine)
 
         this.widget_volume = ControlWidgetVolume(
@@ -61,8 +65,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         ((this.widget_volume as View).layoutParams as LinearLayout.LayoutParams).weight = 1f
 
         (this.widget_volume as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-
-        this.spacer = primary.findViewById(R.id.spacer)
     }
 
     override fun refresh() {
@@ -77,10 +79,9 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val line_offset = cursor.line_offset
 
         if (!opus_manager.is_percussion(channel)) {
-            this.spacer.visibility = View.VISIBLE
             this.button_choose_percussion.visibility = View.GONE
+            (this.spacer.layoutParams as LinearLayout.LayoutParams).weight = 100f
         } else {
-            this.spacer.visibility = View.GONE
             this.button_choose_percussion.visibility = View.VISIBLE
             val instrument = opus_manager.get_percussion_instrument(line_offset)
             main.populate_active_percussion_names(false)
@@ -96,6 +97,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
                     main.get_drum_name(instrument) ?: this.context.getString(R.string.drum_not_found)
                 )
             }
+            (this.spacer.layoutParams as LinearLayout.LayoutParams).weight = 1f
         }
 
         this.button_adjust.visibility = if (opus_manager.is_percussion(channel)) {
@@ -123,7 +125,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         // TODO: I don't like how I'm doing this. Should be a custom button?
-        this.button_mute.setImageResource(
+        (this.button_mute as MaterialButton).setIconResource(
             if (opus_manager.get_channel(channel).get_line(line_offset).muted) {
                 R.drawable.mute
             } else {

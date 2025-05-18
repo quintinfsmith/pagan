@@ -2,9 +2,9 @@ package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.core.view.isEmpty
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget
@@ -17,11 +17,11 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     ContextMenuWithController<T> {
     lateinit var widget_wrapper: LinearLayout
     // --------------------------------
-    lateinit var button_split: ImageView
-    lateinit var button_insert: ImageView
-    lateinit var button_remove: ImageView
-    lateinit var button_duration: TextView
-    lateinit var button_unset: ImageView
+    lateinit var button_split: Button
+    lateinit var button_insert: Button
+    lateinit var button_remove: Button
+    lateinit var button_duration: Button
+    lateinit var button_unset: Button
 
     init {
         this.init_widget()
@@ -197,6 +197,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         } else {
             ""
         }
+
         if (cursor.ctl_type != ControlEventType.Tempo) {
             this.button_duration.visibility = View.VISIBLE
         } else {

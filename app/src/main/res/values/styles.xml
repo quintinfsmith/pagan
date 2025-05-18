@@ -37,8 +37,7 @@
         <item name="android:textColor">@color/button_text_selector</item>
     </style>
 
-    <style name="button">
-        <item name="android:background">@drawable/button</item>
+    <style name="button" parent="Theme.Pagan.Button">
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:clickable">true</item>
         <item name="android:tint">@color/button_text_selector</item>
@@ -51,7 +50,7 @@
         <item name="android:textColor">@color/number_select_button_text_selector</item>
     </style>
 
-    <style name="icon_button" parent="button">
+    <style name="icon_button" parent="Theme.Pagan.Button">
         <item name="android:paddingTop">@dimen/icon_button_padding_a</item>
         <item name="android:paddingLeft">@dimen/icon_button_padding_a</item>
         <item name="android:paddingRight">@dimen/icon_button_padding_b</item>
@@ -59,19 +58,29 @@
         <item name="android:textSize">18sp</item>
     </style>
 
-    <style name="song_config_button" parent="button">
-        <item name="android:gravity">center</item>
-        <item name="android:textSize">18sp</item>
-        <item name="android:paddingStart">9dp</item>
-        <item name="android:paddingEnd">12dp</item>
-        <item name="android:paddingTop">5dp</item>
-        <item name="android:paddingBottom">8dp</item>
-        <item name="android:foregroundTint">@color/button_text</item>
+    <style name="song_config_button">
+        <item name="android:layout_width">@dimen/config_button_width</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:inset">0dp</item>
+        <item name="cornerRadius">@dimen/config_icon_corner</item>
+        <item name="iconPadding">0dp</item>
+        <item name="iconSize">@dimen/config_icon_size</item>
+        <item name="iconGravity">textStart</item>
     </style>
 
     <style name="button_front" parent="@style/button">
         <item name="android:textSize">24sp</item>
         <item name="android:padding">10sp</item>
+    </style>
+
+    <style name="contextmenu_button">
+        <item name="android:layout_width">@dimen/icon_button_width</item>
+        <item name="android:layout_height">@dimen/icon_button_height</item>
+        <item name="android:inset">0dp</item>
+        <item name="cornerRadius">@dimen/contextmenu_icon_corner</item>
+        <item name="iconPadding">0dp</item>
+        <item name="iconSize">@dimen/context_icon_size</item>
+        <item name="iconGravity">textStart</item>
     </style>
 
     <style name="toggle_button" parent="@style/icon_button">
@@ -233,6 +242,7 @@
     <style name="volume_widget" parent="control_widget">
     </style>
     <style name="volume_widget_button" parent="icon_button">
+        <item name="android:gravity">center</item>
         <item name="android:textSize">20sp</item>
         <item name="android:fontFamily">monospace</item>
     </style>

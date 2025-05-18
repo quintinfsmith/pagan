@@ -4,12 +4,15 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ImageButton
+    <Button
         android:id="@+id/btnMuteLine"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/mute"
-        android:layout_width="@dimen/icon_button_width_b"
+        app:icon="@drawable/mute"
+        style="@style/contextmenu_button"
         android:layout_height="match_parent"
         android:contentDescription="@string/cd_line_mute"/>
+
+    <Space
+        android:layout_height="match_parent"
+        android:layout_width="2dp" />
 
 </LinearLayout>

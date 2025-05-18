@@ -7,66 +7,67 @@
     android:orientation="horizontal"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageButton
+    <Space
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"/>
+
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnSplit"
-        style="@style/icon_button"
-        android:layout_gravity="center"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_split"
-        app:srcCompat="@drawable/split"/>
+        app:icon="@drawable/split"/>
 
     <Space
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_weight="2"
         android:layout_width="0dp"/>
 
-    <ImageButton
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnInsert"
-        style="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_insert"
-        app:srcCompat="@drawable/insert" />
+        app:icon="@drawable/insert" />
 
     <Space
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_weight="2"
         android:layout_width="0dp"/>
 
-    <ImageButton
-        style="@style/icon_button"
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnRemove"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_remove"
-        app:srcCompat="@drawable/remove" />
+        app:icon="@drawable/remove" />
 
     <Space
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_weight="2"
         android:layout_width="0dp"/>
 
-    <TextView
-        style="@style/icon_button"
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnDuration"
+        android:lines="1"
+        android:padding="0dp"
         android:contentDescription="@string/cd_set_event_duration"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
         android:text="" />
 
     <Space
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_weight="2"
         android:layout_width="0dp"/>
 
-    <ImageButton
-        style="@style/icon_button"
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnUnset"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
         android:contentDescription="@string/cd_unset"
-        app:srcCompat="@drawable/unset" />
+        app:icon="@drawable/unset" />
+
+    <Space
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_width="0dp"/>
 
 
 </LinearLayout>

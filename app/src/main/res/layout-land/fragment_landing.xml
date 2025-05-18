@@ -67,26 +67,6 @@
             android:layout_width="match_parent"
             android:layout_weight="1"/>
 
-        <TextView
-            android:clickable="true"
-            android:id="@+id/btnFrontSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_landing_settings"
-            android:theme="@style/button_front" />
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/landing_button_space" />
-
-        <TextView
-            android:clickable="true"
-            android:id="@+id/btnFrontAbout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_landing_about"
-            android:theme="@style/button_front" />
-
     </LinearLayout>
 
     <Space
@@ -107,50 +87,68 @@
             android:layout_width="match_parent"
             android:layout_weight="1"/>
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnMostRecent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_most_recent"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_most_recent"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/landing_button_space" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_new"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_new"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/landing_button_space" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_load"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_load"/>
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="@dimen/landing_button_space" />
 
-        <TextView
+        <Button
             android:clickable="true"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_landing_import"
-            android:theme="@style/button_front" />
+            android:text="@string/btn_landing_import"/>
 
+        <Button
+            android:clickable="true"
+            android:id="@+id/btnFrontSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_landing_settings"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/landing_button_space" />
+
+        <Button
+            android:clickable="true"
+            android:id="@+id/btnFrontAbout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_landing_about"/>
+
+        <Space
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_weight="1"/>
 
     </LinearLayout>
 

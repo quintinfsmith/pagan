@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:id="@+id/llContextLink"
+<LinearLayout android:id="@+id/llContextLink"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:orientation="horizontal"
@@ -14,25 +14,29 @@
         <Space
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_weight="8"/>
 
-        <ImageButton
-            android:theme="@style/icon_button"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:layout_marginStart="@dimen/number_selector_spacing"
-            android:src="@drawable/adjust"
+        <Button
+            style="@style/contextmenu_button"
+            app:icon="@drawable/adjust"
             android:id="@+id/btnAdjust"
             android:contentDescription="@string/cd_adjust_selection"/>
 
-        <ImageButton
-            android:theme="@style/icon_button"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:layout_marginStart="@dimen/number_selector_spacing"
-            android:src="@drawable/unset"
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <Button
+            style="@style/contextmenu_button"
+            app:icon="@drawable/unset"
             android:id="@+id/btnEraseSelection"
             android:contentDescription="@string/cd_clear_selection"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
 
     </LinearLayout>
     <TextView

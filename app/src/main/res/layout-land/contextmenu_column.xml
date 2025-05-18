@@ -4,51 +4,68 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextCol"
     android:orientation="vertical"
+    android:layout_marginEnd="@dimen/primary_contextmenu_padding_start"
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
 
-    <ImageButton
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"/>
+
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnInsertBeat"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/insert_beat"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
+        app:icon="@drawable/insert_beat"
         android:contentDescription="@string/cd_insert_beat" />
 
-    <ImageButton
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"/>
+
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnRemoveBeat"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/remove_beat"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_marginTop="@dimen/number_selector_spacing"
+        app:icon="@drawable/remove_beat"
         android:contentDescription="@string/cd_remove_beat" />
 
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:src="@drawable/adjust"
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"/>
+
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/adjust"
         android:id="@+id/btnAdjust"
-        android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_adjust_selection"/>
 
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:src="@drawable/tag"
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"/>
+
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/tag"
         android:id="@+id/btnTag"
-        android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_mark_section"/>
 
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:src="@drawable/untag"
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"/>
+
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/untag"
         android:id="@+id/btnUntag"
-        android:layout_marginTop="@dimen/number_selector_spacing"
         android:contentDescription="@string/cd_remove_section_mark"/>
+
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="wrap_content"/>
 
 </LinearLayout>

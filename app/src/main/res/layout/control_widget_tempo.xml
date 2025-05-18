@@ -5,14 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.qfs.pagan.ButtonLabelledIcon
+    <Button
         android:id="@+id/tempo_value_button"
-        android:theme="@style/tempo_widget_button"
+        style="@style/contextmenu_button"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/secondary_contextmenu_button_height"
+        android:layout_height="match_parent"
+        app:iconSize="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/baseline_save_alt_24" />
+        app:icon="@drawable/baseline_save_alt_24" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

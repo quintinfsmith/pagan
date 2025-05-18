@@ -3,13 +3,15 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
+import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusPanEvent
 
 class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context: Context, callback: (OpusPanEvent) -> Unit): ControlWidget<OpusPanEvent>(ContextThemeWrapper(context, R.style.pan_widget), default, is_initial_event, R.layout.control_widget_pan, callback) {
     private lateinit var _slider: PanSliderWidget
-    private lateinit var _transition_button: ImageView
+    private lateinit var _transition_button: Button
 
     val min = -10
     val max = 10
@@ -25,7 +27,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
         if (this.is_initial_event) {
             this._transition_button.visibility = View.GONE
         } else {
-            this._transition_button.setImageResource(when (this.working_event.transition) {
+            (this._transition_button as MaterialButton).setIconResource(when (this.working_event.transition) {
                 ControlTransition.Instant -> R.drawable.immediate
                 ControlTransition.Linear -> R.drawable.linear
                // ControlTransition.Concave -> TODO()
@@ -54,7 +56,7 @@ class ControlWidgetPan(default: OpusPanEvent, is_initial_event: Boolean, context
     }
 
     override fun on_set(event: OpusPanEvent) {
-        this._transition_button.setImageResource(when (event.transition) {
+        (this._transition_button as MaterialButton).setIconResource(when (event.transition) {
             ControlTransition.Instant -> R.drawable.immediate
             ControlTransition.Linear -> R.drawable.linear
         })

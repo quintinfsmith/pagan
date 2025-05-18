@@ -2,6 +2,7 @@ package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import com.qfs.pagan.NumberSelector
@@ -14,11 +15,11 @@ import kotlin.math.abs
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_cell, null, primary_container, secondary_container) {
-    lateinit var button_split: ImageView
-    lateinit var button_insert: ImageView
-    lateinit var button_unset: ImageView
-    lateinit var button_remove: ImageView
-    lateinit var button_duration: TextView
+    lateinit var button_split: Button
+    lateinit var button_insert: Button
+    lateinit var button_unset: Button
+    lateinit var button_remove: Button
+    lateinit var button_duration: Button
     lateinit var ns_octave: NumberSelector
     lateinit var ns_offset: NumberSelector
     lateinit var ros_relative_option: RelativeOptionSelector
@@ -161,7 +162,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     )
                 }
 
-                this.button_unset.setImageResource(R.drawable.unset)
+                //this.button_unset.setImageResource(R.drawable.unset)
                 this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
             }
             null -> {

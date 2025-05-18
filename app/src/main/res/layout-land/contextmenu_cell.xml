@@ -20,51 +20,70 @@
                 android:id="@+id/clTextViews"
                 android:orientation="vertical"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_marginEnd="@dimen/primary_contextmenu_padding_start">
 
-                <ImageButton
-                    android:theme="@style/icon_button"
+                <Space
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="@dimen/icon_spacing"/>
+
+                <Button
                     android:id="@+id/btnSplit"
-                    android:layout_width="@dimen/icon_button_width"
-                    android:layout_height="@dimen/icon_button_height"
                     android:contentDescription="@string/cd_split"
-                    app:srcCompat="@drawable/split"/>
+                    style="@style/contextmenu_button"
+                    app:icon="@drawable/split"/>
 
-                <ImageButton
-                    android:theme="@style/icon_button"
+                <Space
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="@dimen/icon_spacing"/>
+
+                <Button
                     android:id="@+id/btnInsert"
-                    android:layout_width="@dimen/icon_button_width"
-                    android:layout_height="@dimen/icon_button_height"
-                    android:layout_marginTop="@dimen/number_selector_spacing"
                     android:contentDescription="@string/cd_insert"
-                    app:srcCompat="@drawable/insert" />
+                    style="@style/contextmenu_button"
+                    app:icon="@drawable/insert" />
 
-                <ImageButton
-                    android:theme="@style/icon_button"
+                <Space
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="@dimen/icon_spacing"/>
+
+                <Button
                     android:id="@+id/btnRemove"
-                    android:layout_width="@dimen/icon_button_width"
-                    android:layout_height="@dimen/icon_button_height"
                     android:contentDescription="@string/cd_remove"
-                    android:layout_marginTop="@dimen/number_selector_spacing"
-                    app:srcCompat="@drawable/remove" />
+                    style="@style/contextmenu_button"
+                    app:icon="@drawable/remove" />
 
-                <ImageButton
-                    android:theme="@style/icon_button"
+                <Space
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="@dimen/icon_spacing"/>
+
+                <Button
                     android:id="@+id/btnUnset"
-                    android:layout_width="@dimen/icon_button_width"
-                    android:layout_height="@dimen/icon_button_height"
                     android:contentDescription="@string/cd_unset"
-                    android:layout_marginTop="@dimen/number_selector_spacing"
-                    app:srcCompat="@drawable/unset" />
+                    style="@style/contextmenu_button"
+                    app:icon="@drawable/unset"/>
 
-                <TextView
-                    android:theme="@style/icon_button"
+                <Space
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="@dimen/icon_spacing"/>
+
+                <Button
                     android:id="@+id/btnDuration"
-                    android:minHeight="@dimen/icon_button_height"
+                    android:lines="1"
+                    android:padding="0dp"
+                    style="@style/contextmenu_button"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_width="@dimen/icon_button_width"
-                    android:layout_marginTop="@dimen/number_selector_spacing"/>
+                    android:layout_gravity="center_vertical"/>
+
+                <Space
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
+                    android:layout_width="@dimen/icon_spacing"/>
             </LinearLayout>
 
             <com.qfs.pagan.NumberSelector

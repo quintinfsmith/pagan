@@ -6,56 +6,67 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-        <ImageButton
+        <Button
+            style="@style/contextmenu_button"
             android:id="@+id/btnToggleChannelCtl"
-            android:theme="@style/icon_button"
-            app:srcCompat="@drawable/ctl"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
+            app:icon="@drawable/ctl"
             android:contentDescription="@string/cd_show_effect_controls"/>
 
         <Space
             android:id="@+id/spacer"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:minWidth="2dp"
             android:layout_width="0dp" />
 
-        <TextView
+        <Button
+            style="@style/contextmenu_button"
+            android:id="@+id/btnChoosePercussion"
             android:layout_gravity="center"
             android:ellipsize="end"
             android:maxLines="1"
-            android:theme="@style/button"
-            android:id="@+id/btnChoosePercussion"
             android:textSize="18sp"
-            android:layout_weight="1"
+            android:layout_weight="100"
             android:layout_width="0dp"
             android:layout_height="@dimen/icon_button_height"
             android:textAlignment="center"
             android:contentDescription="@string/cd_set_percussion_instrument"
             android:text="" />
 
-        <ImageButton
-            android:theme="@style/icon_button"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:src="@drawable/adjust"
+        <Space
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:minWidth="2dp"
+            android:layout_width="0dp" />
+
+        <Button
+            style="@style/contextmenu_button"
+            app:icon="@drawable/adjust"
             android:id="@+id/btnAdjust"
             android:contentDescription="@string/cd_adjust_selection"/>
 
-        <ImageButton
+        <Space
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:minWidth="2dp"
+            android:layout_width="0dp" />
+
+        <Button
+            style="@style/contextmenu_button"
             android:id="@+id/btnRemoveLine"
-            android:theme="@style/icon_button"
-            app:srcCompat="@drawable/remove_line"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
+            app:icon="@drawable/remove_line"
             android:contentDescription="@string/cd_remove_line"/>
 
-        <ImageButton
-            android:theme="@style/icon_button"
+        <Space
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:minWidth="2dp"
+            android:layout_width="0dp" />
+
+        <Button
+            style="@style/contextmenu_button"
             android:id="@+id/btnInsertLine"
-            app:srcCompat="@drawable/insert_line"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
+            app:icon="@drawable/insert_line"
             android:contentDescription="@string/cd_insert_line"/>
 
 </LinearLayout>

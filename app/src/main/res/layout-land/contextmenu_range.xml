@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextLink"
+    android:layout_marginEnd="@dimen/primary_contextmenu_padding_start"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <ImageButton
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_gravity="end"
-        android:theme="@style/icon_button"
-        android:src="@drawable/unset"
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/unset"
         android:id="@+id/btnEraseSelection"
         android:contentDescription="@string/cd_clear_selection"/>
 
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_marginTop="@dimen/number_selector_spacing"
-        android:src="@drawable/adjust"
+    <Space
+        android:layout_height="2dp"
+        android:layout_width="match_parent"/>
+
+    <Button
+        style="@style/contextmenu_button"
+        app:icon="@drawable/adjust"
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
+
+    <Space
+        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_weight="1"/>
 
     <TextView
         android:layout_width="match_parent"

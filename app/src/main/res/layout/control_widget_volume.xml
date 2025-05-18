@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
+    <Button
         android:id="@+id/volume_button"
-        android:theme="@style/volume_widget_button"
+        style="@style/contextmenu_button"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -25,12 +25,13 @@
         app:layout_constraintEnd_toStartOf="@+id/volume_transition_button"
         app:layout_constraintStart_toEndOf="@+id/volume_button" />
 
-    <ImageButton
+    <Button
         android:id="@+id/volume_transition_button"
-        android:layout_width="@dimen/secondary_contextmenu_button_height"
-        android:layout_height="@dimen/secondary_contextmenu_button_height"
-        style="@style/icon_button"
+        style="@style/contextmenu_button"
+        android:layout_height="match_parent"
+        app:iconSize="30dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,50 +3,67 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextCell"
     android:orientation="vertical"
+    android:layout_marginEnd="@dimen/primary_contextmenu_padding_start"
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
-        <ImageButton
-            android:theme="@style/icon_button"
+        <Space
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"/>
+
+        <Button
             android:id="@+id/btnSplit"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
+            style="@style/contextmenu_button"
             android:contentDescription="@string/cd_split"
-            app:srcCompat="@drawable/split"/>
+            app:icon="@drawable/split"/>
 
-        <ImageButton
-            android:theme="@style/icon_button"
+        <Space
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"/>
+
+        <Button
             android:id="@+id/btnInsert"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:layout_marginTop="@dimen/number_selector_spacing"
+            style="@style/contextmenu_button"
             android:contentDescription="@string/cd_insert"
-            app:srcCompat="@drawable/insert" />
+            app:icon="@drawable/insert" />
 
-        <ImageButton
-            android:theme="@style/icon_button"
+        <Space
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"/>
+
+        <Button
             android:id="@+id/btnRemove"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
+            style="@style/contextmenu_button"
             android:contentDescription="@string/cd_remove"
-            android:layout_marginTop="@dimen/number_selector_spacing"
-            app:srcCompat="@drawable/remove" />
+            app:icon="@drawable/remove" />
 
-        <ImageButton
-            android:theme="@style/icon_button"
+        <Space
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"/>
+
+        <Button
             android:id="@+id/btnUnset"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
+            style="@style/contextmenu_button"
             android:contentDescription="@string/cd_unset"
-            android:layout_marginTop="@dimen/number_selector_spacing"
-            app:srcCompat="@drawable/unset" />
+            app:icon="@drawable/unset" />
+        <Space
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"/>
 
-        <TextView
-            android:theme="@style/icon_button"
+        <Button
             android:contentDescription="@string/cd_set_event_duration"
-            android:id="@+id/btnDuration"
-            android:minHeight="@dimen/icon_button_height"
+            android:padding="0dp"
+            android:lines="1"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_marginTop="@dimen/number_selector_spacing"/>
+            android:id="@+id/btnDuration"
+            style="@style/contextmenu_button"/>
+
+        <Space
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"/>
 </LinearLayout>

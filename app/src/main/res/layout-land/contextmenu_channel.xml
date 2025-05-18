@@ -4,49 +4,58 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextRow"
     android:orientation="vertical"
+    android:layout_marginEnd="@dimen/primary_contextmenu_padding_start"
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
 
-    <ImageButton
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="match_parent" />
+
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnInsertLine"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/insert_line"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
+        app:icon="@drawable/insert_line"
         android:contentDescription="@string/cd_insert_channel" />
 
-    <ImageButton
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="match_parent" />
+
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnRemoveLine"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/remove_line"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_marginTop="@dimen/number_selector_spacing"
+        app:icon="@drawable/remove_line"
         android:contentDescription="@string/cd_remove_channel" />
 
-    <ImageButton
-        android:theme="@style/icon_button"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_marginTop="@dimen/number_selector_spacing"
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="match_parent" />
+
+    <Button
+        style="@style/contextmenu_button"
         android:src="@drawable/adjust"
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
 
-    <ImageButton
+    <Space
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_width="match_parent" />
+
+    <Button
         android:visibility="gone"
+        style="@style/contextmenu_button"
         android:id="@+id/btnToggleChannelCtl"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/ctl"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
-        android:layout_marginTop="@dimen/number_selector_spacing"
+        app:icon="@drawable/ctl"
         android:contentDescription="@string/cd_channel_volume"/>
 
     <Space
-        android:id="@+id/spacer"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_width="0dp" />
+        android:layout_width="match_parent" />
 
 </LinearLayout>

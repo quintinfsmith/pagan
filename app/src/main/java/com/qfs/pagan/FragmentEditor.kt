@@ -832,7 +832,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 }
             }
 
-            spinner.adapter = ArrayAdapter<String>(activity, android.R.layout.simple_spinner_dropdown_item, items)
+            spinner.adapter = ArrayAdapter<String>(activity, R.layout.spinner_list, items)
             spinner.onItemSelectedListener = object: OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                     if (position > 0) {

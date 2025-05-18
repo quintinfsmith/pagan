@@ -96,6 +96,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 import androidx.core.net.toUri
+import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ActionTracker.TrackedAction
 import kotlin.math.max
 import kotlin.math.min
@@ -1526,13 +1527,13 @@ class MainActivity : AppCompatActivity() {
 
     fun setup_project_config_drawer() {
         val opus_manager = this.get_opus_manager()
-        val tvChangeProjectName: TextView = this.findViewById(R.id.btnChangeProjectName)
+        val tvChangeProjectName: MaterialButton = this.findViewById(R.id.btnChangeProjectName)
         tvChangeProjectName.setOnClickListener {
             this.get_action_interface().set_project_name_and_notes()
         }
 
         //-------------------------------------------
-        val btnRadix: TextView = this.findViewById(R.id.btnRadix)
+        val btnRadix: MaterialButton = this.findViewById(R.id.btnRadix)
         btnRadix.setOnClickListener {
             this.get_action_interface().set_tuning_table_and_transpose()
         }
@@ -1629,13 +1630,13 @@ class MainActivity : AppCompatActivity() {
 
     internal fun setup_project_config_drawer_export_button() {
         val export_options = this.get_exportable_options()
-        val export_button = this.findViewById<ImageView>(R.id.btnExportProject) ?: return
+        val export_button = this.findViewById<MaterialButton>(R.id.btnExportProject) ?: return
         val export_progress_wrapper = this.findViewById<LinearLayout>(R.id.llExportProgress) ?: return
         if (!this.view_model.is_exporting()) {
-            export_button.setImageResource(R.drawable.export)
+            export_button.setIconResource(R.drawable.export)
             export_progress_wrapper.visibility = View.GONE
         } else {
-            export_button.setImageResource(R.drawable.baseline_cancel_42)
+            export_button.setIconResource(R.drawable.baseline_cancel_42)
             export_progress_wrapper.visibility = View.VISIBLE
         }
 

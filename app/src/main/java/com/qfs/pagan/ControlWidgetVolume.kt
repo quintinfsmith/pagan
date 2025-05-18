@@ -3,16 +3,19 @@ package com.qfs.pagan
 import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
+import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
 class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, R.layout.control_widget_volume, callback) {
     private lateinit var _slider: SeekBar
-    private lateinit var _button: TextView
-    private lateinit var _transition_button: ImageView
+    private lateinit var _button: Button
+    private lateinit var _transition_button: Button
     val min = 0
     val max = 100
     private var _lockout_ui: Boolean = false
@@ -29,7 +32,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
         if (this.is_initial_event) {
             this._transition_button.visibility = View.GONE
         } else {
-            this._transition_button.setImageResource(
+            (this._transition_button as MaterialButton).setIconResource(
                 when (this.working_event.transition) {
                     ControlTransition.Instant -> R.drawable.immediate
                     ControlTransition.Linear -> R.drawable.linear
@@ -84,7 +87,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
         this._slider.progress = (event.value * this.max.toFloat()).toInt()
         val value = (event.value * 100).toInt()
         this.set_text(value)
-        this._transition_button.setImageResource(when (event.transition) {
+        (this._transition_button as MaterialButton).setIconResource(when (event.transition) {
             ControlTransition.Instant -> R.drawable.immediate
             ControlTransition.Linear -> R.drawable.linear
         })

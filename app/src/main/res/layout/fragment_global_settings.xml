@@ -26,7 +26,7 @@
                     android:paddingTop="@dimen/normal_padding"
                     android:paddingEnd="15dp" />
 
-                <TextView
+                <Button
                     android:theme="@style/song_config_button"
                     android:id="@+id/btnChooseSoundFont"
                     android:text="@string/btn_settings_sfmute"
@@ -111,8 +111,9 @@
                 android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
+                android:labelFor="@+id/sPlaybackStereo"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sPlaybackStereo"
                 android:layout_width="wrap_content"
@@ -129,8 +130,9 @@
                 android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
+                android:labelFor="@+id/sLimitSamples"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sLimitSamples"
                 android:layout_width="wrap_content"
@@ -146,8 +148,9 @@
                 android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
+                android:labelFor="@+id/sClipSameLineRelease"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sClipSameLineRelease"
                 android:layout_width="wrap_content"
@@ -163,8 +166,9 @@
                     android:paddingStart="15dp"
                     android:layout_weight="1"
                     android:layout_width="0dp"
+                    android:labelFor="@+id/sRelativeEnabled"
                     android:layout_height="wrap_content"/>
-                <androidx.appcompat.widget.SwitchCompat
+                <com.google.android.material.materialswitch.MaterialSwitch
                     android:theme="@style/Theme.Pagan.Switch"
                     android:id="@+id/sRelativeEnabled"
                     android:layout_width="wrap_content"
@@ -180,8 +184,9 @@
                 android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
+                android:labelFor="@+id/sUsePreferredSF"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sUsePreferredSF"
                 android:layout_width="wrap_content"
@@ -198,8 +203,9 @@
                 android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
+                android:labelFor="@+id/sEnableMidi"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sEnableMidi"
                 android:layout_width="wrap_content"
@@ -216,8 +222,9 @@
                 android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
+                android:labelFor="@+id/sAllowStdPercussion"
                 android:layout_height="wrap_content"/>
-            <androidx.appcompat.widget.SwitchCompat
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:theme="@style/Theme.Pagan.Switch"
                 android:id="@+id/sAllowStdPercussion"
                 android:layout_width="wrap_content"

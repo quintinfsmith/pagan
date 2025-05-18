@@ -2,8 +2,11 @@ package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -14,12 +17,12 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuChannel(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_channel, R.layout.contextmenu_channel_secondary, primary_container, secondary_container) {
-    lateinit var button_insert: ImageView
-    lateinit var button_remove: ImageView
-    lateinit var button_choose_instrument: TextView
-    lateinit var button_toggle_controllers: ImageView
-    lateinit var button_mute: ImageView
-    lateinit var button_adjust: ImageView
+    lateinit var button_insert: Button
+    lateinit var button_remove: Button
+    lateinit var button_choose_instrument: Button
+    lateinit var button_toggle_controllers: Button
+    lateinit var button_mute: Button
+    lateinit var button_adjust: Button
 
     init {
         this.refresh()
@@ -42,7 +45,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Channel) {
             throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
         }
-
 
         this.button_choose_instrument.visibility = View.VISIBLE
 
@@ -68,7 +70,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
         val is_percussion = opus_manager.is_percussion(channel_index)
         this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.channels.isNotEmpty())
-        this.button_remove.setImageResource(
+        (this.button_remove as MaterialButton).setIconResource(
             if (is_percussion) {
                 R.drawable.hide
             } else {
@@ -92,7 +94,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
 
         // TODO: I don't like how I'm doing this. Should be a custom button?
-        this.button_mute.setImageResource(
+        (this.button_mute as MaterialButton).setIconResource(
             if (channel.muted) {
                 R.drawable.mute
             } else {

@@ -17,11 +17,11 @@
         app:layout_constraintEnd_toStartOf="@+id/pan_transition_type"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ImageButton
+    <Button
         android:id="@+id/pan_transition_type"
-        style="@style/icon_button"
-        android:layout_width="@dimen/secondary_contextmenu_button_height"
-        android:layout_height="@dimen/secondary_contextmenu_button_height"
+        style="@style/contextmenu_button"
+        android:layout_height="match_parent"
+        app:iconSize="30dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>

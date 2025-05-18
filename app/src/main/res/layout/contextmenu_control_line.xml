@@ -4,12 +4,10 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ImageButton
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnToggleCtl"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/hide"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
+        app:icon="@drawable/hide"
         android:contentDescription="@string/cd_hide_control_line"/>
 
     <Space
@@ -17,11 +15,9 @@
         android:layout_weight="1"
         android:layout_height="match_parent"/>
 
-    <ImageButton
+    <Button
+        style="@style/contextmenu_button"
         android:id="@+id/btnRemoveCtl"
-        android:theme="@style/icon_button"
-        app:srcCompat="@drawable/remove_line"
-        android:layout_width="@dimen/icon_button_width"
-        android:layout_height="@dimen/icon_button_height"
+        app:icon="@drawable/remove_line"
         android:contentDescription="@string/cd_remove_control_line"/>
 </LinearLayout>

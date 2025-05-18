@@ -2,17 +2,18 @@ package com.qfs.pagan.ContextMenu
 
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.Button
 import android.widget.TextView
+import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.R
 
 class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_cell_percussion, null, primary_container, secondary_container) {
-    lateinit var button_split: ImageView
-    lateinit var button_insert: ImageView
-    lateinit var button_unset: ImageView
-    lateinit var button_remove: ImageView
-    lateinit var button_duration: TextView
+    lateinit var button_split: Button
+    lateinit var button_insert: Button
+    lateinit var button_unset: Button
+    lateinit var button_remove: Button
+    lateinit var button_duration: Button
 
     init {
         this.refresh()
@@ -41,10 +42,10 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
         if (current_event_tree.is_event()) {
             val event = current_event_tree.get_event()!!
-            this.button_unset.setImageResource(R.drawable.unset)
+            (this.button_unset as MaterialButton).setIconResource(R.drawable.unset)
             this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
         } else {
-            this.button_unset.setImageResource(R.drawable.set_percussion)
+            (this.button_unset as MaterialButton).setIconResource(R.drawable.set_percussion)
             this.button_duration.text = ""
         }
 

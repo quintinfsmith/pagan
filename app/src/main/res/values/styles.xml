@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="app_bar">
-        <item name="textColor">#FF0000</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
     </style>
-    <style name="recycler_option" parent="button">
+    <style name="recycler_option" parent="Theme.Pagan.Button">
         <item name="android:gravity">center</item>
         <item name="android:clickable">true</item>
         <item name="android:paddingStart">8dp</item>
@@ -11,32 +11,25 @@
         <item name="android:layout_marginBottom">@dimen/config_item_padding</item>
     </style>
 
-    <style name="choose_percussion_button" parent="button">
+    <style name="choose_percussion_button" parent="Theme.Pagan.Button">
         <item name="android:textSize">18sp</item>
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
     </style>
 
-    <style name="recycler_option_instrument" parent="Widget.Material3.Button.IconButton.Filled">
+    <style name="recycler_option_instrument" parent="Theme.Pagan.Button">
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Material3.Corner.Left</item>
         <item name="android:textSize">16sp</item>
         <item name="android:inset">0dp</item>
     </style>
 
-    <style name="recycler_option_x" parent="Widget.Material3.Button.IconButton.Filled">
+    <style name="recycler_option_x" parent="Theme.Pagan.IconButton">
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Material3.Corner.Right</item>
         <item name="android:textSize">16sp</item>
         <item name="android:layout_width">wrap_content</item>
     </style>
 
     <style name="button_labelled_inner">
-        <item name="android:tint">@color/button_text_selector</item>
-        <item name="android:textColor">@color/button_text_selector</item>
-    </style>
-
-    <style name="button" parent="Theme.Pagan.Button">
-        <item name="android:gravity">center_vertical|center_horizontal</item>
-        <item name="android:clickable">true</item>
         <item name="android:tint">@color/button_text_selector</item>
         <item name="android:textColor">@color/button_text_selector</item>
     </style>
@@ -65,7 +58,7 @@
         <item name="iconGravity">textStart</item>
     </style>
 
-    <style name="button_front" parent="@style/button">
+    <style name="button_front" parent="Theme.Pagan.Button">
         <item name="android:textSize">24sp</item>
         <item name="android:padding">10sp</item>
     </style>
@@ -78,11 +71,6 @@
         <item name="iconPadding">0dp</item>
         <item name="iconSize">@dimen/context_icon_size</item>
         <item name="iconGravity">textStart</item>
-    </style>
-
-    <style name="toggle_button" parent="@style/icon_button">
-        <item name="android:padding">5sp</item>
-        <item name="android:textSize">18sp</item>
     </style>
 
     <style name="corner_button">
@@ -195,21 +183,27 @@
         <item name="android:paddingBottom">2dp</item>
     </style>
 
-    <style name="placeholder_outer">
-    </style>
+    <style name="placeholder_outer"> </style>
+
     <style name="cell_placeholder">
         <item name="android:background">@drawable/leaf_facade</item>
         <item name="android:tileMode">repeat</item>
     </style>
+
     <style name="link_mode_button">
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">0dp</item>
-        <item name="android:colorAccent">@color/radio</item>
-        <item name="android:colorControlActivated">@color/radio</item>
+        <item name="android:background">@drawable/radio_flat</item>
+        <item name="android:textColor">@color/radio_text</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:button">@null</item>
     </style>
-    <style name="progress_bar">
+
+    <style name="progress_bar" parent="Widget.AppCompat.ProgressBar.Horizontal">
         <item name="android:background">#33000000</item>
-        <item name="android:indeterminateTint">@color/leaf_main</item>
+        <item name="android:indeterminateTint">@color/primary</item>
     </style>
 
     <style name="tuning_map_item">
@@ -235,8 +229,7 @@
         <item name="android:textSize">24sp</item>
     </style>
 
-    <style name="volume_widget" parent="control_widget">
-    </style>
+    <style name="volume_widget" parent="control_widget"></style>
     <style name="volume_widget_button" parent="icon_button">
         <item name="android:gravity">center</item>
         <item name="android:textSize">20sp</item>

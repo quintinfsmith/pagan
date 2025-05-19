@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#171717</color>
-    <color name="primary_text">#e1e1e1</color>
+    <color name="primary">#A6A6A6</color>
+    <color name="primary_text">#000000</color>
 
     <color name="surface">#2d2d2d</color>
-    <color name="on_surface">#e8e8e8</color>
-    <color name="surface_container">#a8a8a8</color>
+    <color name="on_surface">@color/main_fg</color>
+    <color name="surface_container">#1D1D1D</color>
+    <color name="on_surface_container">@color/main_fg</color>
 
-    <color name="main_bg">#2d2d2d</color>
-    <color name="main_fg">#e1e1e1</color>
+    <color name="main_bg">#1d1d1d</color>
+    <color name="main_fg">#ececec</color>
     <color name="table_lines">#C3C3C3</color>
     <color name="channel_even">#232323</color>
     <color name="channel_even_text">@color/main_fg</color>
@@ -32,6 +33,9 @@
     <color name="muted_leaf_selected">#A9A9A9</color>
     <color name="muted_empty_selected">#A9A9A9</color>
     <color name="muted_channel_even">#454545</color>
+
+    <color name="radio_unchecked">#66FFFFFF</color>
+    <color name="radio_checked">@color/primary</color>
 
     <color name="muted_label_selected_secondary">#A9A9A9</color>
     <color name="muted_label_ctl_selected_secondary">@color/muted_label_selected_secondary</color>

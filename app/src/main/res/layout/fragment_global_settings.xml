@@ -241,43 +241,52 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:paddingBottom="4dp"
                 android:text="@string/settings_screen_orientation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
+
             <RadioGroup
                 android:id="@+id/rgLockOrientation"
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_weight="4"
+                    android:layout_height="match_parent"/>
                 <RadioButton
                     android:id="@+id/rbOrientationUser"
-                    android:theme="@style/link_mode_button"
-                    android:textColor="@color/main_fg"
+                    style="@style/link_mode_button"
                     android:text="@string/settings_orientation_system"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
+
                 <Space
-                    android:layout_weight="1"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"/>
+                    android:layout_weight="1"
+                    android:layout_height="match_parent"/>
+
                 <RadioButton
                     android:id="@+id/rbOrientationLandscape"
+                    style="@style/link_mode_button"
                     android:text="@string/settings_orientation_landscape"
-                    android:textColor="@color/main_fg"
-                    android:theme="@style/link_mode_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
                 <Space
-                    android:layout_weight="1"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"/>
+                    android:layout_weight="1"
+                    android:layout_height="match_parent"/>
                 <RadioButton
                     android:id="@+id/rbOrientationPortrait"
-                    android:theme="@style/link_mode_button"
-                    android:textColor="@color/main_fg"
+                    style="@style/link_mode_button"
                     android:text="@string/settings_orientation_portrait"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_weight="4"
+                    android:layout_height="match_parent"/>
             </RadioGroup>
 
         </LinearLayout>

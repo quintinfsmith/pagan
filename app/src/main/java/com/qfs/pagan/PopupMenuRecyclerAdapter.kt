@@ -35,8 +35,8 @@ class PopupMenuRecyclerAdapter<T>(
             text_view.background.setTint(activity.getColor(R.color.empty_selected))
             text_view.setTextColor(ContextCompat.getColor(activity, R.color.empty_selected_text))
         } else {
-            text_view.background.setTint(activity.getColor(R.color.main_bg))
-            text_view.setTextColor(activity.getColor(R.color.main_fg))
+            text_view.background.setTint(activity.getColor(R.color.surface_container))
+            text_view.setTextColor(activity.getColor(R.color.on_surface_container))
         }
 
         text_view.text = this._options[position].second.trim()

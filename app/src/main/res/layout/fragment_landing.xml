@@ -57,7 +57,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
         <Button
-            android:clickable="true"
             android:id="@+id/btnMostRecent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -68,7 +67,6 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
-            android:clickable="true"
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -79,7 +77,6 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
-            android:clickable="true"
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -90,7 +87,6 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
-            android:clickable="true"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -101,7 +97,6 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
-            android:clickable="true"
             android:id="@+id/btnFrontSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -112,7 +107,6 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
-            android:clickable="true"
             android:id="@+id/btnFrontAbout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

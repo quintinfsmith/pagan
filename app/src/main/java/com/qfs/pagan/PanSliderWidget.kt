@@ -44,7 +44,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             val height = this.height.toFloat()
             val padding = (height / 2f) + (2F * that.stroke_width)
 
-            val purple = ContextCompat.getColor(this.context, R.color.leaf_main)
+            val purple = ContextCompat.getColor(this.context, R.color.primary_text)
             val div_size = 1F / (that.max - that.min).toFloat()
             val relative_n = (that.progress - that.min).toFloat() * div_size
 
@@ -61,7 +61,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             )
 
             this.paint.strokeWidth = 1F
-            this.paint.color = ContextCompat.getColor(this.context, R.color.button)
+            this.paint.color = ContextCompat.getColor(this.context, R.color.primary)
             canvas.drawRoundRect(
                 that.stroke_width,
                 0F,

@@ -22,24 +22,18 @@
         <RadioButton
             android:id="@+id/rbMoveModeMerge"
             android:visibility="gone"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:textColor="@color/main_fg"
+            style="@style/link_mode_button"
             android:text="@string/rb_mm_merge"
-            android:layout_gravity="center_vertical"
             android:layout_height="match_parent"
             android:layout_width="wrap_content"/>
         <Space
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_weight="2"/>
         <RadioButton
             android:id="@+id/rbMoveModeCopy"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:textColor="@color/main_fg"
+            style="@style/link_mode_button"
             android:text="@string/rb_mm_copy"
-            android:layout_gravity="center_vertical"
             android:layout_height="match_parent"
             android:layout_width="wrap_content"/>
         <Space
@@ -48,16 +42,13 @@
             android:layout_weight="1"/>
         <RadioButton
             android:id="@+id/rbMoveModeMove"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:textColor="@color/main_fg"
+            style="@style/link_mode_button"
             android:text="@string/rb_mm_move"
-            android:layout_gravity="center_vertical"
             android:layout_height="match_parent"
             android:layout_width="wrap_content"/>
         <Space
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_weight="2"/>
     </RadioGroup>
 </LinearLayout>

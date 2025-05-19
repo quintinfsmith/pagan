@@ -30,5 +30,4 @@
     <attr name="soundfont_warning_background" format="color" />
     <attr name="soundfont_warning_text" format="color" />
     <attr name="soundfont_warning_link" format="color" />
-    <attr name="drop_down_bg" format="color" />
 </resources>

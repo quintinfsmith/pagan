@@ -2640,14 +2640,12 @@ class MainActivity : AppCompatActivity() {
         when (this.get_active_fragment()) {
             is FragmentEditor -> {
                 toolbar.setNavigationIcon(R.drawable.hamburger_32)
-                toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary_text))
             }
             is FragmentLandingPage -> {
                 toolbar.navigationIcon = null
             }
             else -> {
                 toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-                toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary_text))
             }
         }
     }

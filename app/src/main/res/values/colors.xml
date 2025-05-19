@@ -37,8 +37,8 @@
     <color name="label_ctl_selected_secondary_text">#e1e1e1</color>
 
 
-    <color name="radio_unchecked">@color/main_fg</color>
-    <color name="radio_checked">@color/leaf_main</color>
+    <color name="radio_unchecked">#55000000</color>
+    <color name="radio_checked">@color/primary</color>
 
     <color name="ns_default">@color/button</color>
     <color name="ns_default_text">@color/button_text</color>
@@ -47,12 +47,13 @@
     <color name="ns_selected">@color/blue_sky</color>
     <color name="ns_selected_text">#000000</color>
 
-    <color name="primary">#BAA5FF</color>
-    <color name="primary_text">#23005F</color>
+    <color name="primary">#372D40</color>
+    <color name="primary_text">#E9E9E9</color>
 
-    <color name="surface">#2d2d2d</color>
-    <color name="on_surface">#e8e8e8</color>
-    <color name="surface_container">#a8a8a8</color>
+    <color name="surface">@color/primary</color>
+    <color name="on_surface">@color/primary_text</color>
+    <color name="surface_container">#e8e8e8</color>
+    <color name="on_surface_container">#2d2d2d</color>
 
     <color name="main_bg">#e0e0e0</color>
     <color name="main_fg">#2A2A46</color>

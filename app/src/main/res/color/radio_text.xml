@@ -2,7 +2,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:state_checked="true"
-        android:color="@color/main_fg" />
+        android:color="@color/primary_text" />
     <item android:state_checked="false"
-        android:color="@color/main_fg" />
+        android:color="@color/radio_unchecked" />
 </selector>

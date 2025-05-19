@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="@dimen/dialog_name_and_notes_padding"
     android:layout_width="match_parent"
@@ -8,6 +9,8 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:hint="@string/dlg_project_name"
+        android:textColorHint="@color/main_fg"
         android:theme="@style/Theme.Pagan.EditText">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -15,7 +18,6 @@
             android:id="@+id/etProjectName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/dlg_project_name"
             android:inputType="textShortMessage" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -27,17 +29,19 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:hint="@string/dlg_project_notes"
+        android:textColorHint="@color/main_fg"
         android:theme="@style/Theme.Pagan.EditText">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:gravity="left|top"
-            android:inputType="textMultiLine"
-            android:minLines="5"
-            android:minEms="32"
-            android:hint="@string/dlg_project_notes"
             android:id="@+id/etProjectNotes"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:gravity="left|top"
+            android:inputType="textMultiLine"
+            android:minEms="32"
+            android:minLines="5"/>
+
     </com.google.android.material.textfield.TextInputLayout>
 
 

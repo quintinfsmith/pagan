@@ -22,7 +22,8 @@
         android:id="@+id/shortcut_scrollbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="8dp"/>
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"/>
 
     <Spinner
         android:id="@+id/shortcut_spinner"

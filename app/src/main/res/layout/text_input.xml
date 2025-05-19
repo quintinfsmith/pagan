@@ -7,6 +7,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:id="@+id/textWrapper"
         android:theme="@style/Theme.Pagan.EditText">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -14,7 +15,6 @@
             android:id="@+id/etText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/dlg_project_name"
             android:inputType="textShortMessage" />
 
     </com.google.android.material.textfield.TextInputLayout>

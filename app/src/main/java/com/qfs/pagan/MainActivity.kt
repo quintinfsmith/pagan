@@ -60,6 +60,8 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -2059,13 +2061,13 @@ class MainActivity : AppCompatActivity() {
                 main_fragment.view as ViewGroup,
                 false
             )
-
+        val text_wrapper: TextInputLayout = viewInflated.findViewById(R.id.textWrapper)
         val text_input: EditText = viewInflated.findViewById(R.id.etText)
         text_input.setText(default ?: "")
 
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setView(viewInflated)
             .setTitle(title)
+            .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 callback(text_input.text.toString())
                 dialog.dismiss()

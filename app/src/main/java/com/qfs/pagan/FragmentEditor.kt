@@ -507,6 +507,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         } else {
             GONE
         }
+        this.active_context_menu?.refresh()
     }
 
 
@@ -717,6 +718,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     internal fun set_context_menu_range() {
+        println("FFFF?")
         if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuRange>()) {
             this.active_context_menu = ContextMenuRange(
                 this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary),

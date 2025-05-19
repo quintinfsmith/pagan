@@ -86,8 +86,8 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
         if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
             this.label.text = when (main.configuration.move_mode) {
                 PaganConfiguration.MoveMode.MOVE -> this.context.resources.getString(R.string.label_move_beat)
-                PaganConfiguration.MoveMode.COPY ->  this.context.resources.getString(R.string.label_copy_beat)
                 PaganConfiguration.MoveMode.MERGE -> this.context.resources.getString(R.string.label_merge_beat)
+                else ->  this.context.resources.getString(R.string.label_copy_beat)
             }
         } else {
             return

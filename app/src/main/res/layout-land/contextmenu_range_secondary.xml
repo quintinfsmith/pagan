@@ -5,44 +5,39 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="horizontal">
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
         android:textAlignment="center"
         android:id="@+id/tvMoveModeLabelB"
-        android:text="@string/label_link_beat"
+        android:text=""
         android:paddingTop="8dp"/>
 
     <RadioGroup
         android:id="@+id/rgMoveMode"
         android:orientation="horizontal"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:minHeight="41dp"
-        android:layout_width="match_parent">
+        android:layout_weight="1"
+        android:layout_width="0dp">
         <RadioButton
             android:id="@+id/rbMoveModeMerge"
             android:visibility="gone"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:textColor="@color/main_fg"
+            style="@style/link_mode_button"
             android:text="@string/rb_mm_merge"
-            android:layout_gravity="center_vertical"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_width="wrap_content"/>
         <Space
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_weight="2"/>
         <RadioButton
             android:id="@+id/rbMoveModeCopy"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:textColor="@color/main_fg"
+            style="@style/link_mode_button"
             android:text="@string/rb_mm_copy"
-            android:layout_gravity="center_vertical"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_width="wrap_content"/>
         <Space
             android:layout_width="0dp"
@@ -50,16 +45,13 @@
             android:layout_weight="1"/>
         <RadioButton
             android:id="@+id/rbMoveModeMove"
-            android:layout_margin="0dp"
-            android:theme="@style/link_mode_button"
-            android:textColor="@color/main_fg"
+            style="@style/link_mode_button"
             android:text="@string/rb_mm_move"
-            android:layout_gravity="center_vertical"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_width="wrap_content"/>
         <Space
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_weight="2"/>
     </RadioGroup>
 </LinearLayout>

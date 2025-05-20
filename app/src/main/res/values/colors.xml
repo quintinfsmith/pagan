@@ -39,10 +39,10 @@
     <color name="radio_unchecked">#55000000</color>
     <color name="radio_checked">@color/primary</color>
 
-    <color name="ns_default">@color/button</color>
-    <color name="ns_default_text">@color/button_text</color>
-    <color name="ns_alt">@color/main_fg</color>
-    <color name="ns_alt_text">#FFFFFF</color>
+    <color name="ns_default">@color/surface</color>
+    <color name="ns_default_text">@color/on_surface</color>
+    <color name="ns_alt">@color/surface_container</color>
+    <color name="ns_alt_text">@color/on_surface_container</color>
     <color name="ns_selected">@color/blue_sky</color>
     <color name="ns_selected_text">#000000</color>
 

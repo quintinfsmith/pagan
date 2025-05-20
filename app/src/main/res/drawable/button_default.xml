@@ -1,57 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item >
-        <shape android:shape="rectangle">
-            <corners
-                android:topLeftRadius="7dp"
-                android:topRightRadius="7dp"
-                android:bottomLeftRadius="7dp"
-                android:bottomRightRadius="4dp" />
-            <solid android:color="#10000000"/>
-            <padding
-                android:top="0dp"
-                android:left="0dp"
-                android:right="1dp"
-                android:bottom="1dp" />
-        </shape>
-    </item>
-    <item >
-        <shape android:shape="rectangle">
-            <corners
-                android:topLeftRadius="6dp"
-                android:topRightRadius="6dp"
-                android:bottomLeftRadius="6dp"
-                android:bottomRightRadius="4dp" />
-            <solid android:color="#20000000"/>
-            <padding
-                android:top="0dp"
-                android:left="0dp"
-                android:right="1dp"
-                android:bottom="1dp" />
-        </shape>
-    </item>
-    <item>
-        <shape android:shape="rectangle">
-            <corners
-                android:topLeftRadius="5dp"
-                android:topRightRadius="5dp"
-                android:bottomLeftRadius="5dp"
-                android:bottomRightRadius="4dp" />
-            <solid android:color="#40000000"/>
-            <padding
-                android:top="0dp"
-                android:left="0dp"
-                android:right="1dp"
-                android:bottom="1dp" />
-        </shape>
-    </item>
     <item android:id="@+id/tintable_background">
         <shape android:shape="rectangle">
             <padding
                 android:left="4dp"
                 android:bottom="4dp" />
             <solid android:color="@color/button_selector"/>
-            <corners android:radius="4dp"/>
+            <corners android:radius="12dp"/>
         </shape>
     </item>
 </layer-list>

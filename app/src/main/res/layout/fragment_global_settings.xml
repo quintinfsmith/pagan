@@ -248,41 +248,60 @@
 
             <RadioGroup
                 android:id="@+id/rgLockOrientation"
-                android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
                 <Space
                     android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
                 <RadioButton
                     android:id="@+id/rbOrientationUser"
-                    style="@style/link_mode_button_start"
-                    android:text="@string/settings_orientation_system"
+                    style="@style/radio_button_start"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:paddingStart="@dimen/setting_radio_padding_h"
+                    android:paddingTop="@dimen/setting_radio_padding_v"
+                    android:paddingEnd="@dimen/setting_radio_padding_h"
+                    android:paddingBottom="@dimen/setting_radio_padding_v"
+                    android:text="@string/settings_orientation_system" />
+
                 <Space
                     android:layout_width="3dp"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent" />
+
                 <RadioButton
                     android:id="@+id/rbOrientationLandscape"
-                    style="@style/link_mode_button_center"
-                    android:text="@string/settings_orientation_landscape"
+                    style="@style/radio_button_center"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:paddingStart="@dimen/setting_radio_padding_h"
+                    android:paddingTop="@dimen/setting_radio_padding_v"
+                    android:paddingEnd="@dimen/setting_radio_padding_h"
+                    android:paddingBottom="@dimen/setting_radio_padding_v"
+                    android:text="@string/settings_orientation_landscape" />
+
                 <Space
                     android:layout_width="3dp"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent" />
+
                 <RadioButton
                     android:id="@+id/rbOrientationPortrait"
-                    style="@style/link_mode_button_end"
-                    android:text="@string/settings_orientation_portrait"
+                    style="@style/radio_button_end"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:paddingStart="@dimen/setting_radio_padding_h"
+                    android:paddingTop="@dimen/setting_radio_padding_v"
+                    android:paddingEnd="@dimen/setting_radio_padding_h"
+                    android:paddingBottom="@dimen/setting_radio_padding_v"
+                    android:text="@string/settings_orientation_portrait" />
+
                 <Space
                     android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
             </RadioGroup>
 
         </LinearLayout>

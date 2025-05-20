@@ -19,7 +19,7 @@
                 <RadioButton
                     android:id="@+id/rbMoveModeCopy"
                     android:layout_margin="0dp"
-                    android:theme="@style/link_mode_button"
+                    android:theme="@style/radio_button"
                     android:paddingEnd="2dp"
                     android:text="@string/label_copy_ctl"
                     android:layout_gravity="center_vertical"
@@ -32,7 +32,7 @@
                 <RadioButton
                     android:id="@+id/rbMoveModeMove"
                     android:layout_margin="0dp"
-                    android:theme="@style/link_mode_button"
+                    android:theme="@style/radio_button"
                     android:text="@string/label_move_ctl"
                     android:layout_gravity="center_vertical"
                     android:layout_height="match_parent"

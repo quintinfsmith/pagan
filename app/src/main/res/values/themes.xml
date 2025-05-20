@@ -91,6 +91,7 @@
 
     <style name="Theme.Pagan.Dialog.Title" parent="MaterialAlertDialog.Material3.Title.Text">
         <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/on_surface_container</item>
     </style>
 
     <style name="Theme.Pagan.Dialog.Title.Background" parent="MaterialAlertDialog.Material3.Title.Panel">
@@ -98,7 +99,6 @@
         <item name="android:textSize">20dp</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:textAlignment">center</item>
-        <item name="android:background">@drawable/radio_default</item>
     </style>
 
     <style name="Theme.Pagan.Dialog.ButtonBar" parent="Widget.AppCompat.ButtonBar">

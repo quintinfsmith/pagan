@@ -80,6 +80,8 @@
             android:id="@+id/tvLicenseText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=""/>
+            android:gravity="center"
+            android:text=""
+            android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>

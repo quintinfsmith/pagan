@@ -52,9 +52,13 @@
     <dimen name="octave_label_padding_x">3dp</dimen>
 
     <dimen name="landing_button_space">3dp</dimen>
+    <dimen name="landing_button_space_h">6dp</dimen>
     <dimen name="context_icon_size">32dp</dimen>
     <dimen name="contextmenu_icon_corner">16dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
     <dimen name="config_icon_size">24dp</dimen>
     <dimen name="dialog_name_and_notes_padding">24dp</dimen>
+
+    <dimen name="setting_radio_padding_h">24dp</dimen>
+    <dimen name="setting_radio_padding_v">8dp</dimen>
 </resources>

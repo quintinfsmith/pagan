@@ -36,7 +36,6 @@
     <color name="label_ctl_selected_secondary">#3e6e91</color>
     <color name="label_ctl_selected_secondary_text">#e1e1e1</color>
 
-
     <color name="radio_unchecked">#55000000</color>
     <color name="radio_checked">@color/primary</color>
 
@@ -54,6 +53,8 @@
     <color name="on_surface">@color/primary_text</color>
     <color name="surface_container">#e8e8e8</color>
     <color name="on_surface_container">#2d2d2d</color>
+
+    <color name="primary_dark">@color/primary</color>
 
     <color name="main_bg">#e0e0e0</color>
     <color name="main_fg">#2A2A46</color>

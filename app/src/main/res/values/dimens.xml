@@ -61,4 +61,5 @@
 
     <dimen name="setting_radio_padding_h">24dp</dimen>
     <dimen name="setting_radio_padding_v">8dp</dimen>
+    <dimen name="radio_stroke">2dp</dimen>
 </resources>

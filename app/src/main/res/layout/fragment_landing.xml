@@ -67,6 +67,7 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
+            style="@style/Theme.Pagan.Button"
             android:id="@+id/btnFrontNew"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -77,6 +78,7 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
+            style="@style/Theme.Pagan.Button"
             android:id="@+id/btnFrontLoad"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -87,6 +89,7 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
+            style="@style/Theme.Pagan.Button"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -97,6 +100,7 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
+            style="@style/Theme.Pagan.Button"
             android:id="@+id/btnFrontSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -107,6 +111,7 @@
             android:layout_height="@dimen/normal_padding" />
 
         <Button
+            style="@style/Theme.Pagan.Button"
             android:id="@+id/btnFrontAbout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

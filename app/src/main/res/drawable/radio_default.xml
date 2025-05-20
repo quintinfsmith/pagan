@@ -3,6 +3,6 @@
     <corners android:radius="4dp" />
     <solid android:color="#0fff" />
     <stroke
-        android:width="3dp"
+        android:width="@dimen/radio_stroke"
         android:color="@color/radio_unchecked" />
 </shape>

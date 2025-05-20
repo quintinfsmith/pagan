@@ -2,25 +2,23 @@
     <!-- Base application theme. -->
     <style name="Theme.Pagan" parent="Theme.Material3.DayNight">
         <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorSurfaceContainerHighest">@color/main_bg</item>
         <item name="colorPrimaryVariant">#000000</item>
         <item name="colorOnPrimary">@color/primary_text</item>
         <item name="colorSecondary">@color/leaf_main</item>
         <item name="colorSecondaryVariant">@color/leaf_secondary</item>
         <item name="colorOnSecondary">#1A1a1a</item>
-        <item name="colorPrimaryDark">@color/primary</item>
 
-        <item name="android:textColorPrimary">@color/on_surface_container</item>
+        <item name="android:textColorPrimary">@color/on_surface_container</item>'
+
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/on_surface</item>
         <item name="colorSurfaceContainer">@color/surface_container</item>
-
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="toolbarNavigationButtonStyle">@style/navigation_button</item>
         <item name="actionOverflowMenuStyle">@style/overflow_menu</item>
         <item name="actionOverflowButtonStyle">@style/overflow_button</item>
         <item name="actionButtonStyle">@style/action_button</item>
-        <item name="titleTextColor">@color/on_surface</item>
         <item name="buttonStyle">@style/Theme.Pagan.Button</item>
         <!-- Customize your theme here. -->
 
@@ -40,7 +38,6 @@
     <style name="overflow_button" parent="Widget.Material3.Search.ActionButton.Overflow">
         <item name="android:tint">@color/on_surface</item>
     </style>
-
     <style name="Theme.Pagan.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

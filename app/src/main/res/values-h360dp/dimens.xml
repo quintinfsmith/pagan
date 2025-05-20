@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="icon_size">42dp</dimen>
-    <dimen name="icon_button_height">58dp</dimen>
-    <dimen name="icon_button_width">58dp</dimen>
+    <dimen name="context_icon_size">24dp</dimen>
+    <dimen name="icon_size">30dp</dimen>
+    <dimen name="icon_button_height">48dp</dimen>
+    <dimen name="icon_button_width">48dp</dimen>
     <dimen name="icon_button_padding_a">5dp</dimen>
     <dimen name="icon_button_padding_b">8dp</dimen>
     <dimen name="setting_radio_padding_h">12dp</dimen>
     <dimen name="setting_radio_padding_v">4dp</dimen>
+    <dimen name="secondary_contextmenu_button_height">30dp</dimen>
+    <dimen name="secondary_contextmenu_height">48dp</dimen>
 </resources>

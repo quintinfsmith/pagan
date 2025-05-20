@@ -25,7 +25,6 @@
             android:layout_gravity="center"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textSize="18sp"
             android:layout_weight="100"
             android:layout_width="0dp"
             android:layout_height="@dimen/icon_button_height"

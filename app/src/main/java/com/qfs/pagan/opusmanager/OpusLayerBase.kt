@@ -1617,10 +1617,11 @@ open class OpusLayerBase {
             this._apply_column_trees(beat_index, beats_in_column)
         }
 
-        val tag_beats = this.marked_sections.keys.reversed()
+        val tag_beats = this.marked_sections.keys.sorted().toMutableList()
+        tag_beats.reverse()
         for (tag in tag_beats) {
             if (tag >= beat_index) {
-                this.marked_sections[tag + 1] = this.marked_sections.remove(tag)!!
+                this.marked_sections[tag + 1] = this.marked_sections.remove(tag)
             }
         }
     }
@@ -1678,10 +1679,10 @@ open class OpusLayerBase {
             controller.remove_beat(working_beat_index, count)
         }
 
-        val tag_beats = this.marked_sections.keys.toList()
+        val tag_beats = this.marked_sections.keys.sorted()
         for (tag in tag_beats) {
             if (tag > beat_index) {
-                this.marked_sections[tag - 1] = this.marked_sections.remove(tag)!!
+                this.marked_sections[tag - 1] = this.marked_sections.remove(tag)
             } else if (tag == beat_index) {
                 this.remove_tagged_section(tag)
             }

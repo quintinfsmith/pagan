@@ -15,6 +15,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     ContextMenuWithController<T> {
     lateinit var button_toggle_line_control: Button
     lateinit var button_remove_line_control: Button
+    var first_refresh_skipped = false
     init {
         this.init_widget()
         this.refresh()
@@ -71,6 +72,10 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     override fun setup_interactions() { }
 
     override fun refresh() {
+        if (!this.first_refresh_skipped) {
+            this.first_refresh_skipped = true
+            return
+        }
         this.widget.set_event(this.get_control_event(), true)
     }
 

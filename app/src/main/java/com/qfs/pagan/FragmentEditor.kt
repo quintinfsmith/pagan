@@ -487,7 +487,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     }
 
     private fun show_context_menus() {
-
         val primary = this.requireActivity().findViewById<LinearLayout>(R.id.llContextMenuPrimary)
         primary.removeOnLayoutChangeListener(this::on_show_context_menus)
         primary.visibility = if (primary.isNotEmpty()) {
@@ -507,7 +506,6 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         } else {
             GONE
         }
-        this.active_context_menu?.refresh()
     }
 
 

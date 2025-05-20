@@ -12,10 +12,6 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
     lateinit var button_tag: Button
     lateinit var button_untag: Button
 
-    init {
-        this.refresh()
-    }
-
     override fun init_properties() {
         this.button_insert = this.primary!!.findViewById(R.id.btnInsertBeat)
         this.button_remove = this.primary.findViewById(R.id.btnRemoveBeat)

@@ -24,10 +24,6 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var ns_offset: NumberSelector
     lateinit var ros_relative_option: RelativeOptionSelector
 
-    init {
-        this.refresh()
-    }
-
     override fun init_properties() {
         val primary = this.primary!!
         this.button_split = primary.findViewById(R.id.btnSplit)

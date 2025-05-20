@@ -44,5 +44,6 @@
         android:layout_height="wrap_content"
         android:textAlignment="center"
         android:id="@+id/tvMoveModeLabel"
+        android:paddingBottom="4dp"
         android:paddingTop="8dp"/>
 </LinearLayout>

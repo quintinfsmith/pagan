@@ -253,39 +253,35 @@
                 android:layout_height="wrap_content">
                 <Space
                     android:layout_width="0dp"
-                    android:layout_weight="4"
+                    android:layout_weight="1"
                     android:layout_height="match_parent"/>
                 <RadioButton
                     android:id="@+id/rbOrientationUser"
-                    style="@style/link_mode_button"
+                    style="@style/link_mode_button_start"
                     android:text="@string/settings_orientation_system"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
-
                 <Space
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
+                    android:layout_width="3dp"
                     android:layout_height="match_parent"/>
-
                 <RadioButton
                     android:id="@+id/rbOrientationLandscape"
-                    style="@style/link_mode_button"
+                    style="@style/link_mode_button_center"
                     android:text="@string/settings_orientation_landscape"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
                 <Space
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
+                    android:layout_width="3dp"
                     android:layout_height="match_parent"/>
                 <RadioButton
                     android:id="@+id/rbOrientationPortrait"
-                    style="@style/link_mode_button"
+                    style="@style/link_mode_button_end"
                     android:text="@string/settings_orientation_portrait"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
                 <Space
                     android:layout_width="0dp"
-                    android:layout_weight="4"
+                    android:layout_weight="1"
                     android:layout_height="match_parent"/>
             </RadioGroup>
 

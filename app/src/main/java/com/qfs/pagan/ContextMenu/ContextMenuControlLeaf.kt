@@ -23,6 +23,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     lateinit var button_duration: Button
     lateinit var button_unset: Button
 
+    var first_refresh_skipped = false
     init {
         this.init_widget()
         this.refresh()
@@ -149,6 +150,10 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
     }
 
     override fun refresh() {
+        if (!this.first_refresh_skipped) {
+            this.first_refresh_skipped = true
+            return
+        }
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val current_event = this.get_control_event<T>()

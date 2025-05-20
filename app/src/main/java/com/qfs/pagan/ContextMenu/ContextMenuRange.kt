@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.RadioGroup
 import android.widget.TextView
+import androidx.transition.Visibility
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -18,18 +19,15 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
     lateinit var radio_mode: RadioGroup
     lateinit var label: TextView
 
-    init {
-        this.refresh()
-    }
-
     override fun init_properties() {
         this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
-        this.button_adjust = this.primary!!.findViewById(R.id.btnAdjust)
+        this.button_adjust = this.primary.findViewById(R.id.btnAdjust)
         this.label = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             this.secondary!!.findViewById(R.id.tvMoveModeLabelB)
         } else {
             this.primary.findViewById(R.id.tvMoveModeLabel)
         }
+        this.label.visibility = View.VISIBLE
 
         this.radio_mode = this.secondary!!.findViewById<RadioGroup?>(R.id.rgMoveMode)
     }
@@ -83,14 +81,18 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
             PaganConfiguration.MoveMode.MERGE -> R.id.rbMoveModeMerge
         })
 
-        if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
-            this.label.text = when (main.configuration.move_mode) {
+        this.label.text = if (first == second) {
+            when (main.configuration.move_mode) {
                 PaganConfiguration.MoveMode.MOVE -> this.context.resources.getString(R.string.label_move_beat)
                 PaganConfiguration.MoveMode.MERGE -> this.context.resources.getString(R.string.label_merge_beat)
                 else ->  this.context.resources.getString(R.string.label_copy_beat)
             }
         } else {
-            return
+            when (main.configuration.move_mode) {
+                PaganConfiguration.MoveMode.MOVE -> this.context.resources.getString(R.string.label_move_range)
+                PaganConfiguration.MoveMode.MERGE -> this.context.resources.getString(R.string.label_merge_range)
+                else ->  this.context.resources.getString(R.string.label_copy_range)
+            }
         }
     }
 

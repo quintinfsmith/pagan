@@ -191,7 +191,6 @@
     </style>
 
     <style name="link_mode_button">
-        <item name="android:background">@drawable/radio_flat</item>
         <item name="android:textColor">@color/radio_text</item>
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingStart">24dp</item>
@@ -199,6 +198,15 @@
         <item name="android:paddingBottom">8dp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:button">@null</item>
+    </style>
+    <style name="link_mode_button_start" parent="link_mode_button">
+        <item name="android:background">@drawable/radio_flat_start</item>
+    </style>
+    <style name="link_mode_button_center" parent="link_mode_button">
+        <item name="android:background">@drawable/radio_flat</item>
+    </style>
+    <style name="link_mode_button_end" parent="link_mode_button">
+        <item name="android:background">@drawable/radio_flat_end</item>
     </style>
 
     <style name="progress_bar" parent="Widget.AppCompat.ProgressBar.Horizontal">

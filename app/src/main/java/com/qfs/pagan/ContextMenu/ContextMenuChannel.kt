@@ -24,10 +24,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_mute: Button
     lateinit var button_adjust: Button
 
-    init {
-        this.refresh()
-    }
-
     override fun init_properties() {
         val primary = this.primary!!
         val secondary = this.secondary!!

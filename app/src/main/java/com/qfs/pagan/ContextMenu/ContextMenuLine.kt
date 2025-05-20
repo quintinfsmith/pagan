@@ -32,9 +32,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
 
-    init {
-        this.refresh()
-    }
     override fun init_properties() {
         val primary = this.primary!!
         this.button_toggle_volume_control = primary.findViewById(R.id.btnToggleChannelCtl)

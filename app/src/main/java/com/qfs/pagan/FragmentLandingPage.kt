@@ -50,7 +50,8 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         } else {
             btn_mostRecent.visibility = View.GONE
             val btn_index = (btn_mostRecent.parent as ViewGroup).indexOfChild(btn_mostRecent)
-            (btn_mostRecent.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
+            // Show Space
+            (btn_mostRecent.parent as ViewGroup).getChildAt(btn_index + 1)?.visibility = View.GONE
         }
 
         if (this.get_activity().has_projects_saved()) {
@@ -71,8 +72,6 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
             btn_loadProject.visibility = View.VISIBLE
         } else {
             btn_loadProject.visibility = View.GONE
-            val btn_index = (btn_loadProject.parent as ViewGroup).indexOfChild(btn_loadProject)
-            (btn_loadProject.parent as ViewGroup).getChildAt(btn_index + 1).visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {

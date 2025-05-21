@@ -57,7 +57,8 @@
     <dimen name="contextmenu_icon_corner">16dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
     <dimen name="config_icon_size">24dp</dimen>
-    <dimen name="dialog_name_and_notes_padding">24dp</dimen>
+    <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
+    <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>
 
     <dimen name="setting_radio_padding_h">24dp</dimen>
     <dimen name="setting_radio_padding_v">8dp</dimen>

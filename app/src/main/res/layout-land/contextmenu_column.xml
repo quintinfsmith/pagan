@@ -14,19 +14,11 @@
         app:icon="@drawable/insert_beat"
         android:contentDescription="@string/cd_insert_beat" />
 
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="wrap_content"/>
-
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnRemoveBeat"
         app:icon="@drawable/remove_beat"
         android:contentDescription="@string/cd_remove_beat" />
-
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="wrap_content"/>
 
     <Button
         style="@style/contextmenu_button"
@@ -34,19 +26,11 @@
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
 
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="wrap_content"/>
-
     <Button
         style="@style/contextmenu_button"
         app:icon="@drawable/tag"
         android:id="@+id/btnTag"
         android:contentDescription="@string/cd_mark_section"/>
-
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="wrap_content"/>
 
     <Button
         style="@style/contextmenu_button"

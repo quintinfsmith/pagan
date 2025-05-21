@@ -14,29 +14,17 @@
         app:icon="@drawable/insert_line"
         android:contentDescription="@string/cd_insert_channel" />
 
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="match_parent" />
-
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnRemoveLine"
         app:icon="@drawable/remove_line"
         android:contentDescription="@string/cd_remove_channel" />
 
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="match_parent" />
-
     <Button
         style="@style/contextmenu_button"
         app:icon="@drawable/adjust"
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
-
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="match_parent" />
 
     <Button
         android:visibility="gone"

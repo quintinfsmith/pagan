@@ -13,19 +13,11 @@
         android:contentDescription="@string/cd_split"
         app:icon="@drawable/split"/>
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="2dp"/>
-
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnInsert"
         android:contentDescription="@string/cd_insert"
         app:icon="@drawable/insert" />
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="2dp"/>
 
     <Button
         style="@style/contextmenu_button"
@@ -33,19 +25,11 @@
         android:contentDescription="@string/cd_remove"
         app:icon="@drawable/remove" />
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="2dp"/>
-
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnUnset"
         android:contentDescription="@string/cd_unset"
         app:icon="@drawable/unset" />
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="2dp"/>
 
     <Button
         style="@style/contextmenu_button"

@@ -12,10 +12,6 @@
         android:contentDescription="@string/cd_remove_control_line"
         app:icon="@drawable/remove_line" />
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="2dp"/>
-
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnToggleCtl"

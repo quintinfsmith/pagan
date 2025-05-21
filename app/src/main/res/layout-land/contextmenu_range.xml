@@ -13,19 +13,11 @@
         android:id="@+id/btnEraseSelection"
         android:contentDescription="@string/cd_clear_selection"/>
 
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="match_parent"/>
-
     <Button
         style="@style/contextmenu_button"
         app:icon="@drawable/adjust"
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
-
-    <Space
-        android:layout_height="2dp"
-        android:layout_width="match_parent"/>
 
     <TextView
         android:layout_width="match_parent"

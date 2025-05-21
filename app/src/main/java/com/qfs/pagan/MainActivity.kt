@@ -2061,7 +2061,7 @@ class MainActivity : AppCompatActivity() {
                 main_fragment.view as ViewGroup,
                 false
             )
-        val text_wrapper: TextInputLayout = viewInflated.findViewById(R.id.textWrapper)
+
         val text_input: EditText = viewInflated.findViewById(R.id.etText)
         text_input.setText(default ?: "")
 

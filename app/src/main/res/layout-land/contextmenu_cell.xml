@@ -29,19 +29,11 @@
                     style="@style/contextmenu_button"
                     app:icon="@drawable/split"/>
 
-                <Space
-                    android:layout_height="2dp"
-                    android:layout_width="wrap_content"/>
-
                 <Button
                     android:id="@+id/btnInsert"
                     android:contentDescription="@string/cd_insert"
                     style="@style/contextmenu_button"
                     app:icon="@drawable/insert" />
-
-                <Space
-                    android:layout_height="2dp"
-                    android:layout_width="wrap_content"/>
 
                 <Button
                     android:id="@+id/btnRemove"
@@ -49,19 +41,11 @@
                     style="@style/contextmenu_button"
                     app:icon="@drawable/remove" />
 
-                <Space
-                    android:layout_height="2dp"
-                    android:layout_width="wrap_content"/>
-
                 <Button
                     android:id="@+id/btnUnset"
                     android:contentDescription="@string/cd_unset"
                     style="@style/contextmenu_button"
                     app:icon="@drawable/unset"/>
-
-                <Space
-                    android:layout_height="2dp"
-                    android:layout_width="wrap_content"/>
 
                 <Button
                     android:id="@+id/btnDuration"

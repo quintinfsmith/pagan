@@ -2,7 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:padding="@dimen/dialog_name_and_notes_padding"
+    android:paddingTop="@dimen/dialog_name_and_notes_padding_v"
+    android:paddingBottom="@dimen/dialog_name_and_notes_padding_v"
+    android:paddingEnd="@dimen/dialog_name_and_notes_padding_h"
+    android:paddingStart="@dimen/dialog_name_and_notes_padding_h"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -24,7 +27,7 @@
 
     <Space
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dialog_name_and_notes_padding"/>
+        android:layout_height="@dimen/dialog_name_and_notes_padding_v"/>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"

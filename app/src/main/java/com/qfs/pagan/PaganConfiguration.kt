@@ -34,7 +34,7 @@ data class PaganConfiguration(
                 } else {
                     PaganConfiguration(
                         soundfont = content.get_stringn("soundfont"),
-                        sample_rate = content.get_int("sample_rate", 22050),
+                        sample_rate = content.get_int("sample_rate", 32000),
                         relative_mode = content.get_boolean("relative_mode", false),
                         move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
                         clip_same_line_release = content.get_boolean("clip_same_line_release", true),

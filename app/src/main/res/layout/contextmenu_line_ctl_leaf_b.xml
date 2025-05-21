@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:id="@+id/llContextLink"
+<LinearLayout android:id="@+id/llContextLink"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal">
-        <ImageButton
-            android:layout_width="@dimen/icon_button_width"
-            android:layout_height="@dimen/icon_button_height"
-            android:layout_marginStart="@dimen/number_selector_spacing"
-            android:src="@drawable/unset"
+    android:orientation="horizontal"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+        <Button
+            style="@style/contextmenu_button"
+            app:icon="@drawable/unset"
             android:id="@+id/btnEraseSelection"
             android:contentDescription="@string/cd_clear_selection"/>
 </LinearLayout>

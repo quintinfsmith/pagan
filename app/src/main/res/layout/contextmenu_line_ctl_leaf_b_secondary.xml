@@ -5,41 +5,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal">
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
         <RadioGroup
             android:id="@+id/rgMoveMode"
             android:orientation="horizontal"
             android:layout_height="wrap_content"
-            android:minHeight="41dp"
-            android:layout_width="0dp"
-            android:layout_weight="1">
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+            android:layout_width="wrap_content">
                 <RadioButton
                     android:id="@+id/rbMoveModeCopy"
-                    android:layout_margin="0dp"
-                    android:theme="@style/radio_button"
-                    android:paddingEnd="2dp"
+                    style="@style/radio_button_start"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
                     android:text="@string/label_copy_ctl"
-                    android:layout_gravity="center_vertical"
                     android:layout_height="match_parent"
                     android:layout_width="wrap_content"/>
                 <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+                    android:layout_width="3dp"
+                    android:layout_height="match_parent"/>
                 <RadioButton
                     android:id="@+id/rbMoveModeMove"
-                    android:layout_margin="0dp"
-                    android:theme="@style/radio_button"
+                    style="@style/radio_button_end"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
                     android:text="@string/label_move_ctl"
                     android:layout_gravity="center_vertical"
                     android:layout_height="match_parent"
                     android:layout_width="wrap_content"/>
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-        </RadioGroup>
+                </RadioGroup>
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
 </LinearLayout>

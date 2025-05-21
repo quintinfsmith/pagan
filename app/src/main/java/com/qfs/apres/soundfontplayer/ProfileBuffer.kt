@@ -24,5 +24,10 @@ class ProfileBuffer(val ptr: Long) {
     fun destroy(deep: Boolean = false) {
         this.destroy_jni(this.ptr, deep)
     }
+
+    external fun get_data_ptr_jni(ptr: Long): Long
+    fun get_data(): ControllerEventData {
+        return ControllerEventData(this.get_data_ptr_jni(this.ptr))
+    }
 }
 

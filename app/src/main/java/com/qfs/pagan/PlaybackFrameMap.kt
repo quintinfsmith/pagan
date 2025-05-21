@@ -338,18 +338,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     fun setup_effect_buffers() {
         this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
-            for ((control_type, controller) in channel.controllers.get_all()) {
-                val control_type_key = this.get_control_type_key(control_type) ?: continue
-                this._effect_profiles.add(
-                    Triple(
-                        1, // layer (channel)
-                        this.generate_merge_keys(c, -1)[1], // key
-                        ProfileBuffer(
-                            this.convert_controller_to_event_data(control_type_key, controller)
-                        )
-                    )
-                )
-            }
             channel.lines.forEachIndexed { l: Int, line: OpusLineAbstract<out InstrumentEvent> ->
                 for ((control_type, controller) in line.controllers.get_all()) {
                     val control_type_key = this.get_control_type_key(control_type) ?: continue
@@ -363,6 +351,18 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         )
                     )
                 }
+            }
+            for ((control_type, controller) in channel.controllers.get_all()) {
+                val control_type_key = this.get_control_type_key(control_type) ?: continue
+                this._effect_profiles.add(
+                    Triple(
+                        1, // layer (channel)
+                        this.generate_merge_keys(c, -1)[1], // key
+                        ProfileBuffer(
+                            this.convert_controller_to_event_data(control_type_key, controller)
+                        )
+                    )
+                )
             }
         }
 

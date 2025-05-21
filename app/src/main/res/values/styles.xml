@@ -194,16 +194,14 @@
     <style name="radio_button">
         <item name="android:textColor">@color/radio_text</item>
         <item name="android:textAlignment">center</item>
-        <item name="android:paddingStart">24dp</item>
-        <item name="android:paddingEnd">24dp</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:button">@null</item>
     </style>
+
     <style name="radio_button_start" parent="radio_button">
         <item name="android:background">@drawable/radio_flat_start</item>
     </style>
+
     <style name="radio_button_center" parent="radio_button">
         <item name="android:background">@drawable/radio_flat</item>
     </style>
@@ -211,9 +209,8 @@
         <item name="android:background">@drawable/radio_flat_end</item>
     </style>
 
-    <style name="progress_bar" parent="Widget.AppCompat.ProgressBar.Horizontal">
-        <item name="android:background">#33000000</item>
-        <item name="android:indeterminateTint">@color/primary</item>
+    <style name="progress_bar">
+        <item name="android:indeterminateTint">@color/leaf_main</item>
     </style>
 
     <style name="tuning_map_item">

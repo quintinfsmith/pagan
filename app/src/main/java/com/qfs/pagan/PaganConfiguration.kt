@@ -8,7 +8,7 @@ import java.io.File
 data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
-    var sample_rate: Int = 22050,
+    var sample_rate: Int = 32000,
     var show_percussion: Boolean = true, // Deprecated, use variable in view_model
     var move_mode: MoveMode = MoveMode.COPY,
     var clip_same_line_release: Boolean = true,

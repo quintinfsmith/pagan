@@ -28,11 +28,20 @@
             android:visibility="gone"
             style="@style/radio_button_start"
             android:text="@string/rb_mm_merge"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"/>
         <RadioButton
             android:id="@+id/rbMoveModeCopy"
             style="@style/radio_button_start"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:text="@string/rb_mm_copy"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"/>
@@ -42,6 +51,10 @@
         <RadioButton
             android:id="@+id/rbMoveModeMove"
             style="@style/radio_button_end"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:lines="1"
             android:text="@string/rb_mm_move"
             android:layout_height="wrap_content"

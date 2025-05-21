@@ -43,6 +43,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -168,7 +169,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var _app_bar_configuration: AppBarConfiguration
     private lateinit var _binding: ActivityMainBinding
     private var _options_menu: Menu? = null
-    private var _progress_bar: ProgressBar? = null
+    private var _progress_bar: ConstraintLayout? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
@@ -1404,19 +1405,24 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (this._progress_bar == null) {
-                this._progress_bar = ProgressBar(ContextThemeWrapper(this, R.style.progress_bar))
+                this._progress_bar = LayoutInflater.from(this)
+                    .inflate(
+                        R.layout.loading_reticle,
+                        this._binding.root as ViewGroup,
+                        false
+                    ) as ConstraintLayout
+
+                    ProgressBar(ContextThemeWrapper(this, R.style.progress_bar))
             }
 
             this._progress_bar!!.isClickable = true
-            val params: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(100, 100)
-            params.addRule(RelativeLayout.CENTER_IN_PARENT)
             val parent = this._progress_bar!!.parent
             if (parent != null) {
                 (parent as ViewGroup).removeView(this._progress_bar)
             }
 
             try {
-                this._binding.root.addView(this._progress_bar, params)
+                this._binding.root.addView(this._progress_bar)
             } catch (e: UninitializedPropertyAccessException) {
                 // pass
             }

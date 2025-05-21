@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".MainActivity"
     tools:ignore="MissingDefaultResource">
     <LinearLayout
@@ -22,7 +22,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_sf"
-                    android:paddingStart="15dp"
                     android:paddingTop="@dimen/normal_padding"
                     android:paddingEnd="15dp" />
 
@@ -39,32 +38,42 @@
 
         <LinearLayout
             android:id="@+id/llSFWarning"
-            android:orientation="vertical"
-            android:padding="4dp"
-            android:background="?attr/soundfont_warning_frame"
-            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
-                <LinearLayout
-                    android:orientation="vertical"
-                    android:padding="4dp"
-                    android:background="?attr/soundfont_warning_background"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="4dp"
+                android:background="?attr/soundfont_warning_frame"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:padding="4dp"
+                        android:background="?attr/soundfont_warning_background"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
 
-                <TextView
-                    android:text="@string/warning_nosoundfont"
-                    android:textColor="?attr/soundfont_warning_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                        <TextView
+                            android:maxWidth="256dp"
+                            android:text="@string/warning_nosoundfont"
+                            android:textColor="?attr/soundfont_warning_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
 
-                <TextView
-                    android:id="@+id/tvFluidUrl"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textColor="?attr/soundfont_warning_link"
-                    android:text="@string/url_fluid"/>
-                </LinearLayout>
+                        <TextView
+                            android:maxWidth="256dp"
+                            android:id="@+id/tvFluidUrl"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textStyle="bold"
+                            android:textColor="?attr/soundfont_warning_link"
+                            android:text="@string/url_fluid"/>
+
+                    </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -78,7 +87,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_playback_quality"
-                    android:paddingStart="15dp"
                     android:paddingEnd="15dp" />
 
                 <SeekBar
@@ -96,9 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=""
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp" />
-
+                    android:paddingStart="15dp"/>
         </LinearLayout>
         <LinearLayout
             android:visibility="gone"
@@ -108,7 +114,6 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="@string/label_settings_playback_stereo"
-                android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:labelFor="@+id/sPlaybackStereo"
@@ -127,7 +132,6 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="@string/label_settings_playback_limit_samples"
-                android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:labelFor="@+id/sLimitSamples"
@@ -145,7 +149,6 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="@string/label_settings_same_line_release"
-                android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:labelFor="@+id/sClipSameLineRelease"
@@ -163,7 +166,6 @@
             android:layout_height="wrap_content">
                 <TextView
                     android:text="@string/label_settings_relative"
-                    android:paddingStart="15dp"
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:labelFor="@+id/sRelativeEnabled"
@@ -181,7 +183,6 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="@string/label_settings_use_preferred_sf"
-                android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:labelFor="@+id/sUsePreferredSF"
@@ -200,7 +201,6 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="@string/label_settings_enable_midi_playback"
-                android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:labelFor="@+id/sEnableMidi"
@@ -219,7 +219,6 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="@string/label_settings_allow_std_percussion"
-                android:paddingStart="15dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:labelFor="@+id/sAllowStdPercussion"
@@ -234,12 +233,11 @@
         <LinearLayout
             android:paddingTop="4dp"
             android:paddingBottom="4dp"
-            android:paddingStart="15dp"
-            android:paddingEnd="15dp"
             android:id="@+id/llLockOrientation"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <TextView
                 android:paddingBottom="4dp"
                 android:text="@string/settings_screen_orientation"
@@ -249,34 +247,23 @@
             <RadioGroup
                 android:id="@+id/rgLockOrientation"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
                 android:orientation="horizontal">
 
                 <Space
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
-
-                <RadioButton
-                    android:id="@+id/rbOrientationUser"
-                    style="@style/radio_button_start"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="@dimen/setting_radio_padding_h"
-                    android:paddingTop="@dimen/setting_radio_padding_v"
-                    android:paddingEnd="@dimen/setting_radio_padding_h"
-                    android:paddingBottom="@dimen/setting_radio_padding_v"
-                    android:text="@string/settings_orientation_system" />
-
-                <Space
-                    android:layout_width="3dp"
+                    android:layout_weight="1"
                     android:layout_height="match_parent" />
 
                 <RadioButton
                     android:id="@+id/rbOrientationLandscape"
-                    style="@style/radio_button_center"
+                    style="@style/radio_button_start"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:drawablePadding="0dp"
+                    android:lines="1"
                     android:paddingStart="@dimen/setting_radio_padding_h"
                     android:paddingTop="@dimen/setting_radio_padding_v"
                     android:paddingEnd="@dimen/setting_radio_padding_h"
@@ -288,10 +275,29 @@
                     android:layout_height="match_parent" />
 
                 <RadioButton
+                    android:id="@+id/rbOrientationUser"
+                    style="@style/radio_button_center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:lines="1"
+                    android:paddingStart="@dimen/setting_radio_padding_h"
+                    android:paddingTop="@dimen/setting_radio_padding_v"
+                    android:paddingEnd="@dimen/setting_radio_padding_h"
+                    android:paddingBottom="@dimen/setting_radio_padding_v"
+                    android:text="@string/settings_orientation_system" />
+
+                <Space
+                    android:layout_width="3dp"
+                    android:layout_height="match_parent" />
+
+                <RadioButton
                     android:id="@+id/rbOrientationPortrait"
                     style="@style/radio_button_end"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:lines="1"
                     android:paddingStart="@dimen/setting_radio_padding_h"
                     android:paddingTop="@dimen/setting_radio_padding_v"
                     android:paddingEnd="@dimen/setting_radio_padding_h"
@@ -300,8 +306,9 @@
 
                 <Space
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:layout_height="match_parent" />
+
             </RadioGroup>
 
         </LinearLayout>

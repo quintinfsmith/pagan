@@ -10,6 +10,7 @@
     <Button
         style="@style/contextmenu_button"
         app:icon="@drawable/unset"
+
         android:id="@+id/btnEraseSelection"
         android:contentDescription="@string/cd_clear_selection"/>
 

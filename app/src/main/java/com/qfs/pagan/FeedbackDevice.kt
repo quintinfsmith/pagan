@@ -3,6 +3,7 @@ package com.qfs.pagan
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont.Sample
+import com.qfs.apres.soundfontplayer.ControllerEventData
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.ProfileBuffer
@@ -19,6 +20,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         private val _handles = mutableSetOf<SampleHandle>()
         private val _mutex = Mutex()
         var max_frame = -1
+        var volume = .6F
 
         override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
             if (this._handles.isEmpty()) {
@@ -28,7 +30,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
             val output = mutableSetOf<Pair<SampleHandle, IntArray>>()
             for (handle in this._handles) {
                 this.max_frame = max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
-                output.add(Pair(handle, intArrayOf()))
+                output.add(Pair(handle, intArrayOf(0)))
             }
 
             runBlocking {
@@ -54,8 +56,17 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         }
 
         override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
-            //TODO("Not yet implemented")
-            return listOf()
+            return listOf(
+                Triple(
+                    0,
+                    0,
+                    ProfileBuffer(
+                        ControllerEventData(
+                            arrayOf(Pair(0, Pair(this.volume, 0f))), 2 // VOLUME
+                        )
+                    )
+                )
+            )
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, Pair<SampleHandle, IntArray>>> {

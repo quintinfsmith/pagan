@@ -69,6 +69,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             IntArray(profiles.size) { profiles[it].first },
             IntArray(profiles.size) { profiles[it].second }
         )
+
         for (i in 0 until merged_array.size / 2) {
             working_array[(i * 2)] = merged_array[i * 2]
             working_array[(i * 2) + 1] = merged_array[(i * 2) + 1]

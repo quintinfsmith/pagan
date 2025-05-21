@@ -16,4 +16,9 @@ class ControllerEventData(val ptr: Long) {
         }
         external fun create(frame_indices: IntArray, values: FloatArray, increments: FloatArray, type: Int): Long
     }
+
+    external fun destroy_jni(ptr: Long)
+    fun destroy() {
+        this.destroy_jni(this.ptr)
+    }
 }

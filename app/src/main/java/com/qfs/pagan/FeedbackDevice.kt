@@ -21,7 +21,9 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         private val _mutex = Mutex()
         var max_frame = -1
         var volume = .6F
-
+        val volume_event_data = ControllerEventData(
+            arrayOf(Pair(0, Pair(this.volume, 0f))), 2 // VOLUME
+        )
         override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
             if (this._handles.isEmpty()) {
                 return null
@@ -57,15 +59,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
 
         override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
             return listOf(
-                Triple(
-                    0,
-                    0,
-                    ProfileBuffer(
-                        ControllerEventData(
-                            arrayOf(Pair(0, Pair(this.volume, 0f))), 2 // VOLUME
-                        )
-                    )
-                )
+                Triple(0, 0, ProfileBuffer(this.volume_event_data))
             )
         }
 
@@ -121,4 +115,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         }
     }
 
+    fun destroy() {
+        (this.sample_frame_map as ImmediateFrameMap).volume_event_data.destroy()
+    }
 }

@@ -1409,8 +1409,6 @@ class MainActivity : AppCompatActivity() {
                         this._binding.root as ViewGroup,
                         false
                     ) as ConstraintLayout
-
-                    ProgressBar(ContextThemeWrapper(this, R.style.progress_bar))
             }
 
             this._progress_bar!!.isClickable = true
@@ -2545,6 +2543,7 @@ class MainActivity : AppCompatActivity() {
     fun disconnect_feedback_device() {
         this._temporary_feedback_devices.forEachIndexed { i: Int, device: FeedbackDevice? ->
             device?.kill()
+            device?.destroy()
             this._temporary_feedback_devices[i] = null
         }
         this._feedback_sample_manager?.destroy()

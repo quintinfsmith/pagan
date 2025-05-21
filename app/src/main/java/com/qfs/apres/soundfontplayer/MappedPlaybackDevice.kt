@@ -192,7 +192,6 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
         }
     }
 
-
     fun kill() {
         this.is_playing = false
         this.active_audio_track_handle?.stop()

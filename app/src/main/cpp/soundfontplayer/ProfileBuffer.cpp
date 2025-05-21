@@ -34,6 +34,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(
     return (jlong)buffer;
 }
 
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_qfs_apres_soundfontplayer_ProfileBuffer_get_1data_1ptr_1jni(JNIEnv* env, jobject, jlong ptr_long) {
+    auto *ptr = (struct ProfileBuffer *) ptr_long;
+    return (jlong)ptr->data;
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_ProfileBuffer_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long, jboolean deep) {
     auto *ptr = (struct ProfileBuffer *) ptr_long;

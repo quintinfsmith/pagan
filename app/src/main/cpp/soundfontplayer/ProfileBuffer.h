@@ -22,13 +22,8 @@ public:
 
     float get_next() {
         ProfileBufferFrame* bframe_data = this->data->frames[this->current_index];
-        if (bframe_data->frame == this->current_frame) {
-            this->current_value = bframe_data->initial_value;
-        } else {
-            this->current_value += bframe_data->increment;
-        }
+        float output = bframe_data->initial_value + ((float)(this->current_frame - bframe_data->frame) * bframe_data->increment);
 
-        float output = this->current_value;
         this->_move_to_next_frame();
         return output;
     }

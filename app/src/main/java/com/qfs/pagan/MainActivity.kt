@@ -31,11 +31,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.ProgressBar
-import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -203,8 +201,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             this.activity.runOnUiThread {
-                val btnExportProject = this.activity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                btnExportProject.setImageResource(R.drawable.baseline_cancel_42)
+                val btnExportProject = this.activity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
+                btnExportProject.setIconResource(R.drawable.baseline_cancel_42)
                 val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
                 llExportProgress.visibility = View.VISIBLE
                 val tvExportProgress = this.activity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
@@ -256,8 +254,8 @@ class MainActivity : AppCompatActivity() {
             this.activity.runOnUiThread {
                 val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
                 llExportProgress.visibility = View.GONE
-                val btnExportProject = this.activity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                btnExportProject.setImageResource(R.drawable.export)
+                val btnExportProject = this.activity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
+                btnExportProject.setIconResource(R.drawable.export)
             }
             this.activity._active_notification = null
         }
@@ -268,8 +266,8 @@ class MainActivity : AppCompatActivity() {
             this.activity.runOnUiThread {
                 val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
                 llExportProgress.visibility = View.GONE
-                val btnExportProject = this.activity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                btnExportProject.setImageResource(R.drawable.export)
+                val btnExportProject = this.activity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
+                btnExportProject.setIconResource(R.drawable.export)
             }
 
             val builder = this.activity.get_notification() ?: return
@@ -564,8 +562,8 @@ class MainActivity : AppCompatActivity() {
 
                         override fun on_start() {
                             this@MainActivity.runOnUiThread {
-                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                                btnExportProject.setImageResource(R.drawable.baseline_cancel_42)
+                                val btnExportProject = this@MainActivity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setIconResource(R.drawable.baseline_cancel_42)
                                 val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
                                 llExportProgress.visibility = View.VISIBLE
 
@@ -618,8 +616,8 @@ class MainActivity : AppCompatActivity() {
                                     this@MainActivity.findViewById<View>(R.id.llExportProgress)
                                         ?: return@runOnUiThread
                                 llExportProgress.visibility = View.GONE
-                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                                btnExportProject.setImageResource(R.drawable.export)
+                                val btnExportProject = this@MainActivity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setIconResource(R.drawable.export)
                             }
                             this@MainActivity._active_notification = null
                         }
@@ -632,8 +630,8 @@ class MainActivity : AppCompatActivity() {
                                 val llExportProgress = this@MainActivity.findViewById<View>(R.id.llExportProgress)
                                         ?: return@runOnUiThread
                                 llExportProgress.visibility = View.GONE
-                                val btnExportProject = this@MainActivity.findViewById<ImageView>(R.id.btnExportProject) ?: return@runOnUiThread
-                                btnExportProject.setImageResource(R.drawable.export)
+                                val btnExportProject = this@MainActivity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
+                                btnExportProject.setIconResource(R.drawable.export)
                             }
 
                             val builder = this@MainActivity.get_notification() ?: return

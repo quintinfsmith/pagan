@@ -826,7 +826,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 if (i == 0) {
                     activity.getString(R.string.jump_to_section)
                 } else {
-                    "${i - 1}: ${opus_manager.marked_sections[keys[i - 1]]}" ?: getString(R.string.section_spinner_item, i)
+                    val section_name = opus_manager.marked_sections[keys[i - 1]]
+                    if (section_name == null) {
+                        getString(R.string.section_spinner_item, i)
+                    } else {
+                        "$i: ${section_name}"
+                    }
                 }
             }
 

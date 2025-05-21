@@ -198,7 +198,7 @@
     <string name="cd_mark_section">Tag Section</string>
     <string name="cd_remove_section_mark">Remove Section Tag</string>
     <string name="dialog_mark_section">Tag Section</string>
-    <string name="section_spinner_item">Tag %1$d</string>
+    <string name="section_spinner_item">%1$d: Section %1$02d</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

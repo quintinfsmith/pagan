@@ -687,7 +687,7 @@ class ActionTracker {
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == CtlLineLevel.Line) {
+        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == CtlLineLevel.Line && type == cursor.ctl_type) {
             opus_manager.cursor_select_channel(channel)
         } else {
             opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
@@ -750,7 +750,7 @@ class ActionTracker {
         val opus_manager = this.get_opus_manager()
 
         val cursor = opus_manager.cursor
-        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.ctl_level == CtlLineLevel.Channel) {
+        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.ctl_level == CtlLineLevel.Channel && type == cursor.ctl_type) {
             opus_manager.cursor_select_channel(channel)
         } else {
             opus_manager.cursor_select_channel_ctl_line(type, channel)

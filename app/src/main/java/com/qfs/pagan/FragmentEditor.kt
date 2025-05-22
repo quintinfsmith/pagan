@@ -828,9 +828,9 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                 } else {
                     val section_name = opus_manager.marked_sections[keys[i - 1]]
                     if (section_name == null) {
-                        getString(R.string.section_spinner_item, i)
+                        getString(R.string.section_spinner_item, i, keys[i - 1])
                     } else {
-                        "$i: ${section_name}"
+                        "${keys[i - 1]}: ${section_name}"
                     }
                 }
             }

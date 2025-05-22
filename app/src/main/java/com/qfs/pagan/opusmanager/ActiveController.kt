@@ -1,7 +1,6 @@
 package com.qfs.pagan.opusmanager
 
 import com.qfs.pagan.structure.OpusTree
-import java.time.Instant
 
 
 class ControllerProfile() {
@@ -28,8 +27,11 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
     fun generate_profile(): ControllerProfile {
         data class StackItem(val position: List<Int>, val tree: OpusTree<T>?, val relative_width: Float, val relative_offset: Float)
 
-        var working_value = this.initial_event.to_float()
+        var initial_value = this.initial_event.to_float()
         val output = ControllerProfile()
+        output.add(0F, 0F, 0F, initial_value, ControlTransition.Instant)
+        var previous_tail = Pair(0F, initial_value)
+
 
         val size = this.beat_count()
         val default_size = 1F / size.toFloat()
@@ -41,7 +43,8 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
 
                 if (working_tree.is_event()) {
                     val working_event = working_tree.get_event()!!
-                    val diff = working_event.to_float() - working_value
+                    val working_value = working_event.to_float()
+                    val diff = working_value - previous_tail.second
                     if (diff == 0F) {
                         continue
                     }
@@ -49,13 +52,12 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
                     val start_position = (b.toFloat() / size.toFloat()) + working_item.relative_offset
                     val end_position = start_position + (working_event.duration * working_item.relative_width)
 
-                    output.add(start_position, end_position, working_value, working_event.to_float(), working_event.transition)
-                    working_value = working_event.to_float()
-
-                    if (working_event.transition != ControlTransition.Instant) {
-                        output.add(end_position, end_position, 0f, working_value, ControlTransition.Instant)
+                    if (start_position > previous_tail.first) {
+                        output.add(previous_tail.first, start_position, previous_tail.second, previous_tail.second, ControlTransition.Instant)
                     }
 
+                    output.add(start_position, end_position, previous_tail.second, working_value, working_event.transition)
+                    previous_tail = Pair(end_position, working_value)
                 } else if (!working_tree.is_leaf()) {
                     val new_width = working_item.relative_width / working_tree.size.toFloat()
                     for (i in 0 until working_tree.size) {
@@ -65,10 +67,6 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
                     }
                 }
             }
-        }
-
-        if (output.values.isEmpty()) {
-            output.add(0f, 0f, 0f, working_value, ControlTransition.Instant)
         }
 
         return output

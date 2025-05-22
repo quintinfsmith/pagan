@@ -42,7 +42,6 @@ void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames
     }
 }
 
-
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         JNIEnv* env,
@@ -54,6 +53,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         jintArray buffer_layer_indices_input,
         jintArray buffer_keys_input
     ) {
+
     int array_count = env->GetArrayLength(input_array);
 
     float* working_arrays[array_count];
@@ -77,6 +77,11 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     int current_array_count = array_count;
     auto tmp_first_layer = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, 0));
     int layer_count = env->GetArrayLength(tmp_first_layer);
+
+    int shifted_buffers[effect_buffer_count];
+    int shift_buffers_size = 0;
+
+    // Merge the layers first, since initially, the data arrays are actually sample specific
     for (int layer = 0; layer < layer_count; layer++) {
         int done[current_array_count];
         int done_size = 0;
@@ -91,7 +96,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 }
             }
             if (skip) continue;
-
             if (i != new_arrays_size) {
                 for (int j = 0; j < frames; j++) {
                     int jj = j * 2;
@@ -111,26 +115,46 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 }
             }
 
-            // Apply effects
-            for (int j = 0; j < effect_buffer_count; j++) {
-                if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {
-                    continue;
-                }
-                auto* effect_buffer = (ProfileBuffer*)effect_buffers[j];
-
-                // TODO: Applying volume  & pan here for now, but this needs to be organized better
-                if (effect_buffer->data->type == 1) { // PAN
-                    apply_pan(effect_buffer, working_arrays[new_arrays_size], (int)frames);
-                } else if (effect_buffer->data->type == 2) { // VOLUME
-                    apply_volume(effect_buffer, working_arrays[new_arrays_size], (int)frames);
-                }
-            }
-
             done[done_size++] = working_keys[i][layer];
             working_keys[new_arrays_size] = working_keys[i];
             new_arrays_size++;
         }
+
         current_array_count = new_arrays_size;
+
+        for (int i = 0; i < current_array_count; i++) {
+            for (int j = 0; j < effect_buffer_count; j++) {
+                if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {
+                    continue;
+                }
+
+                auto* effect_buffer = (ProfileBuffer*)effect_buffers[j];
+
+
+                if (effect_buffer->data->type == 1) { // PAN
+                    apply_pan(effect_buffer, working_arrays[i], (int)frames);
+                    shifted_buffers[shift_buffers_size++] = j;
+                } else if (effect_buffer->data->type == 2) { // VOLUME
+                    apply_volume(effect_buffer, working_arrays[i], (int)frames);
+                    shifted_buffers[shift_buffers_size++] = j;
+                }
+            }
+        }
+    }
+
+    // set the positions of the buffers that weren't needed
+    for (int i = 0; i < effect_buffer_count; i++) {
+        bool found = false;
+        for (int j = 0; j < shift_buffers_size; j++) {
+            if (shifted_buffers[j] == i) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            auto* effect_buffer = (ProfileBuffer*)effect_buffers[i];
+            effect_buffer->drain((int)frames);
+        }
     }
 
     jfloat output_ptr[frames * 2];

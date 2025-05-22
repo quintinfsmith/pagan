@@ -314,16 +314,22 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private fun convert_controller_to_event_data(type_key: Int, controller: ActiveController<*>): ControllerEventData {
         val controller_profile = controller.generate_profile()
 
-        val control_event_data = HashMap<Int, Pair<Float, Float>>( )
+        val control_event_data = HashMap<Int, Triple<Int, Float, Float>>()
         for (entry in controller_profile.values) {
-            for ((frame, pair) in this.adjust_effect_profile_event_to_tempo(entry.third, entry.first.first, entry.first.second, entry.second.first, entry.second.second)) {
-                control_event_data[frame] = pair
+            for ((frames, pair) in this.adjust_effect_profile_event_to_tempo(entry.third, entry.first.first, entry.first.second, entry.second.first, entry.second.second)) {
+                control_event_data[frames.first] = Triple(frames.second, pair.first, pair.second)
             }
         }
+
         val keys = control_event_data.keys.sorted()
         val array = Array(control_event_data.size) { i: Int ->
-            Pair(keys[i], control_event_data[keys[i]]!!)
+            val (end_frame, value, increment) = control_event_data[keys[i]]!!
+            Pair(
+                Pair(keys[i], end_frame),
+                Pair(value, increment)
+            )
         }
+
         return ControllerEventData(array, type_key)
     }
 
@@ -420,8 +426,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     // TODO: NEEDS BETTER NAME
-    private fun adjust_effect_profile_event_to_tempo(transition: ControlTransition, relative_start: Float, relative_end: Float, start_value: Float, end_value: Float): List<Pair<Int, Pair<Float, Float>>> {
-        val output = mutableListOf<Pair<Int, Pair<Float, Float>>>()
+    private fun adjust_effect_profile_event_to_tempo(transition: ControlTransition, relative_start: Float, relative_end: Float, start_value: Float, end_value: Float): List<Pair<Pair<Int, Int>, Pair<Float, Float>>> {
+        val output = mutableListOf<Pair<Pair<Int, Int>, Pair<Float, Float>>>()
 
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         // Find the tempo active at the beginning of the beat
@@ -461,7 +467,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         if (transition == ControlTransition.Instant) {
             return listOf(
-                Pair(start_frame, Pair(end_value, 0F))
+                Pair(
+                    Pair(start_frame, start_frame),
+                    Pair(end_value, 0F)
+                )
             )
         }
 
@@ -484,7 +493,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                      Pair(working_value, 0F)
                 }
 
-                output.add(Pair(end_frame, Pair(working_value, increment)))
+                output.add(
+                    Pair(
+                        Pair(end_frame, next_end_frame - 1),
+                        Pair(working_value, increment)
+                    )
+                )
 
                 working_value = next_value
                 end_frame = next_end_frame
@@ -504,7 +518,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             0F
         }
 
-        output.add(Pair(end_frame, Pair(working_value, increment)))
+        output.add(
+            Pair(
+                Pair(end_frame, next_end_frame - 1),
+                Pair(working_value, increment)
+            )
+        )
 
         return output
     }
@@ -630,13 +649,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         )
 
         val line_pair = Pair(beat_key.channel, beat_key.line_offset)
-
-        // Prioritize line ctl, then use channel ctl
-        val pan_key = if (this._pan_map.containsKey(line_pair) || !this._pan_map.containsKey(Pair(beat_key.channel, -1))) {
-            line_pair
-        } else {
-            Pair(beat_key.channel, -1)
-        }
 
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up

@@ -8,22 +8,17 @@
 #include <vector>
 #include "ControllerEventData.h"
 
-#include <android/log.h>
 class ProfileBuffer {
 public:
     ControllerEventData* data;
     int current_frame;
     int current_index;
     float current_value;
-    int next_frame_trigger;
-    int start_frame;
 
     ~ProfileBuffer() = default;
 
     float get_next() {
-        ProfileBufferFrame* bframe_data = this->data->frames[this->current_index];
-        float output = bframe_data->initial_value + ((float)(this->current_frame - bframe_data->frame) * bframe_data->increment);
-
+        float output = this->current_value;
         this->_move_to_next_frame();
         return output;
     }
@@ -33,57 +28,61 @@ public:
             return;
         }
         // First set the working frame
-        this->current_frame = frame + this->start_frame;
+        this->current_frame = frame;
 
         // Find the active event
-        this->current_index = -1;
-        while (this->current_index < this->data->frame_count - 1) {
-            if (this->data->frames[this->current_index + 1]->frame <= this->current_frame) {
-                this->current_index++;
-            } else {
+        this->current_index = 0;
+        while (this->current_index < this->data->frame_count) {
+            if (this->data->frames[this->current_index]->frame <= this->current_frame && this->current_frame <= this->data->frames[this->current_index]->end) {
                 break;
             }
+            this->current_index++;
         }
 
-        if (this->current_index == -1) {
-            this->current_index = 0;
-        }
-
-        // Set the next frame trigger
-        if (this->current_index < this->data->frame_count - 1) {
-            this->next_frame_trigger = this->data->frames[this->current_index + 1]->frame;
+        if (this->current_index >= this->data->frame_count) {
+            ProfileBufferFrame* bframe_data = this->data->frames[this->data->frame_count - 1];
+            this->current_value = bframe_data->initial_value + ((bframe_data->end - bframe_data->frame) * bframe_data->increment);
         } else {
-            this->next_frame_trigger = -1;
-        }
-
-        // Set the active value
-        ProfileBufferFrame* frame_data = this->data->frames[this->current_index];
-        this->current_value = frame_data->initial_value;
-        if (frame_data->increment != 0) {
-            this->current_value += (float)(this->current_frame - frame_data->frame) * frame_data->increment;
+            ProfileBufferFrame* bframe_data = this->data->frames[this->current_index];
+            if (this->current_frame >= bframe_data->frame) {
+                this->current_value = bframe_data->initial_value + ((this->current_frame - bframe_data->frame) * bframe_data->increment);
+            }
         }
     }
 
     void copy_to(ProfileBuffer* new_buffer) const {
         new_buffer->data = this->data;
-        new_buffer->start_frame = this->start_frame;
-        new_buffer->next_frame_trigger = this->next_frame_trigger;
         new_buffer->current_index = this->current_index;
-        new_buffer->current_frame = this->current_frame;
         new_buffer->current_value = this->current_value;
+        new_buffer->current_frame = this->current_frame;
         new_buffer->set_frame(0);
+    }
+
+    // TODO: This could probably be optimized but not a priority atm.
+    void drain(int count) {
+        this->set_frame(count + this->current_frame);
     }
 
 private:
     void _move_to_next_frame() {
         this->current_frame++;
-        int working_frame = this->current_frame;
-        if (working_frame == this->next_frame_trigger) {
-            this->current_index += 1;
-            if (this->current_index >= this->data->frame_count - 1) {
-                this->next_frame_trigger = -1;
-            } else {
-                this->next_frame_trigger = this->data->frames[this->current_index + 1]->frame;
+        if (this->current_index >= this->data->frame_count) {
+            // Nothing to be done
+        } else {
+            auto bframe = this->data->frames[this->current_index];
+            if (this->current_frame > bframe->end) {
+                this->current_index++;
+                if (this->current_index >= this->data->frame_count) {
+                    return;
+                }
+
+                bframe = this->data->frames[this->current_index];
+            }
+
+            if (this->current_frame == bframe->frame) {
+                this->current_value = bframe->initial_value;
+            } else if (this->current_frame > bframe->frame) {
+                this->current_value += bframe->increment;
             }
         }
     }

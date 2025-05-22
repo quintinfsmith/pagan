@@ -183,6 +183,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             new_modulators[key] = new_modulators[key]!! + modulators
         }
         val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 50F
+        val loop_mode  = sample_directive.sampleMode ?: global_sample_directive.sampleMode
         return List(sample_directive.sample!!.size) { i: Int ->
             val working_sample = sample_directive.sample!![i]
             SampleHandle(
@@ -192,7 +193,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                 pitch_shift = pitch_shift,
                 initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
                 stereo_mode = working_sample.sample_type,
-                loop_points = if (sample_directive.sampleMode != null && (sample_directive.sampleMode!! and 1) == 1) {
+                loop_points = if (loop_mode != null && (loop_mode!! and 1) == 1) {
                     val tmp = Pair(
                         working_sample.loop_start + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
                         working_sample.loop_end + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)

@@ -7,6 +7,7 @@
 
 struct ProfileBufferFrame {
     int frame;
+    int end;
     float initial_value;
     float increment;
 };

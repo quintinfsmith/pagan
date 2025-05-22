@@ -22,7 +22,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         var max_frame = -1
         var volume = .6F
         val volume_event_data = ControllerEventData(
-            arrayOf(Pair(0, Pair(this.volume, 0f))), 2 // VOLUME
+            arrayOf(Pair(Pair(0,0), Pair(this.volume, 0f))), 2 // VOLUME
         )
         override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
             if (this._handles.isEmpty()) {

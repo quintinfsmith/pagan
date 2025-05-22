@@ -22,6 +22,7 @@ public:
             ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
             ptr->frame = frame.frame;
             ptr->initial_value = frame.initial_value;
+            ptr->end = frame.end;
             ptr->increment = frame.increment;
         }
     }
@@ -41,6 +42,7 @@ public:
                 ProfileBufferFrame* frame = this->frames[i];
                 auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
                 ptr->frame = frame->frame;
+                ptr->end = frame->end;
                 ptr->increment = frame->increment;
                 ptr->initial_value = frame->initial_value;
                 new_buffer->frames[i] = ptr;

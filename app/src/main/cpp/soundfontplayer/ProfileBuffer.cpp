@@ -2,7 +2,6 @@
 #include <malloc.h>
 #include "ProfileBuffer.h"
 #include "ControllerEventData.h"
-
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
         JNIEnv* env,
@@ -12,11 +11,9 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
 ) {
     auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
     buffer->data = (ControllerEventData *)cev_ptr;
-    buffer->start_frame = start_frame;
     buffer->current_frame = start_frame;
     buffer->current_index = 0;
     buffer->current_value = 0;
-    buffer->next_frame_trigger = -1;
     buffer->set_frame(0);
 
     return (jlong)buffer;

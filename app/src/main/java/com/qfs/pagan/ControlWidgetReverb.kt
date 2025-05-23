@@ -7,10 +7,11 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetReverb(default: OpusReverbEvent, is_initial_event: Boolean, context: Context, callback: (OpusReverbEvent) -> Unit): ControlWidget<OpusReverbEvent>(context, default, is_initial_event, R.layout.control_widget_reverb, callback) {
+class ControlWidgetReverb(default: OpusReverbEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusReverbEvent) -> Unit): ControlWidget<OpusReverbEvent>(context, default, level, is_initial_event, R.layout.control_widget_reverb, callback) {
     private val _slider = SeekBar(ContextThemeWrapper(context, R.style.Theme_Pagan_SeekBar))
     private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _min = 0f

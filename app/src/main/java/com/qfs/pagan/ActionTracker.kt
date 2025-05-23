@@ -1015,11 +1015,11 @@ class ActionTracker {
 
         val widget: ControlWidgetVolume = context_menu.get_widget() as ControlWidgetVolume
 
-        val dlg_default = (widget.get_event().value * widget.max.toFloat()).toInt()
+        val dlg_default = (widget.get_event().value * 100F).toInt()
         val dlg_title = main.getString(R.string.dlg_set_volume)
         this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, volume) { new_value: Int ->
             this.track(TrackedAction.SetVolumeAtCursor, listOf(new_value))
-            val new_event = OpusVolumeEvent(new_value.toFloat() / widget.max.toFloat(), widget.get_event().transition, widget.working_event.duration)
+            val new_event = OpusVolumeEvent(new_value.toFloat() / 100F, widget.get_event().transition, widget.working_event.duration)
             widget.set_event(new_event)
         }
     }

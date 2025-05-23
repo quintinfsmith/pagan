@@ -35,7 +35,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             ControlEventType.Tempo
         )
         val channel_controller_domain = listOf(
-            //       ControlEventType.Volume,
+            ControlEventType.Volume,
             ControlEventType.Pan
         )
         val line_controller_domain = listOf(

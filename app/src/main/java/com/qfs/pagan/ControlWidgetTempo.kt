@@ -3,10 +3,11 @@ package com.qfs.pagan
 import android.content.Context
 import android.widget.Button
 import com.google.android.material.button.MaterialButton
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetTempo(default: OpusTempoEvent, is_initial_event: Boolean, context: Context, callback: (OpusTempoEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, default, is_initial_event, R.layout.control_widget_tempo, callback) {
+class ControlWidgetTempo(default: OpusTempoEvent, _level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusTempoEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, default, CtlLineLevel.Global, is_initial_event, R.layout.control_widget_tempo, callback) {
     private lateinit var input: Button
     val min = 0f
     val max = 512f

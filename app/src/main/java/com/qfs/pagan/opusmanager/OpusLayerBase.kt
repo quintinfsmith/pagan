@@ -1824,7 +1824,12 @@ open class OpusLayerBase {
      */
     open fun new_channel_controller(type: ControlEventType, channel_index: Int) {
         val channel = this.get_all_channels()[channel_index]
-        channel.controllers.get_controller<OpusControlEvent>(type)
+        val controller = channel.controllers.get_controller<OpusControlEvent>(type)
+
+        // Channel volume is treated differently than line volume
+        if (type == ControlEventType.Volume) {
+            controller.initial_event = OpusVolumeEvent(1F)
+        }
 
         this.recache_line_maps()
     }

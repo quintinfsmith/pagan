@@ -13,6 +13,7 @@ import com.qfs.pagan.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
@@ -41,6 +42,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
 
         this.widget_volume = ControlWidgetVolume(
             OpusVolumeEvent(0F),
+            CtlLineLevel.Line,
             true,
             this.context
         ) { event: OpusControlEvent ->

@@ -7,14 +7,15 @@ import android.widget.Button
 import android.widget.SeekBar
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.opusmanager.ControlTransition
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, is_initial_event, R.layout.control_widget_volume, callback) {
+class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, level, is_initial_event, R.layout.control_widget_volume, callback) {
     private lateinit var _slider: SeekBar
     private lateinit var _button: Button
     private lateinit var _transition_button: Button
     val min = 0
-    val max = 100
+    val max = if (level == CtlLineLevel.Line) 100 else 200
     private var _lockout_ui: Boolean = false
 
     override fun on_inflated() {
@@ -81,7 +82,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, is_initial_event: Boolean, c
     }
 
     override fun on_set(event: OpusVolumeEvent) {
-        this._slider.progress = (event.value * this.max.toFloat()).toInt()
+        this._slider.progress = (event.value * 100F).toInt()
         val value = (event.value * 100).toInt()
         this.set_text(value)
         (this._transition_button as MaterialButton).setIconResource(when (event.transition) {

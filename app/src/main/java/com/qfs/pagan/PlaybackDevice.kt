@@ -92,7 +92,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     fun play_opus(start_beat: Int) {
         this._first_beat_passed = false
         (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = this.activity.configuration.clip_same_line_release
-        (this.sample_frame_map as PlaybackFrameMap).parse_opus(false)
+        (this.sample_frame_map as PlaybackFrameMap).parse_opus()
         val start_frame = this.sample_frame_map.get_marked_frames()[start_beat]
 
         // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()

@@ -28,7 +28,6 @@ import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     private val FADE_LIMIT = _sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
-    private var _simple_mode: Boolean = false // Simple mode ignores delays, and decays. Reduces Lode on cpu
     private val _handle_map = HashMap<Int, Pair<SampleHandle, IntArray>>() // Handle UUID::(Handle::Merge Keys)
     private val _handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
     private val _frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
@@ -263,9 +262,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    fun parse_opus(force_simple_mode: Boolean = false) {
+    fun parse_opus(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
         this.clear()
-        this._simple_mode = force_simple_mode
 
         for (channel in this.opus_manager.get_all_channels()) {
             val instrument = channel.get_instrument()
@@ -275,7 +273,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this.map_tempo_changes()
         this.get_marked_frames()
-        this.setup_effect_buffers()
+        this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
 
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
             if (channel.muted) {
@@ -342,7 +340,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    fun setup_effect_buffers() {
+    fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
         this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
             if (channel.muted) {
                 return@forEachIndexed
@@ -351,13 +349,31 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 if (line.muted) {
                     return@forEachIndexed
                 }
-
-                for ((control_type, controller) in line.controllers.get_all()) {
+                if (!ignore_line_controls) {
+                    for ((control_type, controller) in line.controllers.get_all()) {
+                        val control_type_key = this.get_control_type_key(control_type) ?: continue
+                        this._effect_profiles.add(
+                            Triple(
+                                0, // layer ( line)
+                                this.generate_merge_keys(c, l)[0], // key
+                                ProfileBuffer(
+                                    this.convert_controller_to_event_data(
+                                        control_type_key,
+                                        controller
+                                    )
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+            if (!ignore_channel_controls) {
+                for ((control_type, controller) in channel.controllers.get_all()) {
                     val control_type_key = this.get_control_type_key(control_type) ?: continue
                     this._effect_profiles.add(
                         Triple(
-                            0, // layer ( line)
-                            this.generate_merge_keys(c, l)[0], // key
+                            1, // layer (channel)
+                            this.generate_merge_keys(c, -1)[1], // key
                             ProfileBuffer(
                                 this.convert_controller_to_event_data(control_type_key, controller)
                             )
@@ -365,31 +381,21 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     )
                 }
             }
-            for ((control_type, controller) in channel.controllers.get_all()) {
+        }
+
+        if (!ignore_global_controls) {
+            for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
                 val control_type_key = this.get_control_type_key(control_type) ?: continue
                 this._effect_profiles.add(
                     Triple(
-                        1, // layer (channel)
-                        this.generate_merge_keys(c, -1)[1], // key
+                        2, // layer (global)
+                        0,
                         ProfileBuffer(
                             this.convert_controller_to_event_data(control_type_key, controller)
                         )
                     )
                 )
             }
-        }
-
-        for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
-            val control_type_key = this.get_control_type_key(control_type) ?: continue
-            this._effect_profiles.add(
-                Triple(
-                    2, // layer (global)
-                    0,
-                    ProfileBuffer(
-                        this.convert_controller_to_event_data(control_type_key, controller)
-                    )
-                )
-            )
         }
     }
 

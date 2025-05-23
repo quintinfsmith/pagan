@@ -327,7 +327,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 Pair(value, increment)
             )
         }
-
         return ControllerEventData(array, type_key)
     }
 

@@ -32,10 +32,7 @@ public:
 
         // Find the active event
         this->current_index = 0;
-        while (this->current_index < this->data->frame_count) {
-            if (this->data->frames[this->current_index]->frame <= this->current_frame && this->current_frame <= this->data->frames[this->current_index]->end) {
-                break;
-            }
+        while (this->current_index < this->data->frame_count && this->current_frame < this->data->frames[this->current_index]->frame) {
             this->current_index++;
         }
 

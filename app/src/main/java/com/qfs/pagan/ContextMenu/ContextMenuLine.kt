@@ -4,11 +4,8 @@ import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Space
-import android.widget.TextView
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget

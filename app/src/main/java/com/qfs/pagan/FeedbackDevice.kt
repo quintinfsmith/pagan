@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.Sample
 import com.qfs.apres.soundfontplayer.ControllerEventData
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice

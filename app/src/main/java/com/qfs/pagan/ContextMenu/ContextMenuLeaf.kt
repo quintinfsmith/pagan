@@ -3,8 +3,6 @@ package com.qfs.pagan.ContextMenu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
 import com.qfs.pagan.NumberSelector
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeOptionSelector

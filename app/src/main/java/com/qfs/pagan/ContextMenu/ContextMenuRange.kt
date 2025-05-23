@@ -4,13 +4,10 @@ import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
 import android.widget.RadioGroup
 import android.widget.TextView
-import androidx.transition.Visibility
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.OpusManagerCursor
 
 class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_range, R.layout.contextmenu_range_secondary, primary_container, secondary_container) {

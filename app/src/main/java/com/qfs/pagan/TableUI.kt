@@ -30,7 +30,6 @@ import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.OpusTree
 import kotlin.math.abs
 import kotlin.math.floor
-import kotlin.math.max
 import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")

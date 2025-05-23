@@ -3,7 +3,6 @@ package com.qfs.pagan.ContextMenu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
 import com.qfs.pagan.ContextMenuWithController
@@ -12,6 +11,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
+
 class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container),
     ContextMenuWithController<T> {

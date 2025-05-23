@@ -43,7 +43,6 @@ import java.io.File
 import java.io.FileInputStream
 import kotlin.concurrent.thread
 
-
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
     var active_context_menu: ContextMenuView? = null

@@ -1,22 +1,10 @@
 package com.qfs.pagan
 
-import android.content.Context
-import android.graphics.drawable.shapes.RoundRectShape
-import android.view.ContextThemeWrapper
-import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
-import kotlin.math.roundToInt
 
 class ChannelOptionAdapter(
     private val _opus_manager: OpusLayerInterface,

@@ -21,7 +21,6 @@ import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.opusmanager.UnreachableException
 import com.qfs.pagan.structure.OpusTree
-import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

@@ -72,6 +72,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:minWidth="@dimen/config_width"
         android:paddingTop="@dimen/config_item_padding"
         app:layout_constraintBottom_toTopOf="@+id/llProjectOptions"
         app:layout_constraintEnd_toEndOf="parent"

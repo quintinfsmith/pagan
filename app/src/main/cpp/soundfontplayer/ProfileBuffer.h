@@ -6,6 +6,7 @@
 #define PAGAN_PROFILEBUFFER_H
 #include "ProfileBufferFrame.h"
 #include <vector>
+#include <android/log.h>
 #include "ControllerEventData.h"
 
 class ProfileBuffer {
@@ -32,7 +33,7 @@ public:
 
         // Find the active event
         this->current_index = 0;
-        while (this->current_index < this->data->frame_count && this->current_frame < this->data->frames[this->current_index]->frame) {
+        while (this->current_index < this->data->frame_count && this->current_frame > this->data->frames[this->current_index]->end) {
             this->current_index++;
         }
 
@@ -43,8 +44,14 @@ public:
             ProfileBufferFrame* bframe_data = this->data->frames[this->current_index];
             if (this->current_frame >= bframe_data->frame) {
                 this->current_value = bframe_data->initial_value + ((this->current_frame - bframe_data->frame) * bframe_data->increment);
+            } else if (this->current_index > 0) {
+                bframe_data = this->data->frames[this->current_index - 1];
+                this->current_value = bframe_data->initial_value + ((bframe_data->end - bframe_data->frame) * bframe_data->increment);
+            } else {
+                this->current_value = 0; // Shouldn't be reachable
             }
         }
+        __android_log_write(ANDROID_LOG_DEBUG, "", (std::to_string(this->current_index) + " " + std::to_string(this->data->frame_count) + " " + std::to_string(frame)).c_str());
     }
 
     void copy_to(ProfileBuffer* new_buffer) const {

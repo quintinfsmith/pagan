@@ -344,7 +344,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     fun setup_effect_buffers() {
         this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
+            if (channel.muted) {
+                return@forEachIndexed
+            }
             channel.lines.forEachIndexed { l: Int, line: OpusLineAbstract<out InstrumentEvent> ->
+                if (line.muted) {
+                    return@forEachIndexed
+                }
+
                 for ((control_type, controller) in line.controllers.get_all()) {
                     val control_type_key = this.get_control_type_key(control_type) ?: continue
                     this._effect_profiles.add(

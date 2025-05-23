@@ -6,7 +6,6 @@
 #define PAGAN_PROFILEBUFFER_H
 #include "ProfileBufferFrame.h"
 #include <vector>
-#include <android/log.h>
 #include "ControllerEventData.h"
 
 class ProfileBuffer {
@@ -51,7 +50,6 @@ public:
                 this->current_value = 0; // Shouldn't be reachable
             }
         }
-        __android_log_write(ANDROID_LOG_DEBUG, "", (std::to_string(this->current_index) + " " + std::to_string(this->data->frame_count) + " " + std::to_string(frame)).c_str());
     }
 
     void copy_to(ProfileBuffer* new_buffer) const {

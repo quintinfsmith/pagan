@@ -7,7 +7,6 @@ class ControllerEventData(val ptr: Long) {
 
     companion object {
         fun intermediary_create(frames: Array<Pair<Pair<Int, Int>, Pair<Float, Float>>>, type: Int): Long {
-            println("${frames.toList()}")
             return create(
                 IntArray(frames.size) { i: Int -> frames[i].first.first },
                 IntArray(frames.size) { i: Int -> frames[i].first.second },

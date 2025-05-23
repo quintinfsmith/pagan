@@ -4958,9 +4958,6 @@ open class OpusLayerBase {
         Given the row, get the line number in the Opus
      */
     fun get_ctl_line_from_row(row: Int): Int {
-        if (!this._cached_row_map.containsKey(row)) {
-            throw IndexOutOfBoundsException(row)
-        }
         return this._cached_row_map[row]!!
     }
 

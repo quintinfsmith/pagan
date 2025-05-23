@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
@@ -12,10 +12,14 @@
     android:clickable="true">
 
     <LinearLayout
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/rvActiveChannels"
+        app:layout_constrainedWidth="true"
         android:id="@+id/llB"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:layout_weight="1"
         android:orientation="vertical">
 
         <LinearLayout
@@ -61,83 +65,94 @@
                 android:layout_gravity="end"
                 style="@style/song_config_button"/>
         </LinearLayout>
-
-        <com.qfs.pagan.ChannelOptionRecycler
-            android:id="@+id/rvActiveChannels"
-            android:paddingTop="@dimen/config_item_padding"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
     </LinearLayout>
 
-    <LinearLayout
+    <com.qfs.pagan.ChannelOptionRecycler
+        android:id="@+id/rvActiveChannels"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:paddingTop="@dimen/config_item_padding"
-        android:paddingBottom="@dimen/config_item_padding"
+        app:layout_constraintBottom_toTopOf="@+id/llProjectOptions"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/llB" />
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/llProjectOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        app:layout_constrainedWidth="true"
         android:gravity="bottom"
         android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:paddingTop="@dimen/config_item_padding"
+        android:paddingBottom="@dimen/config_item_padding"
+        app:layout_constraintBottom_toTopOf="@+id/llExportProgress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rvActiveChannels">
 
         <Button
-            android:layout_margin="-3dp"
-            style="@style/song_config_button"
             android:id="@+id/btnSaveProject"
-            android:maxLines="1"
-            android:layout_height="@dimen/config_button_width"
+            style="@style/song_config_button"
             android:layout_width="@dimen/config_button_width"
+            android:layout_height="@dimen/config_button_width"
+            android:layout_margin="-3dp"
+            android:contentDescription="@string/cd_save_project"
+            android:maxLines="1"
             app:icon="@drawable/ic_baseline_save_24"
-            android:contentDescription="@string/cd_save_project"/>
-
-        <Space
-            android:layout_weight="1"
-            android:minWidth="4dp"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"/>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/btnCopyProject"
             style="@style/song_config_button"
-            android:maxLines="1"
-            android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
-            app:icon="@drawable/ic_baseline_content_copy_24"
-            android:contentDescription="@string/cd_duplicate_project"/>
+            android:layout_height="@dimen/config_button_width"
 
-        <Space
-            android:layout_weight="1"
-            android:minWidth="4dp"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"/>
+            android:contentDescription="@string/cd_duplicate_project"
+            android:maxLines="1"
+            app:icon="@drawable/ic_baseline_content_copy_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnDeleteProject"
+            app:layout_constraintStart_toEndOf="@+id/btnSaveProject"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/btnDeleteProject"
             style="@style/song_config_button"
-            android:maxLines="1"
-            android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
+            android:layout_height="@dimen/config_button_width"
+            android:contentDescription="@string/cd_delete_project"
+            android:maxLines="1"
             app:icon="@drawable/ic_baseline_delete_24"
-            android:contentDescription="@string/cd_delete_project"/>
-
-        <Space
-            android:layout_weight="1"
-            android:minWidth="4dp"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"/>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnExportProject"
+            app:layout_constraintStart_toEndOf="@+id/btnCopyProject"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/btnExportProject"
             style="@style/song_config_button"
-            android:maxLines="1"
-            android:layout_height="@dimen/config_button_width"
             android:layout_width="@dimen/config_button_width"
+            android:layout_height="@dimen/config_button_width"
+            android:contentDescription="@string/cd_export_project"
+            android:maxLines="1"
             app:icon="@drawable/export"
-            android:contentDescription="@string/cd_export_project"/>
-    </LinearLayout>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/llProjectOptions"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constrainedWidth="true"
         android:paddingTop="@dimen/config_item_padding"
         android:paddingBottom="@dimen/config_item_padding"
         android:id="@+id/llExportProgress"
@@ -161,4 +176,4 @@
 
     </LinearLayout>
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

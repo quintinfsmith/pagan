@@ -161,8 +161,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun new_row(y: Int) {
         this.reset_table_size()
-        this.line_label_layout.insert_label(y)
         this.table_ui.insert_row(y)
+        this.line_label_layout.insert_label(y)
     }
 
     fun remove_rows(y: Int, count: Int) {

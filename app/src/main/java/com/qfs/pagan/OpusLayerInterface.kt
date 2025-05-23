@@ -1413,10 +1413,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     instrument
                 )
 
-                if (this.is_percussion(channel)) {
-                    activity?.populate_active_percussion_names(true)
-                }
-
                 this._ui_change_bill.queue_refresh_channel(channel)
                 this._ui_change_bill.queue_refresh_context_menu()
             }
@@ -2605,6 +2601,10 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                     BillableItem.ChannelChange -> {
                         val channel = this._ui_change_bill.get_next_int()
+
+                        if (this.is_percussion(channel)) {
+                            activity.populate_active_percussion_names(true)
+                        }
 
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
                         if (channel_recycler.adapter != null) {

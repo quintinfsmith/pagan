@@ -87,6 +87,7 @@ class ChannelOptionAdapter(
         } else {
             remove_button.setIconResource(R.drawable.delete_channel)
         }
+
         remove_button.setOnClickListener {
             if (this._opus_manager.is_percussion(holder.layoutPosition)) {
                 this.interact_btnTogglePercussionVisibility()

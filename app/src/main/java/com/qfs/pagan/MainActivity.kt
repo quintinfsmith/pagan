@@ -114,10 +114,23 @@ class MainActivity : AppCompatActivity() {
         var action_interface = ActionTracker()
         var opus_manager = OpusManager()
 
-        fun export_wav(opus_manager: OpusLayerBase, sample_handle_manager: SampleHandleManager, target_output_stream: DataOutputStream, tmp_file: File, configuration: PaganConfiguration? = null, handler: WavConverter.ExporterEventHandler) {
+        fun export_wav(
+            opus_manager: OpusLayerBase,
+            sample_handle_manager: SampleHandleManager,
+            target_output_stream: DataOutputStream,
+            tmp_file: File, configuration: PaganConfiguration? = null,
+            handler: WavConverter.ExporterEventHandler,
+            ignore_global_effects: Boolean = false,
+            ignore_channel_effects: Boolean = false,
+            ignore_line_effects: Boolean = false,
+        ) {
             val frame_map = PlaybackFrameMap(opus_manager, sample_handle_manager)
             frame_map.clip_same_line_release = configuration?.clip_same_line_release ?: true
-            frame_map.parse_opus()
+            frame_map.parse_opus(
+                ignore_global_effects,
+                ignore_channel_effects,
+                ignore_line_effects
+            )
 
             val start_frame = frame_map.get_marked_frames()[0]
 
@@ -392,7 +405,17 @@ class MainActivity : AppCompatActivity() {
                             val data_output_buffer = DataOutputStream(buffered_output_stream)
 
                             export_event_handler.update(y++, file_uri)
-                            this.view_model.export_wav(opus_manager_copy, exporter_sample_handle_manager, data_output_buffer, tmp_file, this.configuration, export_event_handler)
+                            this.view_model.export_wav(
+                                opus_manager_copy,
+                                exporter_sample_handle_manager,
+                                data_output_buffer,
+                                tmp_file,
+                                this.configuration,
+                                export_event_handler,
+                                true,
+                                true,
+                                false
+                            )
 
                             data_output_buffer.close()
                             buffered_output_stream.close()
@@ -497,7 +520,17 @@ class MainActivity : AppCompatActivity() {
                         val data_output_buffer = DataOutputStream(buffered_output_stream)
 
                         export_event_handler.update(y++, file_uri)
-                        this.view_model.export_wav(opus_manager_copy, exporter_sample_handle_manager, data_output_buffer, tmp_file, this.configuration, export_event_handler)
+                        this.view_model.export_wav(
+                            opus_manager_copy,
+                            exporter_sample_handle_manager,
+                            data_output_buffer,
+                            tmp_file,
+                            this.configuration,
+                            export_event_handler,
+                            true,
+                            false,
+                            false
+                        )
 
                         data_output_buffer.close()
                         buffered_output_stream.close()

@@ -103,8 +103,10 @@
             android:contentDescription="@string/cd_save_project"
             android:maxLines="1"
             app:icon="@drawable/ic_baseline_save_24"
+
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnCopyProject"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
@@ -117,8 +119,8 @@
             android:maxLines="1"
             app:icon="@drawable/ic_baseline_content_copy_24"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnDeleteProject"
             app:layout_constraintStart_toEndOf="@+id/btnSaveProject"
+            app:layout_constraintEnd_toStartOf="@+id/btnDeleteProject"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
@@ -130,8 +132,8 @@
             android:maxLines="1"
             app:icon="@drawable/ic_baseline_delete_24"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnExportProject"
             app:layout_constraintStart_toEndOf="@+id/btnCopyProject"
+            app:layout_constraintEnd_toStartOf="@+id/btnExportProject"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
@@ -143,6 +145,7 @@
             android:maxLines="1"
             app:icon="@drawable/export"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btnDeleteProject"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>

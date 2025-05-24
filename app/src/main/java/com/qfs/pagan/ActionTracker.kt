@@ -325,7 +325,7 @@ class ActionTracker {
                         arrayOf(
                             JSONInteger(integers[0]!!),
                             if (integers.size > 1) {
-                                JSONString(string_from_ints(integers.subList(1, 0)))
+                                JSONString(string_from_ints(integers.subList(1, integers.size)))
                             } else {
                                 null
                             }

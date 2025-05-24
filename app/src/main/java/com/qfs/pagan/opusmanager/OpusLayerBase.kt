@@ -1681,9 +1681,9 @@ open class OpusLayerBase {
 
         val tag_beats = this.marked_sections.keys.sorted()
         for (tag in tag_beats) {
-            if (tag > beat_index) {
-                this.marked_sections[tag - 1] = this.marked_sections.remove(tag)
-            } else if (tag == beat_index) {
+            if (tag >= beat_index + count) {
+                this.marked_sections[tag - count] = this.marked_sections.remove(tag)
+            } else if (tag >= beat_index && tag < beat_index + count) {
                 this.remove_tagged_section(tag)
             }
         }
@@ -4064,6 +4064,10 @@ open class OpusLayerBase {
 
     open fun remove_tagged_section(beat: Int) {
         this.marked_sections.remove(beat)
+    }
+
+    fun get_marked_sections(): List<Pair<Int, String?>> {
+        return this.marked_sections.toList()
     }
 
     fun is_beat_tagged(beat: Int): Boolean {

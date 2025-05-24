@@ -70,6 +70,7 @@ class ActionTrackerUnitTest {
                 }
 
                 // ------- Single Int Argument ----------------
+                ActionTracker.TrackedAction.UntagColumn,
                 ActionTracker.TrackedAction.AdjustSelection,
                 ActionTracker.TrackedAction.MuteChannel,
                 ActionTracker.TrackedAction.UnMuteChannel,
@@ -151,12 +152,23 @@ class ActionTrackerUnitTest {
                         listOf(bytes.size) + List(bytes.size) { bytes[it].toInt() } + listOf(0)
                     )
                 }
+
                 ActionTracker.TrackedAction.CursorSelectGlobalCtlLine -> {
                     val string = "Tempo"
                     val bytes = string.toByteArray()
                     Pair(
                         enum,
                         listOf(bytes.size) + List(bytes.size) { bytes[it].toInt() }
+                    )
+                }
+
+                //ActionTracker.TrackedAction.UntagColumn -> {
+                ActionTracker.TrackedAction.TagColumn -> {
+                    val string = "TAGNAME"
+                    val bytes = string.toByteArray()
+                    Pair(
+                        enum,
+                        listOf(56) + List(bytes.size) { bytes[it].toInt() }
                     )
                 }
 
@@ -205,7 +217,6 @@ class ActionTrackerUnitTest {
                     val test_ints = arrayOf(0, 0, 1, 0)
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
-
             }
 
             val json_name = JSONString(enum.name)
@@ -264,6 +275,7 @@ class ActionTrackerUnitTest {
                     }
 
                     // ------- Single Int Argument ----------------
+                    ActionTracker.TrackedAction.UntagColumn,
                     ActionTracker.TrackedAction.AdjustSelection,
                     ActionTracker.TrackedAction.ForceOrientation,
                     ActionTracker.TrackedAction.MuteChannel,
@@ -378,6 +390,11 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.SwapLines -> {
                         val test_ints = arrayOf(0, 0, 1, 0)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
+                    }
+
+                    // ---------- int + string -----------
+                    ActionTracker.TrackedAction.TagColumn -> {
+                        JSONList(json_name, JSONInteger(56), JSONString("TAGNAME"))
                     }
 
                 },

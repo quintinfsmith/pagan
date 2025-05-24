@@ -11,15 +11,15 @@ cmake_minimum_required(VERSION 3.22.1)
 # build script scope).
 project("pagan")
 
-# if (UNIX)
-# 	find_package(JNI REQUIRED)
-# 	if (JNI_FOUND)
-# 	    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
-# 	    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
-# 	endif()
-# 	include_directories(${JAVA_INCLUDE_PATH})
-# 	include_directories(${JAVA_INCLUDE_PATH}/linux)
-# endif (UNIX)
+if (UNIX)
+	find_package(JNI REQUIRED)
+	if (JNI_FOUND)
+	    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+	    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+	endif()
+	include_directories(${JAVA_INCLUDE_PATH})
+	include_directories(${JAVA_INCLUDE_PATH}/linux)
+endif (UNIX)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -38,6 +38,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         # List C/C++ source files with relative paths to this CMakeLists.txt.
         native-lib.cpp)
 
+if (ANDROID)
 # Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this
 # build script, prebuilt third-party libraries, or Android system libraries.
@@ -45,3 +46,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 	# List libraries link to the target library
 	android
 	log)
+endif (ANDROID)

@@ -3293,6 +3293,64 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
         )
     }
 
+    @Test
+    fun test_set_tag() {
+        val manager = OpusManager()
+        manager._project_change_new()
+        manager.insert_beats(0, 12)
+        val tag_name = "Test Tag Name"
+        val tag_position = 10
+
+        manager.tag_section(tag_position, tag_name)
+        assertEquals(
+            listOf(Pair(tag_position, tag_name)),
+            manager.get_marked_sections()
+        )
+        for (i in 0 until manager.length) {
+            assertEquals(
+                i == tag_position,
+                manager.is_beat_tagged(i)
+            )
+        }
+
+        manager.remove_beat(0)
+        assertEquals(
+            listOf(Pair(tag_position - 1, tag_name)),
+            manager.get_marked_sections()
+        )
+
+        manager.remove_beat(0, 3)
+        assertEquals(
+            listOf(Pair(tag_position - 4, tag_name)),
+            manager.get_marked_sections()
+        )
+
+        manager.insert_beat(4)
+        assertEquals(
+            listOf(Pair(tag_position - 3, tag_name)),
+            manager.get_marked_sections()
+        )
+
+        manager.insert_beats(4, 3)
+        assertEquals(
+            listOf(Pair(tag_position, tag_name)),
+            manager.get_marked_sections()
+        )
+
+        manager.remove_tagged_section(tag_position)
+        assert(manager.get_marked_sections().isEmpty())
+
+        manager.tag_section(tag_position, null)
+        assertEquals(
+            listOf(Pair(tag_position, null)),
+            manager.get_marked_sections()
+        )
+
+        manager.remove_beat(tag_position)
+        assert(manager.get_marked_sections().isEmpty())
+
+    }
+
     //@Test
     //fun test_merge_leafs() {
     //    val manager = OpusManager()

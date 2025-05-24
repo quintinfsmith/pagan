@@ -877,7 +877,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+       super.onCreate(savedInstanceState)
         this.check_for_crash_report()
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->

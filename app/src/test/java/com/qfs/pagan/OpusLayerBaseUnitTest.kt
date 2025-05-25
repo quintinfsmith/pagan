@@ -3345,7 +3345,6 @@ class OpusLayerBaseUnitTest {
 
         manager.remove_beat(tag_position)
         assert(manager.get_marked_sections().isEmpty())
-
     }
 
     //@Test

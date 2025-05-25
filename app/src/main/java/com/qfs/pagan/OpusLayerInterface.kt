@@ -1625,10 +1625,17 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    fun force_cursor_select_column(beat: Int) {
+        if (this.cursor == this._cache_cursor) {
+            this.cursor_clear()
+        }
+        this.cursor_select_column(beat)
+    }
     override fun cursor_select_column(beat: Int) {
         if (this._block_cursor_selection()) {
             return
         }
+
         this.lock_ui_partial {
             super.cursor_select_column(beat)
             this.temporary_blocker = null

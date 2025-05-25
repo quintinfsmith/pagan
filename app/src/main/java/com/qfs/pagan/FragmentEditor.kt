@@ -805,7 +805,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 title_text.text = resources.getString(R.string.label_shortcut_scrollbar, p1)
                 title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, p1)
-                opus_manager.cursor_select_column(p1)
+                opus_manager.force_cursor_select_column(p1)
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
             override fun onStopTrackingTouch(seekbar: SeekBar?) { }
@@ -837,7 +837,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
             spinner.onItemSelectedListener = object: OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                     if (position > 0) {
-                        opus_manager.cursor_select_column(keys[position - 1])
+                        opus_manager.force_cursor_select_column(keys[position - 1])
                         dialog.dismiss()
                     }
                 }

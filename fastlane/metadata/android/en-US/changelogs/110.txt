@@ -1,0 +1,6 @@
+- UI redesign
+- Section Tagging
+- Channel Volume Control
+- Fixed Pan & Volume not always being accurate
+- Fixed some instruments in some soundfonts not looping correctly
+

@@ -4156,14 +4156,6 @@ open class OpusLayerBase {
         val inner_map = json_data["d"] as JSONHashMap
         this.set_project_name(inner_map.get_stringn("title"))
         this.set_project_notes(inner_map.get_stringn("notes"))
-        this.marked_sections.clear()
-        val tags = inner_map.get_hashmapn("tags")
-        if (tags != null) {
-            for (key in tags.keys) {
-                this.marked_sections[key.toInt()] = tags.get_stringn(key)
-            }
-        }
-
         this.channels.clear()
 
         this.set_beat_count(inner_map.get_int("size"))
@@ -4199,6 +4191,19 @@ open class OpusLayerBase {
         )
 
         this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
+
+        this.marked_sections.clear()
+        val tags = inner_map.get_hashmapn("tags")
+        if (tags != null) {
+            for (key in tags.keys) {
+                val beat = key.toInt()
+                // technically possible if the user manually edits the file for sections to be out of bounds
+                if (beat in 0 until this.length) {
+                    this.marked_sections[beat] = tags.get_stringn(key)
+                }
+            }
+        }
+
     }
 
     fun project_change_midi(midi: Midi) {

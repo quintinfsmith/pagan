@@ -1654,9 +1654,20 @@ open class OpusLayerHistory: OpusLayerCursor() {
     override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
         this._remember {
             if (this.has_channel_controller(type, channel_index)) {
+                val controller = this.get_all_channels()[channel_index].controllers.get_controller<OpusControlEvent>(type)
+                for (beat in controller.beats.indices) {
+                    if (controller.beats[beat].is_leaf() && !controller.beats[beat].is_event()) {
+                        continue
+                    }
+
+                    this.push_to_history_stack(
+                        HistoryToken.REPLACE_CHANNEL_CTL_TREE,
+                        listOf(type, channel_index, beat, listOf<Int>(), controller.beats[beat])
+                    )
+                }
                 this.push_to_history_stack(
                     HistoryToken.NEW_CHANNEL_CONTROLLER,
-                    listOf(type, channel_index, this.get_all_channels()[channel_index].controllers.get_controller<OpusControlEvent>(type).visible)
+                    listOf(type, channel_index, controller.visible)
                 )
             }
             super.remove_channel_controller(type, channel_index)

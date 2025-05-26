@@ -1,21 +1,38 @@
-# Pagan, a Music Sequencer
+<h1 align="center" style="font-size: 24px;" >
+ 
+ <img style="height: 2em; float: left" src="https://github.com/quintinfsmith/pagan/blob/master/fastlane/metadata/android/en-US/images/icon.png?raw=true"/>
+ Pagan
+</h1>
 
-[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
+<p align="center">
+  <i align="center">Make music on your phone.</i>
+</p>
 
-<a href="https://burnsomni.net/manual/pagan" style="display: inline-block;">Manual</a>
+<p align="center">
+ <a href="https://f-droid.org/en/packages/com.qfs.pagan" title="Fdroid">
+ <img src="https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid" title="fdroid"/>
+ </a>
+ 
+ <a href="https://burnsomni.net/manual/pagan" title="Website">
+  <img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fburnsomni.net"/>
+ </a>
+ 
+ <a href="https://github.com/quintinfsmith/pagan/releases/" title="Github Release">
+ <img alt="GitHub Release" src="https://img.shields.io/github/v/release/quintinfsmith/pagan"/>
+ </a>
+</p>
 
-Step Sequencers can be limited.
-
-DAWs and Notation Software can be impenetrable.
-
-Pagan is something different.
-
-
-
-
-
+<p align="center">
 <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/"><img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" /></a>
 <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'><img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/></a>
+</p>
+
+<p align="center">
+ <b>
+    <a href="https://burnsomni.net/manual/pagan">Manual</a>
+ </b>
+</p>
+
 
 ## Features
 
@@ -30,35 +47,35 @@ Pagan is something different.
 <table style="width:100%">
  <tr>
   <td align="center">
-   <img src="https://github.com/user-attachments/assets/fc967215-d8db-41de-a52a-6b1f6dc7f960"/>
+   <img src="https://github.com/user-attachments/assets/6ceaf057-8d36-4b41-8210-ebd4b4fd60af"/>
   </td>
   <td align="center">
-   <img src="https://github.com/user-attachments/assets/9f2504f4-5fcf-421a-b129-6fc3b4aca4d3"/>
+   <img src="https://github.com/user-attachments/assets/8a3b1083-3521-4c6d-a05c-5625668cf2d9"/>
   </td>
   <td align="center">
-   <img src="https://github.com/user-attachments/assets/2a8c5001-e2a4-43f2-b0f7-7f614fbff8d4"/>
+   <img src="https://github.com/user-attachments/assets/9f45a8e2-33d6-4b35-9e58-7632e51fa5e8"/>
   </td>
  </tr>
  <tr>
   <td align="center">
-   <img src="https://github.com/user-attachments/assets/e42c48db-fc30-4fef-aabf-e9c7fe5cf706"/>
+   <img src="https://github.com/user-attachments/assets/b9c589e2-b213-44bf-b7e6-8dfa5d5a6498"/>
   </td>
   <td align="center">
-   <img src="https://github.com/user-attachments/assets/d2657ea8-5ae9-41e8-b45a-3da9d0a04901"/>
+   <img src="https://github.com/user-attachments/assets/15afb52d-5d3f-4c35-9c11-64022d24e222"/>
   </td>
   <td align="center">
-   <img src="https://github.com/user-attachments/assets/05b2d930-3ed4-4fe5-a925-aa93b0e2453f"/>
+   <img src="https://github.com/user-attachments/assets/c00b5bcc-556c-4a34-9453-078f6621b924"/>
   </td>
  </tr>
 </table>
 
-## Contribute
+## Contribute or Contact
 
-Pull requests are welcome but if you're not condfident with development, feel free to create an issue 
+Pull requests are welcome but if you're not confident with development, feel free to create an issue 
 
 https://github.com/quintinfsmith/pagan/issues
 
-You can also email me 
+If you have a feature request or any questions, you can also email me 
 
 smith.quintin@protonmail.com 
 

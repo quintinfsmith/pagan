@@ -1,0 +1,7 @@
+- UI redesign
+- Section Tagging
+- Channel Volume Control
+- Fixed Pan & Volume not always being accurate
+- Fixed some instruments in some soundfonts not looping correctly
+- Fixed undoing a removed channel leading to a potential crash.
+- Fixed samples always playing from the start in playback

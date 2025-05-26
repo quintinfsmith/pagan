@@ -29,16 +29,16 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
 void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
     for (int i = 0; i < frames; i++) {
         float pan_value = effect_buffer->get_next();
-        working_array[(i * 2)] *= 1 + pan_value;
-        working_array[(i * 2) + 1] *= (-1 + pan_value) * -1;
+        working_array[i] *= 1 + pan_value;
+        working_array[i + frames] *= (-1 + pan_value) * -1;
     }
 }
 
 void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames) {
     for (int i = 0; i < frames; i++) {
         float volume = effect_buffer->get_next();
-        working_array[(i * 2)] *= volume;
-        working_array[(i * 2) + 1] *= volume;
+        working_array[i] *= volume;
+        working_array[i + frames] *= volume;
     }
 }
 
@@ -53,6 +53,8 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         jintArray buffer_layer_indices_input,
         jintArray buffer_keys_input
     ) {
+    // NOTE: The array channels are split between first and last half instead of the normal multiplexing
+    // The output of this function will be multiplexed though.
 
     int array_count = env->GetArrayLength(input_array);
 
@@ -98,9 +100,8 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             if (skip) continue;
             if (i != new_arrays_size) {
                 for (int j = 0; j < frames; j++) {
-                    int jj = j * 2;
-                    working_arrays[new_arrays_size][jj] = working_arrays[i][jj];
-                    working_arrays[new_arrays_size][jj + 1] = working_arrays[i][jj + 1];
+                    working_arrays[new_arrays_size][j] = working_arrays[i][j];
+                    working_arrays[new_arrays_size][j + frames] = working_arrays[i][j + frames];
                 }
             }
 
@@ -109,9 +110,8 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                     continue;
                 }
                 for (int j = 0; j < frames; j++) {
-                    int jj = j * 2;
-                    working_arrays[new_arrays_size][jj] += working_arrays[k][jj];
-                    working_arrays[new_arrays_size][jj + 1] += working_arrays[k][jj + 1];
+                    working_arrays[new_arrays_size][j] += working_arrays[k][j];
+                    working_arrays[new_arrays_size][j + frames] += working_arrays[k][j + frames];
                 }
             }
 
@@ -127,9 +127,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {
                     continue;
                 }
-
                 auto* effect_buffer = (ProfileBuffer*)effect_buffers[j];
-
 
                 if (effect_buffer->data->type == 1) { // PAN
                     apply_pan(effect_buffer, working_arrays[i], (int)frames);
@@ -158,18 +156,18 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     }
 
     jfloat output_ptr[frames * 2];
-    for (int i = 0; i < frames; i++) {
-        int k = i * 2;
-        output_ptr[k] = 0;
-        output_ptr[k + 1] = 0;
+    for (int i = 0; i < frames * 2; i++) {
+        output_ptr[i] = 0;
     }
 
+    // move the merged and modified signal into a single array,
+    // Multiplexing the channels
     for (int i = 0; i < current_array_count; i++) {
         jfloat* input_ptr = working_arrays[i];
         for (int j = 0; j < frames; j++) {
             int k = j * 2;
-            output_ptr[k] += input_ptr[k];
-            output_ptr[k + 1] += input_ptr[k + 1];
+            output_ptr[k] += input_ptr[j];
+            output_ptr[k + 1] += input_ptr[j + frames];
         }
     }
 

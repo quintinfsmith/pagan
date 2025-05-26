@@ -259,14 +259,17 @@ class SampleHandle {
             return output;
         }
 
+        // Instead of multiplexing the channels, alternating between left and right
+        // The 2 channels are split length-wise. the first entire half is the right channel, followed by the left
+        // This is so its easier to FFT later in the process.
         void get_next_frames(float* buffer, int target_size, int left_padding) {
             int actual_size = target_size;
             std::tuple<float, float> working_pan = this->get_balance();
 
             // No need to smooth the left padding since the handle won't start, then have a gap, then continue
             for (int i = 0; i < left_padding; i++) {
-                buffer[(i * 2)] = 0;
-                buffer[(i * 2) + 1] = 0;
+                buffer[i] = 0;
+                buffer[i + target_size] = 0;
             }
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
@@ -279,8 +282,8 @@ class SampleHandle {
 
                 float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
 
-                buffer[(i * 2)] = v * std::get<0>(working_pan);
-                buffer[(i * 2) + 1] = v * std::get<1>(working_pan);
+                buffer[i] = v * std::get<0>(working_pan);
+                buffer[i + target_size] = v * std::get<1>(working_pan);
 
                 this->previous_value = v;
             }
@@ -289,12 +292,12 @@ class SampleHandle {
             for (int i = actual_size; i < target_size; i++) {
                 if (this->previous_value != 0) {
                     float v = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    buffer[(i * 2)] = v * std::get<0>(working_pan);
-                    buffer[(i * 2) + 1] = v * std::get<1>(working_pan);
+                    buffer[i] = v * std::get<0>(working_pan);
+                    buffer[i + target_size] = v * std::get<1>(working_pan);
                     this->previous_value = v;
                 } else {
-                    buffer[(i * 2)] = 0;
-                    buffer[(i * 2) + 1] = 0;
+                    buffer[i] = 0;
+                    buffer[i + target_size] = 0;
                 }
             }
         }

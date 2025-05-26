@@ -9,17 +9,9 @@
 </p>
 
 <p align="center">
- <a href="https://f-droid.org/en/packages/com.qfs.pagan" title="Fdroid">
- <img src="https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid" title="fdroid"/>
- </a>
- 
- <a href="https://burnsomni.net/manual/pagan" title="Website">
-  <img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fburnsomni.net"/>
- </a>
- 
- <a href="https://github.com/quintinfsmith/pagan/releases/" title="Github Release">
- <img alt="GitHub Release" src="https://img.shields.io/github/v/release/quintinfsmith/pagan"/>
- </a>
+<a href="https://f-droid.org/en/packages/com.qfs.pagan" title="Fdroid"><img src="https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid" title="fdroid"/></a>
+<a href="https://burnsomni.net/manual/pagan" title="Website"><img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fburnsomni.net"/></a>
+<a href="https://github.com/quintinfsmith/pagan/releases/" title="Github Release"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/quintinfsmith/pagan"/></a>
 </p>
 
 <p align="center">

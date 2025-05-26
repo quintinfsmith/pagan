@@ -69,13 +69,13 @@
  </tr>
 </table>
 
-## Contribute
+## Contribute or Contact
 
 Pull requests are welcome but if you're not confident with development, feel free to create an issue 
 
 https://github.com/quintinfsmith/pagan/issues
 
-You can also email me 
+If you have a feature request or any questions, you can also email me 
 
 smith.quintin@protonmail.com 
 

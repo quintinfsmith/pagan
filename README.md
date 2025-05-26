@@ -1,17 +1,38 @@
-# Pagan, a Music Sequencer
+<h1 align="center" style="font-size: 24px;" >
+ 
+ <img style="height: 2em; float: left" src="https://github.com/quintinfsmith/pagan/blob/master/fastlane/metadata/android/en-US/images/icon.png?raw=true"/>
+ Pagan
+</h1>
 
-[![fdroid](https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid)](https://f-droid.org/en/packages/com.qfs.pagan/) 
+<p align="center">
+  <i align="center">Make music on your phone.</i>
+</p>
 
-<a href="https://burnsomni.net/manual/pagan" style="display: inline-block;">Manual</a>
+<p align="center">
+ <a href="https://f-droid.org/en/packages/com.qfs.pagan" title="Fdroid">
+ <img src="https://img.shields.io/f-droid/v/com.qfs.pagan.svg?logo=F-Droid" title="fdroid"/>
+ </a>
+ 
+ <a href="https://burnsomni.net/manual/pagan" title="Website">
+  <img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fburnsomni.net"/>
+ </a>
+ 
+ <a href="https://github.com/quintinfsmith/pagan/releases/" title="Github Release">
+ <img alt="GitHub Release" src="https://img.shields.io/github/v/release/quintinfsmith/pagan"/>
+ </a>
+</p>
 
-Step Sequencers can be limited.
-
-DAWs and Notation Software can be impenetrable.
-
-Pagan is something different.
-
+<p align="center">
 <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/"><img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" /></a>
 <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'><img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/></a>
+</p>
+
+<p align="center">
+ <b>
+    <a href="https://burnsomni.net/manual/pagan">Manual</a>
+ </b>
+</p>
+
 
 ## Features
 
@@ -25,7 +46,6 @@ Pagan is something different.
 ## Screenshots
 <table style="width:100%">
  <tr>
-
   <td align="center">
    <img src="https://github.com/user-attachments/assets/6ceaf057-8d36-4b41-8210-ebd4b4fd60af"/>
   </td>
@@ -51,7 +71,7 @@ Pagan is something different.
 
 ## Contribute
 
-Pull requests are welcome but if you're not condfident with development, feel free to create an issue 
+Pull requests are welcome but if you're not confident with development, feel free to create an issue 
 
 https://github.com/quintinfsmith/pagan/issues
 

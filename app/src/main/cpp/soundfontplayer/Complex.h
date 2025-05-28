@@ -10,9 +10,9 @@
 using namespace std;
 
 class Complex {
-    float real;
-    float imaginary;
     public:
+        float real;
+        float imaginary;
         Complex() {
             this->real = 0;
             this->imaginary = 0;
@@ -27,7 +27,11 @@ class Complex {
         friend Complex operator-(Complex const& c1, Complex const& c2);
         friend Complex operator*(Complex const& c1, Complex const& c2);
         friend Complex operator/(Complex const& c1, Complex const& c2);
-        friend bool operator==(Complex const& c1, Complex const& c2);
+
+        void operator*=(Complex const& c) {
+            this->real = (this->real * c.real) - (this->imaginary * c.imaginary);
+            this->imaginary = (this->real * c.imaginary) + (this->imaginary * c.real);
+        }
 };
 
 Complex operator+(Complex const& c1, Complex const& c2) {

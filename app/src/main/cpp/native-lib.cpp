@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <exception>
+#include <android/log.h>
 
 #include "soundfont/SampleData.cpp"
 #include "soundfontplayer/PitchedBuffer.cpp"
@@ -9,6 +10,7 @@
 #include "soundfontplayer/ControllerEventData.cpp"
 #include "soundfontplayer/ProfileBuffer.cpp"
 #include "soundfontplayer/SampleHandle.cpp"
+#include "soundfontplayer/Complex.h"
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobject, jfloatArray input_array) {
@@ -154,7 +156,51 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             effect_buffer->drain((int)frames);
         }
     }
+    __android_log_write(ANDROID_LOG_DEBUG, "", "R");
 
+    float left_signal[frames];
+    float right_signal[frames];
+    for (int i = 0; i < frames; i++) {
+        left_signal[i] = 0;
+        right_signal[i] = 0;
+    }
+
+    __android_log_write(ANDROID_LOG_DEBUG, "", "Q");
+    // move the merged and modified signal into a single array,
+    // Multiplexing the channels
+    for (int i = 0; i < current_array_count; i++) {
+        jfloat* input_ptr = working_arrays[i];
+        for (int j = 0; j < frames; j++) {
+            right_signal[j] += input_ptr[j];
+            left_signal[j] += input_ptr[j + frames];
+        }
+    }
+
+    __android_log_write(ANDROID_LOG_DEBUG, "", "A");
+    // Testing Convolution with Echo
+    float echo_impulse_response[frames];
+    for (int i = 0; i < frames; i++) {
+        echo_impulse_response[i] = 0;
+    }
+    echo_impulse_response[0] = 1;
+    echo_impulse_response[frames/2] = .5;
+    __android_log_write(ANDROID_LOG_DEBUG, "", "B");
+
+    vector<Complex> echo_trans = fft(echo_impulse_response, frames);
+    vector<Complex> right_trans = fft(right_signal, frames);
+    vector<Complex> left_trans = fft(left_signal, frames);
+
+    __android_log_write(ANDROID_LOG_DEBUG, "", "C");
+    for (int i = 0; i < echo_trans.size(); i++) {
+        right_trans[i] *= echo_trans[i];
+        left_trans[i] *= echo_trans[i];
+    }
+    __android_log_write(ANDROID_LOG_DEBUG, "", "D");
+
+    vector<Complex> left_ifft = _ifft(left_trans);
+    vector<Complex> right_ifft = _ifft(right_trans);
+
+    __android_log_write(ANDROID_LOG_DEBUG, "", "E");
     jfloat output_ptr[frames * 2];
     for (int i = 0; i < frames * 2; i++) {
         output_ptr[i] = 0;
@@ -162,14 +208,13 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
 
     // move the merged and modified signal into a single array,
     // Multiplexing the channels
-    for (int i = 0; i < current_array_count; i++) {
-        jfloat* input_ptr = working_arrays[i];
-        for (int j = 0; j < frames; j++) {
-            int k = j * 2;
-            output_ptr[k] += input_ptr[j];
-            output_ptr[k + 1] += input_ptr[j + frames];
-        }
+    for (int j = 0; j < frames; j++) {
+        int k = j * 2;
+        output_ptr[k] += right_ifft[j].real;
+        output_ptr[k + 1] += left_ifft[j].real;
     }
+
+    __android_log_write(ANDROID_LOG_DEBUG, "", "F");
 
     jfloatArray output = env->NewFloatArray(frames * 2);
     env->SetFloatArrayRegion(output, 0, frames * 2, output_ptr);

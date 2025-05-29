@@ -4,7 +4,6 @@
 
 #ifndef PAGAN_COMPLEX_H
 #define PAGAN_COMPLEX_H
-
 #include <cmath>
 #include <vector>
 using namespace std;
@@ -71,105 +70,105 @@ bool operator==(Complex const& c1, Complex const& c2) {
     return c1.real == c2.real && c1.imaginary == c2.imaginary;
 }
 
-vector<Complex> _fft(vector<Complex> input) {
-    int size = input.size();
+void _fft(Complex* input, int size, Complex* output) {
     if (size == 1) {
-        return input;
+        output[0] = input[0];
+        return;
     }
 
     int half_size = size / 2;
-    Complex twiddle_factors[half_size];
-    for (int i = 0; i < half_size; i++) {
-        float v = (2 * (float)M_PI * (float)i) / (float)size;
-        twiddle_factors[i] = Complex(cos(v), sin(v));
-    }
-
-    vector<Complex> input_evens;
-    vector<Complex> input_odds;
-    input_evens.reserve(half_size);
-    input_odds.reserve(half_size);
+    Complex* input_evens = (Complex*)malloc(sizeof(Complex) * half_size);
+    Complex* input_odds = (Complex*)malloc(sizeof(Complex) * half_size);
 
     for (int i = 0; i < half_size; i++) {
         input_evens[i] = input[i * 2];
         input_odds[i] = input[(i * 2) + 1];
     }
 
-    vector<Complex> result_evens = _fft(input_evens);
-    vector<Complex> result_odds = _fft(input_odds);
+    Complex* result_evens = (Complex*)malloc(sizeof(Complex) * half_size);
+    Complex* result_odds = (Complex*)malloc(sizeof(Complex) * half_size);
+    _fft(input_evens, half_size, result_evens);
+    _fft(input_odds, half_size, result_odds);
 
-    vector<Complex> output;
-    output.reserve(size);
-    for (int i = 0; i < size; i++) {
-        int x = i % half_size;
-        if (i < half_size) {
-            output[i] = result_evens[x] + (twiddle_factors[x] * result_odds[x]);
-        } else {
-            output[i] = result_evens[x] - (twiddle_factors[x] * result_odds[x]);
-        }
-    }
-
-    return output;
-}
-
-vector<Complex> _ifft(vector<Complex> input) {
-    int size = input.size();
-    if (size == 1) {
-        return input;
-    }
-
-    int half_size = size / 2;
-    Complex twiddle_factors[half_size];
+    Complex* twiddle_factors = (Complex*)malloc(sizeof(Complex) * half_size);
+    float ratio = float(2 * M_PI) / (float)size;
     for (int i = 0; i < half_size; i++) {
-        float v = (-2 * (float)M_PI * (float)i) / (float)size;
+        float v = (float)i * ratio;
         twiddle_factors[i] = Complex(cos(v), sin(v));
     }
 
-    vector<Complex> input_evens;
-    input_evens.reserve(half_size);
-    vector<Complex> input_odds;
-    input_odds.reserve(half_size);
+    for (int i = 0; i < half_size; i++) {
+        output[i] = result_evens[i] + (twiddle_factors[i] * result_odds[i]);
+        output[i + half_size] = result_evens[i] - (twiddle_factors[i] * result_odds[i]);
+    }
+
+    free(twiddle_factors);
+    free(input_evens);
+    free(input_odds);
+    free(result_evens);
+    free(result_odds);
+}
+
+void _ifft(Complex* input, int size, Complex* output) {
+    if (size == 1) {
+        output[0] = input[0];
+        return;
+    }
+
+    int half_size = size / 2;
+    Complex* input_evens = (Complex*)malloc(sizeof(Complex) * half_size);
+    Complex* input_odds = (Complex*)malloc(sizeof(Complex) * half_size);
 
     for (int i = 0; i < half_size; i++) {
         input_evens[i] = input[i * 2];
         input_odds[i] = input[(i * 2) + 1];
     }
 
-    vector<Complex> result_evens = _ifft(input_evens);
-    vector<Complex> result_odds = _ifft(input_odds);
+    Complex* result_evens = (Complex*)malloc(sizeof(Complex) * half_size);
+    Complex* result_odds = (Complex*)malloc(sizeof(Complex) * half_size);
+    _ifft(input_evens, half_size, result_evens);
+    _ifft(input_odds, half_size, result_odds);
 
-    vector<Complex> output;
-    output.reserve(size);
-
-    for (int i = 0; i < size; i++) {
-        int x = i % half_size;
-        if (i < half_size) {
-            output[i] = (result_evens[x] + (twiddle_factors[x] * result_odds[x])) / 2;
-        } else {
-            output[i] = (result_evens[x] - (twiddle_factors[x] * result_odds[x])) / 2;
-        }
+    Complex* twiddle_factors = (Complex*)malloc(sizeof(Complex) * half_size);
+    float ratio = float(-2 * M_PI) / (float)size;
+    for (int i = 0; i < half_size; i++) {
+        float v = (float)i * ratio;
+        twiddle_factors[i] = Complex(cos(v), sin(v));
     }
 
-    return output;
+    for (int i = 0; i < half_size; i++) {
+        output[i] = (result_evens[i] + (twiddle_factors[i] * result_odds[i])) / 2;
+        output[i + half_size] = (result_evens[i] - (twiddle_factors[i] * result_odds[i])) / 2;
+    }
+
+    free(twiddle_factors);
+    free(input_evens);
+    free(input_odds);
+    free(result_evens);
+    free(result_odds);
 }
 
-vector<Complex> fft(float* input, int input_size) {
-    int new_size = 1;
-    while (new_size < input_size) {
-        new_size *= 2;
-    }
+Complex* fft(float* input, int input_size, int new_size) {
 
-    vector<Complex> new_input;
-    new_input.reserve(new_size);
-
+    auto new_input = (Complex*)malloc(sizeof(Complex) * new_size);
     for (int i = 0; i < input_size; i++) {
         new_input[i] = Complex(input[i], 0);
     }
 
     for (int i = input_size; i < new_size; i++) {
-        new_input[i] = Complex();
+        new_input[i] = Complex(0, 0);
     }
 
-    return _fft(new_input);
+    Complex* output = (Complex*)malloc(sizeof(Complex) * new_size);
+    _fft(new_input, new_size, output);
+
+    return output;
+}
+
+Complex* ifft(Complex* input, int input_size) {
+    Complex* output = (Complex*)malloc(sizeof(Complex) * input_size);
+    _ifft(input, input_size, output);
+    return output;
 }
 
 #endif //PAGAN_COMPLEX_H

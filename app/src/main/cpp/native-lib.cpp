@@ -156,69 +156,19 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         }
     }
 
-    // DEBUGGING FFT Convolution
-    float left_signal[frames];
-    float right_signal[frames];
-    for (int i = 0; i < frames; i++) {
-        left_signal[i] = 0;
-        right_signal[i] = 0;
+    jfloat output_ptr[frames * 2];
+    for (int i = 0; i < frames * 2; i++) {
+        output_ptr[i] = 0;
     }
-
     // move the merged and modified signal into a single array,
     // Multiplexing the channels
     for (int i = 0; i < current_array_count; i++) {
         jfloat* input_ptr = working_arrays[i];
         for (int j = 0; j < frames; j++) {
-            right_signal[j] += input_ptr[j];
-            left_signal[j] += input_ptr[j + frames];
+            output_ptr[j * 2] += input_ptr[j];
+            output_ptr[(j * 2) + 1] += input_ptr[j + frames];
         }
     }
-
-    // Testing Convolution with Echo
-    float echo_impulse_response[frames];
-    for (int i = 0; i < frames; i++) {
-        echo_impulse_response[i] = 0;
-    }
-
-    echo_impulse_response[0] = 1;
-    echo_impulse_response[frames/3] = .66;
-    echo_impulse_response[frames * 2 /3] = .33;
-
-    int new_size = 1;
-    while (new_size < frames) {
-        new_size *= 2;
-    }
-
-    Complex* echo_trans = fft(echo_impulse_response, frames, new_size);
-    Complex* right_trans = fft(right_signal, frames, new_size);
-    Complex* left_trans = fft(left_signal, frames, new_size);
-
-    for (int i = 0; i < new_size; i++) {
-        right_trans[i] *= echo_trans[i];
-        left_trans[i] *= echo_trans[i];
-    }
-
-    Complex* left_ifft = ifft(left_trans, new_size);
-    Complex* right_ifft = ifft(right_trans, new_size);
-
-    jfloat output_ptr[frames * 2];
-    for (int i = 0; i < frames * 2; i++) {
-        output_ptr[i] = 0;
-    }
-
-    // move the merged and modified signal into a single array,
-    // Multiplexing the channels
-    for (int j = 0; j < frames; j++) {
-        int k = j * 2;
-        output_ptr[k] += right_ifft[j].real;
-        output_ptr[k + 1] += left_ifft[j].real;
-    }
-
-    free(left_ifft);
-    free(right_ifft);
-    free(echo_trans);
-    free(left_trans);
-    free(right_trans);
 
     jfloatArray output = env->NewFloatArray(frames * 2);
     env->SetFloatArrayRegion(output, 0, frames * 2, output_ptr);

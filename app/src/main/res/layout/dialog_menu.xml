@@ -4,6 +4,18 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/spinner_sort_options_wrapper"
+        android:orientation="horizontal"
+        android:layout_gravity="end"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Spinner
+            android:id="@+id/spinner_sort_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
     <com.qfs.pagan.PopupMenuRecyclerView
         android:id="@+id/rvOptions"
         android:paddingBottom="8dp"

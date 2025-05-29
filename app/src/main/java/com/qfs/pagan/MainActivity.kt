@@ -30,9 +30,13 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.NumberPicker
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -85,9 +89,12 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
+import kotlin.io.path.Path
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -2189,6 +2196,58 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Pair<T, String>>, default: T? = null, sort_options: List<Pair<String, (Pair<T, String>) -> Comparable>>, default_sort_option: Int = 0, callback: (index: Int, value: T) -> Unit) {
+        if (this._popup_active) {
+            return
+        }
+        if (options.isEmpty()) {
+            return
+        }
+
+        this._popup_active = true
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_menu,
+                window.decorView.rootView as ViewGroup,
+                false
+            )
+
+        viewInflated.findViewById<View>(R.id.spinner_sort_options_wrapper).visibility = View.VISIBLE
+        val spinner = viewInflated.findViewById<Spinner>(R.id.spinner_sort_options)
+        val sortable_labels = List(sort_options.size) { i: Int ->
+            sort_options[i].first
+        }
+
+        val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
+        val dialog = AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle(title)
+            .setView(viewInflated)
+            .setOnDismissListener {
+                this._popup_active = false
+            }
+            .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+
+        val adapter = PopupMenuRecyclerAdapter<T>(recycler, options.sortedBy { v -> sort_options[default_sort_option].second(v) }, default) { index: Int, value: T ->
+            dialog.dismiss()
+            callback(index, value)
+        }
+
+        spinner.adapter = ArrayAdapter<String>(this, R.layout.spinner_list, sortable_labels)
+        spinner.onItemSelectedListener = object: OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                adapter.set_items(
+                    options.sortedBy { v -> sort_options[position].second(v) }
+                )
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        adapter.notifyDataSetChanged()
+    }
+
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit) {
         if (this._popup_active) {
             return
@@ -2229,7 +2288,31 @@ class MainActivity : AppCompatActivity() {
     internal fun dialog_load_project() {
         val project_list = this._project_manager.get_project_list()
 
-        this.dialog_popup_menu("Load Project", project_list) { _: Int, path: String ->
+        val sort_options = listOf(
+            Pair(
+                "ABC...",
+                { (_, project_name): Pair<String, String> ->
+                    project_name
+                }
+            ),
+            Pair(
+                "Date Modified",
+                { (path, _): Pair<String, String> ->
+                    val f = File(path)
+                    f.lastModified()
+                }
+            ),
+            Pair(
+                "Date Created",
+                { (path, _): Pair<String, String> ->
+                    val f = Path(path)
+                    val attributes: BasicFileAttributes = Files.readAttributes<BasicFileAttributes>(f, BasicFileAttributes::class.java)
+                    attributes.creationTime()
+                }
+            )
+        )
+
+        this.dialog_popup_sortable_menu("Load Project", project_list, null, sort_options, 0) { _: Int, path: String ->
             this.get_action_interface().load_project(path)
         }
     }

@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 
 class PopupMenuRecyclerAdapter<T>(
     private val _recycler: RecyclerView,
-    private val _options: List<Pair<T, String>>,
+    private var _options: List<Pair<T, String>>,
     private val _default: T? = null,
     private val _callback: (Int, T) -> Unit
 ) : RecyclerView.Adapter<ViewHolder>() {
@@ -25,6 +25,10 @@ class PopupMenuRecyclerAdapter<T>(
         this._recycler.itemAnimator = null
         this._recycler.layoutManager = LinearLayoutManager(this._recycler.context)
         this.notifyItemRangeInserted(0, this._options.size)
+    }
+    fun set_items(new_items: List<Pair<T, String>>) {
+        this._options = new_items
+        this.notifyDataSetChanged()
     }
     override fun onViewAttachedToWindow(holder: ViewHolder) { }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {

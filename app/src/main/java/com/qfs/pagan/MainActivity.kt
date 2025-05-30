@@ -2196,7 +2196,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Pair<T, String>>, default: T? = null, sort_options: List<Pair<String, (Pair<T, String>) -> Comparable>>, default_sort_option: Int = 0, callback: (index: Int, value: T) -> Unit) {
+    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Pair<T, String>>, default: T? = null, sort_options: List<Pair<String, (List<Pair<T, String>>) -> List<Pair<T, String>>>>, default_sort_option: Int = 0, callback: (index: Int, value: T) -> Unit) {
         if (this._popup_active) {
             return
         }
@@ -2214,8 +2214,12 @@ class MainActivity : AppCompatActivity() {
 
         viewInflated.findViewById<View>(R.id.spinner_sort_options_wrapper).visibility = View.VISIBLE
         val spinner = viewInflated.findViewById<Spinner>(R.id.spinner_sort_options)
-        val sortable_labels = List(sort_options.size) { i: Int ->
-            sort_options[i].first
+        val sortable_labels = List(sort_options.size * 2) { i: Int ->
+            if (i % 2 == 0) {
+                sort_options[i / 2].first
+            } else {
+                getString(R.string.sorted_list_desc, sort_options[i / 2].first)
+            }
         }
 
         val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
@@ -2230,7 +2234,7 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
 
-        val adapter = PopupMenuRecyclerAdapter<T>(recycler, options.sortedBy { v -> sort_options[default_sort_option].second(v) }, default) { index: Int, value: T ->
+        val adapter = PopupMenuRecyclerAdapter<T>(recycler, sort_options[default_sort_option].second(options), default) { index: Int, value: T ->
             dialog.dismiss()
             callback(index, value)
         }
@@ -2239,7 +2243,11 @@ class MainActivity : AppCompatActivity() {
         spinner.onItemSelectedListener = object: OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 adapter.set_items(
-                    options.sortedBy { v -> sort_options[position].second(v) }
+                    if (position % 2 == 1) {
+                        sort_options[position / 2].second(options).asReversed()
+                    } else {
+                        sort_options[position / 2].second(options)
+                    }
                 )
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -2290,29 +2298,35 @@ class MainActivity : AppCompatActivity() {
 
         val sort_options = listOf(
             Pair(
-                "ABC...",
-                { (_, project_name): Pair<String, String> ->
-                    project_name
+                getString(R.string.sort_option_abc),
+                { original: List<Pair<String, String>> ->
+                    original.sortedBy { (_, label): Pair<String, String> ->
+                        label
+                    }
                 }
             ),
             Pair(
-                "Date Modified",
-                { (path, _): Pair<String, String> ->
-                    val f = File(path)
-                    f.lastModified()
+                getString(R.string.sort_option_date_modified),
+                { original: List<Pair<String, String>> ->
+                    original.sortedBy { (path, _): Pair<String, String> ->
+                        val f = File(path)
+                        f.lastModified()
+                    }
                 }
             ),
             Pair(
-                "Date Created",
-                { (path, _): Pair<String, String> ->
-                    val f = Path(path)
-                    val attributes: BasicFileAttributes = Files.readAttributes<BasicFileAttributes>(f, BasicFileAttributes::class.java)
-                    attributes.creationTime()
+                getString(R.string.sort_option_date_created),
+                { original: List<Pair<String, String>> ->
+                    original.sortedBy { (path, _): Pair<String, String> ->
+                        val f = Path(path)
+                        val attributes: BasicFileAttributes = Files.readAttributes<BasicFileAttributes>(f, BasicFileAttributes::class.java)
+                        attributes.creationTime()
+                    }
                 }
             )
         )
 
-        this.dialog_popup_sortable_menu("Load Project", project_list, null, sort_options, 0) { _: Int, path: String ->
+        this.dialog_popup_sortable_menu<String>(getString(R.string.menu_item_load_project), project_list, null, sort_options, 0) { _: Int, path: String ->
             this.get_action_interface().load_project(path)
         }
     }

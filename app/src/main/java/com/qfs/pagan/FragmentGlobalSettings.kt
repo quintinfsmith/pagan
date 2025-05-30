@@ -181,8 +181,11 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
         val soundfont_dir = activity.get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
-        //val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), this.resources.getString(R.string.no_soundfont)) )
-        //soundfonts.add(Pair(Pair(1, null), getString(R.string.option_import_soundfont)))
+        if (file_list.isEmpty()) {
+            val tracker = activity.get_action_interface()
+            tracker.import_soundfont()
+            return
+        }
 
         val soundfonts = mutableListOf<Pair<String, String>>()
         for (file in file_list) {

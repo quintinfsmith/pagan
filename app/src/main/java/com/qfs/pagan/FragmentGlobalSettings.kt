@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.SeekBar
@@ -176,24 +177,53 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
     }
 
     private fun interact_btnChooseSoundFont() {
-        val soundfont_dir = this.get_activity().get_soundfont_directory()
+        val activity = this.get_activity()
+        val soundfont_dir = activity.get_soundfont_directory()
         val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
 
-        val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), this.resources.getString(R.string.no_soundfont)) )
-        soundfonts.add(Pair(Pair(2, null), getString(R.string.option_import_soundfont)))
+        //val soundfonts = mutableListOf<Pair<Pair<Int, String?>, String>>( Pair(Pair(0, null), this.resources.getString(R.string.no_soundfont)) )
+        //soundfonts.add(Pair(Pair(1, null), getString(R.string.option_import_soundfont)))
 
+        val soundfonts = mutableListOf<Pair<String, String>>()
         for (file in file_list) {
-            soundfonts.add(Pair(Pair(1, file.name), file.name))
+            soundfonts.add(Pair(file.name, file.name))
         }
 
-        this.get_activity().dialog_popup_menu(getString(R.string.dialog_select_soundfont), soundfonts) { _: Int, pair: Pair<Int, String?> ->
-            val (mode, path) = pair
-            val activity = this.get_activity()
+        val sort_options = listOf(
+            Pair(
+                activity.getString(R.string.sort_option_abc),
+                { original: List<Pair<String, String>> ->
+                    original.sortedBy { item: Pair<String, String> ->
+                        item.first
+                    }
+                }
+            )
+        )
+
+        val dialog = this.get_activity().dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0) { _: Int, path: String ->
             val tracker = activity.get_action_interface()
-            when (mode) {
-                0 -> tracker.disable_soundfont()
-                1 -> tracker.set_soundfont(path!!)
-                2 -> tracker.import_soundfont()
+            tracker.set_soundfont(path)
+        }
+
+        if (dialog != null) {
+            val menu_wrapper = dialog.findViewById<ViewGroup>(R.id.menu_wrapper)
+            val pre_menu: View = LayoutInflater.from(activity)
+                .inflate(
+                    R.layout.soundfont_pre_menu,
+                    menu_wrapper,
+                    false
+                )
+
+            menu_wrapper.addView(pre_menu, 0)
+            menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).setOnClickListener {
+                dialog.dismiss()
+                val tracker = activity.get_action_interface()
+                tracker.disable_soundfont()
+            }
+            menu_wrapper.findViewById<Button>(R.id.sf_menu_import).setOnClickListener {
+                dialog.dismiss()
+                val tracker = activity.get_action_interface()
+                tracker.import_soundfont()
             }
         }
     }

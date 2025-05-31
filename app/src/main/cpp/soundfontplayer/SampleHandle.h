@@ -11,7 +11,7 @@
 #include "ProfileBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
-#include "soundfontplayer/VibratoEnvelope.h"
+#include "VibratoEnvelope.h"
 class NoFrameDataException: public std::exception {};
 
 int SampleHandleUUIDGen = 0;

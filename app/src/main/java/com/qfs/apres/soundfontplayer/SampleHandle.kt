@@ -15,6 +15,10 @@ class SampleHandle(var ptr: Long) {
         pitch_shift: Float = 1F,
         filter_cutoff: Float = 13500F,
         pan: Float = 0F,
+        vibrato_frequency: Float = 0f,
+        vibrato_delay: Float = 0f,
+        vibrato_pitch: Float = 0f,
+
 
         // TODO: Modulations
         //modulation_envelope: ModulationEnvelope,
@@ -31,7 +35,10 @@ class SampleHandle(var ptr: Long) {
             volume_envelope.ptr,
             pitch_shift,
             filter_cutoff,
-            pan
+            pan,
+            vibrato_frequency,
+            vibrato_delay,
+            vibrato_pitch
             //modulation_envelope,
             //modulation_lfo,
             //modulators
@@ -49,7 +56,10 @@ class SampleHandle(var ptr: Long) {
             volume_envelope_ptr: Long,
             pitch_shift: Float,
             filter_cutoff: Float,
-            pan: Float
+            pan: Float,
+            vibrato_frequency: Float,
+            vibrato_delay: Float,
+            vibrato_pitch: Float
         ): Long
     }
 

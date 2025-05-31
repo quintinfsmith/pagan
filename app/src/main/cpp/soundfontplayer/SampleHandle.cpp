@@ -1,6 +1,5 @@
 #include "SampleHandle.h"
 #include <string>
-
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
     auto *ptr = (SampleHandle *)ptr_long;
@@ -79,7 +78,10 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         jlong volume_envelope_ptr,
         jfloat pitch_shift,
         jfloat filter_cutoff,
-        jfloat pan
+        jfloat pan,
+        jfloat vibrato_frequency,
+        jfloat vibrato_delay,
+        jfloat vibrato_pitch
 ) {
 
     auto* handle = (SampleHandle*)malloc(sizeof(SampleHandle));
@@ -101,6 +103,11 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->pan = pan;
     handle->previous_value = 0;
     handle->secondary_setup(nullptr, 0);
+    if (vibrato_frequency != 0) {
+        handle->vibrato = new VibratoEnvelope(vibrato_frequency, vibrato_delay, vibrato_pitch);
+    } else {
+        handle->vibrato = nullptr;
+    }
 
     return (jlong)handle;
 }

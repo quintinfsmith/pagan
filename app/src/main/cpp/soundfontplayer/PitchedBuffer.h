@@ -19,7 +19,8 @@ struct PitchedBuffer {
     int start;
     int end;
     bool is_loop;
-    int virtual_position;
+    int virtual_position; // position as viewed from the outside
+    int internal_position; // same ratio as virtual position but readjusted on every repitch
     float pitch_adjustment;
     int virtual_size;
     float adjusted_pitch;
@@ -42,6 +43,7 @@ public:
         this->end = end;
         this->is_loop = is_loop;
         this->virtual_position = virtual_position;
+        this->internal_position = virtual_position;
         this->pitch_adjustment = pitch_adjustment;
         this->virtual_size = virtual_size;
         this->adjusted_pitch = adjusted_pitch;
@@ -49,13 +51,14 @@ public:
 
     explicit PitchedBuffer(SampleData* data, float pitch, int start, int end, bool is_loop) {
         this->virtual_position = 0;
+        this->internal_position = virtual_position;
         this->data = data;
         this->pitch = pitch;
         this->start = start;
         this->end = end;
         this->is_loop = is_loop;
 
-        this->repitch(1.0);
+        this->initialize_pitch();
     }
 
     // Pitched Buffer doesn't original source of data so don't destroy it here.
@@ -64,12 +67,21 @@ public:
     void repitch(float new_pitch_adjustment) {
         this->pitch_adjustment = new_pitch_adjustment;
         this->adjusted_pitch = this->pitch * this->pitch_adjustment;
+
+        this->virtual_size = static_cast<int>(static_cast<float>(this->end + 1 - this->start) / this->adjusted_pitch);
+        this->internal_position /= this->adjusted_pitch;
+    }
+
+    void initialize_pitch() {
+        this->pitch_adjustment = 1;
+        this->adjusted_pitch = this->pitch;
         this->virtual_size = static_cast<int>(static_cast<float>(this->end + 1 - this->start) / this->adjusted_pitch);
     }
 
     float get() {
-        int unpitched_position = (int)((float)this->virtual_position * this->adjusted_pitch);
+        int unpitched_position = (int)((float)this->internal_position * this->adjusted_pitch);
         this->virtual_position += 1;
+        this->internal_position += 1;
 
         float output = (float)this->get_real_frame(unpitched_position) / (float)32768; //SHORT MAX
         return output;
@@ -91,11 +103,13 @@ public:
     }
 
     bool is_overflowing() {
-        return (int)((float)this->virtual_position * this->adjusted_pitch) - this->start >= this->end;
+        return (int)((float)this->internal_position * this->adjusted_pitch) - this->start >= this->end;
     }
 
+    // This should NOT be used if a smooth transition is required
     void set_position(int frame) {
         this->virtual_position = frame;
+        this->internal_position = frame;
     }
 
     void copy_to(PitchedBuffer* new_buffer) const {
@@ -105,6 +119,7 @@ public:
         new_buffer->end = this->end;
         new_buffer->is_loop = this->is_loop;
         new_buffer->virtual_position = this->virtual_position;
+        new_buffer->internal_position = this->internal_position;
         new_buffer->pitch_adjustment = this->pitch_adjustment;
         new_buffer->virtual_size = this->virtual_size;
         new_buffer->adjusted_pitch = this->adjusted_pitch;

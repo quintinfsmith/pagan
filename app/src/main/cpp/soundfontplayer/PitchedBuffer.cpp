@@ -70,7 +70,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_get_1virtual_1position(JNIEnv* 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_set_1virtual_1position(JNIEnv* env, jobject, jlong ptr_long, jint new_position) {
     auto *ptr = (PitchedBuffer *)ptr_long;
-    ptr->virtual_position = new_position;
+    ptr->set_position(new_position);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

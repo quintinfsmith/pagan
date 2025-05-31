@@ -11,7 +11,7 @@
 #include "ProfileBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
-
+#include "soundfontplayer/VibratoEnvelope.h"
 class NoFrameDataException: public std::exception {};
 
 int SampleHandleUUIDGen = 0;
@@ -46,6 +46,8 @@ class SampleHandle {
         int active_buffer;
         float previous_value = 0;
 
+        VibratoEnvelope* vibrato;
+
         explicit SampleHandle(
             SampleData* data,
             jfloat sample_rate,
@@ -58,7 +60,8 @@ class SampleHandle {
             float filter_cutoff,
             float pan,
             PitchedBuffer** data_buffers,
-            int buffer_count
+            int buffer_count,
+            VibratoEnvelope* vibrato
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
@@ -72,6 +75,7 @@ class SampleHandle {
             this->pitch_shift = pitch_shift;
             this->filter_cutoff = filter_cutoff;
             this->pan = pan;
+            this->vibrato = vibrato;
 
             this->secondary_setup(data_buffers, buffer_count);
         }
@@ -101,6 +105,7 @@ class SampleHandle {
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
+                ptr->internal_position = 0;
                 ptr->data = this->data;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = 0;
@@ -111,22 +116,24 @@ class SampleHandle {
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
+                ptr->internal_position = 0;
                 ptr->data = this->data;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = this->loop_start;
                 ptr->end = this->loop_end;
                 ptr->is_loop = true;
-                ptr->repitch(1);
+                ptr->initialize_pitch();
                 this->data_buffers[1] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
+                ptr->internal_position = 0;
                 ptr->data = this->data;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = this->loop_end;
                 ptr->end = this->data->size;
                 ptr->is_loop = false;
-                ptr->repitch(1);
+                ptr->initialize_pitch();
                 this->data_buffers[2] = ptr;
 
                 this->buffer_count = 3;
@@ -135,12 +142,13 @@ class SampleHandle {
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
                 ptr->virtual_position = 0;
+                ptr->internal_position = 0;
                 ptr->data = this->data;
                 ptr->pitch = this->pitch_shift;
                 ptr->start = 0;
                 ptr->end = this->data->size;
                 ptr->is_loop = false;
-                ptr->repitch(1);
+                ptr->initialize_pitch();
                 this->data_buffers[0] = ptr;
                 this->buffer_count = 1;
             }
@@ -371,6 +379,11 @@ class SampleHandle {
                 this->is_dead = true;
                 throw NoFrameDataException();
             }
+
+            // TODO: Implement Triangular vibrato period here
+            // if (this->vibrato != nullptr) {
+            //     this->get_active_data_buffer()->repitch()
+            // }
 
             return frame_value * frame_factor;
         }

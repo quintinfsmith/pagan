@@ -11,7 +11,7 @@
 #include "ProfileBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
-#include "VibratoEnvelope.h"
+#include "Oscillator.h"
 class NoFrameDataException: public std::exception {};
 
 int SampleHandleUUIDGen = 0;
@@ -46,22 +46,26 @@ class SampleHandle {
         int active_buffer;
         float previous_value = 0;
 
-        VibratoEnvelope* vibrato;
+        Oscillator* vibrato_oscillator;
+        int vibrato_delay;
+        float vibrato_pitch;
 
         explicit SampleHandle(
-            SampleData* data,
-            jfloat sample_rate,
-            jfloat initial_attenuation,
-            jint loop_start,
-            jint loop_end,
-            int stereo_mode,
-            VolumeEnvelope* volume_envelope,
-            float pitch_shift,
-            float filter_cutoff,
-            float pan,
-            PitchedBuffer** data_buffers,
-            int buffer_count,
-            VibratoEnvelope* vibrato
+                SampleData* data,
+                jfloat sample_rate,
+                jfloat initial_attenuation,
+                jint loop_start,
+                jint loop_end,
+                int stereo_mode,
+                VolumeEnvelope* volume_envelope,
+                float pitch_shift,
+                float filter_cutoff,
+                float pan,
+                PitchedBuffer** data_buffers,
+                int buffer_count,
+                Oscillator* vibrato_oscillator,
+                float vibrato_delay,
+                float vibrato_pitch
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
@@ -75,7 +79,9 @@ class SampleHandle {
             this->pitch_shift = pitch_shift;
             this->filter_cutoff = filter_cutoff;
             this->pan = pan;
-            this->vibrato = vibrato;
+            this->vibrato_oscillator = vibrato_oscillator;
+            this->vibrato_delay = (int)(vibrato_delay * this->sample_rate);
+            this->vibrato_pitch = vibrato_pitch;
 
             this->secondary_setup(data_buffers, buffer_count);
         }
@@ -380,9 +386,9 @@ class SampleHandle {
                 throw NoFrameDataException();
             }
 
-            // TODO: Implement Triangular vibrato period here
-            // if (this->vibrato != nullptr) {
-            //     this->get_active_data_buffer()->repitch()
+            // if (this->vibrato_oscillator != nullptr && this->vibrato_delay < this->working_frame) {
+            //     // TODO: ?Prebuild this?
+            //     this->get_active_data_buffer()->repitch(1 + ((this->vibrato_pitch - 1) * ((this->vibrato_oscillator->next() / 2) + .5)));
             // }
 
             return frame_value * frame_factor;

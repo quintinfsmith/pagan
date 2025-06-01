@@ -166,6 +166,11 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             sustain_attenuation = max(0F, min(mod_env_sustain, 1440F)) / 100F // Centibels -> bels
         )
 
+        val vib_freq: Float = (sample_directive.vib_lfo_freq ?: global_sample_directive.vib_lfo_freq ?: 0F) * (instrument_directive.vib_lfo_freq ?: 1F) * (global_instrument_directive.vib_lfo_freq ?: 1F)
+        val vib_lfo_delay: Float = (sample_directive.vib_lfo_delay ?: global_sample_directive.vib_lfo_delay ?: 0F) * (instrument_directive.vib_lfo_delay ?: 1F) * (global_instrument_directive.vib_lfo_delay ?: 1F)
+        val vib_lfo_pitch: Int = (sample_directive.vib_lfo_pitch ?: global_sample_directive.vib_lfo_pitch ?: 0 ) + (instrument_directive.vib_lfo_pitch ?: 0) + (global_instrument_directive.vib_lfo_pitch ?: 0)
+        val vibrato_pitch_rel: Float = (2F).pow((1200F + vib_lfo_pitch.toFloat()) / 1200F)
+
         // val mod_lfo_freq: Float = (sample_directive.mod_lfo_freq ?: global_sample_directive.mod_lfo_freq ?: 0F) * (instrument_directive.mod_lfo_freq ?: 1F) * (global_instrument_directive.mod_lfo_freq ?: 1F)
         // val mod_lfo_delay: Float = (sample_directive.mod_lfo_delay ?: global_sample_directive.mod_lfo_delay ?: 0F) * (instrument_directive.mod_lfo_delay ?: 1F) * (global_instrument_directive.mod_lfo_delay ?: 1F)
         // val mod_lfo_to_volume: Float = (sample_directive.mod_lfo_to_volume ?: global_sample_directive.mod_lfo_to_volume ?: 0F ) + (instrument_directive.mod_lfo_to_volume ?: 0F) + (global_instrument_directive.mod_lfo_to_volume ?: 0F)
@@ -207,7 +212,10 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                     null
                 },
                 volume_envelope = volume_envelope,
-                filter_cutoff = filter_cutoff
+                filter_cutoff = filter_cutoff,
+                vibrato_frequency = vib_freq,
+                vibrato_pitch = vibrato_pitch_rel,
+                vibrato_delay = vib_lfo_delay
 
                 //modulation_lfo = if (this.ignore_lfo) {
                 //    null

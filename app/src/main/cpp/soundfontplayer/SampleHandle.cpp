@@ -91,7 +91,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->initial_attenuation = initial_attenuation;
     handle->loop_start = loop_start;
     handle->loop_end = loop_end;
-
     handle->stereo_mode = stereo_mode;
 
     auto* original_volume_envelope = (VolumeEnvelope*)volume_envelope_ptr;
@@ -104,9 +103,13 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->previous_value = 0;
     handle->secondary_setup(nullptr, 0);
     if (vibrato_frequency != 0) {
-        handle->vibrato = new VibratoEnvelope(vibrato_frequency, vibrato_delay, vibrato_pitch);
+        handle->vibrato_oscillator = new Oscillator(sample_rate, vibrato_frequency);
+        handle->vibrato_pitch = vibrato_pitch;
+        handle->vibrato_delay = (int)(vibrato_delay * sample_rate);
     } else {
-        handle->vibrato = nullptr;
+        handle->vibrato_oscillator = nullptr;
+        handle->vibrato_pitch = 0;
+        handle->vibrato_delay = 0;
     }
 
     return (jlong)handle;
@@ -139,6 +142,16 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
     new_handle->kill_frame = ptr->kill_frame;
     new_handle->is_dead = ptr->is_dead;
     new_handle->previous_value = ptr->previous_value;
+
+    if (ptr->vibrato_oscillator != nullptr) {
+        new_handle->vibrato_oscillator = new Oscillator(ptr->vibrato_oscillator->sample_rate, ptr->vibrato_oscillator->frequency);
+        new_handle->vibrato_pitch = ptr->vibrato_pitch;
+        new_handle->vibrato_delay = ptr->vibrato_delay;
+    } else {
+        new_handle->vibrato_oscillator = nullptr;
+        new_handle->vibrato_pitch = 0;
+        new_handle->vibrato_delay = 0;
+    }
 
     return (jlong)new_handle;
 }

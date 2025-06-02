@@ -2091,6 +2091,111 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
+    fun dialog_color_picker(initial_color: Long, callback: (Int) -> Unit) {
+        val main_fragment = this.get_active_fragment()
+        val c = Color.toArgb(initial_color)
+
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.color_picker,
+                main_fragment!!.view as ViewGroup,
+                false
+            )
+        val flColorDisplay = viewInflated.findViewById<FrameLayout>(R.id.flColorDisplay)
+        val sbRed = viewInflated.findViewById<SeekBar>(R.id.sbRed)
+        val sbGreen = viewInflated.findViewById<SeekBar>(R.id.sbGreen)
+        val sbBlue = viewInflated.findViewById<SeekBar>(R.id.sbBlue)
+        val rniRed = viewInflated.findViewById<RangedIntegerInput>(R.id.rniRed)
+        val rniGreen = viewInflated.findViewById<RangedIntegerInput>(R.id.rniGreen)
+        val rniBlue = viewInflated.findViewById<RangedIntegerInput>(R.id.rniBlue)
+
+        rniRed.set_value(c.red)
+        rniGreen.set_value(c.green)
+        rniBlue.set_value(c.blue)
+
+        sbRed.progress = c.red
+        sbGreen.progress = c.green
+        sbBlue.progress = c.blue
+
+        var lockout = false
+        rniRed.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun afterTextChanged(p0: Editable?) {
+                if (lockout || p0.toString().isEmpty()) {
+                    return
+                }
+                lockout = true
+                sbRed.progress = p0.toString().toInt()
+                lockout = false
+            }
+        })
+        rniGreen.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun afterTextChanged(p0: Editable?) {
+                if (lockout || p0.toString().isEmpty()) {
+                    return
+                }
+                lockout = true
+                sbGreen.progress = p0.toString().toInt()
+                lockout = false
+            }
+        })
+
+        rniBlue.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun afterTextChanged(p0: Editable?) {
+                if (lockout || p0.toString().isEmpty()) {
+                    return
+                }
+                lockout = true
+                sbBlue.progress = p0.toString().toInt()
+                lockout = false
+            }
+        })
+
+        val seekbar_listener = object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+                if (lockout) {
+                    return
+                }
+                lockout = true
+                when (p0) {
+                    sbRed -> rniRed.set_value(p1)
+                    sbGreen -> rniGreen.set_value(p1)
+                    sbBlue -> rniBlue.set_value(p1)
+                }
+                flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
+                lockout = false
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(seekbar: SeekBar) { }
+        }
+
+        sbRed.setOnSeekBarChangeListener(seekbar_listener)
+        sbGreen.setOnSeekBarChangeListener(seekbar_listener)
+        sbBlue.setOnSeekBarChangeListener(seekbar_listener)
+
+
+        flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
+
+        this._adjust_dialog_colors(
+            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
+                .setView(viewInflated)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    val new_color = Color.argb(255, rniRed.get_value()!!, rniGreen.get_value()!!, rniBlue.get_value()!!)
+                    callback(new_color)
+                    dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+        )
+    }
+
     fun dialog_text_popup(title: String, default: String? = null, callback: (String) -> Unit) {
         val main_fragment = this.get_active_fragment()
 

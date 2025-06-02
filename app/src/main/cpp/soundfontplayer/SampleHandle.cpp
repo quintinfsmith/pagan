@@ -102,7 +102,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
     handle->pan = pan;
     handle->previous_value = 0;
     handle->secondary_setup(nullptr, 0);
-    if (vibrato_frequency != 0) {
+    if (vibrato_frequency != 0 && vibrato_pitch != 1) {
         handle->vibrato_oscillator = new Oscillator(sample_rate, vibrato_frequency);
         handle->vibrato_pitch = vibrato_pitch;
         handle->vibrato_delay = (int)(vibrato_delay * sample_rate);

@@ -22,7 +22,8 @@ class Oscillator {
             int frame = this->frame;
             this->frame = (this->frame + 1) % (2 * this->period);
             // TODO: Make this Triangular
-            return sinf( ((float)frame / (float)this->period) * M_PI_2);
+            //return sinf( ((float)frame / (float)this->period) * M_PI_2);
+            return (4 / (float)this->period) * abs(((frame - (this->period / 4)) % this->period) - (this->period / 2)) - 1;
         }
 };
 

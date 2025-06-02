@@ -388,7 +388,6 @@ class SampleHandle {
             }
 
             if (this->vibrato_oscillator != nullptr && this->vibrato_delay < this->working_frame) {
-                // TODO: ?Prebuild this?
                 this->get_active_data_buffer()->repitch(1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next()));
             }
 

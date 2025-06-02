@@ -28,6 +28,15 @@ class OpusLineJSONInterface {
             output["beats"] = beats
             output["controllers"] = ActiveControlSetJSONInterface.to_json(line.controllers)
             output["muted"] = line.muted
+            output["color"] = if (line.color != null) {
+                val i = line.color!!.toUInt()
+                val red = ((i and 16711680u) shr 16).toInt()
+                val green = ((i and 65280u) shr 8).toInt()
+                val blue = (i and 255u).toInt()
+                "#%02x".format(red) + "%02x".format(green) + "%02x".format(blue)
+            } else {
+                null
+            }
 
             when (line) {
                 is OpusLinePercussion -> {
@@ -54,13 +63,13 @@ class OpusLineJSONInterface {
 
                 beat_list[beat_index] = tree
             }
+
             val output = OpusLinePercussion(
                 input.get_int("instrument"),
                 beat_list
             )
-            output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), size)
-            output.muted = input.get_boolean("muted", false)
 
+            _interpret_general(input, output)
 
             return output
         }
@@ -84,10 +93,25 @@ class OpusLineJSONInterface {
             }
 
             val output = OpusLine(beat_list)
-            output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), size)
-            output.muted = input.get_boolean("muted", false)
+
+            _interpret_general(input, output)
 
             return output
+        }
+
+        private fun _interpret_general(input: JSONHashMap, output: OpusLineAbstract<*>) {
+            output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), output.beat_count())
+            output.muted = input.get_boolean("muted", false)
+
+            val tmp_color = input.get_stringn("color")
+            if (tmp_color == null) {
+                output.color = null
+            } else {
+                val red = tmp_color.substring(1, 3).toInt(16)
+                val green = tmp_color.substring(3, 5).toInt(16)
+                val blue = tmp_color.substring(5, 7).toInt(16)
+                output.color = (red * 256 * 256) + (green * 256) + blue
+            }
         }
     }
 }

@@ -58,11 +58,11 @@ abstract class Generated {
             val generator = generators[i]
             when (generator.get_operation()) {
                 Operation.ModLFOPitch -> {
-                    this.mod_lfo_pitch = generator.asInt()
+                    this.mod_lfo_pitch = generator.asIntSigned()
                 }
 
                 Operation.VibLFOPitch -> {
-                    this.vib_lfo_pitch = generator.asInt()
+                    this.vib_lfo_pitch = generator.asIntSigned()
                 }
 
                 Operation.ModEnvPitch -> {

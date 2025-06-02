@@ -5,7 +5,6 @@
 #ifndef PAGAN_OSCILLATOR_H
 #define PAGAN_OSCILLATOR_H
 
-
 class Oscillator {
     int frame = 0;
     public:
@@ -20,9 +19,10 @@ class Oscillator {
         }
 
         float next() {
-            int frame = this->frame++;
-            this->frame %= this->sample_rate;
-            return (4 / this->period) * abs(((frame - (this->period  / 4)) % this->period) - (this->period / 2)) - 1;
+            int frame = this->frame;
+            this->frame = (this->frame + 1) % (2 * this->period);
+            // TODO: Make this Triangular
+            return sinf( ((float)frame / (float)this->period) * M_PI_2);
         }
 };
 

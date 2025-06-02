@@ -8,14 +8,15 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_copy_1inner(JNIEnv* env, jobjec
     PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
     buffer->data = ptr->data;
-    buffer->pitch = ptr->pitch;
+    buffer->default_pitch = ptr->default_pitch;
     buffer->start = ptr->start;
     buffer->end = ptr->end;
     buffer->is_loop = ptr->is_loop;
     buffer->virtual_position = ptr->virtual_position;
-    buffer->pitch_adjustment = ptr->pitch_adjustment;
+    buffer->pitched_increment = ptr->pitched_increment;
+    buffer->real_position_preradix = ptr->real_position_preradix;
+    buffer->real_position_postradix = ptr->real_position_postradix;
     buffer->virtual_size = ptr->virtual_size;
-    buffer->adjusted_pitch = ptr->adjusted_pitch;
 
     return (jlong)buffer;
 }
@@ -33,13 +34,15 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
 
     auto* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
     buffer->data = (SampleData*)data_ptr_long;
-    buffer->pitch = pitch;
+    buffer->default_pitch = pitch;
     buffer->start = start;
     buffer->end = end;
     buffer->is_loop = is_loop;
     buffer->virtual_position = 0;
-    buffer->repitch(1);
+    buffer->real_position_preradix = 0;
+    buffer->real_position_postradix = 0;
 
+    buffer->repitch(1);
     return (jlong)buffer;
 }
 

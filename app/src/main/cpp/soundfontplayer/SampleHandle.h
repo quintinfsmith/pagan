@@ -111,9 +111,10 @@ class SampleHandle {
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
-                ptr->internal_position = 0;
+                ptr->real_position_preradix = 0;
+                ptr->real_position_postradix = 0;
                 ptr->data = this->data;
-                ptr->pitch = this->pitch_shift;
+                ptr->default_pitch = this->pitch_shift;
                 ptr->start = 0;
                 ptr->end = this->loop_start;
                 ptr->is_loop = false;
@@ -122,24 +123,25 @@ class SampleHandle {
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
-                ptr->internal_position = 0;
+                ptr->real_position_preradix = 0;
+                ptr->real_position_postradix = 0;
                 ptr->data = this->data;
-                ptr->pitch = this->pitch_shift;
+                ptr->default_pitch = this->pitch_shift;
                 ptr->start = this->loop_start;
                 ptr->end = this->loop_end;
                 ptr->is_loop = true;
-                ptr->initialize_pitch();
+                ptr->repitch(1);
                 this->data_buffers[1] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
                 ptr->virtual_position = 0;
-                ptr->internal_position = 0;
+                ptr->real_position_preradix = 0;
+                ptr->real_position_postradix = 0;
                 ptr->data = this->data;
-                ptr->pitch = this->pitch_shift;
+                ptr->default_pitch = this->pitch_shift;
                 ptr->start = this->loop_end;
                 ptr->end = this->data->size;
-                ptr->is_loop = false;
-                ptr->initialize_pitch();
+                ptr->repitch(1);
                 this->data_buffers[2] = ptr;
 
                 this->buffer_count = 3;
@@ -148,13 +150,14 @@ class SampleHandle {
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
 
                 ptr->virtual_position = 0;
-                ptr->internal_position = 0;
+                ptr->real_position_preradix = 0;
+                ptr->real_position_postradix = 0;
                 ptr->data = this->data;
-                ptr->pitch = this->pitch_shift;
+                ptr->default_pitch = this->pitch_shift;
                 ptr->start = 0;
                 ptr->end = this->data->size;
                 ptr->is_loop = false;
-                ptr->initialize_pitch();
+                ptr->repitch(1);
                 this->data_buffers[0] = ptr;
                 this->buffer_count = 1;
             }
@@ -165,7 +168,6 @@ class SampleHandle {
                 delete this->data_buffers[i];
             }
             delete[] this->data_buffers;
-
             delete this->volume_envelope;
         };
 
@@ -295,7 +297,6 @@ class SampleHandle {
                 }
 
                 float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
-
                 buffer[i] = v * std::get<0>(working_pan);
                 buffer[i + target_size] = v * std::get<1>(working_pan);
 
@@ -386,10 +387,10 @@ class SampleHandle {
                 throw NoFrameDataException();
             }
 
-            // if (this->vibrato_oscillator != nullptr && this->vibrato_delay < this->working_frame) {
-            //     // TODO: ?Prebuild this?
-            //     this->get_active_data_buffer()->repitch(1 + ((this->vibrato_pitch - 1) * ((this->vibrato_oscillator->next() / 2) + .5)));
-            // }
+            if (this->vibrato_oscillator != nullptr && this->vibrato_delay < this->working_frame) {
+                // TODO: ?Prebuild this?
+                this->get_active_data_buffer()->repitch(1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next()));
+            }
 
             return frame_value * frame_factor;
         }

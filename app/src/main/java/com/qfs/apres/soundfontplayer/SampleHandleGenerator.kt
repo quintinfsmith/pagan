@@ -169,7 +169,9 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         val vib_freq: Float = (sample_directive.vib_lfo_freq ?: global_sample_directive.vib_lfo_freq ?: 0F) * (instrument_directive.vib_lfo_freq ?: 1F) * (global_instrument_directive.vib_lfo_freq ?: 1F)
         val vib_lfo_delay: Float = (sample_directive.vib_lfo_delay ?: global_sample_directive.vib_lfo_delay ?: 0F) * (instrument_directive.vib_lfo_delay ?: 1F) * (global_instrument_directive.vib_lfo_delay ?: 1F)
         val vib_lfo_pitch: Int = (sample_directive.vib_lfo_pitch ?: global_sample_directive.vib_lfo_pitch ?: 0 ) + (instrument_directive.vib_lfo_pitch ?: 0) + (global_instrument_directive.vib_lfo_pitch ?: 0)
-        val vibrato_pitch_rel: Float = (2F).pow((1200F + vib_lfo_pitch.toFloat()) / 1200F)
+        val vibrato_pitch_rel: Float = (2F).pow((1200F + max(-100f, min(100f, vib_lfo_pitch.toFloat()))) / 1200F) / 2
+
+        println("VIBPITCH: $vib_lfo_pitch, $vibrato_pitch_rel")
 
         // val mod_lfo_freq: Float = (sample_directive.mod_lfo_freq ?: global_sample_directive.mod_lfo_freq ?: 0F) * (instrument_directive.mod_lfo_freq ?: 1F) * (global_instrument_directive.mod_lfo_freq ?: 1F)
         // val mod_lfo_delay: Float = (sample_directive.mod_lfo_delay ?: global_sample_directive.mod_lfo_delay ?: 0F) * (instrument_directive.mod_lfo_delay ?: 1F) * (global_instrument_directive.mod_lfo_delay ?: 1F)
@@ -187,6 +189,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             }
             new_modulators[key] = new_modulators[key]!! + modulators
         }
+
         val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 50F
         val loop_mode  = sample_directive.sampleMode ?: global_sample_directive.sampleMode
         return List(sample_directive.sample!!.size) { i: Int ->
@@ -224,7 +227,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
                 //        sample_rate = this.sample_rate,
                 //        frequency = mod_lfo_freq,
                 //        volume = mod_lfo_to_volume / 100F, // Centibels -> bels
-                //        pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
+                //        default_pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
                 //        filter = mod_lfo_filter,
                 //        delay = mod_lfo_delay
                 //    )

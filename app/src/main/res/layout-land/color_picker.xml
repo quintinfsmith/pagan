@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:minWidth="@dimen/color_picker_popup_width"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <com.qfs.pagan.PaganTextView
+                android:text="Red"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"/>
+            <com.qfs.pagan.RangedNumberInput
+                android:id="@+id/rniRed"
+                custom:max="255"
+                custom:min="0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/sbRed"
+            android:layout_width="match_parent"
+            android:layout_height="21dp"
+            android:max="255"
+            android:progress="0"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <com.qfs.pagan.PaganTextView
+                android:text="Green"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"/>
+            <com.qfs.pagan.RangedNumberInput
+                android:id="@+id/rniGreen"
+                custom:max="255"
+                custom:min="0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <SeekBar
+            android:id="@+id/sbGreen"
+            android:layout_width="match_parent"
+            android:layout_height="21dp"
+            android:max="255"
+            android:progress="0"/>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <com.qfs.pagan.PaganTextView
+                android:text="Blue"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"/>
+            <com.qfs.pagan.RangedNumberInput
+                android:id="@+id/rniBlue"
+                custom:max="255"
+                custom:min="0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+        <SeekBar
+            android:id="@+id/sbBlue"
+            android:layout_width="match_parent"
+            android:layout_height="21dp"
+            android:max="255"
+            android:progress="0"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="21dp" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:padding="@dimen/color_picker_display_padding"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+        <FrameLayout
+            android:id="@+id/flColorDisplay"
+            android:layout_gravity="center"
+            android:layout_width="@dimen/color_picker_display_height"
+            android:layout_height="@dimen/color_picker_display_height"/>
+    </FrameLayout>
+
+
+</LinearLayout>

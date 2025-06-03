@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
+import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
@@ -20,6 +21,8 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.OpenableColumns
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.KeyEvent
@@ -34,8 +37,10 @@ import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.NumberPicker
+import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -49,6 +54,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.documentfile.provider.DocumentFile
@@ -2142,7 +2150,6 @@ class MainActivity : AppCompatActivity() {
                 lockout = false
             }
         })
-
         rniBlue.addTextChangedListener(object: TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
@@ -2180,20 +2187,6 @@ class MainActivity : AppCompatActivity() {
 
 
         flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
-
-        this._adjust_dialog_colors(
-            AlertDialog.Builder(main_fragment.context, R.style.AlertDialog)
-                .setView(viewInflated)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    val new_color = Color.argb(255, rniRed.get_value()!!, rniGreen.get_value()!!, rniBlue.get_value()!!)
-                    callback(new_color)
-                    dialog.dismiss()
-                }
-                .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-        )
     }
 
     fun dialog_text_popup(title: String, default: String? = null, callback: (String) -> Unit) {

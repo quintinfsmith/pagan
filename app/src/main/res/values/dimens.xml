@@ -32,6 +32,12 @@
     <dimen name="icon_button_padding_b">4dp</dimen>
     <dimen name="channel_conf_icon_height">24dp</dimen>
 
+    <dimen name="inline_color_picker_label_padding">12dp</dimen>
+    <dimen name="inline_color_picker_button_size">41dp</dimen>
+    <dimen name="color_picker_display_height">82dp</dimen>
+    <dimen name="color_picker_display_padding">8dp</dimen>
+    <dimen name="color_picker_popup_width">400dp</dimen>
+
     <dimen name="icon_spacing">4dp</dimen>
     <dimen name="primary_contextmenu_padding_top">4dp</dimen>
     <dimen name="primary_contextmenu_padding_start">4dp</dimen>

@@ -120,7 +120,7 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
                     view_stack.add(child)
                 }
             }
-            current_view.postInvalidate()
+            current_view.invalidate()
             current_view.refreshDrawableState()
         }
     }

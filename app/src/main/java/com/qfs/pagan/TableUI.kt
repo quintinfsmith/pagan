@@ -596,7 +596,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val line_height = resources.getDimension(R.dimen.line_height).toInt().toFloat()
             val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
             val channel_gap_height = resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
-            val density = 1 / resources.displayMetrics.density
 
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()
@@ -633,56 +632,32 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                             val state = this.get_standard_leaf_state(beat_key, position)
 
-
-                            //if (line.color != null) {
-                            //    colored_line_paint.setColor(line.color!!)
-                            //} else {
-                            //    val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf)!!
-                            //    colored_line_paint.color = color_list.getColorForState(state, Color.MAGENTA)
-                            //}
-                            //val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
-                            //leaf_drawable.setState(state)
-                            //leaf_drawable.setBounds(
-                            //    x.toInt(),
-                            //    y.toInt(),
-                            //    (x + width).toInt(),
-                            //    (y + line_height).toInt()
-                            //)
-                            //leaf_drawable.draw(canvas)
-
-
-                            val base_color = if (line.color != null) {
-                                line.color!!
-                                //colored_line_paint.color = line.color!!
-                                //canvas.drawRect(
-                                //    x + (density * 1),
-                                //    y,
-                                //    (x + width) - (density * 1),
-                                //    y + line_height,
-                                //    colored_line_paint
-                                //)
-                            } else {
-                                "#765bd5".toColorInt()
-                            }
-
-                            val secondary = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf)!!.getColorForState(state, Color.MAGENTA)
-                            val alpha_b = secondary.alpha.toFloat() / 255f
-                            val alpha_a = 1F - alpha_b
-
-                            colored_line_paint.color = Color.valueOf(
-                                ((base_color.red * alpha_a) + (secondary.red * alpha_b)) / 255f,
-                                ((base_color.green * alpha_a) + (secondary.green * alpha_b)) / 255f,
-                                ((base_color.blue * alpha_a) + (secondary.blue * alpha_b)) / 255f,
-                            ).toArgb()
-
-                            canvas.drawRect(
-                                x,
-                                y,
-                                x + width - density,
-                                y + line_height - density,
-                                colored_line_paint
+                            val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
+                            leaf_drawable.setState(state)
+                            leaf_drawable.setBounds(
+                                x.toInt(),
+                                y.toInt(),
+                                (x + width).toInt(),
+                                (y + line_height).toInt()
                             )
+                            leaf_drawable.draw(canvas)
 
+
+                            if (line.color != null) {
+                                colored_line_paint.color = line.color!!
+                                colored_line_paint.alpha = if (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active)) {
+                                    255
+                                } else {
+                                   127
+                                }
+                                canvas.drawRect(
+                                    x,
+                                    y + (line_height * 2 / 16),
+                                    x + width - resources.getDimension(R.dimen.stroke_leaf),
+                                    y + (line_height * 4 / 16),
+                                    colored_line_paint
+                                )
+                            }
 
                             val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf_text_selector)!!
                             this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)

@@ -312,6 +312,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(channel, line_offset)
     }
 
+    override fun set_line_color(channel: Int, line_offset: Int, color: Int?) {
+        super.set_line_color(channel, line_offset, color)
+        this.cursor_select_line(channel, line_offset)
+    }
+
     /* ------------------- 2nd Order Functions ---------------------------------- */
     override fun insert_beats(beat_index: Int, count: Int) {
         super.insert_beats(beat_index, count)

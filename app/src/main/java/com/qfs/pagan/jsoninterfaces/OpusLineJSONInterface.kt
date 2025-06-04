@@ -1,5 +1,6 @@
 package com.qfs.pagan.opusmanager
 
+import android.graphics.Color
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
@@ -107,10 +108,11 @@ class OpusLineJSONInterface {
             if (tmp_color == null) {
                 output.color = null
             } else {
-                val red = tmp_color.substring(1, 3).toInt(16)
-                val green = tmp_color.substring(3, 5).toInt(16)
-                val blue = tmp_color.substring(5, 7).toInt(16)
-                output.color = (red * 256 * 256) + (green * 256) + blue
+                output.color = Color.rgb(
+                    tmp_color.substring(1, 3).toInt(16),
+                    tmp_color.substring(3, 5).toInt(16),
+                    tmp_color.substring(5, 7).toInt(16)
+                )
             }
         }
     }

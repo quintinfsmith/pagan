@@ -12,10 +12,6 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.alpha
-import androidx.core.graphics.blue
-import androidx.core.graphics.green
-import androidx.core.graphics.red
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -35,7 +31,6 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
-import androidx.core.graphics.toColorInt
 
 @SuppressLint("ViewConstructor")
 /* The UI of the EditorTable. Only drawing-related logic and onclick dispatching is handled here. */
@@ -596,6 +591,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val line_height = resources.getDimension(R.dimen.line_height).toInt().toFloat()
             val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
             val channel_gap_height = resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
+            val stripe_stroke = resources.getDimension(R.dimen.stroke_leaf)
 
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()
@@ -642,19 +638,22 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             )
                             leaf_drawable.draw(canvas)
 
-
-                            if (line.color != null) {
-                                colored_line_paint.color = line.color!!
-                                colored_line_paint.alpha = if (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active)) {
-                                    255
-                                } else {
-                                   127
-                                }
+                            if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active))) {
+                                colored_line_paint.color = Color.BLACK
                                 canvas.drawRect(
                                     x,
-                                    y + (line_height * 2 / 16),
+                                    y + (line_height * 1 / 16),
                                     x + width - resources.getDimension(R.dimen.stroke_leaf),
                                     y + (line_height * 4 / 16),
+                                    colored_line_paint
+                                )
+
+                                colored_line_paint.color = line.color!!
+                                canvas.drawRect(
+                                    x,
+                                    y + (line_height * 1 / 16) + stripe_stroke,
+                                    x + width - resources.getDimension(R.dimen.stroke_leaf),
+                                    y + (line_height * 4 / 16) - stripe_stroke,
                                     colored_line_paint
                                 )
                             }

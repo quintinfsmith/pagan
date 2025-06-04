@@ -45,6 +45,8 @@ enum class HistoryToken {
     MUTE_LINE,
     UNMUTE_CHANNEL,
     UNMUTE_LINE,
+    SET_LINE_COLOR,
+    UNSET_LINE_COLOR,
     TAG_SECTION,
     UNTAG_SECTION,
 

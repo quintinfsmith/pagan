@@ -2,66 +2,35 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration.getLongPressTimeout
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
+import androidx.core.graphics.toColor
+import androidx.core.graphics.toColorInt
+import androidx.core.graphics.toColorLong
+import androidx.test.core.view.forceRedraw
 import kotlin.concurrent.thread
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): ConstraintLayout(context) {
+class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)) {
     val click_threshold_millis = 250
     val click_threshold_pixels = 5
     var press_position: Pair<Float, Float>? = null
     var press_timestamp: Long = 0
     val long_click_duration: Long = getLongPressTimeout().toLong()
     var flag_long_click_cancelled: Boolean = false
-    var text_view = TextView(ContextThemeWrapper(context, R.style.line_label))
-    var overlay = object: View(context) {
-        override fun draw(canvas: Canvas) {
-            super.draw(canvas)
-            val that = this@LineLabelStd
-            val line = that.get_opus_manager().get_all_channels()[that.channel].lines[that.line_offset]
-            val line_color = line.color
-            println("$channel, $line_offset, $line_color, $height, $width")
-
-            if (line_color != null) {
-                val paint = Paint()
-                paint.color = line.color!!
-                canvas.drawRect(
-                    canvas.width.toFloat() / 3F,
-                    canvas.height.toFloat() * 2F / 16F,
-                    canvas.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
-                    canvas.height.toFloat() * 4F / 16F,
-                    paint
-                )
-            }
-        }
-    }
-
     init {
-        this.addView(this.text_view)
-        this.addView(this.overlay)
-
-        (this.text_view.layoutParams as ConstraintLayout.LayoutParams).width = MATCH_PARENT
-        (this.text_view.layoutParams as ConstraintLayout.LayoutParams).height = MATCH_PARENT
-        (this.text_view.layoutParams as ConstraintLayout.LayoutParams).topToTop = PARENT_ID
-        (this.text_view.layoutParams as ConstraintLayout.LayoutParams).bottomToBottom = PARENT_ID
-        (this.text_view.layoutParams as ConstraintLayout.LayoutParams).endToEnd = PARENT_ID
-        (this.text_view.layoutParams as ConstraintLayout.LayoutParams).startToStart = PARENT_ID
-
-        (this.overlay.layoutParams as ConstraintLayout.LayoutParams).width = this.width * 2 / 3
-        (this.overlay.layoutParams as ConstraintLayout.LayoutParams).height = this.height * 4 / 16
-        (this.overlay.layoutParams as ConstraintLayout.LayoutParams).topToTop = PARENT_ID
-        (this.overlay.layoutParams as ConstraintLayout.LayoutParams).endToEnd = PARENT_ID
-        (this.overlay.layoutParams as ConstraintLayout.LayoutParams).startToStart = PARENT_ID
-
+        this.setOnClickListener {
+            this.on_click()
+        }
         this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
             this.touch_callback(view, touchEvent)
         }
@@ -88,8 +57,32 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Co
         this.set_text()
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
+        val line = this.get_opus_manager().get_all_channels()[this.channel].lines[this.line_offset]
+        val line_color = line.color
+        if (line_color != null) {
+            val stripe_stroke = resources.getDimension(R.dimen.stroke_leaf)
+            val line_height = resources.getDimension(R.dimen.line_height)
+            val paint = Paint()
+            paint.color = Color.BLACK
+            canvas.drawRect(
+                0F,
+                (line_height * 1F / 16F),
+                this.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
+                line_height * 4F / 16F,
+                paint
+            )
+
+            paint.color = line_color.toColorLong().toColorInt()
+            canvas.drawRect(
+                0F,
+                (line_height * 1F / 16F) + stripe_stroke,
+                this.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
+                line_height * 4F / 16F - stripe_stroke,
+                paint
+            )
+        }
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -202,9 +195,10 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Co
             "!$instrument"
         }
 
-        this.text_view.text = text
+        this.text = text
         this.contentDescription = text
-        this.drawableStateChanged()
+        println("$channel -> ${this.line_offset}, ${this.get_opus_manager().get_all_channels()[channel].lines[line_offset].color}")
+        this.refreshDrawableState()
     }
 
     fun get_activity(): MainActivity {

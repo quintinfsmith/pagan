@@ -2175,7 +2175,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 val new_color = Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0)
                 flColorDisplay.setBackgroundColor(new_color)
-                callback(new_color)
                 lockout = false
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
@@ -2187,9 +2186,16 @@ class MainActivity : AppCompatActivity() {
         sbBlue.setOnSeekBarChangeListener(seekbar_listener)
 
 
+
         flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setView(viewInflated)
+            .setOnDismissListener {
+                val new_color = Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0)
+                if (new_color != initial_color) {
+                    callback(new_color)
+                }
+            }
             .show()
     }
 

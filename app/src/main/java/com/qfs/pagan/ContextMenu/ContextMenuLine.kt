@@ -157,7 +157,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             val cursor = opus_manager.cursor
             val line = opus_manager.get_all_channels()[cursor.channel].lines[cursor.line_offset]
             this.get_activity().dialog_color_picker(line.color ?: this.get_activity().getColor(R.color.leaf_main).toInt()) { color: Int ->
-                line.color = color
+                opus_manager.set_line_color(cursor.channel, cursor.line_offset, color)
             }
 
             true

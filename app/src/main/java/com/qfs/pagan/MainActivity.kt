@@ -2099,16 +2099,15 @@ class MainActivity : AppCompatActivity() {
         return result
     }
 
-    fun dialog_color_picker(initial_color: Long, callback: (Int) -> Unit) {
+    fun dialog_color_picker(initial_color: Int, callback: (Int) -> Unit) {
         val main_fragment = this.get_active_fragment()
-        val c = Color.toArgb(initial_color)
-
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.color_picker,
                 main_fragment!!.view as ViewGroup,
                 false
             )
+
         val flColorDisplay = viewInflated.findViewById<FrameLayout>(R.id.flColorDisplay)
         val sbRed = viewInflated.findViewById<SeekBar>(R.id.sbRed)
         val sbGreen = viewInflated.findViewById<SeekBar>(R.id.sbGreen)
@@ -2117,13 +2116,13 @@ class MainActivity : AppCompatActivity() {
         val rniGreen = viewInflated.findViewById<RangedIntegerInput>(R.id.rniGreen)
         val rniBlue = viewInflated.findViewById<RangedIntegerInput>(R.id.rniBlue)
 
-        rniRed.set_value(c.red)
-        rniGreen.set_value(c.green)
-        rniBlue.set_value(c.blue)
+        rniRed.set_value(initial_color.red)
+        rniGreen.set_value(initial_color.green)
+        rniBlue.set_value(initial_color.blue)
 
-        sbRed.progress = c.red
-        sbGreen.progress = c.green
-        sbBlue.progress = c.blue
+        sbRed.progress = initial_color.red
+        sbGreen.progress = initial_color.green
+        sbBlue.progress = initial_color.blue
 
         var lockout = false
         rniRed.addTextChangedListener(object: TextWatcher {
@@ -2174,7 +2173,9 @@ class MainActivity : AppCompatActivity() {
                     sbGreen -> rniGreen.set_value(p1)
                     sbBlue -> rniBlue.set_value(p1)
                 }
-                flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
+                val new_color = Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0)
+                flColorDisplay.setBackgroundColor(new_color)
+                callback(new_color)
                 lockout = false
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
@@ -2187,6 +2188,9 @@ class MainActivity : AppCompatActivity() {
 
 
         flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setView(viewInflated)
+            .show()
     }
 
     fun dialog_text_popup(title: String, default: String? = null, callback: (String) -> Unit) {

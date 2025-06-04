@@ -60,7 +60,7 @@ class InlineColorPicker(private val _activity: MainActivity, label: String): Lin
         }
 
         this._color_button.setOnClickListener {
-            this._activity.dialog_color_picker(this._color_button.get_color().toColorLong()) { new_color: Int ->
+            this._activity.dialog_color_picker(this._color_button.get_color().toInt()) { new_color: Int ->
                 this._color_button.set_color(new_color)
             }
         }

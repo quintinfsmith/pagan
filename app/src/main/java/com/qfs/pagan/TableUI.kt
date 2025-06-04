@@ -12,6 +12,10 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.alpha
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -31,6 +35,7 @@ import com.qfs.pagan.structure.OpusTree
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import androidx.core.graphics.toColorInt
 
 @SuppressLint("ViewConstructor")
 /* The UI of the EditorTable. Only drawing-related logic and onclick dispatching is handled here. */
@@ -49,6 +54,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         init {
             this.table_line_paint.color = ContextCompat.getColor(context, R.color.table_lines)
             this.table_line_paint.strokeWidth = 1F
+
 
             this.text_paint_offset.textSize = resources.getDimension(R.dimen.text_size_offset)
             this.text_paint_offset.color = ContextCompat.getColor(context, R.color.leaf_text_selector)
@@ -590,6 +596,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val line_height = resources.getDimension(R.dimen.line_height).toInt().toFloat()
             val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
             val channel_gap_height = resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
+            val density = 1 / resources.displayMetrics.density
 
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()
@@ -600,6 +607,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val vertical_scroll_view = (horizontal_scroll_view.parent as ScrollView)
             val scroll_y = vertical_scroll_view.scrollY
             val scroll_x = horizontal_scroll_view.scrollX
+
             canvas.drawRect(
                 scroll_x.toFloat(),
                 scroll_y.toFloat(),
@@ -607,9 +615,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 (scroll_y + vertical_scroll_view.measuredHeight).toFloat(),
                 this.table_line_paint
             )
+
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
-
                 var y_offset = line_height
                 for (j in channels.indices) {
                     val channel = channels[j]
@@ -618,14 +626,64 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                     for (k in channel.lines.indices) {
                         val line = channel.lines[k]
+                        val colored_line_paint = Paint()
+
                         val beat_key = BeatKey(j, k, i)
                         val tree = opus_manager.get_tree(beat_key, listOf())
                         this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                             val state = this.get_standard_leaf_state(beat_key, position)
-                            val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
-                            leaf_drawable.setState(state)
-                            leaf_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + line_height).toInt())
-                            leaf_drawable.draw(canvas)
+
+
+                            //if (line.color != null) {
+                            //    colored_line_paint.setColor(line.color!!)
+                            //} else {
+                            //    val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf)!!
+                            //    colored_line_paint.color = color_list.getColorForState(state, Color.MAGENTA)
+                            //}
+                            //val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
+                            //leaf_drawable.setState(state)
+                            //leaf_drawable.setBounds(
+                            //    x.toInt(),
+                            //    y.toInt(),
+                            //    (x + width).toInt(),
+                            //    (y + line_height).toInt()
+                            //)
+                            //leaf_drawable.draw(canvas)
+
+
+                            val base_color = if (line.color != null) {
+                                line.color!!
+                                //colored_line_paint.color = line.color!!
+                                //canvas.drawRect(
+                                //    x + (density * 1),
+                                //    y,
+                                //    (x + width) - (density * 1),
+                                //    y + line_height,
+                                //    colored_line_paint
+                                //)
+                            } else {
+                                "#765bd5".toColorInt()
+                            }
+
+                            val secondary = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf)!!.getColorForState(state, Color.MAGENTA)
+                            val alpha_b = secondary.alpha.toFloat() / 255f
+                            val alpha_a = 1F - alpha_b
+
+                            colored_line_paint.color = Color.valueOf(
+                                ((base_color.red * alpha_a) + (secondary.red * alpha_b)) / 255f,
+                                ((base_color.green * alpha_a) + (secondary.green * alpha_b)) / 255f,
+                                ((base_color.blue * alpha_a) + (secondary.blue * alpha_b)) / 255f,
+                            ).toArgb()
+
+                            canvas.drawRect(
+                                x,
+                                y,
+                                x + width - density,
+                                y + line_height - density,
+                                colored_line_paint
+                            )
+
+
                             val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf_text_selector)!!
                             this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)
                             this.text_paint_offset.color = color_list.getColorForState(state, Color.MAGENTA)

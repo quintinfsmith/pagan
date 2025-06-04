@@ -29,10 +29,10 @@ class OpusLineJSONInterface {
             output["controllers"] = ActiveControlSetJSONInterface.to_json(line.controllers)
             output["muted"] = line.muted
             output["color"] = if (line.color != null) {
-                val i = line.color!!.toUInt()
-                val red = ((i and 16711680u) shr 16).toInt()
-                val green = ((i and 65280u) shr 8).toInt()
-                val blue = (i and 255u).toInt()
+                val i = line.color!!
+                val red = ((i and 16711680) shr 16).toInt()
+                val green = ((i and 65280) shr 8).toInt()
+                val blue = (i and 255).toInt()
                 "#%02x".format(red) + "%02x".format(green) + "%02x".format(blue)
             } else {
                 null

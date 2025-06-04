@@ -4,7 +4,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-    <com.qfs.pagan.PaganTextView
+    <TextView
         android:id="@+id/label"
         android:layout_weight="1"
         android:layout_width="wrap_content"

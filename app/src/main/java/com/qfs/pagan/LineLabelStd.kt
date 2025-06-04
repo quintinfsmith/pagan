@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
@@ -21,7 +23,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         this.setOnClickListener {
             this.on_click()
         }
-
         this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
             this.touch_callback(view, touchEvent)
         }
@@ -46,6 +47,24 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         this.layoutParams.height = this.resources.getDimension(R.dimen.line_height).toInt()
         this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         this.set_text()
+    }
+
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
+        val line = this.get_opus_manager().get_all_channels()[this.channel].lines[this.line_offset]
+        val line_color = line.color
+        println("$channel, $line_offset, $line_color, $height, $width")
+        if (line_color != null) {
+            val paint = Paint()
+            paint.color = line.color!!
+            canvas.drawRect(
+                0F,
+                this.height.toFloat() * 2F / 16F,
+                this.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
+                this.height.toFloat() * 4F / 16F,
+                paint
+            )
+        }
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -160,6 +179,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
         this.text = text
         this.contentDescription = text
+        this.drawableStateChanged()
     }
 
     fun get_activity(): MainActivity {

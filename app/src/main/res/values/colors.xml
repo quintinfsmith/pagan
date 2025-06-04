@@ -5,16 +5,16 @@
     <color name="white">#FFFFFFFF</color>
     <color name="link_color">#2a2a46</color>
 
-    <color name="leaf_main">#00000000</color>
-    <color name="leaf_spill">#33000000</color>
+    <color name="leaf_main">#765BD5</color>
+    <color name="leaf_spill">#5944a3</color>
     <color name="leaf_text">#000000</color>
     <color name="leaf_selected">#2636b2</color>
     <color name="leaf_selected_text">#FFFFFF</color>
     <color name="leaf_secondary">#4F5BBC</color>
     <color name="leaf_secondary_text">#000000</color>
-    <color name="leaf_invalid">#FFE51C3A</color>
+    <color name="leaf_invalid">#E51C3A</color>
     <color name="leaf_invalid_text">#FFFFFF</color>
-    <color name="leaf_invalid_selected">#FF890E21</color>
+    <color name="leaf_invalid_selected">#890E21</color>
     <color name="leaf_invalid_selected_text">#A27E7E</color>
 
     <color name="muted_leaf_text">#000000</color>
@@ -27,7 +27,7 @@
     <color name="ctl_leaf_secondary">#567B80</color>
     <color name="ctl_leaf_selected_text">#FFFFFF</color>
 
-    <color name="empty_selected">#FF5ba1d6</color>
+    <color name="empty_selected">@color/blue_sky</color>
     <color name="empty_selected_text">#000000</color>
     <color name="label_selected_secondary">@color/blue_sky</color>
     <color name="label_selected_secondary_text">#000000</color>
@@ -71,12 +71,12 @@
     <color name="ctl_line_text">#101010</color>
 
 
-    <color name="muted_leaf_main">#FF6E6E6E</color>
-    <color name="muted_leaf_spill">#FF535353</color>
-    <color name="muted_leaf_selected">#FF444444</color>
-    <color name="muted_leaf_secondary">#FF626262</color>
-    <color name="muted_empty_selected">#FF999999</color>
-    <color name="muted_channel_even">#FFCFCFCF</color>
+    <color name="muted_leaf_main">#6E6E6E</color>
+    <color name="muted_leaf_spill">#535353</color>
+    <color name="muted_leaf_selected">#444444</color>
+    <color name="muted_leaf_secondary">#626262</color>
+    <color name="muted_empty_selected">#999999</color>
+    <color name="muted_channel_even">#CFCFCF</color>
 
     <color name="muted_label_selected_secondary">#999999</color>
     <color name="muted_label_ctl_selected_secondary">@color/muted_label_selected_secondary</color>

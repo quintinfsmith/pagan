@@ -2,12 +2,15 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.graphics.Typeface
+import android.text.Editable
 import android.text.InputFilter
 import android.text.InputType
 import android.text.Spanned
+import android.text.TextWatcher
 import android.util.AttributeSet
+import com.google.android.material.textfield.TextInputEditText
 
-open class HexEditText(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(context, attrs) {
+open class HexEditText(context: Context, attrs: AttributeSet? = null): TextInputEditText(context, attrs) {
     class HexFilter: InputFilter {
         override fun filter(
             source: CharSequence,

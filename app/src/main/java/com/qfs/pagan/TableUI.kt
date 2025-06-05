@@ -50,6 +50,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.table_line_paint.color = ContextCompat.getColor(context, R.color.table_lines)
             this.table_line_paint.strokeWidth = 1F
 
+
             this.text_paint_offset.textSize = resources.getDimension(R.dimen.text_size_offset)
             this.text_paint_offset.color = ContextCompat.getColor(context, R.color.leaf_text_selector)
             this.text_paint_offset.isFakeBoldText = true
@@ -600,6 +601,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val vertical_scroll_view = (horizontal_scroll_view.parent as ScrollView)
             val scroll_y = vertical_scroll_view.scrollY
             val scroll_x = horizontal_scroll_view.scrollX
+
             canvas.drawRect(
                 scroll_x.toFloat(),
                 scroll_y.toFloat(),
@@ -607,9 +609,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 (scroll_y + vertical_scroll_view.measuredHeight).toFloat(),
                 this.table_line_paint
             )
+
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
-
                 var y_offset = line_height
                 for (j in channels.indices) {
                     val channel = channels[j]
@@ -618,14 +620,34 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                     for (k in channel.lines.indices) {
                         val line = channel.lines[k]
+                        val colored_line_paint = Paint()
+
                         val beat_key = BeatKey(j, k, i)
                         val tree = opus_manager.get_tree(beat_key, listOf())
                         this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                             val state = this.get_standard_leaf_state(beat_key, position)
+
                             val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
                             leaf_drawable.setState(state)
-                            leaf_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + line_height).toInt())
+                            leaf_drawable.setBounds(
+                                x.toInt(),
+                                y.toInt(),
+                                (x + width).toInt(),
+                                (y + line_height).toInt()
+                            )
                             leaf_drawable.draw(canvas)
+
+                            if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active))) {
+                                colored_line_paint.color = line.color!!
+                                canvas.drawRect(
+                                    x,
+                                    y + (line_height * 1 / 16),
+                                    x + width - resources.getDimension(R.dimen.stroke_leaf),
+                                    y + (line_height * 4 / 16),
+                                    colored_line_paint
+                                )
+                            }
+
                             val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.leaf_text_selector)!!
                             this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)
                             this.text_paint_offset.color = color_list.getColorForState(state, Color.MAGENTA)

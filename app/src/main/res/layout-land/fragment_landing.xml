@@ -113,6 +113,7 @@
                 android:text="@string/btn_landing_new"/>
 
             <Space
+                android:id="@+id/space_load"
                 android:layout_height="match_parent"
                 android:layout_width="@dimen/landing_button_space_h" />
 

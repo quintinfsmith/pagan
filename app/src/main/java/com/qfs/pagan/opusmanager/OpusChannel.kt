@@ -339,6 +339,10 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
         }
     }
 
+    fun set_line_color(line_offset: Int, color: Int?) {
+        this.lines[line_offset].color = color
+    }
+
     override fun hashCode(): Int {
         var result = this.lines.hashCode()
         result = (31 * result) + this.controllers.hashCode()

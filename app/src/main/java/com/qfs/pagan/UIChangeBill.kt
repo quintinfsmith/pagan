@@ -649,7 +649,7 @@ class UIChangeBill {
         val working_tree = this.get_working_tree() ?: return
         working_tree.int_queue.add(y)
         working_tree.bill.add(
-            if (state_only) {
+            if (false && state_only) {
                 BillableItem.RowStateChange
             } else {
                 BillableItem.RowChange

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/hex_wrapper"
+        android:layout_width="58dp"
+        android:layout_height="match_parent"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toStartOf="@id/color_pickers"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:hint="@string/hexcode"
+            android:textColorHint="@color/main_fg"
+            android:theme="@style/Theme.Pagan.EditText">
+
+            <com.qfs.pagan.HexEditText
+                android:id="@+id/hexValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toStartOf="@id/color_pickers"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/flColorDisplay"
+        android:layout_marginEnd="20dp"
+        android:layout_width="58dp"
+        android:layout_height="58dp"/>
+
+    <LinearLayout
+        android:id="@+id/color_pickers"
+        custom:layout_constraintStart_toEndOf="@id/flColorDisplay"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <com.qfs.pagan.RangedIntegerInput
+                android:id="@+id/rniRed"
+                android:textAlignment="textEnd"
+                custom:max="255"
+                custom:min="0"
+                android:minEms="3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <SeekBar
+                android:id="@+id/sbRed"
+                android:minWidth="@dimen/color_picker_seekbar"
+                android:progressTint="#CC0000"
+                android:thumbTint="#CC0000"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center"
+                android:max="255"
+                android:progress="0"/>
+
+        </LinearLayout>
+        <Space
+            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <com.qfs.pagan.RangedIntegerInput
+                android:id="@+id/rniGreen"
+                custom:max="255"
+                custom:min="0"
+                android:minEms="3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <SeekBar
+                android:id="@+id/sbGreen"
+                android:minWidth="@dimen/color_picker_seekbar"
+                android:progressTint="#00CC00"
+                android:thumbTint="#00CC00"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center"
+                android:max="255"
+                android:progress="0"/>
+        </LinearLayout>
+        <Space
+            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <com.qfs.pagan.RangedIntegerInput
+                android:id="@+id/rniBlue"
+                custom:max="255"
+                custom:min="0"
+                android:minEms="3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <SeekBar
+                android:id="@+id/sbBlue"
+                android:minWidth="@dimen/color_picker_seekbar"
+                android:progressTint="#0000CC"
+                android:thumbTint="#0000CC"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="center"
+                android:max="255"
+                android:progress="0"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -696,6 +696,22 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
+                HistoryToken.SET_LINE_COLOR -> {
+                    this.set_line_color(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        current_node.args[2] as Int?
+                    )
+                }
+
+                HistoryToken.UNSET_LINE_COLOR -> {
+                    this.set_line_color(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int,
+                        null
+                    )
+                }
+
                 HistoryToken.TAG_SECTION -> {
                     this.tag_section(
                         current_node.args[0] as Int,
@@ -1784,6 +1800,25 @@ open class OpusLayerHistory: OpusLayerCursor() {
         this._remember {
             super.unmute_line(channel, line_offset)
             this.push_to_history_stack(HistoryToken.MUTE_LINE, listOf(channel, line_offset))
+        }
+    }
+
+    override fun set_line_color(channel: Int, line_offset: Int, color: Int?) {
+        this._remember {
+            val original_color = this.get_all_channels()[channel].lines[line_offset].color
+            super.set_line_color(channel, line_offset, color)
+
+            if (original_color == null) {
+                this.push_to_history_stack(
+                    HistoryToken.UNSET_LINE_COLOR,
+                    listOf<Any>(channel, line_offset)
+                )
+            } else {
+                this.push_to_history_stack(
+                    HistoryToken.SET_LINE_COLOR,
+                    listOf(channel, line_offset, original_color)
+                )
+            }
         }
     }
 

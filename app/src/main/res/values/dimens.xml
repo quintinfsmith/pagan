@@ -18,11 +18,6 @@
     <dimen name="config_width">248dp</dimen>
     <dimen name="number_selector_spacing">2dp</dimen>
     <dimen name="alert_padding">6dp</dimen>
-    <dimen name="alert_button_height">41dp</dimen>
-    <dimen name="alert_button_padding_top">5dp</dimen>
-    <dimen name="alert_button_padding_bottom">8dp</dimen>
-    <dimen name="alert_button_padding_left">5dp</dimen>
-    <dimen name="alert_button_padding_right">8dp</dimen>
     <dimen name="icon_size">36dp</dimen>
     <dimen name="icon_button_height">54dp</dimen>
     <dimen name="icon_button_width">60dp</dimen>
@@ -31,6 +26,12 @@
     <dimen name="icon_button_padding_a">1dp</dimen>
     <dimen name="icon_button_padding_b">4dp</dimen>
     <dimen name="channel_conf_icon_height">24dp</dimen>
+
+    <dimen name="inline_color_picker_label_padding">12dp</dimen>
+    <dimen name="inline_color_picker_button_size">41dp</dimen>
+    <dimen name="color_picker_display_height">82dp</dimen>
+    <dimen name="color_picker_display_padding">8dp</dimen>
+    <dimen name="color_picker_popup_width">400dp</dimen>
 
     <dimen name="icon_spacing">4dp</dimen>
     <dimen name="primary_contextmenu_padding_top">4dp</dimen>
@@ -60,9 +61,14 @@
     <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
     <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>
 
+    <dimen name="alert_button_padding_v">8dp</dimen>
+    <dimen name="alert_button_padding_h">24dp</dimen>
+    <dimen name="min_alert_button_width">0dp</dimen>
+    <dimen name="min_alert_button_height">0dp</dimen>
     <dimen name="setting_radio_padding_h">24dp</dimen>
     <dimen name="setting_radio_padding_v">8dp</dimen>
     <dimen name="radio_stroke">2dp</dimen>
 
     <dimen name="progress_bar_size">64dp</dimen>
+    <dimen name="color_picker_seekbar">100dp</dimen>
 </resources>

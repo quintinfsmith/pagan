@@ -10,4 +10,8 @@
     <dimen name="setting_radio_padding_v">0dp</dimen>
     <dimen name="secondary_contextmenu_button_height">30dp</dimen>
     <dimen name="secondary_contextmenu_height">48dp</dimen>
+    <dimen name="alert_button_padding_v">8dp</dimen>
+    <dimen name="alert_button_padding_h">20dp</dimen>
+    <dimen name="min_alert_button_width">0dp</dimen>
+    <dimen name="min_alert_button_height">0dp</dimen>
 </resources>

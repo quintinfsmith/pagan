@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.Space
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
@@ -70,8 +71,10 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
                 }
             }
             btn_loadProject.visibility = View.VISIBLE
+            view.findViewById<Space>(R.id.space_load).visibility = View.VISIBLE
         } else {
             btn_loadProject.visibility = View.GONE
+            view.findViewById<Space>(R.id.space_load).visibility = View.GONE
         }
 
         btn_importMidi.setOnClickListener {

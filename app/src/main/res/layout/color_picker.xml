@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <FrameLayout
+            android:layout_margin="@dimen/color_picker_display_padding"
+            android:id="@+id/flColorDisplay"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="@dimen/color_picker_display_height"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:hint="@string/hexcode"
+            android:textColorHint="@color/main_fg"
+            android:theme="@style/Theme.Pagan.EditText">
+
+            <com.qfs.pagan.HexEditText
+                android:id="@+id/hexValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <SeekBar
+            android:id="@+id/sbRed"
+            android:minWidth="@dimen/color_picker_seekbar"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:progressTint="#CC0000"
+            android:thumbTint="#CC0000"
+            android:max="255"
+            android:progress="0"/>
+        <com.qfs.pagan.RangedIntegerInput
+            android:id="@+id/rniRed"
+            android:textAlignment="textEnd"
+            custom:max="255"
+            custom:min="0"
+            android:lines="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <SeekBar
+            android:id="@+id/sbGreen"
+            android:minWidth="@dimen/color_picker_seekbar"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:progressTint="#00CC00"
+            android:thumbTint="#00CC00"
+            android:layout_gravity="center"
+            android:max="255"
+            android:progress="0"/>
+        <com.qfs.pagan.RangedIntegerInput
+            android:id="@+id/rniGreen"
+            custom:max="255"
+            custom:min="0"
+            android:lines="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <SeekBar
+            android:id="@+id/sbBlue"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:minWidth="@dimen/color_picker_seekbar"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:progressTint="#0000CC"
+            android:thumbTint="#0000CC"
+            android:max="255"
+            android:progress="0"/>
+
+            <com.qfs.pagan.RangedIntegerInput
+                android:id="@+id/rniBlue"
+                custom:max="255"
+                custom:min="0"
+                android:lines="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+    </LinearLayout>
+</LinearLayout>

@@ -1,11 +1,13 @@
 package com.qfs.pagan.ContextMenu
 
 import android.content.res.Configuration
+import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Space
+import androidx.core.graphics.toColorLong
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget
@@ -145,6 +147,20 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
                 return@setOnClickListener
             }
             this.interact_btnChoosePercussion()
+        }
+
+        this.button_choose_percussion.setOnLongClickListener {
+            if (!it.isEnabled) {
+                return@setOnLongClickListener false
+            }
+            val opus_manager = this.get_opus_manager()
+            val cursor = opus_manager.cursor
+            val line = opus_manager.get_all_channels()[cursor.channel].lines[cursor.line_offset]
+            this.get_activity().dialog_color_picker(line.color ?: this.get_activity().getColor(R.color.leaf_main).toInt()) { color: Int? ->
+                opus_manager.set_line_color(cursor.channel, cursor.line_offset, color)
+            }
+
+            true
         }
 
         this.button_insert.setOnLongClickListener {

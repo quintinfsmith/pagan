@@ -11,6 +11,8 @@
     <dimen name="secondary_contextmenu_height">62dp</dimen>
     <dimen name="secondary_contextmenu_button_height">42dp</dimen>
 
+    <dimen name="color_picker_seekbar">240dp</dimen>
+    <dimen name="color_picker_display_height">42dp</dimen>
     <dimen name="icon_button_height">54dp</dimen>
     <dimen name="icon_button_width">58dp</dimen>
     <dimen name="icon_size">36dp</dimen>

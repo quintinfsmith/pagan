@@ -65,21 +65,12 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
             val stripe_stroke = resources.getDimension(R.dimen.stroke_leaf)
             val line_height = resources.getDimension(R.dimen.line_height)
             val paint = Paint()
-            paint.color = Color.BLACK
+            paint.color = line_color.toColorLong().toColorInt()
             canvas.drawRect(
-                0F,
+                this.width.toFloat() / 3f,
                 (line_height * 1F / 16F),
                 this.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
                 line_height * 4F / 16F,
-                paint
-            )
-
-            paint.color = line_color.toColorLong().toColorInt()
-            canvas.drawRect(
-                0F,
-                (line_height * 1F / 16F) + stripe_stroke,
-                this.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
-                line_height * 4F / 16F - stripe_stroke,
                 paint
             )
         }
@@ -197,7 +188,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
         this.text = text
         this.contentDescription = text
-        println("$channel -> ${this.line_offset}, ${this.get_opus_manager().get_all_channels()[channel].lines[line_offset].color}")
         this.refreshDrawableState()
     }
 

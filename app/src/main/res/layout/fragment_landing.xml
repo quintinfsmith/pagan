@@ -74,6 +74,7 @@
             android:text="@string/btn_landing_new"/>
 
         <Space
+            android:id="@+id/space_load"
             android:layout_width="match_parent"
             android:layout_height="@dimen/normal_padding" />
 
@@ -116,6 +117,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/btn_landing_about"/>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,11 +1,21 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration.getLongPressTimeout
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
+import androidx.core.graphics.toColor
+import androidx.core.graphics.toColorInt
+import androidx.core.graphics.toColorLong
+import androidx.test.core.view.forceRedraw
 import kotlin.concurrent.thread
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -21,7 +31,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         this.setOnClickListener {
             this.on_click()
         }
-
         this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
             this.touch_callback(view, touchEvent)
         }
@@ -46,6 +55,25 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         this.layoutParams.height = this.resources.getDimension(R.dimen.line_height).toInt()
         this.layoutParams.width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         this.set_text()
+    }
+
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
+        val line = this.get_opus_manager().get_all_channels()[this.channel].lines[this.line_offset]
+        val line_color = line.color
+        if (line_color != null) {
+            val stripe_stroke = resources.getDimension(R.dimen.stroke_leaf)
+            val line_height = resources.getDimension(R.dimen.line_height)
+            val paint = Paint()
+            paint.color = line_color.toColorLong().toColorInt()
+            canvas.drawRect(
+                this.width.toFloat() / 3f,
+                (line_height * 1F / 16F),
+                this.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
+                line_height * 4F / 16F,
+                paint
+            )
+        }
     }
 
     override fun onCreateDrawableState(extraSpace: Int): IntArray? {
@@ -160,6 +188,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
 
         this.text = text
         this.contentDescription = text
+        this.refreshDrawableState()
     }
 
     fun get_activity(): MainActivity {

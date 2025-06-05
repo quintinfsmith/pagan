@@ -1779,6 +1779,10 @@ open class OpusLayerBase {
         }
     }
 
+    open fun set_line_color(channel: Int, line_offset: Int, color: Int?) {
+        this.get_all_channels()[channel].set_line_color(line_offset, color)
+    }
+
     /**
      * Remove the [type] effect controller of the [line_offset]th line of the [channel_index]th channel.
      */

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ActivitySettings">
 
     <com.google.android.material.appbar.AppBarLayout
         android:theme="@style/app_bar"
@@ -18,9 +18,7 @@
             app:contentInsetStartWithNavigation="0dp"
             app:titleTextAppearance="@style/TextAppearance.AppCompat.Small"
             app:titleTextColor="@color/on_surface" />
-
     </com.google.android.material.appbar.AppBarLayout>
 
-    <include layout="@layout/content_main" />
-
+    <include layout="@layout/fragment_global_settings" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

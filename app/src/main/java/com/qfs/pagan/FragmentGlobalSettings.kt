@@ -173,7 +173,6 @@ class FragmentGlobalSettings : FragmentPagan<FragmentGlobalSettingsBinding>() {
                 }
             )
         }
-
     }
 
     private fun interact_btnChooseSoundFont() {

@@ -33,22 +33,17 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.AdapterView
-import android.widget.AdapterView.OnItemSelectedListener
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.SeekBar
-import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -57,7 +52,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
-import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.documentfile.provider.DocumentFile
@@ -69,7 +63,6 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -98,20 +91,16 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
-import kotlin.io.path.Path
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlin.text.toHexString
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : PaganActivity() {
     companion object {
         init {
             System.loadLibrary("pagan")
@@ -212,8 +201,6 @@ class MainActivity : AppCompatActivity() {
     private var _notification_channel: NotificationChannel? = null
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
-
-    private var _popup_active: Boolean = false
 
     class MultiExporterEventHandler(var activity: MainActivity, var total_count: Int): WavConverter.ExporterEventHandler {
         var working_y = 0
@@ -450,7 +437,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private var _export_multi_channel_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
@@ -766,46 +752,6 @@ class MainActivity : AppCompatActivity() {
                 applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                     FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
                     this.feedback_msg(getString(R.string.feedback_exported_to_midi))
-                }
-            }
-        }
-    }
-
-    var _import_soundfont_intent_listener = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                if (uri.path != null) {
-                    val soundfont_dir = this.get_soundfont_directory()
-                    val file_name = this.parse_file_name(uri)
-
-                    val new_file = File("${soundfont_dir}/$file_name")
-                    this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                        try {
-                            new_file.outputStream().use { output_stream: FileOutputStream ->
-                                FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
-                                    input_stream.copyTo(output_stream, 4096 * 4)
-                                }
-                            }
-                        } catch (e: FileNotFoundException) {
-                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
-                        }
-                    }
-
-                    try {
-                        SoundFont(new_file.path)
-                        this.get_action_interface().ignore().set_soundfont(new_file.name)
-                    } catch (e: Exception) {
-                        this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
-                        new_file.delete()
-                        return@registerForActivityResult
-                    }
-
-                    // Hide the warning
-                    if (this.get_active_fragment() is FragmentGlobalSettings && this.is_soundfont_available()) {
-                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
-                    }
-                } else {
-                    throw FileNotFoundException()
                 }
             }
         }
@@ -1437,12 +1383,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun feedback_msg(msg: String) {
-        this.runOnUiThread {
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-        }
-    }
-
     fun loading_reticle_show(title_msg: String? = null) {
         this.runOnUiThread {
             if (title_msg != null) {
@@ -1898,11 +1838,6 @@ class MainActivity : AppCompatActivity() {
         return this._project_manager.has_projects_saved()
     }
 
-    fun is_soundfont_available(): Boolean {
-        val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles()?.isNotEmpty() == true
-    }
-
     fun populate_supported_soundfont_instrument_names() {
         // populate a cache of available soundfont names so se don't have to open up the soundfont data
         // every time
@@ -2077,28 +2012,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    fun parse_file_name(uri: Uri): String? {
-        var result: String? = null
-        if (uri.scheme == "content") {
-            val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if (ci >= 0) {
-                        result = cursor.getString(ci)
-                    }
-                }
-                cursor.close()
-            }
-        }
-
-        if (result == null && uri.path is String) {
-            result = uri.path!!
-            result = result.substring(result.lastIndexOf("/") + 1)
-        }
-        return result
     }
 
     fun dialog_color_picker(initial_color: Int, callback: (Int?) -> Unit) {
@@ -2306,209 +2219,6 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    internal fun dialog_popup_selection_offset() {
-        val view_inflated: View = LayoutInflater.from(this)
-            .inflate(
-                R.layout.dialog_note_offset,
-                window.decorView.rootView as ViewGroup,
-                false
-            )
-
-        val np_octave = view_inflated.findViewById<NumberPicker>(R.id.npOctave)
-        np_octave.maxValue = 14
-        np_octave.minValue = 0
-        np_octave.value = 7
-        np_octave.wrapSelectorWheel = false
-        np_octave.setFormatter { value: Int ->
-            "${value - 7}"
-        }
-
-        val np_offset = view_inflated.findViewById<NumberPicker>(R.id.npOffset)
-        val radix = (this.get_opus_manager().tuning_map.size - 1)
-        np_offset.maxValue = (radix * 2)
-        np_offset.minValue = 0
-        np_offset.value = radix
-        np_offset.wrapSelectorWheel = false
-        np_offset.setFormatter { value: Int ->
-            "${value - radix}"
-        }
-
-        this._popup_active = true
-        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setView(view_inflated)
-            .setTitle(R.string.dialog_adjust_selection)
-            .setOnDismissListener {
-                this._popup_active = false
-            }
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                val opus_manager = this.get_opus_manager()
-                val radix = opus_manager.tuning_map.size
-                val octave = np_octave.value - 7
-                val offset = np_offset.value - (radix - 1)
-                val real_delta = (octave * radix) + offset
-                opus_manager.offset_selection(real_delta)
-
-                this.get_action_interface().track(TrackedAction.AdjustSelection, listOf(real_delta))
-                dialog.dismiss()
-            }
-            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-                dialog.cancel()
-            }
-            .show()
-    }
-
-    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Pair<T, String>>, default: T? = null, sort_options: List<Pair<String, (List<Pair<T, String>>) -> List<Pair<T, String>>>>, default_sort_option: Int = 0, callback: (index: Int, value: T) -> Unit): AlertDialog? {
-        if (this._popup_active) {
-            return null
-        }
-        if (options.isEmpty()) {
-            return null
-        }
-
-        this._popup_active = true
-        val viewInflated: View = LayoutInflater.from(this)
-            .inflate(
-                R.layout.dialog_menu,
-                window.decorView.rootView as ViewGroup,
-                false
-            )
-
-        if (options.size > 1) {
-            viewInflated.findViewById<View>(R.id.spinner_sort_options_wrapper).visibility =
-                View.VISIBLE
-        }
-        val spinner = viewInflated.findViewById<Spinner>(R.id.spinner_sort_options)
-        val sortable_labels = List(sort_options.size * 2) { i: Int ->
-            if (i % 2 == 0) {
-                sort_options[i / 2].first
-            } else {
-                getString(R.string.sorted_list_desc, sort_options[i / 2].first)
-            }
-        }
-
-        val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
-        val dialog = AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(title)
-            .setView(viewInflated)
-            .setOnDismissListener {
-                this._popup_active = false
-            }
-            .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-
-        val adapter = PopupMenuRecyclerAdapter<T>(recycler, sort_options[default_sort_option].second(options), default) { index: Int, value: T ->
-            dialog.dismiss()
-            callback(index, value)
-        }
-
-        spinner.adapter = ArrayAdapter<String>(this, R.layout.spinner_list, sortable_labels)
-        spinner.onItemSelectedListener = object: OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                adapter.set_items(
-                    if (position % 2 == 1) {
-                        sort_options[position / 2].second(options).asReversed()
-                    } else {
-                        sort_options[position / 2].second(options)
-                    }
-                )
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-
-        adapter.notifyDataSetChanged()
-
-        return dialog
-    }
-
-    internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit): AlertDialog? {
-        if (this._popup_active) {
-            return null
-        }
-
-        if (options.isEmpty()) {
-            return null
-        }
-
-        this._popup_active = true
-        val viewInflated: View = LayoutInflater.from(this)
-            .inflate(
-                R.layout.dialog_menu,
-                window.decorView.rootView as ViewGroup,
-                false
-            )
-
-        val recycler = viewInflated.findViewById<RecyclerView>(R.id.rvOptions)
-        val dialog = AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(title)
-            .setView(viewInflated)
-            .setOnDismissListener {
-                this._popup_active = false
-            }
-            .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-
-        val adapter = PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
-            dialog.dismiss()
-            callback(index, value)
-        }
-
-        adapter.notifyDataSetChanged()
-
-        return dialog
-    }
-
-    internal fun dialog_load_project() {
-        val project_list = this._project_manager.get_project_list()
-        val sort_options = listOf(
-            Pair(
-                getString(R.string.sort_option_abc),
-                { original: List<Pair<String, String>> ->
-                    original.sortedBy { (_, label): Pair<String, String> ->
-                        label
-                    }
-                }
-            ),
-            Pair(
-                getString(R.string.sort_option_date_modified),
-                { original: List<Pair<String, String>> ->
-                    original.sortedBy { (path, _): Pair<String, String> ->
-                        val f = File(path)
-                        f.lastModified()
-                    }
-                }
-            ),
-            Pair(
-                getString(R.string.sort_option_date_created),
-                { original: List<Pair<String, String>> ->
-                    original.sortedBy { (path, _): Pair<String, String> ->
-                        val f = Path(path)
-                        val attributes: BasicFileAttributes =
-                            Files.readAttributes<BasicFileAttributes>(
-                                f,
-                                BasicFileAttributes::class.java
-                            )
-                        attributes.creationTime()
-                    }
-                }
-            )
-        )
-
-        this.dialog_popup_sortable_menu<String>(
-            getString(R.string.menu_item_load_project),
-            project_list,
-            null,
-            sort_options,
-            0
-        ) { _: Int, path: String ->
-            this.get_action_interface().load_project(path)
-        }
-    }
-
-
     // TODO: fix code duplication in dialog_float/integer_input
     internal fun dialog_float_input(title: String, min_value: Float, max_value: Float, default: Float? = null, callback: (value: Float) -> Unit ) {
         val coerced_default_value = default ?: (this._float_dialog_defaults[title] ?: min_value)
@@ -2582,20 +2292,6 @@ class MainActivity : AppCompatActivity() {
 
         number_input.requestFocus()
         number_input.selectAll()
-    }
-
-    fun dialog_confirm(title: String, callback: () -> Unit) {
-        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(title)
-            .setCancelable(true)
-            .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
-                dialog.dismiss()
-                callback()
-            }
-            .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
     }
 
     private fun needs_save(): Boolean {
@@ -3032,4 +2728,55 @@ class MainActivity : AppCompatActivity() {
         this.requestedOrientation = value
     }
 
+
+    internal fun dialog_popup_selection_offset() {
+        val view_inflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_note_offset,
+                window.decorView.rootView as ViewGroup,
+                false
+            )
+
+        val np_octave = view_inflated.findViewById<NumberPicker>(R.id.npOctave)
+        np_octave.maxValue = 14
+        np_octave.minValue = 0
+        np_octave.value = 7
+        np_octave.wrapSelectorWheel = false
+        np_octave.setFormatter { value: Int ->
+            "${value - 7}"
+        }
+
+        val np_offset = view_inflated.findViewById<NumberPicker>(R.id.npOffset)
+        val radix = (this.get_opus_manager().tuning_map.size - 1)
+        np_offset.maxValue = (radix * 2)
+        np_offset.minValue = 0
+        np_offset.value = radix
+        np_offset.wrapSelectorWheel = false
+        np_offset.setFormatter { value: Int ->
+            "${value - radix}"
+        }
+
+        this._popup_active = true
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setView(view_inflated)
+            .setTitle(R.string.dialog_adjust_selection)
+            .setOnDismissListener {
+                this._popup_active = false
+            }
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                val opus_manager = this.get_opus_manager()
+                val radix = opus_manager.tuning_map.size
+                val octave = np_octave.value - 7
+                val offset = np_offset.value - (radix - 1)
+                val real_delta = (octave * radix) + offset
+                opus_manager.offset_selection(real_delta)
+
+                this.get_action_interface().track(TrackedAction.AdjustSelection, listOf(real_delta))
+                dialog.dismiss()
+            }
+            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
+    }
 }

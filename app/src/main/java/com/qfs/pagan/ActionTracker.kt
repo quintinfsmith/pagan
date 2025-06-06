@@ -1597,18 +1597,6 @@ class ActionTracker {
         }
     }
 
-    fun import_soundfont(uri: Uri? = null) {
-        // TODO: Track action
-        if (uri == null) {
-            val intent = Intent()
-                .setType("*/*")
-                .setAction(Intent.ACTION_GET_CONTENT)
-            this.get_activity()._import_soundfont_intent_listener.launch(intent)
-        } else {
-            TODO("would only be used for debug atm anyway.")
-        }
-    }
-
     fun set_soundfont(filename: String) {
         val activity = this.get_activity()
 

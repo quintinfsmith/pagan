@@ -3,9 +3,11 @@ package com.qfs.pagan
 import android.content.pm.ActivityInfo
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
+import kotlinx.serialization.Serializable
 import java.io.File
 
-data class PaganConfiguration(
+@Serializable
+class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
     var sample_rate: Int = 32000,
@@ -24,6 +26,20 @@ data class PaganConfiguration(
         MERGE
     }
     companion object {
+        fun from_json(content: JSONHashMap): PaganConfiguration {
+            return PaganConfiguration(
+                soundfont = content.get_stringn("soundfont"),
+                sample_rate = content.get_int("sample_rate", 32000),
+                relative_mode = content.get_boolean("relative_mode", false),
+                move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
+                clip_same_line_release = content.get_boolean("clip_same_line_release", true),
+                use_preferred_soundfont = content.get_boolean("use_preferred_soundfont", true),
+                force_orientation = content.get_int("force_orientation", ActivityInfo.SCREEN_ORIENTATION_USER),
+                allow_midi_playback = content.get_boolean("allow_midi_playback", true),
+                allow_std_percussion = content.get_boolean("allow_std_percussion", false)
+            )
+        }
+
         fun from_path(path: String): PaganConfiguration {
             val file = File(path)
             return if (file.exists()) {
@@ -32,17 +48,7 @@ data class PaganConfiguration(
                 if (content == null) {
                     PaganConfiguration()
                 } else {
-                    PaganConfiguration(
-                        soundfont = content.get_stringn("soundfont"),
-                        sample_rate = content.get_int("sample_rate", 32000),
-                        relative_mode = content.get_boolean("relative_mode", false),
-                        move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
-                        clip_same_line_release = content.get_boolean("clip_same_line_release", true),
-                        use_preferred_soundfont = content.get_boolean("use_preferred_soundfont", true),
-                        force_orientation = content.get_int("force_orientation", ActivityInfo.SCREEN_ORIENTATION_USER),
-                        allow_midi_playback = content.get_boolean("allow_midi_playback", true),
-                        allow_std_percussion = content.get_boolean("allow_std_percussion", false)
-                    )
+                    from_json(content)
                 }
             } else {
                 PaganConfiguration()

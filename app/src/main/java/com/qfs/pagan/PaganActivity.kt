@@ -170,50 +170,50 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     internal fun dialog_load_project() {
-        val project_list = this._project_manager.get_project_list()
-        val sort_options = listOf(
-            Pair(
-                getString(R.string.sort_option_abc),
-                { original: List<Pair<String, String>> ->
-                    original.sortedBy { (_, label): Pair<String, String> ->
-                        label
-                    }
-                }
-            ),
-            Pair(
-                getString(R.string.sort_option_date_modified),
-                { original: List<Pair<String, String>> ->
-                    original.sortedBy { (path, _): Pair<String, String> ->
-                        val f = File(path)
-                        f.lastModified()
-                    }
-                }
-            ),
-            Pair(
-                getString(R.string.sort_option_date_created),
-                { original: List<Pair<String, String>> ->
-                    original.sortedBy { (path, _): Pair<String, String> ->
-                        val f = Path(path)
-                        val attributes: BasicFileAttributes =
-                            Files.readAttributes<BasicFileAttributes>(
-                                f,
-                                BasicFileAttributes::class.java
-                            )
-                        attributes.creationTime()
-                    }
-                }
-            )
-        )
+        //val project_list = this._project_manager.get_project_list()
+        //val sort_options = listOf(
+        //    Pair(
+        //        getString(R.string.sort_option_abc),
+        //        { original: List<Pair<String, String>> ->
+        //            original.sortedBy { (_, label): Pair<String, String> ->
+        //                label
+        //            }
+        //        }
+        //    ),
+        //    Pair(
+        //        getString(R.string.sort_option_date_modified),
+        //        { original: List<Pair<String, String>> ->
+        //            original.sortedBy { (path, _): Pair<String, String> ->
+        //                val f = File(path)
+        //                f.lastModified()
+        //            }
+        //        }
+        //    ),
+        //    Pair(
+        //        getString(R.string.sort_option_date_created),
+        //        { original: List<Pair<String, String>> ->
+        //            original.sortedBy { (path, _): Pair<String, String> ->
+        //                val f = Path(path)
+        //                val attributes: BasicFileAttributes =
+        //                    Files.readAttributes<BasicFileAttributes>(
+        //                        f,
+        //                        BasicFileAttributes::class.java
+        //                    )
+        //                attributes.creationTime()
+        //            }
+        //        }
+        //    )
+        //)
 
-        this.dialog_popup_sortable_menu<String>(
-            getString(R.string.menu_item_load_project),
-            project_list,
-            null,
-            sort_options,
-            0
-        ) { _: Int, path: String ->
-            this.get_action_interface().load_project(path)
-        }
+        //this.dialog_popup_sortable_menu<String>(
+        //    getString(R.string.menu_item_load_project),
+        //    project_list,
+        //    null,
+        //    sort_options,
+        //    0
+        //) { _: Int, path: String ->
+        //    this.get_action_interface().load_project(path)
+        //}
     }
 
 

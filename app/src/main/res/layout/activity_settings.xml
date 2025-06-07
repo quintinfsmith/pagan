@@ -21,4 +21,5 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <include layout="@layout/fragment_global_settings" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

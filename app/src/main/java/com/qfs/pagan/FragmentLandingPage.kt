@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -9,8 +10,11 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Space
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONParser
 import com.qfs.pagan.databinding.FragmentLandingBinding
 import java.io.File
 import kotlin.concurrent.thread
@@ -31,8 +35,14 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         val btn_about = view.findViewById<View>(R.id.btnFrontAbout)
 
         btn_settings.setOnClickListener {
-            this.get_activity().get_action_interface().open_settings()
+            //this.get_activity().get_action_interface().open_settings()
+            val activity = this.get_activity()
+
+            val intent = Intent(activity, ActivitySettings::class.java)
+            intent.putExtra("configuration", activity.configuration.to_json().to_string())
+            activity.settings_activity_launcher.launch(intent)
         }
+
 
         btn_about.setOnClickListener {
             this.get_activity().get_action_interface().open_about()
@@ -82,16 +92,16 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
         }
 
         val main = this.get_activity()
-        if (main.is_soundfont_available()) {
-            this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
-        }  else {
-            this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
-                val url = getString(R.string.url_fluid)
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(url)
-                startActivity(intent)
-            }
-        }
+       // if (main.is_soundfont_available()) {
+       //     this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
+       // }  else {
+       //     this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
+       //         val url = getString(R.string.url_fluid)
+       //         val intent = Intent(Intent.ACTION_VIEW)
+       //         intent.data = Uri.parse(url)
+       //         startActivity(intent)
+       //     }
+       // }
     }
 
     override fun onResume() {

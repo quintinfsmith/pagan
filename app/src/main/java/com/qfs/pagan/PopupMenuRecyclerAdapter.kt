@@ -33,7 +33,7 @@ class PopupMenuRecyclerAdapter<T>(
     override fun onViewAttachedToWindow(holder: ViewHolder) { }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val text_view = holder.itemView.findViewById<TextView>(R.id.tvTextView)
-        val activity = (holder.itemView.context as MainActivity)
+        val activity = (holder.itemView.context as PaganActivity)
 
         if (this._options[position].first == this._default) {
             text_view.background.setTint(activity.getColor(R.color.empty_selected))

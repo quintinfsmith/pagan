@@ -16,6 +16,8 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
 import com.qfs.apres.soundfont.SoundFont
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONParser
 import com.qfs.pagan.databinding.ActivitySettingsBinding
 import java.io.File
 import java.io.FileInputStream
@@ -24,7 +26,6 @@ import java.io.FileOutputStream
 
 class ActivitySettings : PaganActivity() {
     lateinit var configuration: PaganConfiguration
-    private lateinit var _config_path: String
     private lateinit var _binding: ActivitySettingsBinding
 
     var _import_soundfont_intent_listener = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -49,14 +50,16 @@ class ActivitySettings : PaganActivity() {
 
                     try {
                         SoundFont(new_file.path)
-                        this.configuration.soundfont = new_file.path
-                    } catch (e: Exception) {
+                        this.configuration.soundfont = file_name
+                    } catch (_: Exception) {
                         this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
                         new_file.delete()
                         return@registerForActivityResult
                     }
 
                     this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                    this.set_soundfont_button_text()
+                    this.update_result()
                 } else {
                     throw FileNotFoundException()
                 }
@@ -64,24 +67,26 @@ class ActivitySettings : PaganActivity() {
         }
     }
 
+    private fun update_result() {
+        val data = Intent()
+        data.putExtra("configuration", this.configuration.to_json().to_string())
+        this.setResult(RESULT_OK, data)
+    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreate(bundle: Bundle?) {
+        super.onCreate(bundle)
 
-        this._config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
-        // [Re]move config file from < v1.1.2
-        val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
-        val new_config_file = File(this._config_path)
-        if (old_config_file.exists()) {
-            if (!new_config_file.exists()) {
-                old_config_file.copyTo(new_config_file)
+        val extras = this.intent.extras
+        val content_string = extras?.getString("configuration")
+
+        this.configuration = if (content_string != null) {
+            val json_obj = JSONParser.parse<JSONHashMap>(content_string)
+            if (json_obj != null) {
+                PaganConfiguration.from_json(json_obj)
+            } else {
+                PaganConfiguration()
             }
-            old_config_file.delete()
-        }
-
-        this.configuration = try {
-            PaganConfiguration.from_path(this._config_path)
-        } catch (e: Exception) {
+        } else {
             PaganConfiguration()
         }
 
@@ -104,30 +109,20 @@ class ActivitySettings : PaganActivity() {
             this.dialog_remove_soundfont()
             true
         }
-
-        btnChooseSoundFont.text = when (this.configuration.soundfont) {
-            null -> getString(R.string.no_soundfont)
-            else -> {
-                val soundfont_dir = this.get_soundfont_directory()
-                val filecheck = File("${soundfont_dir}/${this.configuration.soundfont}")
-                if (filecheck.exists()) {
-                    this.configuration.soundfont
-                } else {
-                    getString(R.string.no_soundfont)
-                }
-            }
-        }
+        this.set_soundfont_button_text()
 
         val switch_relative_mode = this.findViewById<SwitchCompat>(R.id.sRelativeEnabled)
         switch_relative_mode.isChecked = this.configuration.relative_mode
         switch_relative_mode.setOnCheckedChangeListener { _, enabled: Boolean ->
             this.configuration.relative_mode = enabled
+            this.update_result()
         }
 
         val switch_clip_release = this.findViewById<SwitchCompat>(R.id.sClipSameLineRelease)
         switch_clip_release.isChecked = this.configuration.clip_same_line_release
         switch_clip_release.setOnCheckedChangeListener { _, enabled: Boolean ->
             this.configuration.clip_same_line_release = enabled
+            this.update_result()
         }
 
         //val switch_stereo_playback = view.findViewById<SwitchCompat>(R.id.sPlaybackStereo)
@@ -186,6 +181,7 @@ class ActivitySettings : PaganActivity() {
             override fun onStopTrackingTouch(seekbar: SeekBar?) {
                 if (seekbar != null) {
                     this@ActivitySettings.configuration.sample_rate = options[seekbar.progress]
+                    this@ActivitySettings.update_result()
                 }
             }
         })
@@ -194,18 +190,21 @@ class ActivitySettings : PaganActivity() {
         switch_use_preferred_sf.isChecked = this.configuration.use_preferred_soundfont
         switch_use_preferred_sf.setOnCheckedChangeListener { _, enabled: Boolean ->
             this.configuration.use_preferred_soundfont = enabled
+            this.update_result()
         }
 
         val switch_enable_midi_playback = this.findViewById<SwitchCompat>(R.id.sEnableMidi)
         switch_enable_midi_playback.isChecked = this.configuration.allow_midi_playback
         switch_enable_midi_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
             this.configuration.allow_midi_playback = enabled
+            this.update_result()
         }
 
         val switch_allow_std_percussion = this.findViewById<SwitchCompat>(R.id.sAllowStdPercussion)
         switch_allow_std_percussion.isChecked = this.configuration.allow_std_percussion
         switch_allow_std_percussion.setOnCheckedChangeListener { _, enabled: Boolean ->
             this.configuration.allow_std_percussion = enabled
+            this.update_result()
         }
 
 
@@ -237,6 +236,8 @@ class ActivitySettings : PaganActivity() {
                 startActivity(intent)
             }
         }
+
+        this.setResult(RESULT_CANCELED)
     }
 
     fun is_soundfont_available(): Boolean {
@@ -247,6 +248,7 @@ class ActivitySettings : PaganActivity() {
     fun set_forced_orientation(value: Int) {
         this.configuration.force_orientation = value
         this.requestedOrientation = value
+        this.update_result()
     }
 
     fun import_soundfont(uri: Uri? = null) {
@@ -259,6 +261,26 @@ class ActivitySettings : PaganActivity() {
         } else {
             TODO("would only be used for debug atm anyway.")
         }
+    }
+
+    fun set_soundfont_button_text() {
+        val btnChooseSoundFont = this.findViewById<TextView>(R.id.btnChooseSoundFont)
+        println("${this.configuration.soundfont} ....")
+
+        btnChooseSoundFont.text = when (this.configuration.soundfont) {
+            null -> getString(R.string.no_soundfont)
+            else -> {
+                val soundfont_dir = this.get_soundfont_directory()
+                val filecheck = File("${soundfont_dir}/${this.configuration.soundfont}")
+                if (filecheck.exists()) {
+                    this.configuration.soundfont
+                } else {
+                    getString(R.string.no_soundfont)
+                }
+            }
+        }
+
+
     }
 
 
@@ -289,6 +311,8 @@ class ActivitySettings : PaganActivity() {
 
         val dialog = this.dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0) { _: Int, path: String ->
             this.configuration.soundfont = path
+            this.set_soundfont_button_text()
+            this.update_result()
         }
 
         if (dialog != null) {
@@ -303,6 +327,9 @@ class ActivitySettings : PaganActivity() {
             menu_wrapper.addView(pre_menu, 0)
             menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).setOnClickListener {
                 this.configuration.soundfont = null
+                this.update_result()
+                this.set_soundfont_button_text()
+                menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).text
                 dialog.dismiss()
             }
             menu_wrapper.findViewById<Button>(R.id.sf_menu_import).setOnClickListener {
@@ -338,13 +365,16 @@ class ActivitySettings : PaganActivity() {
     }
 
     private fun _delete_soundfont(filename: String) {
-        if (this.configuration.soundfont != null && this.configuration.soundfont!! == filename) {
+        if (this.configuration.soundfont == filename) {
             this.configuration.soundfont = null
         }
+
         val soundfont_dir = this.get_soundfont_directory()
         val file = File("${soundfont_dir.absolutePath}/${filename}")
         if (file.exists()) {
             file.delete()
         }
+
+        this.set_soundfont_button_text()
     }
 }

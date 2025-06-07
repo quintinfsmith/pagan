@@ -11,7 +11,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.database.Cursor
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -20,7 +19,6 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.provider.OpenableColumns
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -39,7 +37,6 @@ import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -79,6 +76,8 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONParser
 import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
@@ -320,6 +319,26 @@ class MainActivity : PaganActivity() {
         fun update(y: Int, file_uri: Uri) {
             this.working_y = y
             this.file_uri = file_uri
+        }
+    }
+
+    val settings_activity_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        when (result.resultCode) {
+            RESULT_OK -> {
+                val content_string = result?.data?.extras?.getString("configuration")
+                this.configuration = if (content_string != null) {
+                    val json_obj = JSONParser.parse<JSONHashMap>(content_string)
+                    if (json_obj != null) {
+                        PaganConfiguration.from_json(json_obj)
+                    } else {
+                        PaganConfiguration()
+                    }
+                } else {
+                    PaganConfiguration()
+                }
+                this.save_configuration()
+            }
+            RESULT_CANCELED -> { }
         }
     }
 
@@ -1156,7 +1175,10 @@ class MainActivity : PaganActivity() {
             }
 
             R.id.itmSettings -> {
-                this.get_action_interface().open_settings()
+                val intent = Intent(this, ActivitySettings::class.java)
+                intent.putExtra("configuration", this.configuration.to_json().to_string())
+                this.settings_activity_launcher.launch(intent)
+               // this.get_action_interface().open_settings()
             }
             R.id.itmAbout -> {
                 this.get_action_interface().open_about()
@@ -1445,9 +1467,6 @@ class MainActivity : PaganActivity() {
                 this._forced_title_text!!
             } else {
                 when (this.get_active_fragment()) {
-                    is FragmentGlobalSettings -> {
-                        resources.getString(R.string.settings_fragment_label)
-                    }
                     is FragmentLicense,
                     is FragmentLandingPage -> {
                         "${getString(R.string.app_name)} ${getString(R.string.app_version)}"

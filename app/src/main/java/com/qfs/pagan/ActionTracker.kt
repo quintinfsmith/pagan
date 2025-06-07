@@ -918,8 +918,8 @@ class ActionTracker {
     }
 
     fun open_settings() {
-        this.track(TrackedAction.OpenSettings)
-        this.get_activity().navigate(R.id.SettingsFragment)
+        //this.track(TrackedAction.OpenSettings)
+        //this.get_activity().navigate(R.id.SettingsFragment)
     }
 
     fun open_about() {
@@ -2147,7 +2147,7 @@ class ActionTracker {
             }
 
             TrackedAction.ImportSoundFont -> {
-                this.import_soundfont(Uri.parse(string_from_ints(integers)))
+               // this.import_soundfont(Uri.parse(string_from_ints(integers)))
             }
 
             TrackedAction.DeleteSoundFont -> {

@@ -38,6 +38,7 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusTextEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import java.io.File
 import java.io.FileInputStream
@@ -641,6 +642,12 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
                     opus_manager.set_initial_event(event)
                 }
             }
+            ControlEventType.Text -> {
+                val controller = controller_set.get_controller<OpusTextEvent>(cursor.ctl_type!!)
+                ControlWidgetText(controller.initial_event, cursor.ctl_level!!, true, main) { event: OpusTextEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
         }
 
 
@@ -691,6 +698,11 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
 
             ControlEventType.Pan -> {
                 ControlWidgetPan(default as OpusPanEvent, cursor.ctl_level!!, false, main) { event: OpusPanEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+            ControlEventType.Text -> {
+                ControlWidgetText(default as OpusTextEvent, cursor.ctl_level!!, false, main) { event: OpusTextEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }

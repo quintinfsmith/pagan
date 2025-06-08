@@ -77,3 +77,4 @@ class VolumeController(beat_count: Int): ActiveController<OpusVolumeEvent>(beat_
 class TempoController(beat_count: Int): ActiveController<OpusTempoEvent>(beat_count, OpusTempoEvent(120F))
 class ReverbController(beat_count: Int): ActiveController<OpusReverbEvent>(beat_count, OpusReverbEvent(1F))
 class PanController(beat_count: Int): ActiveController<OpusPanEvent>(beat_count, OpusPanEvent(0F))
+class TextController(beat_count: Int): ActiveController<OpusTextEvent>(beat_count, OpusTextEvent(""))

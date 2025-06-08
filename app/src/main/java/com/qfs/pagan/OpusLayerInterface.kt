@@ -34,14 +34,17 @@ class OpusLayerInterface : OpusLayerHistory() {
     companion object {
         val global_controller_domain = listOf(
             ControlEventType.Tempo
+           // ControlEventType.Text
         )
         val channel_controller_domain = listOf(
             ControlEventType.Volume,
-            ControlEventType.Pan
+            ControlEventType.Pan,
+            ControlEventType.Text
         )
         val line_controller_domain = listOf(
             ControlEventType.Volume,
-            ControlEventType.Pan
+            ControlEventType.Pan,
+            ControlEventType.Text
         )
     }
 

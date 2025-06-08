@@ -1,13 +1,11 @@
 package com.qfs.pagan.ContextMenu
 
 import android.content.res.Configuration
-import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Space
-import androidx.core.graphics.toColorLong
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget
@@ -20,9 +18,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 
-class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
-    R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container),
-    ContextMenuWithController<OpusVolumeEvent> {
+class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container), ContextMenuWithController<OpusVolumeEvent> {
     lateinit var button_insert: Button
     lateinit var button_adjust: Button
     lateinit var button_remove: Button

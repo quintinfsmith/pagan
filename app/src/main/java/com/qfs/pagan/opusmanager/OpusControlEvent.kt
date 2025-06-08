@@ -4,7 +4,8 @@ enum class ControlEventType(val i: Int) {
     Tempo(0),
     Volume(1),
     Reverb(2),
-    Pan(3)
+    Pan(3),
+    Text(4)
 }
 
 enum class ControlTransition(val i: Int) {
@@ -99,4 +100,25 @@ class OpusPanEvent(var value: Float, transition: ControlTransition = ControlTran
         }
         return (code shl shift) + (code shr (32 - shift))
     }
+}
+
+class OpusTextEvent(var value: String, duration: Int = 1): OpusControlEvent(duration, ControlTransition.Instant) {
+    override fun copy(): OpusControlEvent {
+        return OpusTextEvent(this.value, this.duration)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is OpusTextEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
+    }
+
+    override fun to_float(): Float {
+        return 0F
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + value.hashCode()
+        return result
+    }
+
 }

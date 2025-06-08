@@ -336,6 +336,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             ControlEventType.Volume -> 2
             ControlEventType.Reverb -> 3
             ControlEventType.Tempo -> null
+            ControlEventType.Text -> null
         }
     }
 

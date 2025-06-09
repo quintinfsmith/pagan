@@ -1,20 +1,13 @@
 package com.qfs.pagan
 
-import android.app.Activity.RESULT_OK
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.Space
-import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
-import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONParser
 import com.qfs.pagan.databinding.FragmentLandingBinding
 import java.io.File
 import kotlin.concurrent.thread
@@ -45,7 +38,12 @@ class FragmentLandingPage : FragmentPagan<FragmentLandingBinding>() {
 
 
         btn_about.setOnClickListener {
-            this.get_activity().get_action_interface().open_about()
+            val activity = this.get_activity()
+            startActivity(
+                Intent(activity, ActivityAbout::class.java).apply {
+                    putExtra("configuration", activity.configuration.to_json().to_string())
+                }
+            )
         }
 
         btn_newProject.setOnClickListener {

@@ -16,8 +16,6 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
 import com.qfs.apres.soundfont.SoundFont
-import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONParser
 import com.qfs.pagan.databinding.ActivitySettingsBinding
 import java.io.File
 import java.io.FileInputStream
@@ -25,7 +23,6 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 
 class ActivitySettings : PaganActivity() {
-    lateinit var configuration: PaganConfiguration
     private lateinit var _binding: ActivitySettingsBinding
 
     var _import_soundfont_intent_listener = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -73,24 +70,10 @@ class ActivitySettings : PaganActivity() {
         this.setResult(RESULT_OK, data)
     }
 
+
+
     override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
-
-        val extras = this.intent.extras
-        val content_string = extras?.getString("configuration")
-
-        this.configuration = if (content_string != null) {
-            val json_obj = JSONParser.parse<JSONHashMap>(content_string)
-            if (json_obj != null) {
-                PaganConfiguration.from_json(json_obj)
-            } else {
-                PaganConfiguration()
-            }
-        } else {
-            PaganConfiguration()
-        }
-
-        this.requestedOrientation = this.configuration.force_orientation
 
         this._binding = ActivitySettingsBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)

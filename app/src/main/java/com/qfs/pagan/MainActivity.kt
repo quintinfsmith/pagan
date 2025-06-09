@@ -164,7 +164,6 @@ class MainActivity : PaganActivity() {
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
     private lateinit var _project_manager: ProjectManager
-    lateinit var configuration: PaganConfiguration
     private lateinit var _config_path: String
     private var _integer_dialog_defaults = HashMap<String, Int>()
     private var _float_dialog_defaults = HashMap<String, Float>()
@@ -337,6 +336,7 @@ class MainActivity : PaganActivity() {
                     PaganConfiguration()
                 }
                 this.save_configuration()
+                this.requestedOrientation = this.configuration.force_orientation
             }
             RESULT_CANCELED -> { }
         }
@@ -1181,7 +1181,11 @@ class MainActivity : PaganActivity() {
                // this.get_action_interface().open_settings()
             }
             R.id.itmAbout -> {
-                this.get_action_interface().open_about()
+                startActivity(
+                    Intent(this, ActivityAbout::class.java).apply {
+                        putExtra("configuration", this@MainActivity.configuration.to_json().to_string())
+                    }
+                )
             }
             R.id.itmDebug -> {
                 val tracker = this.get_action_interface()
@@ -1454,7 +1458,6 @@ class MainActivity : PaganActivity() {
 
         navController.navigate(fragment)
     }
-
 
     fun get_active_fragment(): Fragment? {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)

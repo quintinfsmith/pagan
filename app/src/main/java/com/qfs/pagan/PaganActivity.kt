@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.app.AlertDialog
 import android.database.Cursor
 import android.net.Uri
+import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
@@ -14,13 +15,32 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
-import kotlin.io.path.Path
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONParser
 
 open class PaganActivity: AppCompatActivity() {
+    lateinit var configuration: PaganConfiguration
     internal var _popup_active: Boolean = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+
+        val extras = this.intent.extras
+        val content_string = extras?.getString("configuration")
+
+        this.configuration = if (content_string != null) {
+            val json_obj = JSONParser.parse<JSONHashMap>(content_string)
+            if (json_obj != null) {
+                PaganConfiguration.from_json(json_obj)
+            } else {
+                PaganConfiguration()
+            }
+        } else {
+            PaganConfiguration()
+        }
+        this.requestedOrientation = this.configuration.force_orientation
+
+        super.onCreate(savedInstanceState)
+    }
 
     fun parse_file_name(uri: Uri): String? {
         var result: String? = null

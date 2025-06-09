@@ -1094,8 +1094,6 @@ class MainActivity : PaganActivity() {
         )
     }
 
-
-
     override fun onSupportNavigateUp(): Boolean {
         val navController = this.findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()

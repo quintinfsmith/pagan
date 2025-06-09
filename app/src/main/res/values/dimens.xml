@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="app_bar_height">64dp</dimen>
     <dimen name="normal_padding">1dp</dimen>
     <dimen name="stroke_leaf">1dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>

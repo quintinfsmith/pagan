@@ -25,8 +25,8 @@ class ActivityLanding : PaganActivity() {
             result?.data?.data?.also { uri ->
                 startActivity(
                     Intent(this, MainActivity::class.java).apply {
-                        putExtra("token", IntentFragmentToken.ImportGeneral)
-                        putExtra("uri", uri)
+                        putExtra("token", IntentFragmentToken.ImportGeneral.name)
+                        putExtra("URI", uri.toString())
                     }
                 )
             }
@@ -120,10 +120,7 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<View>(R.id.btnFrontSettings).setOnClickListener {
-            //this.get_activity().get_action_interface().open_settings()
-            val intent = Intent(this, ActivitySettings::class.java)
-            intent.putExtra("configuration", this.configuration.to_json().to_string())
-            //this.settings_this_launcher.launch(intent)
+            startActivity(Intent(this, ActivitySettings::class.java))
         }
 
 

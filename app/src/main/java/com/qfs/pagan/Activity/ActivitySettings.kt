@@ -74,7 +74,6 @@ class ActivitySettings : PaganActivity() {
 
     override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
-
         this._binding = ActivitySettingsBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
         this.setSupportActionBar(this._binding.toolbar)

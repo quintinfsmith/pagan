@@ -16,6 +16,7 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -29,13 +30,19 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -51,6 +58,8 @@ import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
+import androidx.core.view.isEmpty
+import androidx.core.view.isNotEmpty
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
@@ -79,12 +88,30 @@ import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.Activity.ActivityAbout
 import com.qfs.pagan.Activity.ActivitySettings
+import com.qfs.pagan.ContextMenu.ContextMenuChannel
+import com.qfs.pagan.ContextMenu.ContextMenuColumn
+import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
+import com.qfs.pagan.ContextMenu.ContextMenuControlLeafB
+import com.qfs.pagan.ContextMenu.ContextMenuControlLine
+import com.qfs.pagan.ContextMenu.ContextMenuLeaf
+import com.qfs.pagan.ContextMenu.ContextMenuLeafPercussion
+import com.qfs.pagan.ContextMenu.ContextMenuLine
+import com.qfs.pagan.ContextMenu.ContextMenuRange
+import com.qfs.pagan.ContextMenu.ContextMenuView
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.databinding.ActivityLandingBinding
 import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
+import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusPanEvent
+import com.qfs.pagan.opusmanager.OpusReverbEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.io.File
@@ -197,6 +224,7 @@ class MainActivity : PaganActivity() {
     private var _notification_channel: NotificationChannel? = null
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
+    var active_context_menu: ContextMenuView? = null
 
     class MultiExporterEventHandler(var activity: MainActivity, var total_count: Int): WavConverter.ExporterEventHandler {
         var working_y = 0
@@ -819,83 +847,63 @@ class MainActivity : PaganActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    private fun import_bundle(bundle: Bundle) {
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.clear()
+
+        this.loading_reticle_show(getString(R.string.reticle_msg_import_project))
+        this.runOnUiThread {
+            editor_table?.visibility = View.INVISIBLE
+            this.clear_context_menu()
+        }
+
+        val type: CompatibleFileType? = try {
+            bundle.getString("URI")?.let { path ->
+                this.get_file_type(path)
+            }
+        } catch (e: Exception) {
+            null
+        }
+
+        var fallback_msg: String? = null
+        try {
+            when (type) {
+                CompatibleFileType.Midi1 -> {
+                    bundle.getString("URI")?.let { path ->
+                        this.import_midi(path)
+                    }
+                }
+
+                CompatibleFileType.Pagan -> {
+                    bundle.getString("URI")?.let { path ->
+                        this.import_project(path)
+                    }
+                }
+
+                null -> {
+                    fallback_msg = getString(R.string.feedback_file_not_found)
+                }
+            }
+        } catch (e: Exception) {
+            fallback_msg = when (type!!) {
+                CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
+                CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
+            }
+        }
+
+        this.runOnUiThread {
+            editor_table?.visibility = View.VISIBLE
+        }
+        this.loading_reticle_hide()
+    }
+
     fun handle_bundle(bundle: Bundle?) {
         if (bundle == null) {
             return
         }
-
         val token = bundle.getString("token")
         when (token) {
-            IntentFragmentToken.ImportGeneral.name -> {
-                val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-                editor_table.clear()
-
-                 this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportGeneral, bundle)
-                val main = this.get_activity()
-                main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
-                main.runOnUiThread {
-                    editor_table?.visibility = View.INVISIBLE
-                    this@FragmentEditor.clear_context_menu()
-                }
-
-                thread {
-                    val type: CompatibleFileType? = try {
-                        bundle!!.getString("URI")?.let { path ->
-                            main.get_file_type(path)
-                        }
-                    } catch (e: Exception) {
-                        null
-                    }
-
-                    var fallback_msg: String? = null
-                    try {
-                        when (type) {
-                            CompatibleFileType.Midi1 -> {
-                                bundle!!.getString("URI")?.let { path ->
-                                    main.import_midi(path)
-                                }
-                            }
-
-                            CompatibleFileType.Pagan -> {
-                                bundle!!.getString("URI")?.let { path ->
-                                    main.import_project(path)
-                                }
-                            }
-
-                            null -> {
-                                fallback_msg = getString(R.string.feedback_file_not_found)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        fallback_msg = when (type!!) {
-                            CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
-                            CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
-                        }
-                    }
-
-                    if (fallback_msg != null) {
-                        val opus_manager = main.get_opus_manager()
-                        // if Not Loaded, just create new and throw a message up
-                        if (!opus_manager.first_load_done) {
-                            opus_manager.project_change_new()
-                        } else {
-                            main.runOnUiThread {
-                                this.reload_from_bkp()
-                                editor_table.visibility = View.VISIBLE
-                                this.restore_view_model_position()
-                            }
-                        }
-
-                        this.get_activity().feedback_msg(fallback_msg)
-                    }
-
-                    main.runOnUiThread {
-                        editor_table?.visibility = View.VISIBLE
-                    }
-                    main.loading_reticle_hide()
-                    this.view_model.backup_fragment_intent = null
-                }
-            }
+            IntentFragmentToken.ImportGeneral.name -> this.import_bundle(bundle)
         }
     }
 
@@ -1021,13 +1029,12 @@ class MainActivity : PaganActivity() {
         this.view_model.opus_manager.attach_activity(this)
 
         val toolbar = this._binding.toolbar
+        toolbar.background = null
 
         toolbar.setOnLongClickListener {
             this.get_action_interface().set_project_name_and_notes()
             true
         }
-
-        toolbar.background = null
 
         //////////////////////////////////////////
         if (this.configuration.soundfont != null) {
@@ -1105,7 +1112,9 @@ class MainActivity : PaganActivity() {
             }
         )
 
-        this.handle_bundle(savedInstanceState)
+        this.intent.extras?.let {
+            this.handle_bundle(it)
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -2754,35 +2763,346 @@ class MainActivity : PaganActivity() {
             .show()
     }
 
-    fun toggle_percussion() {
+    // vv Formerly Fragment Functions ---------------------------------------------------------
+    fun clear_context_menu() {
+        this.hide_context_menus()
+        if (this.active_context_menu == null) {
+            return
+        }
+
+        if (this.active_context_menu!!.primary != null) {
+            if (this.active_context_menu!!.primary!!.parent != null) {
+                (this.active_context_menu!!.primary!!.parent as ViewGroup).removeAllViews()
+            }
+        }
+
+        if (this.active_context_menu!!.secondary != null) {
+            if (this.active_context_menu!!.secondary!!.parent != null) {
+                (this.active_context_menu!!.secondary!!.parent as ViewGroup).removeAllViews()
+            }
+        }
+
+        this.active_context_menu = null
+    }
+
+    private fun hide_context_menus() {
+        this.findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = GONE
+        this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = GONE
+    }
+
+    fun on_show_context_menus(a: View, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int): Boolean {
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.force_scroll_to_cursor_vertical()
+        return false
+    }
+
+    private fun show_context_menus() {
+        val primary = this.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        primary.removeOnLayoutChangeListener(this::on_show_context_menus)
+        primary.visibility = if (primary.isNotEmpty()) {
+            primary.addOnLayoutChangeListener(this::on_show_context_menus)
+            VISIBLE
+        } else {
+            GONE
+        }
+
+        val secondary = this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        secondary.removeOnLayoutChangeListener(this::on_show_context_menus)
+        secondary.visibility = if (secondary.isNotEmpty()) {
+            if (primary.isEmpty()) {
+                secondary.addOnLayoutChangeListener(this::on_show_context_menus)
+            }
+            VISIBLE
+        } else {
+            GONE
+        }
+    }
+
+    internal fun set_context_menu_control_line() {
+        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
+        this.clear_context_menu()
+
+        val opus_manager = this.get_opus_manager()
+        val channels = opus_manager.get_all_channels()
+
+        val cursor = opus_manager.cursor
+        val controller_set = when (cursor.ctl_level!!) {
+            CtlLineLevel.Line -> {
+                channels[cursor.channel].lines[cursor.line_offset].controllers
+            }
+            CtlLineLevel.Channel -> {
+                val channel = cursor.channel
+                channels[channel].controllers
+            }
+            CtlLineLevel.Global -> {
+                opus_manager.controllers
+            }
+        }
+
+        val widget = when (cursor.ctl_type!!) {
+            ControlEventType.Tempo -> {
+                val controller = controller_set.get_controller<OpusTempoEvent>(cursor.ctl_type!!)
+                ControlWidgetTempo(controller.initial_event, cursor.ctl_level!!, true, this) { event: OpusTempoEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+            ControlEventType.Volume -> {
+                val controller = controller_set.get_controller<OpusVolumeEvent>(cursor.ctl_type!!)
+                ControlWidgetVolume(controller.initial_event, cursor.ctl_level!!, true, this) { event: OpusVolumeEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+            ControlEventType.Reverb -> {
+                val controller = controller_set.get_controller<OpusReverbEvent>(cursor.ctl_type!!)
+                ControlWidgetReverb(controller.initial_event, cursor.ctl_level!!, true, this) { event: OpusReverbEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+
+            ControlEventType.Pan -> {
+                val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
+                ControlWidgetPan(controller.initial_event, cursor.ctl_level!!, true, this) { event: OpusPanEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
+        }
+
+
+        this.active_context_menu = ContextMenuControlLine(
+            widget,
+            this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        )
+
+        this.show_context_menus()
+    }
+
+    internal fun set_context_menu_line_control_leaf() {
+        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
+        this.clear_context_menu()
+
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val beat_key = cursor.get_beatkey()
-        val position = cursor.get_position()
-        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
+        val controller_set = opus_manager.get_active_active_control_set() ?: return
 
-        if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).is_event()) {
-            opus_manager.unset()
-        } else {
-            opus_manager.set_percussion_event_at_cursor()
-            val event_note = opus_manager.get_percussion_instrument(beat_key.line_offset)
-            this.play_event(beat_key.channel, event_note)
+        val controller = controller_set.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+        val default = controller.get_latest_event(cursor.beat, cursor.get_position())?.copy() ?: controller.initial_event.copy()
+
+
+        val (actual_beat, actual_position) = controller.get_blocking_position(cursor.beat, cursor.get_position()) ?: Pair(cursor.beat, cursor.get_position())
+        val tree = controller.get_tree(actual_beat, actual_position)
+        if (!tree.is_event()) {
+            default.duration = 1
         }
-    }
 
-    fun toggle_percussion_visibility() {
-        val opus_manager = this.get_opus_manager()
-        try {
-            if (!opus_manager.percussion_channel.visible || opus_manager.channels.isNotEmpty()) {
-                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
-            } else {
-                return
+        val widget = when (cursor.ctl_type!!) {
+            ControlEventType.Tempo -> {
+                ControlWidgetTempo(default as OpusTempoEvent, cursor.ctl_level!!, false, this) { event: OpusTempoEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
             }
-        } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
-            return
-        } catch (e: OpusLayerInterface.HidingLastChannelException) {
+            ControlEventType.Volume -> {
+                ControlWidgetVolume(default as OpusVolumeEvent, cursor.ctl_level!!, false, this) { event: OpusVolumeEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+            ControlEventType.Reverb -> {
+                ControlWidgetReverb(default as OpusReverbEvent, cursor.ctl_level!!, false, this) { event: OpusReverbEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+
+            ControlEventType.Pan -> {
+                ControlWidgetPan(default as OpusPanEvent, cursor.ctl_level!!, false, this) { event: OpusPanEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+        }
+
+        this.active_context_menu = ContextMenuControlLeaf(
+            widget,
+            this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+            this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+        )
+        this.show_context_menus()
+    }
+
+    internal fun set_context_menu_line_control_leaf_b() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafB>()) {
+            this.active_context_menu = ContextMenuControlLeafB(
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+    internal fun set_context_menu_range() {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuRange>()) {
+            this.active_context_menu = ContextMenuRange(
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+    internal fun set_context_menu_column() {
+        if (this.in_playback()) {
+            this.clear_context_menu()
             return
         }
 
+        if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
+            this.active_context_menu = ContextMenuColumn(
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
     }
+
+    internal fun set_context_menu_line() {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuLine>()) {
+            this.active_context_menu = ContextMenuLine(
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+    internal fun set_context_menu_channel() {
+        if (!this.refresh_or_clear_context_menu<ContextMenuChannel>()) {
+            this.active_context_menu = ContextMenuChannel(
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+
+    internal fun set_context_menu_leaf() {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuLeaf>()) {
+            this.active_context_menu = ContextMenuLeaf(
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+    internal fun set_context_menu_leaf_percussion() {
+        if (!this.refresh_or_clear_context_menu<com.qfs.pagan.ContextMenu.ContextMenuLeafPercussion>()) {
+            this.active_context_menu = ContextMenuLeafPercussion(
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        }
+        this.show_context_menus()
+    }
+
+    fun shortcut_dialog() {
+        val view = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_shortcut,
+                this._binding.root as ViewGroup,
+                false
+            )
+
+        val scroll_bar = view.findViewById<SeekBar>(R.id.shortcut_scrollbar)!!
+        val title_text = view.findViewById<TextView>(R.id.shortcut_title)!!
+        val spinner = view.findViewById<Spinner>(R.id.shortcut_spinner)!!
+
+        val opus_manager = this.get_opus_manager()
+        scroll_bar.max = opus_manager.length - 1
+        scroll_bar.progress = this._get_start_column()
+
+        title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
+        title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
+
+        scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                title_text.text = resources.getString(R.string.label_shortcut_scrollbar, p1)
+                title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, p1)
+                opus_manager.force_cursor_select_column(p1)
+            }
+            override fun onStartTrackingTouch(p0: SeekBar?) { }
+            override fun onStopTrackingTouch(seekbar: SeekBar?) { }
+        })
+
+        val dialog_builder = AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+        dialog_builder.setView(view)
+        val dialog = dialog_builder.show()
+
+        if (opus_manager.marked_sections.isEmpty()) {
+            spinner.visibility = View.GONE
+        } else {
+            spinner.visibility = View.VISIBLE
+            val keys = opus_manager.marked_sections.keys.toList().sorted()
+            val items = List(keys.size + 1) { i: Int ->
+                if (i == 0) {
+                    this.getString(R.string.jump_to_section)
+                } else {
+                    val section_name = opus_manager.marked_sections[keys[i - 1]]
+                    if (section_name == null) {
+                        getString(R.string.section_spinner_item, i, keys[i - 1])
+                    } else {
+                        "${keys[i - 1]}: ${section_name}"
+                    }
+                }
+            }
+
+            spinner.adapter = ArrayAdapter<String>(this, R.layout.spinner_list, items)
+            spinner.onItemSelectedListener = object: OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    if (position > 0) {
+                        opus_manager.force_cursor_select_column(keys[position - 1])
+                        dialog.dismiss()
+                    }
+                }
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            }
+        }
+    }
+
+    private fun _get_start_column(): Int {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        return when (cursor.mode) {
+            OpusManagerCursor.CursorMode.Single,
+            OpusManagerCursor.CursorMode.Column -> {
+                cursor.beat
+            }
+            OpusManagerCursor.CursorMode.Range -> {
+                cursor.range!!.first.beat
+            }
+            else -> {
+                val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+                editor_table.get_first_visible_column_index()
+            }
+        }
+    }
+
+    private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
+        val llContextMenu = this.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
+        val llContextMenuSecondary = this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+
+        if (this.active_context_menu !is T) {
+            llContextMenu.removeAllViews()
+            llContextMenu.visibility = GONE
+            llContextMenuSecondary.removeAllViews()
+            llContextMenuSecondary.visibility = GONE
+            this.active_context_menu = null
+            return false
+        }
+
+        this.active_context_menu?.refresh()
+
+        return true
+    }
+
+    // ^^ Formerly Fragment Functions ---------------------------------------------------------
+
 }

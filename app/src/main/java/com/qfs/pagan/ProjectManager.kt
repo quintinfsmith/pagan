@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.content.Context
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
@@ -9,9 +10,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-class ProjectManager(val activity: MainActivity) {
+class ProjectManager(val context: Context) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
-    private val data_dir = activity.getExternalFilesDir(null).toString()
+    private val data_dir = context.getExternalFilesDir(null).toString()
     val path = "$data_dir/projects/"
     private val _cache_path = "$data_dir/project_list.json"
 
@@ -80,7 +81,7 @@ class ProjectManager(val activity: MainActivity) {
     private fun generate_file_project_name(): String {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        return this.activity.getString(R.string.untitled_op, now.format(formatter))
+        return this.context.getString(R.string.untitled_op, now.format(formatter))
     }
 
     private fun _cache_project_list() {
@@ -98,7 +99,7 @@ class ProjectManager(val activity: MainActivity) {
             var project_name = try {
                 this.get_file_project_name(json_file) ?: this.generate_file_project_name()
             } catch (e: Exception) {
-                this.activity.getString(R.string.corrupted_project)
+                this.context.getString(R.string.corrupted_project)
             }
             project_list.add(Pair(json_file.path, project_name))
         }

@@ -418,14 +418,12 @@ class ActionTracker {
         } else {
             activity.block_physical_midi_output()
         }
-        activity.save_configuration()
     }
 
     fun allow_std_percussion(value: Boolean) {
         this.track(TrackedAction.AllowStdPercussion, listOf(if (value) 1 else 0))
         val activity = this.get_activity()
         activity.configuration.allow_std_percussion = value
-        activity.save_configuration()
         activity.populate_supported_soundfont_instrument_names()
     }
 
@@ -1441,14 +1439,12 @@ class ActionTracker {
         val btnChooseSoundFont = activity.findViewById<TextView>(R.id.btnChooseSoundFont)
         btnChooseSoundFont.text = activity.getString(R.string.no_soundfont)
         activity.disable_soundfont()
-        activity.save_configuration()
     }
 
     fun set_relative_mode_visibility(enabled: Boolean) {
         this.track(TrackedAction.SetRelativeModeVisibility, listOf(if (enabled) 1 else 0))
         val activity = this.get_activity()
         activity.configuration.relative_mode = enabled
-        activity.save_configuration()
     }
 
     fun set_relative_mode(mode: Int) {
@@ -1607,18 +1603,9 @@ class ActionTracker {
 
         this.track(TrackedAction.SetSoundFont, ActionTracker.string_to_ints(filename))
 
-        val btnChooseSoundFont = activity.findViewById<TextView>(R.id.btnChooseSoundFont)
         thread {
             activity.loading_reticle_show(activity.getString(R.string.loading_new_soundfont))
             activity.set_soundfont(filename)
-
-            // Check that it set
-            if (filename == activity.configuration.soundfont) {
-                if (btnChooseSoundFont != null) {
-                    btnChooseSoundFont.text = filename
-                }
-                activity.save_configuration()
-            }
             activity.loading_reticle_hide()
         }
     }
@@ -2375,7 +2362,6 @@ class ActionTracker {
         this.track(TrackedAction.SetClipNotes, listOf(if (value) 1 else 0))
         val activity = this.get_activity()
         activity.configuration.clip_same_line_release = value
-        activity.save_configuration()
     }
 
     private fun dialog_tuning_table() {

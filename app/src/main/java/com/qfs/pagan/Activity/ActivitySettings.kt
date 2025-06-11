@@ -1,6 +1,5 @@
-package com.qfs.pagan
+package com.qfs.pagan.Activity
 
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
@@ -16,17 +15,20 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
 import com.qfs.apres.soundfont.SoundFont
+import com.qfs.pagan.PaganActivity
+import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivitySettingsBinding
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import androidx.core.net.toUri
 
 class ActivitySettings : PaganActivity() {
     private lateinit var _binding: ActivitySettingsBinding
 
     var _import_soundfont_intent_listener = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
+        if (result.resultCode == RESULT_OK) {
             result?.data?.data?.also { uri ->
                 if (uri.path != null) {
                     val soundfont_dir = this.get_soundfont_directory()
@@ -65,12 +67,10 @@ class ActivitySettings : PaganActivity() {
     }
 
     private fun update_result() {
-        val data = Intent()
-        data.putExtra("configuration", this.configuration.to_json().to_string())
-        this.setResult(RESULT_OK, data)
+        // RESULT_OK lets the other activities know they need to reload the configuration
+        this.save_configuration()
+        this.setResult(RESULT_OK, Intent())
     }
-
-
 
     override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
@@ -83,29 +83,31 @@ class ActivitySettings : PaganActivity() {
         val toolbar = this._binding.toolbar
         toolbar.background = null
 
-        val btnChooseSoundFont = this.findViewById<TextView>(R.id.btnChooseSoundFont)
-        btnChooseSoundFont.setOnClickListener {
-            this.interact_btnChooseSoundFont()
-        }
-
-        btnChooseSoundFont.setOnLongClickListener {
-            this.dialog_remove_soundfont()
-            true
+        this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
+            it.setOnClickListener {
+                this.interact_btnChooseSoundFont()
+            }
+            it.setOnLongClickListener {
+                this.dialog_remove_soundfont()
+                true
+            }
         }
         this.set_soundfont_button_text()
 
-        val switch_relative_mode = this.findViewById<SwitchCompat>(R.id.sRelativeEnabled)
-        switch_relative_mode.isChecked = this.configuration.relative_mode
-        switch_relative_mode.setOnCheckedChangeListener { _, enabled: Boolean ->
-            this.configuration.relative_mode = enabled
-            this.update_result()
+        this.findViewById<SwitchCompat>(R.id.sRelativeEnabled).let {
+            it.isChecked = this.configuration.relative_mode
+            it.setOnCheckedChangeListener { _, enabled: Boolean ->
+                this.configuration.relative_mode = enabled
+                this.update_result()
+            }
         }
 
-        val switch_clip_release = this.findViewById<SwitchCompat>(R.id.sClipSameLineRelease)
-        switch_clip_release.isChecked = this.configuration.clip_same_line_release
-        switch_clip_release.setOnCheckedChangeListener { _, enabled: Boolean ->
-            this.configuration.clip_same_line_release = enabled
-            this.update_result()
+        this.findViewById<SwitchCompat>(R.id.sClipSameLineRelease).let {
+            it.isChecked = this.configuration.clip_same_line_release
+            it.setOnCheckedChangeListener { _, enabled: Boolean ->
+                this.configuration.clip_same_line_release = enabled
+                this.update_result()
+            }
         }
 
         //val switch_stereo_playback = view.findViewById<SwitchCompat>(R.id.sPlaybackStereo)
@@ -134,79 +136,75 @@ class ActivitySettings : PaganActivity() {
 
         val sample_rate_value_text = this.findViewById<TextView>(R.id.tvSampleRate)
         sample_rate_value_text.text = getString(R.string.config_label_sample_rate, this.configuration.sample_rate)
-        val slider_playback_quality = this.findViewById<SeekBar>(R.id.sbPlaybackQuality)
-        val options = listOf(
-            8000,
-            11025,
-            22050,
-            32000,
-            44100,
-            48000
-        )
-
-        var index = 0
-        for (i in options.indices) {
-            if (options[i] >= this.configuration.sample_rate) {
-                index = i
-                break
-            }
-        }
-
-        slider_playback_quality.max = options.size - 1
-        slider_playback_quality.progress = index
-        slider_playback_quality.setOnSeekBarChangeListener(object :
-            SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                val v = options[p1]
-                sample_rate_value_text.text = getString(R.string.config_label_sample_rate, v)
-            }
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(seekbar: SeekBar?) {
-                if (seekbar != null) {
-                    this@ActivitySettings.configuration.sample_rate = options[seekbar.progress]
-                    this@ActivitySettings.update_result()
+        this.findViewById<SeekBar>(R.id.sbPlaybackQuality).let {
+            val options = listOf(8000, 11025, 22050, 32000, 44100, 48000)
+            var index = 0
+            for (i in options.indices) {
+                if (options[i] >= this.configuration.sample_rate) {
+                    index = i
+                    break
                 }
             }
-        })
 
-        val switch_use_preferred_sf = this.findViewById<SwitchCompat>(R.id.sUsePreferredSF)
-        switch_use_preferred_sf.isChecked = this.configuration.use_preferred_soundfont
-        switch_use_preferred_sf.setOnCheckedChangeListener { _, enabled: Boolean ->
-            this.configuration.use_preferred_soundfont = enabled
-            this.update_result()
-        }
-
-        val switch_enable_midi_playback = this.findViewById<SwitchCompat>(R.id.sEnableMidi)
-        switch_enable_midi_playback.isChecked = this.configuration.allow_midi_playback
-        switch_enable_midi_playback.setOnCheckedChangeListener { _, enabled: Boolean ->
-            this.configuration.allow_midi_playback = enabled
-            this.update_result()
-        }
-
-        val switch_allow_std_percussion = this.findViewById<SwitchCompat>(R.id.sAllowStdPercussion)
-        switch_allow_std_percussion.isChecked = this.configuration.allow_std_percussion
-        switch_allow_std_percussion.setOnCheckedChangeListener { _, enabled: Boolean ->
-            this.configuration.allow_std_percussion = enabled
-            this.update_result()
-        }
-
-
-        val lock_orientation_group = this.findViewById<RadioGroup>(R.id.rgLockOrientation)
-        lock_orientation_group.check(when (this.configuration.force_orientation) {
-            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> R.id.rbOrientationLandscape
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT -> R.id.rbOrientationPortrait
-            else -> R.id.rbOrientationUser
-
-        })
-
-        lock_orientation_group.setOnCheckedChangeListener { _, value: Int ->
-            this.set_forced_orientation(
-                when (value) {
-                    R.id.rbOrientationLandscape -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                    R.id.rbOrientationPortrait -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                    else -> ActivityInfo.SCREEN_ORIENTATION_USER
+            it.max = options.size - 1
+            it.progress = index
+            it.setOnSeekBarChangeListener(object :
+                SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                    val v = options[p1]
+                    sample_rate_value_text.text = getString(R.string.config_label_sample_rate, v)
                 }
-            )
+                override fun onStartTrackingTouch(p0: SeekBar?) {}
+                override fun onStopTrackingTouch(seekbar: SeekBar?) {
+                    if (seekbar != null) {
+                        this@ActivitySettings.configuration.sample_rate = options[seekbar.progress]
+                        this@ActivitySettings.update_result()
+                    }
+                }
+            })
+        }
+        this.findViewById<SwitchCompat>(R.id.sUsePreferredSF).let {
+            it.isChecked = this.configuration.use_preferred_soundfont
+            it.setOnCheckedChangeListener { _, enabled: Boolean ->
+                this.configuration.use_preferred_soundfont = enabled
+                this.update_result()
+            }
+        }
+
+        this.findViewById<SwitchCompat>(R.id.sEnableMidi).let {
+            it.isChecked = this.configuration.allow_midi_playback
+            it.setOnCheckedChangeListener { _, enabled: Boolean ->
+                this.configuration.allow_midi_playback = enabled
+                this.update_result()
+            }
+        }
+
+        this.findViewById<SwitchCompat>(R.id.sAllowStdPercussion).let {
+            it.isChecked = this.configuration.allow_std_percussion
+            it.setOnCheckedChangeListener { _, enabled: Boolean ->
+                this.configuration.allow_std_percussion = enabled
+                this.update_result()
+            }
+        }
+
+
+        this.findViewById<RadioGroup>(R.id.rgLockOrientation).let {
+            it.check(when (this.configuration.force_orientation) {
+                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> R.id.rbOrientationLandscape
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT -> R.id.rbOrientationPortrait
+                else -> R.id.rbOrientationUser
+
+            })
+
+            it.setOnCheckedChangeListener { _, value: Int ->
+                this.set_forced_orientation(
+                    when (value) {
+                        R.id.rbOrientationLandscape -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                        R.id.rbOrientationPortrait -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                        else -> ActivityInfo.SCREEN_ORIENTATION_USER
+                    }
+                )
+            }
         }
 
         if (this.is_soundfont_available()) {
@@ -215,7 +213,7 @@ class ActivitySettings : PaganActivity() {
             this.findViewById<TextView>(R.id.tvFluidUrl).setOnClickListener {
                 val url = getString(R.string.url_fluid)
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(url)
+                intent.data = url.toUri()
                 startActivity(intent)
             }
         }
@@ -247,10 +245,7 @@ class ActivitySettings : PaganActivity() {
     }
 
     fun set_soundfont_button_text() {
-        val btnChooseSoundFont = this.findViewById<TextView>(R.id.btnChooseSoundFont)
-        println("${this.configuration.soundfont} ....")
-
-        btnChooseSoundFont.text = when (this.configuration.soundfont) {
+        this.findViewById<TextView>(R.id.btnChooseSoundFont).text = when (this.configuration.soundfont) {
             null -> getString(R.string.no_soundfont)
             else -> {
                 val soundfont_dir = this.get_soundfont_directory()
@@ -262,8 +257,6 @@ class ActivitySettings : PaganActivity() {
                 }
             }
         }
-
-
     }
 
 
@@ -282,14 +275,9 @@ class ActivitySettings : PaganActivity() {
         }
 
         val sort_options = listOf(
-            Pair(
-                getString(R.string.sort_option_abc),
-                { original: List<Pair<String, String>> ->
-                    original.sortedBy { item: Pair<String, String> ->
-                        item.first
-                    }
-                }
-            )
+            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<String, String>> ->
+                original.sortedBy { item: Pair<String, String> -> item.first }
+            }
         )
 
         val dialog = this.dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0) { _: Int, path: String ->
@@ -298,8 +286,7 @@ class ActivitySettings : PaganActivity() {
             this.update_result()
         }
 
-        if (dialog != null) {
-            val menu_wrapper = dialog.findViewById<ViewGroup>(R.id.menu_wrapper)
+        dialog?.findViewById<ViewGroup>(R.id.menu_wrapper)?.let { menu_wrapper ->
             val pre_menu: View = LayoutInflater.from(this)
                 .inflate(
                     R.layout.soundfont_pre_menu,
@@ -315,6 +302,7 @@ class ActivitySettings : PaganActivity() {
                 menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).text
                 dialog.dismiss()
             }
+
             menu_wrapper.findViewById<Button>(R.id.sf_menu_import).setOnClickListener {
                 this.import_soundfont()
                 dialog.dismiss()

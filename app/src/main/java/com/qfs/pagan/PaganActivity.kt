@@ -15,31 +15,49 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONParser
+import java.io.File
+import java.io.FileNotFoundException
 
 open class PaganActivity: AppCompatActivity() {
+    internal lateinit var configuration_path: String
     lateinit var configuration: PaganConfiguration
     internal var _popup_active: Boolean = false
+    internal lateinit var project_manager: ProjectManager
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    internal fun save_configuration() {
+        try {
+            this.configuration.save(this.configuration_path)
+        } catch (e: FileNotFoundException) {
+            this.feedback_msg(resources.getString(R.string.config_file_not_found))
+        }
+    }
 
-        val extras = this.intent.extras
-        val content_string = extras?.getString("configuration")
-
-        this.configuration = if (content_string != null) {
-            val json_obj = JSONParser.parse<JSONHashMap>(content_string)
-            if (json_obj != null) {
-                PaganConfiguration.from_json(json_obj)
-            } else {
-                PaganConfiguration()
-            }
-        } else {
+    private fun load_config() {
+        this.configuration = try {
+            PaganConfiguration.from_path(this.configuration_path)
+        } catch (e: Exception) {
             PaganConfiguration()
         }
         this.requestedOrientation = this.configuration.force_orientation
+    }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+        this.load_config()
+
+        this.project_manager = ProjectManager(this)
+        // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
+        val old_projects_dir = File("${applicationInfo.dataDir}/projects")
+        if (old_projects_dir.isDirectory) {
+            for (f in old_projects_dir.listFiles()!!) {
+                val new_file_name = this.project_manager.get_new_path()
+                f.copyTo(File(new_file_name))
+            }
+            old_projects_dir.deleteRecursively()
+        }
+
     }
 
     fun parse_file_name(uri: Uri): String? {
@@ -149,7 +167,6 @@ open class PaganActivity: AppCompatActivity() {
             .show()
     }
 
-
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit): AlertDialog? {
         if (this._popup_active) {
             return null
@@ -235,6 +252,4 @@ open class PaganActivity: AppCompatActivity() {
         //    this.get_action_interface().load_project(path)
         //}
     }
-
-
 }

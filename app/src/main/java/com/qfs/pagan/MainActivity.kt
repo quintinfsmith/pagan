@@ -76,9 +76,10 @@ import com.qfs.apres.soundfont.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONParser
 import com.qfs.pagan.ActionTracker.TrackedAction
+import com.qfs.pagan.Activity.ActivityAbout
+import com.qfs.pagan.Activity.ActivitySettings
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -130,7 +131,7 @@ class MainActivity : PaganActivity() {
             ignore_line_effects: Boolean = false,
         ) {
             val frame_map = PlaybackFrameMap(opus_manager, sample_handle_manager)
-            frame_map.clip_same_line_release = configuration?.clip_same_line_release ?: true
+            frame_map.clip_same_line_release = configuration?.clip_same_line_release != false
             frame_map.parse_opus(
                 ignore_global_effects,
                 ignore_channel_effects,
@@ -145,7 +146,6 @@ class MainActivity : PaganActivity() {
             }
 
             this.export_handle = WavConverter(sample_handle_manager)
-
             this.export_handle?.export_wav(frame_map, target_output_stream, tmp_file, handler)
             this.export_handle = null
         }
@@ -163,8 +163,6 @@ class MainActivity : PaganActivity() {
     val view_model: MainViewModel by viewModels()
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
-    private lateinit var _project_manager: ProjectManager
-    private lateinit var _config_path: String
     private var _integer_dialog_defaults = HashMap<String, Int>()
     private var _float_dialog_defaults = HashMap<String, Float>()
     var active_percussion_names = HashMap<Int, String>()
@@ -318,27 +316,6 @@ class MainActivity : PaganActivity() {
         fun update(y: Int, file_uri: Uri) {
             this.working_y = y
             this.file_uri = file_uri
-        }
-    }
-
-    val settings_activity_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        when (result.resultCode) {
-            RESULT_OK -> {
-                val content_string = result?.data?.extras?.getString("configuration")
-                this.configuration = if (content_string != null) {
-                    val json_obj = JSONParser.parse<JSONHashMap>(content_string)
-                    if (json_obj != null) {
-                        PaganConfiguration.from_json(json_obj)
-                    } else {
-                        PaganConfiguration()
-                    }
-                } else {
-                    PaganConfiguration()
-                }
-                this.save_configuration()
-                this.requestedOrientation = this.configuration.force_orientation
-            }
-            RESULT_CANCELED -> { }
         }
     }
 
@@ -727,22 +704,6 @@ class MainActivity : PaganActivity() {
         }
     }
 
-    private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val path = this.getExternalFilesDir(null).toString()
-        val file = File("$path/bkp_crashreport.log")
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                val content = file.readText()
-                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                    FileOutputStream(it.fileDescriptor).write(content.toByteArray())
-                    file.delete()
-                }
-            }
-        } else {
-            file.delete()
-        }
-    }
-
     private var _export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val opus_manager = this.get_opus_manager()
@@ -786,7 +747,7 @@ class MainActivity : PaganActivity() {
         this.unregisterReceiver(this.broadcast_receiver)
         this.playback_stop_midi_output()
         this._midi_interface.close_connected_devices()
-        this._binding.appBarMain.toolbar.hideOverflowMenu()
+        this._binding.toolbar.hideOverflowMenu()
         super.onPause()
     }
 
@@ -858,9 +819,88 @@ class MainActivity : PaganActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    fun handle_bundle(bundle: Bundle?) {
+        if (bundle == null) {
+            return
+        }
+
+        val token = bundle.getString("token")
+        when (token) {
+            IntentFragmentToken.ImportGeneral.name -> {
+                val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+                editor_table.clear()
+
+                 this.view_model.backup_fragment_intent = Pair(IntentFragmentToken.ImportGeneral, bundle)
+                val main = this.get_activity()
+                main.loading_reticle_show(getString(R.string.reticle_msg_import_project))
+                main.runOnUiThread {
+                    editor_table?.visibility = View.INVISIBLE
+                    this@FragmentEditor.clear_context_menu()
+                }
+
+                thread {
+                    val type: CompatibleFileType? = try {
+                        bundle!!.getString("URI")?.let { path ->
+                            main.get_file_type(path)
+                        }
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                    var fallback_msg: String? = null
+                    try {
+                        when (type) {
+                            CompatibleFileType.Midi1 -> {
+                                bundle!!.getString("URI")?.let { path ->
+                                    main.import_midi(path)
+                                }
+                            }
+
+                            CompatibleFileType.Pagan -> {
+                                bundle!!.getString("URI")?.let { path ->
+                                    main.import_project(path)
+                                }
+                            }
+
+                            null -> {
+                                fallback_msg = getString(R.string.feedback_file_not_found)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        fallback_msg = when (type!!) {
+                            CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
+                            CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
+                        }
+                    }
+
+                    if (fallback_msg != null) {
+                        val opus_manager = main.get_opus_manager()
+                        // if Not Loaded, just create new and throw a message up
+                        if (!opus_manager.first_load_done) {
+                            opus_manager.project_change_new()
+                        } else {
+                            main.runOnUiThread {
+                                this.reload_from_bkp()
+                                editor_table.visibility = View.VISIBLE
+                                this.restore_view_model_position()
+                            }
+                        }
+
+                        this.get_activity().feedback_msg(fallback_msg)
+                    }
+
+                    main.runOnUiThread {
+                        editor_table?.visibility = View.VISIBLE
+                    }
+                    main.loading_reticle_hide()
+                    this.view_model.backup_fragment_intent = null
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-       super.onCreate(savedInstanceState)
-        this.check_for_crash_report()
+        super.onCreate(savedInstanceState)
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
@@ -877,23 +917,6 @@ class MainActivity : PaganActivity() {
             ctx.startActivity(mainIntent)
             Runtime.getRuntime().exit(0)
 
-        }
-
-        this._config_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
-        // [Re]move config file from < v1.1.2
-        val old_config_file = File("${applicationInfo.dataDir}/pagan.cfg")
-        val new_config_file = File(this._config_path)
-        if (old_config_file.exists()) {
-            if (!new_config_file.exists()) {
-                old_config_file.copyTo(new_config_file)
-            }
-            old_config_file.delete()
-        }
-
-        this.configuration = try {
-            PaganConfiguration.from_path(this._config_path)
-        } catch (e: Exception) {
-            PaganConfiguration()
         }
 
         this._midi_interface = object : MidiController(this) {
@@ -987,28 +1010,17 @@ class MainActivity : PaganActivity() {
 
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
 
-        this._project_manager = ProjectManager(this)
-        // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
-        val old_projects_dir = File("${applicationInfo.dataDir}/projects")
-        if (old_projects_dir.isDirectory) {
-            for (f in old_projects_dir.listFiles()!!) {
-                val new_file_name = this._project_manager.get_new_path()
-                f.copyTo(File(new_file_name))
-            }
-            old_projects_dir.deleteRecursively()
-        }
-
         this.requestedOrientation = this.configuration.force_orientation
 
         this._binding = ActivityMainBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
-        this.setSupportActionBar(this._binding.appBarMain.toolbar)
+        this.setSupportActionBar(this._binding.toolbar)
         this._binding.root.setBackgroundColor(resources.getColor(R.color.main_bg))
 
         this.view_model.action_interface.attach_activity(this)
         this.view_model.opus_manager.attach_activity(this)
 
-        val toolbar = this._binding.appBarMain.toolbar
+        val toolbar = this._binding.toolbar
 
         toolbar.setOnLongClickListener {
             this.get_action_interface().set_project_name_and_notes()
@@ -1092,6 +1104,8 @@ class MainActivity : PaganActivity() {
                 }
             }
         )
+
+        this.handle_bundle(savedInstanceState)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -1172,19 +1186,8 @@ class MainActivity : PaganActivity() {
                 }
             }
 
-            R.id.itmSettings -> {
-                val intent = Intent(this, ActivitySettings::class.java)
-                intent.putExtra("configuration", this.configuration.to_json().to_string())
-                this.settings_activity_launcher.launch(intent)
-               // this.get_action_interface().open_settings()
-            }
-            R.id.itmAbout -> {
-                startActivity(
-                    Intent(this, ActivityAbout::class.java).apply {
-                        putExtra("configuration", this@MainActivity.configuration.to_json().to_string())
-                    }
-                )
-            }
+            R.id.itmSettings -> startActivity(Intent(this, ActivitySettings::class.java))
+            R.id.itmAbout -> startActivity(Intent(this, ActivityAbout::class.java))
             R.id.itmDebug -> {
                 val tracker = this.get_action_interface()
                 this.save_actions()
@@ -1196,14 +1199,14 @@ class MainActivity : PaganActivity() {
     }
 
     fun project_save() {
-        this._project_manager.save(this.get_opus_manager())
+        this.project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
 
     fun project_delete() {
         val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
-        this._project_manager.delete(this.get_opus_manager())
+        this.project_manager.delete(this.get_opus_manager())
 
         val fragment = this.get_active_fragment()
         fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
@@ -1216,7 +1219,7 @@ class MainActivity : PaganActivity() {
 
     fun project_move_to_copy() {
         this.dialog_save_project {
-            this._project_manager.move_to_copy(this.get_opus_manager())
+            this.project_manager.move_to_copy(this.get_opus_manager())
             this.update_title_text()
             this.feedback_msg(getString(R.string.feedback_on_copy))
 
@@ -1382,7 +1385,7 @@ class MainActivity : PaganActivity() {
     }
 
     fun get_new_project_path(): String {
-        return this._project_manager.get_new_path()
+        return this.project_manager.get_new_path()
     }
 
     // Ui Wrappers ////////////////////////////////////////////
@@ -1467,22 +1470,14 @@ class MainActivity : PaganActivity() {
             if (this._forced_title_text != null) {
                 this._forced_title_text!!
             } else {
-                when (this.get_active_fragment()) {
-                    is FragmentLicense,
-                    is FragmentLandingPage -> {
-                        "${getString(R.string.app_name)} ${getString(R.string.app_version)}"
-                    }
-                    else -> {
-                        this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
-                    }
-                }
+                this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
             }
         )
         this._refresh_toolbar()
     }
 
     fun set_title_text(new_text: String) {
-        this._binding.appBarMain.toolbar.title = new_text
+        this._binding.toolbar.title = new_text
     }
 
     fun force_title_text(msg: String) {
@@ -1829,7 +1824,7 @@ class MainActivity : PaganActivity() {
     fun import_project(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.get_opus_manager().load(bytes, this._project_manager.get_new_path())
+            this.get_opus_manager().load(bytes, this.project_manager.get_new_path())
         }
     }
 
@@ -1847,7 +1842,7 @@ class MainActivity : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_midi(midi)
         val filename = this.parse_file_name(path.toUri())
-        val new_path = this._project_manager.get_new_path()
+        val new_path = this.project_manager.get_new_path()
 
         opus_manager.path = new_path
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(R.string.default_imported_midi_title))
@@ -1855,7 +1850,7 @@ class MainActivity : PaganActivity() {
     }
 
     fun has_projects_saved(): Boolean {
-        return this._project_manager.has_projects_saved()
+        return this.project_manager.has_projects_saved()
     }
 
     fun populate_supported_soundfont_instrument_names() {
@@ -2009,13 +2004,6 @@ class MainActivity : PaganActivity() {
         return soundfont_dir
     }
 
-    fun save_configuration() {
-        try {
-            this.configuration.save(this._config_path)
-        } catch (e: FileNotFoundException) {
-            this.feedback_msg(resources.getString(R.string.config_file_not_found))
-        }
-    }
 
     fun get_drum_name(index: Int): String? {
         this.populate_active_percussion_names(false)
@@ -2368,7 +2356,13 @@ class MainActivity : PaganActivity() {
     }
 
     fun select_import_file() {
-        this.get_action_interface().import()
+        //this.get_action_interface().import()
+        this.general_import_intent_launcher.launch(
+            Intent().apply {
+                setAction(Intent.ACTION_GET_CONTENT)
+                setType("*/*")
+            }
+        )
     }
 
 
@@ -2447,43 +2441,8 @@ class MainActivity : PaganActivity() {
         file.writeText(e.stackTraceToString())
     }
 
-    fun check_for_crash_report() {
-        val path = this.getExternalFilesDir(null).toString()
-        val file = File("$path/bkp_crashreport.log")
-        if (file.isFile) {
-            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-               .setTitle(R.string.crash_report_save)
-                .setMessage(R.string.crash_report_desc)
-                .setCancelable(true)
-                .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
-                    export_crash_report()
-                    dialog.dismiss()
-                }
-                .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
-                    file.delete()
-                    dialog.dismiss()
-                }
-                .show()
-        }
-    }
-
-    fun export_crash_report() {
-        val now = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        val name = "pagan.cr-${now.format(formatter)}.log"
-
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        //intent.type = MimeTypes.AUDIO_MIDI
-        intent.type = "text/plain"
-        intent.putExtra(Intent.EXTRA_TITLE, "$name")
-
-        this._crash_report_intent_launcher.launch(intent)
-    }
-
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
-        this.save_configuration()
         this.set_soundfont(this.configuration.soundfont)
     }
 
@@ -2660,14 +2619,11 @@ class MainActivity : PaganActivity() {
     }
 
     private fun _refresh_toolbar() {
-        val toolbar = this._binding.appBarMain.toolbar
+        val toolbar = this._binding.toolbar
 
         when (this.get_active_fragment()) {
             is FragmentEditor -> {
                 toolbar.setNavigationIcon(R.drawable.hamburger_32)
-            }
-            is FragmentLandingPage -> {
-                toolbar.navigationIcon = null
             }
             else -> {
                 toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
@@ -2743,8 +2699,6 @@ class MainActivity : PaganActivity() {
     }
 
     fun set_forced_orientation(value: Int) {
-        this.configuration.force_orientation = value
-        this.save_configuration()
         this.requestedOrientation = value
     }
 
@@ -2798,5 +2752,37 @@ class MainActivity : PaganActivity() {
                 dialog.cancel()
             }
             .show()
+    }
+
+    fun toggle_percussion() {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val beat_key = cursor.get_beatkey()
+        val position = cursor.get_position()
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
+
+        if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).is_event()) {
+            opus_manager.unset()
+        } else {
+            opus_manager.set_percussion_event_at_cursor()
+            val event_note = opus_manager.get_percussion_instrument(beat_key.line_offset)
+            this.play_event(beat_key.channel, event_note)
+        }
+    }
+
+    fun toggle_percussion_visibility() {
+        val opus_manager = this.get_opus_manager()
+        try {
+            if (!opus_manager.percussion_channel.visible || opus_manager.channels.isNotEmpty()) {
+                opus_manager.toggle_channel_visibility(opus_manager.channels.size)
+            } else {
+                return
+            }
+        } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
+            return
+        } catch (e: OpusLayerInterface.HidingLastChannelException) {
+            return
+        }
+
     }
 }

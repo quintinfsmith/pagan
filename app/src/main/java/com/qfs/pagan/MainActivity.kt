@@ -16,7 +16,6 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -24,11 +23,9 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.ContextThemeWrapper
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -57,18 +54,12 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.net.toUri
-import androidx.core.os.bundleOf
 import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.clearFragmentResult
-import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.ViewModel
-import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -98,8 +89,6 @@ import com.qfs.pagan.ContextMenu.ContextMenuLeafPercussion
 import com.qfs.pagan.ContextMenu.ContextMenuLine
 import com.qfs.pagan.ContextMenu.ContextMenuRange
 import com.qfs.pagan.ContextMenu.ContextMenuView
-import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.databinding.ActivityLandingBinding
 import com.qfs.pagan.databinding.ActivityMainBinding
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -745,14 +734,6 @@ class MainActivity : PaganActivity() {
         }
     }
 
-    internal var general_import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                this.navigate_import(uri)
-            }
-        }
-    }
-
     private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val opus_manager = this.get_opus_manager()
@@ -779,28 +760,29 @@ class MainActivity : PaganActivity() {
         super.onPause()
     }
 
-    override fun onKeyDown(key_code: Int, event: KeyEvent?): Boolean {
-        val active_fragment = this.get_active_fragment()
-        val cancel_super = if (event != null) {
-            when (active_fragment) {
-                is FragmentEditor ->
-                    try {
-                        active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
-                    } catch (e: Exception) {
-                        true
-                    }
-                else -> false
-            }
-        } else {
-            false
-        }
+    // TODO: Rewrite this withour fragment
+    //override fun onKeyDown(key_code: Int, event: KeyEvent?): Boolean {
+    //    val active_fragment = this.get_active_fragment()
+    //    val cancel_super = if (event != null) {
+    //        when (active_fragment) {
+    //            is FragmentEditor ->
+    //                try {
+    //                    active_fragment.keyboard_input_interface?.input(key_code, event) ?: false
+    //                } catch (e: Exception) {
+    //                    true
+    //                }
+    //            else -> false
+    //        }
+    //    } else {
+    //        false
+    //    }
 
-        return if (cancel_super) {
-            true
-        } else {
-            super.onKeyDown(key_code, event)
-        }
-    }
+    //    return if (cancel_super) {
+    //        true
+    //    } else {
+    //        super.onKeyDown(key_code, event)
+    //    }
+    //}
 
     override fun onResume() {
         super.onResume()
@@ -845,6 +827,19 @@ class MainActivity : PaganActivity() {
         // Can't reliably put json in outstate. there is a size limit
         this.save_to_backup()
         super.onSaveInstanceState(outState)
+    }
+
+    fun setup_new() {
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.clear()
+
+        this.runOnUiThread {
+            editor_table?.visibility = View.INVISIBLE
+        }
+        this.get_opus_manager().project_change_new()
+        this.runOnUiThread {
+            editor_table?.visibility = View.VISIBLE
+        }
     }
 
     private fun import_bundle(bundle: Bundle) {
@@ -903,6 +898,7 @@ class MainActivity : PaganActivity() {
         }
         val token = bundle.getString("token")
         when (token) {
+            IntentFragmentToken.New.name -> this.setup_new()
             IntentFragmentToken.ImportGeneral.name -> this.import_bundle(bundle)
         }
     }
@@ -1117,10 +1113,10 @@ class MainActivity : PaganActivity() {
         }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = this.findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
-    }
+    //override fun onSupportNavigateUp(): Boolean {
+    //    val navController = this.findNavController(R.id.nav_host_fragment_content_main)
+    //    return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
+    //}
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
@@ -1138,12 +1134,7 @@ class MainActivity : PaganActivity() {
 
         when (item.itemId) {
             android.R.id.home -> {
-                val fragment = this.get_active_fragment()
-                if (fragment is FragmentEditor) {
-                    this.drawer_open()
-                } else {
-                    this.get_action_interface().go_back()
-                }
+                this.drawer_open()
             }
 
             R.id.itmNewProject -> {
@@ -1160,7 +1151,7 @@ class MainActivity : PaganActivity() {
 
             R.id.itmImportMidi -> {
                 this.dialog_save_project {
-                    this.select_import_file()
+ //                   this.select_import_file()
                 }
             }
 
@@ -1217,11 +1208,7 @@ class MainActivity : PaganActivity() {
         val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
         this.project_manager.delete(this.get_opus_manager())
 
-        val fragment = this.get_active_fragment()
-        fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-        if (fragment !is FragmentEditor) {
-            this.navigate(R.id.EditorFragment)
-        }
+        this.setup_new()
 
         this.feedback_msg(resources.getString(R.string.feedback_delete, title))
     }
@@ -1241,39 +1228,39 @@ class MainActivity : PaganActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun _enable_blocker_view() {
-        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        //val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
 
-        if (blocker_view != null && blocker_view.visibility != View.VISIBLE) {
-            blocker_view.setOnTouchListener { _, motion_event ->
-                /* Allow Scrolling on the y axis when scrolling in the main_recycler */
-                if (motion_event == null) {
-                } else if (motion_event.action == 1) {
-                    this._blocker_scroll_y = null
-                } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
-                } else {
-                    val fragment = this.get_active_fragment()
-                    if (fragment !is FragmentEditor) {
-                        return@setOnTouchListener false
-                    }
-                    val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-                    val scroll_view = editor_table.get_scroll_view()
+        //if (blocker_view != null && blocker_view.visibility != View.VISIBLE) {
+        //    blocker_view.setOnTouchListener { _, motion_event ->
+        //        /* Allow Scrolling on the y axis when scrolling in the main_recycler */
+        //        if (motion_event == null) {
+        //        } else if (motion_event.action == 1) {
+        //            this._blocker_scroll_y = null
+        //        } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
+        //        } else {
+        //            val fragment = this.get_active_fragment()
+        //            if (fragment !is FragmentEditor) {
+        //                return@setOnTouchListener false
+        //            }
+        //            val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        //            val scroll_view = editor_table.get_scroll_view()
 
-                    if (this._blocker_scroll_y == null) {
-                        this._blocker_scroll_y = (motion_event.y - scroll_view.y)
-                    }
+        //            if (this._blocker_scroll_y == null) {
+        //                this._blocker_scroll_y = (motion_event.y - scroll_view.y)
+        //            }
 
-                    val rel_y = (motion_event.y - scroll_view.y)
-                    val delta_y = this._blocker_scroll_y!! - rel_y
+        //            val rel_y = (motion_event.y - scroll_view.y)
+        //            val delta_y = this._blocker_scroll_y!! - rel_y
 
-                    scroll_view.scrollBy(0, delta_y.toInt())
-                    this._blocker_scroll_y = rel_y
-                }
-                true
-            }
+        //            scroll_view.scrollBy(0, delta_y.toInt())
+        //            this._blocker_scroll_y = rel_y
+        //        }
+        //        true
+        //    }
 
-            blocker_view.visibility = View.VISIBLE
-            this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
+        //    blocker_view.visibility = View.VISIBLE
+        //    this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        //}
     }
 
     private fun _disable_blocker_view() {
@@ -1283,8 +1270,8 @@ class MainActivity : PaganActivity() {
             return
         }
         this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
-        blocker_view.visibility = View.GONE
+        // val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
+        // blocker_view.visibility = View.GONE
     }
 
     private fun playback_start() {
@@ -1461,18 +1448,18 @@ class MainActivity : PaganActivity() {
     }
 
     fun navigate(fragment: Int) {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        if (fragment == R.id.EditorFragment) {
-            this._has_seen_front_page = true
-        }
+        //val navController = findNavController(R.id.nav_host_fragment_content_main)
+        //if (fragment == R.id.EditorFragment) {
+        //    this._has_seen_front_page = true
+        //}
 
-        navController.navigate(fragment)
+        //navController.navigate(fragment)
     }
 
-    fun get_active_fragment(): Fragment? {
-        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        return navHost?.childFragmentManager?.fragments?.get(0)
-    }
+    //fun get_active_fragment(): Fragment? {
+    //    val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+    //    return navHost?.childFragmentManager?.fragments?.get(0)
+    //}
 
     fun update_title_text() {
         this.set_title_text(
@@ -1500,34 +1487,34 @@ class MainActivity : PaganActivity() {
     }
 
     fun update_menu_options() {
-        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        val options_menu = this._options_menu ?: return
+        //val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        //val options_menu = this._options_menu ?: return
 
-        when (navHost?.childFragmentManager?.fragments?.get(0)) {
-            is FragmentEditor -> {
-                val play_midi_visible = this.configuration.allow_midi_playback && (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
-                options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
-                options_menu.findItem(R.id.itmUndo).isVisible = true
-                options_menu.findItem(R.id.itmNewProject).isVisible = true
-                options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
-                options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
-                options_menu.findItem(R.id.itmImportMidi).isVisible = true
-                options_menu.findItem(R.id.itmSettings).isVisible = true
-                options_menu.findItem(R.id.itmAbout).isVisible = true
-                options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
-            }
-            else -> {
-                options_menu.findItem(R.id.itmLoadProject).isVisible = false
-                options_menu.findItem(R.id.itmUndo).isVisible = false
-                options_menu.findItem(R.id.itmNewProject).isVisible = false
-                options_menu.findItem(R.id.itmPlay).isVisible = false
-                options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = false
-                options_menu.findItem(R.id.itmImportMidi).isVisible = false
-                options_menu.findItem(R.id.itmSettings).isVisible = false
-                options_menu.findItem(R.id.itmAbout).isVisible = false
-                options_menu.findItem(R.id.itmDebug).isVisible = false
-            }
-        }
+        //when (navHost?.childFragmentManager?.fragments?.get(0)) {
+        //    is FragmentEditor -> {
+        //        val play_midi_visible = this.configuration.allow_midi_playback && (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
+        //        options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
+        //        options_menu.findItem(R.id.itmUndo).isVisible = true
+        //        options_menu.findItem(R.id.itmNewProject).isVisible = true
+        //        options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
+        //        options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
+        //        options_menu.findItem(R.id.itmImportMidi).isVisible = true
+        //        options_menu.findItem(R.id.itmSettings).isVisible = true
+        //        options_menu.findItem(R.id.itmAbout).isVisible = true
+        //        options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
+        //    }
+        //    else -> {
+        //        options_menu.findItem(R.id.itmLoadProject).isVisible = false
+        //        options_menu.findItem(R.id.itmUndo).isVisible = false
+        //        options_menu.findItem(R.id.itmNewProject).isVisible = false
+        //        options_menu.findItem(R.id.itmPlay).isVisible = false
+        //        options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = false
+        //        options_menu.findItem(R.id.itmImportMidi).isVisible = false
+        //        options_menu.findItem(R.id.itmSettings).isVisible = false
+        //        options_menu.findItem(R.id.itmAbout).isVisible = false
+        //        options_menu.findItem(R.id.itmDebug).isVisible = false
+        //    }
+        //}
     }
 
     fun setup_project_config_drawer() {
@@ -2032,11 +2019,10 @@ class MainActivity : PaganActivity() {
     }
 
     fun dialog_color_picker(initial_color: Int, callback: (Int?) -> Unit) {
-        val main_fragment = this.get_active_fragment()
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.color_picker,
-                main_fragment!!.view as ViewGroup,
+                this._binding.root,
                 false
             )
 
@@ -2183,12 +2169,10 @@ class MainActivity : PaganActivity() {
     }
 
     fun dialog_text_popup(title: String, default: String? = null, callback: (String) -> Unit) {
-        val main_fragment = this.get_active_fragment()
-
-        val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
+        val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.text_input,
-                main_fragment.view as ViewGroup,
+                this._binding.root,
                 false
             )
 
@@ -2209,12 +2193,11 @@ class MainActivity : PaganActivity() {
     }
 
     fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, callback: (String, String) -> Unit) {
-        val main_fragment = this.get_active_fragment()
 
-        val viewInflated: View = LayoutInflater.from(main_fragment!!.context)
+        val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.text_name_change,
-                main_fragment.view as ViewGroup,
+                this._binding.root,
                 false
             )
 
@@ -2348,8 +2331,6 @@ class MainActivity : PaganActivity() {
     }
 
     private fun dialog_delete_project() {
-        val main_fragment = this.get_active_fragment()
-
         val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
 
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
@@ -2363,17 +2344,6 @@ class MainActivity : PaganActivity() {
             }
             .show()
     }
-
-    fun select_import_file() {
-        //this.get_action_interface().import()
-        this.general_import_intent_launcher.launch(
-            Intent().apply {
-                setAction(Intent.ACTION_GET_CONTENT)
-                setType("*/*")
-            }
-        )
-    }
-
 
     fun get_default_export_name(): String {
         val now = LocalDateTime.now()
@@ -2629,15 +2599,7 @@ class MainActivity : PaganActivity() {
 
     private fun _refresh_toolbar() {
         val toolbar = this._binding.toolbar
-
-        when (this.get_active_fragment()) {
-            is FragmentEditor -> {
-                toolbar.setNavigationIcon(R.drawable.hamburger_32)
-            }
-            else -> {
-                toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-            }
-        }
+        toolbar.setNavigationIcon(R.drawable.hamburger_32)
     }
 
     fun vibrate() {
@@ -2682,18 +2644,6 @@ class MainActivity : PaganActivity() {
         val file = File(file_name)
         file.writeText(generated_code)
         this.get_action_interface().clear()
-    }
-
-    fun navigate_import(uri: Uri) {
-        val fragment = this.get_active_fragment()
-        fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
-        fragment?.setFragmentResult(
-            IntentFragmentToken.ImportGeneral.name,
-            bundleOf(Pair("URI", uri.toString()))
-        )
-        if (fragment !is FragmentEditor) {
-            this.navigate(R.id.EditorFragment)
-        }
     }
 
     fun is_debug_on(): Boolean {
@@ -2960,6 +2910,10 @@ class MainActivity : PaganActivity() {
             )
         }
         this.show_context_menus()
+    }
+
+    fun refresh_context_menu() {
+        this.active_context_menu?.refresh() ?: this.hide_context_menus()
     }
 
     internal fun set_context_menu_line() {

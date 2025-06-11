@@ -2548,13 +2548,12 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                         activity.update_channel_instruments()
                         activity.populate_active_percussion_names(true)
-                        this.withFragment {
-                            if (restore_position) {
-                                it.restore_view_model_position()
-                            }
-
-                            it.clear_context_menu()
+                        if (restore_position) {
+                            // TODO: May need to reimplement this once activies are split up
+                            //activity.restore_view_model_position()
                         }
+
+                        activity.clear_context_menu()
                     }
 
                     BillableItem.RowAdd -> {
@@ -2644,69 +2643,47 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.ContextMenuRefresh -> {
-                        this.withFragment {
-                            it.refresh_context_menu()
-                        }
+                        activity.refresh_context_menu()
                     }
 
                     BillableItem.ContextMenuSetLine -> {
-                        this.withFragment {
-                            it.set_context_menu_line()
-                        }
+                        activity.set_context_menu_line()
                     }
 
                     BillableItem.ContextMenuSetLeaf -> {
-                        this.withFragment {
-                            it.set_context_menu_leaf()
-                        }
+                        activity.set_context_menu_leaf()
                     }
 
                     BillableItem.ContextMenuSetLeafPercussion -> {
-                        this.withFragment {
-                            it.set_context_menu_leaf_percussion()
-                        }
+                        activity.set_context_menu_leaf_percussion()
                     }
 
                     BillableItem.ContextMenuSetControlLeaf -> {
-                        this.withFragment {
-                            it.set_context_menu_line_control_leaf()
-                        }
+                        activity.set_context_menu_line_control_leaf()
                     }
 
                     BillableItem.ContextMenuSetControlLeafB -> {
-                        this.withFragment {
-                            it.set_context_menu_line_control_leaf_b()
-                        }
+                        activity.set_context_menu_line_control_leaf_b()
                     }
 
                     BillableItem.ContextMenuSetRange -> {
-                        this.withFragment {
-                            it.set_context_menu_range()
-                        }
+                        activity.set_context_menu_range()
                     }
 
                     BillableItem.ContextMenuSetColumn -> {
-                        this.withFragment {
-                            it.set_context_menu_column()
-                        }
+                        activity.set_context_menu_column()
                     }
 
                     BillableItem.ContextMenuSetControlLine -> {
-                        this.withFragment {
-                            it.set_context_menu_control_line()
-                        }
+                        activity.set_context_menu_control_line()
                     }
 
                     BillableItem.ContextMenuSetChannel -> {
-                        this.withFragment {
-                            it.set_context_menu_channel()
-                        }
+                        activity.set_context_menu_channel()
                     }
 
                     BillableItem.ContextMenuClear -> {
-                        this.withFragment {
-                            it.clear_context_menu()
-                        }
+                        activity.clear_context_menu()
                     }
 
                     BillableItem.ConfigDrawerEnableCopyAndDelete -> {
@@ -2794,15 +2771,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    private fun <T> withFragment(callback: (FragmentEditor) -> T): T? {
-        val fragment = this._activity?.get_active_fragment()
-        return if (fragment is FragmentEditor) {
-            callback(fragment)
-        } else {
-            null
-        }
-    }
-
     fun set_relative_mode(mode: Int, update_ui: Boolean = true) {
         this.relative_mode = mode
         this.lock_ui_partial {
@@ -2811,6 +2779,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
     }
+
     fun set_relative_mode(event: TunedInstrumentEvent) {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = when (event) {

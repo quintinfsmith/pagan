@@ -26,10 +26,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     init {
         this._spacer.setOnClickListener {
-            val fragment = this.get_activity().get_active_fragment()
-            if (fragment is FragmentEditor) {
-                fragment.shortcut_dialog()
-            }
+            get_activity().shortcut_dialog()
         }
 
         this._spacer.setOnLongClickListener {

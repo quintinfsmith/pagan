@@ -131,7 +131,11 @@ class ActivityLanding : PaganActivity() {
         }
 
         btn_newProject.setOnClickListener {
-            //this.get_action_interface().new_project()
+            startActivity(
+                Intent(this, MainActivity::class.java).apply {
+                    putExtra("token", IntentFragmentToken.New.name)
+                }
+            )
         }
 
 

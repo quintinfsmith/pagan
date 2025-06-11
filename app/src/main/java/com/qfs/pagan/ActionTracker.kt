@@ -1,19 +1,11 @@
 package com.qfs.pagan
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.os.bundleOf
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.fragment.app.clearFragmentResult
-import androidx.fragment.app.setFragmentResult
-import androidx.navigation.findNavController
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
@@ -430,21 +422,21 @@ class ActionTracker {
     fun go_back(do_save: Boolean? = null) {
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
-        val navController = activity.findNavController(R.id.nav_host_fragment_content_main)
-        if (navController.currentDestination?.id == R.id.EditorFragment) {
-            if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Unset) {
-                this.track(TrackedAction.GoBack)
-                opus_manager.cursor_clear()
-            } else {
-                this.dialog_save_project(do_save) { saved: Boolean ->
-                    this.track(TrackedAction.GoBack, listOf(if (saved) 1 else 0))
-                    activity.finish()
-                }
-            }
-        } else {
-            this.track(TrackedAction.GoBack)
-            navController.popBackStack()
-        }
+        //val navController = activity.findNavController(R.id.nav_host_fragment_content_main)
+        //if (navController.currentDestination?.id == R.id.EditorFragment) {
+        //    if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Unset) {
+        //        this.track(TrackedAction.GoBack)
+        //        opus_manager.cursor_clear()
+        //    } else {
+        //        this.dialog_save_project(do_save) { saved: Boolean ->
+        //            this.track(TrackedAction.GoBack, listOf(if (saved) 1 else 0))
+        //            activity.finish()
+        //        }
+        //    }
+        //} else {
+        //    this.track(TrackedAction.GoBack)
+        //    navController.popBackStack()
+        //}
     }
 
     fun move_selection_to_beat(beat_key: BeatKey) {
@@ -930,42 +922,18 @@ class ActionTracker {
         this.track(TrackedAction.NewProject)
 
         val activity = this.get_activity()
-        val fragment = activity.get_active_fragment()
-        fragment?.clearFragmentResult(IntentFragmentToken.Resume.name)
-        fragment?.setFragmentResult(IntentFragmentToken.New.name, bundleOf())
-
-        if (fragment !is FragmentEditor) {
-            activity.navigate(R.id.EditorFragment)
-        }
+        activity.setup_new()
     }
 
     fun load_project(path: String) {
         this.track(TrackedAction.LoadProject, ActionTracker.string_to_ints(path))
-
-        val activity = this.get_activity()
-        val fragment = activity.get_active_fragment() ?: return
-
-        activity.loading_reticle_show(activity.getString(R.string.reticle_msg_load_project))
-        fragment.setFragmentResult(
-            IntentFragmentToken.Load.name,
-            bundleOf(Pair("PATH", path))
-        )
-
-        if (fragment !is FragmentEditor) {
-            activity.navigate(R.id.EditorFragment)
-        }
+        TODO("LOAD PROJECT")
     }
 
 
     fun <K: OpusControlEvent> set_ctl_duration(duration: Int? = null) {
         val main = this.get_activity()
-
-        val fragment = main.get_active_fragment()
-        if (fragment !is FragmentEditor) {
-            return
-        }
-
-        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<K>
+        val context_menu = main.active_context_menu as ContextMenuControlLeaf<K>
         val event = context_menu.get_control_event<K>().copy() as K
         val event_duration = event.duration
 
@@ -984,11 +952,7 @@ class ActionTracker {
 
         val main = this.get_activity()
 
-        val fragment = main.get_active_fragment()
-        if (fragment !is FragmentEditor) {
-            return
-        }
-        val context_menu = fragment.active_context_menu as ContextMenuControlLeaf<OpusControlEvent>
+        val context_menu = main.active_context_menu as ContextMenuControlLeaf<OpusControlEvent>
 
         val event = context_menu.get_control_event<OpusControlEvent>().copy()
         this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: ControlTransition ->
@@ -1001,12 +965,7 @@ class ActionTracker {
     fun set_volume(volume: Int? = null) {
         val main = this.get_activity()
 
-        val fragment = main.get_active_fragment()
-        if (fragment !is FragmentEditor) {
-            return
-        }
-
-        val context_menu = fragment.active_context_menu
+        val context_menu = main.active_context_menu
         if (context_menu !is ContextMenuWithController<*>) {
             return
         }
@@ -1378,13 +1337,9 @@ class ActionTracker {
 
     fun set_pan_at_cursor(value: Int) {
         val main = this.get_activity()
-        val fragment = main.get_active_fragment()
-        if (fragment !is FragmentEditor) {
-            return
-        }
 
         this.track(TrackedAction.SetPanAtCursor, listOf(value))
-        val context_menu = fragment.active_context_menu
+        val context_menu = main.active_context_menu
         if (context_menu !is ContextMenuWithController<*>) {
             return
         }
@@ -1397,13 +1352,8 @@ class ActionTracker {
 
     fun set_tempo_at_cursor(input_value: Float? = null) {
         val main = this.get_activity()
-        val fragment = main.get_active_fragment()
-        if (fragment !is FragmentEditor) {
-            return
-        }
 
-
-        val context_menu = fragment.active_context_menu
+        val context_menu = main.active_context_menu
         if (context_menu !is ContextMenuWithController<*>) {
             return
         }
@@ -2130,7 +2080,7 @@ class ActionTracker {
             TrackedAction.ImportSong -> {
                 val uri_string = string_from_ints(integers)
                 val uri = Uri.parse(uri_string)
-                this.import(uri)
+                //this.import(uri)
             }
 
             TrackedAction.ImportSoundFont -> {
@@ -2197,11 +2147,7 @@ class ActionTracker {
         main.configuration.move_mode = mode
         main.save_configuration()
 
-        val fragment = main.get_active_fragment()
-        if (fragment !is FragmentEditor) {
-            return
-        }
-        val context_menu = fragment.active_context_menu
+        val context_menu = main.active_context_menu
         if (context_menu !is ContextMenuRange) {
             return
         }
@@ -2365,52 +2311,53 @@ class ActionTracker {
     }
 
     private fun dialog_tuning_table() {
-        val activity = this.get_activity()
-        val opus_manager = this.get_opus_manager()
-        val main_fragment = activity.get_active_fragment() ?: return
+        TODO("DIALOG TUNING_ TABLE")
+        //val activity = this.get_activity()
+        //val opus_manager = this.get_opus_manager()
 
-        val viewInflated: View = LayoutInflater.from(main_fragment.context)
-            .inflate(
-                R.layout.dialog_tuning_map,
-                main_fragment.view as ViewGroup,
-                false
-            )
+        //// TODO
+        //val viewInflated: View = LayoutInflater.from(activity)
+        //    .inflate(
+        //        R.layout.dialog_tuning_map,
+        //        activity,
+        //        false
+        //    )
 
-        val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
-        val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
-        etTranspose.set_range(0, 99999999)
-        etTranspose.set_value(opus_manager.transpose.first)
+        //val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
+        //val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
+        //etTranspose.set_range(0, 99999999)
+        //etTranspose.set_value(opus_manager.transpose.first)
 
-        val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
-        etTransposeRadix.set_range(1, 99999999)
-        etTransposeRadix.set_value(opus_manager.transpose.second)
+        //val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
+        //etTransposeRadix.set_range(1, 99999999)
+        //etTransposeRadix.set_value(opus_manager.transpose.second)
 
-        val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
-        rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
+        //val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
+        //rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
 
 
-        AlertDialog.Builder(activity, R.style.Theme_Pagan_Dialog)
-            .setTitle(R.string.dlg_tuning)
-            .setView(viewInflated)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                val tuning_map = (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
-                val transpose = Pair(etTranspose.get_value() ?: 0, etTransposeRadix.get_value() ?: tuning_map.size)
-                this._track_tuning_map_and_transpose(tuning_map, transpose)
-                opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
-                dialog.dismiss()
-            }
-            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-                dialog.cancel()
-            }
-            .show()
+        //AlertDialog.Builder(activity, R.style.Theme_Pagan_Dialog)
+        //    .setTitle(R.string.dlg_tuning)
+        //    .setView(viewInflated)
+        //    .setPositiveButton(android.R.string.ok) { dialog, _ ->
+        //        val tuning_map = (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
+        //        val transpose = Pair(etTranspose.get_value() ?: 0, etTransposeRadix.get_value() ?: tuning_map.size)
+        //        this._track_tuning_map_and_transpose(tuning_map, transpose)
+        //        opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
+        //        dialog.dismiss()
+        //    }
+        //    .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+        //        dialog.cancel()
+        //    }
+        //    .show()
 
-        val default_value = opus_manager.tuning_map.size
+        //val default_value = opus_manager.tuning_map.size
 
-        etRadix.set_value(default_value)
-        etRadix.set_range(2, 36)
-        etRadix.value_set_callback = { new_radix: Int? ->
-            rvTuningMap.reset_tuning_map(new_radix)
-        }
+        //etRadix.set_value(default_value)
+        //etRadix.set_range(2, 36)
+        //etRadix.value_set_callback = { new_radix: Int? ->
+        //    rvTuningMap.reset_tuning_map(new_radix)
+        //}
     }
 
     private fun _track_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Pair<Int, Int>) {
@@ -2437,22 +2384,24 @@ class ActionTracker {
         }
     }
 
-    fun import(uri: Uri? = null) {
-        // TODO: Track action
-        val activity = this.get_activity()
-        if (uri == null) {
-            val intent = Intent()
-            intent.setAction(Intent.ACTION_GET_CONTENT)
-            intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
-            activity.general_import_intent_launcher.launch(intent)
-        } else {
-            // TODO: Right now this still needs to be manually handled during playback. Not sure if its even possible to automate
-            val intent = Intent()
-            intent.setAction(Intent.ACTION_GET_CONTENT)
-            intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
-            activity.general_import_intent_launcher.launch(intent)
-        }
-    }
+    // TODO: Reimplement once i figure out how action tracking will work with split activities
+    //fun import(uri: Uri? = null) {
+    //
+    //    // TODO: Track action
+    //    val activity = this.get_activity()
+    //    if (uri == null) {
+    //        val intent = Intent()
+    //        intent.setAction(Intent.ACTION_GET_CONTENT)
+    //        intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+    //        activity.general_import_intent_launcher.launch(intent)
+    //    } else {
+    //        // TODO: Right now this still needs to be manually handled during playback. Not sure if its even possible to automate
+    //        val intent = Intent()
+    //        intent.setAction(Intent.ACTION_GET_CONTENT)
+    //        intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+    //        activity.general_import_intent_launcher.launch(intent)
+    //    }
+    //}
 
     fun to_json(): JSONObject {
         return JSONList(

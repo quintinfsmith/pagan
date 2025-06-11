@@ -9,23 +9,29 @@
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
-
-    <com.google.android.material.appbar.AppBarLayout
-        android:theme="@style/app_bar"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+        <com.google.android.material.appbar.AppBarLayout
+            android:theme="@style/app_bar"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/app_bar_height"
-            app:contentInsetStartWithNavigation="0dp"
-            app:titleTextAppearance="@style/TextAppearance.AppCompat.Small"
-            app:titleTextColor="@color/on_surface" />
+            android:layout_height="wrap_content">
 
-    </com.google.android.material.appbar.AppBarLayout>
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/app_bar_height"
+                app:contentInsetStartWithNavigation="0dp"
+                app:titleTextAppearance="@style/TextAppearance.AppCompat.Small"
+                app:titleTextColor="@color/on_surface" />
 
-    <include layout="@layout/fragment_main" />
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <include layout="@layout/fragment_main" />
+
+    </LinearLayout>
 
 
     <LinearLayout

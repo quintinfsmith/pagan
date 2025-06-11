@@ -41,7 +41,6 @@ import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -1073,11 +1072,12 @@ class MainActivity : PaganActivity() {
         this.update_channel_instruments(this.get_opus_manager().channels.size)
         ///////////////////////////////////////////
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                this@MainActivity.get_action_interface().go_back()
-            }
-        })
+        // TODO: Restore functionallity
+        //onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+        //    override fun handleOnBackPressed() {
+        //        this@MainActivity.get_action_interface().go_back()
+        //    }
+        //})
 
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
         drawer_layout.addDrawerListener(
@@ -1469,7 +1469,6 @@ class MainActivity : PaganActivity() {
                 this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
             }
         )
-        this._refresh_toolbar()
     }
 
     fun set_title_text(new_text: String) {
@@ -1487,34 +1486,12 @@ class MainActivity : PaganActivity() {
     }
 
     fun update_menu_options() {
-        //val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        //val options_menu = this._options_menu ?: return
-
-        //when (navHost?.childFragmentManager?.fragments?.get(0)) {
-        //    is FragmentEditor -> {
-        //        val play_midi_visible = this.configuration.allow_midi_playback && (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
-        //        options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
-        //        options_menu.findItem(R.id.itmUndo).isVisible = true
-        //        options_menu.findItem(R.id.itmNewProject).isVisible = true
-        //        options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
-        //        options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
-        //        options_menu.findItem(R.id.itmImportMidi).isVisible = true
-        //        options_menu.findItem(R.id.itmSettings).isVisible = true
-        //        options_menu.findItem(R.id.itmAbout).isVisible = true
-        //        options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
-        //    }
-        //    else -> {
-        //        options_menu.findItem(R.id.itmLoadProject).isVisible = false
-        //        options_menu.findItem(R.id.itmUndo).isVisible = false
-        //        options_menu.findItem(R.id.itmNewProject).isVisible = false
-        //        options_menu.findItem(R.id.itmPlay).isVisible = false
-        //        options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = false
-        //        options_menu.findItem(R.id.itmImportMidi).isVisible = false
-        //        options_menu.findItem(R.id.itmSettings).isVisible = false
-        //        options_menu.findItem(R.id.itmAbout).isVisible = false
-        //        options_menu.findItem(R.id.itmDebug).isVisible = false
-        //    }
-        //}
+        val options_menu = this._options_menu ?: return
+        val play_midi_visible = this.configuration.allow_midi_playback && (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
+        options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
+        options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
+        options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
+        options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
     }
 
     fun setup_project_config_drawer() {
@@ -2597,11 +2574,6 @@ class MainActivity : PaganActivity() {
         }
     }
 
-    private fun _refresh_toolbar() {
-        val toolbar = this._binding.toolbar
-        toolbar.setNavigationIcon(R.drawable.hamburger_32)
-    }
-
     fun vibrate() {
         val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = this.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -3059,4 +3031,50 @@ class MainActivity : PaganActivity() {
 
     // ^^ Formerly Fragment Functions ---------------------------------------------------------
 
+    fun dialog_tuning_table() {
+        val opus_manager = this.get_opus_manager()
+
+        val viewInflated = LayoutInflater.from(this)
+            .inflate(
+                R.layout.dialog_tuning_map,
+                this._binding.root,
+                false
+            )
+
+        val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
+        val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
+        etTranspose.set_range(0, 99999999)
+        etTranspose.set_value(opus_manager.transpose.first)
+
+        val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
+        etTransposeRadix.set_range(1, 99999999)
+        etTransposeRadix.set_value(opus_manager.transpose.second)
+
+        val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
+        rvTuningMap.adapter = TuningMapRecyclerAdapter(opus_manager.tuning_map.clone())
+
+
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle(R.string.dlg_tuning)
+            .setView(viewInflated)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                val tuning_map = (rvTuningMap.adapter as TuningMapRecyclerAdapter).tuning_map
+                val transpose = Pair(etTranspose.get_value() ?: 0, etTransposeRadix.get_value() ?: tuning_map.size)
+                this.get_action_interface()._track_tuning_map_and_transpose(tuning_map, transpose)
+                opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
+                dialog.dismiss()
+            }
+            .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
+
+        val default_value = opus_manager.tuning_map.size
+
+        etRadix.set_value(default_value)
+        etRadix.set_range(2, 36)
+        etRadix.value_set_callback = { new_radix: Int? ->
+            rvTuningMap.reset_tuning_map(new_radix)
+        }
+    }
 }

@@ -21,6 +21,7 @@
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
+                app:navigationIcon="@drawable/hamburger_32"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/app_bar_height"
                 app:contentInsetStartWithNavigation="0dp"

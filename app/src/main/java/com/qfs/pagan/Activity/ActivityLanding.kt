@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.net.toUri
 import com.qfs.pagan.IntentFragmentToken
 import com.qfs.pagan.MainActivity
 import com.qfs.pagan.PaganActivity
@@ -25,8 +26,7 @@ class ActivityLanding : PaganActivity() {
             result?.data?.data?.also { uri ->
                 startActivity(
                     Intent(this, MainActivity::class.java).apply {
-                        putExtra("token", IntentFragmentToken.ImportGeneral.name)
-                        putExtra("URI", uri.toString())
+                        setData(uri)
                     }
                 )
             }
@@ -107,7 +107,7 @@ class ActivityLanding : PaganActivity() {
                 most_recent_button.setOnClickListener {
                     startActivity(
                         Intent(this, MainActivity::class.java).apply {
-                            putExtra("token", IntentFragmentToken.MostRecent)
+                            setData(bkp_json_path.toUri())
                         }
                     )
                 }
@@ -125,17 +125,11 @@ class ActivityLanding : PaganActivity() {
 
 
         btn_about.setOnClickListener {
-            startActivity(
-                Intent(this, ActivityAbout::class.java)
-            )
+            startActivity(Intent(this, ActivityAbout::class.java))
         }
 
         btn_newProject.setOnClickListener {
-            startActivity(
-                Intent(this, MainActivity::class.java).apply {
-                    putExtra("token", IntentFragmentToken.New.name)
-                }
-            )
+            startActivity(Intent(this, MainActivity::class.java))
         }
 
 

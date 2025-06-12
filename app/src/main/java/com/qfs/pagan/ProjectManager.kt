@@ -1,5 +1,7 @@
 package com.qfs.pagan
 import android.content.Context
+import android.net.Uri
+import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
@@ -12,9 +14,19 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ProjectManager(val context: Context) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
-    private val data_dir = context.getExternalFilesDir(null).toString()
+    private val data_dir = context.getExternalFilesDir(null)!!
     val path = "$data_dir/projects/"
     private val _cache_path = "$data_dir/project_list.json"
+
+    fun contains(uri: Uri): Boolean {
+        val file_list = this.data_dir.listFiles() ?: return false
+        for (f in file_list) {
+            if (f.toUri() == uri) {
+                return true
+            }
+        }
+        return false
+    }
 
     fun get_directory(): File {
         val directory = File(this.path)

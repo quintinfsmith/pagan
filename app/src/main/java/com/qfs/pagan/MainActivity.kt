@@ -841,20 +841,53 @@ class MainActivity : PaganActivity() {
         }
     }
 
-    private fun import_bundle(bundle: Bundle) {
+    fun load_project(path: String) {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
 
-        this.loading_reticle_show(getString(R.string.reticle_msg_import_project))
+        this.runOnUiThread {
+            editor_table?.visibility = View.INVISIBLE
+        }
+
+        this.get_opus_manager().load_path(path)
+
+        this.runOnUiThread {
+            editor_table?.visibility = View.VISIBLE
+        }
+    }
+
+    fun load_from_bkp() {
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.clear()
+
+        this.runOnUiThread {
+            editor_table?.visibility = View.INVISIBLE
+        }
+
+        val opus_manager = this.get_opus_manager()
+        val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
+        val bytes = FileInputStream(bkp_json_path).readBytes()
+        val backup_path: String = File("${this.applicationInfo.dataDir}/.bkp_path").readText()
+        opus_manager.load(bytes, backup_path)
+
+        this.runOnUiThread {
+            editor_table?.visibility = View.VISIBLE
+        }
+    }
+
+    private fun handle_uri(uri: Uri) {
+        val path_string = uri.toString()
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.clear()
+        //this.loading_reticle_show(getString(R.string.reticle_msg_import_project))
+
         this.runOnUiThread {
             editor_table?.visibility = View.INVISIBLE
             this.clear_context_menu()
         }
 
         val type: CompatibleFileType? = try {
-            bundle.getString("URI")?.let { path ->
-                this.get_file_type(path)
-            }
+            this.get_file_type(uri)
         } catch (e: Exception) {
             null
         }
@@ -863,18 +896,14 @@ class MainActivity : PaganActivity() {
         try {
             when (type) {
                 CompatibleFileType.Midi1 -> {
-                    bundle.getString("URI")?.let { path ->
-                        this.import_midi(path)
-                    }
+                    this.import_midi(path_string)
                 }
 
                 CompatibleFileType.Pagan -> {
-                    bundle.getString("URI")?.let { path ->
-                        this.import_project(path)
-                    }
+                    this.import_project(path_string)
                 }
 
-                null -> {
+                else -> {
                     fallback_msg = getString(R.string.feedback_file_not_found)
                 }
             }
@@ -888,18 +917,8 @@ class MainActivity : PaganActivity() {
         this.runOnUiThread {
             editor_table?.visibility = View.VISIBLE
         }
-        this.loading_reticle_hide()
-    }
 
-    fun handle_bundle(bundle: Bundle?) {
-        if (bundle == null) {
-            return
-        }
-        val token = bundle.getString("token")
-        when (token) {
-            IntentFragmentToken.New.name -> this.setup_new()
-            IntentFragmentToken.ImportGeneral.name -> this.import_bundle(bundle)
-        }
+       // this.loading_reticle_hide()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -1108,8 +1127,15 @@ class MainActivity : PaganActivity() {
             }
         )
 
-        this.intent.extras?.let {
-            this.handle_bundle(it)
+
+        if (this.intent.data == null) {
+            this.setup_new()
+        } else if (this.is_bkp(this.intent.data!!)) {
+            this.load_from_bkp()
+        } else if (this.project_manager.contains(this.intent.data!!)) {
+            this.load_project(this.intent.data!!.toString())
+        } else {
+            this.handle_uri(this.intent.data!!)
         }
     }
 
@@ -2397,6 +2423,13 @@ class MainActivity : PaganActivity() {
         file.writeText(e.stackTraceToString())
     }
 
+    fun is_bkp(uri: Uri): Boolean {
+        val result = uri == "${applicationInfo.dataDir}/.bkp.json".toUri()
+        println("----???? $result")
+        return result
+    }
+
+
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
         this.set_soundfont(this.configuration.soundfont)
@@ -2591,17 +2624,16 @@ class MainActivity : PaganActivity() {
     }
 
 
-    fun get_file_type(path: String): CompatibleFileType {
-        return this.applicationContext.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use {
+    fun get_file_type(uri: Uri): CompatibleFileType {
+        return this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             val test_bytes = ByteArray(4)
             FileInputStream(it.fileDescriptor).read(test_bytes)
             if (test_bytes.contentEquals("MThd".toByteArray())) {
                 CompatibleFileType.Midi1
             } else {
-
                 CompatibleFileType.Pagan
             }
-        } ?: throw FileNotFoundException(path)
+        } ?: throw FileNotFoundException(uri.toString())
     }
 
     fun get_action_interface(): ActionTracker {

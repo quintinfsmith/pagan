@@ -921,7 +921,6 @@ class ActionTracker {
 
     fun new_project() {
         this.track(TrackedAction.NewProject)
-
         val activity = this.get_activity()
         activity.setup_new()
     }

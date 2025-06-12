@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Space
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
 import com.qfs.pagan.IntentFragmentToken
@@ -17,21 +18,10 @@ import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.concurrent.thread
 
 class ActivityLanding : PaganActivity() {
     private lateinit var _binding: ActivityLandingBinding
-
-    private var import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                startActivity(
-                    Intent(this, MainActivity::class.java).apply {
-                        setData(uri)
-                    }
-                )
-            }
-        }
-    }
 
     private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val path = this.getExternalFilesDir(null).toString()
@@ -84,7 +74,6 @@ class ActivityLanding : PaganActivity() {
         this._crash_report_intent_launcher.launch(intent)
     }
 
-
     override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
         this.check_for_crash_report()
@@ -134,27 +123,34 @@ class ActivityLanding : PaganActivity() {
 
 
         val btn_loadProject = this.findViewById<View>(R.id.btnFrontLoad)
-        //if (this.has_projects_saved()) {
-        //    //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
-        //    // but right now i  think this is the only place this is a problem
-        //    var lockout = false
-        //    btn_loadProject.setOnClickListener {
-        //        if (lockout) {
-        //            return@setOnClickListener
-        //        }
-        //        lockout = true
-        //        this.dialog_load_project()
-        //        thread {
-        //            Thread.sleep(1000)
-        //            lockout = false
-        //        }
-        //    }
-        //    btn_loadProject.visibility = View.VISIBLE
-        //    this.findViewById<Space>(R.id.space_load).visibility = View.VISIBLE
-        //} else {
-        //    btn_loadProject.visibility = View.GONE
-        //    this.findViewById<Space>(R.id.space_load).visibility = View.GONE
-        //}
+        if (this.has_projects_saved()) {
+            //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
+            // but right now i  think this is the only place this is a problem
+            var lockout = false
+            btn_loadProject.setOnClickListener {
+                if (lockout) {
+                    return@setOnClickListener
+                }
+                lockout = true
+                this.dialog_load_project { path : String ->
+                    startActivity(
+                        Intent(this, MainActivity::class.java).apply {
+                            data = path.toUri()
+                        }
+                    )
+                }
+
+                thread {
+                    Thread.sleep(1000)
+                    lockout = false
+                }
+            }
+            btn_loadProject.visibility = View.VISIBLE
+            this.findViewById<Space>(R.id.space_load).visibility = View.VISIBLE
+        } else {
+            btn_loadProject.visibility = View.GONE
+            this.findViewById<Space>(R.id.space_load).visibility = View.GONE
+        }
 
         btn_importMidi.setOnClickListener {
             this.import_intent_launcher.launch(

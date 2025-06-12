@@ -41,6 +41,7 @@ import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -786,6 +787,7 @@ class MainActivity : PaganActivity() {
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
+        println("RESUMING...")
 
         registerReceiver(
             this.broadcast_receiver,
@@ -824,7 +826,6 @@ class MainActivity : PaganActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         // Can't reliably put json in outstate. there is a size limit
-        this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
 
@@ -1091,13 +1092,6 @@ class MainActivity : PaganActivity() {
         this.update_channel_instruments(this.get_opus_manager().channels.size)
         ///////////////////////////////////////////
 
-        // TODO: Restore functionallity
-        //onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-        //    override fun handleOnBackPressed() {
-        //        this@MainActivity.get_action_interface().go_back()
-        //    }
-        //})
-
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
         drawer_layout.addDrawerListener(
             object : ActionBarDrawerToggle( this, drawer_layout, R.string.drawer_open, R.string.drawer_close) {
@@ -1170,14 +1164,21 @@ class MainActivity : PaganActivity() {
             }
 
             R.id.itmLoadProject -> {
-                this.dialog_save_project {
-                    this.dialog_load_project()
+                this.dialog_load_project { path: String ->
+                    this.dialog_save_project {
+                        this.load_project(path)
+                    }
                 }
             }
 
             R.id.itmImportMidi -> {
                 this.dialog_save_project {
- //                   this.select_import_file()
+                    this.import_intent_launcher.launch(
+                        Intent().apply {
+                            setAction(Intent.ACTION_GET_CONTENT)
+                            setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+                        }
+                    )
                 }
             }
 
@@ -1848,10 +1849,6 @@ class MainActivity : PaganActivity() {
         opus_manager.clear_history()
     }
 
-    fun has_projects_saved(): Boolean {
-        return this.project_manager.has_projects_saved()
-    }
-
     fun populate_supported_soundfont_instrument_names() {
         // populate a cache of available soundfont names so se don't have to open up the soundfont data
         // every time
@@ -2429,7 +2426,6 @@ class MainActivity : PaganActivity() {
         return result
     }
 
-
     fun set_sample_rate(new_sample_rate: Int) {
         this.configuration.sample_rate = new_sample_rate
         this.set_soundfont(this.configuration.soundfont)
@@ -2655,10 +2651,10 @@ class MainActivity : PaganActivity() {
     }
 
     override fun onDestroy() {
+        this.save_to_backup()
         this._sample_handle_manager?.destroy()
         this._feedback_sample_manager?.destroy()
         super.onDestroy()
-
     }
 
     fun set_forced_orientation(value: Int) {

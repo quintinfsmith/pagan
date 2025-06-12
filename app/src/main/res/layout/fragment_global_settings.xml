@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Activity.ActivitySettings"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:ignore="MissingDefaultResource">
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
     <LinearLayout
         android:orientation="vertical"
         android:paddingStart="8dp"

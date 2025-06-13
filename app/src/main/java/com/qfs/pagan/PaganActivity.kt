@@ -229,6 +229,10 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     internal fun dialog_load_project(callback: (project_path: String) -> Unit) {
+        if (this._popup_active) {
+            return
+        }
+
         val project_list = this.project_manager.get_project_list()
         val sort_options = listOf(
             Pair(getString(R.string.sort_option_abc)) { original: List<Pair<String, String>> ->

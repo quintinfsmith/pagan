@@ -19,9 +19,9 @@ class ProjectManager(val context: Context) {
     private val _cache_path = "$data_dir/project_list.json"
 
     fun contains(uri: Uri): Boolean {
-        val file_list = this.data_dir.listFiles() ?: return false
+        val file_list = File(this.path).listFiles() ?: return false
         for (f in file_list) {
-            if (f.toUri() == uri) {
+            if (f.path == uri.toString()) {
                 return true
             }
         }

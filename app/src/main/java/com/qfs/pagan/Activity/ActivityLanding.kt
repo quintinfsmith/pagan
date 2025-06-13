@@ -86,25 +86,14 @@ class ActivityLanding : PaganActivity() {
         val toolbar = this._binding.toolbar
         toolbar.background = null
 
-        val btn_newProject = this.findViewById<View>(R.id.btnFrontNew)
-        val btn_importMidi = this.findViewById<View>(R.id.btnFrontImport)
-        val btn_about = this.findViewById<View>(R.id.btnFrontAbout)
-
         this.findViewById<View>(R.id.btnMostRecent).let { most_recent_button ->
             val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
-            if (File(bkp_json_path).exists()) {
-                most_recent_button.setOnClickListener {
-                    startActivity(
-                        Intent(this, MainActivity::class.java).apply {
-                            setData(bkp_json_path.toUri())
-                        }
-                    )
-                }
-            } else {
-                most_recent_button.visibility = View.GONE
-                val btn_index = (most_recent_button.parent as ViewGroup).indexOfChild(most_recent_button)
-                // Show Space
-                (most_recent_button.parent as ViewGroup).getChildAt(btn_index + 1)?.visibility = View.GONE
+            most_recent_button.setOnClickListener {
+                startActivity(
+                    Intent(this, MainActivity::class.java).apply {
+                        setData(bkp_json_path.toUri())
+                    }
+                )
             }
         }
 
@@ -112,47 +101,27 @@ class ActivityLanding : PaganActivity() {
             startActivity(Intent(this, ActivitySettings::class.java))
         }
 
-
-        btn_about.setOnClickListener {
+        this.findViewById<View>(R.id.btnFrontAbout).setOnClickListener {
             startActivity(Intent(this, ActivityAbout::class.java))
         }
 
-        btn_newProject.setOnClickListener {
+        this.findViewById<View>(R.id.btnFrontNew).setOnClickListener {
             startActivity(Intent(this, MainActivity::class.java))
         }
 
-
-        val btn_loadProject = this.findViewById<View>(R.id.btnFrontLoad)
-        if (this.has_projects_saved()) {
-            //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
-            // but right now i  think this is the only place this is a problem
-            var lockout = false
-            btn_loadProject.setOnClickListener {
-                if (lockout) {
-                    return@setOnClickListener
-                }
-                lockout = true
-                this.dialog_load_project { path : String ->
-                    startActivity(
-                        Intent(this, MainActivity::class.java).apply {
-                            data = path.toUri()
-                        }
-                    )
-                }
-
-                thread {
-                    Thread.sleep(1000)
-                    lockout = false
-                }
+        //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
+        // but right now i  think this is the only place this is a problem
+        this.findViewById<View>(R.id.btnFrontLoad).setOnClickListener {
+            this.dialog_load_project { path : String ->
+                startActivity(
+                    Intent(this, MainActivity::class.java).apply {
+                        data = path.toUri()
+                    }
+                )
             }
-            btn_loadProject.visibility = View.VISIBLE
-            this.findViewById<Space>(R.id.space_load).visibility = View.VISIBLE
-        } else {
-            btn_loadProject.visibility = View.GONE
-            this.findViewById<Space>(R.id.space_load).visibility = View.GONE
         }
 
-        btn_importMidi.setOnClickListener {
+        this.findViewById<View>(R.id.btnFrontImport).setOnClickListener {
             this.import_intent_launcher.launch(
                 Intent().apply {
                     setAction(Intent.ACTION_GET_CONTENT)
@@ -172,5 +141,30 @@ class ActivityLanding : PaganActivity() {
         //         startActivity(intent)
         //     }
         // }
+    }
+
+    fun update_view_visibilities() {
+        this.findViewById<View>(R.id.btnMostRecent).let { most_recent_button ->
+            val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
+            if (!File(bkp_json_path).exists()) {
+                most_recent_button.visibility = View.GONE
+                val btn_index = (most_recent_button.parent as ViewGroup).indexOfChild(most_recent_button)
+                // Show Space
+                (most_recent_button.parent as ViewGroup).getChildAt(btn_index + 1)?.visibility = View.GONE
+            }
+        }
+
+        if (this.has_projects_saved()) {
+            this.findViewById<View>(R.id.btnFrontLoad).visibility = View.VISIBLE
+            this.findViewById<Space>(R.id.space_load).visibility = View.VISIBLE
+        } else {
+            this.findViewById<View>(R.id.btnFrontLoad).visibility = View.GONE
+            this.findViewById<Space>(R.id.space_load).visibility = View.GONE
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        this.update_view_visibilities()
     }
 }

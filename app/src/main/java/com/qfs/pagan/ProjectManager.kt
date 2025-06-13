@@ -1,7 +1,6 @@
 package com.qfs.pagan
 import android.content.Context
 import android.net.Uri
-import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
@@ -19,9 +18,12 @@ class ProjectManager(val context: Context) {
     private val _cache_path = "$data_dir/project_list.json"
 
     fun contains(uri: Uri): Boolean {
+        // clean uri
+        val check_path = File(uri.toString()).path ?: return false
+
         val file_list = File(this.path).listFiles() ?: return false
         for (f in file_list) {
-            if (f.path == uri.toString()) {
+            if (f.path == check_path) {
                 return true
             }
         }

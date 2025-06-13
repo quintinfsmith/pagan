@@ -23,7 +23,6 @@ import java.time.format.DateTimeFormatter
 
 class ActivityLanding : PaganActivity() {
     private lateinit var _binding: ActivityLandingBinding
-
     private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val path = this.getExternalFilesDir(null).toString()
         val file = File("$path/bkp_crashreport.log")
@@ -39,7 +38,6 @@ class ActivityLanding : PaganActivity() {
             file.delete()
         }
     }
-
 
     fun check_for_crash_report() {
         val path = this.getExternalFilesDir(null).toString()
@@ -140,12 +138,16 @@ class ActivityLanding : PaganActivity() {
     fun update_view_visibilities() {
         this.findViewById<View>(R.id.btnMostRecent).let { most_recent_button ->
             val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
-            if (!File(bkp_json_path).exists()) {
-                most_recent_button.visibility = View.GONE
-                val btn_index = (most_recent_button.parent as ViewGroup).indexOfChild(most_recent_button)
-                // Show Space
-                (most_recent_button.parent as ViewGroup).getChildAt(btn_index + 1)?.visibility = View.GONE
+            val visibility = if (!File(bkp_json_path).exists()) {
+                View.GONE
+            } else {
+                View.VISIBLE
             }
+
+            most_recent_button.visibility = visibility
+            // Show Space
+            val btn_index = (most_recent_button.parent as ViewGroup).indexOfChild(most_recent_button)
+            (most_recent_button.parent as ViewGroup).getChildAt(btn_index + 1)?.visibility = visibility
         }
 
         if (this.has_projects_saved()) {
@@ -156,8 +158,10 @@ class ActivityLanding : PaganActivity() {
             this.findViewById<Space>(R.id.space_load).visibility = View.GONE
         }
 
-        if (this.is_soundfont_available()) {
-            this.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
+        this.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = if (this.is_soundfont_available()) {
+            View.INVISIBLE
+        } else {
+            View.VISIBLE
         }
     }
 

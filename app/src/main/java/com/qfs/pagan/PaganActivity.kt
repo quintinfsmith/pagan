@@ -42,6 +42,20 @@ open class PaganActivity: AppCompatActivity() {
         }
     }
 
+    fun get_soundfont_directory(): File {
+        val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
+        if (!soundfont_dir.exists()) {
+            soundfont_dir.mkdirs()
+        }
+
+        return soundfont_dir
+    }
+
+    fun is_soundfont_available(): Boolean {
+        val soundfont_dir = this.get_soundfont_directory()
+        return soundfont_dir.listFiles()?.isNotEmpty() == true
+    }
+
 
     fun has_projects_saved(): Boolean {
         return this.project_manager.has_projects_saved()

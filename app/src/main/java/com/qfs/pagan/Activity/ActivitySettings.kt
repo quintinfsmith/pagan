@@ -81,6 +81,7 @@ class ActivitySettings : PaganActivity() {
 
         val toolbar = this._binding.toolbar
         toolbar.background = null
+        //toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
 
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
             it.setOnClickListener {

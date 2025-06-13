@@ -804,6 +804,7 @@ class MainActivity : PaganActivity() {
         if (this.is_connected_to_physical_device()) {
             this.playback_state_midi = PlaybackState.Ready
         }
+        this.update_title_text()
     }
 
     fun save_to_backup() {

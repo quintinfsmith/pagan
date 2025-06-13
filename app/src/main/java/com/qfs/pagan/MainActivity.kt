@@ -41,7 +41,6 @@ import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -805,6 +804,7 @@ class MainActivity : PaganActivity() {
         if (this.is_connected_to_physical_device()) {
             this.playback_state_midi = PlaybackState.Ready
         }
+        this.update_title_text()
     }
 
     fun save_to_backup() {
@@ -842,6 +842,7 @@ class MainActivity : PaganActivity() {
     }
 
     fun load_project(path: String) {
+        println("LOADING....")
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
 
@@ -1122,12 +1123,16 @@ class MainActivity : PaganActivity() {
 
 
         if (this.intent.data == null) {
+            println("AA")
             this.setup_new()
         } else if (this.is_bkp(this.intent.data!!)) {
+            println("BB")
             this.load_from_bkp()
         } else if (this.project_manager.contains(this.intent.data!!)) {
+            println("CC")
             this.load_project(this.intent.data!!.toString())
         } else {
+            println("DD")
             this.handle_uri(this.intent.data!!)
         }
     }
@@ -1991,16 +1996,6 @@ class MainActivity : PaganActivity() {
         this.populate_active_percussion_names()
     }
 
-    fun get_soundfont_directory(): File {
-        val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
-        if (!soundfont_dir.exists()) {
-            soundfont_dir.mkdirs()
-        }
-
-        return soundfont_dir
-    }
-
-
     fun get_drum_name(index: Int): String? {
         this.populate_active_percussion_names(false)
         return this.active_percussion_names[index + 27]
@@ -2193,7 +2188,6 @@ class MainActivity : PaganActivity() {
     }
 
     fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, callback: (String, String) -> Unit) {
-
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.text_name_change,

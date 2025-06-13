@@ -14,6 +14,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.net.toUri
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.R
@@ -22,7 +23,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import androidx.core.net.toUri
 
 class ActivitySettings : PaganActivity() {
     private lateinit var _binding: ActivitySettingsBinding
@@ -81,6 +81,7 @@ class ActivitySettings : PaganActivity() {
 
         val toolbar = this._binding.toolbar
         toolbar.background = null
+        //toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
 
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
             it.setOnClickListener {
@@ -220,11 +221,6 @@ class ActivitySettings : PaganActivity() {
         this.setResult(RESULT_CANCELED)
     }
 
-    fun is_soundfont_available(): Boolean {
-        val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles()?.isNotEmpty() == true
-    }
-
     fun set_forced_orientation(value: Int) {
         this.configuration.force_orientation = value
         this.requestedOrientation = value
@@ -307,15 +303,6 @@ class ActivitySettings : PaganActivity() {
                 dialog.dismiss()
             }
         }
-    }
-
-    fun get_soundfont_directory(): File {
-        val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
-        if (!soundfont_dir.exists()) {
-            soundfont_dir.mkdirs()
-        }
-
-        return soundfont_dir
     }
 
     private fun dialog_remove_soundfont() {

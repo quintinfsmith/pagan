@@ -3,13 +3,15 @@ package com.qfs.pagan.Activity
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Space
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
-import com.qfs.pagan.IntentFragmentToken
 import com.qfs.pagan.MainActivity
 import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.R
@@ -18,11 +20,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.concurrent.thread
 
 class ActivityLanding : PaganActivity() {
     private lateinit var _binding: ActivityLandingBinding
-
     private var _crash_report_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val path = this.getExternalFilesDir(null).toString()
         val file = File("$path/bkp_crashreport.log")
@@ -38,7 +38,6 @@ class ActivityLanding : PaganActivity() {
             file.delete()
         }
     }
-
 
     fun check_for_crash_report() {
         val path = this.getExternalFilesDir(null).toString()
@@ -109,8 +108,6 @@ class ActivityLanding : PaganActivity() {
             startActivity(Intent(this, MainActivity::class.java))
         }
 
-        //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
-        // but right now i  think this is the only place this is a problem
         this.findViewById<View>(R.id.btnFrontLoad).setOnClickListener {
             this.dialog_load_project { path : String ->
                 startActivity(
@@ -130,28 +127,27 @@ class ActivityLanding : PaganActivity() {
             )
         }
 
-        //val main = this.get_activity()
-        // if (main.is_soundfont_available()) {
-        //     this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
-        // }  else {
-        //     this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
-        //         val url = getString(R.string.url_fluid)
-        //         val intent = Intent(Intent.ACTION_VIEW)
-        //         intent.data = Uri.parse(url)
-        //         startActivity(intent)
-        //     }
-        // }
+        this.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
+            val url = getString(R.string.url_fluid)
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(url)
+            startActivity(intent)
+        }
     }
 
     fun update_view_visibilities() {
         this.findViewById<View>(R.id.btnMostRecent).let { most_recent_button ->
             val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
-            if (!File(bkp_json_path).exists()) {
-                most_recent_button.visibility = View.GONE
-                val btn_index = (most_recent_button.parent as ViewGroup).indexOfChild(most_recent_button)
-                // Show Space
-                (most_recent_button.parent as ViewGroup).getChildAt(btn_index + 1)?.visibility = View.GONE
+            val visibility = if (!File(bkp_json_path).exists()) {
+                View.GONE
+            } else {
+                View.VISIBLE
             }
+
+            most_recent_button.visibility = visibility
+            // Show Space
+            val btn_index = (most_recent_button.parent as ViewGroup).indexOfChild(most_recent_button)
+            (most_recent_button.parent as ViewGroup).getChildAt(btn_index + 1)?.visibility = visibility
         }
 
         if (this.has_projects_saved()) {
@@ -160,6 +156,12 @@ class ActivityLanding : PaganActivity() {
         } else {
             this.findViewById<View>(R.id.btnFrontLoad).visibility = View.GONE
             this.findViewById<Space>(R.id.space_load).visibility = View.GONE
+        }
+
+        this.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = if (this.is_soundfont_available()) {
+            View.INVISIBLE
+        } else {
+            View.VISIBLE
         }
     }
 

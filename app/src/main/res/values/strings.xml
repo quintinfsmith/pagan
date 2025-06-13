@@ -209,6 +209,7 @@
     <string name="blue">Blue</string>
     <string name="color_picker_clear">Clear</string>
     <string name="dlg_title_set_line_color">Set Line Color</string>
+    <string name="app_name_brief">Pagan</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

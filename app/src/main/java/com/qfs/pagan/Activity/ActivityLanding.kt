@@ -3,13 +3,15 @@ package com.qfs.pagan.Activity
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Space
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
-import com.qfs.pagan.IntentFragmentToken
 import com.qfs.pagan.MainActivity
 import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.R
@@ -18,7 +20,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.concurrent.thread
 
 class ActivityLanding : PaganActivity() {
     private lateinit var _binding: ActivityLandingBinding
@@ -109,8 +110,6 @@ class ActivityLanding : PaganActivity() {
             startActivity(Intent(this, MainActivity::class.java))
         }
 
-        //  KLUDGE Lockout prevents accidentally double clicking. need a better general solution,
-        // but right now i  think this is the only place this is a problem
         this.findViewById<View>(R.id.btnFrontLoad).setOnClickListener {
             this.dialog_load_project { path : String ->
                 startActivity(
@@ -130,17 +129,12 @@ class ActivityLanding : PaganActivity() {
             )
         }
 
-        //val main = this.get_activity()
-        // if (main.is_soundfont_available()) {
-        //     this.binding.root.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
-        // }  else {
-        //     this.binding.root.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
-        //         val url = getString(R.string.url_fluid)
-        //         val intent = Intent(Intent.ACTION_VIEW)
-        //         intent.data = Uri.parse(url)
-        //         startActivity(intent)
-        //     }
-        // }
+        this.findViewById<TextView>(R.id.tvFluidUrlLanding).setOnClickListener {
+            val url = getString(R.string.url_fluid)
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(url)
+            startActivity(intent)
+        }
     }
 
     fun update_view_visibilities() {
@@ -160,6 +154,10 @@ class ActivityLanding : PaganActivity() {
         } else {
             this.findViewById<View>(R.id.btnFrontLoad).visibility = View.GONE
             this.findViewById<Space>(R.id.space_load).visibility = View.GONE
+        }
+
+        if (this.is_soundfont_available()) {
+            this.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = View.INVISIBLE
         }
     }
 

@@ -38,6 +38,18 @@ class ActivityLanding : PaganActivity() {
             file.delete()
         }
     }
+    internal var import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                startActivity(
+                    Intent(this, MainActivity::class.java).apply {
+                        setData(uri)
+                    }
+                )
+            }
+        }
+    }
+
 
     fun check_for_crash_report() {
         val path = this.getExternalFilesDir(null).toString()

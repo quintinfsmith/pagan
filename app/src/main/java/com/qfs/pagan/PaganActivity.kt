@@ -30,18 +30,6 @@ open class PaganActivity: AppCompatActivity() {
     internal var _popup_active: Boolean = false
     internal lateinit var project_manager: ProjectManager
 
-    internal var import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                startActivity(
-                    Intent(this, MainActivity::class.java).apply {
-                        setData(uri)
-                    }
-                )
-            }
-        }
-    }
-
     fun get_soundfont_directory(): File {
         val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
         if (!soundfont_dir.exists()) {

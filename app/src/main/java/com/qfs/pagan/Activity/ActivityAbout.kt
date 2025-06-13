@@ -2,6 +2,7 @@ package com.qfs.pagan.Activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import com.qfs.pagan.PaganActivity
@@ -48,6 +49,15 @@ class ActivityAbout: PaganActivity() {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = getString(R.string.url_issues).toUri()
             startActivity(intent)
+        }
+    }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                this.finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

@@ -335,6 +335,14 @@ class MainActivity : PaganActivity() {
         }
     }
 
+    internal var import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                this.handle_uri(uri)
+            }
+        }
+    }
+
     private var _export_multi_line_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
@@ -842,7 +850,6 @@ class MainActivity : PaganActivity() {
     }
 
     fun load_project(path: String) {
-        println("LOADING....")
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
 

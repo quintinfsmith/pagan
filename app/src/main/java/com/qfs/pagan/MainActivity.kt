@@ -787,7 +787,6 @@ class MainActivity : PaganActivity() {
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
-        println("RESUMING...")
 
         registerReceiver(
             this.broadcast_receiver,
@@ -1558,6 +1557,7 @@ class MainActivity : PaganActivity() {
 
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
+
         val file_exists = (opus_manager.path != null && File(opus_manager.path!!).isFile)
         btnDeleteProject.isEnabled = file_exists
         btnCopyProject.isEnabled = file_exists
@@ -2422,7 +2422,6 @@ class MainActivity : PaganActivity() {
 
     fun is_bkp(uri: Uri): Boolean {
         val result = uri == "${applicationInfo.dataDir}/.bkp.json".toUri()
-        println("----???? $result")
         return result
     }
 

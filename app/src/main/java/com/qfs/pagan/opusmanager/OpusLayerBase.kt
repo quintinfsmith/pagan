@@ -4122,10 +4122,9 @@ open class OpusLayerBase {
                     // *Unreachable
                     throw Exception()
                 }
-            }
+            },
+            new_path
         )
-
-        this.path = new_path
     }
 
     open fun project_change_wrapper(callback: () -> Unit) {
@@ -4150,13 +4149,13 @@ open class OpusLayerBase {
         this.import_from_other(OpusLayerBase.initialize_basic())
     }
 
-    fun project_change_json(json_data: JSONHashMap) {
+    fun project_change_json(json_data: JSONHashMap, forced_path: String? = null) {
         this.project_change_wrapper {
-            this._project_change_json(json_data)
+            this._project_change_json(json_data, forced_path)
         }
     }
 
-    open fun _project_change_json(json_data: JSONHashMap) {
+    open fun _project_change_json(json_data: JSONHashMap, forced_path: String? = null) {
         val inner_map = json_data["d"] as JSONHashMap
         this.set_project_name(inner_map.get_stringn("title"))
         this.set_project_notes(inner_map.get_stringn("notes"))
@@ -4208,6 +4207,7 @@ open class OpusLayerBase {
             }
         }
 
+        this.path = forced_path
     }
 
     fun project_change_midi(midi: Midi) {

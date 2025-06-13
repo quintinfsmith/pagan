@@ -1368,8 +1368,8 @@ class OpusLayerInterface : OpusLayerHistory() {
         return output
     }
 
-    override fun _project_change_json(json_data: JSONHashMap) {
-        super._project_change_json(json_data)
+    override fun _project_change_json(json_data: JSONHashMap, forced_path: String?) {
+        super._project_change_json(json_data, forced_path)
         if (!this._in_reload) {
             val activity = this.get_activity() ?: return
             if (! activity.configuration.use_preferred_soundfont) {

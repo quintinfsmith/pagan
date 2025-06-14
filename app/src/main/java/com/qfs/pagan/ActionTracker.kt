@@ -1172,7 +1172,6 @@ class ActionTracker {
         } catch (e: OpusLayerInterface.HidingLastChannelException) {
             return
         }
-
     }
 
     fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>? = null) {

@@ -108,11 +108,7 @@ class OpusLineJSONInterface {
             if (tmp_color == null) {
                 output.color = null
             } else {
-                output.color = Color.rgb(
-                    tmp_color.substring(1, 3).toInt(16),
-                    tmp_color.substring(3, 5).toInt(16),
-                    tmp_color.substring(5, 7).toInt(16)
-                )
+                output.color = (tmp_color.substring(1, 3).toInt(16) shl 16) + (tmp_color.substring(3, 5).toInt(16) shl 8) + tmp_color.substring(5, 7).toInt(16)
             }
         }
     }

@@ -55,7 +55,8 @@
     <string name="config_file_not_found">Configuration can\'t be accessed</string>
 
     <string name="label_manual">Manual</string>
-    <string name="label_issues_location">Issues</string>
+    <string name="label_issues_location">Issues Tracker</string>
+    <string name="suggestions_description">Issues or Feature Requests</string>
     <string name="label_source_code">Source</string>
     <string name="feedback_on_copy">Now working on copy</string>
     <string name="default_imported_midi_title">Imported Midi</string>
@@ -185,6 +186,7 @@
     <string name="settings_orientation_portrait">Portrait</string>
     <string name="can_t_move_percussion_channel">Can\'t move percussion channel.</string>
     <string name="crash_report_save">Save Crash Report?</string>
+    <string name="support_email">qfs.pagan@pm.me</string>
     <string name="crash_report_desc">It helps to include this when submitting bug reports to qfs.pagan@pm.me</string>
     <string name="label_settings_enable_midi_playback">Enable Midi Playback</string>
     <string name="export_wav_lines_filename">%1$02d.%2$02d.wav</string>

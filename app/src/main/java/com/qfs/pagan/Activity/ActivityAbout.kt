@@ -1,6 +1,7 @@
 package com.qfs.pagan.Activity
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -49,6 +50,13 @@ class ActivityAbout: PaganActivity() {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = getString(R.string.url_issues).toUri()
             startActivity(intent)
+        }
+
+        this.findViewById<View>(R.id.linkSuggestions).setOnClickListener {
+            val intent = Intent(Intent.ACTION_SENDTO)
+            intent.data = "mailto:".toUri()
+            intent.putExtra(Intent.EXTRA_EMAIL, this.getString(R.string.support_email))
+            startActivity(intent);
         }
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

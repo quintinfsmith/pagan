@@ -1134,11 +1134,6 @@ class MainActivity : PaganActivity() {
         }
     }
 
-    //override fun onSupportNavigateUp(): Boolean {
-    //    val navController = this.findNavController(R.id.nav_host_fragment_content_main)
-    //    return navController.navigateUp(this._app_bar_configuration) || super.onSupportNavigateUp()
-    //}
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
         this._options_menu = menu

@@ -6,12 +6,10 @@ import com.qfs.json.JSONParser
 import kotlinx.serialization.Serializable
 import java.io.File
 
-@Serializable
-class PaganConfiguration(
+data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,
     var sample_rate: Int = 32000,
-    var show_percussion: Boolean = true, // Deprecated, use variable in view_model
     var move_mode: MoveMode = MoveMode.COPY,
     var clip_same_line_release: Boolean = true,
     var use_preferred_soundfont: Boolean = true,
@@ -19,12 +17,12 @@ class PaganConfiguration(
     var allow_midi_playback: Boolean = true,
     var allow_std_percussion: Boolean = false
 ) {
-
     enum class MoveMode {
         MOVE,
         COPY,
         MERGE
     }
+
     companion object {
         fun from_json(content: JSONHashMap): PaganConfiguration {
             return PaganConfiguration(

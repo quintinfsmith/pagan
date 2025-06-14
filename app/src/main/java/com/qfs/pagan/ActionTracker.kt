@@ -373,7 +373,6 @@ class ActionTracker {
     fun attach_activity(activity: MainActivity) {
         this.activity = activity
         this.DEBUG_ON = activity.is_debug_on()
-
     }
 
     fun get_activity(): MainActivity {
@@ -404,20 +403,12 @@ class ActionTracker {
 
     fun allow_midi_playback(value: Boolean) {
         this.track(TrackedAction.AllowMidiPlayback, listOf(if (value) 1 else 0))
-        val activity = this.get_activity()
-        activity.configuration.allow_midi_playback = value
-        if (value) {
-            activity.enable_physical_midi_output()
-        } else {
-            activity.block_physical_midi_output()
-        }
+        TODO()
     }
 
     fun allow_std_percussion(value: Boolean) {
         this.track(TrackedAction.AllowStdPercussion, listOf(if (value) 1 else 0))
-        val activity = this.get_activity()
-        activity.configuration.allow_std_percussion = value
-        activity.populate_supported_soundfont_instrument_names()
+        TODO()
     }
 
     fun go_back(do_save: Boolean? = null) {
@@ -905,7 +896,8 @@ class ActionTracker {
 
     fun set_sample_rate(new_rate: Int) {
         this.track(TrackedAction.SetSampleRate, listOf(new_rate))
-        this.get_activity().set_sample_rate(new_rate)
+        TODO()
+        //this.get_activity().set_sample_rate(new_rate)
     }
 
     fun open_settings() {

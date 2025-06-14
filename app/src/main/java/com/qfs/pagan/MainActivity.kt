@@ -753,11 +753,6 @@ class MainActivity : PaganActivity() {
         }
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        this.recreate()
-    }
-
     override fun onPause() {
         this.playback_stop()
         this.unregisterReceiver(this.broadcast_receiver)
@@ -1128,18 +1123,13 @@ class MainActivity : PaganActivity() {
             }
         )
 
-
         if (this.intent.data == null) {
-            println("AA")
             this.setup_new()
         } else if (this.is_bkp(this.intent.data!!)) {
-            println("BB")
             this.load_from_bkp()
         } else if (this.project_manager.contains(this.intent.data!!)) {
-            println("CC")
             this.load_project(this.intent.data!!.toString())
         } else {
-            println("DD")
             this.handle_uri(this.intent.data!!)
         }
     }
@@ -1995,7 +1985,6 @@ class MainActivity : PaganActivity() {
         this._soundfont?.destroy()
         this._soundfont = null
         this._sample_handle_manager = null
-        this.configuration.soundfont = null
         this._midi_playback_device = null
         this._soundfont_supported_instrument_names.clear()
 
@@ -2424,11 +2413,6 @@ class MainActivity : PaganActivity() {
     fun is_bkp(uri: Uri): Boolean {
         val result = uri == "${applicationInfo.dataDir}/.bkp.json".toUri()
         return result
-    }
-
-    fun set_sample_rate(new_sample_rate: Int) {
-        this.configuration.sample_rate = new_sample_rate
-        this.set_soundfont(this.configuration.soundfont)
     }
 
     fun reinit_playback_device() {
@@ -3104,5 +3088,35 @@ class MainActivity : PaganActivity() {
         etRadix.value_set_callback = { new_radix: Int? ->
             rvTuningMap.reset_tuning_map(new_radix)
         }
+    }
+
+    override fun on_paganconfig_change(original: PaganConfiguration) {
+        super.on_paganconfig_change(original)
+
+        if (this.configuration.soundfont != original.soundfont) {
+            this.set_soundfont(this.configuration.soundfont)
+        } else if (this.configuration.sample_rate != original.sample_rate && this.configuration.soundfont != null) {
+            this.set_soundfont(this.configuration.soundfont)
+        }
+
+        if (original.allow_midi_playback != this.configuration.allow_midi_playback) {
+            if (this.configuration.allow_midi_playback) {
+                this.enable_physical_midi_output()
+            } else {
+                this.block_physical_midi_output()
+            }
+        }
+
+        if (original.allow_std_percussion != this.configuration.allow_std_percussion) {
+            this.populate_supported_soundfont_instrument_names()
+        }
+
+        if (original.relative_mode != this.configuration.relative_mode) {
+            if (this.active_context_menu is ContextMenuLeaf) {
+                this.active_context_menu!!.refresh()
+            }
+        }
+
+        this.update_menu_options()
     }
 }

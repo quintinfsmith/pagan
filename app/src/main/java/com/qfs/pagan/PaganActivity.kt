@@ -1,8 +1,7 @@
 package com.qfs.pagan
 
-import android.app.Activity
 import android.app.AlertDialog
-import android.content.Intent
+import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
@@ -15,7 +14,6 @@ import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
@@ -66,22 +64,39 @@ open class PaganActivity: AppCompatActivity() {
         this.requestedOrientation = this.configuration.force_orientation
     }
 
+    private fun reload_config() {
+        val new_configuration = try {
+            PaganConfiguration.from_path(this.configuration_path)
+        } catch (e: Exception) {
+            PaganConfiguration()
+        }
+
+        if (new_configuration != this.configuration) {
+            val original = this.configuration
+            this.configuration = new_configuration
+            this.on_paganconfig_change(original)
+        }
+    }
+
+    open fun on_paganconfig_change(original: PaganConfiguration) {
+        this.requestedOrientation = this.configuration.force_orientation
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        this.project_manager = ProjectManager(this)
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
         this.load_config()
+    }
 
-        this.project_manager = ProjectManager(this)
-        // Move files from applicationInfo.data to externalfilesdir (pre v1.1.2 location)
-        val old_projects_dir = File("${applicationInfo.dataDir}/projects")
-        if (old_projects_dir.isDirectory) {
-            for (f in old_projects_dir.listFiles()!!) {
-                val new_file_name = this.project_manager.get_new_path()
-                f.copyTo(File(new_file_name))
-            }
-            old_projects_dir.deleteRecursively()
-        }
+    override fun onResume() {
+        super.onResume()
+        this.reload_config()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        this.recreate()
     }
 
     fun parse_file_name(uri: Uri): String? {

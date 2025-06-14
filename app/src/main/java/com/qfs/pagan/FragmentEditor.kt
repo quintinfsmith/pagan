@@ -18,7 +18,6 @@ import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.setFragmentResult
-import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import com.qfs.pagan.ContextMenu.ContextMenuChannel
 import com.qfs.pagan.ContextMenu.ContextMenuColumn
@@ -41,7 +40,6 @@ import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import java.io.File
 import java.io.FileInputStream
-import kotlin.concurrent.thread
 
 class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
     val view_model: EditorViewModel by viewModels()
@@ -159,20 +157,7 @@ class FragmentEditor : FragmentPagan<FragmentMainBinding>() {
         val opus_manager = main.get_opus_manager()
 
         val editor_table = this.binding.root.findViewById<EditorTable>(R.id.etEditorTable)
-
-        // SavedInstanceState may be created when the fragment isn't active, and save an empty state.
-        // *NEED* to make sure it isn't empty before traversing this branch
-        if (savedInstanceState != null) {
-            this.view_model.scroll_x = savedInstanceState.getInt("scroll_x")
-            this.view_model.scroll_y = savedInstanceState.getInt("scroll_y")
-        } else if (!opus_manager.first_load_done) {
-            // Navigate to (import / load/new)
-            editor_table.visibility = View.VISIBLE
-            return
-        }
-
         editor_table.visibility = View.VISIBLE
-        this.reload_from_bkp()
 
 
         // At the moment, can't save the history cache into a bundle, so restore it if

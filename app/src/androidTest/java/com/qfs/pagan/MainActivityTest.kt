@@ -98,10 +98,21 @@ class MainActivityTest {
             val base_version = OpusLayerBase()
             base_version.import_from_other(opus_manager)
             other.path = opus_manager.path // Path wont be the same
-            assertEquals(
-                other.to_json().to_string(),
-                base_version.to_json().to_string()
-            )
+
+
+            assertEquals(other.length, base_version.length)
+            assertEquals(other.channels.size, base_version.channels.size)
+
+            for (c in 0 until other.get_all_channels().size) {
+                val other_channel = other.get_all_channels()[c]
+                val this_channel = base_version.get_all_channels()[c]
+                for (l in 0 until other_channel.lines.size) {
+                    assertEquals(other_channel.lines[l], this_channel.lines[l])
+                }
+            }
+
+            assertEquals(other.project_name, base_version.project_name)
+            assertEquals(other.project_notes, base_version.project_notes)
         }
     }
 

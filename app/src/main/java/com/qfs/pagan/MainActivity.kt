@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -1173,7 +1172,7 @@ class MainActivity : PaganActivity() {
             R.id.itmLoadProject -> {
                 this.dialog_load_project { path: String ->
                     this.dialog_save_project {
-                        this.load_project(path)
+                        this.get_action_interface().load_project(path)
                     }
                 }
             }
@@ -1220,16 +1219,26 @@ class MainActivity : PaganActivity() {
                 }
             }
 
-            R.id.itmSettings -> startActivity(Intent(this, ActivitySettings::class.java))
-            R.id.itmAbout -> startActivity(Intent(this, ActivityAbout::class.java))
+            R.id.itmSettings -> {
+                this.get_action_interface().open_settings()
+            }
+            R.id.itmAbout -> {
+                this.get_action_interface().open_about()
+            }
             R.id.itmDebug -> {
-                val tracker = this.get_action_interface()
                 this.save_actions()
                 this.feedback_msg("SAVED ACTIONS")
-
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    fun open_settings() {
+        startActivity(Intent(this, ActivitySettings::class.java))
+    }
+
+    fun open_about() {
+        startActivity(Intent(this, ActivityAbout::class.java))
     }
 
     fun project_save() {

@@ -1,5 +1,4 @@
 package com.qfs.pagan
-import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView

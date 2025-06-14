@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import android.net.Uri
 import android.util.Log
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -853,13 +852,13 @@ class ActionTracker {
     }
 
     fun open_settings() {
-        //this.track(TrackedAction.OpenSettings)
-        TODO()
+        this.track(TrackedAction.OpenSettings)
+        this.get_activity().open_settings()
     }
 
     fun open_about() {
         this.track(TrackedAction.OpenAbout)
-        TODO()
+        this.get_activity().open_about()
     }
 
 
@@ -871,7 +870,7 @@ class ActionTracker {
 
     fun load_project(path: String) {
         this.track(TrackedAction.LoadProject, string_to_ints(path))
-        TODO("LOAD PROJECT")
+        this.get_activity().load_project(path)
     }
 
 

@@ -28,17 +28,12 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.OpenSettings,
                 ActionTracker.TrackedAction.OpenAbout,
                 ActionTracker.TrackedAction.NewProject,
-                ActionTracker.TrackedAction.DisableSoundFont,
                 ActionTracker.TrackedAction.ApplyUndo -> {
                     Pair(enum, listOf())
                 }
 
                 // ------- Boolean ------------
-                ActionTracker.TrackedAction.AllowMidiPlayback,
-                ActionTracker.TrackedAction.AllowStdPercussion,
-                ActionTracker.TrackedAction.GoBack,
-                ActionTracker.TrackedAction.SetClipNotes,
-                ActionTracker.TrackedAction.SetRelativeModeVisibility -> {
+                ActionTracker.TrackedAction.GoBack -> {
                     Pair(enum, listOf(1))
                 }
 
@@ -58,10 +53,7 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.SetTransitionAtCursor,
                 ActionTracker.TrackedAction.ShowLineController,
                 ActionTracker.TrackedAction.ShowChannelController,
-                ActionTracker.TrackedAction.SetSoundFont,
-                ActionTracker.TrackedAction.DeleteSoundFont,
                 ActionTracker.TrackedAction.ImportSong,
-                ActionTracker.TrackedAction.ImportSoundFont,
                 ActionTracker.TrackedAction.SetCopyMode,
                 ActionTracker.TrackedAction.LoadProject -> {
                     val test_string = "Some String"
@@ -74,11 +66,9 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.AdjustSelection,
                 ActionTracker.TrackedAction.MuteChannel,
                 ActionTracker.TrackedAction.UnMuteChannel,
-                ActionTracker.TrackedAction.ForceOrientation,
                 ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
                 ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
                 ActionTracker.TrackedAction.SetPanAtCursor,
-                ActionTracker.TrackedAction.SetSampleRate,
                 ActionTracker.TrackedAction.InsertLine,
                 ActionTracker.TrackedAction.RemoveLine,
                 ActionTracker.TrackedAction.InsertChannel,
@@ -240,17 +230,12 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.OpenSettings,
                     ActionTracker.TrackedAction.OpenAbout,
                     ActionTracker.TrackedAction.NewProject,
-                    ActionTracker.TrackedAction.DisableSoundFont,
                     ActionTracker.TrackedAction.ApplyUndo -> {
                         JSONList(json_name)
                     }
 
                     // ------- Boolean ------------
-                    ActionTracker.TrackedAction.AllowMidiPlayback,
-                    ActionTracker.TrackedAction.AllowStdPercussion,
-                    ActionTracker.TrackedAction.GoBack,
-                    ActionTracker.TrackedAction.SetClipNotes,
-                    ActionTracker.TrackedAction.SetRelativeModeVisibility -> {
+                    ActionTracker.TrackedAction.GoBack -> {
                         JSONList(json_name, JSONBoolean(true))
                     }
 
@@ -264,10 +249,7 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.SetTransitionAtCursor,
                     ActionTracker.TrackedAction.ShowLineController,
                     ActionTracker.TrackedAction.ShowChannelController,
-                    ActionTracker.TrackedAction.SetSoundFont,
-                    ActionTracker.TrackedAction.DeleteSoundFont,
                     ActionTracker.TrackedAction.ImportSong,
-                    ActionTracker.TrackedAction.ImportSoundFont,
                     ActionTracker.TrackedAction.SetCopyMode,
                     ActionTracker.TrackedAction.LoadProject -> {
                         val test_string = "Some String"
@@ -277,13 +259,11 @@ class ActionTrackerUnitTest {
                     // ------- Single Int Argument ----------------
                     ActionTracker.TrackedAction.UntagColumn,
                     ActionTracker.TrackedAction.AdjustSelection,
-                    ActionTracker.TrackedAction.ForceOrientation,
                     ActionTracker.TrackedAction.MuteChannel,
                     ActionTracker.TrackedAction.UnMuteChannel,
                     ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
                     ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
                     ActionTracker.TrackedAction.SetPanAtCursor,
-                    ActionTracker.TrackedAction.SetSampleRate,
                     ActionTracker.TrackedAction.InsertLine,
                     ActionTracker.TrackedAction.RemoveLine,
                     ActionTracker.TrackedAction.InsertChannel,

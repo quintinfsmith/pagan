@@ -41,6 +41,7 @@ import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -1122,6 +1123,16 @@ class MainActivity : PaganActivity() {
                 }
             }
         )
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                this@MainActivity.dialog_save_project {
+                    this@MainActivity.save_to_backup()
+                    this@MainActivity.finish()
+                }
+            }
+        })
+
 
         if (this.intent.data == null) {
             this.setup_new()

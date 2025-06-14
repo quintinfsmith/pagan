@@ -19,6 +19,7 @@
         tools:targetApi="35" >
 
         <activity
+            android:screenOrientation="locked"
             android:name=".Activity.ActivityLanding"
             android:exported="true"
             android:label="@string/app_name"
@@ -37,6 +38,7 @@
         </activity>
 
         <activity android:name=".MainActivity"
+            android:screenOrientation="locked"
             android:exported="true"
             android:label="@string/app_name_brief"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
@@ -51,11 +53,13 @@
 
 
         <activity android:name=".Activity.ActivitySettings"
+            android:screenOrientation="locked"
             android:label="@string/app_name"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/Theme.Pagan.NoActionBar"/>
 
         <activity android:name=".Activity.ActivityAbout"
+            android:screenOrientation="locked"
             android:label="@string/app_name"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/Theme.Pagan.NoActionBar"/>

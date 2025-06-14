@@ -2551,6 +2551,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             //activity.restore_view_model_position()
                         }
 
+                        activity.update_title_text()
                         activity.clear_context_menu()
                     }
 

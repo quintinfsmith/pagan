@@ -1882,7 +1882,8 @@ class MainActivity : PaganActivity() {
         return this._soundfont_supported_instrument_names
     }
 
-    fun set_soundfont(filename: String?) {
+    fun set_soundfont() {
+        val filename = this.configuration.soundfont
         if (filename == null) {
             this.disable_soundfont()
             return
@@ -1906,7 +1907,6 @@ class MainActivity : PaganActivity() {
             return
         }
 
-        this.configuration.soundfont = filename
         this.populate_supported_soundfont_instrument_names()
 
         this.reinit_playback_device()
@@ -3100,9 +3100,9 @@ class MainActivity : PaganActivity() {
         super.on_paganconfig_change(original)
 
         if (this.configuration.soundfont != original.soundfont) {
-            this.set_soundfont(this.configuration.soundfont)
+            this.set_soundfont()
         } else if (this.configuration.sample_rate != original.sample_rate && this.configuration.soundfont != null) {
-            this.set_soundfont(this.configuration.soundfont)
+            this.set_soundfont()
         }
 
         if (original.allow_midi_playback != this.configuration.allow_midi_playback) {

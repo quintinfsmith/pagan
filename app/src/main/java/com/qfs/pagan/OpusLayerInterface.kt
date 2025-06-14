@@ -1378,7 +1378,8 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
             if (sf_path != activity.configuration.soundfont) {
-                this.get_activity()?.get_action_interface()?.set_soundfont(sf_path)
+                activity.configuration.soundfont = sf_path
+                activity.set_soundfont()
             }
         }
     }
@@ -1395,8 +1396,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             // Needs to be set to trigger potentially queued cell changes from on_overlap()
             this._queue_cell_change(beat_key)
-            // val btnDuration: TextView = main.findViewById(R.id.btnDuration) ?: return@runOnUiThread
-            // btnDuration.text = main.getString(R.string.label_duration, duration)
             this._ui_change_bill.queue_refresh_context_menu()
         }
     }

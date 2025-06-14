@@ -1,10 +1,7 @@
 package com.qfs.pagan
 
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import android.view.LayoutInflater
-import android.widget.TextView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.qfs.json.JSONBoolean
@@ -27,7 +24,6 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import java.io.File
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -110,16 +106,9 @@ class ActionTracker {
         OpenSettings,
         OpenAbout,
         GoBack,
-        SetSampleRate,
-        DisableSoundFont,
-        SetSoundFont,
         SetProjectNameAndNotes,
-        SetClipNotes,
         SetTuningTable,
         ImportSong,
-        ImportSoundFont,
-        DeleteSoundFont,
-        SetRelativeModeVisibility,
         SetRelativeMode,
         SwapLines,
         SwapChannels,
@@ -127,9 +116,6 @@ class ActionTracker {
         UnMuteChannel,
         MuteLine,
         UnMuteLine,
-        ForceOrientation,
-        AllowMidiPlayback,
-        AllowStdPercussion,
         AdjustSelection,
         TagColumn,
         UntagColumn
@@ -145,13 +131,10 @@ class ActionTracker {
                     TrackedAction.SetProjectNameAndNotes -> {
                         val name = entry.get_string(1)
                         val notes = entry.get_string(2)
-                        val name_ints = ActionTracker.string_to_ints(name)
-                        listOf(name_ints.size) + name_ints + ActionTracker.string_to_ints(notes)
+                        val name_ints = string_to_ints(name)
+                        listOf(name_ints.size) + name_ints + string_to_ints(notes)
                     }
                     // STRING
-                    TrackedAction.DeleteSoundFont,
-                    TrackedAction.ImportSoundFont,
-                    TrackedAction.SetSoundFont,
                     TrackedAction.SetTransitionAtCursor,
                     TrackedAction.ImportSong,
                     TrackedAction.ShowLineController,
@@ -159,15 +142,11 @@ class ActionTracker {
                     TrackedAction.SetCopyMode,
                     TrackedAction.LoadProject -> {
                         val string = entry.get_string(1)
-                        ActionTracker.string_to_ints(string)
+                        string_to_ints(string)
                     }
 
                     // Boolean
-                    TrackedAction.AllowMidiPlayback,
-                    TrackedAction.AllowStdPercussion,
-                    TrackedAction.GoBack,
-                    TrackedAction.SetClipNotes,
-                    TrackedAction.SetRelativeModeVisibility -> {
+                    TrackedAction.GoBack -> {
                         if (entry.size == 1) {
                             listOf()
                         } else {
@@ -276,8 +255,8 @@ class ActionTracker {
                 when (token) {
                     TrackedAction.SetProjectNameAndNotes -> {
                         val name_length = integers[0]!!
-                        val name = ActionTracker.string_from_ints(integers.subList(1, name_length + 1))
-                        val notes = ActionTracker.string_from_ints(integers.subList(name_length + 1, integers.size))
+                        val name = string_from_ints(integers.subList(1, name_length + 1))
+                        val notes = string_from_ints(integers.subList(name_length + 1, integers.size))
                         arrayOf(
                             JSONString(name),
                             JSONString(notes)
@@ -285,33 +264,21 @@ class ActionTracker {
                     }
 
                     // STRING
-                    TrackedAction.DeleteSoundFont,
-                    TrackedAction.ImportSoundFont,
-                    TrackedAction.SetSoundFont,
                     TrackedAction.SetTransitionAtCursor,
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
                     TrackedAction.SetCopyMode,
                     TrackedAction.ImportSong,
                     TrackedAction.LoadProject -> {
-                        arrayOf(JSONString(ActionTracker.string_from_ints(integers)))
+                        arrayOf(JSONString(string_from_ints(integers)))
                     }
                     // Boolean
-                    TrackedAction.AllowMidiPlayback,
-                    TrackedAction.AllowStdPercussion,
-                    TrackedAction.GoBack,
-                    TrackedAction.SetClipNotes,
-                    TrackedAction.SetRelativeModeVisibility -> {
+                    TrackedAction.GoBack -> {
                         arrayOf(JSONBoolean(integers[0] != 0))
                     }
 
                     TrackedAction.SetTempoAtCursor -> {
                         arrayOf(JSONFloat(Float.fromBits(integers[0]!!)))
-                    }
-
-                    TrackedAction.ShowLineController,
-                    TrackedAction.ShowChannelController -> {
-                        arrayOf(JSONString(string_from_ints(integers)))
                     }
 
                     TrackedAction.TagColumn -> {
@@ -344,7 +311,7 @@ class ActionTracker {
                         val str_len = integers[0]!!
                         Array(integers.size - str_len) { i: Int ->
                             if (i == 0) {
-                                JSONString(ActionTracker.sized_string_from_ints(integers))
+                                JSONString(sized_string_from_ints(integers))
                             } else {
                                 JSONInteger(integers[i + str_len]!!)
                             }
@@ -401,19 +368,10 @@ class ActionTracker {
         this.get_opus_manager().apply_undo()
     }
 
-    fun allow_midi_playback(value: Boolean) {
-        this.track(TrackedAction.AllowMidiPlayback, listOf(if (value) 1 else 0))
-        TODO()
-    }
-
-    fun allow_std_percussion(value: Boolean) {
-        this.track(TrackedAction.AllowStdPercussion, listOf(if (value) 1 else 0))
-        TODO()
-    }
-
     fun go_back(do_save: Boolean? = null) {
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
+        TODO()
+        //val activity = this.get_activity()
+        //val opus_manager = activity.get_opus_manager()
         //val navController = activity.findNavController(R.id.nav_host_fragment_content_main)
         //if (navController.currentDestination?.id == R.id.EditorFragment) {
         //    if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Unset) {
@@ -490,7 +448,7 @@ class ActionTracker {
                 to_channel,
                 to_line
             )
-        } catch (e: OpusLayerBase.IncompatibleChannelException) {
+        } catch (_: OpusLayerBase.IncompatibleChannelException) {
             val activity = this.get_activity()
             activity.feedback_msg(activity.getString(R.string.std_percussion_swap))
         }
@@ -501,7 +459,7 @@ class ActionTracker {
         val opus_manager = this.get_opus_manager()
         try {
             opus_manager.swap_channels(from_channel, to_channel)
-        } catch (e: OpusLayerBase.IncompatibleChannelException) {
+        } catch (_: OpusLayerBase.IncompatibleChannelException) {
             val activity = this.get_activity()
             activity.feedback_msg(activity.getString(R.string.can_t_move_percussion_channel))
         }
@@ -586,7 +544,7 @@ class ActionTracker {
     fun cursor_select_ctl_at_line(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeafCtlLine,
-                ActionTracker.enum_to_ints(type) + listOf(beat_key.channel, beat_key.line_offset, beat_key.beat) + position
+                enum_to_ints(type) + listOf(beat_key.channel, beat_key.line_offset, beat_key.beat) + position
         )
 
         this.get_opus_manager().cursor_select_ctl_at_line(type, beat_key, position)
@@ -595,7 +553,7 @@ class ActionTracker {
     fun cursor_select_ctl_at_channel(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeafCtlChannel,
-            ActionTracker.enum_to_ints(type) + listOf(channel, beat) + position
+            enum_to_ints(type) + listOf(channel, beat) + position
         )
 
         this.get_opus_manager().cursor_select_ctl_at_channel(type, channel, beat, position)
@@ -629,9 +587,9 @@ class ActionTracker {
                         second_key,
                         repeat
                     )
-                } catch (e: OpusLayerBase.MixedInstrumentException) {
+                } catch (_: OpusLayerBase.MixedInstrumentException) {
                     opus_manager.cursor_select_line(channel, line_offset)
-                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                } catch (_: OpusLayerBase.InvalidOverwriteCall) {
                     opus_manager.cursor_select_line(channel, line_offset)
                 }
             }
@@ -640,7 +598,7 @@ class ActionTracker {
                 this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
                 try {
                     opus_manager.overwrite_line(channel, line_offset, first_key, repeat)
-                } catch (e: OpusLayerBase.InvalidOverwriteCall) {
+                } catch (_: OpusLayerBase.InvalidOverwriteCall) {
                     opus_manager.cursor_select_line(channel, line_offset)
                 }
             }
@@ -664,7 +622,7 @@ class ActionTracker {
     }
 
     fun cursor_select_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
-        this.track(TrackedAction.CursorSelectLineCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset))
+        this.track(TrackedAction.CursorSelectLineCtlLine, enum_to_ints(type) + listOf(channel, line_offset))
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -688,7 +646,7 @@ class ActionTracker {
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
                     } else {
@@ -699,7 +657,7 @@ class ActionTracker {
 
             CtlLineLevel.Channel -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat, repeat)
                     } else {
@@ -710,7 +668,7 @@ class ActionTracker {
 
             CtlLineLevel.Global -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat, repeat)
                     } else {
@@ -719,7 +677,7 @@ class ActionTracker {
                 }
             }
             null -> {
-                this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
                 opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
             }
         }
@@ -894,20 +852,14 @@ class ActionTracker {
         opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
 
-    fun set_sample_rate(new_rate: Int) {
-        this.track(TrackedAction.SetSampleRate, listOf(new_rate))
-        TODO()
-        //this.get_activity().set_sample_rate(new_rate)
-    }
-
     fun open_settings() {
         //this.track(TrackedAction.OpenSettings)
-        //this.get_activity().navigate(R.id.SettingsFragment)
+        TODO()
     }
 
     fun open_about() {
         this.track(TrackedAction.OpenAbout)
-        this.get_activity().navigate(R.id.LicenseFragment)
+        TODO()
     }
 
 
@@ -918,7 +870,7 @@ class ActionTracker {
     }
 
     fun load_project(path: String) {
-        this.track(TrackedAction.LoadProject, ActionTracker.string_to_ints(path))
+        this.track(TrackedAction.LoadProject, string_to_ints(path))
         TODO("LOAD PROJECT")
     }
 
@@ -948,7 +900,7 @@ class ActionTracker {
 
         val event = context_menu.get_control_event<OpusControlEvent>().copy()
         this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: ControlTransition ->
-            this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
+            this.track(TrackedAction.SetTransitionAtCursor, string_to_ints(transition.name))
             event.transition = transition
             context_menu.widget.set_event(event)
         }
@@ -1167,9 +1119,9 @@ class ActionTracker {
             } else {
                 return
             }
-        } catch (e: OpusLayerInterface.HidingNonEmptyPercussionException) {
+        } catch (_: OpusLayerInterface.HidingNonEmptyPercussionException) {
             return
-        } catch (e: OpusLayerInterface.HidingLastChannelException) {
+        } catch (_: OpusLayerInterface.HidingLastChannelException) {
             return
         }
     }
@@ -1215,7 +1167,7 @@ class ActionTracker {
         }
 
         // Separated KIts and tuned instruments. Kits are always bank 128, but the other instruments are defined by program with variants using the bank
-        options.sortBy { (key, name) ->
+        options.sortBy { (key, _) ->
             if (key.first == 128) {
                 (key.first * 128) + key.second
             } else {
@@ -1277,7 +1229,7 @@ class ActionTracker {
         if (opus_manager.is_percussion(use_index)) {
             try {
                 opus_manager.toggle_channel_visibility(use_index)
-            } catch (e: OpusLayerInterface.HidingLastChannelException) {
+            } catch (_: OpusLayerInterface.HidingLastChannelException) {
                 // pass
             }
         } else if (opus_manager.channels.isNotEmpty()) {
@@ -1374,20 +1326,6 @@ class ActionTracker {
         }
     }
 
-    fun disable_soundfont() {
-        this.track(ActionTracker.TrackedAction.DisableSoundFont)
-        val activity = this.get_activity()
-        val btnChooseSoundFont = activity.findViewById<TextView>(R.id.btnChooseSoundFont)
-        btnChooseSoundFont.text = activity.getString(R.string.no_soundfont)
-        activity.disable_soundfont()
-    }
-
-    fun set_relative_mode_visibility(enabled: Boolean) {
-        this.track(TrackedAction.SetRelativeModeVisibility, listOf(if (enabled) 1 else 0))
-        val activity = this.get_activity()
-        activity.configuration.relative_mode = enabled
-    }
-
     fun set_relative_mode(mode: Int) {
         this.track(TrackedAction.SetRelativeMode, listOf(mode))
 
@@ -1420,7 +1358,7 @@ class ActionTracker {
                             //val current_tree = opus_manager.get_tree()
                             val new_event = current_tree.get_event()!!
                             (new_event as AbsoluteNoteEvent).note
-                        } catch (e: OpusLayerBase.NoteOutOfRange) {
+                        } catch (_: OpusLayerBase.NoteOutOfRange) {
                             opus_manager.set_event_at_cursor(
                                 AbsoluteNoteEvent(0, event.duration)
                             )
@@ -1505,62 +1443,15 @@ class ActionTracker {
         opus_manager.relative_mode = mode
     }
 
-    fun delete_soundfont(input_filename: String? = null) {
-        val activity = this.get_activity()
-        val soundfont_dir = activity.get_soundfont_directory()
-        val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
-
-        val soundfonts = mutableListOf<Pair<String, String>>( )
-
-        for (file in file_list) {
-            soundfonts.add(Pair(file.name, file.name))
-        }
-        if (soundfonts.isEmpty()) {
-            return
-        }
-
-        this.dialog_popup_menu(activity.getString(R.string.dialog_remove_soundfont_title), soundfonts, stub_output = input_filename) { _: Int, filename: String ->
-            this.dialog_confirm(activity.getString(R.string.dialog_remove_soundfont_text, filename), input_filename != null) {
-                this.track(TrackedAction.DeleteSoundFont, ActionTracker.string_to_ints(filename))
-                if (activity.configuration.soundfont != null && activity.configuration.soundfont!! == filename) {
-                    activity.get_action_interface().ignore().disable_soundfont()
-                }
-
-                val file = File("${soundfont_dir.absolutePath}/${filename}")
-                if (file.exists()) {
-                    file.delete()
-                }
-            }
-        }
-    }
-
-    fun set_soundfont(filename: String) {
-        val activity = this.get_activity()
-
-        val path = "${activity.getExternalFilesDir(null)}/SoundFonts/$filename"
-        if (!File(path).isFile) {
-            return // TODO: Maybe throw exception?
-        }
-
-        this.track(TrackedAction.SetSoundFont, ActionTracker.string_to_ints(filename))
-
-        thread {
-            activity.loading_reticle_show(activity.getString(R.string.loading_new_soundfont))
-            activity.set_soundfont(filename)
-            activity.loading_reticle_hide()
-        }
-    }
-
-
     fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {
         val opus_manager = this.get_opus_manager()
         val default = Pair(opus_manager.project_name ?: "", opus_manager.project_notes ?: "")
 
         this.dialog_name_and_notes_popup(default, project_name_and_notes) { name: String, notes: String ->
-            val name_ints = ActionTracker.string_to_ints(name)
+            val name_ints = string_to_ints(name)
             this.track(
                 TrackedAction.SetProjectNameAndNotes,
-                listOf(name_ints.size) + name_ints + ActionTracker.string_to_ints(notes)
+                listOf(name_ints.size) + name_ints + string_to_ints(notes)
             )
 
             val opus_manager = this.get_opus_manager()
@@ -2014,16 +1905,6 @@ class ActionTracker {
                 }
             }
 
-            TrackedAction.SetSampleRate -> {
-                this.set_sample_rate(integers[0]!!)
-            }
-            TrackedAction.DisableSoundFont -> {
-                this.disable_soundfont()
-            }
-            TrackedAction.SetSoundFont -> {
-                this.set_soundfont(string_from_ints(integers))
-            }
-
             TrackedAction.SetProjectNameAndNotes -> {
                 val size = integers[0]!!
                 val project_name = string_from_ints(integers.subList(1, size + 1))
@@ -2052,10 +1933,6 @@ class ActionTracker {
                 this.project_copy()
             }
 
-            TrackedAction.SetClipNotes -> {
-                this.set_clip_same_line_notes(integers[0] != 0)
-            }
-
             TrackedAction.SetTuningTable -> {
                 this.set_tuning_table_and_transpose(
                     Array<Pair<Int, Int>>((integers.size - 2) / 2) { i: Int ->
@@ -2069,22 +1946,11 @@ class ActionTracker {
             }
 
             TrackedAction.ImportSong -> {
-                val uri_string = string_from_ints(integers)
-                val uri = Uri.parse(uri_string)
+                //val uri_string = string_from_ints(integers)
+                //val uri = Uri.parse(uri_string)
                 //this.import(uri)
             }
 
-            TrackedAction.ImportSoundFont -> {
-               // this.import_soundfont(Uri.parse(string_from_ints(integers)))
-            }
-
-            TrackedAction.DeleteSoundFont -> {
-                this.delete_soundfont(string_from_ints(integers))
-            }
-
-            TrackedAction.SetRelativeModeVisibility -> {
-                this.set_relative_mode_visibility(integers[0] != 0)
-            }
             TrackedAction.SetRelativeMode -> {
                 this.set_relative_mode(integers[0]!!)
             }
@@ -2108,16 +1974,6 @@ class ActionTracker {
             TrackedAction.UnMuteLine -> {
                 this.line_unmute(integers[0]!!, integers[1]!!)
             }
-            TrackedAction.ForceOrientation -> {
-                this.set_orientation(integers[0]!!)
-            }
-            TrackedAction.AllowMidiPlayback -> {
-                this.allow_midi_playback(integers[0] != 0)
-            }
-            TrackedAction.AllowStdPercussion -> {
-                this.allow_std_percussion(integers[0] != 0)
-            }
-
             TrackedAction.TagColumn -> {
                 if (integers.size > 1) {
                     this.tag_column(integers[0]!!, string_from_ints(integers.subList(1, integers.size)))
@@ -2143,7 +1999,7 @@ class ActionTracker {
             return
         }
 
-        this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
+        this.track(TrackedAction.SetCopyMode, string_to_ints(mode.name))
 
         context_menu.label.text = when (mode) {
             PaganConfiguration.MoveMode.MOVE -> {
@@ -2290,18 +2146,6 @@ class ActionTracker {
         opus_manager.remove_tagged_section(use_beat)
     }
 
-    fun set_orientation(value: Int) {
-        this.track(TrackedAction.ForceOrientation, listOf(value))
-        this.get_activity().set_forced_orientation(value)
-    }
-
-    fun set_clip_same_line_notes(value: Boolean) {
-        this.track(TrackedAction.SetClipNotes, listOf(if (value) 1 else 0))
-        val activity = this.get_activity()
-        activity.configuration.clip_same_line_release = value
-    }
-
-
     internal fun _track_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Pair<Int, Int>) {
         this.track(
             TrackedAction.SetTuningTable,
@@ -2348,7 +2192,7 @@ class ActionTracker {
     fun to_json(): JSONObject {
         return JSONList(
             *Array(this.action_queue.size) { i: Int ->
-                ActionTracker.item_to_json(this.action_queue[i])
+                item_to_json(this.action_queue[i])
             }
         )
     }
@@ -2357,7 +2201,7 @@ class ActionTracker {
         this.action_queue.clear()
         for (i in 0 until json_list.size) {
             val entry = json_list.get_listn(i) ?: continue
-            val (token, ints) = ActionTracker.from_json_entry(entry)
+            val (token, ints) = from_json_entry(entry)
             this.track(token, ints)
         }
     }

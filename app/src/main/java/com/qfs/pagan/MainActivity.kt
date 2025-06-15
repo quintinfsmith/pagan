@@ -177,6 +177,7 @@ class MainActivity : PaganActivity() {
     }
 
     val view_model: MainViewModel by viewModels()
+    private var initial_load = true
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _has_seen_front_page = false
     private var _integer_dialog_defaults = HashMap<String, Int>()
@@ -192,7 +193,6 @@ class MainActivity : PaganActivity() {
     private var _midi_playback_device: PlaybackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
-    private lateinit var _app_bar_configuration: AppBarConfiguration
     private lateinit var _binding: ActivityMainBinding
     private var _options_menu: Menu? = null
     private var _progress_bar: ConstraintLayout? = null
@@ -1137,6 +1137,7 @@ class MainActivity : PaganActivity() {
         } else {
             this.handle_uri(this.intent.data!!)
         }
+        this.initial_load = false
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -2309,8 +2310,7 @@ class MainActivity : PaganActivity() {
     }
 
     fun dialog_save_project(callback: (Boolean) -> Unit) {
-        if (this.intent.hasExtra("initial_load")) {
-            this.intent.removeExtra("initial_load")
+        if (this.initial_load) {
             callback(false)
         } else if (this.needs_save()) {
             AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)

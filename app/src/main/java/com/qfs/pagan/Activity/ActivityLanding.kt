@@ -45,7 +45,6 @@ class ActivityLanding : PaganActivity() {
                 startActivity(
                     Intent(this, MainActivity::class.java).apply {
                         setData(uri)
-                        putExtra("initial_load", 1)
                     }
                 )
             }
@@ -105,7 +104,6 @@ class ActivityLanding : PaganActivity() {
                 startActivity(
                     Intent(this, MainActivity::class.java).apply {
                         setData(bkp_json_path.toUri())
-                        putExtra("initial_load", 1)
                     }
                 )
             }
@@ -121,9 +119,7 @@ class ActivityLanding : PaganActivity() {
 
         this.findViewById<View>(R.id.btnFrontNew).setOnClickListener {
             startActivity(
-                Intent(this, MainActivity::class.java).apply {
-                    putExtra("initial_load", 1)
-                }
+                Intent(this, MainActivity::class.java)
             )
         }
 
@@ -132,7 +128,6 @@ class ActivityLanding : PaganActivity() {
                 startActivity(
                     Intent(this, MainActivity::class.java).apply {
                         data = path.toUri()
-                        putExtra("initial_load", 1)
                     }
                 )
             }

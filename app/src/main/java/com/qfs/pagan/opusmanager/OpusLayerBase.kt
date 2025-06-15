@@ -4139,6 +4139,10 @@ open class OpusLayerBase {
         this.on_project_changed()
     }
 
+    open fun project_refresh() {
+        this.on_project_changed()
+    }
+
     fun project_change_new() {
         this.project_change_wrapper {
             this._project_change_new()

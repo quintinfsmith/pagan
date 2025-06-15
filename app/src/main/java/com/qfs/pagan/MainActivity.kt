@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -828,7 +829,25 @@ class MainActivity : PaganActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         // Can't reliably put json in outstate. there is a size limit
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        outState.putInt("x", editor_table.get_scroll_x())
+        outState.putInt("y", editor_table.get_scroll_y())
+
         super.onSaveInstanceState(outState)
+    }
+    fun refresh(x: Int, y: Int) {
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        editor_table.clear()
+
+        this.runOnUiThread {
+            editor_table?.visibility = View.INVISIBLE
+        }
+        this.get_opus_manager().project_refresh()
+        this.runOnUiThread {
+            editor_table?.visibility = View.VISIBLE
+            editor_table?.table_ui?.scroll(x, y)
+        }
+
     }
 
     fun setup_new() {
@@ -899,11 +918,15 @@ class MainActivity : PaganActivity() {
         try {
             when (type) {
                 CompatibleFileType.Midi1 -> {
-                    this.import_midi(path_string)
+                    this.dialog_save_project {
+                        this.import_midi(path_string)
+                    }
                 }
 
                 CompatibleFileType.Pagan -> {
-                    this.import_project(path_string)
+                    this.dialog_save_project {
+                        this.import_project(path_string)
+                    }
                 }
 
                 else -> {
@@ -1132,8 +1155,12 @@ class MainActivity : PaganActivity() {
             }
         })
 
-
-        if (this.intent.data == null) {
+        if (savedInstanceState != null) {
+            this.refresh(
+                savedInstanceState.getInt("x") ?: 0,
+                savedInstanceState.getInt("y") ?: 0
+            )
+        } else if (this.intent.data == null) {
             this.setup_new()
         } else if (this.is_bkp(this.intent.data!!)) {
             this.load_from_bkp()
@@ -1178,14 +1205,12 @@ class MainActivity : PaganActivity() {
             }
 
             R.id.itmImportMidi -> {
-                this.dialog_save_project {
-                    this.import_intent_launcher.launch(
-                        Intent().apply {
-                            setAction(Intent.ACTION_GET_CONTENT)
-                            setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
-                        }
-                    )
-                }
+                this.import_intent_launcher.launch(
+                    Intent().apply {
+                        setAction(Intent.ACTION_GET_CONTENT)
+                        setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+                    }
+                )
             }
 
             R.id.itmUndo -> {
@@ -3133,5 +3158,9 @@ class MainActivity : PaganActivity() {
         }
 
         this.update_menu_options()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
     }
 }

@@ -969,7 +969,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
-
     val painted_layer = PaintedLayer(editor_table)
     private var _scroll_locked: Boolean = false
     private var queued_scroll_x: Int? = null

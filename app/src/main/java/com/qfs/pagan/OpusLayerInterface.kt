@@ -1246,6 +1246,13 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    override fun project_refresh() {
+        this.lock_ui_full {
+            this._ui_clear()
+            super.project_refresh()
+        }
+    }
+
     // This function is called from the Base Layer within th project_change_wrapper.
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_new() {

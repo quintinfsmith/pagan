@@ -286,6 +286,14 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         )
     }
 
+    fun get_scroll_x(): Int {
+        return this.table_ui.inner_scroll_view.scrollX
+    }
+
+    fun get_scroll_y(): Int {
+        return this.table_ui.scrollY
+    }
+
     private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
         val box_width = this.table_ui.inner_scroll_view.measuredWidth
 

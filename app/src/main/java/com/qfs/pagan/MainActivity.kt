@@ -839,12 +839,8 @@ class MainActivity : PaganActivity() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
 
-        this.runOnUiThread {
-            editor_table?.visibility = View.INVISIBLE
-        }
         this.get_opus_manager().project_refresh()
         this.runOnUiThread {
-            editor_table?.visibility = View.VISIBLE
             editor_table?.table_ui?.scroll(x, y)
         }
 
@@ -853,38 +849,18 @@ class MainActivity : PaganActivity() {
     fun setup_new() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
-
-        this.runOnUiThread {
-            editor_table?.visibility = View.INVISIBLE
-        }
         this.get_opus_manager().project_change_new()
-        this.runOnUiThread {
-            editor_table?.visibility = View.VISIBLE
-        }
     }
 
     fun load_project(path: String) {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
-
-        this.runOnUiThread {
-            editor_table?.visibility = View.INVISIBLE
-        }
-
         this.get_opus_manager().load_path(path)
-
-        this.runOnUiThread {
-            editor_table?.visibility = View.VISIBLE
-        }
     }
 
     fun load_from_bkp() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
-
-        this.runOnUiThread {
-            editor_table?.visibility = View.INVISIBLE
-        }
 
         val opus_manager = this.get_opus_manager()
         val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
@@ -892,19 +868,15 @@ class MainActivity : PaganActivity() {
         val backup_path: String = File("${this.applicationInfo.dataDir}/.bkp_path").readText()
         opus_manager.load(bytes, backup_path)
 
-        this.runOnUiThread {
-            editor_table?.visibility = View.VISIBLE
-        }
     }
 
     private fun handle_uri(uri: Uri) {
         val path_string = uri.toString()
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
-        //this.loading_reticle_show(getString(R.string.reticle_msg_import_project))
+        this.loading_reticle_show()
 
         this.runOnUiThread {
-            editor_table?.visibility = View.INVISIBLE
             this.clear_context_menu()
         }
 
@@ -940,11 +912,7 @@ class MainActivity : PaganActivity() {
             }
         }
 
-        this.runOnUiThread {
-            editor_table?.visibility = View.VISIBLE
-        }
-
-       // this.loading_reticle_hide()
+        this.loading_reticle_hide()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -2341,7 +2309,10 @@ class MainActivity : PaganActivity() {
     }
 
     fun dialog_save_project(callback: (Boolean) -> Unit) {
-        if (this.needs_save()) {
+        if (this.intent.hasExtra("initial_load")) {
+            this.intent.removeExtra("initial_load")
+            callback(false)
+        } else if (this.needs_save()) {
             AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
                 .setTitle(R.string.dialog_save_warning_title)
                 .setCancelable(true)

@@ -138,7 +138,7 @@ class ActivitySettings : PaganActivity() {
         val sample_rate_value_text = this.findViewById<TextView>(R.id.tvSampleRate)
         sample_rate_value_text.text = getString(R.string.config_label_sample_rate, this.configuration.sample_rate)
         this.findViewById<SeekBar>(R.id.sbPlaybackQuality).let {
-            val options = listOf(8000, 11025, 22050, 32000, 44100, 48000)
+            val options = listOf(8000, 22050, 32000, 44100, 48000)
             var index = 0
             for (i in options.indices) {
                 if (options[i] >= this.configuration.sample_rate) {

@@ -30,16 +30,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-
         </activity>
 
         <activity android:name=".MainActivity"
             android:screenOrientation="locked"
             android:exported="true"
+            android:appCategory="audio"
             android:label="@string/app_name_brief"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/Theme.Pagan.NoActionBar">

@@ -1386,8 +1386,16 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
             if (sf_path != activity.configuration.soundfont) {
+                val original_soundfont = activity.configuration.soundfont
                 activity.configuration.soundfont = sf_path
-                activity.set_soundfont()
+                // Try opening the assigned soundfont, but if it fails for any reason, go back to the
+                // Currently active one.
+                try {
+                    activity.set_soundfont()
+                } catch (e: Exception) {
+                    activity.configuration.soundfont = original_soundfont
+                    activity.set_soundfont()
+                }
             }
         }
     }

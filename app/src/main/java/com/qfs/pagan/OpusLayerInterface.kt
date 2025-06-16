@@ -45,7 +45,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     var relative_mode: Int = 0
-    var first_load_done = false
     private var _activity: MainActivity? = null
 
     private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
@@ -1230,7 +1229,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
         this.get_activity()?.disconnect_feedback_device()
-        this.first_load_done = true
     }
 
     fun reload(bytes: ByteArray, new_path: String?) {
@@ -1276,6 +1274,10 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
         this.percussion_channel.visible = this.has_percussion()
+
+        val activity = this.get_activity()!!
+        val new_path = activity.get_new_project_path()
+        this.path = new_path
     }
 
     override fun save(path: String?) {
@@ -2406,6 +2408,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 val ctl_tree = controller.get_tree(beat)
                 column.add(ctl_tree.get_total_child_weight())
             }
+
             editor_table.add_column_to_map(beat, column)
         }
     }
@@ -2553,10 +2556,10 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                         activity.update_channel_instruments()
                         activity.populate_active_percussion_names(true)
-                        if (restore_position) {
-                            // TODO: May need to reimplement this once activies are split up
-                            //activity.restore_view_model_position()
-                        }
+                        // TODO: May need to reimplement this once activies are split up
+                        //if (restore_position) {
+                        //    activity.restore_view_model_position()
+                        //}
 
                         activity.update_title_text()
                         activity.clear_context_menu()

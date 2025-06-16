@@ -6,12 +6,14 @@
     android:orientation="vertical">
 
     <com.qfs.pagan.EditorTable
+        android:background="#FF00FF"
         android:id="@+id/etEditorTable"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
     <LinearLayout
+        android:background="#FF0000"
         android:id="@+id/llContextMenuPrimary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,6 +25,7 @@
         android:orientation="vertical"/>
 
     <LinearLayout
+        android:background="#FFAA00"
         android:id="@+id/llContextMenuSecondary"
         android:layout_width="match_parent"
         android:layout_height="@dimen/secondary_contextmenu_height"

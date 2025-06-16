@@ -813,9 +813,6 @@ class MainActivity : PaganActivity() {
 
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
-        if (!opus_manager.first_load_done) {
-            return
-        }
         val path = opus_manager.path
         if (path != null) {
             val path_file = File("${applicationInfo.dataDir}/.bkp_path")
@@ -867,7 +864,6 @@ class MainActivity : PaganActivity() {
         val bytes = FileInputStream(bkp_json_path).readBytes()
         val backup_path: String = File("${this.applicationInfo.dataDir}/.bkp_path").readText()
         opus_manager.load(bytes, backup_path)
-
     }
 
     private fun handle_uri(uri: Uri) {
@@ -1137,6 +1133,7 @@ class MainActivity : PaganActivity() {
         } else {
             this.handle_uri(this.intent.data!!)
         }
+
         this.initial_load = false
     }
 
@@ -1853,9 +1850,6 @@ class MainActivity : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_midi(midi)
         val filename = this.parse_file_name(path.toUri())
-        val new_path = this.project_manager.get_new_path()
-
-        opus_manager.path = new_path
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(R.string.default_imported_midi_title))
         opus_manager.clear_history()
     }

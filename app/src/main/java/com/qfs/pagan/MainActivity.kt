@@ -829,7 +829,8 @@ class MainActivity : PaganActivity() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         outState.putInt("x", editor_table.get_scroll_x())
         outState.putInt("y", editor_table.get_scroll_y())
-
+        println("SAVE!")
+        this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
     fun refresh(x: Int, y: Int) {
@@ -2635,7 +2636,6 @@ class MainActivity : PaganActivity() {
     }
 
     override fun onDestroy() {
-        this.save_to_backup()
         this._sample_handle_manager?.destroy()
         this._feedback_sample_manager?.destroy()
         super.onDestroy()

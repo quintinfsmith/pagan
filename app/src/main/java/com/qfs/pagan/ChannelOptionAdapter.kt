@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.qfs.pagan.Activity.ActivityEditor
 
 class ChannelOptionAdapter(
     private val _opus_manager: OpusLayerInterface,
@@ -38,8 +39,8 @@ class ChannelOptionAdapter(
         return ChannelOptionViewHolder(wrapper)
     }
 
-    fun get_activity(): MainActivity {
-        return this._recycler.context as MainActivity
+    fun get_activity(): ActivityEditor {
+        return this._recycler.context as ActivityEditor
     }
 
     private fun set_text(view: MaterialButton, position: Int) {

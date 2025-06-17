@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import kotlin.math.roundToInt
@@ -30,7 +31,7 @@ class ControlWidgetReverb(default: OpusReverbEvent, level: CtlLineLevel, is_init
 
         this._button.setOnClickListener {
             var context = this.context
-            while (context !is MainActivity) {
+            while (context !is ActivityEditor) {
                 context = (context as ContextThemeWrapper).baseContext
             }
 

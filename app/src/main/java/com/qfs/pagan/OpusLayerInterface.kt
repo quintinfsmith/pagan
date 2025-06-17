@@ -4,6 +4,7 @@ import android.view.View
 import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.ActiveController
@@ -45,7 +46,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     var relative_mode: Int = 0
-    private var _activity: MainActivity? = null
+    private var _activity: ActivityEditor? = null
 
     private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
 
@@ -56,11 +57,11 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private var _in_reload = false
 
-    fun attach_activity(activity: MainActivity) {
+    fun attach_activity(activity: ActivityEditor) {
         this._activity = activity
     }
 
-    fun get_activity(): MainActivity? {
+    fun get_activity(): ActivityEditor? {
         return this._activity
     }
 
@@ -892,7 +893,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             // set the default instrument to the first available in the soundfont (if applicable)
             if (this.is_percussion(channel)) {
-                this.get_activity()?.let { activity: MainActivity ->
+                this.get_activity()?.let { activity: ActivityEditor ->
                     val percussion_keys = activity.active_percussion_names.keys.sorted()
                     if (percussion_keys.isNotEmpty()) {
                         this.percussion_channel.lines[line_offset ?: (this.percussion_channel.size - 1)].instrument = percussion_keys.first() - 27
@@ -2527,7 +2528,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             return
         }
         var queued_scroll: Triple<Pair<Int?, Int?>, Pair<Float, Float>, Boolean>? = null
-        this.runOnUiThread { activity: MainActivity ->
+        this.runOnUiThread { activity: ActivityEditor ->
             this._ui_change_bill.consolidate()
             while (true) {
                 val entry = this._ui_change_bill.get_next_entry()
@@ -2765,7 +2766,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    private fun runOnUiThread(callback: (MainActivity) -> Unit) {
+    private fun runOnUiThread(callback: (ActivityEditor) -> Unit) {
         val main = this._activity ?: return // TODO: Throw Exception?
         val runnable = Runnable {
             callback(main)

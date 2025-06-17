@@ -1,28 +1,21 @@
 package com.qfs.pagan
 
 
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
-import com.qfs.apres.event.Volume
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.pagan.ActionTracker.TrackedAction
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.VolumeController
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.TypeSafeMatcher
@@ -51,7 +44,7 @@ class MainActivityTest {
 
     @Rule
     @JvmField
-    var mActivityScenarioRule = ActivityScenarioRule(MainActivity::class.java)
+    var mActivityScenarioRule = ActivityScenarioRule(ActivityEditor::class.java)
 
     private fun run_action(token: ActionTracker.TrackedAction, int_list: List<Int?> = listOf()) {
         this.mActivityScenarioRule.scenario.onActivity { activity ->
@@ -60,7 +53,7 @@ class MainActivityTest {
         }
     }
 
-    private fun with_opus_manager(callback: (OpusManager, MainActivity) -> Unit) {
+    private fun with_opus_manager(callback: (OpusManager, ActivityEditor) -> Unit) {
         this.mActivityScenarioRule.scenario.onActivity { activity ->
             val opus_manager = activity?.get_opus_manager() ?: return@onActivity
             callback(opus_manager, activity)

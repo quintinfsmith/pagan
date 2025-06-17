@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.view.ContextThemeWrapper
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 
@@ -72,7 +73,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
         return (this.parent as LineLabelView).get_opus_manager()
     }
 
-    fun get_activity(): MainActivity {
-        return (this.context as ContextThemeWrapper).baseContext as MainActivity
+    fun get_activity(): ActivityEditor {
+        return (this.context as ContextThemeWrapper).baseContext as ActivityEditor
     }
 }

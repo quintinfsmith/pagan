@@ -6,6 +6,7 @@ import android.view.DragEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.LinearLayoutCompat
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -114,9 +115,9 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         this.set_inner_label()
     }
 
-    fun get_activity(): MainActivity {
+    fun get_activity(): ActivityEditor {
         var context = this.context
-        while (context !is MainActivity) {
+        while (context !is ActivityEditor) {
             context = (context as ContextThemeWrapper).baseContext
         }
         return context

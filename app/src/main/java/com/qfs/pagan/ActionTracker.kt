@@ -9,6 +9,7 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
 import com.qfs.pagan.ContextMenu.ContextMenuRange
 import com.qfs.pagan.OpusLayerInterface
@@ -331,17 +332,17 @@ class ActionTracker {
         }
     }
 
-    var activity: MainActivity? = null
+    var activity: ActivityEditor? = null
     private var ignore_flagged: Boolean = false
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
     var lock: Boolean = false
 
-    fun attach_activity(activity: MainActivity) {
+    fun attach_activity(activity: ActivityEditor) {
         this.activity = activity
         this.DEBUG_ON = activity.is_debug_on()
     }
 
-    fun get_activity(): MainActivity {
+    fun get_activity(): ActivityEditor {
         return this.activity ?: throw NoActivityException()
     }
 

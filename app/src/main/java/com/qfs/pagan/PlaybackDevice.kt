@@ -3,12 +3,13 @@ package com.qfs.pagan
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.pagan.Activity.ActivityEditor
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 
-class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHandleManager, stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo): MappedPlaybackDevice(
+class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: SampleHandleManager, stereo_mode: WaveGenerator.StereoMode = WaveGenerator.StereoMode.Stereo): MappedPlaybackDevice(
     PlaybackFrameMap(activity.get_opus_manager(), sample_handle_manager),
     sample_handle_manager.sample_rate,
     sample_handle_manager.buffer_size,
@@ -58,7 +59,7 @@ class PlaybackDevice(var activity: MainActivity, sample_handle_manager: SampleHa
     }
 
     override fun on_start() {
-        this.activity.update_playback_state_soundfont(MainActivity.PlaybackState.Playing)
+        this.activity.update_playback_state_soundfont(ActivityEditor.PlaybackState.Playing)
     }
 
     override fun on_mark(i: Int) {

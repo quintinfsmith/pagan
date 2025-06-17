@@ -1,36 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <com.qfs.pagan.EditorTable
-        android:id="@+id/etEditorTable"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <LinearLayout
-        android:id="@+id/llContextMenuPrimary"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="@dimen/primary_contextmenu_padding_bottom"
-        android:paddingTop="@dimen/primary_contextmenu_padding_top"
-        android:paddingStart="@dimen/primary_contextmenu_padding_start"
-        android:paddingEnd="@dimen/primary_contextmenu_padding_end"
-        android:visibility="gone"
-        android:orientation="vertical"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.qfs.pagan.EditorTable
+            android:id="@+id/etEditorTable"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <LinearLayout
+            android:id="@+id/llContextMenuPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/primary_contextmenu_padding_bottom"
+            android:paddingTop="@dimen/primary_contextmenu_padding_top"
+            android:paddingStart="@dimen/primary_contextmenu_padding_start"
+            android:paddingEnd="@dimen/primary_contextmenu_padding_end"
+            android:visibility="gone"
+            android:orientation="vertical"/>
+
+        <LinearLayout
+            android:id="@+id/llContextMenuSecondary"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/secondary_contextmenu_height"
+            android:paddingBottom="@dimen/secondary_contextmenu_padding_bottom"
+            android:paddingTop="@dimen/secondary_contextmenu_padding_top"
+            android:paddingStart="@dimen/secondary_contextmenu_padding_start"
+            android:paddingEnd="@dimen/secondary_contextmenu_padding_end"
+            android:visibility="gone"
+            android:orientation="vertical"/>
+    </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/llContextMenuSecondary"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/secondary_contextmenu_height"
-        android:paddingBottom="@dimen/secondary_contextmenu_padding_bottom"
-        android:paddingTop="@dimen/secondary_contextmenu_padding_top"
-        android:paddingStart="@dimen/secondary_contextmenu_padding_start"
-        android:paddingEnd="@dimen/secondary_contextmenu_padding_end"
+        android:id="@+id/llClearOverlay"
+        android:orientation="horizontal"
+        android:clickable="true"
         android:visibility="gone"
-        android:orientation="vertical"/>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

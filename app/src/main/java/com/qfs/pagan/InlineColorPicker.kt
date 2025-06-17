@@ -7,10 +7,10 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.LinearLayoutCompat
-import androidx.core.graphics.toColorLong
+import com.qfs.pagan.Activity.ActivityEditor
 import kotlin.math.roundToInt
 
-class InlineColorPicker(private val _activity: MainActivity, label: String): LinearLayoutCompat(_activity, null) {
+class InlineColorPicker(private val _activity: ActivityEditor, label: String): LinearLayoutCompat(_activity, null) {
     private val _color_button = ButtonColor(_activity, null)
     private val _hex_input = HexEditText(_activity)
 

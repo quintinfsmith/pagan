@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
 import com.google.android.material.button.MaterialButton
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
@@ -38,7 +39,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_init
             )
 
             this._transition_button.setOnClickListener {
-                val main = (this.context as MainActivity)
+                val main = (this.context as ActivityEditor)
                 main.get_action_interface().set_ctl_transition()
             }
         }
@@ -48,11 +49,11 @@ class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_init
         this._slider.progress = (this.working_event.value * this.max.toFloat()).toInt()
 
         var context = this.context
-        while (context !is MainActivity) {
+        while (context !is ActivityEditor) {
             context = (context as ContextThemeWrapper).baseContext
         }
         this._button.setOnClickListener {
-            (context as MainActivity).get_action_interface().set_volume()
+            (context as ActivityEditor).get_action_interface().set_volume()
         }
 
         this._slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

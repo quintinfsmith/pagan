@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.widget.Button
 import com.google.android.material.button.MaterialButton
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt
@@ -18,7 +19,7 @@ class ControlWidgetTempo(default: OpusTempoEvent, _level: CtlLineLevel, is_initi
         (this.input as MaterialButton).setIconResource(R.drawable.tempo_widget_icon)
         this.input.text = "${this.working_event.value} BPM"
         this.input.setOnClickListener {
-            (this.context as MainActivity).get_action_interface().set_tempo_at_cursor()
+            (this.context as ActivityEditor).get_action_interface().set_tempo_at_cursor()
         }
     }
 

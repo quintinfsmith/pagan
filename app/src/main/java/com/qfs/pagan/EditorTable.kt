@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import kotlin.math.max
@@ -228,12 +229,12 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         return this._column_width_maxes[column]
     }
 
-    fun get_activity(): MainActivity {
-        return this.context as MainActivity
+    fun get_activity(): ActivityEditor {
+        return this.context as ActivityEditor
     }
 
     fun get_opus_manager(): OpusManager {
-        return (this.context as MainActivity).get_opus_manager()
+        return (this.context as ActivityEditor).get_opus_manager()
     }
 
     fun update_line_label(y: Int) {

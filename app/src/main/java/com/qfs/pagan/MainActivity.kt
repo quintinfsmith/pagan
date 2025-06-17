@@ -55,6 +55,7 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.net.toUri
+import androidx.core.view.GravityCompat
 import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
 import androidx.documentfile.provider.DocumentFile
@@ -97,6 +98,7 @@ import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
 import com.qfs.pagan.opusmanager.OpusPanEvent
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
@@ -1112,9 +1114,19 @@ class MainActivity : PaganActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                this@MainActivity.dialog_save_project {
-                    this@MainActivity.save_to_backup()
-                    this@MainActivity.finish()
+                val that = this@MainActivity
+                val opus_manager = that.get_opus_manager()
+                val drawer_layout = that.findViewById<DrawerLayout>(R.id.drawer_layout)
+
+                if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+                    that.drawer_close()
+                } else if (opus_manager.cursor.mode != CursorMode.Unset) {
+                    opus_manager.cursor_clear()
+                } else {
+                    that.dialog_save_project {
+                        that.save_to_backup()
+                        that.finish()
+                    }
                 }
             }
         })

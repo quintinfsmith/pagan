@@ -7,6 +7,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import androidx.core.view.children
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.context) {
@@ -66,8 +67,8 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         this.dragging_position = null
     }
 
-    fun get_activity(): MainActivity {
-        return this.context as MainActivity
+    fun get_activity(): ActivityEditor {
+        return this.context as ActivityEditor
     }
 
     fun get_opus_manager(): OpusManager {

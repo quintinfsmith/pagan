@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.LinearLayoutCompat
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 
@@ -38,9 +39,9 @@ abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_
         }
     }
 
-    fun get_activity(): MainActivity {
+    fun get_activity(): ActivityEditor {
         var working_context = this.context
-        while (working_context !is MainActivity) {
+        while (working_context !is ActivityEditor) {
             working_context = (working_context as ContextThemeWrapper).baseContext
         }
         return working_context

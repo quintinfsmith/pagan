@@ -2,7 +2,7 @@ package com.qfs.pagan.ContextMenu
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import com.qfs.pagan.MainActivity
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 
 abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int?, primary_container: ViewGroup, secondary_container: ViewGroup) {
@@ -37,8 +37,8 @@ abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int
     abstract fun refresh()
 
 
-    fun get_activity(): MainActivity {
-        return this.context as MainActivity
+    fun get_activity(): ActivityEditor {
+        return this.context as ActivityEditor
     }
     fun get_opus_manager(): OpusLayerInterface {
         return this.get_activity().get_opus_manager()

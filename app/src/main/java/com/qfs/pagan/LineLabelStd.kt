@@ -2,20 +2,15 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration.getLongPressTimeout
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.graphics.blue
-import androidx.core.graphics.green
-import androidx.core.graphics.red
-import androidx.core.graphics.toColor
 import androidx.core.graphics.toColorInt
 import androidx.core.graphics.toColorLong
-import androidx.test.core.view.forceRedraw
+import com.qfs.pagan.Activity.ActivityEditor
 import kotlin.concurrent.thread
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -191,7 +186,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         this.refreshDrawableState()
     }
 
-    fun get_activity(): MainActivity {
+    fun get_activity(): ActivityEditor {
         return (this.parent as LineLabelView).get_activity()
     }
     fun get_opus_manager(): OpusLayerInterface {

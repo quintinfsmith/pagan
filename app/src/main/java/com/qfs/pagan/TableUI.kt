@@ -12,6 +12,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import androidx.core.content.ContextCompat
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -271,8 +272,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        fun get_activity(): MainActivity {
-            return this.context as MainActivity
+        fun get_activity(): ActivityEditor {
+            return this.context as ActivityEditor
         }
 
         fun get_action_interface(): ActionTracker {

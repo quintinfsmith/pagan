@@ -12,7 +12,6 @@ import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
 import com.qfs.apres.event.GeneralMIDIEvent
-import com.qfs.pagan.MainActivity
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

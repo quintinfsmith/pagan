@@ -32,7 +32,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".MainActivity"
+        <activity android:name=".Activity.ActivityEditor"
             android:screenOrientation="locked"
             android:exported="true"
             android:appCategory="audio"

@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
+import com.qfs.pagan.Activity.ActivityEditor
 
 class ButtonStd(context: Context, attrs: AttributeSet?): androidx.appcompat.widget.AppCompatTextView(context, attrs) {
     // NOTE: this logic exists in drawableStateChanged() rather than init since palette isn't guaranteed
@@ -21,9 +22,9 @@ class ButtonStd(context: Context, attrs: AttributeSet?): androidx.appcompat.widg
             .5f
         }
     }
-    fun get_activity(): MainActivity {
+    fun get_activity(): ActivityEditor {
         var context = this.context
-        while (context !is MainActivity) {
+        while (context !is ActivityEditor) {
             context = (context as ContextThemeWrapper).baseContext
         }
         return context

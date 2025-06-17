@@ -12,7 +12,7 @@ import android.widget.Space
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
-import com.qfs.pagan.MainActivity
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivityLandingBinding
@@ -43,7 +43,7 @@ class ActivityLanding : PaganActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result?.data?.data?.also { uri ->
                 startActivity(
-                    Intent(this, MainActivity::class.java).apply {
+                    Intent(this, ActivityEditor::class.java).apply {
                         setData(uri)
                     }
                 )
@@ -102,7 +102,7 @@ class ActivityLanding : PaganActivity() {
             val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
             most_recent_button.setOnClickListener {
                 startActivity(
-                    Intent(this, MainActivity::class.java).apply {
+                    Intent(this, ActivityEditor::class.java).apply {
                         setData(bkp_json_path.toUri())
                     }
                 )
@@ -119,14 +119,14 @@ class ActivityLanding : PaganActivity() {
 
         this.findViewById<View>(R.id.btnFrontNew).setOnClickListener {
             startActivity(
-                Intent(this, MainActivity::class.java)
+                Intent(this, ActivityEditor::class.java)
             )
         }
 
         this.findViewById<View>(R.id.btnFrontLoad).setOnClickListener {
             this.dialog_load_project { path : String ->
                 startActivity(
-                    Intent(this, MainActivity::class.java).apply {
+                    Intent(this, ActivityEditor::class.java).apply {
                         data = path.toUri()
                     }
                 )

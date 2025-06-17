@@ -26,6 +26,7 @@ import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -1261,39 +1262,34 @@ class MainActivity : PaganActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun _enable_blocker_view() {
-        //val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
+        if (blocker_view != null && blocker_view.visibility != View.VISIBLE) {
+            blocker_view.setOnTouchListener { _, motion_event ->
+                /* Allow Scrolling on the y axis when scrolling in the main_recycler */
+                if (motion_event == null) {
+                } else if (motion_event.action == 1) {
+                    this._blocker_scroll_y = null
+                } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
+                } else {
+                    val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+                    val scroll_view = editor_table.get_scroll_view()
 
-        //if (blocker_view != null && blocker_view.visibility != View.VISIBLE) {
-        //    blocker_view.setOnTouchListener { _, motion_event ->
-        //        /* Allow Scrolling on the y axis when scrolling in the main_recycler */
-        //        if (motion_event == null) {
-        //        } else if (motion_event.action == 1) {
-        //            this._blocker_scroll_y = null
-        //        } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
-        //        } else {
-        //            val fragment = this.get_active_fragment()
-        //            if (fragment !is FragmentEditor) {
-        //                return@setOnTouchListener false
-        //            }
-        //            val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-        //            val scroll_view = editor_table.get_scroll_view()
+                    if (this._blocker_scroll_y == null) {
+                        this._blocker_scroll_y = (motion_event.y - scroll_view.y)
+                    }
 
-        //            if (this._blocker_scroll_y == null) {
-        //                this._blocker_scroll_y = (motion_event.y - scroll_view.y)
-        //            }
+                    val rel_y = (motion_event.y - scroll_view.y)
+                    val delta_y = this._blocker_scroll_y!! - rel_y
 
-        //            val rel_y = (motion_event.y - scroll_view.y)
-        //            val delta_y = this._blocker_scroll_y!! - rel_y
+                    scroll_view.scrollBy(0, delta_y.toInt())
+                    this._blocker_scroll_y = rel_y
+                }
+                true
+            }
 
-        //            scroll_view.scrollBy(0, delta_y.toInt())
-        //            this._blocker_scroll_y = rel_y
-        //        }
-        //        true
-        //    }
-
-        //    blocker_view.visibility = View.VISIBLE
-        //    this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        //}
+            blocker_view.visibility = View.VISIBLE
+            this.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun _disable_blocker_view() {
@@ -1303,8 +1299,8 @@ class MainActivity : PaganActivity() {
             return
         }
         this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        // val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
-        // blocker_view.visibility = View.GONE
+        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
+        blocker_view.visibility = View.GONE
     }
 
     private fun playback_start() {

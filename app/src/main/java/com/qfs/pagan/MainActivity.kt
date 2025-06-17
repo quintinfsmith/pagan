@@ -829,7 +829,6 @@ class MainActivity : PaganActivity() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         outState.putInt("x", editor_table.get_scroll_x())
         outState.putInt("y", editor_table.get_scroll_y())
-        println("SAVE!")
         this.save_to_backup()
         super.onSaveInstanceState(outState)
     }

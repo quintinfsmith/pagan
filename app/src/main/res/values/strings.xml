@@ -212,6 +212,10 @@
     <string name="color_picker_clear">Clear</string>
     <string name="dlg_title_set_line_color">Set Line Color</string>
     <string name="app_name_brief">Pagan</string>
+    <string name="no_project_notes">No Project Notes</string>
+    <string name="project_info_beat_count">%1$d Beats</string>
+    <string name="project_info_channel_count">%1$d Channels</string>
+    <string name="project_info_tempo">%1$d BPM</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

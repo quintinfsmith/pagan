@@ -13,7 +13,7 @@ class PopupMenuRecyclerAdapter<T>(
     private val _recycler: RecyclerView,
     private var _options: List<Pair<T, String>>,
     private val _default: T? = null,
-    private val _callback: (Int, T) -> Unit
+    private val event_handler: MenuDialogEventHandler<T>,
 ) : RecyclerView.Adapter<ViewHolder>() {
     class PopupMenuRecyclerViewHolder(itemView: View) : ViewHolder(itemView) {
         init {
@@ -46,7 +46,10 @@ class PopupMenuRecyclerAdapter<T>(
         text_view.text = this._options[position].second.trim()
 
         text_view.setOnClickListener {
-            this._callback(position, this._options[position].first)
+            this.event_handler.do_submit(position, this._options[position].first)
+        }
+        text_view.setOnLongClickListener {
+            this.event_handler.on_long_click_item(position, this._options[position].first)
         }
     }
 

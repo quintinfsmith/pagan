@@ -43,6 +43,9 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
+    <style name="Theme.Pagan.NoActionBar.FullscreenOnLandscape" parent="Theme.Pagan.NoActionBar">
+        <item name="android:windowFullscreen">false</item>
+    </style>
     <style name="Theme.Pagan.SeekBar" parent="Widget.AppCompat.SeekBar">
         <item name="android:thumbTint">@color/primary</item>
         <item name="android:progressTint">@color/primary</item>

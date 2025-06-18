@@ -9,6 +9,7 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event.Text
 import com.qfs.apres.event.TimeSignature
 import com.qfs.apres.event.VolumeMSB
 import com.qfs.apres.event2.NoteOff79
@@ -3676,9 +3677,12 @@ open class OpusLayerBase {
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
-
-
         val midi = Midi()
+
+        midi.insert_event(0, Text("Generated with Pagan Music Sequencer."))
+        this.project_notes?.let {
+            midi.insert_event(0, Text(it))
+        }
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.length + 1)
@@ -3765,18 +3769,18 @@ open class OpusLayerBase {
                 apply_active_controller(volume_controller) { event: OpusVolumeEvent, previous_event: OpusVolumeEvent?, frames: Int ->
                     when (event.transition) {
                         ControlTransition.Instant -> {
-                            val value = min(((event.value + 1F) * 64).toInt(), 127)
-                            listOf(Pair(0, VolumeMSB(c, value)))
+                            val value = event.value * 127
+                            listOf(Pair(0, VolumeMSB(c, value.toInt())))
                         }
 
                         ControlTransition.Linear -> {
-                            val working_value = previous_event?.value ?: 0F
+                            val working_value = previous_event?.value ?: 64F
                             val diff = (event.value - working_value) / (frames * event.duration).toFloat()
                             val working_list = mutableListOf<Pair<Int, MIDIEvent>>()
                             var last_val: Int? = null
                             for (x in 0 until frames * event.duration) {
                                 val mid_val = working_value + (x * diff)
-                                val value = min(((mid_val + 1F) * 64).toInt(), 127)
+                                val value = min((mid_val * 127).toInt(), 127)
                                 if (last_val != value) {
                                     working_list.add(Pair(x, VolumeMSB(c, value)))
                                 }
@@ -3787,23 +3791,11 @@ open class OpusLayerBase {
                     }
                 }
             }
-
-
         }
 
-
-
         this.channels.forEachIndexed outer@{ c: Int, channel: OpusChannel ->
-            midi.insert_event(
-                0,
-                0,
-                BankSelect(channel.midi_channel, channel.midi_bank)
-            )
-            midi.insert_event(
-                0,
-                0,
-                ProgramChange(channel.midi_channel, channel.midi_program)
-            )
+            midi.insert_event(0, 0, BankSelect(channel.midi_channel, channel.midi_bank))
+            midi.insert_event(0, 0, ProgramChange(channel.midi_channel, channel.midi_program))
 
             for (l in channel.lines.indices) {
                 val line = channel.lines[l]
@@ -3883,7 +3875,7 @@ open class OpusLayerBase {
                         }
                     }
 
-                    if (!(b < start_beat || b >= end_beat ?: this.length)) {
+                    if (!((b < start_beat || b >= (end_beat ?: this.length)))) {
                         current_tick += midi.ppqn
                     }
                 }

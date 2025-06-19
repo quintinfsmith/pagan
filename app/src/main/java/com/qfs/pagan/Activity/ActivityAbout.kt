@@ -27,6 +27,8 @@ class ActivityAbout: PaganActivity() {
         val text_view_license = this.findViewById<TextView>(R.id.tvLicenseText)
         val stream = this.assets.open("LICENSE")
 
+        this._binding.toolbar.title = "${this.getString(R.string.app_name)} ${this.getString(R.string.app_version)}"
+
         val bytes = ByteArray(stream.available())
         stream.read(bytes)
         stream.close()

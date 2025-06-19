@@ -16,12 +16,13 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:title="@string/app_name"
             app:navigationIcon="@drawable/baseline_arrow_back_24"
             app:contentInsetStartWithNavigation="0dp"
             app:titleTextAppearance="@style/TextAppearance.AppCompat.Small"
             app:titleTextColor="@color/on_surface" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <include layout="@layout/fragment_license" />
+    <include layout="@layout/fragment_about" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

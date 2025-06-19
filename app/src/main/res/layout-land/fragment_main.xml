@@ -36,7 +36,8 @@
                 android:paddingTop="@dimen/secondary_contextmenu_padding_top"
                 android:paddingStart="@dimen/secondary_contextmenu_padding_start"
                 android:paddingEnd="@dimen/secondary_contextmenu_padding_end"
-                android:layout_width="match_parent"
+                android:layout_gravity="center"
+                android:layout_width="@dimen/contextmenu_width"
                 android:layout_height="@dimen/secondary_contextmenu_height"
                 android:visibility="gone"
                 android:orientation="vertical">
@@ -44,17 +45,30 @@
 
         </LinearLayout>
 
-
         <LinearLayout
-            android:id="@+id/llContextMenuPrimary"
-            android:layout_width="wrap_content"
+            android:orientation="vertical"
             android:layout_height="match_parent"
-            android:paddingBottom="@dimen/primary_contextmenu_padding_bottom"
-            android:paddingTop="@dimen/primary_contextmenu_padding_top"
-            android:paddingStart="@dimen/primary_contextmenu_padding_start"
-            android:paddingEnd="@dimen/primary_contextmenu_padding_end"
-            android:visibility="gone"
-            android:orientation="horizontal">
+            android:layout_width="wrap_content">
+            <Space
+                android:layout_width="match_parent"
+                android:layout_weight="1"
+                android:layout_height="0dp"/>
+            <LinearLayout
+                android:id="@+id/llContextMenuPrimary"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/contextmenu_landscape_height"
+                android:paddingBottom="@dimen/primary_contextmenu_padding_bottom"
+                android:paddingTop="@dimen/primary_contextmenu_padding_top"
+                android:paddingStart="@dimen/primary_contextmenu_padding_start"
+                android:paddingEnd="@dimen/primary_contextmenu_padding_end"
+                android:visibility="gone"
+                android:orientation="horizontal">
+            </LinearLayout>
+            <Space
+                android:layout_width="match_parent"
+                android:layout_weight="1"
+                android:layout_height="0dp"/>
         </LinearLayout>
 
     </LinearLayout>

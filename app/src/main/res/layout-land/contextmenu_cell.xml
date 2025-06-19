@@ -60,8 +60,8 @@
                 xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:orientation="horizontal"
                 android:id="@+id/nsOctave"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/base_leaf_width"
+                android:layout_height="match_parent"
                 android:paddingStart="@dimen/number_selector_spacing"
                 android:paddingEnd="@dimen/number_selector_spacing"
                 custom:entries_per_line="8"
@@ -75,7 +75,7 @@
             android:id="@+id/rosRelativeOption"
             android:minHeight="@dimen/relative_option_width"
             android:padding="@dimen/normal_padding"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="@dimen/relative_option_width" />
 
     </LinearLayout>
@@ -84,8 +84,8 @@
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:orientation="horizontal"
         android:id="@+id/nsOffset"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/base_leaf_width"
+        android:layout_height="match_parent"
         custom:min="0"
         custom:max="11"/>
 </LinearLayout>

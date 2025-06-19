@@ -103,7 +103,7 @@
                 android:id="@+id/nsOctave"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/line_height"
                 custom:entries_per_line="8"
                 custom:button_theme="1"
                 custom:min="0"
@@ -117,8 +117,7 @@
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:id="@+id/nsOffset"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="@dimen/line_height"
         android:orientation="vertical"
         custom:min="0"
         custom:max="11"/>

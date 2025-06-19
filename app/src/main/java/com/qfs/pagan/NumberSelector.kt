@@ -154,17 +154,19 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             val new_linear_layout = LinearLayout(this.context)
             this.addView(new_linear_layout)
 
-            if (this.orientation == HORIZONTAL) {
-                new_linear_layout.layoutParams.width = resources.getDimension(R.dimen.base_leaf_width).roundToInt()
+            (new_linear_layout.layoutParams as LinearLayout.LayoutParams).weight = 1F
+            if (orientation == HORIZONTAL) {
+                new_linear_layout.layoutParams.width = 0
                 new_linear_layout.layoutParams.height = MATCH_PARENT
                 new_linear_layout.orientation = VERTICAL
                 if (i != 0) {
                     new_linear_layout.setPadding(margin, 0, 0, 0)
                 }
             } else {
-                new_linear_layout.layoutParams.height = resources.getDimension(R.dimen.line_height).roundToInt()
                 new_linear_layout.layoutParams.width = MATCH_PARENT
+                new_linear_layout.layoutParams.height = 0
                 new_linear_layout.orientation = HORIZONTAL
+
                 if (i != 0) {
                     new_linear_layout.setPadding(0, margin, 0, 0)
                 }
@@ -189,7 +191,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             layout_params.gravity = CENTER
             if (orientation == HORIZONTAL) {
                 layout_params.width = MATCH_PARENT
-                layout_params.height = resources.getDimension(R.dimen.line_height).roundToInt()
+                layout_params.height = 0
             } else {
                 layout_params.height = MATCH_PARENT
                 layout_params.width = 0

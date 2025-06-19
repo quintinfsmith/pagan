@@ -81,4 +81,6 @@
     <dimen name="secondary_contextmenu_padding_end">0dp</dimen>
     <dimen name="secondary_contextmenu_padding_bottom">0dp</dimen>
 
+    <dimen name="contextmenu_width">-1px</dimen>
+    <dimen name="contextmenu_landscape_height">-1px</dimen>
 </resources>

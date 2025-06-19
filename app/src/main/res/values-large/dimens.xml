@@ -2,4 +2,5 @@
 <resources>
     <dimen name="contextmenu_width">400dp</dimen>
     <dimen name="contextmenu_landscape_height">400dp</dimen>
+    <dimen name="landing_menu_width">400dp</dimen>
 </resources>

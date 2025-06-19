@@ -83,4 +83,6 @@
 
     <dimen name="contextmenu_width">-1px</dimen>
     <dimen name="contextmenu_landscape_height">-1px</dimen>
+
+    <dimen name="landing_menu_width">-1px</dimen>
 </resources>

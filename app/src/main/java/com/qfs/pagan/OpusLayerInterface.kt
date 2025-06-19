@@ -45,6 +45,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
     }
 
+    var initialized = false
     var relative_mode: Int = 0
     private var _activity: ActivityEditor? = null
 
@@ -1230,6 +1231,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
         this.get_activity()?.disconnect_feedback_device()
+        this.initialized = true
     }
 
     fun reload(bytes: ByteArray, new_path: String?) {
@@ -2962,5 +2964,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.move_beat_range(beat_key, first_corner, second_corner)
         }
+    }
+
+    fun is_initialized(): Boolean {
+        return this.initialized
     }
 }

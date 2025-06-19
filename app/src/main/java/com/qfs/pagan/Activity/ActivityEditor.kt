@@ -127,14 +127,11 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.collections.iterator
 import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlin.text.format
-import kotlin.text.iterator
 
 class ActivityEditor : PaganActivity() {
     companion object {
@@ -894,6 +891,7 @@ class ActivityEditor : PaganActivity() {
         opus_manager.path = path
     }
 
+
     override fun onSaveInstanceState(outState: Bundle) {
         // Can't reliably put json in outstate. there is a size limit
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
@@ -1208,10 +1206,15 @@ class ActivityEditor : PaganActivity() {
         })
 
         if (savedInstanceState != null) {
-            this.refresh(
-                savedInstanceState.getInt("x") ?: 0,
-                savedInstanceState.getInt("y") ?: 0
-            )
+            // if the activity is forgotten, the opus_manager is be uninitialized
+            if (this.get_opus_manager().is_initialized()) {
+                this.refresh(
+                    savedInstanceState.getInt("x") ?: 0,
+                    savedInstanceState.getInt("y") ?: 0
+                )
+            } else {
+                this.load_from_bkp()
+            }
         } else if (this.intent.data == null) {
             this.setup_new()
         } else if (this.is_bkp(this.intent.data!!)) {

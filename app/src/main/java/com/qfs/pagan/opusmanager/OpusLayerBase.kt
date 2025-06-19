@@ -9,7 +9,9 @@ import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event.Text
 import com.qfs.apres.event.TimeSignature
+import com.qfs.apres.event.VolumeMSB
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.json.JSONHashMap
@@ -3675,9 +3677,12 @@ open class OpusLayerBase {
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
-
-
         val midi = Midi()
+
+        midi.insert_event(0, Text("Generated with Pagan Music Sequencer."))
+        this.project_notes?.let {
+            midi.insert_event(0, Text(it))
+        }
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.length + 1)
@@ -3734,8 +3739,8 @@ open class OpusLayerBase {
 
         val channels = this.get_all_channels()
         for (c in channels.indices) {
-            val channel_controller = channels[c].controllers.get_controller<OpusPanEvent>(ControlEventType.Pan)
-            apply_active_controller(channel_controller) { event: OpusPanEvent, previous_event: OpusPanEvent?, frames: Int ->
+            val pan_controller = channels[c].controllers.get_controller<OpusPanEvent>(ControlEventType.Pan)
+            apply_active_controller(pan_controller) { event: OpusPanEvent, previous_event: OpusPanEvent?, frames: Int ->
                 when (event.transition) {
                     ControlTransition.Instant -> {
                         val value = min(((event.value + 1F) * 64).toInt(), 127)
@@ -3758,21 +3763,39 @@ open class OpusLayerBase {
                     }
                 }
             }
+
+            if (channels[c].controllers.has_controller(ControlEventType.Volume)) {
+                val volume_controller = channels[c].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
+                apply_active_controller(volume_controller) { event: OpusVolumeEvent, previous_event: OpusVolumeEvent?, frames: Int ->
+                    when (event.transition) {
+                        ControlTransition.Instant -> {
+                            val value = event.value * 127
+                            listOf(Pair(0, VolumeMSB(c, value.toInt())))
+                        }
+
+                        ControlTransition.Linear -> {
+                            val working_value = previous_event?.value ?: 64F
+                            val diff = (event.value - working_value) / (frames * event.duration).toFloat()
+                            val working_list = mutableListOf<Pair<Int, MIDIEvent>>()
+                            var last_val: Int? = null
+                            for (x in 0 until frames * event.duration) {
+                                val mid_val = working_value + (x * diff)
+                                val value = min((mid_val * 127).toInt(), 127)
+                                if (last_val != value) {
+                                    working_list.add(Pair(x, VolumeMSB(c, value)))
+                                }
+                                last_val = value
+                            }
+                            working_list
+                        }
+                    }
+                }
+            }
         }
 
-
-
         this.channels.forEachIndexed outer@{ c: Int, channel: OpusChannel ->
-            midi.insert_event(
-                0,
-                0,
-                BankSelect(channel.midi_channel, channel.midi_bank)
-            )
-            midi.insert_event(
-                0,
-                0,
-                ProgramChange(channel.midi_channel, channel.midi_program)
-            )
+            midi.insert_event(0, 0, BankSelect(channel.midi_channel, channel.midi_bank))
+            midi.insert_event(0, 0, ProgramChange(channel.midi_channel, channel.midi_program))
 
             for (l in channel.lines.indices) {
                 val line = channel.lines[l]
@@ -3852,7 +3875,7 @@ open class OpusLayerBase {
                         }
                     }
 
-                    if (!(b < start_beat || b >= end_beat ?: this.length)) {
+                    if (!((b < start_beat || b >= (end_beat ?: this.length)))) {
                         current_tick += midi.ppqn
                     }
                 }

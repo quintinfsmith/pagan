@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="contextmenu_width">480dp</dimen>
+    <dimen name="landing_menu_width">480dp</dimen>
+</resources>

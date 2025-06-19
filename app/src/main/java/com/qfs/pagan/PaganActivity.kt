@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,14 +14,22 @@ import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.opusmanager.OpusLayerBase
+import com.qfs.pagan.opusmanager.OpusTempoEvent
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.util.Date
 import kotlin.io.path.Path
+import kotlin.math.roundToInt
 
 open class PaganActivity: AppCompatActivity() {
     internal lateinit var configuration_path: String
@@ -127,7 +136,7 @@ open class PaganActivity: AppCompatActivity() {
         }
     }
 
-    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Pair<T, String>>, default: T? = null, sort_options: List<Pair<String, (List<Pair<T, String>>) -> List<Pair<T, String>>>>, default_sort_option: Int = 0, callback: (index: Int, value: T) -> Unit): AlertDialog? {
+    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Pair<T, String>>, default: T? = null, sort_options: List<Pair<String, (List<Pair<T, String>>) -> List<Pair<T, String>>>>, default_sort_option: Int = 0, event_handler: MenuDialogEventHandler<T>): AlertDialog? {
         if (this._popup_active) {
             return null
         }
@@ -168,12 +177,17 @@ open class PaganActivity: AppCompatActivity() {
             }
             .show()
 
-        val adapter = PopupMenuRecyclerAdapter<T>(recycler, sort_options[default_sort_option].second(options), default) { index: Int, value: T ->
-            dialog.dismiss()
-            callback(index, value)
+        val adapter = PopupMenuRecyclerAdapter<T>(recycler, sort_options[default_sort_option].second(options), default, event_handler)
+        event_handler.dialog = dialog
+
+        spinner.adapter = object: ArrayAdapter<String>(this, R.layout.spinner_list, sortable_labels) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent)
+                (view as TextView).gravity = Gravity.END
+                return view
+            }
         }
 
-        spinner.adapter = ArrayAdapter<String>(this, R.layout.spinner_list, sortable_labels)
         spinner.onItemSelectedListener = object: OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 adapter.set_items(
@@ -207,6 +221,14 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit): AlertDialog? {
+        return this.dialog_popup_menu(title, options, default, object : MenuDialogEventHandler<T>() {
+            override fun on_submit(index: Int, value: T) {
+                callback(index, value)
+            }
+        })
+    }
+
+    internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, event_handler: MenuDialogEventHandler<T>): AlertDialog? {
         if (this._popup_active) {
             return null
         }
@@ -235,10 +257,8 @@ open class PaganActivity: AppCompatActivity() {
             }
             .show()
 
-        val adapter = PopupMenuRecyclerAdapter<T>(recycler, options, default) { index: Int, value: T ->
-            dialog.dismiss()
-            callback(index, value)
-        }
+        val adapter = PopupMenuRecyclerAdapter<T>(recycler, options, default, event_handler)
+        event_handler.dialog = dialog
 
         adapter.notifyDataSetChanged()
 
@@ -261,26 +281,74 @@ open class PaganActivity: AppCompatActivity() {
                     f.lastModified()
                 }
             },
-            Pair(getString(R.string.sort_option_date_created)) { original: List<Pair<String, String>> ->
-                original.sortedBy { (path, _): Pair<String, String> ->
-                    val f = Path(path)
-                    val attributes: BasicFileAttributes = Files.readAttributes<BasicFileAttributes>(
-                        f,
-                        BasicFileAttributes::class.java
-                    )
-                    attributes.creationTime()
-                }
-            }
+            //Pair(getString(R.string.sort_option_date_created)) { original: List<Pair<String, String>> ->
+            //    original.sortedBy { (path, _): Pair<String, String> ->
+            //        val f = Path(path)
+            //        val attributes: BasicFileAttributes = Files.readAttributes<BasicFileAttributes>(
+            //            f,
+            //            BasicFileAttributes::class.java
+            //        )
+            //        attributes.creationTime()
+            //    }
+            //}
         )
 
-        this.dialog_popup_sortable_menu<String>(
-            getString(R.string.menu_item_load_project),
-            project_list,
-            null,
-            sort_options,
-            0
-        ) { _: Int, path: String ->
-            callback(path)
-        }
+        this.dialog_popup_sortable_menu<String>(getString(R.string.menu_item_load_project), project_list, null, sort_options, 0, object: MenuDialogEventHandler<String>() {
+            override fun on_submit(index: Int, value: String) {
+                callback(value)
+            }
+            override fun on_long_click_item(index: Int, value: String): Boolean {
+                val view: View = LayoutInflater.from(this@PaganActivity)
+                    .inflate(
+                        R.layout.dialog_project_info,
+                        window.decorView.rootView as ViewGroup,
+                        false
+                    )
+
+                val opus_manager = OpusLayerBase()
+                opus_manager.load_path(value)
+                if (opus_manager.project_notes != null) {
+                    view.findViewById<TextView>(R.id.project_notes)?.let {
+                        it.text = opus_manager.project_notes!!
+                        it.visibility = View.VISIBLE
+                    }
+                }
+
+                view.findViewById<TextView>(R.id.project_size)?.let {
+                    it.text = getString(R.string.project_info_beat_count, opus_manager.length)
+                }
+                view.findViewById<TextView>(R.id.project_channel_count)?.let {
+                    var count = opus_manager.channels.size
+                    if (opus_manager.has_percussion()) {
+                        count += 1
+                    }
+                    it.text = getString(R.string.project_info_channel_count, count)
+                }
+                view.findViewById<TextView>(R.id.project_tempo)?.let {
+                    it.text = getString(R.string.project_info_tempo, opus_manager.get_global_controller<OpusTempoEvent>(ControlEventType.Tempo).initial_event.value.roundToInt())
+                }
+                view.findViewById<TextView>(R.id.project_last_modified)?.let {
+                    val f = File(value)
+                    val time = Date(f.lastModified())
+                    val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                    it.text = formatter.format(time)
+                }
+
+                AlertDialog.Builder(this@PaganActivity, R.style.Theme_Pagan_Dialog)
+                    .setTitle(opus_manager.project_name ?: getString(R.string.untitled_opus))
+                    .setView(view)
+                    .setOnDismissListener { }
+                    .setPositiveButton(getString(R.string.menu_item_load_project)) { dialog, _ ->
+                        dialog.dismiss()
+                        this.do_submit(index, value)
+                    }
+                    .setNeutralButton(getString(android.R.string.cancel)) { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    .show()
+
+                return true
+            }
+        })
     }
 }

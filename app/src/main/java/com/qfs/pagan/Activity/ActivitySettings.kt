@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.net.toUri
 import com.qfs.apres.soundfont.SoundFont
+import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivitySettingsBinding
@@ -276,11 +277,13 @@ class ActivitySettings : PaganActivity() {
             }
         )
 
-        val dialog = this.dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0) { _: Int, path: String ->
-            this.configuration.soundfont = path
-            this.set_soundfont_button_text()
-            this.update_result()
-        }
+        val dialog = this.dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<String>() {
+            override fun on_submit(index: Int, value: String) {
+                this@ActivitySettings.configuration.soundfont = value
+                this@ActivitySettings.set_soundfont_button_text()
+                this@ActivitySettings.update_result()
+            }
+        })
 
         dialog?.findViewById<ViewGroup>(R.id.menu_wrapper)?.let { menu_wrapper ->
             val pre_menu: View = LayoutInflater.from(this)

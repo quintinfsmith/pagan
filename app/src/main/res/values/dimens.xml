@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="app_bar_height">64dp</dimen>
     <dimen name="normal_padding">1dp</dimen>
     <dimen name="stroke_leaf">1dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
@@ -19,33 +18,16 @@
     <dimen name="config_width">248dp</dimen>
     <dimen name="number_selector_spacing">2dp</dimen>
     <dimen name="alert_padding">6dp</dimen>
-    <dimen name="icon_size">36dp</dimen>
-    <dimen name="icon_button_height">54dp</dimen>
-    <dimen name="icon_button_width">60dp</dimen>
     <dimen name="icon_button_height_b">45dp</dimen>
     <dimen name="icon_button_width_b">53dp</dimen>
-    <dimen name="icon_button_padding_a">1dp</dimen>
-    <dimen name="icon_button_padding_b">4dp</dimen>
     <dimen name="channel_conf_icon_height">24dp</dimen>
 
     <dimen name="inline_color_picker_label_padding">12dp</dimen>
     <dimen name="inline_color_picker_button_size">41dp</dimen>
-    <dimen name="color_picker_display_height">82dp</dimen>
     <dimen name="color_picker_display_padding">8dp</dimen>
     <dimen name="color_picker_popup_width">400dp</dimen>
 
     <dimen name="icon_spacing">4dp</dimen>
-    <dimen name="primary_contextmenu_padding_top">4dp</dimen>
-    <dimen name="primary_contextmenu_padding_start">4dp</dimen>
-    <dimen name="primary_contextmenu_padding_end">2dp</dimen>
-    <dimen name="primary_contextmenu_padding_bottom">2dp</dimen>
-    <dimen name="secondary_contextmenu_padding_top">0dp</dimen>
-    <dimen name="secondary_contextmenu_padding_start">4dp</dimen>
-    <dimen name="secondary_contextmenu_padding_end">2dp</dimen>
-    <dimen name="secondary_contextmenu_padding_bottom">2dp</dimen>
-    <dimen name="secondary_contextmenu_height">52dp</dimen>
-    <dimen name="secondary_contextmenu_button_height">42dp</dimen>
-
     <dimen name="text_size_offset">18sp</dimen>
     <dimen name="text_size_octave">14sp</dimen>
     <dimen name="text_size_column_tagged">18sp</dimen>
@@ -55,21 +37,52 @@
 
     <dimen name="landing_button_space">3dp</dimen>
     <dimen name="landing_button_space_h">6dp</dimen>
-    <dimen name="context_icon_size">32dp</dimen>
     <dimen name="contextmenu_icon_corner">16dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
     <dimen name="config_icon_size">24dp</dimen>
     <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
     <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>
 
+    <dimen name="radio_stroke">2dp</dimen>
+    <dimen name="progress_bar_size">64dp</dimen>
+
+
+    <dimen name="app_bar_height">41dp</dimen>
+    <dimen name="context_icon_size">32dp</dimen>
+    <dimen name="icon_size">30dp</dimen>
+    <dimen name="icon_button_width">58dp</dimen>
+    <dimen name="icon_button_height">54dp</dimen>
+
+    <dimen name="icon_button_padding_a">1dp</dimen>
+    <dimen name="icon_button_padding_b">4dp</dimen>
+
     <dimen name="alert_button_padding_v">8dp</dimen>
-    <dimen name="alert_button_padding_h">24dp</dimen>
+    <dimen name="alert_button_padding_h">20dp</dimen>
+
     <dimen name="min_alert_button_width">0dp</dimen>
     <dimen name="min_alert_button_height">0dp</dimen>
-    <dimen name="setting_radio_padding_h">24dp</dimen>
-    <dimen name="setting_radio_padding_v">8dp</dimen>
-    <dimen name="radio_stroke">2dp</dimen>
 
-    <dimen name="progress_bar_size">64dp</dimen>
+    <dimen name="setting_radio_padding_h">14dp</dimen>
+    <dimen name="setting_radio_padding_v">8dp</dimen>
+
+    <dimen name="secondary_contextmenu_height">48dp</dimen>
+    <dimen name="secondary_contextmenu_button_height">30dp</dimen>
+
     <dimen name="color_picker_seekbar">100dp</dimen>
+    <dimen name="color_picker_display_height">82dp</dimen>
+
+    <dimen name="primary_contextmenu_padding_top">2dp</dimen>
+    <dimen name="primary_contextmenu_padding_start">2dp</dimen>
+    <dimen name="primary_contextmenu_padding_end">0dp</dimen>
+    <dimen name="primary_contextmenu_padding_bottom">0dp</dimen>
+
+    <dimen name="secondary_contextmenu_padding_top">2dp</dimen>
+    <dimen name="secondary_contextmenu_padding_start">2dp</dimen>
+    <dimen name="secondary_contextmenu_padding_end">0dp</dimen>
+    <dimen name="secondary_contextmenu_padding_bottom">0dp</dimen>
+
+    <dimen name="contextmenu_width">-1px</dimen>
+    <dimen name="contextmenu_landscape_height">-1px</dimen>
+
+    <dimen name="landing_menu_width">-1px</dimen>
 </resources>

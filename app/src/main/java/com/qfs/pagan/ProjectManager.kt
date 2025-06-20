@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import com.qfs.pagan.OpusLayerInterface as OpusManager
+import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
 
 class ProjectManager(val context: Context) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")

@@ -74,6 +74,7 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.ChannelOptionAdapter
 import com.qfs.pagan.ChannelOptionRecycler
 import com.qfs.pagan.CompatibleFileType
@@ -878,6 +879,18 @@ class ActivityEditor : PaganActivity() {
         this.update_title_text()
     }
 
+    fun delete_backup() {
+        File("${applicationInfo.dataDir}/.bkp.json").let { file ->
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+        File("${applicationInfo.dataDir}/.bkp_path").let { file ->
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+    }
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
         val path = opus_manager.path
@@ -1330,12 +1343,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun project_delete() {
-        val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
         this.project_manager.delete(this.get_opus_manager())
-
-        this.setup_new()
-
-        this.feedback_msg(resources.getString(R.string.feedback_delete, title))
     }
 
     fun project_move_to_copy() {
@@ -1658,7 +1666,7 @@ class ActivityEditor : PaganActivity() {
 
         btnDeleteProject.setOnClickListener {
             if (it.isEnabled) {
-                this.dialog_delete_project()
+                this.dialog_delete_project(this.get_opus_manager())
             }
         }
 
@@ -2416,21 +2424,6 @@ class ActivityEditor : PaganActivity() {
         } else {
             callback(false)
         }
-    }
-
-    private fun dialog_delete_project() {
-        val title = this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
-
-        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(resources.getString(R.string.dlg_delete_title, title))
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                this@ActivityEditor.get_action_interface().delete()
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                dialog.cancel()
-            }
-            .show()
     }
 
     fun get_default_export_name(): String {
@@ -3261,7 +3254,14 @@ class ActivityEditor : PaganActivity() {
         this.update_menu_options()
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
+    override fun on_project_delete(project: OpusLayerBase) {
+        // TODO: Track
+        this.drawer_close()
+        super.on_project_delete(project)
+        this.update_menu_options()
+        if (this.get_opus_manager().path == project.path) {
+            this.delete_backup()
+            this.setup_new()
+        }
     }
 }

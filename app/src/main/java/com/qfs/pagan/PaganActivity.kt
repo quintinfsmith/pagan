@@ -18,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusTempoEvent
@@ -338,11 +339,17 @@ open class PaganActivity: AppCompatActivity() {
                     .setTitle(opus_manager.project_name ?: getString(R.string.untitled_opus))
                     .setView(view)
                     .setOnDismissListener { }
-                    .setPositiveButton(getString(R.string.menu_item_load_project)) { dialog, _ ->
+                    .setPositiveButton(R.string.details_load_project) { dialog, _ ->
                         dialog.dismiss()
                         this.do_submit(index, value)
                     }
-                    .setNeutralButton(getString(android.R.string.cancel)) { dialog, _ ->
+                    .setNegativeButton(R.string.delete_project) { dialog, _ ->
+                        this@PaganActivity.dialog_delete_project(opus_manager) {
+                            dialog.dismiss()
+                            this.dialog?.dismiss()
+                        }
+                    }
+                    .setNeutralButton(android.R.string.cancel) { dialog, _ ->
                         dialog.dismiss()
                     }
                     .show()
@@ -351,4 +358,31 @@ open class PaganActivity: AppCompatActivity() {
             }
         })
     }
+
+    internal fun dialog_delete_project(project: OpusLayerBase, deleted_callback: ((OpusLayerBase) -> Unit)? = null) {
+        if (project.path == null) {
+            return
+        }
+
+        val title = project.project_name ?: getString(R.string.untitled_opus)
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle(resources.getString(R.string.dlg_delete_title, title))
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                this.project_manager.delete(project)
+                if (deleted_callback != null) {
+                    deleted_callback(project)
+                }
+                val title = project.project_name ?: getString(R.string.untitled_opus)
+                this.feedback_msg(resources.getString(R.string.feedback_delete, title))
+                this@PaganActivity.on_project_delete(project)
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .show()
+    }
+
+    open fun on_project_delete(project: OpusLayerBase) { }
+
 }

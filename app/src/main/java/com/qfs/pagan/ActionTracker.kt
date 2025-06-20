@@ -425,10 +425,11 @@ class ActionTracker {
     }
 
     fun delete() {
-        this.track(TrackedAction.DeleteProject)
-        val activity = this.get_activity()
-        activity.project_delete()
-        this.ignore().drawer_close()
+        // TODO
+       // this.track(TrackedAction.DeleteProject)
+       // val activity = this.get_activity()
+       // activity.project_delete()
+       // this.ignore().drawer_close()
     }
 
     fun project_copy() {

@@ -3,19 +3,22 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:minWidth="300dp"
     android:orientation="vertical">
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <TextView
+            android:lines="1"
             android:text="Last Modified:"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"/>
         <TextView
+            android:lines="1"
             android:id="@+id/project_last_modified"
             android:text=""
             android:layout_width="wrap_content"
@@ -27,6 +30,7 @@
         android:layout_height="wrap_content">
 
         <TextView
+            android:lines="1"
             android:id="@+id/project_size"
             android:text=""
             android:layout_width="wrap_content"
@@ -38,6 +42,7 @@
             android:layout_height="wrap_content"/>
 
         <TextView
+            android:lines="1"
             android:id="@+id/project_channel_count"
             android:text=""
             android:layout_width="wrap_content"
@@ -49,6 +54,7 @@
             android:layout_height="wrap_content"/>
 
         <TextView
+            android:lines="1"
             android:id="@+id/project_tempo"
             android:text=""
             android:layout_width="wrap_content"

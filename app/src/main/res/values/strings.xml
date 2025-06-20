@@ -144,6 +144,8 @@
     <string name="dialog_transition">Transition</string>
     <string name="show_line_controls">Show Line Controls...</string>
     <string name="show_channel_controls">Show Channel Controls...</string>
+    <string name="delete_project">Delete</string>
+    <string name="details_load_project">Load</string>
     <string name="menu_item_new_project">New Project</string>
     <string name="menu_item_load_project">Load Project</string>
     <string name="menu_item_import">Import</string>

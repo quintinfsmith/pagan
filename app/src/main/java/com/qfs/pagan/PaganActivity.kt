@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.Activity.ActivityEditor
@@ -93,6 +94,7 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         this.project_manager = ProjectManager(this)
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"

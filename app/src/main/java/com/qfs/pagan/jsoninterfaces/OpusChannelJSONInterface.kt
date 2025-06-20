@@ -28,6 +28,11 @@ class OpusChannelJSONInterface {
                 OpusLineJSONInterface.to_json(channel.lines[i])
             }
 
+            channel_map["type"] = when (channel) {
+                is OpusPercussionChannel -> "kit"
+                is OpusChannel -> "std"
+                else -> "???"
+            }
             channel_map["lines"] = lines
             channel_map["midi_channel"] = channel.get_midi_channel()
             channel_map["midi_bank"] = channel.get_midi_bank()
@@ -328,6 +333,16 @@ class OpusChannelJSONInterface {
                     output_line
                 }
             )
+        }
+
+        fun convert_v3_to_v4(input_map: JSONHashMap): JSONHashMap {
+            val output_map = input_map.copy()
+            output_map["type"] = if (input_map.get_intn("midi_channel") == 9) {
+                "kit"
+            } else {
+                "std"
+            }
+            return output_map
         }
     }
 }

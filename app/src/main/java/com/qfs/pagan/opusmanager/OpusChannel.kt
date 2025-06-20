@@ -22,7 +22,8 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     }
 }
 
-abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
+abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int) {
+    class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
     class BlockedTreeException(var line_offset: Int, var e: OpusTreeArray.BlockedTreeException): Exception()
@@ -364,11 +365,9 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>> {
     fun unmute() {
         this.muted = false
     }
-
 }
 
-class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>() {
-    class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
+class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>(uuid) {
     var midi_channel: Int = 0
     var midi_bank = 0
 
@@ -394,8 +393,7 @@ class OpusChannel(var uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, Opus
 
 }
 
-class OpusPercussionChannel : OpusChannelAbstract<PercussionEvent, OpusLinePercussion>() {
-
+class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, OpusLinePercussion>(uuid) {
     companion object {
         const val DEFAULT_INSTRUMENT = 0
     }

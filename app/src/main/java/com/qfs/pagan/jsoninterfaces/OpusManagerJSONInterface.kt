@@ -9,7 +9,7 @@ import com.qfs.pagan.opusmanager.OpusChannelJSONInterface
 
 class OpusManagerJSONInterface {
     companion object {
-        const val LATEST_VERSION = 3
+        const val LATEST_VERSION = 4
 
         fun convert_v0_to_v1(input: JSONHashMap): JSONHashMap {
             val old_channels = input.get_list("channels")
@@ -92,6 +92,24 @@ class OpusManagerJSONInterface {
                     }
                 }
             }
+        }
+
+        fun convert_v3_to_v4(input_map: JSONHashMap): JSONHashMap {
+            val output_map = input_map.copy()
+            val channel_maps = output_map.get_hashmap("d").get_list("channels")
+            for (i in 0 until channel_maps.size) {
+                channel_maps[i] = OpusChannelJSONInterface.convert_v3_to_v4(
+                    channel_maps.get_hashmap(i)
+                )
+            }
+
+            channel_maps.add(
+                OpusChannelJSONInterface.convert_v3_to_v4(
+                    output_map.get_hashmap("d").get_hashmap("percussion_channel")
+                )
+            )
+
+            return output_map
         }
 
         fun convert_v2_to_v3(input_map: JSONHashMap): JSONHashMap {

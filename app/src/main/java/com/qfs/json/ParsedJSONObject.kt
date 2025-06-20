@@ -23,6 +23,7 @@ interface JSONEncodeable {
 
 interface JSONObject {
     fun to_string(): String
+    fun copy(): JSONObject
 }
 
 data class JSONString(var value: String): JSONObject {
@@ -37,6 +38,10 @@ data class JSONString(var value: String): JSONObject {
     override fun toString(): String {
         return this.to_string()
     }
+
+    override fun copy(): JSONObject {
+        return JSONString(this.value)
+    }
 }
 
 data class JSONFloat(var value: Float): JSONObject {
@@ -48,6 +53,10 @@ data class JSONFloat(var value: Float): JSONObject {
     }
     override fun toString(): String {
         return this.to_string()
+    }
+
+    override fun copy(): JSONObject {
+        return JSONFloat(this.value)
     }
 }
 
@@ -61,6 +70,10 @@ data class JSONInteger(var value: Int): JSONObject {
     override fun toString(): String {
         return this.to_string()
     }
+
+    override fun copy(): JSONInteger {
+        return JSONInteger(this.value)
+    }
 }
 data class JSONBoolean(var value: Boolean): JSONObject {
     override fun to_string(): String {
@@ -72,6 +85,10 @@ data class JSONBoolean(var value: Boolean): JSONObject {
     }
     override fun toString(): String {
         return this.to_string()
+    }
+
+    override fun copy(): JSONBoolean {
+        return JSONBoolean(this.value)
     }
 }
 
@@ -278,6 +295,13 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
         return this.hash_map.isEmpty()
     }
 
+    override fun copy(): JSONHashMap {
+        val output = JSONHashMap()
+        for ((key, value) in this.hash_map) {
+            output.hash_map[key] = value?.copy()
+        }
+        return output
+    }
 }
 
 class JSONList(vararg args: JSONObject?): JSONObject {
@@ -499,6 +523,12 @@ class JSONList(vararg args: JSONObject?): JSONObject {
 
     fun isEmpty(): Boolean {
         return this.list.isEmpty()
+    }
+
+    override fun copy(): JSONList {
+        return JSONList(*Array(this.size) { i: Int ->
+            this.list[i]?.copy()
+        })
     }
 }
 

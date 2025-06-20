@@ -319,8 +319,7 @@ open class OpusLayerBase {
 
     var length: Int = 1
     var controllers = ActiveControlSet(length, setOf(ControlEventType.Tempo))
-    var channels: MutableList<OpusChannel> = mutableListOf()
-    var percussion_channel = OpusPercussionChannel()
+    var channels: MutableList<OpusChannelAbstract> = mutableListOf()
     var path: String? = null
     var project_name: String? = null
     var project_notes: String? = null
@@ -4120,6 +4119,9 @@ open class OpusLayerBase {
         this.project_change_json(
             when (version) {
                 OpusManagerJSONInterface.LATEST_VERSION -> generalized_object
+                3 -> {
+                    OpusManagerJSONInterface.convert_v3_to_v4(generalized_object)
+                }
                 2 -> {
                     OpusManagerJSONInterface.convert_v2_to_v3(
                         generalized_object
@@ -4190,21 +4192,15 @@ open class OpusLayerBase {
 
         this.set_beat_count(inner_map.get_int("size"))
         for (generalized_channel in inner_map.get_list("channels")) {
-            val channel: OpusChannel = OpusChannelJSONInterface.interpret(
+            val channel = OpusChannelJSONInterface.interpret(
                 generalized_channel as JSONHashMap,
                 this.length
-            ) as OpusChannel
+            )
 
             channel.uuid = OpusLayerBase.gen_channel_uuid()
             this.channels.add(channel)
             this._channel_uuid_map[channel.uuid] = channel
         }
-
-        this.percussion_channel = OpusChannelJSONInterface.interpret(
-            inner_map.get_hashmap("percussion_channel"),
-            this.length
-        ) as OpusPercussionChannel
-
 
         val generalized_tuning_map = inner_map.get_list("tuning_map")
         this.tuning_map = Array(generalized_tuning_map.size) { i: Int ->

@@ -3054,7 +3054,10 @@ class ActivityEditor : PaganActivity() {
 
         val opus_manager = this.get_opus_manager()
         scroll_bar.max = opus_manager.length - 1
-        scroll_bar.progress = this._get_start_column()
+
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        scroll_bar.progress = editor_table.get_first_visible_column_index()
+
 
         title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
         title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)

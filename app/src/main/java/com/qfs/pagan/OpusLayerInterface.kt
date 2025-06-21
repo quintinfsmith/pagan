@@ -18,6 +18,7 @@ import com.qfs.pagan.opusmanager.OpusEvent
 import com.qfs.pagan.opusmanager.OpusLayerHistory
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.opusmanager.UnreachableException
@@ -1644,7 +1645,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     fun force_cursor_select_column(beat: Int) {
-        if (this.cursor == this._cache_cursor) {
+        if (this.cursor.mode != CursorMode.Unset) {
             this.cursor_clear()
         }
         this.cursor_select_column(beat)

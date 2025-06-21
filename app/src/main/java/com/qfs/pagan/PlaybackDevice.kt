@@ -32,7 +32,8 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
                 }
             }
             if (!cancelled) {
-                this.activity.loading_reticle_show(activity.getString(R.string.title_msg_buffering))
+                this.activity.loading_reticle_show()
+                this.activity.force_title_text(this.activity.getString(R.string.title_msg_buffering))
             } else {
                 runBlocking {
                     this@PlaybackDevice._buffering_mutex.withLock {
@@ -72,6 +73,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
         if (! this._first_beat_passed) {
             this.activity.runOnUiThread {
                 this.activity.loading_reticle_hide()
+                this.activity.clear_forced_title()
                 this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)
             }
             this._first_beat_passed = true

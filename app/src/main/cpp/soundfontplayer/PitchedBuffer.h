@@ -83,7 +83,7 @@ public:
         int range_size = this->end - this->start;
 
         int adj_i;
-        if (this->is_loop) {
+        if (this->is_loop && range_size > 0) {
             adj_i = unpitched_position % range_size;
         } else if (unpitched_position >= range_size) {
             throw PitchedBufferOverflow();

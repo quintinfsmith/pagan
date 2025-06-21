@@ -212,7 +212,6 @@ class ActivityEditor : PaganActivity() {
 
     private lateinit var _binding: ActivityMainBinding
     private var _options_menu: Menu? = null
-    private var _progress_bar: ConstraintLayout? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
@@ -990,6 +989,7 @@ class ActivityEditor : PaganActivity() {
         }
 
         this.loading_reticle_hide()
+        this.clear_forced_title()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -1411,7 +1411,8 @@ class ActivityEditor : PaganActivity() {
         this._enable_blocker_view()
         this.runOnUiThread {
             this.set_playback_button(R.drawable.baseline_play_disabled_24)
-            this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
+            this.force_title_text(getString(R.string.reticle_msg_start_playback))
+            this.loading_reticle_show()
         }
 
         var start_point = this.get_working_column()
@@ -1438,7 +1439,8 @@ class ActivityEditor : PaganActivity() {
             return
         }
 
-        this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
+        this.force_title_text(getString(R.string.reticle_msg_start_playback))
+        this.loading_reticle_show()
         this._enable_blocker_view()
 
         var start_point = this.get_working_column()
@@ -1451,6 +1453,7 @@ class ActivityEditor : PaganActivity() {
 
         this.runOnUiThread {
             this.loading_reticle_hide()
+            this.clear_forced_title()
             this.set_midi_playback_button(R.drawable.ic_baseline_pause_24)
         }
 
@@ -1478,6 +1481,7 @@ class ActivityEditor : PaganActivity() {
     internal fun playback_stop() {
         if (this.update_playback_state_soundfont(PlaybackState.Stopping)) {
             this.loading_reticle_hide()
+            this.clear_forced_title()
             this._midi_playback_device?.kill()
         }
     }
@@ -1485,6 +1489,7 @@ class ActivityEditor : PaganActivity() {
     internal fun playback_stop_midi_output() {
         if (this.update_playback_state_midi(PlaybackState.Stopping)) {
             this.loading_reticle_hide()
+            this.clear_forced_title()
             this._virtual_input_device.stop()
             this.restore_midi_playback_state()
         }
@@ -1534,46 +1539,6 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    fun loading_reticle_show(title_msg: String? = null) {
-        this.runOnUiThread {
-            if (title_msg != null) {
-                this.force_title_text(title_msg)
-            }
-
-            if (this._progress_bar == null) {
-                this._progress_bar = LayoutInflater.from(this)
-                    .inflate(
-                        R.layout.loading_reticle,
-                        this._binding.root as ViewGroup,
-                        false
-                    ) as ConstraintLayout
-            }
-
-            this._progress_bar!!.isClickable = true
-            val parent = this._progress_bar!!.parent
-            if (parent != null) {
-                (parent as ViewGroup).removeView(this._progress_bar)
-            }
-
-            try {
-                this._binding.root.addView(this._progress_bar)
-            } catch (e: UninitializedPropertyAccessException) {
-                // pass
-            }
-        }
-    }
-
-    fun loading_reticle_hide() {
-        thread {
-            this.runOnUiThread {
-                this.clear_forced_title()
-                val progressBar = this._progress_bar ?: return@runOnUiThread
-                if (progressBar.parent != null) {
-                    (progressBar.parent as ViewGroup).removeView(progressBar)
-                }
-            }
-        }
-    }
 
     fun navigate(fragment: Int) {
         //val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -3264,4 +3229,5 @@ class ActivityEditor : PaganActivity() {
             this.setup_new()
         }
     }
+
 }

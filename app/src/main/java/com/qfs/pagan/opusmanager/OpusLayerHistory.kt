@@ -791,13 +791,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun swap_lines(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+    override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
 
         this._remember {
-            super.swap_lines(channel_a, line_a, channel_b, line_b)
+            super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
             this.push_to_history_stack(
                 HistoryToken.SWAP_LINES,
-                listOf(channel_a, line_a, channel_b, line_b)
+                listOf(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
             )
         }
     }

@@ -180,8 +180,8 @@ open class OpusLayerCursor: OpusLayerBase() {
         return output
     }
 
-    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
-        super.new_channel(channel, lines, uuid)
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
+        super.new_channel(channel, lines, uuid, is_percussion)
         this.cursor_select_channel(channel ?: (this.channels.size - 1))
     }
 
@@ -360,7 +360,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             OpusManagerCursor.CursorMode.Column -> {
                 Pair(
                     BeatKey(0, 0, cursor.beat),
-                    BeatKey(this.channels.size, this.percussion_channel.size -1, cursor.beat)
+                    BeatKey(this.channels.size, this.channels.last().size -1, cursor.beat)
                 )
             }
             OpusManagerCursor.CursorMode.Channel -> {
@@ -395,7 +395,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             OpusManagerCursor.CursorMode.Column -> {
                 Pair(
                     BeatKey(0, 0, cursor.beat),
-                    BeatKey(this.channels.size, this.percussion_channel.size -1, cursor.beat)
+                    BeatKey(this.channels.size, this.channels.last().size - 1, cursor.beat)
                 )
             }
             OpusManagerCursor.CursorMode.Channel -> {
@@ -1142,6 +1142,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
     fun set_percussion_instrument(instrument: Int) {
         this.percussion_set_instrument(
+            this.cursor.channel,
             this.cursor.line_offset,
             instrument
         )

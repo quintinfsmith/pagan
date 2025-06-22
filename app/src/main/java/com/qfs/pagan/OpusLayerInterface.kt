@@ -1108,10 +1108,10 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
     }
-    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         this.lock_ui_partial {
             val notify_index = channel ?: this.channels.size
-            super.new_channel(channel, lines, uuid)
+            super.new_channel(channel, lines, uuid, is_percussion)
             this._ui_change_bill.queue_add_channel(notify_index)
             this._post_new_channel(notify_index, lines)
         }

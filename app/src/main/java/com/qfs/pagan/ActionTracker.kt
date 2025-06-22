@@ -1262,7 +1262,7 @@ class ActionTracker {
         val main = this.get_activity()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val default_instrument = opus_manager.get_percussion_instrument(cursor.line_offset)
+        val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
         val options = mutableListOf<Pair<Int, String>>()
         val sorted_keys = main.active_percussion_names.keys.toMutableList()

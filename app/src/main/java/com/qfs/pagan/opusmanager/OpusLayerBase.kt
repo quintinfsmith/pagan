@@ -519,10 +519,11 @@ open class OpusLayerBase {
                             controller.initial_event.copy()
                         )
                     }
-                    if (i == this.channels.size) {
+                    if (this.is_percussion(i)) {
                         this.percussion_set_instrument(
+                            i,
                             j + 1,
-                            this.get_percussion_instrument(j)
+                            this.get_percussion_instrument(i, j)
                         )
                     }
                 }
@@ -663,7 +664,7 @@ open class OpusLayerBase {
         if (line_offset > percussion_channel.size) {
             throw BadBeatKey(BeatKey(channel, line_offset, beat))
         }
-        return percussion_channel.get_tree(line_offset, beat, position ?: listOf())
+        return (percussion_channel as OpusPercussionChannel).get_tree(line_offset, beat, position ?: listOf())
     }
 
     /**
@@ -1196,13 +1197,6 @@ open class OpusLayerBase {
         }
 
         return output
-    }
-
-    /**
-     * Check if the percusssion channel has any events
-     */
-    fun has_percussion(): Boolean {
-        return !this.percussion_channel.is_empty()
     }
 
     /**

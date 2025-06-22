@@ -191,7 +191,8 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         channel,
                         working_channel.uuid,
                         working_channel.get_midi_bank(),
-                        working_channel.get_midi_program()
+                        working_channel.get_midi_program(),
+                        working_channel is OpusPercussionChannel
                     )
                 )
             )
@@ -430,11 +431,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                 HistoryToken.NEW_CHANNEL -> {
                     val channel = current_node.args[0] as Int
+                    val is_percussion = current_node.args[4] as Boolean
                     this.new_channel(
                         channel = channel,
-                        uuid = current_node.args[1] as Int
+                        uuid = current_node.args[1] as Int,
+                        is_percussion = is_percussion
                     )
-
                     this.channel_set_instrument(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
                 }
 
@@ -575,8 +577,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                 HistoryToken.SET_PERCUSSION_INSTRUMENT -> {
                     this.percussion_set_instrument(
-                        current_node.args[0] as Int, // line
-                        current_node.args[1] as Int // Instrument
+                        current_node.args[0] as Int, // channel
+                        current_node.args[1] as Int, // line
+                        current_node.args[2] as Int // Instrument
                     )
                 }
 
@@ -1382,12 +1385,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun new_channel(channel: Int?, lines: Int, uuid: Int?) {
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         this._remember {
             val channel_to_remove = channel ?: this.channels.size
 
-            super.new_channel(channel, lines, uuid)
-
+            super.new_channel(channel, lines, uuid, is_percussion)
             this.push_to_history_stack(
                 HistoryToken.REMOVE_CHANNEL,
                 listOf(this.channels[channel_to_remove].uuid)
@@ -1428,11 +1430,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun percussion_set_instrument(line_offset: Int, instrument: Int) {
+    override fun percussion_set_instrument(channel: Int, line_offset: Int, instrument: Int) {
         this._remember {
-            val current = this.get_percussion_instrument(line_offset)
-            this.push_to_history_stack(HistoryToken.SET_PERCUSSION_INSTRUMENT, listOf(line_offset, current))
-            super.percussion_set_instrument(line_offset, instrument)
+            val current = this.get_percussion_instrument(channel, line_offset)
+            this.push_to_history_stack(HistoryToken.SET_PERCUSSION_INSTRUMENT, listOf(channel, line_offset, current))
+            super.percussion_set_instrument(channel, line_offset, instrument)
         }
     }
 

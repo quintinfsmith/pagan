@@ -1,0 +1,4 @@
+- Midis and Project files can be imported from file browser now
+- Added Line Coloring for percussion channel
+- View project details and notes from load project menu by long-pressing
+- tweaks to landing page layout

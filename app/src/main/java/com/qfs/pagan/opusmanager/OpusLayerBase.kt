@@ -3684,6 +3684,12 @@ open class OpusLayerBase {
             midi.insert_event(0, Text(it))
         }
 
+        // Set default values
+        for (channel in this.channels) {
+            midi.insert_event(0, 0, VolumeMSB(channel.midi_channel, 0x64))
+        }
+        midi.insert_event(0, 0, VolumeMSB(9, 0x64))
+
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.length + 1)
         val radix = this.tuning_map.size

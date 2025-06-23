@@ -1235,12 +1235,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.initialized = true
     }
 
-    fun reload(bytes: ByteArray, new_path: String?) {
-        this._in_reload = true
-        this.load(bytes, new_path)
-        this._in_reload = false
-    }
-
     override fun project_change_wrapper(callback: () -> Unit)  {
         this.lock_ui_full {
             this._ui_clear()

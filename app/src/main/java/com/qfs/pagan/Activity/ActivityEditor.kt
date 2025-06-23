@@ -945,10 +945,6 @@ class ActivityEditor : PaganActivity() {
 
     private fun handle_uri(uri: Uri) {
         val path_string = uri.toString()
-        this.loading_reticle_show()
-        this.runOnUiThread {
-            this.clear_context_menu()
-        }
 
         val type: CompatibleFileType? = try {
             this.get_file_type(uri)
@@ -956,38 +952,40 @@ class ActivityEditor : PaganActivity() {
             null
         }
 
-        var fallback_msg: String? = null
-        try {
-            when (type) {
-                CompatibleFileType.Midi1 -> {
-                    this.dialog_save_project {
-                        this.import_midi(path_string)
-                    }
-                }
-
-                CompatibleFileType.Pagan -> {
-                    this.dialog_save_project {
-                        this.import_project(path_string)
-                    }
-                }
-
-                else -> {
-                    fallback_msg = getString(R.string.feedback_file_not_found)
-                }
-            }
-        } catch (e: Exception) {
-            fallback_msg = when (type!!) {
-                CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
-                CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
-            }
+        val inner_callback: ((String) -> Unit) = when (type) {
+            CompatibleFileType.Midi1 -> { path_string -> this.import_midi(path_string) }
+            CompatibleFileType.Pagan -> { path_string -> this.import_project(path_string) }
+            else -> { _ -> throw FileNotFoundException(path_string) }
         }
-        this.loading_reticle_hide()
-        this.clear_forced_title()
-        if (fallback_msg != null) {
-            if (!this.get_opus_manager().is_initialized()) {
-                this.setup_new()
+
+        this.dialog_save_project {
+            thread {
+                this.loading_reticle_show()
+                this.runOnUiThread {
+                    this.clear_context_menu()
+                }
+
+                val fallback_msg = try {
+                    inner_callback(path_string)
+                    null
+                } catch (e: Exception) {
+                    when (type) {
+                        CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
+                        CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
+                        null -> getString(R.string.feedback_file_not_found)
+                    }
+                }
+
+                this.loading_reticle_hide()
+                this.clear_forced_title()
+
+                if (fallback_msg != null) {
+                    if (!this.get_opus_manager().is_initialized()) {
+                        this.setup_new()
+                    }
+                    this.feedback_msg(fallback_msg)
+                }
             }
-            this.feedback_msg(fallback_msg)
         }
     }
 

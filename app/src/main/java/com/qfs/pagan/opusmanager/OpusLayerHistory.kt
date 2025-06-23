@@ -173,10 +173,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
             // Will be an extra empty line that needs to be removed
             tmp_history_nodes.add(Pair(HistoryToken.REMOVE_LINE, listOf(channel, line_count)))
 
+            val is_percussion = working_channel is OpusPercussionChannel
             for (i in line_count - 1 downTo 0) {
                 tmp_history_nodes.add(
                     Pair(
-                        HistoryToken.INSERT_LINE,
+                        if (is_percussion) HistoryToken.INSERT_LINE_PERCUSSION else HistoryToken.INSERT_LINE,
                         listOf(channel, i, working_channel.lines[i])
                     )
                 )
@@ -575,8 +576,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                 HistoryToken.SET_PERCUSSION_INSTRUMENT -> {
                     this.percussion_set_instrument(
-                        current_node.args[0] as Int, // line
-                        current_node.args[1] as Int // Instrument
+                        current_node.args[0] as Int, // channel
+                        current_node.args[1] as Int, // line
+                        current_node.args[2] as Int // Instrument
                     )
                 }
 
@@ -1428,11 +1430,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun percussion_set_instrument(line_offset: Int, instrument: Int) {
+    override fun percussion_set_instrument(channel: Int, line_offset: Int, instrument: Int) {
         this._remember {
-            val current = this.get_percussion_instrument(line_offset)
-            this.push_to_history_stack(HistoryToken.SET_PERCUSSION_INSTRUMENT, listOf(line_offset, current))
-            super.percussion_set_instrument(line_offset, instrument)
+            val current = this.get_percussion_instrument(channel, line_offset)
+            this.push_to_history_stack(HistoryToken.SET_PERCUSSION_INSTRUMENT, listOf(channel, line_offset, current))
+            super.percussion_set_instrument(channel, line_offset, instrument)
         }
     }
 

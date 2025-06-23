@@ -977,7 +977,9 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 this.loading_reticle_hide()
-                this.clear_forced_title()
+                this.runOnUiThread {
+                    this.clear_forced_title()
+                }
 
                 if (fallback_msg != null) {
                     if (!this.get_opus_manager().is_initialized()) {

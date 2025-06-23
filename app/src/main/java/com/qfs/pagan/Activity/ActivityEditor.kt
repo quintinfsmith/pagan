@@ -9,7 +9,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -42,7 +41,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -74,7 +72,6 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.ChannelOptionAdapter
 import com.qfs.pagan.ChannelOptionRecycler
 import com.qfs.pagan.CompatibleFileType
@@ -948,10 +945,7 @@ class ActivityEditor : PaganActivity() {
 
     private fun handle_uri(uri: Uri) {
         val path_string = uri.toString()
-        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.clear()
         this.loading_reticle_show()
-
         this.runOnUiThread {
             this.clear_context_menu()
         }
@@ -987,9 +981,14 @@ class ActivityEditor : PaganActivity() {
                 CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
             }
         }
-
         this.loading_reticle_hide()
         this.clear_forced_title()
+        if (fallback_msg != null) {
+            if (!this.get_opus_manager().is_initialized()) {
+                this.setup_new()
+            }
+            this.feedback_msg(fallback_msg)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

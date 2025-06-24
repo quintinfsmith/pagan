@@ -1163,7 +1163,7 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-        this.update_channel_instruments(this.get_opus_manager().channels.size)
+        // this.update_channel_instruments(this.get_opus_manager().channels.size)
         ///////////////////////////////////////////
 
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
@@ -1804,10 +1804,12 @@ class ActivityEditor : PaganActivity() {
 
             this._sample_handle_manager?.let { handle_manager: SampleHandleManager ->
                 // Don't need to update anything but percussion here
-                val midi_channel = opus_manager.percussion_channel.get_midi_channel()
-                val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
-                handle_manager.select_bank(midi_channel, midi_bank)
-                handle_manager.change_program(midi_channel, midi_program)
+                for ((_, channel) in opus_manager.get_percussion_channels()) {
+                    val midi_channel = channel.get_midi_channel()
+                    val (midi_bank, midi_program) = channel.get_instrument()
+                    handle_manager.select_bank(midi_channel, midi_bank)
+                    handle_manager.change_program(midi_channel, midi_program)
+                }
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)

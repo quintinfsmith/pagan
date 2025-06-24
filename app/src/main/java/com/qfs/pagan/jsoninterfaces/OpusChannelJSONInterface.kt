@@ -45,7 +45,7 @@ class OpusChannelJSONInterface {
         }
 
         private fun _interpret_percussion(input_map: JSONHashMap, beat_count: Int): OpusPercussionChannel {
-            val channel = OpusPercussionChannel()
+            val channel = OpusPercussionChannel(-1)
             val input_lines = input_map.get_list("lines")
             for (line in input_lines) {
                 channel.lines.add(OpusLineJSONInterface.percussion_line(line as JSONHashMap, beat_count))

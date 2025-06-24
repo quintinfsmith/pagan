@@ -298,8 +298,8 @@ open class OpusLayerBase {
 
         fun initialize_basic(): OpusLayerBase {
             val new_manager = OpusLayerBase()
-            new_manager.new_line(0) // Add percussion line
             new_manager.new_channel()
+            new_manager.new_channel(is_percussion = true)
             new_manager.set_beat_count(4)
             new_manager.set_project_name(null)
             new_manager.set_project_notes(null)
@@ -350,7 +350,7 @@ open class OpusLayerBase {
      * Calculates the number of channels in use.
      */
     fun get_channel_count(): Int {
-        return this.channels.size + 1
+        return this.channels.size
     }
 
     /**
@@ -759,7 +759,7 @@ open class OpusLayerBase {
      * [position] defaults to null, indicating the root tree of the beat
      */
     fun <T : OpusControlEvent> get_channel_ctl_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>? = null): OpusTree<T> {
-        if (channel > this.channels.size) {
+        if (channel >= this.channels.size) {
             throw InvalidChannel(channel)
         }
         return this.get_channel(channel).get_ctl_tree(
@@ -774,7 +774,7 @@ open class OpusLayerBase {
      * [position] defaults to null, indicating the root tree of the beat
      */
     fun <T : OpusControlEvent> get_line_ctl_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>? = null): OpusTree<T> {
-        if (beat_key.channel > this.channels.size) {
+        if (beat_key.channel >= this.channels.size) {
             throw BadBeatKey(beat_key)
         }
 
@@ -1020,11 +1020,10 @@ open class OpusLayerBase {
     }
 
     /**
-     * Artifact. Checks if the [channel] is assigned to be used as percussion.
-     * The last channel is now always used as percussion.
+     * Checks if the [channel] is assigned to be used as percussion.
      */
     fun is_percussion(channel: Int): Boolean {
-        return channel == this.channels.size
+        return this.get_channel(channel) is OpusPercussionChannel
     }
 
     /**
@@ -3674,9 +3673,8 @@ open class OpusLayerBase {
 
         // Set default values
         for (channel in this.channels) {
-            midi.insert_event(0, 0, VolumeMSB(channel.midi_channel, 0x64))
+            midi.insert_event(0, 0, VolumeMSB(channel.get_midi_channel(), 0x64))
         }
-        midi.insert_event(0, 0, VolumeMSB(9, 0x64))
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.length + 1)
@@ -3799,14 +3797,14 @@ open class OpusLayerBase {
                 }
                 var current_tick = 0
                 var prev_note = 0
-                line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
-                    val stack: MutableList<StackItem<TunedInstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
+                line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<out InstrumentEvent> ->
+                    val stack: MutableList<StackItem<out InstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeAt(0)
                         if (current.tree.is_event()) {
                             val event = current.tree.get_event()!!
                             val (note, bend) = if (this.is_percussion(c)) { // Ignore the event data and use percussion map
-                                Pair(this.get_percussion_instrument(l) + 27, 0)
+                                Pair(this.get_percussion_instrument(c, l) + 27, 0)
                             } else {
                                 val current_note = when (event) {
                                     is RelativeNoteEvent -> {
@@ -4599,13 +4597,13 @@ open class OpusLayerBase {
     }
 
     private fun _is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
-        return if (this.channels.size + 1 <= first_corner.channel) {
+        return if (this.channels.size <= first_corner.channel) {
             false
         } else if (this.get_channel(first_corner.channel).size <= first_corner.line_offset) {
             false
         } else if (this.length <= first_corner.beat) {
             false
-        } else if (this.channels.size + 1 <= second_corner.channel) {
+        } else if (this.channels.size <= second_corner.channel) {
             false
         } else if (this.get_channel(second_corner.channel).size <= second_corner.line_offset) {
             false
@@ -4841,6 +4839,15 @@ open class OpusLayerBase {
 
     fun get_all_channels(): List<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> {
         return this.channels
+    }
+    fun get_percussion_channels(): List<Pair<Int, OpusPercussionChannel>> {
+        val output = mutableListOf<Pair<Int, OpusPercussionChannel>>()
+        for (c in 0 until this.channels.size) {
+            if (this.is_percussion(c)) {
+                output.add(Pair(c, this.get_channel(c) as OpusPercussionChannel))
+            }
+        }
+        return output
     }
 
     internal fun get_leaf_offset_and_width(beat_key: BeatKey, position: List<Int>, mod_position: List<Int>? = null, mod_amount: Int = 0): Pair<Rational, Int> {

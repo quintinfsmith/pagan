@@ -1,13 +1,11 @@
 package com.qfs.pagan.ContextMenu
 
 import android.content.res.Configuration
-import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Space
-import androidx.core.graphics.toColorLong
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget
@@ -81,7 +79,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             (this.spacer.layoutParams as LinearLayout.LayoutParams).weight = 100f
         } else {
             this.button_choose_percussion.visibility = View.VISIBLE
-            val instrument = opus_manager.get_percussion_instrument(line_offset)
+            val instrument = opus_manager.get_percussion_instrument(channel, line_offset)
             main.populate_active_percussion_names(false)
             this.button_choose_percussion.text = if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 this.context.getString(

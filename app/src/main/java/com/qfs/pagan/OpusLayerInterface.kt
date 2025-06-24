@@ -19,6 +19,7 @@ import com.qfs.pagan.opusmanager.OpusLayerHistory
 import com.qfs.pagan.opusmanager.OpusLineAbstract
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
+import com.qfs.pagan.opusmanager.OpusPercussionChannel
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.opusmanager.UnreachableException
@@ -166,10 +167,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             return
         }
         if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
-
-        if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
             return
         }
 
@@ -412,9 +409,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
         this.lock_ui_partial {
-            if (this.is_percussion(beat_key.channel) && !this.is_channel_visible(this.channels.size)) {
-                this.make_percussion_visible()
-            }
             super.replace_tree(beat_key, position, tree)
             this._queue_cell_change(beat_key)
         }
@@ -708,10 +702,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
         this.lock_ui_partial {
-            if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
-                this.make_percussion_visible()
-            }
-
             super.set_event(beat_key, position, event)
 
             if (event is TunedInstrumentEvent) {
@@ -728,27 +718,23 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {
         this.lock_ui_partial {
             super.percussion_set_event(beat_key, position)
-            if (!this.percussion_channel.visible) {
-                this.make_percussion_visible()
-            }
-
             this._queue_cell_change(beat_key)
             this._ui_change_bill.queue_refresh_context_menu()
         }
     }
 
-    override fun percussion_set_instrument(line_offset: Int, instrument: Int) {
+    override fun percussion_set_instrument(channel: Int, line_offset: Int, instrument: Int) {
         this.lock_ui_partial {
-            super.percussion_set_instrument(line_offset, instrument)
+            super.percussion_set_instrument(channel, line_offset, instrument)
             // Need to call get_drum name to repopulate instrument list if needed
             this.get_activity()?.get_drum_name(instrument)
 
             if (!this._ui_change_bill.is_full_locked()) {
-                this._ui_change_bill.queue_refresh_choose_percussion_button(line_offset)
+                this._ui_change_bill.queue_refresh_choose_percussion_button(channel, line_offset)
                 this._ui_change_bill.queue_line_label_refresh(
                     this.get_visible_row_from_ctl_line(
                         this.get_actual_line_index(
-                            this.get_instrument_line_index(this.channels.size, line_offset)
+                            this.get_instrument_line_index(channel, line_offset)
                         )
                     )!!
                 )
@@ -759,9 +745,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
             super.split_tree(beat_key, position, splits, move_event_to_end)
-            if ((this.percussion_channel.visible || !this.is_percussion(beat_key.channel))) {
-                this._queue_cell_change(beat_key)
-            }
+            this._queue_cell_change(beat_key)
         }
     }
 
@@ -775,20 +759,14 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun controller_channel_split_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
             super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
-
-            if (this.percussion_channel.visible || !this.is_percussion(channel)) {
-                this._queue_channel_ctl_cell_change(type, channel, beat)
-            }
+            this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
     override fun controller_line_split_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.lock_ui_partial {
             super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
-
-            if (this.percussion_channel.visible || !this.is_percussion(beat_key.channel)) {
-                this._queue_line_ctl_cell_change(type, beat_key)
-            }
+            this._queue_line_ctl_cell_change(type, beat_key)
         }
     }
 
@@ -898,7 +876,9 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this.get_activity()?.let { activity: ActivityEditor ->
                     val percussion_keys = activity.active_percussion_names.keys.sorted()
                     if (percussion_keys.isNotEmpty()) {
-                        this.percussion_channel.lines[line_offset ?: (this.percussion_channel.size - 1)].instrument = percussion_keys.first() - 27
+                        (this.get_channel(channel) as OpusPercussionChannel).let {
+                            it.lines[line_offset ?: (it.size - 1)].instrument = percussion_keys.first() - 27
+                        }
                     }
                 }
             }
@@ -909,10 +889,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         this.lock_ui_partial {
-            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
-                this.make_percussion_visible()
-            }
-
             super.insert_line(channel, line_offset, line)
             this._update_after_new_line(channel, line_offset)
         }
@@ -1040,10 +1016,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
         return this.lock_ui_partial {
-            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
-                this.make_percussion_visible()
-            }
-
             val abs_line = this.get_visible_row_from_ctl_line(
                 this.get_actual_line_index(
                     this.get_instrument_line_index(channel, line_offset)
@@ -1085,26 +1057,24 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
             val y = this.get_instrument_line_index(channel, 0)
 
-            if (!this.is_percussion(channel) || this.percussion_channel.visible) {
-                var ctl_row = this.get_visible_row_from_ctl_line(
-                    this.get_actual_line_index(y)
-                )!!
+            var ctl_row = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(y)
+            )!!
 
-                for (j in 0 until line_list.size) {
-                    val line = line_list[j]
-                    this._add_line_to_column_width_map(ctl_row++, line)
-                    for ((_, controller) in line.controllers.get_all()) {
-                        if (controller.visible) {
-                            this._add_controller_to_column_width_map(ctl_row++, controller)
-                        }
-                    }
-                }
-
-                val controllers = channels[channel].controllers.get_all()
-                for ((_, controller) in controllers) {
+            for (j in 0 until line_list.size) {
+                val line = line_list[j]
+                this._add_line_to_column_width_map(ctl_row++, line)
+                for ((_, controller) in line.controllers.get_all()) {
                     if (controller.visible) {
                         this._add_controller_to_column_width_map(ctl_row++, controller)
                     }
+                }
+            }
+
+            val controllers = channels[channel].controllers.get_all()
+            for ((_, controller) in controllers) {
+                if (controller.visible) {
+                    this._add_controller_to_column_width_map(ctl_row++, controller)
                 }
             }
         }
@@ -1206,14 +1176,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun remove_channel(channel: Int) {
         if (!this._ui_change_bill.is_full_locked()) {
-            val force_show_percussion = !this.percussion_channel.visible
-                && !this.is_percussion(channel)
-                && this.channels.size == 1
-
-            if (force_show_percussion) {
-                this.make_percussion_visible()
-            }
-
             this.lock_ui_partial {
                 val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
                 super.remove_channel(channel)
@@ -1253,14 +1215,19 @@ class OpusLayerInterface : OpusLayerHistory() {
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_new() {
         val activity = this.get_activity()!!
-        this.percussion_channel.visible = true
-
         super._project_change_new()
 
         // set the default instrument to the first available in the soundfont (if applicable)
         val percussion_keys = activity.active_percussion_names.keys.sorted()
         if (percussion_keys.isNotEmpty()) {
-            this.percussion_set_instrument(0, percussion_keys.first() - 27)
+            for (c in this.channels.indices) {
+                if (!this.is_percussion(c)) {
+                    continue
+                }
+                for (l in 0 until this.get_channel(c).size) {
+                    this.percussion_set_instrument(c, l, percussion_keys.first() - 27)
+                }
+            }
         }
 
         val new_path = activity.get_new_project_path()
@@ -1271,7 +1238,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
-        this.percussion_channel.visible = this.has_percussion()
 
         val activity = this.get_activity()!!
         val new_path = activity.get_new_project_path()
@@ -1565,10 +1531,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.cursor_select_line(channel, line_offset)
             this.temporary_blocker = null
 
-            if (this.is_percussion(channel) && !this.is_channel_visible(channel)) {
-                this.make_percussion_visible()
-            }
-
             this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_line()
         }
@@ -1581,10 +1543,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.cursor_select_channel(channel)
             this.temporary_blocker = null
-
-            if (this.is_percussion(channel) && !this.is_channel_visible(channel)) {
-                this.make_percussion_visible()
-            }
 
             this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_channel()
@@ -1599,10 +1557,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.cursor_select_channel_ctl_line(ctl_type, channel)
             this.temporary_blocker = null
 
-            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
-                this.make_percussion_visible()
-            }
-
             this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_control_line()
         }
@@ -1615,10 +1569,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
             this.temporary_blocker = null
-
-            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
-                this.make_percussion_visible()
-            }
 
             this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_control_line()
@@ -1664,10 +1614,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
         this.lock_ui_partial {
             this._unset_temporary_blocker()
-            if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
-                this.make_percussion_visible()
-            }
-
             super.cursor_select(beat_key, position)
 
             val current_tree = this.get_tree()
@@ -1691,10 +1637,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
         this.lock_ui_partial {
             this._unset_temporary_blocker()
-            if (!this.percussion_channel.visible && this.is_percussion(beat_key.channel)) {
-                this.make_percussion_visible()
-            }
-
             super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
 
             this._queue_cursor_update(this.cursor, false)
@@ -1708,10 +1650,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
         this.lock_ui_partial {
             this._unset_temporary_blocker()
-            if (!this.percussion_channel.visible && this.is_percussion(channel)) {
-                this.make_percussion_visible()
-            }
-
             super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
 
             this._queue_cursor_update(this.cursor, false)
@@ -1905,14 +1843,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this._queue_global_ctl_cell_change(type, blocked.first)
             }
         }
-    }
-
-    private fun make_percussion_visible() {
-        // Don't force visibility if undo is being called
-        if (this.history_cache.isLocked()) {
-            return
-        }
-        this.set_channel_visibility(this.channels.size, true)
     }
 
     private fun _queue_scroll_to_cursor(cursor: OpusManagerCursor) {
@@ -2553,7 +2483,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.FullRefresh -> {
-                        val restore_position = this._ui_change_bill.get_next_int() != 0
                         activity.setup_project_config_drawer()
                         activity.update_menu_options()
 
@@ -2562,10 +2491,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                         activity.update_channel_instruments()
                         activity.populate_active_percussion_names(true)
-                        // TODO: May need to reimplement this once activies are split up
-                        //if (restore_position) {
-                        //    activity.restore_view_model_position()
-                        //}
 
                         activity.update_title_text()
                         activity.clear_context_menu()
@@ -2712,9 +2637,10 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.PercussionButtonRefresh -> {
+                        val channel = this._ui_change_bill.get_next_int()
                         val line_offset = this._ui_change_bill.get_next_int()
                         val btnChoosePercussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: continue
-                        val instrument = this.get_percussion_instrument(line_offset)
+                        val instrument = this.get_percussion_instrument(channel, line_offset)
 
                         if (activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                             btnChoosePercussion.text = activity.getString(R.string.label_short_percussion, instrument)

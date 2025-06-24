@@ -20,19 +20,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import java.io.File
 import java.io.FileNotFoundException
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
 import java.text.SimpleDateFormat
-import java.time.format.DateTimeFormatter
 import java.util.Date
 import kotlin.concurrent.thread
-import kotlin.io.path.Path
 import kotlin.math.roundToInt
 
 open class PaganActivity: AppCompatActivity() {
@@ -325,9 +320,6 @@ open class PaganActivity: AppCompatActivity() {
                 }
                 view.findViewById<TextView>(R.id.project_channel_count)?.let {
                     var count = opus_manager.channels.size
-                    if (opus_manager.has_percussion()) {
-                        count += 1
-                    }
                     it.text = getString(R.string.project_info_channel_count, count)
                 }
                 view.findViewById<TextView>(R.id.project_tempo)?.let {

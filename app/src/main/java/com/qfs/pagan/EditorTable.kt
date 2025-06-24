@@ -31,7 +31,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         }
 
         this._spacer.setOnLongClickListener {
-            this.get_opus_manager().cursor_select_column(0)
+            this.get_opus_manager().force_cursor_select_column(0)
             true
         }
 

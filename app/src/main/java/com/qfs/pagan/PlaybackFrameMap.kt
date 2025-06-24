@@ -14,7 +14,6 @@ import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.InstrumentEvent
-import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLineAbstract
@@ -275,7 +274,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.get_marked_frames()
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
 
-        this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannel ->
+        this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             if (channel.muted) {
                 return@forEachIndexed
             }
@@ -287,23 +286,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 var prev_abs_note = 0
                 for (b in 0 until this.opus_manager.length) {
-                    val beat_key = BeatKey(c,l,b)
-                    val working_tree = this.opus_manager.get_tree(beat_key)
-                    prev_abs_note = this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, prev_abs_note)
-                }
-            }
-        }
-
-        val c = this.opus_manager.channels.size
-        if (!this.opus_manager.percussion_channel.muted) {
-            for (l in this.opus_manager.percussion_channel.lines.indices) {
-                if (this.opus_manager.percussion_channel.get_line(l).muted) {
-                    continue
-                }
-                for (b in 0 until this.opus_manager.length) {
                     val beat_key = BeatKey(c, l, b)
                     val working_tree = this.opus_manager.get_tree(beat_key)
-                    this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, 0)
+                    prev_abs_note = this.map_tree(beat_key, listOf(), working_tree, 1F, 0F, prev_abs_note)
                 }
             }
         }
@@ -683,7 +668,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called
         val (note, bend) = when (event) {
             is PercussionEvent -> {
-                Pair(27 + this.opus_manager.get_percussion_instrument(beat_key.line_offset), 0)
+                Pair(27 + this.opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset), 0)
             }
             is AbsoluteNoteEvent -> {
                 // Can happen since we convert RelativeNotes to Absolute ones before passing them to this function

@@ -9,7 +9,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -42,7 +41,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -74,7 +72,6 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.ActionTracker.TrackedAction
 import com.qfs.pagan.ChannelOptionAdapter
 import com.qfs.pagan.ChannelOptionRecycler
 import com.qfs.pagan.CompatibleFileType
@@ -212,7 +209,6 @@ class ActivityEditor : PaganActivity() {
 
     private lateinit var _binding: ActivityMainBinding
     private var _options_menu: Menu? = null
-    private var _progress_bar: ConstraintLayout? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
@@ -949,13 +945,6 @@ class ActivityEditor : PaganActivity() {
 
     private fun handle_uri(uri: Uri) {
         val path_string = uri.toString()
-        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.clear()
-        this.loading_reticle_show()
-
-        this.runOnUiThread {
-            this.clear_context_menu()
-        }
 
         val type: CompatibleFileType? = try {
             this.get_file_type(uri)
@@ -963,33 +952,43 @@ class ActivityEditor : PaganActivity() {
             null
         }
 
-        var fallback_msg: String? = null
-        try {
-            when (type) {
-                CompatibleFileType.Midi1 -> {
-                    this.dialog_save_project {
-                        this.import_midi(path_string)
-                    }
-                }
-
-                CompatibleFileType.Pagan -> {
-                    this.dialog_save_project {
-                        this.import_project(path_string)
-                    }
-                }
-
-                else -> {
-                    fallback_msg = getString(R.string.feedback_file_not_found)
-                }
-            }
-        } catch (e: Exception) {
-            fallback_msg = when (type!!) {
-                CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
-                CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
-            }
+        val inner_callback: ((String) -> Unit) = when (type) {
+            CompatibleFileType.Midi1 -> { path_string -> this.import_midi(path_string) }
+            CompatibleFileType.Pagan -> { path_string -> this.import_project(path_string) }
+            else -> { _ -> throw FileNotFoundException(path_string) }
         }
 
-        this.loading_reticle_hide()
+        this.dialog_save_project {
+            thread {
+                this.loading_reticle_show()
+                this.runOnUiThread {
+                    this.clear_context_menu()
+                }
+
+                val fallback_msg = try {
+                    inner_callback(path_string)
+                    null
+                } catch (e: Exception) {
+                    when (type) {
+                        CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
+                        CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
+                        null -> getString(R.string.feedback_file_not_found)
+                    }
+                }
+
+                this.loading_reticle_hide()
+                this.runOnUiThread {
+                    this.clear_forced_title()
+                }
+
+                if (fallback_msg != null) {
+                    if (!this.get_opus_manager().is_initialized()) {
+                        this.setup_new()
+                    }
+                    this.feedback_msg(fallback_msg)
+                }
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -1164,7 +1163,7 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-        this.update_channel_instruments(this.get_opus_manager().channels.size)
+        // this.update_channel_instruments(this.get_opus_manager().channels.size)
         ///////////////////////////////////////////
 
         val drawer_layout = this.findViewById<DrawerLayout>(R.id.drawer_layout) ?: return
@@ -1411,7 +1410,8 @@ class ActivityEditor : PaganActivity() {
         this._enable_blocker_view()
         this.runOnUiThread {
             this.set_playback_button(R.drawable.baseline_play_disabled_24)
-            this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
+            this.force_title_text(getString(R.string.reticle_msg_start_playback))
+            this.loading_reticle_show()
         }
 
         var start_point = this.get_working_column()
@@ -1438,7 +1438,8 @@ class ActivityEditor : PaganActivity() {
             return
         }
 
-        this.loading_reticle_show(getString(R.string.reticle_msg_start_playback))
+        this.force_title_text(getString(R.string.reticle_msg_start_playback))
+        this.loading_reticle_show()
         this._enable_blocker_view()
 
         var start_point = this.get_working_column()
@@ -1451,6 +1452,7 @@ class ActivityEditor : PaganActivity() {
 
         this.runOnUiThread {
             this.loading_reticle_hide()
+            this.clear_forced_title()
             this.set_midi_playback_button(R.drawable.ic_baseline_pause_24)
         }
 
@@ -1478,6 +1480,7 @@ class ActivityEditor : PaganActivity() {
     internal fun playback_stop() {
         if (this.update_playback_state_soundfont(PlaybackState.Stopping)) {
             this.loading_reticle_hide()
+            this.clear_forced_title()
             this._midi_playback_device?.kill()
         }
     }
@@ -1485,6 +1488,7 @@ class ActivityEditor : PaganActivity() {
     internal fun playback_stop_midi_output() {
         if (this.update_playback_state_midi(PlaybackState.Stopping)) {
             this.loading_reticle_hide()
+            this.clear_forced_title()
             this._virtual_input_device.stop()
             this.restore_midi_playback_state()
         }
@@ -1534,46 +1538,6 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    fun loading_reticle_show(title_msg: String? = null) {
-        this.runOnUiThread {
-            if (title_msg != null) {
-                this.force_title_text(title_msg)
-            }
-
-            if (this._progress_bar == null) {
-                this._progress_bar = LayoutInflater.from(this)
-                    .inflate(
-                        R.layout.loading_reticle,
-                        this._binding.root as ViewGroup,
-                        false
-                    ) as ConstraintLayout
-            }
-
-            this._progress_bar!!.isClickable = true
-            val parent = this._progress_bar!!.parent
-            if (parent != null) {
-                (parent as ViewGroup).removeView(this._progress_bar)
-            }
-
-            try {
-                this._binding.root.addView(this._progress_bar)
-            } catch (e: UninitializedPropertyAccessException) {
-                // pass
-            }
-        }
-    }
-
-    fun loading_reticle_hide() {
-        thread {
-            this.runOnUiThread {
-                this.clear_forced_title()
-                val progressBar = this._progress_bar ?: return@runOnUiThread
-                if (progressBar.parent != null) {
-                    (progressBar.parent as ViewGroup).removeView(progressBar)
-                }
-            }
-        }
-    }
 
     fun navigate(fragment: Int) {
         //val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -1840,10 +1804,12 @@ class ActivityEditor : PaganActivity() {
 
             this._sample_handle_manager?.let { handle_manager: SampleHandleManager ->
                 // Don't need to update anything but percussion here
-                val midi_channel = opus_manager.percussion_channel.get_midi_channel()
-                val (midi_bank, midi_program) = opus_manager.percussion_channel.get_instrument()
-                handle_manager.select_bank(midi_channel, midi_bank)
-                handle_manager.change_program(midi_channel, midi_program)
+                for ((_, channel) in opus_manager.get_percussion_channels()) {
+                    val midi_channel = channel.get_midi_channel()
+                    val (midi_bank, midi_program) = channel.get_instrument()
+                    handle_manager.select_bank(midi_channel, midi_bank)
+                    handle_manager.change_program(midi_channel, midi_program)
+                }
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
@@ -3089,7 +3055,10 @@ class ActivityEditor : PaganActivity() {
 
         val opus_manager = this.get_opus_manager()
         scroll_bar.max = opus_manager.length - 1
-        scroll_bar.progress = this._get_start_column()
+
+        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
+        scroll_bar.progress = editor_table.get_first_visible_column_index()
+
 
         title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
         title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
@@ -3264,4 +3233,5 @@ class ActivityEditor : PaganActivity() {
             this.setup_new()
         }
     }
+
 }

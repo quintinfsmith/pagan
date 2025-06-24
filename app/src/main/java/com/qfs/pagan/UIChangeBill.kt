@@ -185,7 +185,6 @@ class UIChangeBill {
                     BillableItem.FullRefresh -> {
                         this._tree.clear()
                         this._tree.bill.add(bill_item)
-                        this._tree.int_queue.add(node.int_queue.removeAt(0))
                         return
                     }
 
@@ -345,6 +344,7 @@ class UIChangeBill {
                     }
 
                     BillableItem.PercussionButtonRefresh -> {
+                        this._tree.int_queue.add(node.int_queue.removeAt(0))
                         this._tree.int_queue.add(node.int_queue.removeAt(0))
                     }
 
@@ -694,15 +694,15 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ColumnRemove)
     }
 
-    fun queue_refresh_choose_percussion_button(line_offset: Int) {
+    fun queue_refresh_choose_percussion_button(channel: Int, line_offset: Int) {
         val working_tree = this.get_working_tree() ?: return
+        working_tree.int_queue.add(channel)
         working_tree.int_queue.add(line_offset)
         working_tree.bill.add(BillableItem.PercussionButtonRefresh)
     }
 
     fun queue_full_refresh(restore_position: Boolean = false) {
         val working_tree = this.get_working_tree(true) ?: return
-        working_tree.int_queue.add(if (restore_position) 1 else 0)
         working_tree.bill.add(BillableItem.FullRefresh)
     }
 

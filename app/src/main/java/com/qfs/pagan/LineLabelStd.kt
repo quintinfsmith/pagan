@@ -177,7 +177,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         val text = if (!opus_manager.is_percussion(this.channel)) {
             "${this.channel}::${this.line_offset}"
         } else {
-            val instrument = opus_manager.get_percussion_instrument(this.line_offset)
+            val instrument = opus_manager.get_percussion_instrument(this.channel, this.line_offset)
             "!$instrument"
         }
 

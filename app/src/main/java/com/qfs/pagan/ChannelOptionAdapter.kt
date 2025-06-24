@@ -74,32 +74,9 @@ class ChannelOptionAdapter(
             this.interact_btnChooseInstrument(holder.layoutPosition)
         }
 
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-
-        if (this._opus_manager.is_percussion(position)) {
-            remove_button.setIconResource(
-                if (opus_manager.percussion_channel.visible) {
-                    R.drawable.show_percussion
-                } else {
-                    R.drawable.hide_percussion
-                }
-            )
-        } else {
-            remove_button.setIconResource(R.drawable.delete_channel)
-        }
-
         remove_button.setOnClickListener {
-            if (this._opus_manager.is_percussion(holder.layoutPosition)) {
-                this.interact_btnTogglePercussionVisibility()
-            } else {
-                this.interact_btnRemoveChannel(holder.layoutPosition)
-            }
+            this.interact_btnRemoveChannel(holder.layoutPosition)
         }
-    }
-
-    private fun interact_btnTogglePercussionVisibility() {
-        this.get_activity().get_action_interface().toggle_percussion_visibility()
     }
 
     private fun interact_btnRemoveChannel(c: Int) {
@@ -115,7 +92,7 @@ class ChannelOptionAdapter(
     }
 
     fun notify_soundfont_changed() {
-        this.notifyItemRangeChanged(0, this._opus_manager.channels.size + 1)
+        this.notifyItemRangeChanged(0, this._opus_manager.channels.size)
     }
 
     fun add_channel() {
@@ -134,7 +111,7 @@ class ChannelOptionAdapter(
     }
 
     fun setup() {
-        this._channel_count = this._opus_manager.channels.size + 1
+        this._channel_count = this._opus_manager.channels.size
         this.notifyItemRangeChanged(0, this._channel_count)
     }
 }

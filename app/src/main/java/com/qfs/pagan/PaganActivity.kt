@@ -18,19 +18,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import java.io.File
 import java.io.FileNotFoundException
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
 import java.text.SimpleDateFormat
-import java.time.format.DateTimeFormatter
 import java.util.Date
-import kotlin.io.path.Path
+import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
 open class PaganActivity: AppCompatActivity() {
@@ -38,6 +35,7 @@ open class PaganActivity: AppCompatActivity() {
     lateinit var configuration: PaganConfiguration
     internal var _popup_active: Boolean = false
     internal lateinit var project_manager: ProjectManager
+    private var _progress_bar: ConstraintLayout? = null
 
     fun get_soundfont_directory(): File {
         val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
@@ -322,9 +320,6 @@ open class PaganActivity: AppCompatActivity() {
                 }
                 view.findViewById<TextView>(R.id.project_channel_count)?.let {
                     var count = opus_manager.channels.size
-                    if (opus_manager.has_percussion()) {
-                        count += 1
-                    }
                     it.text = getString(R.string.project_info_channel_count, count)
                 }
                 view.findViewById<TextView>(R.id.project_tempo)?.let {
@@ -386,5 +381,41 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     open fun on_project_delete(project: OpusLayerBase) { }
+
+    fun loading_reticle_show() {
+        this.runOnUiThread {
+            if (this._progress_bar == null) {
+                this._progress_bar = LayoutInflater.from(this)
+                    .inflate(
+                        R.layout.loading_reticle,
+                        window.decorView as ViewGroup,
+                        false
+                    ) as ConstraintLayout
+            }
+
+            this._progress_bar!!.isClickable = true
+            val parent = this._progress_bar!!.parent
+            if (parent != null) {
+                (parent as ViewGroup).removeView(this._progress_bar)
+            }
+
+            try {
+                (window.decorView as ViewGroup).addView(this._progress_bar)
+            } catch (e: UninitializedPropertyAccessException) {
+                // pass
+            }
+        }
+    }
+
+    fun loading_reticle_hide() {
+        thread {
+            this.runOnUiThread {
+                val progressBar = this._progress_bar ?: return@runOnUiThread
+                if (progressBar.parent != null) {
+                    (progressBar.parent as ViewGroup).removeView(progressBar)
+                }
+            }
+        }
+    }
 
 }

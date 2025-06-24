@@ -457,12 +457,7 @@ class ActionTracker {
     fun swap_channels(from_channel: Int, to_channel: Int) {
         this.track(TrackedAction.SwapChannels, listOf(from_channel, to_channel))
         val opus_manager = this.get_opus_manager()
-        try {
-            opus_manager.swap_channels(from_channel, to_channel)
-        } catch (_: OpusLayerBase.IncompatibleChannelException) {
-            val activity = this.get_activity()
-            activity.feedback_msg(activity.getString(R.string.can_t_move_percussion_channel))
-        }
+        opus_manager.swap_channels(from_channel, to_channel)
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {

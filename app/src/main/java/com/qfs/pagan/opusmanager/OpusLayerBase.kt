@@ -1847,12 +1847,6 @@ open class OpusLayerBase {
     open fun new_channel_controller(type: ControlEventType, channel_index: Int) {
         val channel = this.get_all_channels()[channel_index]
         val controller = channel.controllers.get_controller<OpusControlEvent>(type)
-
-        // Channel volume is treated differently than line volume
-        if (type == ControlEventType.Volume) {
-            controller.initial_event = OpusVolumeEvent(1F)
-        }
-
         this.recache_line_maps()
     }
 
@@ -3677,6 +3671,12 @@ open class OpusLayerBase {
         this.project_notes?.let {
             midi.insert_event(0, Text(it))
         }
+
+        // Set default values
+        for (channel in this.channels) {
+            midi.insert_event(0, 0, VolumeMSB(channel.midi_channel, 0x64))
+        }
+        midi.insert_event(0, 0, VolumeMSB(9, 0x64))
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
         val max_tick = midi.get_ppqn() * (this.length + 1)

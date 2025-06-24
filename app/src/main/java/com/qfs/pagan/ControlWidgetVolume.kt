@@ -16,7 +16,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_init
     private lateinit var _button: Button
     private lateinit var _transition_button: Button
     val min = 0
-    val max = if (level == CtlLineLevel.Line) 100 else 200
+    val max = 127
     private var _lockout_ui: Boolean = false
 
     override fun on_inflated() {

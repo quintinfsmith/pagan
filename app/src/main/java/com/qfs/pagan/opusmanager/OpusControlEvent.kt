@@ -42,11 +42,9 @@ class OpusVolumeEvent(var value: Float, transition: ControlTransition = ControlT
     override fun copy(): OpusVolumeEvent {
         return OpusVolumeEvent(this.value, this.transition, this.duration)
     }
-
     override fun to_float(): Float {
-        return value
+        return this.value / 1.27F // 1.27 == 1
     }
-
     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
         val shift = when (this.transition) {
@@ -55,7 +53,6 @@ class OpusVolumeEvent(var value: Float, transition: ControlTransition = ControlT
         }
         return (code shl shift) + (code shr (32 - shift))
     }
-
     override fun equals(other: Any?): Boolean {
         return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
     }

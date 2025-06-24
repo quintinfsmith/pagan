@@ -25,6 +25,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import kotlin.concurrent.thread
 
 class ActivitySettings : PaganActivity() {
     private lateinit var _binding: ActivitySettingsBinding
@@ -33,34 +34,40 @@ class ActivitySettings : PaganActivity() {
         if (result.resultCode == RESULT_OK) {
             result?.data?.data?.also { uri ->
                 if (uri.path != null) {
-                    val soundfont_dir = this.get_soundfont_directory()
-                    val file_name = this.parse_file_name(uri)
+                    thread {
+                        val soundfont_dir = this.get_soundfont_directory()
+                        val file_name = this.parse_file_name(uri)
 
-                    val new_file = File("${soundfont_dir}/$file_name")
-                    this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                        try {
-                            new_file.outputStream().use { output_stream: FileOutputStream ->
-                                FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
-                                    input_stream.copyTo(output_stream, 4096 * 4)
-                                }
+                        this.loading_reticle_show()
+                        val new_file = File("${soundfont_dir}/$file_name")
+                        this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                            try {
+                                new_file.outputStream()
+                                    .use { output_stream: FileOutputStream ->
+                                        FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
+                                            input_stream.copyTo(output_stream, 4096 * 4)
+                                        }
+                                    }
+                            } catch (e: FileNotFoundException) {
+                                // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
                             }
-                        } catch (e: FileNotFoundException) {
-                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
                         }
-                    }
 
-                    try {
-                        SoundFont(new_file.path)
-                        this.configuration.soundfont = file_name
-                    } catch (_: Exception) {
-                        this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
-                        new_file.delete()
-                        return@registerForActivityResult
-                    }
+                        try {
+                            SoundFont(new_file.path)
+                            this.configuration.soundfont = file_name
+                            this.loading_reticle_hide()
+                        } catch (_: Exception) {
+                            this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
+                            new_file.delete()
+                            this.loading_reticle_hide()
+                            return@thread
+                        }
 
-                    this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
-                    this.set_soundfont_button_text()
-                    this.update_result()
+                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                        this.set_soundfont_button_text()
+                        this.update_result()
+                    }
                 } else {
                     throw FileNotFoundException()
                 }

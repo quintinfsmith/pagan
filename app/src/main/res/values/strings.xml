@@ -27,6 +27,8 @@
     <string name="url_git">https://github.com/quintinfsmith/pagan</string>
     <string name="url_issues">https://github.com/quintinfsmith/pagan/issues</string>
     <string name="url_manual">https://burnsomni.net/manual/pagan</string>
+    <string name="line_label_second">::%1$d</string>
+    <string name="line_label_second_percussion">!%1$d</string>
 
     <string name="btn_landing_new">New Project</string>
     <string name="btn_landing_import">Import</string>

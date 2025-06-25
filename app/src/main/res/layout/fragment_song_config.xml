@@ -58,6 +58,14 @@
                 android:layout_weight="1" />
 
             <Button
+                android:id="@+id/btnAddPercussion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_cfg_add_kit_channel"
+                android:layout_gravity="end"
+                style="@style/song_config_button"/>
+
+            <Button
                 android:id="@+id/btnAddChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -65,13 +73,6 @@
                 android:layout_gravity="end"
                 style="@style/song_config_button"/>
 
-            <Button
-                android:id="@+id/btnAddPercussion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/btn_cfg_add_kit_channel"
-                android:layout_gravity="end"
-                style="@style/song_config_button"/>
         </LinearLayout>
     </LinearLayout>
 

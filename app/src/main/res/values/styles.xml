@@ -155,6 +155,8 @@
     <style name="line_label">
         <item name="android:minWidth">41dp</item>
         <item name="android:padding">0dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
         <item name="android:gravity">bottom|center_horizontal</item>
         <item name="android:textColor">@color/line_label_text</item>
         <item name="android:background">@drawable/editor_label_line</item>

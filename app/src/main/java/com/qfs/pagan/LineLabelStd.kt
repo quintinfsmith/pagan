@@ -4,24 +4,29 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.view.ContextThemeWrapper
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration.getLongPressTimeout
-import androidx.appcompat.widget.AppCompatTextView
+import android.widget.TextView
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.graphics.toColorLong
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.opusmanager.OpusPercussionChannel
 import kotlin.concurrent.thread
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label)) {
+class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): LinearLayoutCompat(ContextThemeWrapper(context, R.style.line_label)) {
     val click_threshold_millis = 250
     val click_threshold_pixels = 5
     var press_position: Pair<Float, Float>? = null
     var press_timestamp: Long = 0
     val long_click_duration: Long = getLongPressTimeout().toLong()
     var flag_long_click_cancelled: Boolean = false
+    var channel_text_display: TextView
+    var line_offset_text_display: TextView
     init {
         this.setOnClickListener {
             this.on_click()
@@ -29,6 +34,17 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
         this.setOnTouchListener { view: View?, touchEvent: MotionEvent? ->
             this.touch_callback(view, touchEvent)
         }
+        this.addView(
+            LayoutInflater.from(context)
+                .inflate(
+                    R.layout.line_label_std,
+                    this,
+                    false
+                )
+        )
+
+        this.channel_text_display = this.findViewById<TextView>(R.id.channel_display)
+        this.line_offset_text_display = this.findViewById<TextView>(R.id.line_offset_display)
     }
 
     private fun cancel_long_click() {
@@ -174,15 +190,22 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Ap
     fun set_text() {
         val opus_manager = this.get_opus_manager()
 
-        val text = if (!opus_manager.is_percussion(this.channel)) {
-            "${this.channel}::${this.line_offset}"
+        this.channel_text_display.text = this.channel.toString()
+        this.line_offset_text_display.text = if (opus_manager.is_percussion(this.channel)) {
+            val channel = (opus_manager.get_channel(this.channel) as OpusPercussionChannel)
+            resources.getString(R.string.line_label_second_percussion, channel.lines[this.line_offset].instrument)
         } else {
-            val instrument = opus_manager.get_percussion_instrument(this.channel, this.line_offset)
-            "!$instrument"
+            resources.getString(R.string.line_label_second, this.line_offset)
         }
+        //val text = if (!opus_manager.is_percussion(this.channel)) {
+        //    "${this.channel}::${this.line_offset}"
+        //} else {
+        //    val instrument = opus_manager.get_percussion_instrument(this.channel, this.line_offset)
+        //    "!$instrument"
+        //}
 
-        this.text = text
-        this.contentDescription = text
+        //this.text = text
+        //this.contentDescription = text
         this.refreshDrawableState()
     }
 

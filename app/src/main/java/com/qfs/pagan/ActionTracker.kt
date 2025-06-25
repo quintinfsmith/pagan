@@ -1184,18 +1184,25 @@ class ActionTracker {
         }
     }
 
+    fun insert_percussion_channel(index: Int? = null) {
+        this.track(TrackedAction.InsertChannel, listOf(index ?: -1, 1))
+        val opus_manager = this.get_opus_manager()
+        if (index != null) {
+            opus_manager.new_channel(index, is_percussion = true)
+        } else {
+            val channel = opus_manager.cursor.channel
+            opus_manager.new_channel(channel + 1, is_percussion = true)
+        }
+    }
+
     fun insert_channel(index: Int? = null) {
-        this.track(TrackedAction.InsertChannel, listOf(index ?: -1))
+        this.track(TrackedAction.InsertChannel, listOf(index ?: -1, 0))
         val opus_manager = this.get_opus_manager()
         if (index != null) {
             opus_manager.new_channel(index)
         } else {
             val channel = opus_manager.cursor.channel
-            if (opus_manager.is_percussion(channel)) {
-                opus_manager.new_channel(channel)
-            } else {
-                opus_manager.new_channel(channel + 1)
-            }
+            opus_manager.new_channel(channel + 1)
         }
     }
 
@@ -1204,13 +1211,7 @@ class ActionTracker {
         val use_index = index ?: opus_manager.cursor.channel
 
         this.track(TrackedAction.RemoveChannel, listOf(use_index))
-        if (opus_manager.is_percussion(use_index)) {
-            try {
-                opus_manager.toggle_channel_visibility(use_index)
-            } catch (_: OpusLayerInterface.HidingLastChannelException) {
-                // pass
-            }
-        } else if (opus_manager.channels.isNotEmpty()) {
+        if (opus_manager.channels.isNotEmpty()) {
             opus_manager.remove_channel(use_index)
         }
     }
@@ -1829,8 +1830,15 @@ class ActionTracker {
             TrackedAction.InsertChannel -> {
                 // -1 means insert channel at cursor
                 val index = integers[0]!!
+                val is_percussion = integers[1]!! != 0
                 if (index == -1) {
-                    this.insert_channel(null)
+                    if (is_percussion) {
+                        this.insert_percussion_channel(null)
+                    } else {
+                        this.insert_channel(null)
+                    }
+                } else if (is_percussion) {
+                    this.insert_percussion_channel(index)
                 } else {
                     this.insert_channel(index)
                 }

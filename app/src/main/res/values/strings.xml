@@ -4,8 +4,8 @@
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
     <string name="label_choose_percussion">%1$d: %2$s</string>
-    <string name="label_choose_instrument">%1$d: %2$s</string>
-    <string name="label_choose_instrument_percussion">Kit: %1$s</string>
+    <string name="label_choose_instrument">%1$02d: %2$s</string>
+    <string name="label_choose_instrument_percussion">%1$02d: %2$s</string>
     <string name="label_shortcut_scrollbar">Jump to beat %1$d</string>
     <string name="label_shortcut">Jump to beat</string>
     <string name="dlg_tuning">Tuning</string>
@@ -44,7 +44,7 @@
 
     <string name="btn_cfg_change_name">Change Project Name…</string>
     <string name="label_tuning">Tuning</string>
-    <string name="btn_cfg_add_channel">Add Channel</string>
+    <string name="btn_cfg_add_channel">+ Channel</string>
     <string name="btn_cfg_save">Save</string>
     <string name="btn_cfg_copy">Copy</string>
     <string name="btn_cfg_delete">Delete</string>
@@ -218,6 +218,7 @@
     <string name="project_info_beat_count">%1$d Beats</string>
     <string name="project_info_channel_count">%1$d Channels</string>
     <string name="project_info_tempo">%1$d BPM</string>
+    <string name="btn_cfg_add_kit_channel">+ Kit</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

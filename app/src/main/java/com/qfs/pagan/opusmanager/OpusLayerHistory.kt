@@ -667,13 +667,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     this.set_channel_controller_visibility(type, channel, current_node.args[2] as Boolean)
                 }
 
-                HistoryToken.SET_CHANNEL_VISIBILITY -> {
-                    this.set_channel_visibility(
-                        current_node.args[0] as Int,
-                        current_node.args[1] as Boolean
-                    )
-                }
-
                 HistoryToken.CURSOR_SELECT -> {
                     this.cursor_select(
                         checked_cast<BeatKey>(current_node.args[0]),
@@ -1764,18 +1757,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 )
             }
             super.new_global_controller(type)
-        }
-    }
-
-    override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
-        this._remember {
-            if (this.get_all_channels()[channel_index].visible != visibility) {
-                this.push_to_history_stack(
-                    HistoryToken.SET_CHANNEL_VISIBILITY,
-                    listOf(channel_index, !visibility)
-                )
-            }
-            super.set_channel_visibility(channel_index, visibility)
         }
     }
 

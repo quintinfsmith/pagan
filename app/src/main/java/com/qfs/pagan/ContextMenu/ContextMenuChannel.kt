@@ -61,15 +61,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             View.VISIBLE
         }
 
-        val is_percussion = opus_manager.is_percussion(channel_index)
-        this.button_remove.isEnabled = (!is_percussion && opus_manager.channels.isNotEmpty()) || (is_percussion && opus_manager.channels.isNotEmpty())
-        (this.button_remove as MaterialButton).setIconResource(
-            if (is_percussion) {
-                R.drawable.hide
-            } else {
-                R.drawable.remove_line
-            }
-        )
+        this.button_remove.isEnabled = opus_manager.channels.size > 1
 
         var show_control_toggle = false
         for (ctl_type in OpusLayerInterface.Companion.channel_controller_domain) {
@@ -86,7 +78,6 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             this.button_toggle_controllers.visibility = View.VISIBLE
         }
 
-        // TODO: I don't like how I'm doing this. Should be a custom button?
         (this.button_mute as MaterialButton).setIconResource(
             if (channel.muted) {
                 R.drawable.mute

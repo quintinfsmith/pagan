@@ -1600,9 +1600,11 @@ class ActivityEditor : PaganActivity() {
         }
         //-------------------------------------------
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
-            this.get_action_interface().insert_channel(
-                opus_manager.channels.size
-            )
+            this.get_action_interface().insert_channel(opus_manager.channels.size)
+        }
+
+        this.findViewById<View>(R.id.btnAddPercussion).setOnClickListener {
+            this.get_action_interface().insert_percussion_channel(opus_manager.channels.size)
         }
 
         this.setup_project_config_drawer_export_button()

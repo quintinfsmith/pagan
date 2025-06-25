@@ -36,7 +36,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     private var _beat_count: Int = 0
     var size: Int = 0
 
-    var visible = true // Would rather have this in the Interface Layer but the code is much cleaner with it here
     var muted = false
 
     abstract fun gen_line(): T
@@ -350,7 +349,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         result = (31 * result) + this.midi_program
         result = (31 * result) + this._beat_count
         result = (31 * result) + this.size
-        result = (31 * result) + this.visible.hashCode()
         return result
     }
 

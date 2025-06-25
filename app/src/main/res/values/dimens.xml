@@ -43,6 +43,9 @@
     <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
     <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>
 
+    <dimen name="channel_option_corner_radius_percussion">12dp</dimen>
+    <dimen name="channel_option_corner_radius">40dp</dimen>
+
     <dimen name="radio_stroke">2dp</dimen>
     <dimen name="progress_bar_size">64dp</dimen>
 

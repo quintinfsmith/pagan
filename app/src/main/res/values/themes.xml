@@ -57,7 +57,7 @@
     </style>
     <style name="Theme.Pagan.Button.Tonal" parent="ThemeOverlay.Material3.Button.TonalButton">
     </style>
-    <style name="Theme.Pagan.IconButton" parent="Widget.Material3.Button.IconButton.Filled"> </style>
+    <style name="Theme.Pagan.IconButton" parent="Widget.Material3.Button.IconButton.Filled"></style>
     <style name="Theme.Pagan.Dialog" parent="Widget.AppCompat.ButtonBar.AlertDialog">
         <item name="android:windowIsFloating">true</item>
         <item name="android:background">@null</item>

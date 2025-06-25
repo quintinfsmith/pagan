@@ -1881,15 +1881,6 @@ open class OpusLayerBase {
     }
 
     /**
-     * Show/hide the channel at [channel_index]
-     */
-    open fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
-        val channel = this.get_all_channels()[channel_index]
-        channel.visible = visibility
-        this.recache_line_maps()
-    }
-
-    /**
      * Mute Playback of channel at [channel]
      */
     open fun mute_channel(channel: Int) {
@@ -3324,11 +3315,6 @@ open class OpusLayerBase {
         }
     }
 
-    fun toggle_channel_visibility(channel_index: Int) {
-        val channel = this.get_all_channels()[channel_index]
-        this.set_channel_visibility(channel_index, !channel.visible)
-    }
-
     open fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
         val channel = this.get_all_channels()[channel_index]
         val line = channel.lines[line_offset]
@@ -4681,15 +4667,13 @@ open class OpusLayerBase {
         for (channel_index in channels.indices) {
             val channel = channels[channel_index]
             for (line_offset in channel.lines.indices) {
-                if (channel.visible) {
-                    this._cached_inv_visible_line_map[ctl_line] = visible_line
-                    this._cached_row_map[visible_line] = ctl_line
-                    visible_line += 1
-                }
+                this._cached_inv_visible_line_map[ctl_line] = visible_line
+                this._cached_row_map[visible_line] = ctl_line
+                visible_line += 1
                 ctl_line += 1
 
                 for ((type, controller) in channel.lines[line_offset].controllers.get_all()) {
-                    if (controller.visible && channel.visible) {
+                    if (controller.visible) {
                         this._cached_inv_visible_line_map[ctl_line] = visible_line
                         this._cached_row_map[visible_line] = ctl_line
                         this._cached_ctl_map_line[Triple(channel_index, line_offset, type)] = visible_line
@@ -4700,7 +4684,7 @@ open class OpusLayerBase {
             }
 
             for ((type, controller) in channel.controllers.get_all()) {
-                if (controller.visible && channel.visible) {
+                if (controller.visible) {
                     this._cached_inv_visible_line_map[ctl_line] = visible_line
                     this._cached_row_map[visible_line] = ctl_line
                     this._cached_ctl_map_channel[Pair(channel_index, type)] = visible_line
@@ -4926,10 +4910,6 @@ open class OpusLayerBase {
         }
     }
 
-    fun is_channel_visible(channel_index: Int): Boolean {
-        return this.get_all_channels()[channel_index].visible
-    }
-
     fun is_line_ctl_visible(type: ControlEventType, channel: Int, line_offset: Int): Boolean {
         val line = this.get_all_channels()[channel].lines[line_offset]
         return line.controllers.has_controller(type) && line.controllers.get_controller<OpusControlEvent>(type).visible
@@ -4949,15 +4929,6 @@ open class OpusLayerBase {
     open fun on_action_blocked_channel_ctl(type: ControlEventType, blocker_channel: Int, blocker_beat: Int, blocker_position: List<Int>) {}
     open fun on_action_blocked_line_ctl(type: ControlEventType, blocker_key: BeatKey, blocker_position: List<Int>) {}
 
-    fun get_visible_channel_count(): Int {
-        var count = 0
-        for (channel in this.get_all_channels()) {
-            if (channel.visible) {
-                count += 1
-            }
-        }
-        return count
-    }
     fun get_visible_channels(): List<OpusChannelAbstract<*,*>> {
         return this.channels
     }

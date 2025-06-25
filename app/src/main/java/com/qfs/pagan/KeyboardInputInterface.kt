@@ -102,17 +102,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
         },
 
-        Pair(KeyEvent.KEYCODE_GRAVE, false) to object: KeyStrokeNode(this) {
-            override fun call(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean): Boolean {
-                try {
-                    opus_manager.toggle_channel_visibility(opus_manager.channels.size)
-                } catch (e: OpusManager.HidingNonEmptyPercussionException) {
-                    // pass
-                }
-                return true
-            }
-        },
-
         Pair(KeyEvent.KEYCODE_LEFT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
                 if (opus_manager.is_percussion(opus_manager.cursor.channel)) {

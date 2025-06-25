@@ -195,31 +195,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(channel, line_offset)
     }
 
-    override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
-        super.set_channel_visibility(channel_index, visibility)
-
-        if (visibility) {
-            this.cursor_select_channel(channel_index)
-        } else {
-            var next_channel_index = channel_index
-            val channels = this.get_all_channels()
-            while (next_channel_index < channels.size && !channels[next_channel_index].visible) {
-                next_channel_index += 1
-            }
-
-            if (next_channel_index >= channels.size) {
-                next_channel_index -= 1
-                while ((next_channel_index > 0) && !channels[next_channel_index].visible) {
-                    next_channel_index -= 1
-                }
-            }
-
-            if (channels.indices.contains(next_channel_index)) {
-                this.cursor_select_channel(next_channel_index)
-            }
-        }
-    }
-
     override fun remove_line_controller(type: ControlEventType, channel_index: Int, line_offset: Int) {
         super.remove_line_controller(type, channel_index, line_offset)
         this.cursor_select_line(channel_index, line_offset)
@@ -233,17 +208,11 @@ open class OpusLayerCursor: OpusLayerBase() {
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
 
-        var next_channel_index = channel
+        var next_channel_index = channel + 1
         val channels = this.get_all_channels()
-        while (next_channel_index < channels.size && !channels[next_channel_index].visible) {
-            next_channel_index += 1
-        }
 
         if (next_channel_index >= channels.size) {
             next_channel_index -= 1
-            while ((next_channel_index > 0) && !channels[next_channel_index].visible) {
-                next_channel_index -= 1
-            }
         }
 
         if (channels.indices.contains(next_channel_index)) {
@@ -2468,11 +2437,11 @@ open class OpusLayerCursor: OpusLayerBase() {
                     CtlLineLevel.Channel -> cursor.channel
                 }
 
-                kotlin.math.max(0, kotlin.math.min(start_channel + n, this.get_visible_channel_count() - 1))
+                kotlin.math.max(0, kotlin.math.min(start_channel + n, this.channels.size - 1))
             }
 
             OpusManagerCursor.CursorMode.Column -> {
-                kotlin.math.max(0, kotlin.math.min(n - 1, this.get_visible_channel_count() - 1))
+                kotlin.math.max(0, kotlin.math.min(n - 1, this.channels.size - 1))
             }
 
             OpusManagerCursor.CursorMode.Range,

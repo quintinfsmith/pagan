@@ -16,7 +16,6 @@ class ActionTrackerUnitTest {
                 // -------------- No arguments --------------
                 ActionTracker.TrackedAction.RemoveController,
                 ActionTracker.TrackedAction.ToggleControllerVisibility,
-                ActionTracker.TrackedAction.TogglePercussionVisibility,
                 ActionTracker.TrackedAction.Unset,
                 ActionTracker.TrackedAction.UnsetRoot,
                 ActionTracker.TrackedAction.SaveProject,
@@ -71,7 +70,6 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.SetPanAtCursor,
                 ActionTracker.TrackedAction.InsertLine,
                 ActionTracker.TrackedAction.RemoveLine,
-                ActionTracker.TrackedAction.InsertChannel,
                 ActionTracker.TrackedAction.RemoveChannel,
                 ActionTracker.TrackedAction.SetDuration,
                 ActionTracker.TrackedAction.RemoveBeat,
@@ -163,6 +161,7 @@ class ActionTrackerUnitTest {
                 }
 
 
+                ActionTracker.TrackedAction.InsertChannel,
                 ActionTracker.TrackedAction.SwapChannels,
                 ActionTracker.TrackedAction.MuteLine,
                 ActionTracker.TrackedAction.UnMuteLine,
@@ -218,7 +217,6 @@ class ActionTrackerUnitTest {
                     // -------------- No arguments --------------
                     ActionTracker.TrackedAction.RemoveController,
                     ActionTracker.TrackedAction.ToggleControllerVisibility,
-                    ActionTracker.TrackedAction.TogglePercussionVisibility,
                     ActionTracker.TrackedAction.Unset,
                     ActionTracker.TrackedAction.UnsetRoot,
                     ActionTracker.TrackedAction.SaveProject,
@@ -266,7 +264,6 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.SetPanAtCursor,
                     ActionTracker.TrackedAction.InsertLine,
                     ActionTracker.TrackedAction.RemoveLine,
-                    ActionTracker.TrackedAction.InsertChannel,
                     ActionTracker.TrackedAction.RemoveChannel,
                     ActionTracker.TrackedAction.SetDuration,
                     ActionTracker.TrackedAction.RemoveBeat,
@@ -323,6 +320,7 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, string)
                     }
 
+                    ActionTracker.TrackedAction.InsertChannel,
                     ActionTracker.TrackedAction.SwapChannels,
                     ActionTracker.TrackedAction.MuteLine,
                     ActionTracker.TrackedAction.UnMuteLine,

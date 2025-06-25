@@ -616,9 +616,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 var y_offset = line_height
                 for (j in channels.indices) {
                     val channel = channels[j]
-                    if (!channel.visible) {
-                        continue
-                    }
                     for (k in channel.lines.indices) {
                         val line = channel.lines[k]
                         val colored_line_paint = Paint()

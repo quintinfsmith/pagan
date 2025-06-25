@@ -1,11 +1,14 @@
 package com.qfs.pagan
 
+import android.text.SpannableString
+import android.text.style.UnderlineSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
+
 
 class ChannelOptionAdapter(
     private val _opus_manager: OpusLayerInterface,
@@ -35,7 +38,6 @@ class ChannelOptionAdapter(
                 parent,
                 false
             )
-
         return ChannelOptionViewHolder(wrapper)
     }
 
@@ -57,15 +59,19 @@ class ChannelOptionAdapter(
             activity.resources.getString(R.string.unknown_instrument, defaults[curChannel.midi_program])
         }
 
-        view.text = if (!this._opus_manager.is_percussion(position)) {
-            activity.getString(R.string.label_choose_instrument, position, label)
+        view.text = if (this._opus_manager.is_percussion(position)) {
+            val text = activity.getString(R.string.label_choose_instrument_percussion, position, label)
+            val content = SpannableString(text)
+            content.setSpan(UnderlineSpan(), text.indexOf(" ") + 1, text.length, 0)
+            content
         } else {
-            activity.getString(R.string.label_choose_instrument_percussion, label)
+            activity.getString(R.string.label_choose_instrument, position, label)
         }.trim()
     }
 
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
         val wrapper = holder.itemView
+
         val option_button = wrapper.findViewById<MaterialButton>(R.id.btnLabel)
         val remove_button = wrapper.findViewById<MaterialButton>(R.id.btnClose)
         this.set_text(option_button, position)

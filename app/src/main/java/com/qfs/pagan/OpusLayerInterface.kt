@@ -352,23 +352,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun set_channel_visibility(channel_index: Int, visibility: Boolean) {
-        this.lock_ui_partial {
-            if (visibility) {
-                super.set_channel_visibility(channel_index, true)
-                this._post_new_channel(channel_index, this.get_all_channels()[channel_index].lines.size)
-            } else {
-                val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel_index)
-                super.set_channel_visibility(channel_index, false)
-
-                this._ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
-                this._ui_change_bill.queue_column_changes(changed_columns, false)
-            }
-            this._ui_change_bill.queue_refresh_channel(channel_index)
-            this._ui_change_bill.queue_refresh_context_menu()
-        }
-    }
-
     override fun set_project_name(new_name: String?) {
         this.lock_ui_partial {
             super.set_project_name(new_name)
@@ -902,10 +885,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
 
         for (channel in this.get_all_channels()) {
-            if (!channel.visible) {
-                continue
-            }
-
             for (line in channel.lines) {
                 if (y >= first_swapped_line) {
                     this._ui_change_bill.queue_line_label_refresh(y)
@@ -2178,12 +2157,10 @@ class OpusLayerInterface : OpusLayerHistory() {
                             ) ?: return
 
                             val channels = this.get_all_channels()
-                            if (channels[cursor.channel].visible) {
-                                var j = 1
-                                for ((_, controller) in channels[cursor.channel].lines[cursor.line_offset].controllers.get_all()) {
-                                    if  (controller.visible) {
-                                        this._ui_change_bill.queue_line_label_refresh(line_y + j++)
-                                    }
+                            var j = 1
+                            for ((_, controller) in channels[cursor.channel].lines[cursor.line_offset].controllers.get_all()) {
+                                if  (controller.visible) {
+                                    this._ui_change_bill.queue_line_label_refresh(line_y + j++)
                                 }
                             }
 

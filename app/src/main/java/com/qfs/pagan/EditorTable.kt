@@ -76,9 +76,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
         for (i in channels.indices) {
             val channel = channels[i]
-            if (!channel.visible) {
-                continue
-            }
             for (j in channel.lines.indices) {
                 val line = channel.lines[j]
 
@@ -420,9 +417,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         var working_y_offset = line_height // consider column label offset
         for (i in channels.indices) {
             val channel = channels[i]
-            if (!channel.visible) {
-                continue
-            }
             for (j in channel.lines.indices) {
                 val line = channel.lines[j]
                 if (y == row) {
@@ -730,9 +724,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
         val opus_manager = this.get_opus_manager()
         for (channel in opus_manager.get_all_channels()) {
-            if (!channel.visible) {
-                continue
-            }
             for (line in channel.lines) {
                 line_count += 1
                 for ((_, controller) in line.controllers.get_all()) {

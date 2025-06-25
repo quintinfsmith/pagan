@@ -4341,10 +4341,16 @@ open class OpusLayerBase {
             channel_sizes.add(1)
         }
 
-        val sorted_channels = midi_channel_map.values.sortedBy { it }
-        sorted_channels.forEachIndexed { i: Int, channel: Int ->
-            this.new_channel(lines = channel_sizes[channel], is_percussion = i == sorted_channels.size - 1)
+        val keys = midi_channel_map.keys.toList()
+        val sorted_channels = MutableList(keys.size) { i: Int ->
+            Pair(midi_channel_map[keys[i]]!!, keys[i])
+        }.sortedBy { it.first }
+
+        sorted_channels.forEachIndexed { i: Int, pair: Pair<Int, Int> ->
+            val (channel, midi_channel) = pair
+            this.new_channel(lines = channel_sizes[channel], is_percussion = midi_channel == 9)
         }
+
         // Flag ignore blocking so we don't keep rechecking
         for (channel in this.get_all_channels()) {
             for (line in channel.lines) {

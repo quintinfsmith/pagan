@@ -207,17 +207,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
-
-        var next_channel_index = channel + 1
-        val channels = this.get_all_channels()
-
-        if (next_channel_index >= channels.size) {
-            next_channel_index -= 1
-        }
-
-        if (channels.indices.contains(next_channel_index)) {
-            this.cursor_select_channel(next_channel_index)
-        }
+        this.cursor_select_channel(max(0, min(channel, this.channels.size - 1)))
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {

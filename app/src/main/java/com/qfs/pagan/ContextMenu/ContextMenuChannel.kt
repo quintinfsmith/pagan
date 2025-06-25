@@ -15,6 +15,7 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 class ContextMenuChannel(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_channel, R.layout.contextmenu_channel_secondary, primary_container, secondary_container) {
     lateinit var button_insert: Button
+    lateinit var button_insert_percussion: Button
     lateinit var button_remove: Button
     lateinit var button_choose_instrument: Button
     lateinit var button_toggle_controllers: Button
@@ -26,6 +27,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         val secondary = this.secondary!!
         this.button_toggle_controllers = primary.findViewById(R.id.btnToggleChannelCtl)
         this.button_insert = primary.findViewById(R.id.btnInsertLine)
+        this.button_insert_percussion = primary.findViewById(R.id.btnInsertPercussionChannel)
         this.button_remove = primary.findViewById(R.id.btnRemoveLine)
         this.button_adjust = primary.findViewById(R.id.btnAdjust)
         this.button_choose_instrument = secondary.findViewById(R.id.btnChooseInstrument)
@@ -112,6 +114,12 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             }
             this.click_button_insert_channel()
         }
+        this.button_insert_percussion.setOnClickListener {
+            if (!it.isEnabled) {
+                return@setOnClickListener
+            }
+            this.click_button_insert_percussion_channel()
+        }
 
         this.button_remove.setOnClickListener {
             if (!it.isEnabled) {
@@ -152,6 +160,9 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
     fun click_button_insert_channel() {
         this.get_activity().get_action_interface().insert_channel()
+    }
+    fun click_button_insert_percussion_channel() {
+        this.get_activity().get_action_interface().insert_percussion_channel()
     }
 
     fun long_click_button_insert_channel(): Boolean {

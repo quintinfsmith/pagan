@@ -164,6 +164,7 @@
     <string name="cd_channel_volume">Toggle Volume Control</string>
     <string name="cd_remove_channel">Remove Channel</string>
     <string name="cd_insert_channel">Add Channel</string>
+    <string name="cd_insert_channel_percussion">Add Kit</string>
     <string name="cd_show_effect_controls">Show Effect Controls</string>
     <string name="cd_remove_line">Remove Line</string>
     <string name="cd_insert_line">Insert Line</string>

@@ -40,6 +40,16 @@
 
         <Button
             style="@style/contextmenu_button"
+            android:id="@+id/btnInsertPercussionChannel"
+            app:icon="@drawable/insert_line"
+            android:contentDescription="@string/cd_insert_channel"/>
+
+        <Space
+            android:layout_width="2dp"
+            android:layout_height="match_parent"/>
+
+        <Button
+            style="@style/contextmenu_button"
             android:id="@+id/btnInsertLine"
             app:icon="@drawable/insert_line"
             android:contentDescription="@string/cd_insert_channel"/>

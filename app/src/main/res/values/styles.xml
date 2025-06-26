@@ -58,17 +58,6 @@
         <item name="iconGravity">textStart</item>
     </style>
 
-    <style name="song_config_channel_button" parent="Widget.Material3.Button.Icon">
-        <item name="iconSize">@dimen/channel_cfg_icon_size</item>
-    </style>
-
-    <style name="song_config_std_channel_button" parent="song_config_channel_button">
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Material3.Corner.Right</item>
-    </style>
-    <style name="song_config_kit_channel_button" parent="song_config_channel_button">
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Material3.Corner.Left</item>
-    </style>
-
     <style name="button_front" parent="Theme.Pagan.Button">
         <item name="android:textSize">24sp</item>
         <item name="android:padding">10sp</item>

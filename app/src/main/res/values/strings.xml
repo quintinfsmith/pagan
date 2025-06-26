@@ -5,7 +5,7 @@
     <string name="drawer_close">Close Drawer</string>
     <string name="label_choose_percussion">%1$d: %2$s</string>
     <string name="label_choose_instrument">%1$02d: %2$s</string>
-    <string name="label_choose_instrument_percussion">%1$02d: %2$s</string>
+    <string name="label_choose_instrument_percussion">!%1$02d: %2$s</string>
     <string name="label_shortcut_scrollbar">Jump to beat %1$d</string>
     <string name="label_shortcut">Jump to beat</string>
     <string name="dlg_tuning">Tuning</string>

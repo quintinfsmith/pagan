@@ -3,12 +3,14 @@ package com.qfs.pagan
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.util.AttributeSet
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration.getLongPressTimeout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.graphics.toColorLong
@@ -19,6 +21,16 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): LinearLayoutCompat(ContextThemeWrapper(context, R.style.line_label)) {
+    class LineLabelTextView(context: Context, attrs: AttributeSet? = null): AppCompatTextView(ContextThemeWrapper(context, R.style.line_label_text), attrs) {
+        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
+            val drawableState = super.onCreateDrawableState(extraSpace + 3)
+            return if (this.parent != null) {
+                (this.parent.parent as LineLabelStd)._build_drawable_state(drawableState)
+            } else {
+                drawableState
+            }
+        }
+    }
     val click_threshold_millis = 250
     val click_threshold_pixels = 5
     var press_position: Pair<Float, Float>? = null
@@ -73,7 +85,6 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
         val line = this.get_opus_manager().get_all_channels()[this.channel].lines[this.line_offset]
         val line_color = line.color
         if (line_color != null) {
-            val stripe_stroke = resources.getDimension(R.dimen.stroke_leaf)
             val line_height = resources.getDimension(R.dimen.line_height)
             val paint = Paint()
             paint.color = line_color.toColorLong().toColorInt()
@@ -190,7 +201,12 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
     fun set_text() {
         val opus_manager = this.get_opus_manager()
 
-        this.channel_text_display.text = this.channel.toString()
+        this.channel_text_display.text = if (opus_manager.is_percussion(this.channel)) {
+            resources.getString(R.string.line_label_first_percussion, this.channel)
+        } else {
+            resources.getString(R.string.line_label_first, this.channel)
+        }
+
         this.line_offset_text_display.text = if (opus_manager.is_percussion(this.channel)) {
             val channel = (opus_manager.get_channel(this.channel) as OpusPercussionChannel)
             resources.getString(R.string.line_label_second_percussion, channel.lines[this.line_offset].instrument)

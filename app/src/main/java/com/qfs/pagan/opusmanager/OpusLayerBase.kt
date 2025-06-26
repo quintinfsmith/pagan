@@ -4335,10 +4335,6 @@ open class OpusLayerBase {
             val percussion_line_count = channel_sizes.removeAt(adj_channel)
             midi_channel_map[9] = channel_sizes.size
             channel_sizes.add(percussion_line_count)
-        } else {
-            // If no percussion is found, add an empty percussion track
-            midi_channel_map[9] = channel_sizes.size
-            channel_sizes.add(1)
         }
 
         val keys = midi_channel_map.keys.toList()

@@ -962,6 +962,7 @@ class ActivityEditor : PaganActivity() {
             thread {
                 this.loading_reticle_show()
                 this.runOnUiThread {
+                    this.findViewById<EditorTable>(R.id.etEditorTable).visibility = View.GONE
                     this.clear_context_menu()
                 }
 
@@ -976,16 +977,17 @@ class ActivityEditor : PaganActivity() {
                     }
                 }
 
-                this.loading_reticle_hide()
-                this.runOnUiThread {
-                    this.clear_forced_title()
-                }
-
                 if (fallback_msg != null) {
                     if (!this.get_opus_manager().is_initialized()) {
                         this.setup_new()
                     }
                     this.feedback_msg(fallback_msg)
+                }
+
+                this.loading_reticle_hide()
+                this.runOnUiThread {
+                    this.clear_forced_title()
+                    this.findViewById<EditorTable>(R.id.etEditorTable).visibility = View.VISIBLE
                 }
             }
         }

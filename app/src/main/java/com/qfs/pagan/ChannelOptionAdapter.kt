@@ -1,7 +1,5 @@
 package com.qfs.pagan
 
-import android.text.SpannableString
-import android.text.style.UnderlineSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -60,10 +58,7 @@ class ChannelOptionAdapter(
         }
 
         view.text = if (this._opus_manager.is_percussion(position)) {
-            val text = activity.getString(R.string.label_choose_instrument_percussion, position, label)
-            val content = SpannableString(text)
-            content.setSpan(UnderlineSpan(), text.indexOf(" ") + 1, text.length, 0)
-            content
+            activity.getString(R.string.label_choose_instrument_percussion, position, label)
         } else {
             activity.getString(R.string.label_choose_instrument, position, label)
         }.trim()

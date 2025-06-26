@@ -58,20 +58,22 @@
                 android:layout_weight="1" />
 
             <Button
+                app:icon="@drawable/add_channel_kit"
+                android:layout_gravity="end"
                 android:id="@+id/btnAddPercussion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_cfg_add_kit_channel"
-                android:layout_gravity="end"
-                style="@style/song_config_button"/>
+                android:contentDescription="@string/btn_cfg_add_kit_channel"
+                style="@style/song_config_channel_button"/>
 
             <Button
+                app:icon="@drawable/add_channel"
+                android:layout_gravity="end"
                 android:id="@+id/btnAddChannel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_cfg_add_channel"
-                android:layout_gravity="end"
-                style="@style/song_config_button"/>
+                android:contentDescription="@string/btn_cfg_add_channel"
+                style="@style/song_config_channel_button"/>
 
         </LinearLayout>
     </LinearLayout>

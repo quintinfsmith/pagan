@@ -31,7 +31,7 @@
         <Button
             style="@style/contextmenu_button"
             android:id="@+id/btnRemoveLine"
-            app:icon="@drawable/remove_line"
+            app:icon="@drawable/remove_channel"
             android:contentDescription="@string/cd_remove_channel"/>
 
         <Space
@@ -41,7 +41,7 @@
         <Button
             style="@style/contextmenu_button"
             android:id="@+id/btnInsertPercussionChannel"
-            app:icon="@drawable/insert_line"
+            app:icon="@drawable/add_channel_kit"
             android:contentDescription="@string/cd_insert_channel"/>
 
         <Space
@@ -51,6 +51,6 @@
         <Button
             style="@style/contextmenu_button"
             android:id="@+id/btnInsertLine"
-            app:icon="@drawable/insert_line"
+            app:icon="@drawable/add_channel"
             android:contentDescription="@string/cd_insert_channel"/>
 </LinearLayout>

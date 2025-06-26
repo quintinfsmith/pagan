@@ -57,6 +57,13 @@
         <item name="iconSize">@dimen/config_icon_size</item>
         <item name="iconGravity">textStart</item>
     </style>
+    <style name="song_config_channel_button" parent="song_config_button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="iconPadding">0dp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="iconSize">@dimen/channel_cfg_icon_size</item>
+    </style>
 
     <style name="button_front" parent="Theme.Pagan.Button">
         <item name="android:textSize">24sp</item>

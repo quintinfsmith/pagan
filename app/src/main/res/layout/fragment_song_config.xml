@@ -64,7 +64,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/btn_cfg_add_kit_channel"
-                style="@style/song_config_button"/>
+                style="@style/song_config_channel_button"/>
 
             <Button
                 app:icon="@drawable/add_channel"
@@ -73,7 +73,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/btn_cfg_add_channel"
-                style="@style/song_config_button"/>
+                style="@style/song_config_channel_button"/>
 
         </LinearLayout>
     </LinearLayout>

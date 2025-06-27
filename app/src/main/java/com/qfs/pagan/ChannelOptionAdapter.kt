@@ -3,6 +3,7 @@ package com.qfs.pagan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
@@ -14,9 +15,11 @@ class ChannelOptionAdapter(
 ) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
+
     private var _channel_count = 0
     init {
         this._recycler.adapter = this
+
         this.registerAdapterDataObserver(
             object: RecyclerView.AdapterDataObserver() {
                 override fun onItemRangeRemoved(start: Int, count: Int) {

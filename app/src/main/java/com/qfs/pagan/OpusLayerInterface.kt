@@ -710,7 +710,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.percussion_set_instrument(channel, line_offset, instrument)
             // Need to call get_drum name to repopulate instrument list if needed
-            this.get_activity()?.get_drum_name(instrument)
+            this.get_activity()?.get_drum_name(channel, instrument)
 
             if (!this._ui_change_bill.is_full_locked()) {
                 this._ui_change_bill.queue_refresh_choose_percussion_button(channel, line_offset)
@@ -987,6 +987,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                     channel_b_size += 1
                 }
             }
+
+            this.get_activity()?.swap_percussion_channels(channel_a, channel_b)
             this.get_editor_table().swap_mapped_channels(vis_line_b, channel_a_size, vis_line_a, channel_b_size)
             this._swap_line_ui_update(channel_a, 0, channel_b, 0)
 
@@ -1064,6 +1066,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.new_channel(channel, lines, uuid, is_percussion)
             this._ui_change_bill.queue_add_channel(notify_index)
             this._post_new_channel(notify_index, lines)
+            this.get_activity()?.shift_up_percussion_names(notify_index)
         }
     }
 
@@ -1154,17 +1157,19 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun remove_channel(channel: Int) {
+
         if (!this._ui_change_bill.is_full_locked()) {
             this.lock_ui_partial {
                 val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
                 super.remove_channel(channel)
-
+                this.get_activity()?.shift_down_percussion_names(channel)
                 this._ui_change_bill.queue_remove_channel(channel)
                 this._ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
                 this._ui_change_bill.queue_column_changes(changed_columns, false)
             }
         } else {
             super.remove_channel(channel)
+            this.get_activity()?.shift_down_percussion_names(channel)
         }
     }
 
@@ -2467,7 +2472,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         editor_table.setup(this.get_row_count(), this.length)
 
                         activity.update_channel_instruments()
-                        activity.populate_active_percussion_names(true)
+                        activity.active_percussion_names.clear()
 
                         activity.update_title_text()
                         activity.clear_context_menu()
@@ -2526,7 +2531,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         val channel = this._ui_change_bill.get_next_int()
 
                         if (this.is_percussion(channel)) {
-                            activity.populate_active_percussion_names(true)
+                            activity.populate_active_percussion_names(channel, true)
                         }
 
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -2625,7 +2630,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             btnChoosePercussion.text = activity.getString(
                                 R.string.label_choose_percussion,
                                 instrument,
-                                activity.get_drum_name(instrument)
+                                activity.get_drum_name(channel, instrument)
                             )
                         }
                     }

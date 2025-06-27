@@ -80,7 +80,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         } else {
             this.button_choose_percussion.visibility = View.VISIBLE
             val instrument = opus_manager.get_percussion_instrument(channel, line_offset)
-            main.populate_active_percussion_names(false)
+            main.populate_active_percussion_names(cursor.channel, false)
             this.button_choose_percussion.text = if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 this.context.getString(
                     R.string.label_short_percussion,
@@ -90,7 +90,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
                 this.context.getString(
                     R.string.label_choose_percussion,
                     instrument,
-                    main.get_drum_name(instrument) ?: this.context.getString(R.string.drum_not_found)
+                    main.get_drum_name(cursor.channel, instrument) ?: this.context.getString(R.string.drum_not_found)
                 )
             }
             (this.spacer.layoutParams as LinearLayout.LayoutParams).weight = 1f

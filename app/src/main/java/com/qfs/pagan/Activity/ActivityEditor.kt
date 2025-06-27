@@ -196,7 +196,7 @@ class ActivityEditor : PaganActivity() {
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _integer_dialog_defaults = HashMap<String, Int>()
     private var _float_dialog_defaults = HashMap<String, Float>()
-    var active_percussion_names = HashMap<Int, String>()
+    var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
 
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
@@ -1042,7 +1042,7 @@ class ActivityEditor : PaganActivity() {
                         val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
                         channel_adapter.notify_soundfont_changed()
                     }
-                    this@ActivityEditor.populate_active_percussion_names(true)
+                    this@ActivityEditor.active_percussion_names.clear()
                 }
 
                 if (this@ActivityEditor.get_opus_manager().is_tuning_standard()) {
@@ -1076,7 +1076,7 @@ class ActivityEditor : PaganActivity() {
                             channel_adapter.notify_soundfont_changed()
                         }
 
-                        this@ActivityEditor.populate_active_percussion_names(true)
+                        this@ActivityEditor.active_percussion_names.clear()
                     }
                 }
             }
@@ -1715,13 +1715,15 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private fun get_drum_options(): List<Pair<String, Int>> {
+    private fun get_drum_options(channel_index: Int): List<Pair<String, Int>> {
         if (this._sample_handle_manager == null || this.is_connected_to_physical_device()) {
             return this._get_default_drum_options()
         }
 
+        val channel = this.get_opus_manager().get_channel(channel_index)
+
         val preset = try {
-            this._sample_handle_manager!!.get_preset(9) ?: return this._get_default_drum_options()
+            this._sample_handle_manager!!.get_preset(channel.get_midi_channel()) ?: return this._get_default_drum_options()
         } catch (e: SoundFont.InvalidPresetIndex) {
             return this._get_default_drum_options()
         }
@@ -1736,10 +1738,7 @@ class ActivityEditor : PaganActivity() {
 
             for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
                 val key_range = sample_directive.key_range ?: Pair(0, 127)
-                val usable_range = max(
-                    key_range.first,
-                    instrument_range.first
-                )..min(key_range.second, instrument_range.second)
+                val usable_range = max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
 
                 var name = sample_directive.sample!!.first().name
                 if (name.contains("(")) {
@@ -1980,7 +1979,7 @@ class ActivityEditor : PaganActivity() {
         this.reinit_playback_device()
         this.connect_feedback_device()
         this.update_channel_instruments()
-        this.populate_active_percussion_names()
+        this.active_percussion_names.clear()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()
             val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
@@ -1989,6 +1988,37 @@ class ActivityEditor : PaganActivity() {
                 val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
                 channel_adapter.notify_soundfont_changed()
             }
+        }
+    }
+
+    fun shift_up_percussion_names(channel: Int) {
+        val keys = this.active_percussion_names.keys.sorted().reversed()
+        for (k in keys) {
+            if (k < channel) {
+                continue
+            }
+            this.active_percussion_names[k + 1] = this.active_percussion_names.remove(k)!!
+        }
+    }
+
+    fun shift_down_percussion_names(channel: Int) {
+        val keys = this.active_percussion_names.keys.sorted()
+        for (k in keys) {
+            if (k > channel) {
+                this.active_percussion_names[k - 1] = this.active_percussion_names.remove(k)!!
+            } else if (k == channel) {
+                this.active_percussion_names.remove(k)
+            }
+        }
+    }
+
+    fun swap_percussion_channels(channel_a: Int, channel_b: Int) {
+        val a_names = this.active_percussion_names[channel_a]
+        if (this.active_percussion_names[channel_b] != null) {
+            this.active_percussion_names[channel_a] = this.active_percussion_names[channel_b]!!
+        }
+        if (a_names != null) {
+            this.active_percussion_names[channel_b] = a_names
         }
     }
 
@@ -2063,21 +2093,25 @@ class ActivityEditor : PaganActivity() {
         this._soundfont_supported_instrument_names.clear()
 
         this.update_channel_instruments()
-        this.populate_active_percussion_names()
+        this.active_percussion_names.clear()
     }
 
-    fun get_drum_name(index: Int): String? {
-        this.populate_active_percussion_names(false)
-        return this.active_percussion_names[index + 27]
+    fun get_drum_name(channel: Int, index: Int): String? {
+        this.populate_active_percussion_names(channel, false)
+        return if (! this.active_percussion_names.containsKey(channel)) {
+            null
+        } else {
+            this.active_percussion_names[channel]!![index + 27]
+        }
     }
 
-    fun populate_active_percussion_names(force: Boolean = true) {
-        if (force || this.active_percussion_names.isEmpty()) {
-            this.active_percussion_names.clear()
-            val drums = this.get_drum_options()
+    fun populate_active_percussion_names(channel_index: Int, force: Boolean = true) {
+        if (force || !this.active_percussion_names.containsKey(channel_index)) {
+            this.active_percussion_names[channel_index] = HashMap()
+            val drums = this.get_drum_options(channel_index)
             for ((name, note) in drums) {
                 if (note >= 27) {
-                    this.active_percussion_names[note] = name
+                    this.active_percussion_names[channel_index]!![note] = name
                 }
             }
         }

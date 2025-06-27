@@ -1243,10 +1243,10 @@ class ActionTracker {
         val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
         val options = mutableListOf<Pair<Int, String>>()
-        val sorted_keys = main.active_percussion_names.keys.toMutableList()
+        val sorted_keys = main.active_percussion_names[cursor.channel]!!.keys.toMutableList()
         sorted_keys.sort()
         for (note in sorted_keys) {
-            val name = main.active_percussion_names[note]
+            val name = main.active_percussion_names[cursor.channel]!![note]
             options.add(Pair(note - 27, "${note - 27}: $name"))
         }
 

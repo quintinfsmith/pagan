@@ -55,8 +55,6 @@ class OpusChannelJSONInterface {
 
         private fun _interpret_std(input_map: JSONHashMap, beat_count: Int): OpusChannel {
             val channel = OpusChannel(-1)
-            val midi_channel = input_map.get_int("midi_channel")
-            channel.midi_channel = midi_channel
             channel.midi_bank = input_map.get_int("midi_bank")
 
             val input_lines = input_map.get_list("lines")
@@ -73,14 +71,15 @@ class OpusChannelJSONInterface {
         }
 
         fun interpret(input_map: JSONHashMap, beat_count: Int): OpusChannelAbstract<*,*> {
-            val midi_channel = input_map.get_int("midi_channel")
-            val channel = if (midi_channel == 9) {
-                _interpret_percussion(input_map, beat_count)
-            } else {
-                _interpret_std(input_map, beat_count)
+            val channel = when (input_map.get_stringn("type")) {
+                "std" -> _interpret_std(input_map, beat_count)
+                "kit" -> _interpret_percussion(input_map, beat_count)
+                else -> throw Exception("Unknown Channel Type")
             }
+
             channel.size = channel.lines.size
             channel.set_beat_count(beat_count)
+            channel.midi_channel = input_map.get_int("midi_channel")
             channel.midi_program = input_map.get_int("midi_program")
             channel.controllers = ActiveControlSetJSONInterface.from_json(input_map.get_hashmap("controllers"), beat_count)
             channel.muted = input_map.get_boolean("muted", false)

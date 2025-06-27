@@ -1535,7 +1535,9 @@ open class OpusLayerBase {
      */
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null, is_percussion: Boolean = false) {
         val new_channel = if (is_percussion) {
-            OpusPercussionChannel(uuid ?: OpusLayerBase.gen_channel_uuid())
+            OpusPercussionChannel(uuid ?: OpusLayerBase.gen_channel_uuid()).apply {
+                midi_channel = 9
+            }
         } else {
             OpusChannel(uuid ?: OpusLayerBase.gen_channel_uuid()).apply {
                 midi_channel = this@OpusLayerBase.get_next_available_midi_channel()
@@ -3539,16 +3541,22 @@ open class OpusLayerBase {
         }
     }
 
-    private fun get_next_available_midi_channel(): Int {
+    private fun get_next_available_midi_channel(prefer: Int? = null, block_nine: Boolean = true): Int {
         // Find the next available MIDI channel, ignore '9' which needs to be manually set
         // NOTE: This *will* generate past MIDI 1's limit of 16 channels
         val used_channels: MutableSet<Int> = mutableSetOf(9)
+
         for (channel in this.channels) {
             used_channels.add(channel.get_midi_channel())
         }
+
         var new_channel = 0
-        while (new_channel in used_channels) {
-            new_channel += 1
+        if (prefer != null && !used_channels.contains(prefer)) {
+            new_channel = prefer
+        } else {
+            while (new_channel in used_channels) {
+                new_channel += 1
+            }
         }
 
         return new_channel
@@ -3654,6 +3662,9 @@ open class OpusLayerBase {
 
         // Set default values
         for (channel in this.channels) {
+            if (channel.muted) {
+                continue
+            }
             midi.insert_event(0, 0, VolumeMSB(channel.get_midi_channel(), 0x64))
         }
 
@@ -3767,15 +3778,20 @@ open class OpusLayerBase {
         }
 
         for (c in this.channels.indices) {
+            if (this.channels[c].muted) {
+                continue
+            }
+
             val channel = this.get_channel(c)
             midi.insert_event(0, 0, BankSelect(channel.get_midi_channel(), channel.get_midi_bank()))
             midi.insert_event(0, 0, ProgramChange(channel.get_midi_channel(), channel.midi_program))
 
             for (l in channel.lines.indices) {
                 val line = channel.lines[l]
-                if (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value == 0F) {
+                if (line.muted) {
                     continue
                 }
+
                 var current_tick = 0
                 var prev_note = 0
                 line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<out InstrumentEvent> ->
@@ -4821,10 +4837,10 @@ open class OpusLayerBase {
     fun get_all_channels(): List<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> {
         return this.channels
     }
-    fun get_percussion_channels(): List<Pair<Int, OpusPercussionChannel>> {
+    fun get_percussion_channels(include_muted: Boolean = true): List<Pair<Int, OpusPercussionChannel>> {
         val output = mutableListOf<Pair<Int, OpusPercussionChannel>>()
         for (c in 0 until this.channels.size) {
-            if (this.is_percussion(c)) {
+            if (this.is_percussion(c) && (include_muted || !this.channels[c].muted)) {
                 output.add(Pair(c, this.get_channel(c) as OpusPercussionChannel))
             }
         }

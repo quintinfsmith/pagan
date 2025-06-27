@@ -32,15 +32,16 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
 
     var lines: MutableList<T> = mutableListOf()
     var controllers = ActiveControlSet(0)
+    var midi_channel: Int = 0
     var midi_program = 0
     private var _beat_count: Int = 0
     var size: Int = 0
-
     var muted = false
 
     abstract fun gen_line(): T
     open fun clear() {
         this.lines.clear()
+        this.midi_channel = 0
         this.midi_program = 0
         this._beat_count = 0
         this.size = 0
@@ -252,7 +253,9 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
 
         return true
     }
-    abstract fun get_midi_channel(): Int
+    fun get_midi_channel(): Int {
+        return this.midi_channel
+    }
     abstract fun get_midi_bank(): Int
     fun get_midi_program(): Int {
         return this.midi_program
@@ -366,7 +369,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
 }
 
 class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>(uuid) {
-    var midi_channel: Int = 0
     var midi_bank = 0
 
     fun set_midi_bank(bank: Int) {
@@ -375,27 +377,19 @@ class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine
     override fun gen_line(): OpusLine {
         return OpusLine(this.get_beat_count())
     }
-    override fun get_midi_channel(): Int {
-        return this.midi_channel
-    }
     override fun get_midi_bank(): Int {
         return this.midi_bank
     }
     override fun clear() {
         super.clear()
-        this.midi_channel = 0
         this.midi_bank = 0
     }
-
-
-
 }
 
 class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, OpusLinePercussion>(uuid) {
     companion object {
         const val DEFAULT_INSTRUMENT = 0
     }
-
 
     override fun gen_line(): OpusLinePercussion {
         return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
@@ -409,9 +403,6 @@ class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, Op
         return this.lines[line].instrument
     }
 
-    override fun get_midi_channel(): Int {
-        return 9
-    }
     override fun get_midi_bank(): Int {
         return 128
     }

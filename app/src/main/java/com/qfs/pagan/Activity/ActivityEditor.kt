@@ -1673,7 +1673,7 @@ class ActivityEditor : PaganActivity() {
                     ) { _: Int, value: Int ->
                         when (value) {
                             0 -> this.export_project()
-                            1 -> this.export_midi()
+                            1 -> this.export_midi_check()
                             2 -> this.export_wav() // DEBUG
                             3 -> this.export_multi_lines_wav() // DEBUG
                             4 -> this.export_multi_channels_wav() // DEBUG
@@ -2472,9 +2472,30 @@ class ActivityEditor : PaganActivity() {
         this.view_model.cancel_export()
     }
 
+    fun export_midi_check() {
+        val opus_manager = this.get_opus_manager()
+        if (opus_manager.get_percussion_channels().size > 1) {
+            val text_view: TextView = TextView(this)
+            text_view.text = getString(R.string.multiple_kit_warning)
+
+            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+                .setTitle(R.string.generic_warning)
+                .setView(text_view)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    this.export_midi()
+                    dialog.dismiss()
+                }
+                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+        } else {
+            this.export_midi()
+        }
+    }
+
     fun export_midi() {
         val name = this.get_export_name()
-
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
         //intent.type = MimeTypes.AUDIO_MIDI

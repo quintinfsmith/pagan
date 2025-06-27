@@ -3753,7 +3753,7 @@ open class OpusLayerBase {
                 apply_active_controller(volume_controller) { event: OpusVolumeEvent, previous_event: OpusVolumeEvent?, frames: Int ->
                     when (event.transition) {
                         ControlTransition.Instant -> {
-                            val value = event.value * 127
+                            val value = event.value * 100
                             listOf(Pair(0, VolumeMSB(c, value.toInt())))
                         }
 
@@ -3764,7 +3764,7 @@ open class OpusLayerBase {
                             var last_val: Int? = null
                             for (x in 0 until frames * event.duration) {
                                 val mid_val = working_value + (x * diff)
-                                val value = min((mid_val * 127).toInt(), 127)
+                                val value = min((mid_val * 100).toInt(), 127)
                                 if (last_val != value) {
                                     working_list.add(Pair(x, VolumeMSB(c, value)))
                                 }
@@ -3813,12 +3813,8 @@ open class OpusLayerBase {
                                 Pair(this.get_percussion_instrument(c, l) + 27, 0)
                             } else {
                                 val current_note = when (event) {
-                                    is RelativeNoteEvent -> {
-                                        event.offset + prev_note
-                                    }
-                                    is AbsoluteNoteEvent -> {
-                                        event.note
-                                    }
+                                    is RelativeNoteEvent -> event.offset + prev_note
+                                    is AbsoluteNoteEvent -> event.note
                                     else -> break
                                 }
 
@@ -3844,7 +3840,7 @@ open class OpusLayerBase {
                                     channel.get_midi_channel(),
                                     note,
                                     bend,
-                                    (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 127F).toInt(),
+                                    (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 100F).toInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -3880,64 +3876,6 @@ open class OpusLayerBase {
                 }
             }
         }
-
-        // // Handle Percussion Channel
-        // val channel = this.percussion_channel
-        // midi.insert_event(0, 0, BankSelect(9, channel.get_midi_bank()))
-        // midi.insert_event(0, 0, ProgramChange(9, channel.get_midi_program()))
-
-        // for (line in channel.lines) {
-        //     if (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value == 0F) {
-        //         continue
-        //     }
-
-        //     var current_tick = 0
-        //     line.beats.forEachIndexed { b: Int, beat_tree: OpusTree<PercussionEvent> ->
-        //         val stack: MutableList<StackItem<PercussionEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
-        //         while (stack.isNotEmpty()) {
-        //             val current = stack.removeAt(0)
-        //             if (current.tree.is_event()) {
-        //                 val event = current.tree.get_event()!!
-
-        //                 if (!(b < start_beat || b >= (end_beat ?: this.length))) {
-        //                     val pseudo_event = PseudoMidiEvent(
-        //                         9,
-        //                         line.instrument + 27,
-        //                         0,
-        //                         (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 127F).toInt(),
-        //                         event_uuid_gen++
-        //                     )
-        //                     pseudo_midi_map.add(Triple(
-        //                         current.offset,
-        //                         pseudo_event,
-        //                         true
-        //                     ))
-        //                     pseudo_midi_map.add(Triple(
-        //                         min(current.offset + (current.size * event.duration), max_tick),
-        //                         pseudo_event,
-        //                         false
-        //                     ))
-        //                 }
-        //             } else if (!current.tree.is_leaf()) {
-        //                 val working_subdiv_size = current.size / current.tree.size
-        //                 for ((i, subtree) in current.tree.divisions) {
-        //                     stack.add(
-        //                         StackItem(
-        //                             subtree,
-        //                             current.tree.size,
-        //                             current.offset + (working_subdiv_size * i),
-        //                             working_subdiv_size
-        //                         )
-        //                     )
-        //                 }
-        //             }
-        //         }
-
-        //         if (!(b < start_beat || b >= (end_beat ?: this.length))) {
-        //             current_tick += midi.ppqn
-        //         }
-        //     }
-        // }
 
         pseudo_midi_map.sortBy {
             (it.first * 2) + if (it.third) { 1 } else { 0 }

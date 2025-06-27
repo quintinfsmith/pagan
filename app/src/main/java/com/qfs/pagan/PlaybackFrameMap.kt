@@ -602,8 +602,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val event = working_tree.get_event()!!.copy()
         val next_event_frame = if (this.clip_same_line_release) {
-            val next_event_position =
-                this.opus_manager.get_proceding_event_position(beat_key, position)
+            val next_event_position = this.opus_manager.get_proceding_event_position(beat_key, position)
             if (next_event_position != null) {
                 val (next_beat, next_position) = next_event_position
                 val (offset, _) = this.opus_manager.get_leaf_offset_and_width(
@@ -663,7 +662,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey): GeneralMIDIEvent? {
-        val velocity = (this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset) * 127F).toInt()
+        val velocity = min((this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset) * 100F).toInt(), 127)
 
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called
         val (note, bend) = when (event) {

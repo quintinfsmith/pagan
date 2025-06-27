@@ -3777,12 +3777,21 @@ open class OpusLayerBase {
             }
         }
 
+        var percussion_exported = false
         for (c in this.channels.indices) {
             if (this.channels[c].muted) {
                 continue
             }
 
             val channel = this.get_channel(c)
+            if (this.is_percussion(c)) {
+                if (!percussion_exported) {
+                    percussion_exported = true
+                } else {
+                    continue
+                }
+            }
+
             midi.insert_event(0, 0, BankSelect(channel.get_midi_channel(), channel.get_midi_bank()))
             midi.insert_event(0, 0, ProgramChange(channel.get_midi_channel(), channel.midi_program))
 

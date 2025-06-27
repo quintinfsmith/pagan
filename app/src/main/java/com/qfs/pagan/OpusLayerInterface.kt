@@ -1340,6 +1340,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 // Currently active one.
                 try {
                     activity.set_soundfont()
+                    activity.save_configuration()
                 } catch (e: Exception) {
                     activity.configuration.soundfont = original_soundfont
                     activity.set_soundfont()

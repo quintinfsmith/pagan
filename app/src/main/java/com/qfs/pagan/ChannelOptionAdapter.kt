@@ -3,16 +3,16 @@ package com.qfs.pagan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.DraggableAdapter.DraggableAdapter
 
 
 class ChannelOptionAdapter(
     private val _opus_manager: OpusLayerInterface,
     private val _recycler: RecyclerView
-) : RecyclerView.Adapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
+) : DraggableAdapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
 
@@ -118,4 +118,8 @@ class ChannelOptionAdapter(
         this._channel_count = this._opus_manager.channels.size
         this.notifyItemRangeChanged(0, this._channel_count)
     }
+
+    override fun onRowSelected(view_holder: RecyclerView.ViewHolder) {}
+
+    override fun onRowClear(view_holder: RecyclerView.ViewHolder) {}
 }

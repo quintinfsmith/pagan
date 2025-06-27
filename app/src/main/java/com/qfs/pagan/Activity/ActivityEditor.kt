@@ -3292,5 +3292,4 @@ class ActivityEditor : PaganActivity() {
             this.setup_new()
         }
     }
-
 }

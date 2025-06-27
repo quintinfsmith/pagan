@@ -755,10 +755,10 @@ class HistoryCacheUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         manager.new_line(1)
-        manager.percussion_set_instrument(0, 8)
-        manager.percussion_set_instrument(1, 15)
+        manager.percussion_set_instrument(1, 0, 8)
+        manager.percussion_set_instrument(1, 1, 15)
         this.undo_and_check(manager) {
-            it.percussion_set_instrument(1, 21)
+            it.percussion_set_instrument(1, 1, 21)
         }
     }
 

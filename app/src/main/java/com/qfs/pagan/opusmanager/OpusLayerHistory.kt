@@ -1382,7 +1382,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         this._remember {
-            val channel_to_remove = channel ?: max(0, (this.channels.size - 1))
+            val channel_to_remove = channel ?: max(0, this.channels.size)
 
             super.new_channel(channel, lines, uuid, is_percussion)
             this.push_to_history_stack(

@@ -458,7 +458,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         assertEquals(2, manager.get_channel_count())
-        manager.new_channel(lines=0)
+        manager.new_channel(1, lines=0)
         assertEquals(3, manager.get_channel_count())
         assertEquals(0, manager.channels[1].size)
     }
@@ -588,9 +588,9 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         for (i in 0 until 4) {
-            manager.new_channel()
+            manager.new_channel(manager.channels.size - 1)
             for (j in 0 until 4) {
-                manager.new_line(i)
+                manager.new_line(manager.channels.size - 1, i)
             }
         }
 
@@ -886,9 +886,9 @@ class OpusLayerBaseUnitTest {
         for ((position, events) in full_midi.get_all_events_grouped()) {
             event_map[position] = events
         }
-
+        println("${event_map.values}")
         assertEquals(
-            10, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
+            13, // Text, VolumeMSB(x2) SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
             event_map[0]!!.size
         )
 
@@ -929,7 +929,7 @@ class OpusLayerBaseUnitTest {
         )
 
         assertEquals(
-            10, // SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
+            13, // SongPositionPointer, Text, VolumeMSBx2 BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
             event_map_b[0]!!.size
         )
 
@@ -1030,9 +1030,9 @@ class OpusLayerBaseUnitTest {
             }
         }
 
-        assertEquals(0, manager.channels[0].midi_bank)
+        assertEquals(0, manager.channels[0].get_midi_bank())
         assertEquals(1, manager.channels[0].midi_program)
-        assertEquals(2, manager.channels[1].midi_bank)
+        assertEquals(2, manager.channels[1].get_midi_bank())
         assertEquals(3, manager.channels[1].midi_program)
     }
 
@@ -1362,7 +1362,7 @@ class OpusLayerBaseUnitTest {
         manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
         manager.new_line(1)
         manager.new_line(1)
         manager.set_beat_count(6)
@@ -1394,7 +1394,7 @@ class OpusLayerBaseUnitTest {
         manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
         manager.new_line(1)
         manager.new_line(1)
         manager.set_beat_count(6)
@@ -1478,7 +1478,7 @@ class OpusLayerBaseUnitTest {
         manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
         manager.new_line(1)
         manager.new_line(1)
         manager.set_beat_count(6)
@@ -1655,7 +1655,7 @@ class OpusLayerBaseUnitTest {
         val type = ControlEventType.Volume
         var manager = OpusManager()
         manager._project_change_new()
-        manager.new_channel()
+        manager.new_channel(1)
         manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10f))
         manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11f))
         manager.controller_line_set_event(type, BeatKey(1, 0, 0), listOf(), OpusVolumeEvent(.12f))
@@ -1735,7 +1735,7 @@ class OpusLayerBaseUnitTest {
         val type = ControlEventType.Volume
         var manager = OpusManager()
         manager._project_change_new()
-        manager.new_channel()
+        manager.new_channel(1)
         manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10F))
         manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11F))
         manager.controller_line_set_event(type, BeatKey(1, 0, 0), listOf(), OpusVolumeEvent(.12F))
@@ -2157,20 +2157,21 @@ class OpusLayerBaseUnitTest {
             manager.swap_lines(0, 0, 1, 0)
         }
 
-        val p_line_a = manager.percussion_channel.lines[0]
-        val p_line_b = manager.percussion_channel.lines[1]
+        val percussion_channel = manager.get_channel(1)
+        val p_line_a = percussion_channel.lines[0]
+        val p_line_b = percussion_channel.lines[1]
 
         manager.swap_lines(1, 0, 1, 1)
         assertEquals(
             "Failed to swap percussion lines",
             p_line_b,
-            manager.percussion_channel.lines[0]
+            percussion_channel.lines[0]
         )
 
         assertEquals(
             "Failed to swap percussion lines",
             p_line_a,
-            manager.percussion_channel.lines[1]
+            percussion_channel.lines[1]
         )
     }
 
@@ -2179,14 +2180,14 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
 
-        val first_instrument = manager.get_percussion_instrument(0)
+        val first_instrument = manager.get_percussion_instrument(1, 0)
         manager.percussion_set_event(BeatKey(1,0,0), listOf())
         assertTrue(
             manager.get_tree(BeatKey(1,0,0), listOf()).is_event()
         )
 
         val second_instrument = 2
-        manager.percussion_set_instrument(0, second_instrument)
+        manager.percussion_set_instrument(1, 0, second_instrument)
         manager.percussion_set_event(BeatKey(1,0,0), listOf())
         assertTrue(
             manager.get_tree(BeatKey(1,0,0), listOf()).is_event()
@@ -2206,15 +2207,15 @@ class OpusLayerBaseUnitTest {
         manager.new_line(0)
 
         for (i in 1 until 3) {
-            manager.new_channel()
+            manager.new_channel(i)
             for (j in 0 until 3) {
                 manager.new_line(i)
             }
         }
 
         var abs = 0
-        manager.channels.forEachIndexed { i: Int, channel: OpusChannel ->
-            channel.lines.forEachIndexed { j: Int, line: OpusLine ->
+        manager.channels.forEachIndexed { i: Int, channel ->
+            channel.lines.forEachIndexed { j: Int, line ->
                 assertEquals(
                     "incorrect std_offset",
                     Pair(i, j),
@@ -2847,11 +2848,11 @@ class OpusLayerBaseUnitTest {
     fun test_get_channel_count() {
         val manager = OpusManager()
         manager._project_change_new()
-        val original_channel_count = manager.channels.size + 1
+        val original_channel_count = manager.channels.size
         var line_count = original_channel_count // Start with 1 line each
 
         for (i in 0 until 10) {
-            manager.new_channel()
+            manager.new_channel(i)
             assertEquals(
                 i + original_channel_count + 1,
                 manager.get_channel_count()
@@ -2927,15 +2928,15 @@ class OpusLayerBaseUnitTest {
         }
 
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
     }
 
     @Test
     fun test_get_beatkeys_in_range() {
         val manager = OpusManager()
         manager._project_change_new()
-        manager.new_channel()
-        manager.new_channel()
+        manager.new_channel(1)
+        manager.new_channel(1)
         manager.new_line(0)
         manager.new_line(0)
         manager.new_line(1)
@@ -2959,12 +2960,12 @@ class OpusLayerBaseUnitTest {
 
         cases.forEachIndexed { c: Int, case: Pair<BeatKey, BeatKey> ->
             val expectation: MutableList<BeatKey> = mutableListOf()
-            manager.channels.forEachIndexed channel_loop@{ i: Int, channel: OpusChannel ->
+            manager.channels.forEachIndexed channel_loop@{ i: Int, channel ->
                 if (!(case.first.channel .. case.second.channel).contains(i)) {
                     return@channel_loop
                 }
 
-                channel.lines.forEachIndexed line_offset_loop@{ j: Int, line: OpusLine ->
+                channel.lines.forEachIndexed line_offset_loop@{ j: Int, line ->
                     if (case.first.channel == case.second.channel) {
                         if (!(case.first.line_offset .. case.second.line_offset).contains(j)) {
                             return@line_offset_loop
@@ -2981,7 +2982,7 @@ class OpusLayerBaseUnitTest {
                         return@line_offset_loop
                     }
 
-                    line.beats.forEachIndexed beat_loop@{ k: Int, beat_tree: OpusTree<TunedInstrumentEvent> ->
+                    line.beats.forEachIndexed beat_loop@{ k: Int, beat_tree ->
                         if ((case.first.beat .. case.second.beat).contains(k)) {
                             expectation.add(BeatKey(i,j,k))
                         }
@@ -3023,7 +3024,7 @@ class OpusLayerBaseUnitTest {
         manager._project_change_new()
         manager.new_line(0)
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
         manager.new_line(1)
         manager.new_line(1)
         manager.set_beat_count(12)
@@ -3144,7 +3145,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
         manager.set_beat_count(12)
         for (c in 0 until 2) {
             for (l in 0 until manager.channels[c].lines.size) {
@@ -3172,7 +3173,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
         manager.set_beat_count(12)
         for (c in 0 until 2) {
             for (l in 0 until manager.channels[c].lines.size) {
@@ -3199,7 +3200,7 @@ class OpusLayerBaseUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         manager.new_line(0)
-        manager.new_channel()
+        manager.new_channel(1)
         manager.set_beat_count(12)
         for (b in 0 until 12) {
             manager.controller_channel_set_event(type, 0, b, listOf(), OpusVolumeEvent(.64f))
@@ -3251,7 +3252,7 @@ class OpusLayerBaseUnitTest {
     fun test_get_ctl_info() {
         val manager = OpusManager()
         manager._project_change_new()
-        manager.new_channel()
+        manager.new_channel(1)
         manager.set_beat_count(12)
 
         assertEquals(

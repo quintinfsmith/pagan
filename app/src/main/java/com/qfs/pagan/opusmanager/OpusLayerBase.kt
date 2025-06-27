@@ -1534,12 +1534,13 @@ open class OpusLayerBase {
      * [uuid] is the unique identifier used when rebuilding a channel
      */
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null, is_percussion: Boolean = false) {
+        val actual_uuid = uuid ?: OpusLayerBase.gen_channel_uuid()
         val new_channel = if (is_percussion) {
-            OpusPercussionChannel(uuid ?: OpusLayerBase.gen_channel_uuid()).apply {
+            OpusPercussionChannel(actual_uuid).apply {
                 midi_channel = 9
             }
         } else {
-            OpusChannel(uuid ?: OpusLayerBase.gen_channel_uuid()).apply {
+            OpusChannel(actual_uuid).apply {
                 midi_channel = this@OpusLayerBase.get_next_available_midi_channel()
             }
         }

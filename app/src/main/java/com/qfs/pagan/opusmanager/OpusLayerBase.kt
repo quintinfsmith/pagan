@@ -4058,42 +4058,19 @@ open class OpusLayerBase {
 
     open fun load(bytes: ByteArray, new_path: String? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        val generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
-        val version = OpusManagerJSONInterface.detect_version(generalized_object)
-        this.project_change_json(
-            when (version) {
-                OpusManagerJSONInterface.LATEST_VERSION -> generalized_object
-                3 -> {
-                    OpusManagerJSONInterface.convert_v3_to_v4(generalized_object)
-                }
-                2 -> {
-                    OpusManagerJSONInterface.convert_v2_to_v3(
-                        generalized_object
-                    )
-                }
-                1 -> {
-                    OpusManagerJSONInterface.convert_v2_to_v3(
-                        OpusManagerJSONInterface.convert_v1_to_v2(
-                            generalized_object
-                        )
-                    )
-                }
-                0 ->  {
-                    OpusManagerJSONInterface.convert_v2_to_v3(
-                        OpusManagerJSONInterface.convert_v1_to_v2(
-                            OpusManagerJSONInterface.convert_v0_to_v1(
-                                generalized_object
-                            )
-                        )
-                    )
-                }
-                else -> {
-                    // *Unreachable
-                    throw Exception()
-                }
-            },
-            new_path
-        )
+        var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
+        var version = OpusManagerJSONInterface.detect_version(generalized_object)
+        while (version < OpusManagerJSONInterface.LATEST_VERSION) {
+            generalized_object = when (version++) {
+                3 -> OpusManagerJSONInterface.convert_v3_to_v4(generalized_object)
+                2 -> OpusManagerJSONInterface.convert_v2_to_v3(generalized_object)
+                1 -> OpusManagerJSONInterface.convert_v1_to_v2(generalized_object)
+                0 -> OpusManagerJSONInterface.convert_v0_to_v1(generalized_object)
+                else -> throw Exception()
+            }
+        }
+
+        this.project_change_json(generalized_object, new_path)
     }
 
     open fun project_change_wrapper(callback: () -> Unit) {

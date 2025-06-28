@@ -1,0 +1,3 @@
+- Multiple percussion channels
+- bugfix: crash on volumes > 100%
+

@@ -857,7 +857,8 @@ class OpusLayerInterface : OpusLayerHistory() {
             // set the default instrument to the first available in the soundfont (if applicable)
             if (this.is_percussion(channel)) {
                 this.get_activity()?.let { activity: ActivityEditor ->
-                    val percussion_keys = activity.active_percussion_names.keys.sorted()
+                    activity.populate_active_percussion_names(channel)
+                    val percussion_keys = activity.active_percussion_names[channel]?.keys?.sorted() ?: listOf()
                     if (percussion_keys.isNotEmpty()) {
                         (this.get_channel(channel) as OpusPercussionChannel).let {
                             it.lines[line_offset ?: (it.size - 1)].instrument = percussion_keys.first() - 27

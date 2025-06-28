@@ -12,6 +12,7 @@ enum class HistoryToken {
     INSERT_CTL_CHANNEL,
     INSERT_CTL_LINE,
     NEW_CHANNEL,
+    MOVE_CHANNEL,
     REMOVE,
     REMOVE_CTL_GLOBAL,
     REMOVE_CTL_CHANNEL,

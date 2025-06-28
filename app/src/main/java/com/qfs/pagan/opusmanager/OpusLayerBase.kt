@@ -1831,11 +1831,7 @@ open class OpusLayerBase {
 
     open fun move_channel(channel_index: Int, new_channel_index: Int) {
         var channel = this.channels.removeAt(channel_index)
-        if (new_channel_index > channel_index) {
-            this.channels.add(new_channel_index - 1, channel)
-        } else {
-            this.channels.add(new_channel_index, channel)
-        }
+        this.channels.add(new_channel_index, channel)
         this.recache_line_maps()
     }
 

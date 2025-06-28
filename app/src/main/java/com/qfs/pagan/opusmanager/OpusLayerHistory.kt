@@ -431,6 +431,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     this.remove_channel_by_uuid(uuid)
                 }
 
+                HistoryToken.MOVE_CHANNEL -> {
+                    this.move_channel(
+                        current_node.args[0] as Int,
+                        current_node.args[1] as Int
+                    )
+                }
+
                 HistoryToken.NEW_CHANNEL -> {
                     val channel = current_node.args[0] as Int
                     val is_percussion = current_node.args[4] as Boolean
@@ -1388,6 +1395,17 @@ open class OpusLayerHistory: OpusLayerCursor() {
             this.push_to_history_stack(
                 HistoryToken.REMOVE_CHANNEL,
                 listOf(this.channels[channel_to_remove].uuid)
+            )
+        }
+    }
+
+    override fun move_channel(channel_index: Int, new_channel_index: Int) {
+        this._remember {
+            super.move_channel(channel_index, new_channel_index)
+
+            this.push_to_history_stack(
+                HistoryToken.MOVE_CHANNEL,
+                listOf(new_channel_index, channel_index)
             )
         }
     }

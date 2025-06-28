@@ -180,6 +180,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         return output
     }
 
+    override fun move_channel(channel_index: Int, new_channel_index: Int) {
+        super.move_channel(channel_index, new_channel_index)
+        this.cursor_select_channel(new_channel_index)
+    }
+
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         super.new_channel(channel, lines, uuid, is_percussion)
         this.cursor_select_channel(channel ?: (this.channels.size - 1))

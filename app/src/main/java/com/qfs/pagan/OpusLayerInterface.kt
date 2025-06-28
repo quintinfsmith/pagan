@@ -1349,6 +1349,15 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    override fun move_channel(channel_index: Int, new_channel_index: Int) {
+        this.lock_ui_partial {
+            super.move_channel(channel_index, new_channel_index)
+            for (y in min(channel_index, new_channel_index) until this.channels.size) {
+                this._ui_change_bill.queue_refresh_channel(y)
+            }
+        }
+    }
+
     override fun clear() {
         super.clear()
         val editor_table = this.get_editor_table()

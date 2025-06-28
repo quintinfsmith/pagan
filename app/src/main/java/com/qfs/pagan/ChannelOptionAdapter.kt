@@ -1,6 +1,9 @@
 package com.qfs.pagan
 
+import android.annotation.SuppressLint
+import android.view.DragEvent
 import android.view.LayoutInflater
+import android.view.MotionEvent.ACTION_DOWN
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -14,6 +17,10 @@ class ChannelOptionAdapter(
     private val _recycler: RecyclerView
 ) : DraggableAdapter<ChannelOptionAdapter.ChannelOptionViewHolder>() {
     class ChannelOptionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
+    // Temporary variables so Drag can occur once instead of on every index
+    var _from_position: Int? = null
+    var _to_position: Int? = null
 
 
     private var _channel_count = 0
@@ -67,12 +74,18 @@ class ChannelOptionAdapter(
         }.trim()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: ChannelOptionViewHolder, position: Int) {
         val wrapper = holder.itemView
 
         val option_button = wrapper.findViewById<MaterialButton>(R.id.btnLabel)
         val remove_button = wrapper.findViewById<MaterialButton>(R.id.btnClose)
         this.set_text(option_button, position)
+
+        option_button.setOnLongClickListener { v ->
+            this.touch_helper.startDrag(holder)
+            false
+        }
 
         option_button.setOnClickListener {
             this.interact_btnChooseInstrument(holder.layoutPosition)
@@ -119,7 +132,19 @@ class ChannelOptionAdapter(
         this.notifyItemRangeChanged(0, this._channel_count)
     }
 
-    override fun onRowSelected(view_holder: RecyclerView.ViewHolder) {}
-
-    override fun onRowClear(view_holder: RecyclerView.ViewHolder) {}
+    override fun on_row_selected(view_holder: RecyclerView.ViewHolder) { }
+    override fun on_row_moved(from_position: Int, to_position: Int) {
+        if (this._from_position == null) {
+            this._from_position = from_position
+        }
+        this._to_position = to_position
+    }
+    override fun on_row_clear(view_holder: RecyclerView.ViewHolder) {
+        if (this._from_position == null) {
+            return
+        }
+        this.get_activity().get_opus_manager().move_channel(this._from_position!!, this._to_position!!)
+        this._from_position = null
+        this._to_position = null
+    }
 }

@@ -10,6 +10,64 @@ import android.widget.TextView
 import java.util.Locale
 import kotlin.math.max
 
+abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(ContextThemeWrapper(context, R.style.Theme_Pagan_EditText), attrs) {
+    lateinit var max: T
+    lateinit var min: T
+    var value_set_callback: ((T?) -> Unit)? = null
+    abstract var _watcher: RangedTextWatcher<T>
+    var confirm_required = true
+
+    init {
+        /*
+            Use filters to ensure a number is input
+            Then the listener to ensure the value is <= the maximum_value
+            THEN on close, return the max(min_value, output)
+         */
+        this.filters = arrayOf(NumeralFilter())
+        this.typeface = Typeface.MONOSPACE
+        this.setSelectAllOnFocus(true)
+        this.textAlignment = TEXT_ALIGNMENT_TEXT_END
+
+        this.init_range()
+
+
+        this.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
+            if (action_id != null) {
+                if (this.confirm_required && this.value_set_callback != null) {
+                    this.value_set_callback!!(this.get_value())
+                }
+                false
+            } else {
+                true
+            }
+        }
+    }
+
+    abstract fun init_range()
+
+    fun set_range(new_min: T, new_max: T) {
+        this.min = new_min
+        this.max = new_max
+        this._watcher.min_value = new_min
+        this._watcher.max_value = new_max
+    }
+
+    fun set_value(new_value: Int) {
+        this._watcher.lockout = true
+        this.setText(String.format(Locale.getDefault(), "%d", new_value))
+        this._watcher.lockout = false
+    }
+
+    abstract fun get_value(): T?
+
+    fun callback() {
+        if (this.value_set_callback == null) {
+            return
+        }
+        this.value_set_callback!!(this.get_value())
+    }
+}
+
 class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedNumberInput<Int>(context, attrs) {
     override var _watcher = object: RangedTextWatcher<Int>(this, this.min, this.max) {
         override fun gt(value: Int, max: Int): Boolean {
@@ -72,63 +130,5 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
         } finally {
             styled_attributes.recycle()
         }
-    }
-}
-
-abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(ContextThemeWrapper(context, R.style.Theme_Pagan_EditText), attrs) {
-    lateinit var max: T
-    lateinit var min: T
-    var value_set_callback: ((T?) -> Unit)? = null
-    abstract var _watcher: RangedTextWatcher<T>
-    var confirm_required = true
-
-    init {
-        /*
-            Use filters to ensure a number is input
-            Then the listener to ensure the value is <= the maximum_value
-            THEN on close, return the max(min_value, output)
-         */
-        this.filters = arrayOf(NumeralFilter())
-        this.typeface = Typeface.MONOSPACE
-        this.setSelectAllOnFocus(true)
-        this.textAlignment = TEXT_ALIGNMENT_TEXT_END
-
-        this.init_range()
-
-
-        this.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
-            if (action_id != null) {
-                if (this.confirm_required && this.value_set_callback != null) {
-                    this.value_set_callback!!(this.get_value())
-                }
-                false
-            } else {
-                true
-            }
-        }
-    }
-
-    abstract fun init_range()
-
-    fun set_range(new_min: T, new_max: T) {
-        this.min = new_min
-        this.max = new_max
-        this._watcher.min_value = new_min
-        this._watcher.max_value = new_max
-    }
-
-    fun set_value(new_value: Int) {
-        this._watcher.lockout = true
-        this.setText(String.format(Locale.getDefault(), "%d", new_value))
-        this._watcher.lockout = false
-    }
-
-    abstract fun get_value(): T?
-
-    fun callback() {
-        if (this.value_set_callback == null) {
-            return
-        }
-        this.value_set_callback!!(this.get_value())
     }
 }

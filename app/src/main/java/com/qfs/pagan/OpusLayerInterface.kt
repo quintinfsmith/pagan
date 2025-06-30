@@ -1356,6 +1356,10 @@ class OpusLayerInterface : OpusLayerHistory() {
             for (y in min(channel_index, new_channel_index) until this.channels.size) {
                 this._ui_change_bill.queue_refresh_channel(y)
             }
+
+            for (y in 0 until this.get_total_line_count()) {
+                this._ui_change_bill.queue_line_label_refresh(y)
+            }
         }
     }
 

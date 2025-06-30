@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.Pagan" parent="Theme.Material3.DayNight">
+        <item name="fontFamily">@font/fira_sans</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorSurfaceContainerHighest">@color/main_bg</item>

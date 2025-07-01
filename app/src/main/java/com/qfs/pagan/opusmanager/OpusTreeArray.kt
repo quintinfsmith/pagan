@@ -151,7 +151,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is OpusLineAbstract<*>) {
+        if (other !is OpusLineAbstract<*> || this.beats.size != other.beats.size) {
             return false
         }
 

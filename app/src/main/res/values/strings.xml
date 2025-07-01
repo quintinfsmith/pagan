@@ -226,6 +226,7 @@
     <string name="btn_cfg_add_kit_channel">Add Kit Channel</string>
     <string name="generic_warning">Heads Up!</string>
     <string name="multiple_kit_warning">This project has multiple percussion channels but Midi 1.0 only supports 1 percussion channel at a time. The first <i>unmuted</i> percussion channel will be the only one included in the output file.</string>
+    <string name="midi_device_settings">Midi Device Settings</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

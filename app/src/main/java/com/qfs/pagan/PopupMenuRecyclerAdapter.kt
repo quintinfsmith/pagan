@@ -20,16 +20,19 @@ class PopupMenuRecyclerAdapter<T>(
             this.setIsRecyclable(false)
         }
     }
+
     init {
         this._recycler.adapter = this
         this._recycler.itemAnimator = null
         this._recycler.layoutManager = LinearLayoutManager(this._recycler.context)
         this.notifyItemRangeInserted(0, this._options.size)
     }
+
     fun set_items(new_items: List<Pair<T, String>>) {
         this._options = new_items
         this.notifyDataSetChanged()
     }
+
     override fun onViewAttachedToWindow(holder: ViewHolder) { }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val text_view = holder.itemView.findViewById<TextView>(R.id.tvTextView)
@@ -53,7 +56,6 @@ class PopupMenuRecyclerAdapter<T>(
         }
     }
 
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PopupMenuRecyclerViewHolder {
         val viewInflated: View = LayoutInflater.from(parent.context)
             .inflate(
@@ -63,7 +65,6 @@ class PopupMenuRecyclerAdapter<T>(
             )
         return PopupMenuRecyclerViewHolder(viewInflated)
     }
-
 
     override fun getItemCount(): Int {
         return this._options.size

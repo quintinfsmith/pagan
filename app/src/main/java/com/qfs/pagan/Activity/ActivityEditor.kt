@@ -55,6 +55,7 @@ import androidx.core.view.isNotEmpty
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModel
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -1045,6 +1046,7 @@ class ActivityEditor : PaganActivity() {
                     this@ActivityEditor.active_percussion_names.clear()
                 }
 
+                // Mute audio feedback
                 if (this@ActivityEditor.get_opus_manager().is_tuning_standard()) {
                     this@ActivityEditor.disconnect_feedback_device()
                 }
@@ -1585,6 +1587,7 @@ class ActivityEditor : PaganActivity() {
         options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
         options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
         options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
+        options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = this._midi_interface.output_devices_connected() && this.is_debug_on()
         options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
     }
 
@@ -3291,5 +3294,25 @@ class ActivityEditor : PaganActivity() {
             this.delete_backup()
             this.setup_new()
         }
+    }
+
+    fun dialog_midi_device_management() {
+        val viewInflated: View = LayoutInflater.from(this)
+            .inflate(
+                R.layout.midi_device_management,
+                this._binding.root,
+                false
+            )
+
+        val devices_recycler_view = findViewById<RecyclerView>(R.id.midi_devices)
+        val adapter =
+
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setTitle("Connected Midi Devices")
+            .setView(viewInflated)
+            .setNeutralButton(android.R.string.ok) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 }

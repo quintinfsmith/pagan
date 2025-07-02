@@ -93,6 +93,7 @@ import com.qfs.pagan.ControlWidgetVolume
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.FeedbackDevice
 import com.qfs.pagan.HexEditText
+import com.qfs.pagan.MidiDeviceManagerAdapter
 import com.qfs.pagan.MidiFeedbackDispatcher
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganActivity
@@ -3305,7 +3306,8 @@ class ActivityEditor : PaganActivity() {
             )
 
         val devices_recycler_view = findViewById<RecyclerView>(R.id.midi_devices)
-        val adapter =
+        val adapter = MidiDeviceManagerAdapter<RecyclerView.ViewHolder>(this._midi_interface)
+        devices_recycler_view.adapter = adapter
 
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setTitle("Connected Midi Devices")

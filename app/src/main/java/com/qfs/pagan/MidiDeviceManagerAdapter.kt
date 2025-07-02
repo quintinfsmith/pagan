@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.qfs.apres.MidiController
 
 class MidiDeviceManagerAdapter<T>(val midi_controller: MidiController): RecyclerView.Adapter<MidiDeviceManagerAdapter.MidiDeviceViewHolder>() {
@@ -18,10 +17,7 @@ class MidiDeviceManagerAdapter<T>(val midi_controller: MidiController): Recycler
         this.notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): MidiDeviceViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MidiDeviceViewHolder {
         return MidiDeviceViewHolder(
             LayoutInflater.from(this.recycler_view.context)
                 .inflate(

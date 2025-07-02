@@ -1328,6 +1328,9 @@ class ActivityEditor : PaganActivity() {
                 this.save_actions()
                 this.feedback_msg("SAVED ACTIONS")
             }
+            R.id.itmMidiDeviceInfo -> {
+                this.dialog_midi_device_management()
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -1588,7 +1591,8 @@ class ActivityEditor : PaganActivity() {
         options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
         options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
         options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
-        options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = this._midi_interface.output_devices_connected() && this.is_debug_on()
+        //options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = this._midi_interface.output_devices_connected() && this.is_debug_on()
+        options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = this.is_debug_on()
         options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
     }
 
@@ -3298,6 +3302,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun dialog_midi_device_management() {
+
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.midi_device_management,
@@ -3305,7 +3310,7 @@ class ActivityEditor : PaganActivity() {
                 false
             )
 
-        val devices_recycler_view = findViewById<RecyclerView>(R.id.midi_devices)
+        val devices_recycler_view = viewInflated.findViewById<RecyclerView>(R.id.midi_devices)
         val adapter = MidiDeviceManagerAdapter<RecyclerView.ViewHolder>(this._midi_interface)
         devices_recycler_view.adapter = adapter
 

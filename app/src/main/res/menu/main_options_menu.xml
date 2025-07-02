@@ -30,6 +30,7 @@
         android:id="@+id/itmImportMidi"
         android:title="@string/menu_item_import"
         app:showAsAction="never"/>
+
     <item android:id="@+id/itmMidiDeviceInfo"
         android:title="@string/midi_device_settings"
         app:showAsAction="never"/>

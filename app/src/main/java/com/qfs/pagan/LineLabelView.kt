@@ -87,7 +87,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
     }
 
     fun get_opus_manager(): OpusManager {
-        return (this.parent.parent as LineLabelColumnLayout).get_opus_manager()
+        return (this.parent.parent.parent as LineLabelColumnLayout).get_opus_manager()
     }
 
     fun reset_row(new_row: Int) {

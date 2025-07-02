@@ -89,4 +89,5 @@
     <dimen name="contextmenu_landscape_height">-1px</dimen>
 
     <dimen name="landing_menu_width">-1px</dimen>
+    <dimen name="table_bottom_padding">400dp</dimen>
 </resources>

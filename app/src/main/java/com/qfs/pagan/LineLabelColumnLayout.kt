@@ -6,6 +6,8 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Space
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.children
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -17,13 +19,23 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
 
     init {
         this._inner_wrapper.orientation = LinearLayout.VERTICAL
-        this.addView(this._inner_wrapper)
+
+        // Add padding layer so we can scroll the bottom of the table to the middle of the screen
+        val padding_layer = LinearLayout(editor_table.context)
+        padding_layer.orientation = LinearLayout.VERTICAL
+        padding_layer.addView(this._inner_wrapper)
+
+        val padder = Space(ContextThemeWrapper(this.context, R.style.table_padder))
+        padding_layer.addView(padder)
+        this.addView(padding_layer)
+
         this._inner_wrapper.layoutParams.width = WRAP_CONTENT
         this._inner_wrapper.layoutParams.height = WRAP_CONTENT
         this.isVerticalScrollBarEnabled = false
         this.isHorizontalScrollBarEnabled = false
         this.overScrollMode = OVER_SCROLL_NEVER
     }
+
 
     fun insert_label(y: Int? = null) {
         val adj_y = y ?: this.get_count()

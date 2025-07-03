@@ -9,6 +9,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -19,6 +20,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
@@ -132,6 +134,7 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import androidx.core.view.isGone
 
 class ActivityEditor : PaganActivity() {
     companion object {
@@ -2877,6 +2880,7 @@ class ActivityEditor : PaganActivity() {
         } else {
             View.GONE
         }
+
     }
 
     internal fun set_context_menu_control_line() {
@@ -3321,5 +3325,17 @@ class ActivityEditor : PaganActivity() {
                 dialog.dismiss()
             }
             .show()
+    }
+
+    fun get_bottom_padding(): Int {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val projection_metrics = this.getSystemService(WindowManager::class.java).maximumWindowMetrics
+            projection_metrics.bounds.height()
+        } else {
+            val display_metrics = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            this.windowManager.defaultDisplay.getMetrics(display_metrics)
+            display_metrics.heightPixels
+        } / 3
     }
 }

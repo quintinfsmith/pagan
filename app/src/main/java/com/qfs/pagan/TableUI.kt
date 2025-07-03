@@ -10,7 +10,10 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
+import android.widget.LinearLayout.VERTICAL
 import android.widget.ScrollView
+import android.widget.Space
 import androidx.core.content.ContextCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
@@ -166,7 +169,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     when (e) {
                         is OpusLayerBase.MixedInstrumentException -> {
                             tracker.ignore().cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-                            context.feedback_msg(context.getString(R.string.feedback_mixed_link))
+                            context.feedback_msg(context.getString(R.string.feedback_mixed_copy))
                         }
                         is OpusLayerBase.RangeOverflow -> {
                             tracker.ignore().cursor_select(beat_key, position)
@@ -569,7 +572,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
         fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
             if (tree.is_leaf()) {
-                val horizontal_scroll_view = (this.parent as HorizontalScrollView)
+                val horizontal_scroll_view = (this.parent.parent as HorizontalScrollView)
                 // Don't draw outside of the view
                 if (x + width >= horizontal_scroll_view.scrollX && x <= horizontal_scroll_view.scrollX + horizontal_scroll_view.measuredWidth) {
                     callback(tree.get_event(), position, canvas, x, y, width)
@@ -598,7 +601,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
             val opus_manager = this.editor_table.get_opus_manager()
             val channels = opus_manager.get_all_channels()
-            val horizontal_scroll_view = (this.parent as HorizontalScrollView)
+            val horizontal_scroll_view = (this.parent.parent as HorizontalScrollView)
             val vertical_scroll_view = (horizontal_scroll_view.parent as ScrollView)
             val scroll_y = vertical_scroll_view.scrollY
             val scroll_x = horizontal_scroll_view.scrollX
@@ -965,6 +968,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         fun invalidate_wrapper() {
             this.invalidate_queued = true
         }
+
     }
 
     val painted_layer = PaintedLayer(editor_table)
@@ -999,10 +1003,23 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
-    init {
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         this.inner_scroll_view.overScrollMode = OVER_SCROLL_NEVER
         this.inner_scroll_view.isHorizontalScrollBarEnabled = false
-        this.inner_scroll_view.addView(this.painted_layer)
+
+        // Add padding layer so we can scroll the bottom of the table to the middle of the screen
+        val padding_layer = LinearLayout(this.context)
+        padding_layer.orientation = VERTICAL
+        padding_layer.addView(this.painted_layer)
+
+        val padder = Space(this.context)
+        padding_layer.addView(padder)
+
+        val activity = this.editor_table.get_activity()
+        padder.layoutParams.height = activity.get_bottom_padding()
+
+        this.inner_scroll_view.addView(padding_layer)
         this.addView(this.inner_scroll_view)
 
         this.inner_scroll_view.layoutParams.height = MATCH_PARENT
@@ -1091,7 +1108,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     fun notify_row_change(y: Int, state_only: Boolean) {
         this.painted_layer.notify_row_change(y, state_only)
     }
-
     fun set_size(width: Int, height: Int) {
         this.painted_layer.minimumWidth = width
         this.painted_layer.minimumHeight = height

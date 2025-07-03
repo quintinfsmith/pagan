@@ -278,4 +278,8 @@
         <item name="android:textColor">#FF0000</item>
     </style>
 
+    <style name="contextmenu">
+        <item name="android:background">#CCFFFFFF</item>
+        <item name="android:backgroundTint">@color/main_bg</item>
+    </style>
 </resources>

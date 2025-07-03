@@ -85,7 +85,7 @@
     <string name="dlg_insert_channels">Insert Channels</string>
     <string name="dlg_split">Split</string>
     <string name="dlg_insert">Insert</string>
-    <string name="feedback_mixed_link">Can\'t link percussion to non-percussion</string>
+    <string name="feedback_mixed_copy">Can\'t cross percussion and non-percussion</string>
     <string name="feedback_bad_range">Bad Range</string>
     <string name="feedback_exported">Exported</string>
     <string name="feedback_invalid_sf2_file">Invalid sf2 File</string>

@@ -1,14 +1,19 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+import android.content.res.Configuration
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import androidx.core.view.isGone
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -25,7 +30,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     private val _spacer: LinearLayout = LayoutInflater.from(context).inflate(R.layout.corner, this, false) as LinearLayout
     private val _first_column = LinearLayout(context, attrs)
 
-    init {
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         this._spacer.setOnClickListener {
             get_activity().shortcut_dialog()
         }
@@ -529,18 +535,35 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this._scroll_to_y(row)
     }
 
-    // TODO: Create row_height_map so OpusManager isn't accessed here
     private fun _scroll_to_y(row: Int) {
         val (target_y, row_height) = this.get_row_y_position_and_height(row)
-        // TODO: This feels sloppy but i'm too tired to think of a sufficiently cleaner answer
         val vertical_scroll_view = this.get_scroll_view()
-        if (vertical_scroll_view.measuredHeight + vertical_scroll_view.scrollY < target_y + row_height) {
-            val adj_y = (target_y + row_height) - vertical_scroll_view.measuredHeight
+        val activity = this.get_activity()
+        val opus_manager = activity.get_opus_manager()
+        var context_menu_top = if (opus_manager.cursor.mode == CursorMode.Unset) {
+            vertical_scroll_view.measuredHeight
+        } else {
+            when (resources.configuration.orientation) {
+                Configuration.ORIENTATION_LANDSCAPE -> {
+                    val secondary = activity.findViewById<View>(R.id.llContextMenuSecondary)
+                    if (secondary.isGone) {
+                        vertical_scroll_view.measuredHeight
+                    } else {
+                        secondary.y
+                    }
+                }
+                else -> activity.findViewById<View>(R.id.llContextMenuPrimary).y
+            }
+        }.toInt()
+
+        if (context_menu_top + vertical_scroll_view.scrollY < target_y + row_height) {
+            val adj_y = (target_y + row_height) - context_menu_top.toInt()
             this.line_label_layout.scrollTo(0, adj_y)
             this.table_ui.scroll(null, adj_y)
         } else if (target_y < vertical_scroll_view.scrollY) {
-            this.line_label_layout.scrollTo(0, target_y)
-            this.table_ui.scroll(null, target_y)
+            val line_height = resources.getDimension(R.dimen.line_height).toInt()
+            this.line_label_layout.scrollTo(0, target_y - line_height)
+            this.table_ui.scroll(null, target_y - line_height)
         }
     }
 
@@ -593,7 +616,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun swap_mapped_channels(line_a: Int, count_a: Int, line_b: Int, count_b: Int) {
-
         val (first, second) = if (line_a < line_b) {
             Pair(
                 Pair(line_a, count_a),
@@ -753,5 +775,4 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     fun get_column_width_map(): List<List<Int>> {
         return this._column_width_map
     }
-
 }

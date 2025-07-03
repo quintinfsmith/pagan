@@ -1969,6 +1969,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             } catch (e: IndexOutOfBoundsException) {
                                 return // dead cursor
                             }
+
                             for ((shadow_beat, _) in line.get_all_blocked_positions(event_head.first, event_head.second)) {
                                 shadow_beats.add(shadow_beat)
                             }

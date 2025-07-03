@@ -282,8 +282,4 @@
         <item name="android:background">#CCFFFFFF</item>
         <item name="android:backgroundTint">@color/main_bg</item>
     </style>
-    <style name="table_padder">
-        <item name="android:minHeight">@dimen/table_bottom_padding</item>
-    </style>
-
 </resources>

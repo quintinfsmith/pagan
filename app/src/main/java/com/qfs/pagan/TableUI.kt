@@ -5,10 +5,13 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.os.Build
+import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.view.WindowManager
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
@@ -969,6 +972,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         fun invalidate_wrapper() {
             this.invalidate_queued = true
         }
+
     }
 
     val painted_layer = PaintedLayer(editor_table)
@@ -1003,7 +1007,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
-    init {
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         this.inner_scroll_view.overScrollMode = OVER_SCROLL_NEVER
         this.inner_scroll_view.isHorizontalScrollBarEnabled = false
 
@@ -1011,8 +1016,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val padding_layer = LinearLayout(this.context)
         padding_layer.orientation = VERTICAL
         padding_layer.addView(this.painted_layer)
-        val padder = Space(ContextThemeWrapper(this.context, R.style.table_padder))
+
+        val padder = Space(this.context)
         padding_layer.addView(padder)
+
+        val activity = this.editor_table.get_activity()
+        padder.layoutParams.height = activity.get_bottom_padding()
 
         this.inner_scroll_view.addView(padding_layer)
         this.addView(this.inner_scroll_view)
@@ -1103,7 +1112,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     fun notify_row_change(y: Int, state_only: Boolean) {
         this.painted_layer.notify_row_change(y, state_only)
     }
-
     fun set_size(width: Int, height: Int) {
         this.painted_layer.minimumWidth = width
         this.painted_layer.minimumHeight = height

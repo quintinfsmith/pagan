@@ -25,9 +25,12 @@ class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.
         padding_layer.orientation = LinearLayout.VERTICAL
         padding_layer.addView(this._inner_wrapper)
 
-        val padder = Space(ContextThemeWrapper(this.context, R.style.table_padder))
+        val padder = Space(this.context)
         padding_layer.addView(padder)
         this.addView(padding_layer)
+
+        val activity = editor_table.get_activity()
+        padder.layoutParams.height = activity.get_bottom_padding()
 
         this._inner_wrapper.layoutParams.width = WRAP_CONTENT
         this._inner_wrapper.layoutParams.height = WRAP_CONTENT

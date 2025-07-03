@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
+import androidx.core.view.isGone
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
@@ -534,7 +535,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this._scroll_to_y(row)
     }
 
-    // TODO: Create row_height_map so OpusManager isn't accessed here
     private fun _scroll_to_y(row: Int) {
         val (target_y, row_height) = this.get_row_y_position_and_height(row)
         val vertical_scroll_view = this.get_scroll_view()
@@ -544,7 +544,14 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             vertical_scroll_view.measuredHeight
         } else {
             when (resources.configuration.orientation) {
-                Configuration.ORIENTATION_LANDSCAPE -> activity.findViewById<View>(R.id.llContextMenuSecondary).y
+                Configuration.ORIENTATION_LANDSCAPE -> {
+                    val secondary = activity.findViewById<View>(R.id.llContextMenuSecondary)
+                    if (secondary.isGone) {
+                        vertical_scroll_view.measuredHeight
+                    } else {
+                        secondary.y
+                    }
+                }
                 else -> activity.findViewById<View>(R.id.llContextMenuPrimary).y
             }
         }.toInt()

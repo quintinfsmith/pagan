@@ -14,7 +14,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context) {
     init {
         this.setOnDragListener { view: View, dragEvent: DragEvent ->
-            val adapter = (view.parent.parent as LineLabelColumnLayout)
+            val adapter = (view.parent.parent.parent as LineLabelColumnLayout)
             val opus_manager = this.get_opus_manager()
             val (pointer, ctl_level, _) = opus_manager.get_ctl_line_info(
                 opus_manager.get_ctl_line_from_row( this.row )

@@ -5,19 +5,15 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
-import android.os.Build
-import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.view.WindowManager
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.ScrollView
 import android.widget.Space
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
@@ -173,7 +169,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     when (e) {
                         is OpusLayerBase.MixedInstrumentException -> {
                             tracker.ignore().cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-                            context.feedback_msg(context.getString(R.string.feedback_mixed_link))
+                            context.feedback_msg(context.getString(R.string.feedback_mixed_copy))
                         }
                         is OpusLayerBase.RangeOverflow -> {
                             tracker.ignore().cursor_select(beat_key, position)

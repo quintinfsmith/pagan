@@ -13,6 +13,5 @@ open class PaganProgressBar(context: Context, attrs: AttributeSet? = null): Prog
         while (context !is ActivityEditor) {
             context = (context as ContextThemeWrapper).baseContext
         }
-
     }
 }

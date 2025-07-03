@@ -73,7 +73,7 @@ class OpusLayerCursorUnitTest {
                         manager.is_secondary_selection(working_beatkey, working_position)
                     )
 
-                    val pair = manager.get_proceding_leaf_position(working_beatkey, working_position) ?: break
+                    val pair = manager.get_proceeding_leaf_position(working_beatkey, working_position) ?: break
                     working_beatkey = pair.first
                     working_position = pair.second
                 }
@@ -90,7 +90,7 @@ class OpusLayerCursorUnitTest {
                             working_beatkey.beat == selected_beat,
                             manager.is_line_control_secondary_selected(type, working_beatkey, working_position)
                         )
-                        val pair = manager.get_line_ctl_proceding_leaf_position(type, working_beatkey, working_position) ?: break
+                        val pair = manager.get_line_ctl_proceeding_leaf_position(type, working_beatkey, working_position) ?: break
                         working_beatkey = BeatKey(working_beatkey.channel, working_beatkey.line_offset, pair.first)
                         working_position = pair.second
                     }
@@ -109,7 +109,7 @@ class OpusLayerCursorUnitTest {
                         working_beat == selected_beat,
                         manager.is_channel_control_secondary_selected(type, i, working_beat, working_position)
                     )
-                    val pair = manager.get_channel_ctl_proceding_leaf_position(type, i, working_beat, working_position) ?: break
+                    val pair = manager.get_channel_ctl_proceeding_leaf_position(type, i, working_beat, working_position) ?: break
                     working_beat = pair.first
                     working_position = pair.second
                 }
@@ -127,7 +127,7 @@ class OpusLayerCursorUnitTest {
                     working_beat == selected_beat,
                     manager.is_global_control_secondary_selected(type, working_beat, working_position)
                 )
-                val pair = manager.get_global_ctl_proceding_leaf_position(type, working_beat, working_position) ?: break
+                val pair = manager.get_global_ctl_proceeding_leaf_position(type, working_beat, working_position) ?: break
                 working_beat = pair.first
                 working_position = pair.second
             }
@@ -154,7 +154,7 @@ class OpusLayerCursorUnitTest {
                         manager.is_secondary_selection(working_beatkey, working_position)
                     )
 
-                    val pair = manager.get_proceding_leaf_position(working_beatkey, working_position) ?: break
+                    val pair = manager.get_proceeding_leaf_position(working_beatkey, working_position) ?: break
                     working_beatkey = pair.first
                     working_position = pair.second
                 }
@@ -172,7 +172,7 @@ class OpusLayerCursorUnitTest {
                     while (true) {
                         assertFalse(manager.is_line_control_selected(type, working_beatkey, working_position))
                         assertFalse(manager.is_line_control_secondary_selected(type, working_beatkey, working_position))
-                        val pair = manager.get_line_ctl_proceding_leaf_position(type, working_beatkey, working_position) ?: break
+                        val pair = manager.get_line_ctl_proceeding_leaf_position(type, working_beatkey, working_position) ?: break
                         working_beatkey = BeatKey(working_beatkey.channel, working_beatkey.line_offset, pair.first)
                         working_position = pair.second
                     }
@@ -187,7 +187,7 @@ class OpusLayerCursorUnitTest {
                 while (true) {
                     assertFalse(manager.is_channel_control_selected(type, i, working_beat, working_position))
                     assertFalse(manager.is_channel_control_secondary_selected(type, i, working_beat, working_position))
-                    val pair = manager.get_channel_ctl_proceding_leaf_position(type, i, working_beat, working_position) ?: break
+                    val pair = manager.get_channel_ctl_proceeding_leaf_position(type, i, working_beat, working_position) ?: break
                     working_beat = pair.first
                     working_position = pair.second
                 }
@@ -201,7 +201,7 @@ class OpusLayerCursorUnitTest {
             while (true) {
                 assertFalse(manager.is_global_control_selected(type, working_beat, working_position))
                 assertFalse(manager.is_global_control_secondary_selected(type, working_beat, working_position))
-                val pair = manager.get_global_ctl_proceding_leaf_position(type, working_beat, working_position) ?: break
+                val pair = manager.get_global_ctl_proceeding_leaf_position(type, working_beat, working_position) ?: break
                 working_beat = pair.first
                 working_position = pair.second
             }
@@ -229,7 +229,7 @@ class OpusLayerCursorUnitTest {
                         manager.is_secondary_selection(working_beatkey, working_position)
                     )
 
-                    val pair = manager.get_proceding_leaf_position(working_beatkey, working_position) ?: break
+                    val pair = manager.get_proceeding_leaf_position(working_beatkey, working_position) ?: break
                     working_beatkey = pair.first
                     working_position = pair.second
                 }
@@ -250,7 +250,7 @@ class OpusLayerCursorUnitTest {
                             i == channel,
                             manager.is_line_control_secondary_selected(type, working_beatkey, working_position)
                         )
-                        val pair = manager.get_line_ctl_proceding_leaf_position(type, working_beatkey, working_position) ?: break
+                        val pair = manager.get_line_ctl_proceeding_leaf_position(type, working_beatkey, working_position) ?: break
                         working_beatkey = BeatKey(working_beatkey.channel, working_beatkey.line_offset, pair.first)
                         working_position = pair.second
                     }
@@ -268,7 +268,7 @@ class OpusLayerCursorUnitTest {
                         i == channel,
                         manager.is_channel_control_secondary_selected(type, i, working_beat, working_position)
                     )
-                    val pair = manager.get_channel_ctl_proceding_leaf_position(type, i, working_beat, working_position) ?: break
+                    val pair = manager.get_channel_ctl_proceeding_leaf_position(type, i, working_beat, working_position) ?: break
                     working_beat = pair.first
                     working_position = pair.second
                 }
@@ -283,7 +283,7 @@ class OpusLayerCursorUnitTest {
             while (true) {
                 assertFalse(manager.is_global_control_selected(type, working_beat, working_position))
                 assertFalse(manager.is_global_control_secondary_selected(type, working_beat, working_position))
-                val pair = manager.get_global_ctl_proceding_leaf_position(type, working_beat, working_position) ?: break
+                val pair = manager.get_global_ctl_proceeding_leaf_position(type, working_beat, working_position) ?: break
                 working_beat = pair.first
                 working_position = pair.second
             }
@@ -308,7 +308,7 @@ class OpusLayerCursorUnitTest {
                     assertFalse(manager.is_selected(working_beatkey, working_position))
                     assertFalse(manager.is_secondary_selection(working_beatkey, working_position))
 
-                    val pair = manager.get_proceding_leaf_position(working_beatkey, working_position) ?: break
+                    val pair = manager.get_proceeding_leaf_position(working_beatkey, working_position) ?: break
                     working_beatkey = pair.first
                     working_position = pair.second
                 }
@@ -330,7 +330,7 @@ class OpusLayerCursorUnitTest {
                             i == selected_channel && j == selected_line_offset && type == selected_type,
                             manager.is_line_control_secondary_selected(type, working_beatkey, working_position)
                         )
-                        val pair = manager.get_line_ctl_proceding_leaf_position(type, working_beatkey, working_position) ?: break
+                        val pair = manager.get_line_ctl_proceeding_leaf_position(type, working_beatkey, working_position) ?: break
                         working_beatkey = BeatKey(working_beatkey.channel, working_beatkey.line_offset, pair.first)
                         working_position = pair.second
                     }
@@ -346,7 +346,7 @@ class OpusLayerCursorUnitTest {
                 while (true) {
                     assertFalse(manager.is_channel_control_selected(type, i, working_beat, working_position))
                     assertFalse(manager.is_channel_control_secondary_selected(type, i, working_beat, working_position))
-                    val pair = manager.get_channel_ctl_proceding_leaf_position(type, i, working_beat, working_position) ?: break
+                    val pair = manager.get_channel_ctl_proceeding_leaf_position(type, i, working_beat, working_position) ?: break
                     working_beat = pair.first
                     working_position = pair.second
                 }
@@ -361,7 +361,7 @@ class OpusLayerCursorUnitTest {
             while (true) {
                 assertFalse(manager.is_global_control_selected(type, working_beat, working_position))
                 assertFalse(manager.is_global_control_secondary_selected(type, working_beat, working_position))
-                val pair = manager.get_global_ctl_proceding_leaf_position(type, working_beat, working_position) ?: break
+                val pair = manager.get_global_ctl_proceeding_leaf_position(type, working_beat, working_position) ?: break
                 working_beat = pair.first
                 working_position = pair.second
             }
@@ -386,7 +386,7 @@ class OpusLayerCursorUnitTest {
                     assertFalse(manager.is_selected(working_beatkey, working_position))
                     assertFalse(manager.is_secondary_selection(working_beatkey, working_position))
 
-                    val pair = manager.get_proceding_leaf_position(working_beatkey, working_position) ?: break
+                    val pair = manager.get_proceeding_leaf_position(working_beatkey, working_position) ?: break
                     working_beatkey = pair.first
                     working_position = pair.second
                 }
@@ -410,7 +410,7 @@ class OpusLayerCursorUnitTest {
                             i == selected_channel && type == selected_type,
                             manager.is_line_control_secondary_selected(type, working_beatkey, working_position)
                         )
-                        val pair = manager.get_line_ctl_proceding_leaf_position(type, working_beatkey, working_position) ?: break
+                        val pair = manager.get_line_ctl_proceeding_leaf_position(type, working_beatkey, working_position) ?: break
                         working_beatkey = BeatKey(working_beatkey.channel, working_beatkey.line_offset, pair.first)
                         working_position = pair.second
                     }
@@ -434,7 +434,7 @@ class OpusLayerCursorUnitTest {
                         manager.is_channel_control_selected(type, i, working_beat, working_position)
                     )
                     assertFalse(manager.is_channel_control_secondary_selected(type, i, working_beat, working_position))
-                    val pair = manager.get_channel_ctl_proceding_leaf_position(type, i, working_beat, working_position) ?: break
+                    val pair = manager.get_channel_ctl_proceeding_leaf_position(type, i, working_beat, working_position) ?: break
                     working_beat = pair.first
                     working_position = pair.second
                 }
@@ -449,7 +449,7 @@ class OpusLayerCursorUnitTest {
             while (true) {
                 assertFalse(manager.is_global_control_selected(type, working_beat, working_position))
                 assertFalse(manager.is_global_control_secondary_selected(type, working_beat, working_position))
-                val pair = manager.get_global_ctl_proceding_leaf_position(type, working_beat, working_position) ?: break
+                val pair = manager.get_global_ctl_proceeding_leaf_position(type, working_beat, working_position) ?: break
                 working_beat = pair.first
                 working_position = pair.second
             }
@@ -471,7 +471,7 @@ class OpusLayerCursorUnitTest {
                     assertFalse(manager.is_selected(working_beatkey, working_position))
                     assertFalse(manager.is_secondary_selection(working_beatkey, working_position))
 
-                    val pair = manager.get_proceding_leaf_position(working_beatkey, working_position) ?: break
+                    val pair = manager.get_proceeding_leaf_position(working_beatkey, working_position) ?: break
                     working_beatkey = pair.first
                     working_position = pair.second
                 }
@@ -487,7 +487,7 @@ class OpusLayerCursorUnitTest {
                     while (true) {
                         assertFalse(manager.is_line_control_selected(type, working_beatkey, working_position))
                         assertFalse(manager.is_line_control_secondary_selected(type, working_beatkey, working_position))
-                        val pair = manager.get_line_ctl_proceding_leaf_position(type, working_beatkey, working_position) ?: break
+                        val pair = manager.get_line_ctl_proceeding_leaf_position(type, working_beatkey, working_position) ?: break
                         working_beatkey = BeatKey(working_beatkey.channel, working_beatkey.line_offset, pair.first)
                         working_position = pair.second
                     }
@@ -503,7 +503,7 @@ class OpusLayerCursorUnitTest {
                 while (true) {
                     assertFalse(manager.is_channel_control_selected(type, i, working_beat, working_position))
                     assertFalse(manager.is_channel_control_secondary_selected(type, i, working_beat, working_position))
-                    val pair = manager.get_channel_ctl_proceding_leaf_position(type, i, working_beat, working_position) ?: break
+                    val pair = manager.get_channel_ctl_proceeding_leaf_position(type, i, working_beat, working_position) ?: break
                     working_beat = pair.first
                     working_position = pair.second
                 }
@@ -524,7 +524,7 @@ class OpusLayerCursorUnitTest {
                     selected_type == type,
                     manager.is_global_control_secondary_selected(type, working_beat, working_position)
                 )
-                val pair = manager.get_global_ctl_proceding_leaf_position(type, working_beat, working_position) ?: break
+                val pair = manager.get_global_ctl_proceeding_leaf_position(type, working_beat, working_position) ?: break
                 working_beat = pair.first
                 working_position = pair.second
             }

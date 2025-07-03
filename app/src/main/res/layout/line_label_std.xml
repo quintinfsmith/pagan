@@ -3,13 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <view class="com.qfs.pagan.LineLabelStd$LineLabelTextView"
+    <view class="com.qfs.pagan.LineLabel.LineLabelStd$LineLabelTextView"
         android:id="@+id/channel_display"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
-    <view class="com.qfs.pagan.LineLabelStd$LineLabelTextView"
+    <view class="com.qfs.pagan.LineLabel.LineLabelStd$LineLabelTextView"
         android:id="@+id/line_offset_display"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -13,7 +13,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
         }
     }
 
-    fun toList(): List<Int> {
+    fun to_list(): List<Int> {
         return listOf(this.channel, this.line_offset, this.beat)
     }
 
@@ -168,7 +168,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
             this.lines[line_offset].remove_beat(index, count)
         }
 
-        for ((type, controller) in this.controllers.get_all()) {
+        for ((_, controller) in this.controllers.get_all()) {
             controller.remove_beat(index, count)
         }
 
@@ -180,7 +180,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         return try {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
-            throw OpusChannelAbstract.BlockedCtlTreeException(OpusLineAbstract.BlockedCtlTreeException(type, e))
+            throw BlockedCtlTreeException(OpusLineAbstract.BlockedCtlTreeException(type, e))
         }
     }
     /* Catch Blocked tree exceptions and upgrade them to exceptions with more context */
@@ -188,9 +188,9 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         return try {
             callback()
         } catch (e: OpusTreeArray.BlockedTreeException) {
-            throw OpusChannelAbstract.BlockedTreeException(line_offset, e)
+            throw BlockedTreeException(line_offset, e)
         } catch (e: OpusLineAbstract.BlockedCtlTreeException) {
-            throw OpusChannelAbstract.BlockedLineCtlTreeException(line_offset, e)
+            throw BlockedLineCtlTreeException(line_offset, e)
         }
     }
 
@@ -392,7 +392,7 @@ class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, Op
     }
 
     override fun gen_line(): OpusLinePercussion {
-        return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
+        return OpusLinePercussion(DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 
     fun set_instrument(line: Int, offset: Int) {

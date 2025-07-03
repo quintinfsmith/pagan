@@ -9,7 +9,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -87,10 +86,10 @@ import com.qfs.pagan.ContextMenu.ContextMenuLeafPercussion
 import com.qfs.pagan.ContextMenu.ContextMenuLine
 import com.qfs.pagan.ContextMenu.ContextMenuRange
 import com.qfs.pagan.ContextMenu.ContextMenuView
-import com.qfs.pagan.ControlWidgetPan
-import com.qfs.pagan.ControlWidgetReverb
-import com.qfs.pagan.ControlWidgetTempo
-import com.qfs.pagan.ControlWidgetVolume
+import com.qfs.pagan.ControlWidget.ControlWidgetPan
+import com.qfs.pagan.ControlWidget.ControlWidgetReverb
+import com.qfs.pagan.ControlWidget.ControlWidgetTempo
+import com.qfs.pagan.ControlWidget.ControlWidgetVolume
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.FeedbackDevice
 import com.qfs.pagan.HexEditText
@@ -132,7 +131,6 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-import androidx.core.view.isGone
 
 class ActivityEditor : PaganActivity() {
     companion object {

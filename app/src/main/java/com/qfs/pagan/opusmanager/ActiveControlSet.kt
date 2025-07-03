@@ -1,5 +1,11 @@
 package com.qfs.pagan.opusmanager
 
+import com.qfs.pagan.opusmanager.activecontroller.ActiveController
+import com.qfs.pagan.opusmanager.activecontroller.PanController
+import com.qfs.pagan.opusmanager.activecontroller.ReverbController
+import com.qfs.pagan.opusmanager.activecontroller.TempoController
+import com.qfs.pagan.opusmanager.activecontroller.VolumeController
+
 class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
     val controllers = HashMap<ControlEventType, ActiveController<out OpusControlEvent>>()
 

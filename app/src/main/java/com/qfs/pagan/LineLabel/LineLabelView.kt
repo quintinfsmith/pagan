@@ -1,4 +1,4 @@
-package com.qfs.pagan
+package com.qfs.pagan.LineLabel
 
 import android.content.Context
 import android.view.ContextThemeWrapper
@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
 import com.qfs.pagan.OpusLayerInterface as OpusManager

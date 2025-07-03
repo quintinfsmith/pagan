@@ -22,6 +22,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.Rational
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface.Companion.LATEST_VERSION
+import com.qfs.pagan.opusmanager.activecontroller.ActiveController
 import com.qfs.pagan.structure.OpusTree
 import java.io.File
 import kotlin.math.ceil
@@ -53,12 +54,12 @@ open class OpusLayerBase {
     class RemovingRootException : Exception()
     class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
     class NoteOutOfRange(var n: Int) : Exception("Attempting to use unsupported note $n")
-    class InvalidPercussionLineException: Exception("Attemping to add a non-percussion line to the percussion channel")
-    class InvalidLineException: Exception("Attemping to add a percussion line to the non-percussion channel")
+    class InvalidPercussionLineException: Exception("Attempting to add a non-percussion line to the percussion channel")
+    class InvalidLineException: Exception("Attempting to add a percussion line to the non-percussion channel")
     class EmptyPath : Exception("Path Required but not given")
     class EmptyJSONException: Exception("JSON object was NULL")
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey) : Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
-    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, var blocker_key: BeatKey, var blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
+    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
     class PercussionChannelRequired(channel: Int) : Exception("Channel $channel is not a Percussion Channel")
     /**
      * Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
@@ -77,7 +78,7 @@ open class OpusLayerBase {
         }
 
         fun gen_channel_uuid(): Int {
-            return OpusLayerBase._channel_uuid_generator++
+            return _channel_uuid_generator++
         }
 
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
@@ -176,7 +177,7 @@ open class OpusLayerBase {
                     denominator = 2F.pow(event.get_denominator())
                     val new_beat_size = (midi.get_ppqn().toFloat() * (4 / denominator)).toInt()
 
-                    // Need to resize the current beat to match the timesignature that change if noteons
+                    // Need to resize the current beat to match the time signature that change if noteons
                     // have already been added to that tree (shouldn't ever happen)
                     if (beat_index < beat_values.size) {
                         val original_beat_size = beat_size
@@ -231,7 +232,7 @@ open class OpusLayerBase {
             val opus = OpusTree<Set<Array<Int>>>()
 
             if (beat_values.isEmpty()) {
-                for (i in 0 until 4) {
+                (0 until 4).forEach {
                     beat_values.add(OpusTree())
                 }
             }
@@ -412,7 +413,7 @@ open class OpusLayerBase {
         return try {
             this.get_tree(beat_key, position)
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -466,7 +467,7 @@ open class OpusLayerBase {
                 var position = this.get_first_position(beat_key, listOf())
 
                 if (!this.get_tree(beat_key, position).is_event()) {
-                    val pair = this.get_proceding_event_position(beat_key, position) ?: continue
+                    val pair = this.get_proceeding_event_position(beat_key, position) ?: continue
                     beat_key = BeatKey(i, j, pair.first)
                     position = pair.second
                 }
@@ -500,7 +501,7 @@ open class OpusLayerBase {
                         current_remap.add(Triple(beat_key.copy(), position.toList(), lane_index))
                     }
 
-                    val pair = this.get_proceding_event_position(beat_key, position) ?: break
+                    val pair = this.get_proceeding_event_position(beat_key, position) ?: break
                     beat_key.beat = pair.first
                     position = pair.second
                 }
@@ -510,7 +511,7 @@ open class OpusLayerBase {
 
             for (j in remap_trees.size - 1 downTo 0) {
                 val (lines_to_insert, remaps) = remap_trees[j]
-                for (k in 0 until lines_to_insert - 1) {
+                (0 until lines_to_insert - 1).forEach {
                     this.new_line(i, j + 1)
                     for ((type, controller) in working_channel.lines[j].controllers.get_all()) {
 
@@ -674,7 +675,7 @@ open class OpusLayerBase {
     fun get_tree(beat_key: BeatKey, position: List<Int>? = null): OpusTree<out InstrumentEvent> {
         val working_channel = try {
             this.get_channel(beat_key.channel)
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             throw BadBeatKey(beat_key)
         }
         if (beat_key.line_offset >= working_channel.size) {
@@ -803,8 +804,8 @@ open class OpusLayerBase {
      * Get the leaf immediately after the tree found at [beat_key]/[position], if any
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
      */
-    fun get_proceding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<out InstrumentEvent>? {
-        val pair = this.get_proceding_leaf_position(beat_key, position) ?: return null
+    fun get_proceeding_leaf(beat_key: BeatKey, position: List<Int>): OpusTree<out InstrumentEvent>? {
+        val pair = this.get_proceeding_leaf_position(beat_key, position) ?: return null
         return this.get_tree(pair.first, pair.second)
     }
 
@@ -827,7 +828,7 @@ open class OpusLayerBase {
     /**
      * Get the location of the next event after the node @ [beat_key]/[position], if one exists.
      */
-    fun get_proceding_event_position(beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
+    fun get_proceeding_event_position(beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
         return this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_proceding_event_position(beat_key.beat, position)
     }
 
@@ -881,7 +882,7 @@ open class OpusLayerBase {
      * Get the location of the leaf immediately after the tree found at [beat_key]/[position].
      * *it may not be an immediate sibling, rather an aunt, niece, etc*
      */
-    fun get_proceding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
+    fun get_proceeding_leaf_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
         var working_position = position.toMutableList()
         val working_beat_key = BeatKey(beat_key.channel, beat_key.line_offset, beat_key.beat)
         var working_tree = this.get_tree(working_beat_key, working_position)
@@ -917,21 +918,21 @@ open class OpusLayerBase {
     /**
      * Get the leaf immediately after (in a depth-first-search) the node @ [beat]/[position] in the global controller of type [ctl_type]
      */
-    fun get_global_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+    fun get_global_ctl_proceeding_leaf_position(ctl_type: ControlEventType, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         return this.controllers.get_controller<OpusControlEvent>(ctl_type).get_proceding_leaf_position(beat, position)
     }
 
     /**
      * Get the leaf immediately after (in a depth-first-search) the node @ [beat]/[position] in the [channel] controller of type [ctl_type]
      */
-    fun get_channel_ctl_proceding_leaf_position(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+    fun get_channel_ctl_proceeding_leaf_position(ctl_type: ControlEventType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         return this.get_channel(channel).controllers.get_controller<OpusControlEvent>(ctl_type).get_proceding_leaf_position(beat, position)
     }
 
     /**
      * Get the leaf immediately after (in a depth-first-search) the line controller's node @ [beat_key]/[position] of the controller of type [ctl_type]
      */
-    fun get_line_ctl_proceding_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
+    fun get_line_ctl_proceeding_leaf_position(ctl_type: ControlEventType, beat_key: BeatKey, position: List<Int>): Pair<Int, List<Int>>? {
         return this.get_channel(beat_key.channel).lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(ctl_type).get_proceding_leaf_position(beat_key.beat, position)
     }
 
@@ -1144,7 +1145,7 @@ open class OpusLayerBase {
                 if (!this.get_line_ctl_tree<T>(type, actual_beat_key, actual_position).is_event()) {
                     output.duration = 1
                 }
-            } catch (e: OpusTree.InvalidGetCall) {
+            } catch (_: OpusTree.InvalidGetCall) {
                 // pass
             }
         } else {
@@ -1165,7 +1166,7 @@ open class OpusLayerBase {
                 if (!this.get_channel_ctl_tree<T>(type, channel, actual_beat, actual_position).is_event()) {
                     output.duration = 1
                 }
-            } catch (e: OpusTree.InvalidGetCall) {
+            } catch (_: OpusTree.InvalidGetCall) {
                 // pass
             }
         } else {
@@ -1188,7 +1189,7 @@ open class OpusLayerBase {
                 if (!this.get_global_ctl_tree<T>(type, actual_beat, actual_position).is_event()) {
                     output.duration = 1
                 }
-            } catch (e: OpusTree.InvalidGetCall) {
+            } catch (_: OpusTree.InvalidGetCall) {
                 // pass
             }
         } else {
@@ -1534,7 +1535,7 @@ open class OpusLayerBase {
      * [uuid] is the unique identifier used when rebuilding a channel
      */
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null, is_percussion: Boolean = false) {
-        val actual_uuid = uuid ?: OpusLayerBase.gen_channel_uuid()
+        val actual_uuid = uuid ?: gen_channel_uuid()
         val new_channel = if (is_percussion) {
             OpusPercussionChannel(actual_uuid).apply {
                 midi_channel = 9
@@ -1849,7 +1850,7 @@ open class OpusLayerBase {
      */
     open fun new_channel_controller(type: ControlEventType, channel_index: Int) {
         val channel = this.get_all_channels()[channel_index]
-        val controller = channel.controllers.get_controller<OpusControlEvent>(type)
+        channel.controllers.get_controller<OpusControlEvent>(type)
         this.recache_line_maps()
     }
 
@@ -2081,7 +2082,7 @@ open class OpusLayerBase {
                     channel,
                     min(line_offset, working_channel.size - 1)
                 )
-            } catch (e: OpusChannelAbstract.LastLineException) {
+            } catch (_: OpusChannelAbstract.LastLineException) {
                 break
             }
         }
@@ -2235,7 +2236,7 @@ open class OpusLayerBase {
             this.insert_beat(this.length)
         }
 
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
@@ -2434,7 +2435,7 @@ open class OpusLayerBase {
             this.insert_beat(this.length)
         }
 
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
 
 
@@ -2938,7 +2939,7 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
 
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
@@ -3003,7 +3004,7 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
         val count = repeat ?: ceil((this.length - from_key.beat).toFloat() / width.toFloat()).toInt()
@@ -3548,7 +3549,7 @@ open class OpusLayerBase {
         }
     }
 
-    private fun get_next_available_midi_channel(prefer: Int? = null, block_nine: Boolean = true): Int {
+    private fun get_next_available_midi_channel(prefer: Int? = null): Int {
         // Find the next available MIDI channel, ignore '9' which needs to be manually set
         // NOTE: This *will* generate past MIDI 1's limit of 16 channels
         val used_channels: MutableSet<Int> = mutableSetOf(9)
@@ -3615,7 +3616,7 @@ open class OpusLayerBase {
                 blocked_ranges.add(Pair(working_offset, working_offset_end))
             }
 
-            working_position_pair = this.get_proceding_leaf_position(working_position_pair.first, working_position_pair.second) ?: break
+            working_position_pair = this.get_proceeding_leaf_position(working_position_pair.first, working_position_pair.second) ?: break
         }
 
         working_position_pair = Pair(beat_key_to, this.get_first_position(beat_key_to, position_to))
@@ -3634,7 +3635,7 @@ open class OpusLayerBase {
                 blocked_ranges.add(Pair(working_offset, working_offset_end))
             }
 
-            working_position_pair = this.get_proceding_leaf_position(working_position_pair.first, working_position_pair.second) ?: break
+            working_position_pair = this.get_proceeding_leaf_position(working_position_pair.first, working_position_pair.second) ?: break
         }
 
         TODO("In Progress")
@@ -4060,7 +4061,7 @@ open class OpusLayerBase {
         val json_content = bytes.toString(Charsets.UTF_8)
         var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
         var version = OpusManagerJSONInterface.detect_version(generalized_object)
-        while (version < OpusManagerJSONInterface.LATEST_VERSION) {
+        while (version < LATEST_VERSION) {
             generalized_object = when (version++) {
                 3 -> OpusManagerJSONInterface.convert_v3_to_v4(generalized_object)
                 2 -> OpusManagerJSONInterface.convert_v2_to_v3(generalized_object)
@@ -4096,7 +4097,7 @@ open class OpusLayerBase {
     }
 
     open fun _project_change_new() {
-        this.import_from_other(OpusLayerBase.initialize_basic())
+        this.import_from_other(initialize_basic())
     }
 
     fun project_change_json(json_data: JSONHashMap, forced_path: String? = null) {
@@ -4118,7 +4119,7 @@ open class OpusLayerBase {
                 this.length
             )
 
-            channel.uuid = OpusLayerBase.gen_channel_uuid()
+            channel.uuid = gen_channel_uuid()
             this.channels.add(channel)
             this._channel_uuid_map[channel.uuid] = channel
         }
@@ -4161,7 +4162,7 @@ open class OpusLayerBase {
     }
 
     open fun _project_change_midi(midi: Midi) {
-        val (settree, tempo_line, instrument_map) = OpusLayerBase.tree_from_midi(midi)
+        val (settree, tempo_line, instrument_map) = tree_from_midi(midi)
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
         val channel_sizes = mutableListOf<Int>()
@@ -4338,7 +4339,7 @@ open class OpusLayerBase {
                     } else {
                         if (this.get_tree(working_beatkey!!, working_position).size != size) {
                             val c = System.currentTimeMillis()
-                            this.split_tree(working_beatkey!!, working_position, size)
+                            this.split_tree(working_beatkey, working_position, size)
                             split_dur += System.currentTimeMillis() - c
                         }
                         working_position.add(x)
@@ -4346,7 +4347,7 @@ open class OpusLayerBase {
                 }
 
                 if (working_beatkey != null) {
-                    events_to_set.add(Triple(working_beatkey!!, working_position, event))
+                    events_to_set.add(Triple(working_beatkey, working_position, event))
                 }
             }
         }
@@ -4509,7 +4510,7 @@ open class OpusLayerBase {
 
         val (target_channel, target_offset) = try {
             this.get_channel_and_line_offset(this.get_instrument_line_index(beat_key.channel, beat_key.line_offset) + y_diff)
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             throw RangeOverflow(from_key, to_key, beat_key)
         }
 

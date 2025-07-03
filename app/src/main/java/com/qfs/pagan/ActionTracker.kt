@@ -12,6 +12,9 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
 import com.qfs.pagan.ContextMenu.ContextMenuRange
+import com.qfs.pagan.ControlWidget.ControlWidgetPan
+import com.qfs.pagan.ControlWidget.ControlWidgetTempo
+import com.qfs.pagan.ControlWidget.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
@@ -391,7 +394,7 @@ class ActionTracker {
     fun move_selection_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.MoveSelectionToBeat,
-            beat_key.toList()
+            beat_key.to_list()
         )
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
@@ -401,7 +404,7 @@ class ActionTracker {
     fun copy_selection_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.CopySelectionToBeat,
-            beat_key.toList()
+            beat_key.to_list()
         )
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
@@ -411,7 +414,7 @@ class ActionTracker {
     fun merge_selection_into_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.MergeSelectionIntoBeat,
-            beat_key.toList()
+            beat_key.to_list()
         )
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
@@ -463,7 +466,7 @@ class ActionTracker {
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeaf,
-            beat_key.toList() + position
+            beat_key.to_list() + position
         )
 
         val activity = this.get_activity()
@@ -491,7 +494,7 @@ class ActionTracker {
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.MoveLineCtlToBeat,
-            beat_key.toList()
+            beat_key.to_list()
         )
         this.get_opus_manager().move_line_ctl_to_beat(beat_key)
     }
@@ -499,7 +502,7 @@ class ActionTracker {
     fun copy_line_ctl_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.CopyLineCtlToBeat,
-            beat_key.toList()
+            beat_key.to_list()
         )
         this.get_opus_manager().copy_line_ctl_to_beat(beat_key)
     }
@@ -1415,8 +1418,8 @@ class ActionTracker {
             nsOctave.unset_active_button()
             nsOffset.unset_active_button()
         } else {
-            nsOctave.setState(new_value / radix, manual = true, surpress_callback = true)
-            nsOffset.setState(new_value % radix, manual = true, surpress_callback = true)
+            nsOctave.set_state(new_value / radix, manual = true, suppress_callback = true)
+            nsOffset.set_state(new_value % radix, manual = true, suppress_callback = true)
         }
 
         opus_manager.relative_mode = mode

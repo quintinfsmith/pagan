@@ -46,9 +46,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                     )
                 )
             } else {
-                val adj_overlapped = mutableListOf<Triple<Int, List<Int>, Rational>>()
                 var crossed_index = false
-                for ((beat, position, amount) in overlapped) {
+                for ((beat, _, _) in overlapped) {
                     if (beat >= overlapper.first) {
                         crossed_index = true
                         break
@@ -304,7 +303,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         val (next_beat, next_position) = this.get_proceding_event_position(beat, position) ?: return null
 
         val (head_offset, head_width) = this.get_leaf_offset_and_width(beat, position)
-        val (target_offset, target_width) = this.get_leaf_offset_and_width(next_beat, next_position)
+        val (target_offset, _) = this.get_leaf_offset_and_width(next_beat, next_position)
         return if (target_offset >= head_offset && target_offset < head_offset + Rational(duration, head_width)) {
             Pair(next_beat, next_position.toList())
         } else {
@@ -380,7 +379,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
         val (next_beat, next_position) = this.get_proceding_event_position(beat, position) ?: return null
 
-        val (target_offset, target_width) = this.get_leaf_offset_and_width(next_beat, next_position)
+        val (target_offset, _) = this.get_leaf_offset_and_width(next_beat, next_position)
 
         val (direct_offset, direct_width) = this.get_leaf_offset_and_width(beat, position)
         val stack = mutableListOf<Triple<Rational, Int, OpusTree<T>>>(Triple(direct_offset, direct_width, new_tree))
@@ -549,7 +548,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                 for ((blocked_beat, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
                     this._assign_to_inv_cache(blocked_beat, blocked_position, working_beat, working_position, blocked_amount)
                 }
-                for ((blocked_beat, blocked_position, blocked_amount) in this._cache_blocked_tree_map[cache_key]!!) {
+                for ((blocked_beat, blocked_position, _) in this._cache_blocked_tree_map[cache_key]!!) {
                     val overlappee_pair = Pair(blocked_beat, blocked_position.toList())
                     this._on_overlap(cache_key, overlappee_pair)
                 }
@@ -813,7 +812,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                 } else if (working_tree.is_leaf()) {
                     val block_key = Pair(beat, working_position)
                     if (this._cache_inv_blocked_tree_map.containsKey(block_key)) {
-                        val (a,b,_) = this._cache_inv_blocked_tree_map[block_key]!!
+                        val (a,_,_) = this._cache_inv_blocked_tree_map[block_key]!!
                         need_recache.add(a)
                         for (pair in this._decache_overlapping_leaf(a, listOf())) {
                             need_recache.add(pair.first)

@@ -5,6 +5,10 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
+import com.qfs.pagan.opusmanager.activecontroller.ActiveController
+import com.qfs.pagan.opusmanager.activecontroller.PanController
+import com.qfs.pagan.opusmanager.activecontroller.TempoController
+import com.qfs.pagan.opusmanager.activecontroller.VolumeController
 import com.qfs.pagan.structure.OpusTree
 
 class ActiveControllerJSONInterface {

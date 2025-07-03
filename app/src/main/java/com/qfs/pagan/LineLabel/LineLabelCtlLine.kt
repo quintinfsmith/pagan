@@ -1,4 +1,4 @@
-package com.qfs.pagan
+package com.qfs.pagan.LineLabel
 
 import android.content.Context
 import com.qfs.pagan.opusmanager.ControlEventType

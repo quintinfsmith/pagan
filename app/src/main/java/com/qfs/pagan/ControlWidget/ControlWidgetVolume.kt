@@ -1,12 +1,12 @@
-package com.qfs.pagan
+package com.qfs.pagan.ControlWidget
 
 import android.content.Context
 import android.view.ContextThemeWrapper
-import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
@@ -29,7 +29,7 @@ class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_init
         this._button.minEms = 2
 
         if (this.is_initial_event) {
-            this._transition_button.visibility = View.GONE
+            this._transition_button.visibility = GONE
         } else {
             (this._transition_button as MaterialButton).setIconResource(
                 when (this.working_event.transition) {

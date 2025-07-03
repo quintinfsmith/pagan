@@ -1,4 +1,4 @@
-package com.qfs.pagan
+package com.qfs.pagan.LineLabel
 
 import android.view.MotionEvent
 import android.view.View
@@ -7,9 +7,9 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Space
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.children
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.EditorTable
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelColumnLayout(editor_table: EditorTable): ScrollView(editor_table.context) {

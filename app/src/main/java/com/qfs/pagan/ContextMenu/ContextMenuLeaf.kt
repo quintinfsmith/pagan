@@ -35,10 +35,10 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     }
 
     override fun setup_interactions() {
-        this.ns_octave.setOnChange(this::on_octave_change)
-        this.ns_offset.setOnChange(this::on_offset_change)
+        this.ns_octave.set_on_change(this::on_octave_change)
+        this.ns_offset.set_on_change(this::on_offset_change)
 
-        this.ros_relative_option.setOnChange(this::interact_rosRelativeOption)
+        this.ros_relative_option.set_on_change(this::interact_rosRelativeOption)
 
         this.button_duration.setOnClickListener {
             if (!it.isEnabled) {
@@ -118,7 +118,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         if (main.configuration.relative_mode) {
             this.ros_relative_option.visibility = View.VISIBLE
-            this.ros_relative_option.setState(opus_manager.relative_mode, true, true)
+            this.ros_relative_option.set_state(opus_manager.relative_mode, true, true)
         } else {
             this.ros_relative_option.visibility = View.GONE
         }
@@ -144,15 +144,15 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 }
 
                 if (value >= 0) {
-                    this.ns_offset.setState(
+                    this.ns_offset.set_state(
                         value % radix,
                         manual = true,
-                        surpress_callback = true
+                        suppress_callback = true
                     )
-                    this.ns_octave.setState(
+                    this.ns_octave.set_state(
                         value / radix,
                         manual = true,
-                        surpress_callback = true
+                        suppress_callback = true
                     )
                 }
 
@@ -166,7 +166,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
             }
         }
 
-        this.ros_relative_option.setState(
+        this.ros_relative_option.set_state(
             opus_manager.relative_mode,
             true,
             true
@@ -222,17 +222,17 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
     private fun on_offset_change(view: NumberSelector) {
         val main = this.get_activity()
-        val progress = view.getState()!!
+        val progress = view.get_state()!!
         main.get_action_interface().set_offset(progress)
     }
 
     private fun on_octave_change(view: NumberSelector) {
         val main = this.get_activity()
-        val progress = view.getState()!!
+        val progress = view.get_state()!!
         main.get_action_interface().set_octave(progress)
     }
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
-        this.get_activity().get_action_interface().set_relative_mode(view.getState() ?: return)
+        this.get_activity().get_action_interface().set_relative_mode(view.get_state() ?: return)
     }
 }

@@ -6,7 +6,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
 import com.qfs.pagan.ContextMenuWithController
-import com.qfs.pagan.ControlWidget
+import com.qfs.pagan.ControlWidget.ControlWidget
 import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel

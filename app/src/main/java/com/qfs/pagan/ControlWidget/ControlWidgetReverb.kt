@@ -1,4 +1,4 @@
-package com.qfs.pagan
+package com.qfs.pagan.ControlWidget
 
 import android.content.Context
 import android.view.ContextThemeWrapper
@@ -8,13 +8,16 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.ButtonLabelledIcon
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import kotlin.math.roundToInt
 
 class ControlWidgetReverb(default: OpusReverbEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusReverbEvent) -> Unit): ControlWidget<OpusReverbEvent>(context, default, level, is_initial_event, R.layout.control_widget_reverb, callback) {
     private val _slider = SeekBar(ContextThemeWrapper(context, R.style.Theme_Pagan_SeekBar))
-    private val _button = ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
+    private val _button =
+        ButtonLabelledIcon(ContextThemeWrapper(context, R.style.volume_widget_button))
     private val _min = 0f
     private val _max = 100f
     private var _lockout_ui: Boolean = false

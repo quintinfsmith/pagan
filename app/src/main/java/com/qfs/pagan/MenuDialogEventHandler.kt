@@ -1,8 +1,10 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
-import android.view.View
 
+/**
+ * Event Handler for the PopupMenuRecycler. Allows control over long clicks as well as clicks.
+ */
 abstract class MenuDialogEventHandler<T> {
     var dialog: AlertDialog? = null
     fun do_submit(index: Int, value: T) {

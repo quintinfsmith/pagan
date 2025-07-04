@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Typeface
 import android.util.AttributeSet
@@ -22,6 +23,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     private var _active_button: NumberSelectorButton? = null
     private var _on_change_hook: ((NumberSelector) -> Unit)? = null
 
+    @SuppressLint("ViewConstructor")
     class NumberSelectorButton(private var _number_selector: NumberSelector, var value: Int, private var _alt_style: Boolean = false):
         androidx.appcompat.widget.AppCompatTextView(ContextThemeWrapper(_number_selector.context, R.style.button_number_selector)) {
 
@@ -33,7 +35,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             this.typeface = Typeface.MONOSPACE
             this.setOnClickListener {
                 this._number_selector.set_active_button(this)
-                this.setActive(true)
+                this.set_active(true)
             }
         }
 
@@ -46,8 +48,8 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             this.refreshDrawableState()
         }
 
-        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 2)
+        override fun onCreateDrawableState(extra_space: Int): IntArray? {
+            val drawable_state = super.onCreateDrawableState(extra_space + 2)
             val new_state = mutableListOf<Int>()
             if (this._alt_style) {
                 new_state.add(R.attr.state_alternate)
@@ -57,11 +59,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 new_state.add(R.attr.state_active)
             }
 
-            mergeDrawableStates(drawableState, new_state.toIntArray())
-            return drawableState
+            mergeDrawableStates(drawable_state, new_state.toIntArray())
+            return drawable_state
         }
 
-        fun setActive(value: Boolean) {
+        fun set_active(value: Boolean) {
             this._state_active = value
             refreshDrawableState()
         }
@@ -86,23 +88,23 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         this.populate()
     }
 
-    fun getState(): Int? {
+    fun get_state(): Int? {
         if (this._active_button == null) {
             return null
         }
         return this._active_button!!.value
     }
 
-    fun setState(new_state: Int, manual: Boolean = false, surpress_callback: Boolean = false) {
+    fun set_state(new_state: Int, manual: Boolean = false, suppress_callback: Boolean = false) {
         if (new_state < this.min || new_state > this.max) {
             throw IndexOutOfBoundsException()
         }
 
         for ((button, value) in this._button_map) {
             if (value == new_state) {
-                this.set_active_button(button, surpress_callback)
+                this.set_active_button(button, suppress_callback)
                 if (manual) {
-                    button.setActive(true)
+                    button.set_active(true)
                 }
                 return
             }
@@ -154,7 +156,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
             val new_linear_layout = LinearLayout(this.context)
             this.addView(new_linear_layout)
 
-            (new_linear_layout.layoutParams as LinearLayout.LayoutParams).weight = 1F
+            (new_linear_layout.layoutParams as LayoutParams).weight = 1F
             if (orientation == HORIZONTAL) {
                 new_linear_layout.layoutParams.width = 0
                 new_linear_layout.layoutParams.height = MATCH_PARENT
@@ -179,14 +181,14 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 j = this.childCount - 1 - j
             }
 
-            val currentView = NumberSelectorButton(this, i, this._button_theme == 1)
+            val current_view = NumberSelectorButton(this, i, this._button_theme == 1)
             if (this.orientation == HORIZONTAL) {
-                (this.getChildAt(j) as ViewGroup).addView(currentView, 0)
+                (this.getChildAt(j) as ViewGroup).addView(current_view, 0)
             } else {
-                (this.getChildAt(j) as ViewGroup).addView(currentView)
+                (this.getChildAt(j) as ViewGroup).addView(current_view)
             }
 
-            val layout_params = (currentView.layoutParams as LinearLayout.LayoutParams)
+            val layout_params = (current_view.layoutParams as LayoutParams)
             layout_params.weight = 1F
             layout_params.gravity = CENTER
             if (orientation == HORIZONTAL) {
@@ -196,7 +198,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 layout_params.height = MATCH_PARENT
                 layout_params.width = 0
             }
-            this._button_map[currentView] = i
+            this._button_map[current_view] = i
         }
 
         for (row in this.children) {
@@ -215,13 +217,13 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
     }
 
-    fun setOnChange(hook: (NumberSelector) -> Unit) {
+    fun set_on_change(hook: (NumberSelector) -> Unit) {
         this._on_change_hook = hook
     }
 
     fun set_active_button(view: NumberSelectorButton, surpress_callback: Boolean = false) {
         if (this._active_button != view && this._active_button != null) {
-            this._active_button!!.setActive(false)
+            this._active_button!!.set_active(false)
         }
         this.unset_active_button()
 
@@ -236,7 +238,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         if (this._active_button == null) {
             return
         }
-        this._active_button!!.setActive(false)
+        this._active_button!!.set_active(false)
         this._active_button = null
     }
 }

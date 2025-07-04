@@ -4,7 +4,6 @@ package com.qfs.pagan
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.GeneralMIDIEvent
-import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
@@ -13,11 +12,9 @@ import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusChannel
 import com.qfs.pagan.opusmanager.OpusControlEvent
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusLayerHistory
-import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
@@ -98,7 +95,7 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_get_proceding_leaf() {
+    fun test_get_proceeding_leaf() {
         val manager = OpusManager()
         manager._project_change_new()
         val first_beat_key = BeatKey(0,0,1)
@@ -110,12 +107,12 @@ class OpusLayerBaseUnitTest {
         assertEquals(
             "get_proceding_leaf failed",
             expected_leaf,
-            manager.get_proceding_leaf(first_beat_key, listOf(2))
+            manager.get_proceeding_leaf(first_beat_key, listOf(2))
         )
         assertEquals(
             "get_proceding_leaf should be null",
             null,
-            manager.get_proceding_leaf(BeatKey(0,0,3), listOf())
+            manager.get_proceeding_leaf(BeatKey(0,0,3), listOf())
         )
     }
 
@@ -130,11 +127,11 @@ class OpusLayerBaseUnitTest {
         manager.controller_global_set_event(type, 1, listOf(2), OpusTempoEvent(120f))
         assertEquals(
             Pair(1, listOf(3)),
-            manager.get_global_ctl_proceding_leaf_position(type, 1, listOf(2))
+            manager.get_global_ctl_proceeding_leaf_position(type, 1, listOf(2))
         )
         assertEquals(
             null,
-            manager.get_global_ctl_proceding_leaf_position(type, 3, listOf())
+            manager.get_global_ctl_proceeding_leaf_position(type, 3, listOf())
         )
     }
     @Test
@@ -148,11 +145,11 @@ class OpusLayerBaseUnitTest {
         manager.controller_channel_set_event(type, 0, 1, listOf(2), OpusVolumeEvent(1f))
         assertEquals(
             Pair(1, listOf(3)),
-            manager.get_channel_ctl_proceding_leaf_position(type, 0, 1, listOf(2))
+            manager.get_channel_ctl_proceeding_leaf_position(type, 0, 1, listOf(2))
         )
         assertEquals(
             null,
-            manager.get_channel_ctl_proceding_leaf_position(type, 0, 3, listOf())
+            manager.get_channel_ctl_proceeding_leaf_position(type, 0, 3, listOf())
         )
     }
     @Test
@@ -167,11 +164,11 @@ class OpusLayerBaseUnitTest {
         manager.controller_line_set_event(type, first_beat_key, listOf(2), OpusVolumeEvent(1f))
         assertEquals(
             Pair(1, listOf(3)),
-            manager.get_line_ctl_proceding_leaf_position(type, first_beat_key, listOf(2))
+            manager.get_line_ctl_proceeding_leaf_position(type, first_beat_key, listOf(2))
         )
         assertEquals(
             null,
-            manager.get_line_ctl_proceding_leaf_position(type, BeatKey(0,0,3), listOf())
+            manager.get_line_ctl_proceeding_leaf_position(type, BeatKey(0,0,3), listOf())
         )
     }
 
@@ -198,7 +195,7 @@ class OpusLayerBaseUnitTest {
     }
 
     @Test
-    fun test_get_proceding_leaf_position() {
+    fun test_get_proceeding_leaf_position() {
         val manager = OpusManager()
         manager._project_change_new()
 
@@ -208,21 +205,21 @@ class OpusLayerBaseUnitTest {
         assertEquals(
             "Failed to get proceding leaf when it was immediately next to it",
             Pair(first, listOf(1)),
-            manager.get_proceding_leaf_position(first, listOf(0))
+            manager.get_proceeding_leaf_position(first, listOf(0))
         )
 
         manager.split_tree(first, listOf(1), 2)
         assertEquals(
             "Failed to get proceding leaf when it was a niece",
             Pair(first, listOf(1, 0)),
-            manager.get_proceding_leaf_position(first, listOf(0))
+            manager.get_proceeding_leaf_position(first, listOf(0))
         )
 
         manager.split_tree(first, listOf(0), 2)
         assertEquals(
             "Failed to get proceding leaf when it was a cousin",
             Pair(first, listOf(1, 0)),
-            manager.get_proceding_leaf_position(first, listOf(0,1))
+            manager.get_proceeding_leaf_position(first, listOf(0,1))
         )
 
         manager.split_tree(first, listOf(0, 1), 2)
@@ -230,13 +227,13 @@ class OpusLayerBaseUnitTest {
         assertEquals(
             "Failed to return null when looking for proceding leaf after last position",
             null,
-            manager.get_proceding_leaf_position(BeatKey(0,0, manager.length - 1),listOf())
+            manager.get_proceeding_leaf_position(BeatKey(0,0, manager.length - 1),listOf())
         )
 
         assertEquals(
             "Failed to get proceding leaf across beats",
             Pair(first, listOf(0,0)),
-            manager.get_proceding_leaf_position(BeatKey(0,0,0), listOf())
+            manager.get_proceeding_leaf_position(BeatKey(0,0,0), listOf())
         )
     }
     @Test

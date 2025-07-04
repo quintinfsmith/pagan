@@ -9,7 +9,7 @@ import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.ActiveController
+import com.qfs.pagan.opusmanager.activecontroller.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.ControlTransition
@@ -602,7 +602,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val event = working_tree.get_event()!!.copy()
         val next_event_frame = if (this.clip_same_line_release) {
-            val next_event_position = this.opus_manager.get_proceding_event_position(beat_key, position)
+            val next_event_position = this.opus_manager.get_proceeding_event_position(beat_key, position)
             if (next_event_position != null) {
                 val (next_beat, next_position) = next_event_position
                 val (offset, _) = this.opus_manager.get_leaf_offset_and_width(

@@ -1627,7 +1627,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_line_ctl_proceding_leaf_position(
+                    val next_pair = this.get_line_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat_key,
                         working_position
@@ -1661,7 +1661,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat = cursor.beat
                 var working_position = cursor.get_position()
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_global_ctl_proceding_leaf_position(
+                    val next_pair = this.get_global_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat,
                         working_position
@@ -1677,7 +1677,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_proceding_leaf_position(
+                    val next_pair = this.get_proceeding_leaf_position(
                         working_beat_key,
                         working_position
                     ) ?: break
@@ -1831,7 +1831,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_line_ctl_proceding_leaf_position(
+                    val next_pair = this.get_line_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat_key,
                         working_position
@@ -1863,7 +1863,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat = cursor.beat
                 var working_position = cursor.get_position()
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_global_ctl_proceding_leaf_position(
+                    val next_pair = this.get_global_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat,
                         working_position
@@ -1879,7 +1879,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {
-                    val next_pair = this.get_proceding_leaf_position(
+                    val next_pair = this.get_proceeding_leaf_position(
                         working_beat_key,
                         working_position
                     ) ?: break

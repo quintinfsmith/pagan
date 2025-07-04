@@ -1,20 +1,13 @@
-package com.qfs.pagan.opusmanager
+package com.qfs.pagan.opusmanager.activecontroller
 
+import com.qfs.pagan.opusmanager.ControlTransition
+import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.opusmanager.OpusPanEvent
+import com.qfs.pagan.opusmanager.OpusReverbEvent
+import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.opusmanager.OpusTreeArray
+import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.structure.OpusTree
-
-
-class ControllerProfile() {
-    val values = mutableListOf<Triple<Pair<Float, Float>, Pair<Float, Float>, ControlTransition>>()
-    fun add(start: Float, end: Float, start_value: Float, end_value: Float, transition: ControlTransition) {
-        this.values.add(
-            Triple(
-                Pair(start, end),
-                Pair(start_value, end_value),
-                transition
-            )
-        )
-    }
-}
 
 abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): OpusTreeArray<T>(MutableList(beat_count) { OpusTree() }) {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
@@ -72,8 +65,3 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
         return output
     }
 }
-
-class VolumeController(beat_count: Int): ActiveController<OpusVolumeEvent>(beat_count, OpusVolumeEvent(1F))
-class TempoController(beat_count: Int): ActiveController<OpusTempoEvent>(beat_count, OpusTempoEvent(120F))
-class ReverbController(beat_count: Int): ActiveController<OpusReverbEvent>(beat_count, OpusReverbEvent(1F))
-class PanController(beat_count: Int): ActiveController<OpusPanEvent>(beat_count, OpusPanEvent(0F))

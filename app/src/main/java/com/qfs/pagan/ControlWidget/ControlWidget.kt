@@ -1,4 +1,4 @@
-package com.qfs.pagan
+package com.qfs.pagan.ControlWidget
 
 import android.content.Context
 import android.view.ContextThemeWrapper

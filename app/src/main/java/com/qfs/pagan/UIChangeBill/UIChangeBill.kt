@@ -1,143 +1,17 @@
-package com.qfs.pagan
+package com.qfs.pagan.UIChangeBill
 
+import com.qfs.pagan.EditorTable
+import com.qfs.pagan.Rational
 import kotlin.math.max
+
 /**
 * A queue of UI update commands to be executed once it is safe to do so.
 */
 class UIChangeBill {
-    class UILock {
-        companion object {
-            const val FULL = 2
-            const val PARTIAL = 1
-            const val NONE = 0
-        }
-
-        var flag = NONE
-        var level = 0
-        fun lock_partial() {
-            this.flag = max(this.flag, UILock.PARTIAL)
-            this.level += 1
-        }
-
-        fun lock_full() {
-            this.flag = max(this.flag, UILock.FULL)
-            this.level += 1
-        }
-
-        fun unlock() {
-            this.level -= 1
-            if (this.level == 0) {
-                this.flag = UILock.NONE
-            }
-        }
-
-        fun get_level(): Int {
-            return this.level
-        }
-
-        fun is_locked(): Boolean {
-            return this.level > 0
-        }
-
-        fun is_full_locked(): Boolean {
-            return this.flag == UILock.FULL
-        }
-    }
-
-    enum class BillableItem {
-        RowAdd,
-        RowRemove,
-        RowChange,
-        RowStateChange,
-        ColumnAdd,
-        ColumnRemove,
-        ColumnChange,
-        ColumnStateChange,
-        CellChange,
-        CellStateChange,
-        ChannelChange,
-        ChannelAdd,
-        ChannelRemove,
-        ProjectNameChange,
-        ContextMenuRefresh,
-        ContextMenuSetLine,
-        ContextMenuSetChannel,
-        ContextMenuSetLeaf,
-        ContextMenuSetLeafPercussion,
-        ContextMenuSetControlLeaf,
-        ContextMenuSetControlLeafB,
-        ContextMenuSetRange,
-        ContextMenuSetColumn,
-        ContextMenuSetControlLine,
-        ContextMenuClear,
-        ConfigDrawerEnableCopyAndDelete,
-        ConfigDrawerRefreshExportButton,
-        PercussionButtonRefresh,
-        LineLabelRefresh,
-        ColumnLabelRefresh,
-        FullRefresh,
-        ForceScroll
-    }
-
-    class Node {
-        val bill = mutableListOf<BillableItem>()
-        val int_queue = mutableListOf<Int>()
-        val sub_nodes = mutableListOf<Node>()
-        fun new_node() {
-            this.sub_nodes.add(Node())
-        }
-
-        fun get(path: List<Int>): Node {
-            return if (path.isEmpty()) {
-                this
-            } else if (path == listOf(0)) {
-                this.sub_nodes[path[0]]
-            } else {
-                this.sub_nodes[path[0]].get(path.subList(1, path.size))
-            }
-        }
-
-
-        fun remove_node(path: List<Int>) {
-            val next = path[0]
-            if (path.size == 1) {
-                this.sub_nodes.removeAt(next)
-            } else {
-                this.sub_nodes[next].remove_node(path.subList(1, path.size))
-            }
-        }
-
-        fun last(): Node {
-            var working_node = this
-            while (working_node.sub_nodes.isNotEmpty()) {
-                working_node = working_node.sub_nodes.last()
-            }
-            return working_node
-        }
-
-        fun remove_last() {
-            val path = mutableListOf<Int>()
-            var working_node = this
-            while (working_node.sub_nodes.isNotEmpty()) {
-                path.add(working_node.sub_nodes.size - 1)
-                working_node = working_node.sub_nodes.last()
-            }
-            if (path.isNotEmpty()) {
-                this.remove_node(path)
-            }
-        }
-
-        fun clear() {
-            this.sub_nodes.clear()
-            this.bill.clear()
-            this.int_queue.clear()
-        }
-    }
-
     val ui_lock = UILock()
     private var _tree: Node = Node()
     private val working_path = mutableListOf<Int>()
-    
+
     fun consolidate() {
         val queued_cells = Array<MutableSet<EditorTable.Coordinate>>(2) {
             mutableSetOf()
@@ -456,7 +330,7 @@ class UIChangeBill {
                 this._tree.int_queue.add(cell.x)
             }
             this._tree.bill.add(BillableItem.CellStateChange)
-        } 
+        }
 
         if (queued_cells[1].isNotEmpty()) {
             val cells = queued_cells[1].toList()
@@ -478,10 +352,10 @@ class UIChangeBill {
             this._tree.bill.add(BillableItem.ColumnLabelRefresh)
             this._tree.int_queue.add(x)
         }
+
         if (queued_context_menu != null) {
             this._tree.bill.add(queued_context_menu)
         }
-
     }
 
     fun get_next_entry(): BillableItem? {
@@ -649,7 +523,7 @@ class UIChangeBill {
         val working_tree = this.get_working_tree() ?: return
         working_tree.int_queue.add(y)
         working_tree.bill.add(
-            if (false && state_only) {
+            if (state_only) {
                 BillableItem.RowStateChange
             } else {
                 BillableItem.RowChange

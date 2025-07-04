@@ -1,10 +1,11 @@
-package com.qfs.pagan
+package com.qfs.pagan.ControlWidget
 
 import android.content.Context
 import android.view.ContextThemeWrapper
-import android.view.View
 import android.widget.Button
 import com.google.android.material.button.MaterialButton
+import com.qfs.pagan.PanSliderWidget
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusPanEvent
@@ -25,7 +26,7 @@ class ControlWidgetPan(default: OpusPanEvent, level: CtlLineLevel, is_initial_ev
         this._transition_button = this.inner.findViewById(R.id.pan_transition_type)
 
         if (this.is_initial_event) {
-            this._transition_button.visibility = View.GONE
+            this._transition_button.visibility = GONE
         } else {
             (this._transition_button as MaterialButton).setIconResource(when (this.working_event.transition) {
                 ControlTransition.Instant -> R.drawable.immediate

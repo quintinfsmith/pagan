@@ -1,9 +1,10 @@
-package com.qfs.pagan
+package com.qfs.pagan.ControlWidget
 
 import android.content.Context
 import android.widget.Button
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt

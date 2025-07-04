@@ -5,9 +5,10 @@ import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.UIChangeBill.UIChangeBill
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.ActiveController
+import com.qfs.pagan.opusmanager.activecontroller.ActiveController
 import com.qfs.pagan.opusmanager.BeatKey
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
@@ -34,6 +35,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     class MissingEditorTableException: Exception()
 
     companion object {
+        @Suppress("unused")
         val global_controller_domain = listOf(
             ControlEventType.Tempo
         )
@@ -51,7 +53,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     var relative_mode: Int = 0
     private var _activity: ActivityEditor? = null
 
-    private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(OpusManagerCursor.CursorMode.Unset)
+    private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(CursorMode.Unset)
 
     var marked_range: Pair<BeatKey, BeatKey>? = null
 
@@ -151,7 +153,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             )
                         )
                     )!!
-                } catch (e: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+                } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
                     this.get_row_count()
                 },
                 beat_keys[i].beat
@@ -1128,7 +1130,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _pre_remove_channel(channel: Int): Triple<Int, Int, List<Int>> {
         val y = try {
             this.get_instrument_line_index(channel, 0)
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             this.get_total_line_count()
         }
 
@@ -1342,7 +1344,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 try {
                     activity.set_soundfont()
                     activity.save_configuration()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     activity.configuration.soundfont = original_soundfont
                     activity.set_soundfont()
                 }
@@ -1463,17 +1465,17 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._queue_cursor_update(this.cursor)
 
             when (cursor.mode) {
-                OpusManagerCursor.CursorMode.Line -> {
+                CursorMode.Line -> {
                     if (cursor.ctl_level == null) {
                         this._ui_change_bill.queue_set_context_menu_line()
                     } else {
                         this._ui_change_bill.queue_set_context_menu_control_line()
                     }
                 }
-                OpusManagerCursor.CursorMode.Column -> {
+                CursorMode.Column -> {
                     this._ui_change_bill.queue_set_context_menu_column()
                 }
-                OpusManagerCursor.CursorMode.Single -> {
+                CursorMode.Single -> {
                     if (cursor.ctl_level == null) {
                         if (this.is_percussion(cursor.channel)) {
                             this._ui_change_bill.queue_set_context_menu_leaf_percussion()
@@ -1494,15 +1496,15 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
                 }
 
-                OpusManagerCursor.CursorMode.Range -> {
+                CursorMode.Range -> {
                     this._ui_change_bill.queue_set_context_menu_range()
                 }
 
-                OpusManagerCursor.CursorMode.Unset -> {
+                CursorMode.Unset -> {
                     this._ui_change_bill.queue_clear_context_menu()
                 }
 
-                OpusManagerCursor.CursorMode.Channel -> {
+                CursorMode.Channel -> {
                     this._ui_change_bill.queue_set_context_menu_channel()
                 }
             }
@@ -1726,7 +1728,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
             this.temporary_blocker = OpusManagerCursor(
-                mode = OpusManagerCursor.CursorMode.Single,
+                mode = CursorMode.Single,
                 channel = beat_key.channel,
                 line_offset = beat_key.line_offset,
                 beat = beat_key.beat,
@@ -1739,7 +1741,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
             this.temporary_blocker = OpusManagerCursor(
-                mode = OpusManagerCursor.CursorMode.Single,
+                mode = CursorMode.Single,
                 ctl_type = type,
                 ctl_level = CtlLineLevel.Line,
                 channel = beat_key.channel,
@@ -1754,7 +1756,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
             this.temporary_blocker = OpusManagerCursor(
-                mode = OpusManagerCursor.CursorMode.Single,
+                mode = CursorMode.Single,
                 ctl_type = type,
                 ctl_level = CtlLineLevel.Channel,
                 channel = channel,
@@ -1768,7 +1770,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.get_activity()?.vibrate()
         this.lock_ui_partial {
             this.temporary_blocker = OpusManagerCursor(
-                mode = OpusManagerCursor.CursorMode.Single,
+                mode = CursorMode.Single,
                 ctl_type = type,
                 ctl_level = CtlLineLevel.Global,
                 beat = beat,
@@ -1846,8 +1848,8 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private fun _queue_scroll_to_cursor(cursor: OpusManagerCursor) {
         val y = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Line,
-            OpusManagerCursor.CursorMode.Single -> {
+            CursorMode.Line,
+            CursorMode.Single -> {
                 when (cursor.ctl_level) {
                     CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
                     CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
@@ -1862,13 +1864,13 @@ class OpusLayerInterface : OpusLayerHistory() {
                                     )
                                 )
                             )
-                        } catch (e: IndexOutOfBoundsException) {
+                        } catch (_: IndexOutOfBoundsException) {
                             return // nothing to select
                         }
                     }
                 }
             }
-            OpusManagerCursor.CursorMode.Range -> {
+            CursorMode.Range -> {
                 when (cursor.ctl_level) {
                     CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
                     CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
@@ -1884,10 +1886,10 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
 
             }
-            OpusManagerCursor.CursorMode.Column,
-            OpusManagerCursor.CursorMode.Unset -> null
+            CursorMode.Column,
+            CursorMode.Unset -> null
 
-            OpusManagerCursor.CursorMode.Channel -> {
+            CursorMode.Channel -> {
                 this.get_visible_row_from_ctl_line(
                     this.get_actual_line_index(
                         this.get_instrument_line_index(
@@ -1900,10 +1902,10 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Channel -> Triple(null, Rational(0,1), Rational(1,1))
-            OpusManagerCursor.CursorMode.Line -> Triple(null,  Rational(0,1), Rational(1,1))
-            OpusManagerCursor.CursorMode.Column -> Triple(cursor.beat, Rational(0,1), Rational(1,1))
-            OpusManagerCursor.CursorMode.Single -> {
+            CursorMode.Channel -> Triple(null, Rational(0,1), Rational(1,1))
+            CursorMode.Line -> Triple(null,  Rational(0,1), Rational(1,1))
+            CursorMode.Column -> Triple(cursor.beat, Rational(0,1), Rational(1,1))
+            CursorMode.Single -> {
                 var tree: OpusTree<out OpusEvent> = when (cursor.ctl_level) {
                     CtlLineLevel.Line -> this.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
                     CtlLineLevel.Channel -> this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
@@ -1922,18 +1924,18 @@ class OpusLayerInterface : OpusLayerHistory() {
                 Triple(cursor.beat, offset, width)
             }
 
-            OpusManagerCursor.CursorMode.Range -> Triple(cursor.range!!.second.beat, Rational(0,1), Rational(1,1))
-            OpusManagerCursor.CursorMode.Unset -> Triple(null, Rational(0,1), Rational(1,1))
+            CursorMode.Range -> Triple(cursor.range!!.second.beat, Rational(0,1), Rational(1,1))
+            CursorMode.Unset -> Triple(null, Rational(0,1), Rational(1,1))
         }
 
-        this._ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, _activity?.in_playback() ?: false)
+        this._ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, _activity?.in_playback() == true)
     }
 
     private fun _queue_cursor_update(cursor: OpusManagerCursor, deep_update: Boolean = true) {
         if (cursor != this._cache_cursor) {
             try {
                 this._queue_cursor_update(this._cache_cursor, deep_update)
-            } catch (e: OpusTree.InvalidGetCall) {
+            } catch (_: OpusTree.InvalidGetCall) {
                 // Pass
             }
 
@@ -1943,7 +1945,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val coordinates_to_update = mutableSetOf<EditorTable.Coordinate>()
 
         when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single -> {
+            CursorMode.Single -> {
                 when (cursor.ctl_level) {
                     null -> {
                         val beat_key = cursor.get_beatkey()
@@ -1957,7 +1959,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                     )
                                 )
                             )
-                        } catch (e: IndexOutOfBoundsException) {
+                        } catch (_: IndexOutOfBoundsException) {
                             return
                         }
 
@@ -1966,7 +1968,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             val shadow_beats = mutableSetOf<Int>()
                             val event_head = try {
                                 line.get_blocking_position(beat_key.beat, cursor.get_position()) ?: Pair(beat_key.beat, cursor.get_position())
-                            } catch (e: IndexOutOfBoundsException) {
+                            } catch (_: IndexOutOfBoundsException) {
                                 return // dead cursor
                             }
 
@@ -2005,7 +2007,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                         this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset),
                                         channel.lines[cursor.line_offset].get_controller(cursor.ctl_type!!)
                                     )
-                                } catch (e: NullPointerException) {
+                                } catch (_: NullPointerException) {
                                     // Dead cursor
                                     return
                                 }
@@ -2036,7 +2038,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                         this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
                                         this.get_all_channels()[cursor.channel].controllers.get_controller(cursor.ctl_type!!)
                                     )
-                                } catch (e: NullPointerException) {
+                                } catch (_: NullPointerException) {
                                     // Dead cursor
                                     return
                                 }
@@ -2048,7 +2050,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                         this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
                                         this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
                                     )
-                                } catch (e: NullPointerException) {
+                                } catch (_: NullPointerException) {
                                     // Dead cursor
                                     return
                                 }
@@ -2059,7 +2061,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         val beat = cursor.beat
                         val event_head = try {
                             controller.get_blocking_position(beat, cursor.get_position()) ?: Pair(beat, cursor.get_position())
-                        } catch (e: IndexOutOfBoundsException) {
+                        } catch (_: IndexOutOfBoundsException) {
                             return // Dead Cursor
                         }
                         for ((shadow_beat, _) in controller.get_all_blocked_positions(event_head.first, event_head.second)) {
@@ -2079,7 +2081,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
             }
 
-            OpusManagerCursor.CursorMode.Range -> {
+            CursorMode.Range -> {
                 when (cursor.ctl_level) {
                     null -> {
                         val (top_left, bottom_right) = cursor.get_ordered_range()!!
@@ -2092,7 +2094,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                         )
                                     )
                                 ) ?: continue
-                            } catch (e: IndexOutOfBoundsException) {
+                            } catch (_: IndexOutOfBoundsException) {
                                 continue
                             }
 
@@ -2164,7 +2166,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
             }
 
-            OpusManagerCursor.CursorMode.Line -> {
+            CursorMode.Line -> {
                 val y = when (cursor.ctl_level) {
                     null -> {
                         try {
@@ -2186,7 +2188,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             }
 
                             line_y
-                        } catch (e: IndexOutOfBoundsException) {
+                        } catch (_: IndexOutOfBoundsException) {
                             return
                         }
                     }
@@ -2204,7 +2206,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 cursor.channel,
                                 cursor.line_offset
                             )
-                        } catch (e: NullPointerException) {
+                        } catch (_: NullPointerException) {
                             return
                         }
 
@@ -2249,7 +2251,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 cursor.ctl_type!!,
                                 cursor.channel
                             )
-                        } catch (e: NullPointerException) {
+                        } catch (_: NullPointerException) {
                             return
                         }
                     }
@@ -2261,11 +2263,11 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this._ui_change_bill.queue_row_change(y, true)
             }
 
-            OpusManagerCursor.CursorMode.Column -> {
+            CursorMode.Column -> {
                 this._ui_change_bill.queue_column_change(cursor.beat, false)
             }
-            OpusManagerCursor.CursorMode.Unset -> { }
-            OpusManagerCursor.CursorMode.Channel -> {
+            CursorMode.Unset -> { }
+            CursorMode.Channel -> {
                 val y = when (cursor.ctl_level) {
                     null -> {
                         try {
@@ -2277,7 +2279,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                     )
                                 )
                             ) ?: return
-                        } catch (e: IndexOutOfBoundsException) {
+                        } catch (_: IndexOutOfBoundsException) {
                             return
                         }
                     }
@@ -2448,12 +2450,11 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _apply_bill_changes() {
         val editor_table = try {
             this.get_editor_table()
-        } catch (e: MissingEditorTableException) {
+        } catch (_: MissingEditorTableException) {
             this._ui_change_bill.clear()
             return
         }
-        var queued_scroll: Triple<Pair<Int?, Int?>, Pair<Float, Float>, Boolean>? = null
-        this.runOnUiThread { activity: ActivityEditor ->
+        this.run_on_ui_thread { activity: ActivityEditor ->
             this._ui_change_bill.consolidate()
             while (true) {
                 val entry = this._ui_change_bill.get_next_entry()
@@ -2637,13 +2638,13 @@ class OpusLayerInterface : OpusLayerHistory() {
                     BillableItem.PercussionButtonRefresh -> {
                         val channel = this._ui_change_bill.get_next_int()
                         val line_offset = this._ui_change_bill.get_next_int()
-                        val btnChoosePercussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: continue
+                        val btn_choose_percussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: continue
                         val instrument = this.get_percussion_instrument(channel, line_offset)
 
                         if (activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                            btnChoosePercussion.text = activity.getString(R.string.label_short_percussion, instrument)
+                            btn_choose_percussion.text = activity.getString(R.string.label_short_percussion, instrument)
                         } else {
-                            btnChoosePercussion.text = activity.getString(
+                            btn_choose_percussion.text = activity.getString(
                                 R.string.label_choose_percussion,
                                 instrument,
                                 activity.get_drum_name(channel, instrument)
@@ -2687,7 +2688,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    private fun runOnUiThread(callback: (ActivityEditor) -> Unit) {
+    private fun run_on_ui_thread(callback: (ActivityEditor) -> Unit) {
         val main = this._activity ?: return // TODO: Throw Exception?
         val runnable = Runnable {
             callback(main)
@@ -2701,7 +2702,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private fun _ui_clear() {
         this.get_editor_table().clear()
-        this.runOnUiThread { main ->
+        this.run_on_ui_thread { main ->
             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             if (channel_recycler.adapter != null) {
                 val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
@@ -2858,7 +2859,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     fun set_note_octave_at_cursor(octave: Int) {
-        if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
+        if (this.cursor.mode != CursorMode.Single) {
             throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
         }
         val current_tree_position = this.get_actual_position(
@@ -2869,7 +2870,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     fun set_note_offset_at_cursor(offset: Int) {
-        if (this.cursor.mode != OpusManagerCursor.CursorMode.Single) {
+        if (this.cursor.mode != CursorMode.Single) {
             throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
         }
         val current_tree_position = this.get_actual_position(

@@ -1,0 +1,37 @@
+package com.qfs.pagan.UIChangeBill
+
+enum class BillableItem {
+    RowAdd,
+    RowRemove,
+    RowChange,
+    RowStateChange,
+    ColumnAdd,
+    ColumnRemove,
+    ColumnChange,
+    ColumnStateChange,
+    CellChange,
+    CellStateChange,
+    ChannelChange,
+    ChannelAdd,
+    ChannelRemove,
+    ProjectNameChange,
+    ContextMenuRefresh,
+    ContextMenuSetLine,
+    ContextMenuSetChannel,
+    ContextMenuSetLeaf,
+    ContextMenuSetLeafPercussion,
+    ContextMenuSetControlLeaf,
+    ContextMenuSetControlLeafB,
+    ContextMenuSetRange,
+    ContextMenuSetColumn,
+    ContextMenuSetControlLine,
+    ContextMenuClear,
+    ConfigDrawerEnableCopyAndDelete,
+    ConfigDrawerRefreshExportButton,
+    PercussionButtonRefresh,
+    LineLabelRefresh,
+    ColumnLabelRefresh,
+    FullRefresh,
+    ForceScroll
+}
+

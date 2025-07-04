@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
@@ -19,6 +20,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
     )
     private var _on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
+    @SuppressLint("ViewConstructor")
     class RelativeOptionSelectorButton (
         private var _relative_option_selector: RelativeOptionSelector,
         private var _value: Int
@@ -34,29 +36,29 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
             this.text = resources.getString(this._value)
             this.setOnClickListener {
                 this._relative_option_selector.set_active_button(this)
-                this.setActive(true)
+                this.set_active(true)
             }
         }
 
-        override fun onCreateDrawableState(extraSpace: Int): IntArray? {
-            val drawableState = super.onCreateDrawableState(extraSpace + 1)
+        override fun onCreateDrawableState(extra_space: Int): IntArray? {
+            val drawable_state = super.onCreateDrawableState(extra_space + 1)
             val new_state = mutableListOf<Int>()
 
             if (this._state_active) {
                 new_state.add(R.attr.state_active)
             }
 
-            mergeDrawableStates(drawableState, new_state.toIntArray())
-            return drawableState
+            mergeDrawableStates(drawable_state, new_state.toIntArray())
+            return drawable_state
         }
 
-        fun setActive(value: Boolean) {
+        fun set_active(value: Boolean) {
             this._state_active = value
             refreshDrawableState()
         }
 
-        override fun onLayout(isChanged: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-            super.onLayout(isChanged, left, top, right, bottom)
+        override fun onLayout(is_changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+            super.onLayout(is_changed, left, top, right, bottom)
             this.text = resources.getString(this._value)
             this.gravity = CENTER
         }
@@ -66,19 +68,19 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         this.populate()
     }
 
-    fun getState(): Int? {
+    fun get_state(): Int? {
         if (this._active_button == null) {
             return null
         }
         return this._button_map[this._active_button!!]!!
     }
 
-    fun setState(new_state: Int, manual: Boolean = false, surpress_callback: Boolean = false) {
+    fun set_state(new_state: Int, manual: Boolean = false, suppress: Boolean = false) {
         for ((button, value) in this._button_map) {
             if (value == new_state) {
-                this.set_active_button(button, surpress_callback)
+                this.set_active_button(button, suppress)
                 if (manual) {
-                    button.setActive(true)
+                    button.set_active(true)
                 }
                 return
             }
@@ -93,45 +95,46 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
 
     private fun populate() {
         this._item_list.forEachIndexed { i, string_index ->
-            val currentView = RelativeOptionSelectorButton(this, string_index)
-            this.addView(currentView)
-            if (this.orientation == HORIZONTAL) {
-                (currentView.layoutParams as LayoutParams).height = MATCH_PARENT
-                (currentView.layoutParams as LayoutParams).weight = 1f
-                (currentView.layoutParams as LayoutParams).width = 41
-                if (i == 1) {
-                    (currentView.layoutParams as MarginLayoutParams).setMargins(5, 0, 5, 0)
+            RelativeOptionSelectorButton(this, string_index).let { current_view ->
+                this.addView(current_view)
+                if (this.orientation == HORIZONTAL) {
+                    (current_view.layoutParams as LayoutParams).height = MATCH_PARENT
+                    (current_view.layoutParams as LayoutParams).weight = 1f
+                    (current_view.layoutParams as LayoutParams).width = 41
+                    if (i == 1) {
+                        (current_view.layoutParams as MarginLayoutParams).setMargins(5, 0, 5, 0)
+                    }
+                } else {
+                    (current_view.layoutParams as LayoutParams).height = 0
+                    (current_view.layoutParams as LayoutParams).weight = 1f
+                    (current_view.layoutParams as LayoutParams).width = MATCH_PARENT
+                    if (i == 1) {
+                        (current_view.layoutParams as MarginLayoutParams).setMargins(0, 5, 0, 5)
+                    }
                 }
-            } else {
-                (currentView.layoutParams as LayoutParams).height = 0
-                (currentView.layoutParams as LayoutParams).weight = 1f
-                (currentView.layoutParams as LayoutParams).width = MATCH_PARENT
-                if (i == 1) {
-                    (currentView.layoutParams as MarginLayoutParams).setMargins(0, 5, 0, 5)
-                }
-            }
 
-            this._button_map[currentView] = i
+                this._button_map[current_view] = i
+            }
         }
     }
 
-    fun unsetOnChange() {
+    fun unset_on_change() {
         this._on_change_hook = null
     }
 
-    fun setOnChange(hook: (RelativeOptionSelector) -> Unit) {
+    fun set_on_change(hook: (RelativeOptionSelector) -> Unit) {
         this._on_change_hook = hook
     }
 
-    fun set_active_button(view: RelativeOptionSelectorButton, surpress_callback: Boolean = false) {
+    fun set_active_button(view: RelativeOptionSelectorButton, suppress_callback: Boolean = false) {
         if (this._active_button != view && this._active_button != null) {
-            this._active_button!!.setActive(false)
+            this._active_button!!.set_active(false)
         }
         this.unset_active_button()
 
         this._active_button = view
 
-        if (!surpress_callback && this._on_change_hook != null) {
+        if (!suppress_callback && this._on_change_hook != null) {
             this._on_change_hook!!(this)
         }
     }
@@ -140,7 +143,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         if (this._active_button == null) {
             return
         }
-        this._active_button!!.setActive(false)
+        this._active_button!!.set_active(false)
         this._active_button = null
     }
 }

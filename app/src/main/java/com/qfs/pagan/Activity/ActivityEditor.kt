@@ -56,6 +56,7 @@ import androidx.core.view.isNotEmpty
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModel
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.InvalidMIDIFile
@@ -1592,7 +1593,6 @@ class ActivityEditor : PaganActivity() {
         options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
         options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
         options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
-        //options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = this._midi_interface.output_devices_connected() && this.is_debug_on()
         options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = this.is_debug_on()
         options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
     }
@@ -3305,20 +3305,22 @@ class ActivityEditor : PaganActivity() {
 
     fun dialog_midi_device_management() {
 
-        val viewInflated: View = LayoutInflater.from(this)
+        val device_management_view: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.midi_device_management,
                 this._binding.root,
                 false
             )
 
-        val devices_recycler_view = viewInflated.findViewById<RecyclerView>(R.id.midi_devices)
+        val devices_recycler_view = device_management_view.findViewById<RecyclerView>(R.id.midi_devices)
+        devices_recycler_view.layoutManager = LinearLayoutManager(this)
         val adapter = MidiDeviceManagerAdapter<RecyclerView.ViewHolder>(this._midi_interface)
         devices_recycler_view.adapter = adapter
 
+
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle("Connected Midi Devices")
-            .setView(viewInflated)
+            .setTitle(getString(R.string.dialog_connected_midi_devices))
+            .setView(device_management_view)
             .setNeutralButton(android.R.string.ok) { dialog, _ ->
                 dialog.dismiss()
             }

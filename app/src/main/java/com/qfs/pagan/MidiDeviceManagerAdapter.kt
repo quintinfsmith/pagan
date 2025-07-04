@@ -1,14 +1,17 @@
 package com.qfs.pagan
 
+import android.media.midi.MidiDeviceInfo
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.MidiController
+import java.util.function.Supplier
 
 class MidiDeviceManagerAdapter<T>(val midi_controller: MidiController): RecyclerView.Adapter<MidiDeviceManagerAdapter.MidiDeviceViewHolder>() {
     lateinit var recycler_view: RecyclerView
+
     class MidiDeviceViewHolder(item_view: View) : RecyclerView.ViewHolder(item_view)
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -20,25 +23,21 @@ class MidiDeviceManagerAdapter<T>(val midi_controller: MidiController): Recycler
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MidiDeviceViewHolder {
         return MidiDeviceViewHolder(
             LayoutInflater.from(this.recycler_view.context)
-                .inflate(
-                    R.layout.midi_device,
-                    this.recycler_view,
-                    false
-                )
+                .inflate(R.layout.midi_device, this.recycler_view, false)
         )
     }
 
-    override fun onBindViewHolder(
-        holder: MidiDeviceViewHolder,
-        position: Int
-    ) {
+    override fun onBindViewHolder(holder: MidiDeviceViewHolder, position: Int) {
         val devices = this.midi_controller.poll_output_devices()
-        val id_view = holder.itemView.findViewById<TextView>(R.id.midi_device_id)
-        id_view.text = "${devices[position].id}"
+        val id_view = holder.itemView.findViewById<TextView>(R.id.midi_device_name)
+
+        id_view.text = devices[position].properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: holder.itemView.context.getString(
+            R.string.unknown_midi_device,
+            devices[position].id
+        )
     }
 
     override fun getItemCount(): Int {
-        val devices = this.midi_controller.poll_output_devices()
-        return devices.size
+        return this.midi_controller.poll_output_devices().size
     }
 }

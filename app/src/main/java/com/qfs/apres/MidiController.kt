@@ -23,12 +23,17 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     } catch (e: java.lang.NullPointerException) {
         null
     }
+
     var receiver = object: MidiReceiver() {
         override fun onSend(msg: ByteArray?, offset: Int, count: Int, timestamp: Long) {
             if (!this@MidiController.block_physical_devices) {
                 val msg_list = msg!!.toMutableList()
-                msg_list.removeAt(0)
-                val event = StandardMidiFileInterface.event_from_bytes(msg_list, 0x90.toByte()) ?: return
+                val event = try {
+                    msg_list.removeAt(0)
+                    StandardMidiFileInterface.event_from_bytes(msg_list, 0x90.toByte()) ?: return
+                } catch (e: Exception) {
+                    return
+                }
                 broadcast_event(event)
             }
         }
@@ -174,6 +179,16 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
     }
 
+    fun poll_all_devices(): List<MidiDeviceInfo> {
+        return if (this.midi_manager == null) {
+            listOf()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM).toList()
+        } else {
+            this.midi_manager!!.devices.toList()
+        }
+    }
+
     fun poll_output_devices(): List<MidiDeviceInfo> {
         if (this.midi_manager == null) {
             return listOf()
@@ -187,7 +202,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
         val output_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
-            if (device_info.inputPortCount > 0) {
+            if (device_info.inputPortCount > 0 && !device_info.isPrivate) {
                 output_devices.add(device_info)
             }
         }
@@ -206,7 +221,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         }
         val input_devices = mutableListOf<MidiDeviceInfo>()
         for (device_info in devices_info) {
-            if (device_info.outputPortCount > 0) {
+            if (device_info.outputPortCount > 0 && !device_info.isPrivate) {
                 input_devices.add(device_info)
             }
         }

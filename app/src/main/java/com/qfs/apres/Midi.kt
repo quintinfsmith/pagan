@@ -284,6 +284,10 @@ class StandardMidiFileInterface {
         }
 
         fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
+            if (bytes.isEmpty()) {
+                return null
+            }
+
             var output: MIDIEvent? = null
             val leadbyte = toUInt(bytes.removeAt(0))
             val realtimes = listOf(0xF1, 0xF, 0xF8, 0xFC, 0xFE, 0xF7)

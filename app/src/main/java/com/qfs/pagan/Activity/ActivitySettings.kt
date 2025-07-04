@@ -64,7 +64,9 @@ class ActivitySettings : PaganActivity() {
                             return@thread
                         }
 
-                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                        runOnUiThread {
+                            this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                        }
                         this.set_soundfont_button_text()
                         this.update_result()
                     }

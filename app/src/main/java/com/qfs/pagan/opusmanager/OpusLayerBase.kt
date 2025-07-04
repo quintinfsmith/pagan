@@ -4339,15 +4339,15 @@ open class OpusLayerBase {
                     } else {
                         if (this.get_tree(working_beatkey!!, working_position).size != size) {
                             val c = System.currentTimeMillis()
-                            this.split_tree(working_beatkey, working_position, size)
+                            this.split_tree(working_beatkey!!, working_position, size)
                             split_dur += System.currentTimeMillis() - c
                         }
                         working_position.add(x)
                     }
                 }
 
-                if (working_beatkey != null) {
-                    events_to_set.add(Triple(working_beatkey, working_position, event))
+                working_beatkey?.let {
+                    events_to_set.add(Triple(it, working_position, event))
                 }
             }
         }

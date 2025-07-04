@@ -10,7 +10,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.core.view.isGone
 import com.qfs.pagan.Activity.ActivityEditor
-import com.qfs.pagan.LineLabel.LineLabelColumnLayout
+import com.qfs.pagan.LineLabelColumnLayout
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode

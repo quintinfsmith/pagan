@@ -15,6 +15,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.graphics.toColorLong
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.LineLabelColumnLayout
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.opusmanager.OpusPercussionChannel

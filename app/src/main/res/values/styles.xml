@@ -152,6 +152,7 @@
     </style>
 
     <style name="column_label">
+        <item name="font">@font/fira_sans</item>
         <item name="android:gravity">center</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
@@ -169,10 +170,12 @@
         <item name="android:layout_height">@dimen/line_height</item>
     </style>
     <style name="line_label_text">
+        <item name="font">@font/fira_sans</item>
         <item name="android:textColor">@color/line_label_text</item>
     </style>
 
     <style name="ctl_line_label">
+        <item name="font">@font/fira_sans</item>
         <item name="android:minWidth">41dp</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@drawable/editor_label_ctl_line</item>

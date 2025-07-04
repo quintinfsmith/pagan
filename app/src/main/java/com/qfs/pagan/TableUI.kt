@@ -54,25 +54,28 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.table_line_paint.color = ContextCompat.getColor(context, R.color.table_lines)
             this.table_line_paint.strokeWidth = 1F
 
-
             this.text_paint_offset.textSize = resources.getDimension(R.dimen.text_size_offset)
             this.text_paint_offset.color = ContextCompat.getColor(context, R.color.leaf_text_selector)
             this.text_paint_offset.isFakeBoldText = true
             this.text_paint_offset.isAntiAlias = true
+            this.text_paint_offset.typeface = context.resources.getFont(R.font.fira_sans)
 
             this.text_paint_octave.textSize = resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_octave.color = ContextCompat.getColor(context, R.color.leaf_text_selector)
             this.text_paint_octave.isAntiAlias = true
+            this.text_paint_octave.typeface = context.resources.getFont(R.font.fira_sans)
 
             this.text_paint_ctl.textSize = resources.getDimension(R.dimen.text_size_ctl)
             this.text_paint_ctl.color = ContextCompat.getColor(context, R.color.ctl_leaf_text_selector)
             this.text_paint_ctl.isAntiAlias = true
+            this.text_paint_ctl.typeface = context.resources.getFont(R.font.fira_sans)
 
             //this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_column.isFakeBoldText = true
             this.text_paint_column.isAntiAlias = true
             this.text_paint_column.strokeWidth = 3F
             this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
+            this.text_paint_column.typeface = context.resources.getFont(R.font.fira_sans)
 
             this.tagged_paint_column.style = Paint.Style.STROKE
             this.tagged_paint_column.strokeWidth = 3F

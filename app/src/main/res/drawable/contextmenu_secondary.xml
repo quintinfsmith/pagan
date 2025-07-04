@@ -4,7 +4,7 @@
     <corners
         android:bottomLeftRadius="0dp"
         android:bottomRightRadius="0dp"
-        android:topLeftRadius="@dimen/contextmenu_primary_corner_radius"
-        android:topRightRadius="@dimen/contextmenu_primary_corner_radius"/>
+        android:topLeftRadius="@dimen/contextmenu_secondary_corner_radius"
+        android:topRightRadius="@dimen/contextmenu_secondary_corner_radius"/>
     <solid android:color="@color/contextmenu_bg"/>
 </shape>

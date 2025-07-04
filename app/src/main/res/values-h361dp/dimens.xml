@@ -17,20 +17,9 @@
     <dimen name="setting_radio_padding_h">24dp</dimen>
     <dimen name="setting_radio_padding_v">8dp</dimen>
 
-    <dimen name="secondary_contextmenu_height">62dp</dimen>
-    <dimen name="secondary_contextmenu_button_height">42dp</dimen>
+    <dimen name="contextmenu_secondary_button_height">42dp</dimen>
 
     <dimen name="color_picker_seekbar">240dp</dimen>
     <dimen name="color_picker_display_height">42dp</dimen>
-
-    <dimen name="primary_contextmenu_padding_top">4dp</dimen>
-    <dimen name="primary_contextmenu_padding_start">4dp</dimen>
-    <dimen name="primary_contextmenu_padding_end">2dp</dimen>
-    <dimen name="primary_contextmenu_padding_bottom">2dp</dimen>
-
-    <dimen name="secondary_contextmenu_padding_top">0dp</dimen>
-    <dimen name="secondary_contextmenu_padding_start">4dp</dimen>
-    <dimen name="secondary_contextmenu_padding_end">2dp</dimen>
-    <dimen name="secondary_contextmenu_padding_bottom">2dp</dimen>
 
 </resources>

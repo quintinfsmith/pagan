@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/llContextCol"
-    android:layout_marginBottom="@dimen/primary_contextmenu_padding_top"
+    android:layout_marginBottom="@dimen/contextmenu_primary_padding_top"
+    style="@style/contextmenu_primary_inner"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Button
         style="@style/contextmenu_button"

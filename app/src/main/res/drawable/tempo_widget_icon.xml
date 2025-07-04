@@ -1,6 +1,6 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="@dimen/secondary_contextmenu_button_height"
-    android:height="@dimen/secondary_contextmenu_button_height"
+    android:width="@dimen/contextmenu_secondary_button_height"
+    android:height="@dimen/contextmenu_secondary_button_height"
     android:viewportWidth="24"
     android:viewportHeight="24">
   <path

@@ -17,25 +17,18 @@
         android:layout_weight="1"/>
 
     <LinearLayout
-        style="@style/contextmenu"
+        style="@style/contextmenu_secondary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/landscape_primary_contextmenu_wrapper"
         android:id="@+id/llContextMenuSecondary"
-        android:paddingBottom="@dimen/secondary_contextmenu_padding_bottom"
-        android:paddingTop="@dimen/secondary_contextmenu_padding_top"
-        android:paddingStart="@dimen/secondary_contextmenu_padding_start"
-        android:paddingEnd="@dimen/secondary_contextmenu_padding_end"
         android:layout_gravity="center"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="@dimen/secondary_contextmenu_height"
         android:visibility="gone"
         android:orientation="vertical">
     </LinearLayout>
 
     <LinearLayout
-        style="@style/contextmenu"
+        style="@style/contextmenu_primary"
         android:id="@+id/landscape_primary_contextmenu_wrapper"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -51,11 +44,11 @@
             android:id="@+id/llContextMenuPrimary"
             android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/contextmenu_landscape_height"
-            android:paddingBottom="@dimen/primary_contextmenu_padding_bottom"
-            android:paddingTop="@dimen/primary_contextmenu_padding_top"
-            android:paddingStart="@dimen/primary_contextmenu_padding_start"
-            android:paddingEnd="@dimen/primary_contextmenu_padding_end"
+            android:layout_height="@dimen/contextmenu_primary_landscape_height"
+            android:paddingBottom="@dimen/contextmenu_primary_padding_bottom"
+            android:paddingTop="@dimen/contextmenu_primary_padding_top"
+            android:paddingStart="@dimen/contextmenu_primary_padding_start"
+            android:paddingEnd="@dimen/contextmenu_primary_padding_end"
             android:visibility="gone"
             android:orientation="horizontal">
         </LinearLayout>

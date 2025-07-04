@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="contextmenu_primary_padding_top">2dp</dimen>
+    <dimen name="contextmenu_primary_padding_end">2dp</dimen>
+    <dimen name="contextmenu_primary_padding_start">2dp</dimen>
+    <dimen name="contextmenu_primary_padding_bottom">2dp</dimen>
+</resources>

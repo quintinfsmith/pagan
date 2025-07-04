@@ -4,14 +4,13 @@
     xmlns:andorid="http://schemas.android.com/tools"
     android:theme="@style/pan_widget"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <com.qfs.pagan.PanSliderWidget
         android:id="@+id/pan_slider"
         android:layout_width="0dp"
         andorid:layout_weight="1"
-        android:layout_height="match_parent"
-        android:padding="8dp"
+        android:layout_height="@dimen/contextmenu_secondary_button_height"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/pan_transition_type"

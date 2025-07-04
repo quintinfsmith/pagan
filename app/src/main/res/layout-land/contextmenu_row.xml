@@ -4,9 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llContextRow"
     android:orientation="vertical"
-    android:layout_marginEnd="@dimen/primary_contextmenu_padding_start"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent">
+    style="@style/contextmenu_primary_inner">
 
     <Button
         style="@style/contextmenu_button"

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="contextmenu_secondary_width">400dp</dimen>
+    <dimen name="contextmenu_secondary_corner_radius">24dp</dimen>
+    <dimen name="contextmenu_secondary_padding_top">12dp</dimen>
+    <dimen name="contextmenu_secondary_padding_end">12dp</dimen>
+    <dimen name="contextmenu_secondary_padding_start">12dp</dimen>
+    <dimen name="contextmenu_secondary_padding_bottom">12dp</dimen>
+
+    <dimen name="contextmenu_primary_padding_top">2dp</dimen>
+    <dimen name="contextmenu_primary_padding_end">2dp</dimen>
+    <dimen name="contextmenu_primary_padding_start">2dp</dimen>
+    <dimen name="contextmenu_primary_padding_bottom">2dp</dimen>
+</resources>

@@ -70,6 +70,7 @@
     <color name="ctl_line">#FFFFFF</color>
     <color name="ctl_line_text">#101010</color>
 
+    <color name="contextmenu_bg">#CCFFFFFF</color>
 
     <color name="muted_leaf_main">#6E6E6E</color>
     <color name="muted_leaf_spill">#535353</color>

@@ -4,4 +4,6 @@
     <dimen name="contextmenu_landscape_height">400dp</dimen>
     <dimen name="landing_menu_width">400dp</dimen>
     <dimen name="config_width">400dp</dimen>
+
+    <dimen name="contextmenu_corner_radius">24dp</dimen>
 </resources>

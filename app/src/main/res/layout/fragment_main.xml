@@ -15,7 +15,7 @@
         android:layout_height="match_parent"/>
 
     <LinearLayout
-        style="@style/contextmenu"
+        style="@style/contextmenu_primary"
         android:id="@+id/llContextMenuPrimary"
         android:layout_width="@dimen/contextmenu_width"
         android:layout_height="wrap_content"
@@ -31,7 +31,7 @@
         android:orientation="vertical"/>
 
     <LinearLayout
-        style="@style/contextmenu"
+        style="@style/contextmenu_secondary"
         android:id="@+id/llContextMenuSecondary"
         android:layout_gravity="center"
         android:layout_width="@dimen/contextmenu_width"

@@ -215,7 +215,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: output device has input port
     fun open_output_device(device_info: MidiDeviceInfo, port: Int? = null) {
-        if (this.midi_manager == null) {
+        if (this.midi_manager == null || device_info.ports.isEmpty()) {
             return
         }
 
@@ -233,7 +233,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: input device has output port
     fun open_input_device(device_info: MidiDeviceInfo, port: Int? = null) {
-        if (this.midi_manager == null) {
+        if (this.midi_manager == null || device_info.ports.isEmpty()) {
             return
         }
 

@@ -215,11 +215,16 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: output device has input port
     fun open_output_device(device_info: MidiDeviceInfo, port: Int? = null) {
-        if (this.midi_manager == null || device_info.ports.isEmpty()) {
+        if (this.midi_manager == null) {
             return
         }
 
-        val port_number = port ?: (device_info.ports.filter { it.type == TYPE_INPUT }).first().portNumber
+        val input_device_info = device_info.ports.filter { it.type == TYPE_INPUT }
+        if (input_device_info.isEmpty()) {
+            return
+        }
+
+        val port_number = port ?: input_device_info.first().portNumber
 
         this.midi_manager!!.openDevice(device_info, {
             val input_port = it.openInputPort(port_number) ?: return@openDevice // TODO: check open ports?
@@ -233,11 +238,15 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: input device has output port
     fun open_input_device(device_info: MidiDeviceInfo, port: Int? = null) {
-        if (this.midi_manager == null || device_info.ports.isEmpty()) {
+        if (this.midi_manager == null) {
+            return
+        }
+        val output_device_info = device_info.ports.filter { it.type == TYPE_OUTPUT }
+        if (output_device_info.isEmpty()) {
             return
         }
 
-        val port_number = port ?: (device_info.ports.filter { it.type == TYPE_OUTPUT }).first().portNumber
+        val port_number = port ?: output_device_info.first().portNumber
 
         this.midi_manager!!.openDevice(device_info, {
             val output_port = it.openOutputPort(port_number)

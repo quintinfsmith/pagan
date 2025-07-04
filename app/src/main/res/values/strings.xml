@@ -229,6 +229,7 @@
     <string name="midi_device_settings">Midi Device Settings</string>
     <string name="dialog_connected_midi_devices">Connected Midi Devices</string>
     <string name="unknown_midi_device">Unknown Device #%1$d</string>
+    <string name="fira_sans_license_blurb">Fira Sans bundled under the terms of the SIL Open Font License.</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

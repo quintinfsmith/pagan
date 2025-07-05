@@ -1,4 +1,4 @@
 - Improved Midi Playback stability
-- Added scrolling past bottom of table
+- Added scrolling past ends of table
 - Fira Sans now used as ui font
 

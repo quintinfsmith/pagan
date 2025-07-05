@@ -157,7 +157,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
             (new_linear_layout.layoutParams as LayoutParams).weight = 1F
             if (orientation == HORIZONTAL) {
-                new_linear_layout.layoutParams.width = resources.getDimension(R.dimen.base_leaf_width).toInt()
+                new_linear_layout.layoutParams.width = resources.getDimension(R.dimen.number_selector_button_width).toInt()
                 new_linear_layout.layoutParams.height = MATCH_PARENT
                 new_linear_layout.orientation = VERTICAL
                 if (i != 0) {
@@ -165,7 +165,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 }
             } else {
                 new_linear_layout.layoutParams.width = MATCH_PARENT
-                new_linear_layout.layoutParams.height = 0
+                new_linear_layout.layoutParams.height = resources.getDimension(R.dimen.number_selector_button_height).toInt()
                 new_linear_layout.orientation = HORIZONTAL
 
                 if (i != 0) {
@@ -194,7 +194,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 layout_params.width = MATCH_PARENT
                 layout_params.height = 0
             } else {
-                layout_params.height = MATCH_PARENT
+                layout_params.height = resources.getDimension(R.dimen.number_selector_button_height).toInt()
                 layout_params.width = 0
             }
             this._button_map[current_view] = i

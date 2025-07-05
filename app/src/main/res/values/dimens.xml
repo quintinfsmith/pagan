@@ -98,5 +98,6 @@
 
     <dimen name="landing_menu_width">-1px</dimen>
     <dimen name="trailing_space_width">0dp</dimen>
-    <dimen name="number_selector_button_width_h">24dp</dimen>
+    <dimen name="number_selector_button_width">@dimen/base_leaf_width</dimen>
+    <dimen name="number_selector_button_height">41dp</dimen>
 </resources>

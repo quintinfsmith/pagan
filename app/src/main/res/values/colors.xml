@@ -58,7 +58,7 @@
 
     <color name="main_bg">#e0e0e0</color>
     <color name="main_fg">#2A2A46</color>
-    <color name="table_lines">#494950</color>
+    <color name="table_lines">#000000</color>
     <color name="channel_even">#C1D1E3</color>
     <color name="channel_even_text">@color/main_fg</color>
     <color name="button">#FFFFFF</color>

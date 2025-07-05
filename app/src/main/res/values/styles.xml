@@ -39,6 +39,7 @@
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@drawable/number_selector_button</item>
         <item name="android:textColor">@color/number_select_button_text_selector</item>
+        <item name="android:fontFamily">@font/fira_sans</item>
     </style>
 
     <style name="icon_button" parent="Theme.Pagan.Button">

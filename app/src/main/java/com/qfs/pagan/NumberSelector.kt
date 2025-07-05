@@ -32,7 +32,6 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
         init {
             this.text = this._bkp_text
-            this.typeface = Typeface.MONOSPACE
             this.setOnClickListener {
                 this._number_selector.set_active_button(this)
                 this.set_active(true)

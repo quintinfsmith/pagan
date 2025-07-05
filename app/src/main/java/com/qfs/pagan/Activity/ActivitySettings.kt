@@ -88,7 +88,6 @@ class ActivitySettings : PaganActivity() {
         this._binding = ActivitySettingsBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
         this.setSupportActionBar(this._binding.toolbar)
-        this._binding.root.setBackgroundColor(resources.getColor(R.color.main_bg))
 
         val toolbar = this._binding.toolbar
         toolbar.background = null

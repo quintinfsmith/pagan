@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="app_bar">
-    </style>
-
     <style name="recycler_option" parent="Theme.Pagan.Button">
         <item name="android:gravity">center</item>
         <item name="android:clickable">true</item>

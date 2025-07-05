@@ -9,7 +9,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -54,7 +53,6 @@ import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
-import androidx.core.view.isVisible
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModel
@@ -110,7 +108,7 @@ import com.qfs.pagan.RangedFloatInput
 import com.qfs.pagan.RangedIntegerInput
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
-import com.qfs.pagan.databinding.ActivityMainBinding
+import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.CtlLineLevel
 import com.qfs.pagan.opusmanager.OpusChannelAbstract
@@ -213,7 +211,7 @@ class ActivityEditor : PaganActivity() {
     private var _midi_playback_device: PlaybackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
-    private lateinit var _binding: ActivityMainBinding
+    private lateinit var _binding: ActivityEditorBinding
     private var _options_menu: Menu? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
@@ -1114,13 +1112,9 @@ class ActivityEditor : PaganActivity() {
 
         this.requestedOrientation = this.configuration.force_orientation
 
-        this._binding = ActivityMainBinding.inflate(this.layoutInflater)
+        this._binding = ActivityEditorBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
         this.setSupportActionBar(this._binding.toolbar)
-        this._binding.root.setBackgroundColor(resources.getColor(R.color.main_bg))
-
-        this.view_model.action_interface.attach_activity(this)
-        this.view_model.opus_manager.attach_activity(this)
 
         val toolbar = this._binding.toolbar
         toolbar.background = null
@@ -1129,6 +1123,10 @@ class ActivityEditor : PaganActivity() {
             this.get_action_interface().set_project_name_and_notes()
             true
         }
+
+        this.view_model.action_interface.attach_activity(this)
+        this.view_model.opus_manager.attach_activity(this)
+
 
         //////////////////////////////////////////
         if (this.configuration.soundfont != null) {

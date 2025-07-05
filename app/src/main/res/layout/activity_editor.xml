@@ -6,16 +6,15 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     tools:context=".Activity.ActivityEditor">
 
     <LinearLayout
         android:orientation="vertical"
+        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.appbar.AppBarLayout
-            android:theme="@style/app_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -23,7 +22,7 @@
                 android:id="@+id/toolbar"
                 app:navigationIcon="@drawable/hamburger_32"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/app_bar_height"
+                android:layout_height="?attr/actionBarSize"
                 app:contentInsetStartWithNavigation="0dp"
                 app:titleTextAppearance="@style/TextAppearance.AppCompat.Small"
                 app:titleTextColor="@color/on_surface" />
@@ -34,9 +33,9 @@
     </LinearLayout>
 
     <LinearLayout
+        android:fitsSystemWindows="true"
         android:id="@+id/config_drawer"
         android:layout_gravity="start"
-        android:fitsSystemWindows="true"
         android:layout_height="match_parent"
         android:layout_width="wrap_content">
 

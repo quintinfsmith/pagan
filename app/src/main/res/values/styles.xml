@@ -35,6 +35,7 @@
     </style>
 
     <style name="button_number_selector">
+        <item name="android:lines">1</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@drawable/number_selector_button</item>
         <item name="android:textColor">@color/number_select_button_text_selector</item>
@@ -286,7 +287,7 @@
     </style>
 
     <style name="contextmenu_primary_inner">
-        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_width">@dimen/contextmenu_primary_inner_width</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_marginTop">@dimen/contextmenu_primary_padding_top</item>
         <item name="android:layout_marginBottom">@dimen/contextmenu_primary_padding_bottom</item>
@@ -308,5 +309,9 @@
         <item name="android:layout_marginBottom">@dimen/contextmenu_secondary_padding_bottom</item>
         <item name="android:layout_marginStart">@dimen/contextmenu_secondary_padding_start</item>
         <item name="android:layout_marginEnd">@dimen/contextmenu_secondary_padding_end</item>
+    </style>
+    <style name="tail_space">
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:minWidth">@dimen/trailing_space_width</item>
     </style>
 </resources>

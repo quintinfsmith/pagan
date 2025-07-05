@@ -9,6 +9,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -53,6 +54,7 @@ import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
+import androidx.core.view.isVisible
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModel

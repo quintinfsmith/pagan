@@ -6,7 +6,10 @@
     <dimen name="landing_menu_width">400dp</dimen>
     <dimen name="config_width">400dp</dimen>
 
-    <dimen name="contextmenu_primary_corner_radius">24dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_top_left">24dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_top_right">24dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_bottom_left">0dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_bottom_right">0dp</dimen>
 
     <dimen name="contextmenu_primary_padding_top">12dp</dimen>
     <dimen name="contextmenu_primary_padding_end">12dp</dimen>

@@ -84,7 +84,7 @@
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:orientation="horizontal"
         android:id="@+id/nsOffset"
-        android:layout_width="@dimen/base_leaf_width"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
         custom:min="0"
         custom:max="11"/>

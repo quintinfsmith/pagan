@@ -5,13 +5,13 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.GridLayout
 import android.widget.HorizontalScrollView
-import android.widget.LinearLayout
-import android.widget.LinearLayout.VERTICAL
 import android.widget.ScrollView
 import android.widget.Space
 import androidx.core.content.ContextCompat
@@ -971,7 +971,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         fun invalidate_wrapper() {
             this.invalidate_queued = true
         }
-
     }
 
     val painted_layer = PaintedLayer(editor_table)
@@ -1012,15 +1011,20 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.inner_scroll_view.isHorizontalScrollBarEnabled = false
 
         // Add padding layer so we can scroll the bottom of the table to the middle of the screen
-        val padding_layer = LinearLayout(this.context)
-        padding_layer.orientation = VERTICAL
-        padding_layer.addView(this.painted_layer)
+        val padding_layer = GridLayout(this.context)
+        padding_layer.rowCount = 2
+        padding_layer.columnCount = 2
 
-        val padder = Space(this.context)
-        padding_layer.addView(padder)
+        val padder_bottom = Space(this.context)
+        val padder_end = Space(ContextThemeWrapper(this.context, R.style.tail_space))
+
+        padding_layer.addView(this.painted_layer)
+        padding_layer.addView(padder_end)
+        padding_layer.addView(padder_bottom)
+
 
         val activity = this.editor_table.get_activity()
-        padder.layoutParams.height = activity.get_bottom_padding()
+        padder_bottom.layoutParams.height = activity.get_bottom_padding()
 
         this.inner_scroll_view.addView(padding_layer)
         this.addView(this.inner_scroll_view)

@@ -90,8 +90,13 @@
     <dimen name="contextmenu_secondary_button_height">30dp</dimen>
 
     <dimen name="contextmenu_primary_landscape_height">-1px</dimen>
-    <dimen name="contextmenu_primary_corner_radius">0dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_top_left">0dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_top_right">0dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_bottom_left">0dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_bottom_right">0dp</dimen>
     <dimen name="contextmenu_secondary_corner_radius">0dp</dimen>
 
     <dimen name="landing_menu_width">-1px</dimen>
+    <dimen name="trailing_space_width">0dp</dimen>
+    <dimen name="number_selector_button_width_h">24dp</dimen>
 </resources>

@@ -158,7 +158,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
             (new_linear_layout.layoutParams as LayoutParams).weight = 1F
             if (orientation == HORIZONTAL) {
-                new_linear_layout.layoutParams.width = 0
+                new_linear_layout.layoutParams.width = resources.getDimension(R.dimen.base_leaf_width).toInt()
                 new_linear_layout.layoutParams.height = MATCH_PARENT
                 new_linear_layout.orientation = VERTICAL
                 if (i != 0) {

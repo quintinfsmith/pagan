@@ -16,6 +16,7 @@
 
     <LinearLayout
         style="@style/contextmenu_primary"
+        android:clickable="true"
         android:id="@+id/llContextMenuPrimary"
         android:layout_gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
@@ -26,6 +27,7 @@
 
     <LinearLayout
         style="@style/contextmenu_secondary"
+        android:clickable="true"
         android:id="@+id/llContextMenuSecondary"
         android:layout_gravity="center"
         app:layout_constraintEnd_toEndOf="parent"

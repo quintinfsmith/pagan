@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="contextmenu_primary_padding_top">2dp</dimen>
-    <dimen name="contextmenu_primary_padding_end">2dp</dimen>
-    <dimen name="contextmenu_primary_padding_start">2dp</dimen>
-    <dimen name="contextmenu_primary_padding_bottom">2dp</dimen>
+    <dimen name="contextmenu_primary_padding_top">12dp</dimen>
+    <dimen name="contextmenu_primary_padding_end">6dp</dimen>
+    <dimen name="contextmenu_primary_padding_start">6dp</dimen>
+    <dimen name="contextmenu_primary_padding_bottom">12dp</dimen>
+
+    <dimen name="contextmenu_primary_corner_radius_top_left">24dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_top_right">0dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_bottom_left">24dp</dimen>
+    <dimen name="contextmenu_primary_corner_radius_bottom_right">0dp</dimen>
 </resources>

@@ -291,7 +291,7 @@ class SampleHandle {
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
                 try {
-                    frame = this->get_next_frame() * MAX_VOLUME;
+                    frame = this->get_next_frame();
                 } catch (NoFrameDataException &e) {
                     actual_size = i;
                     break;
@@ -392,7 +392,7 @@ class SampleHandle {
                 this->get_active_data_buffer()->repitch(1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next()));
             }
 
-            return frame_value * frame_factor;
+            return frame_value * frame_factor * MAX_VOLUME;
         }
 
         void release_note() {

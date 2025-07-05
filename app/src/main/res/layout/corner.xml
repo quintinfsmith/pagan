@@ -16,7 +16,7 @@
         android:layout_height="24dp"
         android:layout_gravity="center"
         android:src="@drawable/baseline_shortcut_24"
-        app:tint="@color/table_lines" />
+        app:tint="@color/main_fg" />
 
     <Space
         android:layout_width="match_parent"

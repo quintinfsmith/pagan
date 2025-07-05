@@ -15,6 +15,7 @@
 class NoFrameDataException: public std::exception {};
 
 int SampleHandleUUIDGen = 0;
+float MAX_VOLUME = 1 / 1.27;
 
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
@@ -290,7 +291,7 @@ class SampleHandle {
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
                 try {
-                    frame = this->get_next_frame();
+                    frame = this->get_next_frame() * MAX_VOLUME;
                 } catch (NoFrameDataException &e) {
                     actual_size = i;
                     break;

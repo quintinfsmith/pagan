@@ -54,11 +54,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this._spacer.layoutParams.width = MATCH_PARENT
         this._spacer.layoutParams.height = resources.getDimension(R.dimen.line_height).toInt()
 
-        (this.line_label_layout.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        (this.line_label_layout.layoutParams as LayoutParams).weight = 1F
         this.line_label_layout.layoutParams.height = 0
         this.line_label_layout.layoutParams.width = WRAP_CONTENT
 
-        (this.table_ui.layoutParams as LinearLayout.LayoutParams).weight = 1F
+        (this.table_ui.layoutParams as LayoutParams).weight = 1F
         this.table_ui.layoutParams.width = 0
         this.table_ui.layoutParams.height = MATCH_PARENT
     }
@@ -477,8 +477,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val cursor = opus_manager.cursor
 
         val row = when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Line -> {
+            CursorMode.Single,
+            CursorMode.Line -> {
                 when (cursor.ctl_level) {
                     null -> opus_manager.get_visible_row_from_ctl_line(
                         opus_manager.get_actual_line_index(
@@ -508,7 +508,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                 }
             }
             // No need to force_scroll in these modes
-            OpusManagerCursor.CursorMode.Range -> {
+            CursorMode.Range -> {
                 val (first, second) = cursor.get_ordered_range()!!
                 opus_manager.get_visible_row_from_ctl_line(
                     opus_manager.get_actual_line_index(
@@ -519,7 +519,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     )
                 )
             }
-            OpusManagerCursor.CursorMode.Channel-> {
+            CursorMode.Channel-> {
                 opus_manager.get_visible_row_from_ctl_line(
                     opus_manager.get_actual_line_index(
                         opus_manager.get_instrument_line_index(
@@ -529,8 +529,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     )
                 )
             }
-            OpusManagerCursor.CursorMode.Column,
-            OpusManagerCursor.CursorMode.Unset -> null
+            CursorMode.Column,
+            CursorMode.Unset -> null
         } ?: return
         this._scroll_to_y(row)
     }
@@ -541,7 +541,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
         var context_menu_top = if (opus_manager.cursor.mode == CursorMode.Unset) {
-            vertical_scroll_view.measuredHeight
+            this.measuredHeight
         } else {
             when (resources.configuration.orientation) {
                 Configuration.ORIENTATION_LANDSCAPE -> {
@@ -555,6 +555,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                 else -> activity.findViewById<View>(R.id.llContextMenuPrimary).y
             }
         }.toInt()
+
+        // kludge: view hasn't been measured yet. skip.
+        if (context_menu_top == 0) {
+            return
+        }
 
         if (context_menu_top + vertical_scroll_view.scrollY < target_y + row_height) {
             val adj_y = (target_y + row_height) - context_menu_top.toInt()

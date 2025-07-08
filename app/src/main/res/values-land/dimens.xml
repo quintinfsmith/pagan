@@ -8,4 +8,9 @@
     <dimen name="trailing_space_width">180dp</dimen>
 
     <dimen name="contextmenu_primary_inner_width">-2px</dimen>
+
+    <dimen name="icon_button_height">41dp</dimen>
+    <dimen name="icon_button_width">49dp</dimen>
+    <dimen name="context_icon_size">24dp</dimen>
+    <dimen name="contextmenu_icon_corner">12dp</dimen>
 </resources>

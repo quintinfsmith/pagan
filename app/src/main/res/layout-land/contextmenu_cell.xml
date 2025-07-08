@@ -75,7 +75,7 @@
             android:id="@+id/rosRelativeOption"
             android:minHeight="@dimen/relative_option_width"
             android:padding="@dimen/normal_padding"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="@dimen/relative_option_width" />
 
     </LinearLayout>

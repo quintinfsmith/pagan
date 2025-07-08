@@ -37,7 +37,6 @@
 
     <dimen name="landing_button_space">3dp</dimen>
     <dimen name="landing_button_space_h">6dp</dimen>
-    <dimen name="contextmenu_icon_corner">16dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
     <dimen name="config_icon_size">24dp</dimen>
     <dimen name="channel_cfg_icon_size">24dp</dimen>
@@ -54,6 +53,7 @@
     <dimen name="icon_size">30dp</dimen>
     <dimen name="icon_button_width">58dp</dimen>
     <dimen name="icon_button_height">54dp</dimen>
+    <dimen name="contextmenu_icon_corner">16dp</dimen>
 
     <dimen name="icon_button_padding_a">1dp</dimen>
     <dimen name="icon_button_padding_b">4dp</dimen>

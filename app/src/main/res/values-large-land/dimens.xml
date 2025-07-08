@@ -9,4 +9,8 @@
     <dimen name="contextmenu_primary_corner_radius_top_right">0dp</dimen>
     <dimen name="contextmenu_primary_corner_radius_bottom_left">24dp</dimen>
     <dimen name="contextmenu_primary_corner_radius_bottom_right">0dp</dimen>
+
+    <dimen name="icon_button_width">58dp</dimen>
+    <dimen name="icon_button_height">54dp</dimen>
+    <dimen name="contextmenu_icon_corner">16dp</dimen>
 </resources>

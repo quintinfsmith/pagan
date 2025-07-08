@@ -41,8 +41,8 @@
     <string name="label_settings_playback_quality">Playback Quality</string>
     <string name="label_settings_playback_stereo">Playback in Stereo</string>
     <string name="label_settings_playback_limit_samples">Playback: Limit 1 sample per note</string>
-    <string name="label_settings_relative">Relative Input Mode:</string>
-    <string name="label_settings_sf">Active Soundfont:</string>
+    <string name="label_settings_relative">Relative Input Mode</string>
+    <string name="label_settings_sf">Active Soundfont</string>
     <string name="label_settings_same_line_release">Clip sample fade-out on same lines</string>
     <string name="btn_settings_sfmute">Mute</string>
 
@@ -184,7 +184,7 @@
     <string name="rb_mm_copy">Copy</string>
     <string name="rb_mm_move">Move</string>
     <string name="rb_mm_merge">Merge</string>
-    <string name="label_settings_use_preferred_sf">Rememeber soundfont when loading project:</string>
+    <string name="label_settings_use_preferred_sf">Rememeber soundfont when loading project</string>
     <string name="cd_channel_mute">Mute and unmute this channel</string>
     <string name="cd_line_mute">Mute and unmute this line</string>
     <string name="settings_screen_orientation">Screen Orientation</string>

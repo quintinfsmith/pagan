@@ -10,11 +10,10 @@ import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
-
-class ProjectManager(val context: Context) {
+class ProjectManager(val context: Context, _path: String? = null) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     private val data_dir = context.getExternalFilesDir(null)!!
-    val path = "$data_dir/projects/"
+    val path = _path ?: "$data_dir/projects/"
     private val _cache_path = "$data_dir/project_list.json"
 
     fun contains(uri: Uri): Boolean {
@@ -29,6 +28,7 @@ class ProjectManager(val context: Context) {
         }
         return false
     }
+
 
     fun get_directory(): File {
         val directory = File(this.path)

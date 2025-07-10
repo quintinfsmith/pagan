@@ -15,7 +15,8 @@ data class PaganConfiguration(
     var use_preferred_soundfont: Boolean = true,
     var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
     var allow_midi_playback: Boolean = true,
-    var allow_std_percussion: Boolean = false
+    var allow_std_percussion: Boolean = false,
+    var project_directory: String? = null
 ) {
     enum class MoveMode {
         MOVE,
@@ -34,7 +35,8 @@ data class PaganConfiguration(
                 use_preferred_soundfont = content.get_boolean("use_preferred_soundfont", true),
                 force_orientation = content.get_int("force_orientation", ActivityInfo.SCREEN_ORIENTATION_USER),
                 allow_midi_playback = content.get_boolean("allow_midi_playback", true),
-                allow_std_percussion = content.get_boolean("allow_std_percussion", false)
+                allow_std_percussion = content.get_boolean("allow_std_percussion", false),
+                project_directory = content.get_stringn("project_directory")
             )
         }
 
@@ -71,7 +73,7 @@ data class PaganConfiguration(
         output["force_orientation"] = this.force_orientation
         output["allow_midi_playback"] = this.allow_midi_playback
         output["allow_std_percussion"] = this.allow_std_percussion
-
+        output["project_directory"] = this.project_directory
         return output
     }
 }

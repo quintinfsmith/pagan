@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
@@ -17,6 +18,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
@@ -36,6 +38,21 @@ open class PaganActivity: AppCompatActivity() {
     internal var _popup_active: Boolean = false
     internal lateinit var project_manager: ProjectManager
     private var _progress_bar: ConstraintLayout? = null
+
+
+    internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this@PaganActivity.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this@PaganActivity.configuration.project_directory = uri.toString()
+                    this@PaganActivity.project_manager = ProjectManager(this)
+                }
+            }
+        }
+    }
+
 
     fun get_soundfont_directory(): File {
         val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")

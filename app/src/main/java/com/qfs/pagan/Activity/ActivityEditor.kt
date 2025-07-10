@@ -361,6 +361,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
+
     private var _export_multi_line_wav_intent_launcher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
@@ -1346,6 +1347,11 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun project_save() {
+        if (this.configuration.project_directory == null) {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+            this._set_project_directory_intent_launcher.launch(intent)
+        }
         this.project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
@@ -2530,7 +2536,7 @@ class ActivityEditor : PaganActivity() {
      * To be copied and saved somewhere accessible on reload.
      */
     fun bkp_crash_report(e: Throwable) {
-        val path = this.getExternalFilesDir(null).toString()
+        val path = this.applicationInfo.dataDir
         val file = File("$path/bkp_crashreport.log")
         file.writeText(e.stackTraceToString())
     }

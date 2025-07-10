@@ -361,9 +361,22 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
+    private val set_project_directory_and_save_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this@ActivityEditor.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this@ActivityEditor.configuration.project_directory = uri.toString()
+                    this@ActivityEditor.project_manager.change_project_path(uri.toString())
+                    this._project_save()
+                }
+            }
+        }
 
-    private var _export_multi_line_wav_intent_launcher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) { result ->
+    }
+
+    private var _export_multi_line_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
             return@registerForActivityResult
@@ -1346,15 +1359,20 @@ class ActivityEditor : PaganActivity() {
         startActivity(Intent(this, ActivityAbout::class.java))
     }
 
+    private fun _project_save() {
+        this.project_manager.save(this.get_opus_manager())
+        this.feedback_msg(getString(R.string.feedback_project_saved))
+        this.update_menu_options()
+    }
     fun project_save() {
         if (this.configuration.project_directory == null) {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
             intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
-            this._set_project_directory_intent_launcher.launch(intent)
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            this.set_project_directory_and_save_intent_launcher.launch(intent)
+        } else {
+            this._project_save()
         }
-        this.project_manager.save(this.get_opus_manager())
-        this.feedback_msg(getString(R.string.feedback_project_saved))
-        this.update_menu_options()
     }
 
     fun project_delete() {

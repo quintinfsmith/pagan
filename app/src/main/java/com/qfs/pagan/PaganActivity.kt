@@ -47,7 +47,7 @@ open class PaganActivity: AppCompatActivity() {
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     this@PaganActivity.contentResolver.takePersistableUriPermission(uri, new_flags)
                     this@PaganActivity.configuration.project_directory = uri.toString()
-                    this@PaganActivity.project_manager = ProjectManager(this)
+                    this@PaganActivity.project_manager.change_project_path(uri.toString())
                 }
             }
         }
@@ -88,6 +88,9 @@ open class PaganActivity: AppCompatActivity() {
             PaganConfiguration()
         }
         this.requestedOrientation = this.configuration.force_orientation
+
+
+        this.project_manager = ProjectManager(this, this.configuration.project_directory)
     }
 
     private fun reload_config() {
@@ -106,14 +109,26 @@ open class PaganActivity: AppCompatActivity() {
 
     open fun on_paganconfig_change(original: PaganConfiguration) {
         this.requestedOrientation = this.configuration.force_orientation
+
+        if (this.configuration.project_directory != original.project_directory && this.configuration.project_directory != null) {
+            this.project_manager.change_project_path(this.configuration.project_directory!!)
+
+            // Do ExternalFilesDir() check, Changed for 1.7.7
+            this.getExternalFilesDir(null)?.let {
+                val old_path = "$it/projects"
+                this.project_manager.move_old_projects_directory(old_path)
+                File(old_path).deleteRecursively()
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        this.project_manager = ProjectManager(this)
+        // Default to empty path, it gets set in
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
         this.load_config()
+
     }
 
     override fun onResume() {

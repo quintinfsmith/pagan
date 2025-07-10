@@ -10,16 +10,41 @@ import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
-class ProjectManager(val context: Context, _path: String? = null) {
+class ProjectManager(val context: Context, var path: String?) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
-    private val data_dir = context.getExternalFilesDir(null)!!
-    val path = _path ?: "$data_dir/projects/"
-    private val _cache_path = "$data_dir/project_list.json"
+    class InvalidDirectory(path: String): Exception("Real Directory Required ($path)")
+    class PathNotSetException(): Exception("Projects path has not been set.")
+    private val _cache_path = "${context.applicationContext.dataDir}/project_list.json"
+
+    fun move_old_projects_directory(old_path: String) {
+        val old_directory = File(old_path)
+        if (!old_directory.isDirectory) {
+            return
+        }
+
+        for (project in old_directory.listFiles()) {
+            // Use new path instead of copying file name to avoid collisions
+            val new_path = this.get_new_path()
+            project.copyTo(File(new_path))
+            project.deleteOnExit()
+        }
+    }
+
+    fun change_project_path(new_path: String) {
+        val new_directory = File(new_path)
+        if (!new_directory.isDirectory) {
+            throw InvalidDirectory(new_path)
+        }
+        val old_path = this.path
+        this.path = new_path
+        if (old_path != null) {
+            this.move_old_projects_directory(old_path)
+        }
+    }
 
     fun contains(uri: Uri): Boolean {
         // clean uri
         val check_path = File(uri.toString()).path ?: return false
-
         val file_list = File(this.path).listFiles() ?: return false
         for (f in file_list) {
             if (f.path == check_path) {
@@ -29,20 +54,8 @@ class ProjectManager(val context: Context, _path: String? = null) {
         return false
     }
 
-
-    fun get_directory(): File {
-        val directory = File(this.path)
-        if (!directory.isDirectory) {
-            if (! directory.mkdirs()) {
-                throw MKDirFailedException(this.path)
-            }
-        }
-        return directory
-    }
-
     fun delete(opus_manager: OpusManager) {
         val path = opus_manager.path!!
-
         val file = File(path)
         if (file.isFile) {
             file.delete()
@@ -53,7 +66,6 @@ class ProjectManager(val context: Context, _path: String? = null) {
 
     fun move_to_copy(opus_manager: OpusManager) {
         val old_title = opus_manager.project_name
-
         val new_title: String? = if (old_title == null) {
             null
         } else {
@@ -67,8 +79,6 @@ class ProjectManager(val context: Context, _path: String? = null) {
     }
 
     fun save(opus_manager: OpusManager) {
-        this.get_directory()
-
         opus_manager.save()
 
         // Untrack then track in order to update the project title in the cache
@@ -77,6 +87,10 @@ class ProjectManager(val context: Context, _path: String? = null) {
     }
 
     fun get_new_path(): String {
+        if (this.path == null) {
+            throw PathNotSetException()
+        }
+
         var i = 0
         while (File("${this.path}/opus_$i.json").isFile) {
             i += 1
@@ -216,5 +230,4 @@ class ProjectManager(val context: Context, _path: String? = null) {
         val file = File(this._cache_path)
         file.writeText(json_string)
     }
-
 }

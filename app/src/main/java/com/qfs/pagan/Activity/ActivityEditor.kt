@@ -436,10 +436,7 @@ class ActivityEditor : PaganActivity() {
                                 continue
                             }
 
-                            val file = directory.createFile(
-                                "audio/wav",
-                                getString(R.string.export_wav_lines_filename, c, l)
-                            ) ?: continue
+                            val file = directory.createFile("audio/wav", getString(R.string.export_wav_lines_filename, c, l)) ?: continue
                             val file_uri = file.uri
 
                             /* TMP file is necessary since we can't easily predict the exact frame count. */
@@ -914,12 +911,19 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun save_to_backup() {
+        println("SAVE TO BACKUP....")
         val opus_manager = this.get_opus_manager()
         val uri = this.project_manager.active_project?.uri
 
-        uri?.toString()?.let { path ->
-            val path_file = File(this.bkp_path_path)
-            path_file.writeText(path)
+        val path_file = File(this.bkp_path_path)
+        if (uri == null) {
+            println("NO URI")
+            if (path_file.exists()) {
+                path_file.delete()
+            }
+        } else {
+            println("URI: $uri")
+            path_file.writeText(uri.toString())
         }
 
         File(this.bkp_path).writeText(opus_manager.to_json().to_string())
@@ -949,7 +953,6 @@ class ActivityEditor : PaganActivity() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
         this.get_opus_manager().project_change_new()
-        this.project_manager.set_new_project()
     }
 
     fun load_project(uri: Uri) {
@@ -962,8 +965,9 @@ class ActivityEditor : PaganActivity() {
         reader.close()
         input_stream?.close()
 
-        this.get_opus_manager().load(content)
-        this.project_manager.set_project(uri)
+        this.get_opus_manager().load(content) {
+            this.project_manager.set_project(uri)
+        }
     }
 
     fun load_from_bkp() {
@@ -972,9 +976,17 @@ class ActivityEditor : PaganActivity() {
 
         val opus_manager = this.get_opus_manager()
         val bytes = FileInputStream(this.bkp_path).readBytes()
-        opus_manager.load(bytes)
-        val backup_path: String = File(this.bkp_path_path).readText()
-        this.project_manager.set_project(backup_path.toUri())
+        opus_manager.load(bytes) {
+            val backup_path_file = File(this.bkp_path_path)
+            if (backup_path_file.exists()) {
+                val backup_path: String = backup_path_file.readText()
+                println(" ----- $backup_path ----")
+                this.project_manager.set_project(backup_path.toUri())
+            } else {
+                println("???")
+                this.project_manager.set_new_project()
+            }
+        }
 
     }
 
@@ -2428,10 +2440,10 @@ class ActivityEditor : PaganActivity() {
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
 
+        println("NEED SAVE? ${this.project_manager.active_project?.uri}")
         if (this.project_manager.active_project == null) {
             return !opus_manager.history_cache.isEmpty()
         }
-
         val other = OpusLayerBase()
         val input_stream = this.contentResolver.openInputStream(this.project_manager.active_project!!.uri)
         val reader = BufferedReader(InputStreamReader(input_stream))

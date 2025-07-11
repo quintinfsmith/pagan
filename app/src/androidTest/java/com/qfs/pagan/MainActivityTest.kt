@@ -90,7 +90,6 @@ class MainActivityTest {
             other.load(bytes)
             val base_version = OpusLayerBase()
             base_version.import_from_other(opus_manager)
-            other.path = opus_manager.path // Path wont be the same
 
 
             assertEquals(other.length, base_version.length)

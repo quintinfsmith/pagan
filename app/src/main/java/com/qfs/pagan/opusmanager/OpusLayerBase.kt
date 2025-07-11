@@ -4035,12 +4035,7 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
-    fun load_path(path: String) {
-        val json_content = File(path).readBytes()
-        this.load(json_content)
-    }
-
-    open fun load(bytes: ByteArray) {
+    open fun load(bytes: ByteArray, on_load_callback: (() -> Unit)? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
         var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
         var version = OpusManagerJSONInterface.detect_version(generalized_object)
@@ -4054,7 +4049,7 @@ open class OpusLayerBase {
             }
         }
 
-        this.project_change_json(generalized_object)
+        this.project_change_json(generalized_object, on_load_callback)
     }
 
     open fun project_change_wrapper(callback: () -> Unit) {
@@ -4083,9 +4078,10 @@ open class OpusLayerBase {
         this.import_from_other(initialize_basic())
     }
 
-    fun project_change_json(json_data: JSONHashMap) {
+    fun project_change_json(json_data: JSONHashMap, on_load_callback: (() -> Unit)? = null) {
         this.project_change_wrapper {
             this._project_change_json(json_data)
+            on_load_callback?.let { it() }
         }
     }
 

@@ -22,6 +22,10 @@ class ProjectManager(val context: Context, var path: Uri?) {
     class PathNotSetException(): Exception("Projects path has not been set.")
     private val _cache_path = "${context.applicationContext.dataDir}/project_list.json"
     var active_project: DocumentFile? = null
+
+    init {
+        this._cache_project_list()
+    }
     fun move_old_projects_directory(old_path: Uri) {
         val old_directory = DocumentFile.fromTreeUri(this.context, old_path) ?: return
         if (!old_directory.isDirectory) {
@@ -48,6 +52,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
             output_stream?.flush()
             output_stream?.close()
         }
+        this._cache_project_list()
     }
 
     fun set_new_project() {
@@ -55,7 +60,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
     }
 
     fun set_project(uri: Uri) {
-        this.active_project = DocumentFile.fromTreeUri(this.context, uri)
+        this.active_project = DocumentFile.fromSingleUri(this.context, uri)
     }
 
     fun change_project_path(new_uri: Uri) {
@@ -76,13 +81,12 @@ class ProjectManager(val context: Context, var path: Uri?) {
             return false
         }
 
-        val check_file = DocumentFile.fromSingleUri(this.context, uri)
-        val working_directory = DocumentFile.fromTreeUri(this.context, this.path!!) ?: return false
-        return check_file?.parentFile == working_directory
+        val output = uri.authority == this.path?.authority && uri.pathSegments.size > this.path!!.pathSegments.size  && uri.pathSegments.subList(0, this.path!!.pathSegments.size) == this.path!!.pathSegments
+        return output
     }
 
     fun delete(uri: Uri) {
-        val document_file = DocumentFile.fromTreeUri(this.context, uri) ?: return
+        val document_file = DocumentFile.fromSingleUri(this.context, uri) ?: return
         if (document_file.isFile) {
             document_file.delete()
         }
@@ -154,7 +158,11 @@ class ProjectManager(val context: Context, var path: Uri?) {
     }
 
     private fun _cache_project_list() {
+        val file = File(this._cache_path)
         if (!this.has_projects_saved()) {
+            if (file.exists()) {
+                file.delete()
+            }
             return
         }
 
@@ -175,7 +183,6 @@ class ProjectManager(val context: Context, var path: Uri?) {
 
         project_list.sortBy { it.second }
         val json_string = json.encodeToString(project_list)
-        val file = File(this._cache_path)
         file.writeText(json_string)
     }
 
@@ -213,9 +220,10 @@ class ProjectManager(val context: Context, var path: Uri?) {
 
         var string_content = file.readText(Charsets.UTF_8)
 
+        // TODO: Convert to my json library
         val tmp_list: List<Pair<String, String>> = try {
             json.decodeFromString(string_content)
-        } catch (_: Exception) { // TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
+        } catch (_: Exception) {
             // Corruption Protection: if the cache file is bad json, delete and rebuild
             File(this._cache_path).delete()
             this._cache_project_list()
@@ -245,14 +253,19 @@ class ProjectManager(val context: Context, var path: Uri?) {
         }
 
         val project_name = this.get_file_project_name(uri) ?: return
+
         project_list.add(Pair(uri, project_name))
         project_list.sortBy { it.second }
+        // Convert Uris to strings for storage
+        val adj_project_list = List(project_list.size) { i: Int ->
+             Pair(project_list[i].first.toString(), project_list[i].second)
+        }
 
         val json = Json {
             ignoreUnknownKeys = true
         }
 
-        val json_string = json.encodeToString(project_list)
+        val json_string = json.encodeToString(adj_project_list)
         val file = File(this._cache_path)
         file.writeText(json_string)
     }
@@ -278,7 +291,12 @@ class ProjectManager(val context: Context, var path: Uri?) {
             ignoreUnknownKeys = true
         }
 
-        val json_string = json.encodeToString(project_list)
+        // Convert Uris to strings for storage
+        val adj_project_list = List(project_list.size) { i: Int ->
+            Pair(project_list[i].first.toString(), project_list[i].second)
+        }
+
+        val json_string = json.encodeToString(adj_project_list)
         val file = File(this._cache_path)
         file.writeText(json_string)
     }

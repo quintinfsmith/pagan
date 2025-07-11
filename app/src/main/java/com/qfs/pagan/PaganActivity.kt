@@ -314,7 +314,7 @@ open class PaganActivity: AppCompatActivity() {
             },
             Pair(getString(R.string.sort_option_date_modified)) { original: List<Pair<Uri, String>> ->
                 original.sortedBy { (uri, _): Pair<Uri, String> ->
-                    val f = DocumentFile.fromTreeUri(this, uri)
+                    val f = DocumentFile.fromSingleUri(this, uri)
                     f?.lastModified()
                 }
             },
@@ -349,7 +349,9 @@ open class PaganActivity: AppCompatActivity() {
                 val content = reader.readText().toByteArray(Charsets.UTF_8)
                 reader.close()
                 input_stream?.close()
-                opus_manager.load(content)
+                opus_manager.load(content) {
+                    this@PaganActivity.project_manager.set_project(value)
+                }
 
                 if (opus_manager.project_notes != null) {
                     view.findViewById<TextView>(R.id.project_notes)?.let {
@@ -369,7 +371,7 @@ open class PaganActivity: AppCompatActivity() {
                     it.text = getString(R.string.project_info_tempo, opus_manager.get_global_controller<OpusTempoEvent>(ControlEventType.Tempo).initial_event.value.roundToInt())
                 }
                 view.findViewById<TextView>(R.id.project_last_modified)?.let {
-                    DocumentFile.fromTreeUri(this@PaganActivity, value)?.let { f ->
+                    DocumentFile.fromSingleUri(this@PaganActivity, value)?.let { f ->
                         val time = Date(f.lastModified())
                         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
                         it.text = formatter.format(time)

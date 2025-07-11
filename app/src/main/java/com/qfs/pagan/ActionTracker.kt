@@ -1,6 +1,8 @@
 package com.qfs.pagan
 
+import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.qfs.json.JSONBoolean
@@ -867,9 +869,9 @@ class ActionTracker {
         activity.setup_new()
     }
 
-    fun load_project(path: String) {
-        this.track(TrackedAction.LoadProject, string_to_ints(path))
-        this.get_activity().load_project(path)
+    fun load_project(uri: Uri) {
+        this.track(TrackedAction.LoadProject, string_to_ints(uri.toString()))
+        this.get_activity().load_project(uri)
     }
 
 
@@ -1560,7 +1562,7 @@ class ActionTracker {
                 this.new_project()
             }
             TrackedAction.LoadProject -> {
-                this.load_project(string_from_ints(integers))
+                this.load_project(string_from_ints(integers).toUri())
             }
             TrackedAction.CursorSelectColumn -> {
                 this.cursor_select_column(integers[0]!!)

@@ -28,8 +28,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusTempoEvent
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.concurrent.thread
@@ -300,20 +302,20 @@ open class PaganActivity: AppCompatActivity() {
         return dialog
     }
 
-    internal fun dialog_load_project(callback: (project_path: String) -> Unit) {
+    internal fun dialog_load_project(callback: (project_uri: Uri) -> Unit) {
         if (this._popup_active) {
             return
         }
 
         val project_list = this.project_manager.get_project_list()
         val sort_options = listOf(
-            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<String, String>> ->
-                original.sortedBy { (_, label): Pair<String, String> -> label }
+            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
+                original.sortedBy { (_, label): Pair<Uri, String> -> label }
             },
-            Pair(getString(R.string.sort_option_date_modified)) { original: List<Pair<String, String>> ->
-                original.sortedBy { (path, _): Pair<String, String> ->
-                    val f = File(path)
-                    f.lastModified()
+            Pair(getString(R.string.sort_option_date_modified)) { original: List<Pair<Uri, String>> ->
+                original.sortedBy { (uri, _): Pair<Uri, String> ->
+                    val f = DocumentFile.fromTreeUri(this, uri)
+                    f?.lastModified()
                 }
             },
             //Pair(getString(R.string.sort_option_date_created)) { original: List<Pair<String, String>> ->
@@ -328,11 +330,11 @@ open class PaganActivity: AppCompatActivity() {
             //}
         )
 
-        this.dialog_popup_sortable_menu<String>(getString(R.string.menu_item_load_project), project_list, null, sort_options, 0, object: MenuDialogEventHandler<String>() {
-            override fun on_submit(index: Int, value: String) {
+        this.dialog_popup_sortable_menu<Uri>(getString(R.string.menu_item_load_project), project_list, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
+            override fun on_submit(index: Int, value: Uri) {
                 callback(value)
             }
-            override fun on_long_click_item(index: Int, value: String): Boolean {
+            override fun on_long_click_item(index: Int, value: Uri): Boolean {
                 val view: View = LayoutInflater.from(this@PaganActivity)
                     .inflate(
                         R.layout.dialog_project_info,
@@ -341,7 +343,14 @@ open class PaganActivity: AppCompatActivity() {
                     )
 
                 val opus_manager = OpusLayerBase()
-                opus_manager.load_path(value)
+
+                val input_stream = this@PaganActivity.contentResolver.openInputStream(value)
+                val reader = BufferedReader(InputStreamReader(input_stream))
+                val content = reader.readText().toByteArray(Charsets.UTF_8)
+                reader.close()
+                input_stream?.close()
+                opus_manager.load(content)
+
                 if (opus_manager.project_notes != null) {
                     view.findViewById<TextView>(R.id.project_notes)?.let {
                         it.text = opus_manager.project_notes!!
@@ -360,10 +369,11 @@ open class PaganActivity: AppCompatActivity() {
                     it.text = getString(R.string.project_info_tempo, opus_manager.get_global_controller<OpusTempoEvent>(ControlEventType.Tempo).initial_event.value.roundToInt())
                 }
                 view.findViewById<TextView>(R.id.project_last_modified)?.let {
-                    val f = File(value)
-                    val time = Date(f.lastModified())
-                    val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                    it.text = formatter.format(time)
+                    DocumentFile.fromTreeUri(this@PaganActivity, value)?.let { f ->
+                        val time = Date(f.lastModified())
+                        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                        it.text = formatter.format(time)
+                    }
                 }
 
                 AlertDialog.Builder(this@PaganActivity, R.style.Theme_Pagan_Dialog)
@@ -375,7 +385,7 @@ open class PaganActivity: AppCompatActivity() {
                         this.do_submit(index, value)
                     }
                     .setNegativeButton(R.string.delete_project) { dialog, _ ->
-                        this@PaganActivity.dialog_delete_project(value.toUri()) {
+                        this@PaganActivity.dialog_delete_project(value) {
                             dialog.dismiss()
                             this.dialog?.dismiss()
                         }

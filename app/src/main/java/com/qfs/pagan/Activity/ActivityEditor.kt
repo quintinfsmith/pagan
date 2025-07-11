@@ -372,7 +372,9 @@ class ActivityEditor : PaganActivity() {
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
                     this@ActivityEditor.configuration.project_directory = tree_uri
+                    this@ActivityEditor.save_configuration()
                     this@ActivityEditor.project_manager.change_project_path(tree_uri)
+
                     this._project_save()
                 }
             }
@@ -915,7 +917,7 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         val uri = this.project_manager.active_project?.uri
 
-        uri?.path?.let { path ->
+        uri?.toString()?.let { path ->
             val path_file = File(this.bkp_path_path)
             path_file.writeText(path)
         }
@@ -946,15 +948,22 @@ class ActivityEditor : PaganActivity() {
     fun setup_new() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
-
         this.get_opus_manager().project_change_new()
+        this.project_manager.set_new_project()
     }
 
-    fun load_project(path: String) {
+    fun load_project(uri: Uri) {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
 
-        this.get_opus_manager().load_path(path)
+        val input_stream = this.contentResolver.openInputStream(uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content = reader.readText().toByteArray(Charsets.UTF_8)
+        reader.close()
+        input_stream?.close()
+
+        this.get_opus_manager().load(content)
+        this.project_manager.set_project(uri)
     }
 
     fun load_from_bkp() {
@@ -964,24 +973,22 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         val bytes = FileInputStream(this.bkp_path).readBytes()
         opus_manager.load(bytes)
-        this
         val backup_path: String = File(this.bkp_path_path).readText()
+        this.project_manager.set_project(backup_path.toUri())
 
     }
 
     private fun handle_uri(uri: Uri) {
-        val path_string = uri.toString()
-
         val type: CompatibleFileType? = try {
             this.get_file_type(uri)
         } catch (e: Exception) {
             null
         }
 
-        val inner_callback: ((String) -> Unit) = when (type) {
-            CompatibleFileType.Midi1 -> { path_string -> this.import_midi(path_string) }
-            CompatibleFileType.Pagan -> { path_string -> this.import_project(path_string) }
-            else -> { _ -> throw FileNotFoundException(path_string) }
+        val inner_callback: ((Uri) -> Unit) = when (type) {
+            CompatibleFileType.Midi1 -> { uri -> this.import_midi(uri) }
+            CompatibleFileType.Pagan -> { uri -> this.import_project(uri) }
+            else -> { _ -> throw FileNotFoundException(uri.toString()) }
         }
 
         this.dialog_save_project {
@@ -993,7 +1000,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 val fallback_msg = try {
-                    inner_callback(path_string)
+                    inner_callback(uri)
                     null
                 } catch (e: Exception) {
                     when (type) {
@@ -1264,7 +1271,7 @@ class ActivityEditor : PaganActivity() {
         } else if (this.is_bkp(this.intent.data!!)) {
             this.load_from_bkp()
         } else if (this.project_manager.contains(this.intent.data!!)) {
-            this.load_project(this.intent.data!!.toString())
+            this.load_project(this.intent.data!!)
         } else {
             this.handle_uri(this.intent.data!!)
         }
@@ -1298,9 +1305,9 @@ class ActivityEditor : PaganActivity() {
             }
 
             R.id.itmLoadProject -> {
-                this.dialog_load_project { path: String ->
+                this.dialog_load_project { uri: Uri ->
                     this.dialog_save_project {
-                        this.get_action_interface().load_project(path)
+                        this.get_action_interface().load_project(uri)
                     }
                 }
             }
@@ -1922,28 +1929,28 @@ class ActivityEditor : PaganActivity() {
         }()
     }
 
-    fun import_project(path: String) {
-        this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
+    fun import_project(uri: Uri) {
+        this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             this.get_opus_manager().load(bytes)
             this.project_manager.set_new_project()
         }
     }
 
-    fun import_midi(path: String) {
-        val bytes = this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
+    fun import_midi(uri: Uri) {
+        val bytes = this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             FileInputStream(it.fileDescriptor).readBytes()
-        } ?: throw InvalidMIDIFile(path)
+        } ?: throw InvalidMIDIFile(uri.toString())
 
         val midi = try {
             Midi.Companion.from_bytes(bytes)
         } catch (e: Exception) {
-            throw InvalidMIDIFile(path)
+            throw InvalidMIDIFile(uri.toString())
         }
 
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_midi(midi)
-        val filename = this.parse_file_name(path.toUri())
+        val filename = this.parse_file_name(uri)
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(
             R.string.default_imported_midi_title))
         opus_manager.clear_history()

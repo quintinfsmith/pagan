@@ -1217,7 +1217,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
 
-        activity.project_manager.set_new_project()
     }
 
     // This function is called from the Base Layer within th project_change_wrapper.

@@ -197,7 +197,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         }
     }
 
-    fun get_project_list(): List<Pair<String, String>> {
+    fun get_project_list(): List<Pair<Uri, String>> {
         val json = Json {
             ignoreUnknownKeys = true
         }
@@ -213,15 +213,19 @@ class ProjectManager(val context: Context, var path: Uri?) {
 
         var string_content = file.readText(Charsets.UTF_8)
 
-        return try {
+        val tmp_list: List<Pair<String, String>> = try {
             json.decodeFromString(string_content)
-        } catch (e: Exception) { // TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
+        } catch (_: Exception) { // TODO: Figure out how to precisely catch json error (JsonDecodingException not found)
             // Corruption Protection: if the cache file is bad json, delete and rebuild
             File(this._cache_path).delete()
             this._cache_project_list()
             string_content = File(this._cache_path).readText(Charsets.UTF_8)
 
             json.decodeFromString(string_content)
+        }
+        return List(tmp_list.size) { i: Int ->
+            val uri = tmp_list[i].first.toUri()
+            Pair(uri, tmp_list[i].second)
         }
     }
 
@@ -230,7 +234,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         var is_tracking = false
 
         for ((check_path, _) in project_list) {
-            if (check_path == uri.path) {
+            if (check_path == uri) {
                 is_tracking = true
                 break
             }
@@ -241,7 +245,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         }
 
         val project_name = this.get_file_project_name(uri) ?: return
-        project_list.add(Pair(uri.path!!, project_name))
+        project_list.add(Pair(uri, project_name))
         project_list.sortBy { it.second }
 
         val json = Json {
@@ -257,7 +261,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         val project_list = this.get_project_list().toMutableList()
         var index_to_pop = 0
         for ((check_path, _) in project_list) {
-            if (check_path == uri.path) {
+            if (check_path == uri) {
                 break
             }
             index_to_pop += 1

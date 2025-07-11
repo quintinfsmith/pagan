@@ -121,12 +121,14 @@ import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import java.io.BufferedOutputStream
+import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
@@ -201,7 +203,6 @@ class ActivityEditor : PaganActivity() {
     private var _integer_dialog_defaults = HashMap<String, Int>()
     private var _float_dialog_defaults = HashMap<String, Float>()
     var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
-
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
@@ -223,6 +224,9 @@ class ActivityEditor : PaganActivity() {
     private var _blocker_scroll_y: Float? = null
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
+
+    lateinit private var bkp_path: String
+    lateinit private var bkp_path_path: String
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
@@ -364,11 +368,11 @@ class ActivityEditor : PaganActivity() {
     private val set_project_directory_and_save_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.also { result_data ->
-                result_data.data?.also { uri  ->
+                result_data.data?.also { tree_uri  ->
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this@ActivityEditor.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this@ActivityEditor.configuration.project_directory = uri.toString()
-                    this@ActivityEditor.project_manager.change_project_path(uri.toString())
+                    this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
+                    this@ActivityEditor.configuration.project_directory = tree_uri
+                    this@ActivityEditor.project_manager.change_project_path(tree_uri)
                     this._project_save()
                 }
             }
@@ -894,28 +898,29 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun delete_backup() {
-        File("${applicationInfo.dataDir}/.bkp.json").let { file ->
+        File(this.bkp_path).let { file ->
             if (file.exists()) {
                 file.delete()
             }
         }
-        File("${applicationInfo.dataDir}/.bkp_path").let { file ->
+
+        File(this.bkp_path_path).let { file ->
             if (file.exists()) {
                 file.delete()
             }
         }
     }
+
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
-        val path = opus_manager.path
-        if (path != null) {
-            val path_file = File("${applicationInfo.dataDir}/.bkp_path")
+        val uri = this.project_manager.active_project?.uri
+
+        uri?.path?.let { path ->
+            val path_file = File(this.bkp_path_path)
             path_file.writeText(path)
         }
-        opus_manager.save("${applicationInfo.dataDir}/.bkp.json")
 
-        // saving changes the path, need to change it back
-        opus_manager.path = path
+        File(this.bkp_path).writeText(opus_manager.to_json().to_string())
     }
 
 
@@ -927,6 +932,7 @@ class ActivityEditor : PaganActivity() {
         this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
+
     fun refresh(x: Int, y: Int) {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
@@ -935,18 +941,19 @@ class ActivityEditor : PaganActivity() {
         this.runOnUiThread {
             editor_table?.table_ui?.scroll(x, y)
         }
-
     }
 
     fun setup_new() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
+
         this.get_opus_manager().project_change_new()
     }
 
     fun load_project(path: String) {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
+
         this.get_opus_manager().load_path(path)
     }
 
@@ -955,10 +962,11 @@ class ActivityEditor : PaganActivity() {
         editor_table.clear()
 
         val opus_manager = this.get_opus_manager()
-        val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
-        val bytes = FileInputStream(bkp_json_path).readBytes()
-        val backup_path: String = File("${this.applicationInfo.dataDir}/.bkp_path").readText()
-        opus_manager.load(bytes, backup_path)
+        val bytes = FileInputStream(this.bkp_path).readBytes()
+        opus_manager.load(bytes)
+        this
+        val backup_path: String = File(this.bkp_path_path).readText()
+
     }
 
     private fun handle_uri(uri: Uri) {
@@ -1013,6 +1021,9 @@ class ActivityEditor : PaganActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        this.bkp_path = "${applicationInfo.dataDir}/.bkp.json"
+        this.bkp_path_path = "${applicationInfo.dataDir}/.bkp_path"
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
@@ -1242,8 +1253,8 @@ class ActivityEditor : PaganActivity() {
             // if the activity is forgotten, the opus_manager is be uninitialized
             if (this.get_opus_manager().is_initialized()) {
                 this.refresh(
-                    savedInstanceState.getInt("x") ?: 0,
-                    savedInstanceState.getInt("y") ?: 0
+                    savedInstanceState.getInt("x"),
+                    savedInstanceState.getInt("y")
                 )
             } else {
                 this.load_from_bkp()
@@ -1364,6 +1375,7 @@ class ActivityEditor : PaganActivity() {
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
+
     fun project_save() {
         if (this.configuration.project_directory == null) {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
@@ -1373,10 +1385,6 @@ class ActivityEditor : PaganActivity() {
         } else {
             this._project_save()
         }
-    }
-
-    fun project_delete() {
-        this.project_manager.delete(this.get_opus_manager())
     }
 
     fun project_move_to_copy() {
@@ -1546,10 +1554,6 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    fun get_new_project_path(): String {
-        return this.project_manager.get_new_path()
-    }
-
     // Ui Wrappers ////////////////////////////////////////////
     private fun drawer_close() {
         this.get_action_interface().drawer_close()
@@ -1571,21 +1575,6 @@ class ActivityEditor : PaganActivity() {
             // pass, if it's not initialized, it's not locked
         }
     }
-
-
-    fun navigate(fragment: Int) {
-        //val navController = findNavController(R.id.nav_host_fragment_content_main)
-        //if (fragment == R.id.EditorFragment) {
-        //    this._has_seen_front_page = true
-        //}
-
-        //navController.navigate(fragment)
-    }
-
-    //fun get_active_fragment(): Fragment? {
-    //    val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-    //    return navHost?.childFragmentManager?.fragments?.get(0)
-    //}
 
     fun update_title_text() {
         this.set_title_text(
@@ -1661,13 +1650,15 @@ class ActivityEditor : PaganActivity() {
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
 
-        val file_exists = (opus_manager.path != null && File(opus_manager.path!!).isFile)
+        val file_exists = this.project_manager.active_project != null
         btnDeleteProject.isEnabled = file_exists
         btnCopyProject.isEnabled = file_exists
 
         btnDeleteProject.setOnClickListener {
             if (it.isEnabled) {
-                this.dialog_delete_project(this.get_opus_manager())
+                this.project_manager.active_project?.uri?.let { uri ->
+                    this.dialog_delete_project(uri)
+                }
             }
         }
 
@@ -1934,7 +1925,8 @@ class ActivityEditor : PaganActivity() {
     fun import_project(path: String) {
         this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.get_opus_manager().load(bytes, this.project_manager.get_new_path())
+            this.get_opus_manager().load(bytes)
+            this.project_manager.set_new_project()
         }
     }
 
@@ -1955,6 +1947,7 @@ class ActivityEditor : PaganActivity() {
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(
             R.string.default_imported_midi_title))
         opus_manager.clear_history()
+        this.project_manager.set_new_project()
     }
 
     fun populate_supported_soundfont_instrument_names() {
@@ -2427,16 +2420,20 @@ class ActivityEditor : PaganActivity() {
 
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
-        if (opus_manager.path == null) {
-            return true
-        }
 
-        if (!File(opus_manager.path!!).exists()) {
+        if (this.project_manager.active_project == null) {
             return !opus_manager.history_cache.isEmpty()
         }
 
         val other = OpusLayerBase()
-        other.load_path(opus_manager.path!!)
+        val input_stream = this.contentResolver.openInputStream(this.project_manager.active_project!!.uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content: ByteArray = reader.readText().toByteArray(Charsets.UTF_8)
+
+        other.load(content)
+
+        reader.close()
+        input_stream?.close()
 
         return opus_manager != other
     }
@@ -3316,19 +3313,18 @@ class ActivityEditor : PaganActivity() {
         this.update_menu_options()
     }
 
-    override fun on_project_delete(project: OpusLayerBase) {
+    override fun on_project_delete(uri: Uri) {
         // TODO: Track
         this.drawer_close()
-        super.on_project_delete(project)
+        super.on_project_delete(uri)
         this.update_menu_options()
-        if (this.get_opus_manager().path == project.path) {
+        if (this.project_manager.active_project?.uri == uri) {
             this.delete_backup()
             this.setup_new()
         }
     }
 
     fun dialog_midi_device_management() {
-
         val device_management_view: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.midi_device_management,

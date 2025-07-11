@@ -2,6 +2,7 @@ package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
+import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
@@ -1190,7 +1191,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.project_change_wrapper(callback)
         }
     }
-
     override fun project_refresh() {
         this.lock_ui_full {
             this._ui_clear()
@@ -1217,26 +1217,17 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
 
-        val new_path = activity.get_new_project_path()
-        this.path = new_path
+        activity.project_manager.set_new_project()
     }
 
     // This function is called from the Base Layer within th project_change_wrapper.
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
-
         val activity = this.get_activity()!!
-        val new_path = activity.get_new_project_path()
-        this.path = new_path
+        activity.project_manager.set_new_project()
     }
 
-    override fun save(path: String?) {
-        this.lock_ui_partial {
-            super.save(path)
-            this._ui_change_bill.queue_enable_delete_and_copy_buttons()
-        }
-    }
 
     override fun <T: OpusControlEvent> controller_global_set_initial_event(type: ControlEventType, event: T) {
         this.lock_ui_partial {
@@ -1327,8 +1318,8 @@ class OpusLayerInterface : OpusLayerHistory() {
         return output
     }
 
-    override fun _project_change_json(json_data: JSONHashMap, forced_path: String?) {
-        super._project_change_json(json_data, forced_path)
+    override fun _project_change_json(json_data: JSONHashMap) {
+        super._project_change_json(json_data)
         if (!this._in_reload) {
             val activity = this.get_activity() ?: return
             if (! activity.configuration.use_preferred_soundfont) {

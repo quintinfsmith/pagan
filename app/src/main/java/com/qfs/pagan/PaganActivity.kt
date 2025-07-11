@@ -21,6 +21,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.net.toFile
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -39,15 +42,14 @@ open class PaganActivity: AppCompatActivity() {
     internal lateinit var project_manager: ProjectManager
     private var _progress_bar: ConstraintLayout? = null
 
-
     internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.also { result_data ->
                 result_data.data?.also { uri  ->
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     this@PaganActivity.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this@PaganActivity.configuration.project_directory = uri.toString()
-                    this@PaganActivity.project_manager.change_project_path(uri.toString())
+                    this@PaganActivity.configuration.project_directory = uri
+                    this@PaganActivity.project_manager.change_project_path(uri)
                 }
             }
         }
@@ -115,9 +117,9 @@ open class PaganActivity: AppCompatActivity() {
 
             // Do ExternalFilesDir() check, Changed for 1.7.7
             this.getExternalFilesDir(null)?.let {
-                val old_path = "$it/projects"
-                this.project_manager.move_old_projects_directory(old_path)
-                File(old_path).deleteRecursively()
+                val old_uri = "$it/projects".toUri()
+                this.project_manager.move_old_projects_directory(old_uri)
+                old_uri.toFile().deleteRecursively()
             }
         }
     }
@@ -373,7 +375,7 @@ open class PaganActivity: AppCompatActivity() {
                         this.do_submit(index, value)
                     }
                     .setNegativeButton(R.string.delete_project) { dialog, _ ->
-                        this@PaganActivity.dialog_delete_project(opus_manager) {
+                        this@PaganActivity.dialog_delete_project(value.toUri()) {
                             dialog.dismiss()
                             this.dialog?.dismiss()
                         }
@@ -388,22 +390,17 @@ open class PaganActivity: AppCompatActivity() {
         })
     }
 
-    internal fun dialog_delete_project(project: OpusLayerBase, deleted_callback: ((OpusLayerBase) -> Unit)? = null) {
-        if (project.path == null) {
-            return
-        }
-
-        val title = project.project_name ?: getString(R.string.untitled_opus)
+    internal fun dialog_delete_project(uri: Uri, deleted_callback: ((Uri) -> Unit)? = null) {
+        val title = this.project_manager.get_active_project_name()
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setTitle(resources.getString(R.string.dlg_delete_title, title))
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                this.project_manager.delete(project)
+                this.project_manager.delete(uri)
                 if (deleted_callback != null) {
-                    deleted_callback(project)
+                    deleted_callback(uri)
                 }
-                val title = project.project_name ?: getString(R.string.untitled_opus)
                 this.feedback_msg(resources.getString(R.string.feedback_delete, title))
-                this@PaganActivity.on_project_delete(project)
+                this@PaganActivity.on_project_delete(uri)
                 dialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel) { dialog, _ ->
@@ -412,7 +409,7 @@ open class PaganActivity: AppCompatActivity() {
             .show()
     }
 
-    open fun on_project_delete(project: OpusLayerBase) { }
+    open fun on_project_delete(uri: Uri) { }
 
     fun loading_reticle_show() {
         this.runOnUiThread {

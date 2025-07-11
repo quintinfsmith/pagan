@@ -1178,7 +1178,7 @@ class ActivityEditor : PaganActivity() {
             val sf_file = File(path)
             if (sf_file.exists()) {
                 try {
-                    this._soundfont = SoundFont(path)
+                    this._soundfont = SoundFont(this, path)
                     this.populate_supported_soundfont_instrument_names()
                     this._sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
@@ -2006,9 +2006,16 @@ class ActivityEditor : PaganActivity() {
             return
         }
 
-        val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
+        val soundfont_directory = this.get_soundfont_directory()
+        val soundfont_file = soundfont_directory.findFile(filename)
+        if (soundfont_file == null || !soundfont_file.exists()) {
+            // Possible if user puts the sf2 in their files manually
+            this.feedback_msg(getString(R.string.soundfont_not_found))
+            return
+
+        }
         try {
-            this._soundfont = SoundFont(path)
+            this._soundfont = SoundFont(soundfont_file)
         } catch (e: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(getString(R.string.invalid_soundfont))

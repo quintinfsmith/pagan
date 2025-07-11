@@ -57,14 +57,59 @@ open class PaganActivity: AppCompatActivity() {
         }
     }
 
+    internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this@PaganActivity.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this@PaganActivity.set_soundfont_directory(uri)
+                }
+            }
+        }
+    }
 
-    fun get_soundfont_directory(): File {
-        val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
-        if (!soundfont_dir.exists()) {
-            soundfont_dir.mkdirs()
+    fun set_soundfont_directory(uri: Uri) {
+        if (this.configuration.soundfont_directory == null) {
+            DocumentFile.fromTreeUri(this,uri)?.let { new_directory ->
+                this.get_soundfont_directory().let { old_directory ->
+                    for (soundfont in old_directory.listFiles()) {
+                        if (soundfont.name == null) continue
+                        new_directory.createFile("*/*", soundfont.name!!)?.let { new_file ->
+                            val input_stream = this.contentResolver.openInputStream(soundfont.uri)
+                            val output_stream = this.contentResolver.openOutputStream(new_file.uri)
+
+                            val buffer = ByteArray(1024)
+                            while (true) {
+                                val read_size = input_stream?.read(buffer) ?: break
+                                if (read_size == -1) {
+                                    break
+                                }
+                                output_stream?.write(buffer, 0, read_size)
+                            }
+
+                            input_stream?.close()
+                            output_stream?.flush()
+                            output_stream?.close()
+                        }
+                    }
+                }
+            }
         }
 
-        return soundfont_dir
+        this.configuration.soundfont_directory = uri
+    }
+
+    fun get_soundfont_directory(): DocumentFile {
+        return if (this.configuration.soundfont_directory != null) {
+            DocumentFile.fromTreeUri(this,this.configuration.soundfont_directory!!)!!
+        } else {
+            val soundfont_dir = File("${this.applicationContext.dataDir}/SoundFonts")
+            if (!soundfont_dir.exists()) {
+                soundfont_dir.mkdirs()
+            }
+            DocumentFile.fromFile(soundfont_dir)
+        }
     }
 
     fun is_soundfont_available(): Boolean {
@@ -95,6 +140,7 @@ open class PaganActivity: AppCompatActivity() {
 
 
         this.project_manager = ProjectManager(this, this.configuration.project_directory)
+
     }
 
     private fun reload_config() {
@@ -119,6 +165,7 @@ open class PaganActivity: AppCompatActivity() {
 
             // Do ExternalFilesDir() check, Changed for 1.7.7
             this.getExternalFilesDir(null)?.let {
+                TODO("TEST THIS")
                 val old_uri = "$it/projects".toUri()
                 this.project_manager.move_old_projects_directory(old_uri)
                 old_uri.toFile().deleteRecursively()

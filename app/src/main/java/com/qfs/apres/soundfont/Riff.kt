@@ -1,14 +1,15 @@
 package com.qfs.apres.soundfont
 
+import android.content.Context
+import android.net.Uri
 import com.qfs.apres.toUInt
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.FileInputStream
 import java.io.InputStream
 
-class Riff(private var file_path: String) {
-    class InvalidRiff(file_path: String): Exception("$file_path is not a valid Riff")
+class Riff(var context: Context, private var uri: Uri) {
+    class InvalidRiff(file_path: Uri): Exception("$file_path is not a valid Riff")
     class InputStreamClosed : Exception("Input Stream is Closed")
     data class ListChunkHeader(
         val index: Int,
@@ -35,7 +36,7 @@ class Riff(private var file_path: String) {
             val header_check = this.get_string(0, 4) // fourcc
             if (header_check != "RIFF") {
                 this.close_stream()
-                throw InvalidRiff(file_path)
+                throw InvalidRiff(uri)
             }
             val riff_size = this.get_little_endian(4, 4)
             this.type_cc = this.get_string(8, 4)
@@ -81,7 +82,7 @@ class Riff(private var file_path: String) {
     }
 
     private fun open_stream() {
-        this._input_stream = FileInputStream(this.file_path)
+        this._input_stream = this.context.contentResolver.openInputStream(this.uri)
     }
 
     private fun close_stream() {

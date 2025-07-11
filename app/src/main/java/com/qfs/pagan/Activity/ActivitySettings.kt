@@ -1,5 +1,6 @@
 package com.qfs.pagan.Activity
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
@@ -36,7 +37,7 @@ class ActivitySettings : PaganActivity() {
                 if (uri.path != null) {
                     thread {
                         val soundfont_dir = this.get_soundfont_directory()
-                        val file_name = this.parse_file_name(uri)
+                        val file_name = this.parse_file_name(uri)!!
 
                         this.loading_reticle_show()
                         val new_file = File("${soundfont_dir}/$file_name")
@@ -54,7 +55,7 @@ class ActivitySettings : PaganActivity() {
                         }
 
                         try {
-                            SoundFont(new_file.path)
+                            SoundFont(this, soundfont_dir.findFile(file_name)!!.uri)
                             this.configuration.soundfont = file_name
                             this.loading_reticle_hide()
                         } catch (_: Exception) {
@@ -91,6 +92,7 @@ class ActivitySettings : PaganActivity() {
 
         val toolbar = this._binding.toolbar
         toolbar.background = null
+
         //toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
 
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
@@ -229,6 +231,10 @@ class ActivitySettings : PaganActivity() {
         }
 
         this.setResult(RESULT_CANCELED)
+
+        if (this.configuration.soundfont_directory == null) {
+            this.initial_dialog_select_soundfont_directory()
+        }
     }
 
     fun set_forced_orientation(value: Int) {
@@ -267,7 +273,7 @@ class ActivitySettings : PaganActivity() {
 
     private fun interact_btnChooseSoundFont() {
         val soundfont_dir = this.get_soundfont_directory()
-        val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
+        val file_list = soundfont_dir.listFiles().toList()
 
         if (file_list.isEmpty()) {
             this.import_soundfont()
@@ -276,7 +282,7 @@ class ActivitySettings : PaganActivity() {
 
         val soundfonts = mutableListOf<Pair<String, String>>()
         for (file in file_list) {
-            soundfonts.add(Pair(file.name, file.name))
+            soundfonts.add(Pair(file.uri.pathSegments.last(), file.uri.pathSegments.last()))
         }
 
         val sort_options = listOf(
@@ -319,12 +325,12 @@ class ActivitySettings : PaganActivity() {
 
     private fun dialog_remove_soundfont() {
         val soundfont_dir = this.get_soundfont_directory()
-        val file_list = soundfont_dir.listFiles()?.toList() ?: listOf<File>()
+        val file_list = soundfont_dir.listFiles().toList()
 
         val soundfonts = mutableListOf<Pair<String, String>>( )
 
         for (file in file_list) {
-            soundfonts.add(Pair(file.name, file.name))
+            soundfonts.add(Pair(file.name!!, file.name!!))
         }
         this.dialog_popup_menu(getString(R.string.dialog_remove_soundfont_title), soundfonts) { _: Int, filename: String ->
             this.dialog_confirm(getString(R.string.dialog_remove_soundfont_text, filename)) {
@@ -339,10 +345,7 @@ class ActivitySettings : PaganActivity() {
         }
 
         val soundfont_dir = this.get_soundfont_directory()
-        val file = File("${soundfont_dir.absolutePath}/${filename}")
-        if (file.exists()) {
-            file.delete()
-        }
+        soundfont_dir.findFile(filename)?.delete()
 
         this.set_soundfont_button_text()
     }
@@ -355,5 +358,23 @@ class ActivitySettings : PaganActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    fun initial_dialog_select_soundfont_directory() {
+        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+            .setMessage("Please select a location to store soundfonts.")
+            .setOnDismissListener {
+                this._popup_active = false
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                intent.putExtra(Intent.EXTRA_TITLE, "Soundfonts")
+                intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                this._set_soundfont_directory_intent_launcher.launch(intent)
+            }
+            .setPositiveButton(getString(android.R.string.ok)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+
+
     }
 }

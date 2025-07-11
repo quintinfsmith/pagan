@@ -1,11 +1,13 @@
 package com.qfs.apres.soundfont
 
+import android.content.Context
+import android.net.Uri
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class SoundFont(file_path: String) {
-    class InvalidSoundFont(file_path: String): Exception("Not a soundfont $file_path")
+class SoundFont(val context: Context, uri: Uri) {
+    class InvalidSoundFont(uri: Uri): Exception("Not a soundfont $uri")
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
     class InvalidSampleType(i: Int): Exception("Unknown Sample Type $i")
@@ -51,10 +53,10 @@ class SoundFont(file_path: String) {
     }
 
     init {
-        this.riff = Riff(file_path)
+        this.riff = Riff(this.context, uri)
         this.riff.with {
             if (riff.type_cc != "sfbk") {
-                throw InvalidSoundFont(file_path)
+                throw InvalidSoundFont(uri)
             }
 
             val info_chunk = riff.get_chunk_data(riff.list_chunks[0])

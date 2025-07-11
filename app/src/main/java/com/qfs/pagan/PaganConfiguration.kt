@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
-import kotlinx.serialization.Serializable
 import java.io.File
 
 data class PaganConfiguration(
@@ -18,7 +17,8 @@ data class PaganConfiguration(
     var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
     var allow_midi_playback: Boolean = true,
     var allow_std_percussion: Boolean = false,
-    var project_directory: Uri? = null
+    var project_directory: Uri? = null,
+    var soundfont_directory: Uri? = null
 ) {
     enum class MoveMode {
         MOVE,
@@ -38,7 +38,8 @@ data class PaganConfiguration(
                 force_orientation = content.get_int("force_orientation", ActivityInfo.SCREEN_ORIENTATION_USER),
                 allow_midi_playback = content.get_boolean("allow_midi_playback", true),
                 allow_std_percussion = content.get_boolean("allow_std_percussion", false),
-                project_directory = content.get_stringn("project_directory")?.toUri()
+                project_directory = content.get_stringn("project_directory")?.toUri(),
+                soundfont_directory = content.get_stringn("soundfont_directory")?.toUri()
             )
         }
 
@@ -76,6 +77,7 @@ data class PaganConfiguration(
         output["allow_midi_playback"] = this.allow_midi_playback
         output["allow_std_percussion"] = this.allow_std_percussion
         output["project_directory"] = this.project_directory?.toString()
+        output["soundfont_directory"] = this.soundfont_directory?.toString()
         return output
     }
 }

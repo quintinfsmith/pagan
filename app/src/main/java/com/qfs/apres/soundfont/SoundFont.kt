@@ -31,7 +31,7 @@ class SoundFont(val context: Context, uri: Uri) {
     private var icmt: String? = null
     private var isft: String? = null
 
-    private var riff: Riff
+    private val riff: Riff = Riff(this.context, uri)
 
     private var pdta_chunks = HashMap<String, ByteArray>()
     private var sample_data_cache =  HashMap<Pair<Int, Int>, CachedSampleData>()
@@ -53,7 +53,6 @@ class SoundFont(val context: Context, uri: Uri) {
     }
 
     init {
-        this.riff = Riff(this.context, uri)
         this.riff.with {
             if (riff.type_cc != "sfbk") {
                 throw InvalidSoundFont(uri)
@@ -363,7 +362,6 @@ class SoundFont(val context: Context, uri: Uri) {
     }
 
     open fun read_rom_hook(start: Int, end: Int): SampleData {
-        println("GET ROM OOK")
         return SampleData(0)
     }
 

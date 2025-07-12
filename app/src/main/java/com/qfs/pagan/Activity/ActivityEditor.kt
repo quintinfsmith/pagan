@@ -911,18 +911,15 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun save_to_backup() {
-        println("SAVE TO BACKUP....")
         val opus_manager = this.get_opus_manager()
         val uri = this.project_manager.active_project?.uri
 
         val path_file = File(this.bkp_path_path)
         if (uri == null) {
-            println("NO URI")
             if (path_file.exists()) {
                 path_file.delete()
             }
         } else {
-            println("URI: $uri")
             path_file.writeText(uri.toString())
         }
 
@@ -980,10 +977,8 @@ class ActivityEditor : PaganActivity() {
             val backup_path_file = File(this.bkp_path_path)
             if (backup_path_file.exists()) {
                 val backup_path: String = backup_path_file.readText()
-                println(" ----- $backup_path ----")
                 this.project_manager.set_project(backup_path.toUri())
             } else {
-                println("???")
                 this.project_manager.set_new_project()
             }
         }
@@ -1173,12 +1168,11 @@ class ActivityEditor : PaganActivity() {
 
 
         //////////////////////////////////////////
-        if (this.configuration.soundfont != null) {
-            val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
-            val sf_file = File(path)
-            if (sf_file.exists()) {
+        this.get_soundfont_uri()?.let { uri ->
+            val sf_file = DocumentFile.fromSingleUri(this, uri)
+            if (sf_file?.exists() == true) {
                 try {
-                    this._soundfont = SoundFont(this, path)
+                    this._soundfont = SoundFont(this, uri)
                     this.populate_supported_soundfont_instrument_names()
                     this._sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
@@ -1789,7 +1783,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 for (key in usable_range) {
-                    var use_name = if (usable_range.first != usable_range.last) {
+                    val use_name = if (usable_range.first != usable_range.last) {
                         "$name - ${(key - usable_range.first) + 1}"
                     } else {
                         name
@@ -2015,7 +2009,7 @@ class ActivityEditor : PaganActivity() {
 
         }
         try {
-            this._soundfont = SoundFont(soundfont_file)
+            this._soundfont = SoundFont(this, soundfont_file.uri)
         } catch (e: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(getString(R.string.invalid_soundfont))
@@ -2447,7 +2441,6 @@ class ActivityEditor : PaganActivity() {
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
 
-        println("NEED SAVE? ${this.project_manager.active_project?.uri}")
         if (this.project_manager.active_project == null) {
             return !opus_manager.history_cache.isEmpty()
         }

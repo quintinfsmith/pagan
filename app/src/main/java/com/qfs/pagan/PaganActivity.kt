@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.net.toFile
 import androidx.core.net.toUri
+import androidx.core.text.htmlEncode
 import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.ControlEventType
@@ -74,8 +75,8 @@ open class PaganActivity: AppCompatActivity() {
             DocumentFile.fromTreeUri(this,uri)?.let { new_directory ->
                 this.get_soundfont_directory().let { old_directory ->
                     for (soundfont in old_directory.listFiles()) {
-                        if (soundfont.name == null) continue
-                        new_directory.createFile("*/*", soundfont.name!!)?.let { new_file ->
+                        val soundfont_name = soundfont.uri.pathSegments.last().split("/").last()
+                        new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
                             val input_stream = this.contentResolver.openInputStream(soundfont.uri)
                             val output_stream = this.contentResolver.openOutputStream(new_file.uri)
 
@@ -98,6 +99,7 @@ open class PaganActivity: AppCompatActivity() {
         }
 
         this.configuration.soundfont_directory = uri
+        this.save_configuration()
     }
 
     fun get_soundfont_directory(): DocumentFile {
@@ -114,7 +116,7 @@ open class PaganActivity: AppCompatActivity() {
 
     fun is_soundfont_available(): Boolean {
         val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles()?.isNotEmpty() == true
+        return soundfont_dir.listFiles().isNotEmpty()
     }
 
 
@@ -504,6 +506,37 @@ open class PaganActivity: AppCompatActivity() {
                 }
             }
         }
+    }
+
+    fun get_soundfont_uri(): Uri? {
+        if (this.configuration.soundfont == null || this.configuration.soundfont_directory == null) {
+            return null
+        }
+
+        var working_file = DocumentFile.fromTreeUri(this, this.configuration.soundfont_directory!!) ?: return null
+        for (node in this.configuration.soundfont!!.split("/")) {
+            working_file = working_file.findFile(node) ?: return null
+        }
+
+        return working_file.uri
+    }
+
+    fun coax_relative_soundfont_path(soundfont_uri: Uri): String? {
+        if (this.configuration.soundfont_directory == null || soundfont_uri.authority != this.configuration.soundfont_directory!!.authority) {
+            return null
+        }
+
+        val parent_segments = this.configuration.soundfont_directory!!.pathSegments
+        val child_segments = soundfont_uri.pathSegments
+
+        if (parent_segments.size >= child_segments.size || child_segments.subList(0, parent_segments.size) != parent_segments) {
+            return null
+        }
+
+        val coaxed_segments = child_segments.last().split("/").toMutableList()
+        coaxed_segments.removeAt(0)
+
+        return coaxed_segments.joinToString("/")
     }
 
 }

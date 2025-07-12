@@ -40,30 +40,42 @@ class ActivitySettings : PaganActivity() {
                         val file_name = this.parse_file_name(uri)!!
 
                         this.loading_reticle_show()
-                        val new_file = File("${soundfont_dir}/$file_name")
-                        this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                            try {
-                                new_file.outputStream()
-                                    .use { output_stream: FileOutputStream ->
-                                        FileInputStream(it.fileDescriptor).use { input_stream: FileInputStream ->
-                                            input_stream.copyTo(output_stream, 4096 * 4)
+                        soundfont_dir.createFile("*/*", file_name)?.let { new_file ->
+                            this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                                try {
+                                    val output_stream = this.contentResolver.openOutputStream(new_file.uri)
+                                    val input_stream = FileInputStream(it.fileDescriptor)
+
+                                    val buffer = ByteArray(1024)
+                                    while (true) {
+                                        val read_size = input_stream.read(buffer)
+                                        if (read_size == -1) {
+                                            break
                                         }
+                                        output_stream?.write(buffer, 0, read_size)
                                     }
-                            } catch (e: FileNotFoundException) {
-                                // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
+
+                                    input_stream.close()
+                                    output_stream?.flush()
+                                    output_stream?.close()
+
+                                } catch (e: FileNotFoundException) {
+                                    // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
+                                }
+                            }
+
+                            try {
+                                SoundFont(this, new_file.uri)
+                                this.configuration.soundfont = this@ActivitySettings.coax_relative_soundfont_path(new_file.uri)
+                                this.loading_reticle_hide()
+                            } catch (e: Exception) {
+                                this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
+                                new_file.delete()
+                                this.loading_reticle_hide()
+                                return@thread
                             }
                         }
 
-                        try {
-                            SoundFont(this, soundfont_dir.findFile(file_name)!!.uri)
-                            this.configuration.soundfont = file_name
-                            this.loading_reticle_hide()
-                        } catch (_: Exception) {
-                            this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
-                            new_file.delete()
-                            this.loading_reticle_hide()
-                            return@thread
-                        }
 
                         runOnUiThread {
                             this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
@@ -98,10 +110,6 @@ class ActivitySettings : PaganActivity() {
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
             it.setOnClickListener {
                 this.interact_btnChooseSoundFont()
-            }
-            it.setOnLongClickListener {
-                this.dialog_remove_soundfont()
-                true
             }
         }
         this.set_soundfont_button_text()
@@ -256,16 +264,10 @@ class ActivitySettings : PaganActivity() {
     }
 
     fun set_soundfont_button_text() {
-        this.findViewById<TextView>(R.id.btnChooseSoundFont).text = when (this.configuration.soundfont) {
+        this.findViewById<TextView>(R.id.btnChooseSoundFont).text = when (this.get_soundfont_uri()) {
             null -> getString(R.string.no_soundfont)
             else -> {
-                val soundfont_dir = this.get_soundfont_directory()
-                val filecheck = File("${soundfont_dir}/${this.configuration.soundfont}")
-                if (filecheck.exists()) {
-                    this.configuration.soundfont
-                } else {
-                    getString(R.string.no_soundfont)
-                }
+                this.configuration.soundfont!!.split("/").last()
             }
         }
     }
@@ -273,27 +275,41 @@ class ActivitySettings : PaganActivity() {
 
     private fun interact_btnChooseSoundFont() {
         val soundfont_dir = this.get_soundfont_directory()
-        val file_list = soundfont_dir.listFiles().toList()
+        val file_list: MutableList<Uri> = mutableListOf()
+        val stack = mutableListOf(soundfont_dir)
+        while (stack.isNotEmpty()) {
+            val current_document_file = stack.removeAt(0)
+            for (child in current_document_file.listFiles()) {
+                if (child.isDirectory) {
+                    stack.add(child)
+                } else if (child.isFile) {
+                    file_list.add(child.uri)
+                }
+            }
+        }
+
 
         if (file_list.isEmpty()) {
             this.import_soundfont()
             return
         }
 
-        val soundfonts = mutableListOf<Pair<String, String>>()
-        for (file in file_list) {
-            soundfonts.add(Pair(file.uri.pathSegments.last(), file.uri.pathSegments.last()))
+        val soundfonts = mutableListOf<Pair<Uri, String>>()
+        for (uri in file_list) {
+            val relative_path_segments = uri.pathSegments.last().split("/")
+            val relative_path = relative_path_segments.subList(1, relative_path_segments.size).joinToString("/")
+            soundfonts.add(Pair(uri, relative_path))
         }
 
         val sort_options = listOf(
-            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<String, String>> ->
-                original.sortedBy { item: Pair<String, String> -> item.first }
+            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
+                original.sortedBy { item: Pair<Uri, String> -> item.second }
             }
         )
 
-        val dialog = this.dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<String>() {
-            override fun on_submit(index: Int, value: String) {
-                this@ActivitySettings.configuration.soundfont = value
+        val dialog = this.dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
+            override fun on_submit(index: Int, value: Uri) {
+                this@ActivitySettings.configuration.soundfont = this@ActivitySettings.coax_relative_soundfont_path(value)
                 this@ActivitySettings.set_soundfont_button_text()
                 this@ActivitySettings.update_result()
             }
@@ -323,33 +339,6 @@ class ActivitySettings : PaganActivity() {
         }
     }
 
-    private fun dialog_remove_soundfont() {
-        val soundfont_dir = this.get_soundfont_directory()
-        val file_list = soundfont_dir.listFiles().toList()
-
-        val soundfonts = mutableListOf<Pair<String, String>>( )
-
-        for (file in file_list) {
-            soundfonts.add(Pair(file.name!!, file.name!!))
-        }
-        this.dialog_popup_menu(getString(R.string.dialog_remove_soundfont_title), soundfonts) { _: Int, filename: String ->
-            this.dialog_confirm(getString(R.string.dialog_remove_soundfont_text, filename)) {
-                this._delete_soundfont(filename)
-            }
-        }
-    }
-
-    private fun _delete_soundfont(filename: String) {
-        if (this.configuration.soundfont == filename) {
-            this.configuration.soundfont = null
-        }
-
-        val soundfont_dir = this.get_soundfont_directory()
-        soundfont_dir.findFile(filename)?.delete()
-
-        this.set_soundfont_button_text()
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
@@ -362,7 +351,7 @@ class ActivitySettings : PaganActivity() {
 
     fun initial_dialog_select_soundfont_directory() {
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setMessage("Please select a location to store soundfonts.")
+            .setMessage("Select a location to store soundfonts.")
             .setOnDismissListener {
                 this._popup_active = false
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)

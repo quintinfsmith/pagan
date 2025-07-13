@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
@@ -17,14 +18,21 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.net.toFile
+import androidx.core.net.toUri
+import androidx.core.text.htmlEncode
+import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
 import com.qfs.pagan.opusmanager.OpusTempoEvent
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.concurrent.thread
@@ -37,18 +45,56 @@ open class PaganActivity: AppCompatActivity() {
     internal lateinit var project_manager: ProjectManager
     private var _progress_bar: ConstraintLayout? = null
 
-    fun get_soundfont_directory(): File {
-        val soundfont_dir = File("${this.getExternalFilesDir(null)}/SoundFonts")
-        if (!soundfont_dir.exists()) {
-            soundfont_dir.mkdirs()
-        }
+    //
+    fun ucheck_move_soundfonts() {
+        val uri = this.configuration.soundfont_directory ?: return
+        DocumentFile.fromTreeUri(this, uri)?.let { new_directory ->
+            this.get_soundfont_directory().let { old_directory ->
+                for (soundfont in old_directory.listFiles()) {
+                    val soundfont_name = soundfont.uri.pathSegments.last().split("/").last()
+                    new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
+                        val input_stream = this.contentResolver.openInputStream(soundfont.uri)
+                        val output_stream = this.contentResolver.openOutputStream(new_file.uri)
 
-        return soundfont_dir
+                        val buffer = ByteArray(1024)
+                        while (true) {
+                            val read_size = input_stream?.read(buffer) ?: break
+                            if (read_size == -1) {
+                                break
+                            }
+                            output_stream?.write(buffer, 0, read_size)
+                        }
+
+                        input_stream?.close()
+                        output_stream?.flush()
+                        output_stream?.close()
+                    }
+                }
+            }
+        }
+    }
+
+    fun set_soundfont_directory(uri: Uri) {
+        this.configuration.soundfont_directory = uri
+        this.save_configuration()
+        this.ucheck_update_move_project_files()
+    }
+
+    fun get_soundfont_directory(): DocumentFile {
+        return if (this.configuration.soundfont_directory != null) {
+            DocumentFile.fromTreeUri(this,this.configuration.soundfont_directory!!)!!
+        } else {
+            val soundfont_dir = File("${this.applicationContext.dataDir}/SoundFonts")
+            if (!soundfont_dir.exists()) {
+                soundfont_dir.mkdirs()
+            }
+            DocumentFile.fromFile(soundfont_dir)
+        }
     }
 
     fun is_soundfont_available(): Boolean {
         val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles()?.isNotEmpty() == true
+        return soundfont_dir.listFiles().isNotEmpty()
     }
 
 
@@ -71,6 +117,10 @@ open class PaganActivity: AppCompatActivity() {
             PaganConfiguration()
         }
         this.requestedOrientation = this.configuration.force_orientation
+
+
+        this.project_manager = ProjectManager(this, this.configuration.project_directory)
+
     }
 
     private fun reload_config() {
@@ -89,13 +139,19 @@ open class PaganActivity: AppCompatActivity() {
 
     open fun on_paganconfig_change(original: PaganConfiguration) {
         this.requestedOrientation = this.configuration.force_orientation
+
+        if (this.configuration.project_directory != original.project_directory && this.configuration.project_directory != null) {
+            this.project_manager.change_project_path(this.configuration.project_directory!!)
+
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        this.project_manager = ProjectManager(this)
+        // Default to empty path, it gets set in
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+
         this.load_config()
     }
 
@@ -266,20 +322,20 @@ open class PaganActivity: AppCompatActivity() {
         return dialog
     }
 
-    internal fun dialog_load_project(callback: (project_path: String) -> Unit) {
+    internal fun dialog_load_project(callback: (project_uri: Uri) -> Unit) {
         if (this._popup_active) {
             return
         }
 
         val project_list = this.project_manager.get_project_list()
         val sort_options = listOf(
-            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<String, String>> ->
-                original.sortedBy { (_, label): Pair<String, String> -> label }
+            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
+                original.sortedBy { (_, label): Pair<Uri, String> -> label }
             },
-            Pair(getString(R.string.sort_option_date_modified)) { original: List<Pair<String, String>> ->
-                original.sortedBy { (path, _): Pair<String, String> ->
-                    val f = File(path)
-                    f.lastModified()
+            Pair(getString(R.string.sort_option_date_modified)) { original: List<Pair<Uri, String>> ->
+                original.sortedBy { (uri, _): Pair<Uri, String> ->
+                    val f = DocumentFile.fromSingleUri(this, uri)
+                    f?.lastModified()
                 }
             },
             //Pair(getString(R.string.sort_option_date_created)) { original: List<Pair<String, String>> ->
@@ -294,11 +350,11 @@ open class PaganActivity: AppCompatActivity() {
             //}
         )
 
-        this.dialog_popup_sortable_menu<String>(getString(R.string.menu_item_load_project), project_list, null, sort_options, 0, object: MenuDialogEventHandler<String>() {
-            override fun on_submit(index: Int, value: String) {
+        this.dialog_popup_sortable_menu<Uri>(getString(R.string.menu_item_load_project), project_list, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
+            override fun on_submit(index: Int, value: Uri) {
                 callback(value)
             }
-            override fun on_long_click_item(index: Int, value: String): Boolean {
+            override fun on_long_click_item(index: Int, value: Uri): Boolean {
                 val view: View = LayoutInflater.from(this@PaganActivity)
                     .inflate(
                         R.layout.dialog_project_info,
@@ -307,7 +363,16 @@ open class PaganActivity: AppCompatActivity() {
                     )
 
                 val opus_manager = OpusLayerBase()
-                opus_manager.load_path(value)
+
+                val input_stream = this@PaganActivity.contentResolver.openInputStream(value)
+                val reader = BufferedReader(InputStreamReader(input_stream))
+                val content = reader.readText().toByteArray(Charsets.UTF_8)
+                reader.close()
+                input_stream?.close()
+                opus_manager.load(content) {
+                    this@PaganActivity.project_manager.set_project(value)
+                }
+
                 if (opus_manager.project_notes != null) {
                     view.findViewById<TextView>(R.id.project_notes)?.let {
                         it.text = opus_manager.project_notes!!
@@ -326,10 +391,11 @@ open class PaganActivity: AppCompatActivity() {
                     it.text = getString(R.string.project_info_tempo, opus_manager.get_global_controller<OpusTempoEvent>(ControlEventType.Tempo).initial_event.value.roundToInt())
                 }
                 view.findViewById<TextView>(R.id.project_last_modified)?.let {
-                    val f = File(value)
-                    val time = Date(f.lastModified())
-                    val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                    it.text = formatter.format(time)
+                    DocumentFile.fromSingleUri(this@PaganActivity, value)?.let { f ->
+                        val time = Date(f.lastModified())
+                        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                        it.text = formatter.format(time)
+                    }
                 }
 
                 AlertDialog.Builder(this@PaganActivity, R.style.Theme_Pagan_Dialog)
@@ -341,7 +407,7 @@ open class PaganActivity: AppCompatActivity() {
                         this.do_submit(index, value)
                     }
                     .setNegativeButton(R.string.delete_project) { dialog, _ ->
-                        this@PaganActivity.dialog_delete_project(opus_manager) {
+                        this@PaganActivity.dialog_delete_project(value) {
                             dialog.dismiss()
                             this.dialog?.dismiss()
                         }
@@ -356,22 +422,17 @@ open class PaganActivity: AppCompatActivity() {
         })
     }
 
-    internal fun dialog_delete_project(project: OpusLayerBase, deleted_callback: ((OpusLayerBase) -> Unit)? = null) {
-        if (project.path == null) {
-            return
-        }
-
-        val title = project.project_name ?: getString(R.string.untitled_opus)
+    internal fun dialog_delete_project(uri: Uri, deleted_callback: ((Uri) -> Unit)? = null) {
+        val title = this.project_manager.get_active_project_name()
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setTitle(resources.getString(R.string.dlg_delete_title, title))
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                this.project_manager.delete(project)
+                this.project_manager.delete(uri)
                 if (deleted_callback != null) {
-                    deleted_callback(project)
+                    deleted_callback(uri)
                 }
-                val title = project.project_name ?: getString(R.string.untitled_opus)
                 this.feedback_msg(resources.getString(R.string.feedback_delete, title))
-                this@PaganActivity.on_project_delete(project)
+                this@PaganActivity.on_project_delete(uri)
                 dialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel) { dialog, _ ->
@@ -380,7 +441,7 @@ open class PaganActivity: AppCompatActivity() {
             .show()
     }
 
-    open fun on_project_delete(project: OpusLayerBase) { }
+    open fun on_project_delete(uri: Uri) { }
 
     fun loading_reticle_show() {
         this.runOnUiThread {
@@ -410,12 +471,80 @@ open class PaganActivity: AppCompatActivity() {
     fun loading_reticle_hide() {
         thread {
             this.runOnUiThread {
-                val progressBar = this._progress_bar ?: return@runOnUiThread
-                if (progressBar.parent != null) {
-                    (progressBar.parent as ViewGroup).removeView(progressBar)
+                this._progress_bar?.let {
+                    if (it.parent != null) {
+                        (it.parent as ViewGroup).removeView(it)
+                    }
                 }
             }
         }
     }
 
+    fun get_soundfont_uri(): Uri? {
+        if (this.configuration.soundfont == null || this.configuration.soundfont_directory == null) {
+            return null
+        }
+
+        var working_file = DocumentFile.fromTreeUri(this, this.configuration.soundfont_directory!!) ?: return null
+        for (node in this.configuration.soundfont!!.split("/")) {
+            working_file = working_file.findFile(node) ?: return null
+        }
+
+        if (!working_file.exists()) {
+            return null
+        }
+
+        return working_file.uri
+    }
+
+    fun coax_relative_soundfont_path(soundfont_uri: Uri): String? {
+        if (this.configuration.soundfont_directory == null || soundfont_uri.authority != this.configuration.soundfont_directory!!.authority) {
+            return null
+        }
+
+        val parent_segments = this.configuration.soundfont_directory!!.pathSegments
+        val child_segments = soundfont_uri.pathSegments
+
+        if (parent_segments.size >= child_segments.size || child_segments.subList(0, parent_segments.size) != parent_segments) {
+            return null
+        }
+
+        val coaxed_segments = child_segments.last().split("/").toMutableList()
+        coaxed_segments.removeAt(0)
+
+        return coaxed_segments.joinToString("/")
+    }
+
+    // v1.7.7: Using custom projects directories rather than forcing external directory
+    fun ucheck_update_move_project_files() {
+        // Do ExternalFilesDir() check, Changed for 1.7.7
+        this.getExternalFilesDir(null)?.let {
+            val old_directory = File("$it/projects")
+            if (!old_directory.isDirectory) {
+                return
+            }
+
+            for (project in old_directory.listFiles()) {
+                // Use new path instead of copying file name to avoid collisions
+                val new_file = this.project_manager.get_new_file() ?: continue
+                val output_stream = this.contentResolver.openOutputStream(new_file.uri)
+                val input_stream = project.inputStream()
+
+                val buffer = ByteArray(4096)
+                while (true) {
+                    val read_size = input_stream.read(buffer)
+                    if (read_size == -1) {
+                        break
+                    }
+                    output_stream?.write(buffer, 0, read_size)
+                }
+
+                input_stream.close()
+                output_stream?.flush()
+                output_stream?.close()
+            }
+            this.project_manager.recache_project_list()
+            old_directory.deleteRecursively()
+        }
+    }
 }

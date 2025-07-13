@@ -1,11 +1,13 @@
 package com.qfs.apres.soundfont
 
+import android.content.Context
+import android.net.Uri
 import com.qfs.apres.toUInt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class SoundFont(file_path: String) {
-    class InvalidSoundFont(file_path: String): Exception("Not a soundfont $file_path")
+class SoundFont(val context: Context, uri: Uri) {
+    class InvalidSoundFont(uri: Uri): Exception("Not a soundfont $uri")
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
     class InvalidSampleType(i: Int): Exception("Unknown Sample Type $i")
@@ -29,7 +31,7 @@ class SoundFont(file_path: String) {
     private var icmt: String? = null
     private var isft: String? = null
 
-    private var riff: Riff
+    private val riff: Riff = Riff(this.context, uri)
 
     private var pdta_chunks = HashMap<String, ByteArray>()
     private var sample_data_cache =  HashMap<Pair<Int, Int>, CachedSampleData>()
@@ -51,10 +53,9 @@ class SoundFont(file_path: String) {
     }
 
     init {
-        this.riff = Riff(file_path)
         this.riff.with {
             if (riff.type_cc != "sfbk") {
-                throw InvalidSoundFont(file_path)
+                throw InvalidSoundFont(uri)
             }
 
             val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
@@ -361,7 +362,6 @@ class SoundFont(file_path: String) {
     }
 
     open fun read_rom_hook(start: Int, end: Int): SampleData {
-        println("GET ROM OOK")
         return SampleData(0)
     }
 

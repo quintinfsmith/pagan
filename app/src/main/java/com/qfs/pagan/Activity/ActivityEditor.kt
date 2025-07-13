@@ -17,6 +17,7 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.DocumentsContract
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.DisplayMetrics
@@ -121,12 +122,14 @@ import com.qfs.pagan.opusmanager.OpusReverbEvent
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import java.io.BufferedOutputStream
+import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
@@ -201,7 +204,6 @@ class ActivityEditor : PaganActivity() {
     private var _integer_dialog_defaults = HashMap<String, Int>()
     private var _float_dialog_defaults = HashMap<String, Float>()
     var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
-
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
@@ -223,6 +225,9 @@ class ActivityEditor : PaganActivity() {
     private var _blocker_scroll_y: Float? = null
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
+
+    lateinit private var bkp_path: String
+    lateinit private var bkp_path_path: String
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
@@ -361,8 +366,26 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private var _export_multi_line_wav_intent_launcher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) { result ->
+    private val set_project_directory_and_save_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { tree_uri  ->
+
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
+                    this@ActivityEditor.configuration.project_directory = tree_uri
+                    this@ActivityEditor.save_configuration()
+                    this@ActivityEditor.project_manager.change_project_path(tree_uri)
+                    this@ActivityEditor.ucheck_update_move_project_files()
+
+                    this._project_save()
+                }
+            }
+        }
+
+    }
+
+    private var _export_multi_line_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
             return@registerForActivityResult
@@ -416,10 +439,7 @@ class ActivityEditor : PaganActivity() {
                                 continue
                             }
 
-                            val file = directory.createFile(
-                                "audio/wav",
-                                getString(R.string.export_wav_lines_filename, c, l)
-                            ) ?: continue
+                            val file = directory.createFile("audio/wav", getString(R.string.export_wav_lines_filename, c, l)) ?: continue
                             val file_uri = file.uri
 
                             /* TMP file is necessary since we can't easily predict the exact frame count. */
@@ -855,6 +875,18 @@ class ActivityEditor : PaganActivity() {
     //    }
     //}
 
+    // Check if the soundfont was removed
+    fun soundfont_file_check() {
+        if (this.configuration.soundfont == null) {
+            return
+        }
+
+        if (this.get_soundfont_uri() == null) {
+            this.disable_soundfont()
+            this.update_menu_options()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
@@ -877,31 +909,37 @@ class ActivityEditor : PaganActivity() {
             this.playback_state_midi = PlaybackState.Ready
         }
         this.update_title_text()
+        this.soundfont_file_check()
     }
 
     fun delete_backup() {
-        File("${applicationInfo.dataDir}/.bkp.json").let { file ->
+        File(this.bkp_path).let { file ->
             if (file.exists()) {
                 file.delete()
             }
         }
-        File("${applicationInfo.dataDir}/.bkp_path").let { file ->
+
+        File(this.bkp_path_path).let { file ->
             if (file.exists()) {
                 file.delete()
             }
         }
     }
+
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
-        val path = opus_manager.path
-        if (path != null) {
-            val path_file = File("${applicationInfo.dataDir}/.bkp_path")
-            path_file.writeText(path)
-        }
-        opus_manager.save("${applicationInfo.dataDir}/.bkp.json")
+        val uri = this.project_manager.active_project?.uri
 
-        // saving changes the path, need to change it back
-        opus_manager.path = path
+        val path_file = File(this.bkp_path_path)
+        if (uri == null) {
+            if (path_file.exists()) {
+                path_file.delete()
+            }
+        } else {
+            path_file.writeText(uri.toString())
+        }
+
+        File(this.bkp_path).writeText(opus_manager.to_json().to_string())
     }
 
 
@@ -913,6 +951,7 @@ class ActivityEditor : PaganActivity() {
         this.save_to_backup()
         super.onSaveInstanceState(outState)
     }
+
     fun refresh(x: Int, y: Int) {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
@@ -921,7 +960,6 @@ class ActivityEditor : PaganActivity() {
         this.runOnUiThread {
             editor_table?.table_ui?.scroll(x, y)
         }
-
     }
 
     fun setup_new() {
@@ -930,10 +968,19 @@ class ActivityEditor : PaganActivity() {
         this.get_opus_manager().project_change_new()
     }
 
-    fun load_project(path: String) {
+    fun load_project(uri: Uri) {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
-        this.get_opus_manager().load_path(path)
+
+        val input_stream = this.contentResolver.openInputStream(uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content = reader.readText().toByteArray(Charsets.UTF_8)
+        reader.close()
+        input_stream?.close()
+
+        this.get_opus_manager().load(content) {
+            this.project_manager.set_project(uri)
+        }
     }
 
     fun load_from_bkp() {
@@ -941,25 +988,30 @@ class ActivityEditor : PaganActivity() {
         editor_table.clear()
 
         val opus_manager = this.get_opus_manager()
-        val bkp_json_path = "${this.applicationInfo.dataDir}/.bkp.json"
-        val bytes = FileInputStream(bkp_json_path).readBytes()
-        val backup_path: String = File("${this.applicationInfo.dataDir}/.bkp_path").readText()
-        opus_manager.load(bytes, backup_path)
+        val bytes = FileInputStream(this.bkp_path).readBytes()
+        opus_manager.load(bytes) {
+            val backup_path_file = File(this.bkp_path_path)
+            if (backup_path_file.exists()) {
+                val backup_path: String = backup_path_file.readText()
+                this.project_manager.set_project(backup_path.toUri())
+            } else {
+                this.project_manager.set_new_project()
+            }
+        }
+
     }
 
     private fun handle_uri(uri: Uri) {
-        val path_string = uri.toString()
-
         val type: CompatibleFileType? = try {
             this.get_file_type(uri)
         } catch (e: Exception) {
             null
         }
 
-        val inner_callback: ((String) -> Unit) = when (type) {
-            CompatibleFileType.Midi1 -> { path_string -> this.import_midi(path_string) }
-            CompatibleFileType.Pagan -> { path_string -> this.import_project(path_string) }
-            else -> { _ -> throw FileNotFoundException(path_string) }
+        val inner_callback: ((Uri) -> Unit) = when (type) {
+            CompatibleFileType.Midi1 -> { uri -> this.import_midi(uri) }
+            CompatibleFileType.Pagan -> { uri -> this.import_project(uri) }
+            else -> { _ -> throw FileNotFoundException(uri.toString()) }
         }
 
         this.dialog_save_project {
@@ -971,7 +1023,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 val fallback_msg = try {
-                    inner_callback(path_string)
+                    inner_callback(uri)
                     null
                 } catch (e: Exception) {
                     when (type) {
@@ -999,6 +1051,9 @@ class ActivityEditor : PaganActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        this.bkp_path = "${applicationInfo.dataDir}/.bkp.json"
+        this.bkp_path_path = "${applicationInfo.dataDir}/.bkp_path"
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
@@ -1129,12 +1184,11 @@ class ActivityEditor : PaganActivity() {
 
 
         //////////////////////////////////////////
-        if (this.configuration.soundfont != null) {
-            val path = "${this.getExternalFilesDir(null)}/SoundFonts/${this.configuration.soundfont}"
-            val sf_file = File(path)
-            if (sf_file.exists()) {
+        this.get_soundfont_uri()?.let { uri ->
+            val sf_file = DocumentFile.fromSingleUri(this, uri)
+            if (sf_file?.exists() == true) {
                 try {
-                    this._soundfont = SoundFont(path)
+                    this._soundfont = SoundFont(this, uri)
                     this.populate_supported_soundfont_instrument_names()
                     this._sample_handle_manager = SampleHandleManager(
                         this._soundfont!!,
@@ -1228,8 +1282,8 @@ class ActivityEditor : PaganActivity() {
             // if the activity is forgotten, the opus_manager is be uninitialized
             if (this.get_opus_manager().is_initialized()) {
                 this.refresh(
-                    savedInstanceState.getInt("x") ?: 0,
-                    savedInstanceState.getInt("y") ?: 0
+                    savedInstanceState.getInt("x"),
+                    savedInstanceState.getInt("y")
                 )
             } else {
                 this.load_from_bkp()
@@ -1239,7 +1293,7 @@ class ActivityEditor : PaganActivity() {
         } else if (this.is_bkp(this.intent.data!!)) {
             this.load_from_bkp()
         } else if (this.project_manager.contains(this.intent.data!!)) {
-            this.load_project(this.intent.data!!.toString())
+            this.load_project(this.intent.data!!)
         } else {
             this.handle_uri(this.intent.data!!)
         }
@@ -1273,9 +1327,9 @@ class ActivityEditor : PaganActivity() {
             }
 
             R.id.itmLoadProject -> {
-                this.dialog_load_project { path: String ->
+                this.dialog_load_project { uri: Uri ->
                     this.dialog_save_project {
-                        this.get_action_interface().load_project(path)
+                        this.get_action_interface().load_project(uri)
                     }
                 }
             }
@@ -1345,14 +1399,24 @@ class ActivityEditor : PaganActivity() {
         startActivity(Intent(this, ActivityAbout::class.java))
     }
 
-    fun project_save() {
+    private fun _project_save() {
         this.project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
     }
 
-    fun project_delete() {
-        this.project_manager.delete(this.get_opus_manager())
+    fun project_save() {
+        if (this.configuration.project_directory == null) {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            this.configuration.project_directory?.let {
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+            }
+            this.set_project_directory_and_save_intent_launcher.launch(intent)
+        } else {
+            this._project_save()
+        }
     }
 
     fun project_move_to_copy() {
@@ -1522,10 +1586,6 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    fun get_new_project_path(): String {
-        return this.project_manager.get_new_path()
-    }
-
     // Ui Wrappers ////////////////////////////////////////////
     private fun drawer_close() {
         this.get_action_interface().drawer_close()
@@ -1547,21 +1607,6 @@ class ActivityEditor : PaganActivity() {
             // pass, if it's not initialized, it's not locked
         }
     }
-
-
-    fun navigate(fragment: Int) {
-        //val navController = findNavController(R.id.nav_host_fragment_content_main)
-        //if (fragment == R.id.EditorFragment) {
-        //    this._has_seen_front_page = true
-        //}
-
-        //navController.navigate(fragment)
-    }
-
-    //fun get_active_fragment(): Fragment? {
-    //    val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-    //    return navHost?.childFragmentManager?.fragments?.get(0)
-    //}
 
     fun update_title_text() {
         this.set_title_text(
@@ -1637,13 +1682,15 @@ class ActivityEditor : PaganActivity() {
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
 
-        val file_exists = (opus_manager.path != null && File(opus_manager.path!!).isFile)
+        val file_exists = this.project_manager.active_project != null
         btnDeleteProject.isEnabled = file_exists
         btnCopyProject.isEnabled = file_exists
 
         btnDeleteProject.setOnClickListener {
             if (it.isEnabled) {
-                this.dialog_delete_project(this.get_opus_manager())
+                this.project_manager.active_project?.uri?.let { uri ->
+                    this.dialog_delete_project(uri)
+                }
             }
         }
 
@@ -1755,7 +1802,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 for (key in usable_range) {
-                    var use_name = if (usable_range.first != usable_range.last) {
+                    val use_name = if (usable_range.first != usable_range.last) {
                         "$name - ${(key - usable_range.first) + 1}"
                     } else {
                         name
@@ -1907,30 +1954,32 @@ class ActivityEditor : PaganActivity() {
         }()
     }
 
-    fun import_project(path: String) {
-        this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
+    fun import_project(uri: Uri) {
+        this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.get_opus_manager().load(bytes, this.project_manager.get_new_path())
+            this.get_opus_manager().load(bytes)
+            this.project_manager.set_new_project()
         }
     }
 
-    fun import_midi(path: String) {
-        val bytes = this.applicationContext.contentResolver.openFileDescriptor(path.toUri(), "r")?.use {
+    fun import_midi(uri: Uri) {
+        val bytes = this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             FileInputStream(it.fileDescriptor).readBytes()
-        } ?: throw InvalidMIDIFile(path)
+        } ?: throw InvalidMIDIFile(uri.toString())
 
         val midi = try {
             Midi.Companion.from_bytes(bytes)
         } catch (e: Exception) {
-            throw InvalidMIDIFile(path)
+            throw InvalidMIDIFile(uri.toString())
         }
 
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_midi(midi)
-        val filename = this.parse_file_name(path.toUri())
+        val filename = this.parse_file_name(uri)
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(
             R.string.default_imported_midi_title))
         opus_manager.clear_history()
+        this.project_manager.set_new_project()
     }
 
     fun populate_supported_soundfont_instrument_names() {
@@ -1959,8 +2008,8 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun set_soundfont() {
-        val filename = this.configuration.soundfont
-        if (filename == null) {
+        val file_path = this.configuration.soundfont
+        if (file_path == null) {
             this.disable_soundfont()
             return
         }
@@ -1970,9 +2019,21 @@ class ActivityEditor : PaganActivity() {
             return
         }
 
-        val path = "${this.getExternalFilesDir(null)}/SoundFonts/$filename"
+        val soundfont_directory = this.get_soundfont_directory()
+
+        var soundfont_file = soundfont_directory
+        for (segment in file_path.split("/")) {
+            soundfont_file = soundfont_file.findFile(segment) ?: return
+        }
+
+        if (!soundfont_file.exists()) {
+            // Possible if user puts the sf2 in their files manually
+            this.feedback_msg(getString(R.string.soundfont_not_found))
+            return
+
+        }
         try {
-            this._soundfont = SoundFont(path)
+            this._soundfont = SoundFont(this, soundfont_file.uri)
         } catch (e: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(getString(R.string.invalid_soundfont))
@@ -2403,16 +2464,19 @@ class ActivityEditor : PaganActivity() {
 
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
-        if (opus_manager.path == null) {
-            return true
-        }
 
-        if (!File(opus_manager.path!!).exists()) {
+        if (this.project_manager.active_project == null) {
             return !opus_manager.history_cache.isEmpty()
         }
-
         val other = OpusLayerBase()
-        other.load_path(opus_manager.path!!)
+        val input_stream = this.contentResolver.openInputStream(this.project_manager.active_project!!.uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content: ByteArray = reader.readText().toByteArray(Charsets.UTF_8)
+
+        other.load(content)
+
+        reader.close()
+        input_stream?.close()
 
         return opus_manager != other
     }
@@ -2530,7 +2594,7 @@ class ActivityEditor : PaganActivity() {
      * To be copied and saved somewhere accessible on reload.
      */
     fun bkp_crash_report(e: Throwable) {
-        val path = this.getExternalFilesDir(null).toString()
+        val path = this.applicationInfo.dataDir
         val file = File("$path/bkp_crashreport.log")
         file.writeText(e.stackTraceToString())
     }
@@ -3292,19 +3356,18 @@ class ActivityEditor : PaganActivity() {
         this.update_menu_options()
     }
 
-    override fun on_project_delete(project: OpusLayerBase) {
+    override fun on_project_delete(uri: Uri) {
         // TODO: Track
         this.drawer_close()
-        super.on_project_delete(project)
+        super.on_project_delete(uri)
         this.update_menu_options()
-        if (this.get_opus_manager().path == project.path) {
+        if (this.project_manager.active_project?.uri == uri) {
             this.delete_backup()
             this.setup_new()
         }
     }
 
     fun dialog_midi_device_management() {
-
         val device_management_view: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.midi_device_management,

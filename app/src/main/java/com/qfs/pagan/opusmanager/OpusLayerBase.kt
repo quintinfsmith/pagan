@@ -321,7 +321,6 @@ open class OpusLayerBase {
     var length: Int = 1
     var controllers = ActiveControlSet(length, setOf(ControlEventType.Tempo))
     var channels: MutableList<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> = mutableListOf()
-    var path: String? = null
     var project_name: String? = null
     var project_notes: String? = null
     var transpose: Pair<Int, Int> = Pair(0, 12)
@@ -3948,21 +3947,6 @@ open class OpusLayerBase {
         return midi
     }
 
-    open fun save(path: String? = null) {
-        if (path == null && this.path == null) {
-            throw EmptyPath()
-        }
-
-        if (path != null) {
-            this.path = path
-        }
-
-        val file_obj = File(this.path!!)
-
-        val generalized_object = this.to_json()
-        file_obj.writeText(generalized_object.to_string())
-    }
-
     open fun to_json(): JSONHashMap {
         val output = JSONHashMap()
 
@@ -4013,7 +3997,6 @@ open class OpusLayerBase {
         this.marked_sections.clear()
         this.length = 0
         this.channels.clear()
-        this.path = null
         this.project_name = null
         this.tuning_map = Array(12) {
             i: Int -> Pair(i, 12)
@@ -4052,12 +4035,7 @@ open class OpusLayerBase {
         this.recache_line_maps()
     }
 
-    fun load_path(path: String) {
-        val json_content = File(path).readBytes()
-        this.load(json_content, path)
-    }
-
-    open fun load(bytes: ByteArray, new_path: String? = null) {
+    open fun load(bytes: ByteArray, on_load_callback: (() -> Unit)? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
         var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
         var version = OpusManagerJSONInterface.detect_version(generalized_object)
@@ -4071,7 +4049,7 @@ open class OpusLayerBase {
             }
         }
 
-        this.project_change_json(generalized_object, new_path)
+        this.project_change_json(generalized_object, on_load_callback)
     }
 
     open fun project_change_wrapper(callback: () -> Unit) {
@@ -4100,13 +4078,14 @@ open class OpusLayerBase {
         this.import_from_other(initialize_basic())
     }
 
-    fun project_change_json(json_data: JSONHashMap, forced_path: String? = null) {
+    fun project_change_json(json_data: JSONHashMap, on_load_callback: (() -> Unit)? = null) {
         this.project_change_wrapper {
-            this._project_change_json(json_data, forced_path)
+            this._project_change_json(json_data)
+            on_load_callback?.let { it() }
         }
     }
 
-    open fun _project_change_json(json_data: JSONHashMap, forced_path: String? = null) {
+    open fun _project_change_json(json_data: JSONHashMap) {
         val inner_map = json_data["d"] as JSONHashMap
         this.set_project_name(inner_map.get_stringn("title"))
         this.set_project_notes(inner_map.get_stringn("notes"))
@@ -4151,8 +4130,6 @@ open class OpusLayerBase {
                 }
             }
         }
-
-        this.path = forced_path
     }
 
     fun project_change_midi(midi: Midi) {
@@ -4727,7 +4704,6 @@ open class OpusLayerBase {
         this.clear()
         this.length = other.length
         this.channels = other.channels
-        this.path = other.path
         this.project_name = other.project_name
         this.tuning_map = other.tuning_map.clone()
         this.transpose = other.transpose.copy()
@@ -4748,7 +4724,6 @@ open class OpusLayerBase {
     override fun equals(other: Any?): Boolean {
         if (other !is OpusLayerBase
             || this.length != other.length
-            || this.path != other.path
             || this.project_name != other.project_name
             || this.project_notes != other.project_notes
             || this.transpose != other.transpose
@@ -4917,7 +4892,6 @@ open class OpusLayerBase {
         var result = this.length
         result = ((result shl 5) + (result shr 27)).xor(this.controllers.hashCode())
         result = ((result shl 5) + (result shr 27)).xor(this.channels.hashCode())
-        result = ((result shl 5) + (result shr 27)).xor((this.path?.hashCode() ?: 0))
         result = ((result shl 5) + (result shr 27)).xor((this.project_name?.hashCode() ?: 0))
         result = ((result shl 5) + (result shr 27)).xor(this.transpose.hashCode())
         result = ((result shl 5) + (result shr 27)).xor(this.tuning_map.contentHashCode())

@@ -123,10 +123,10 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<View>(R.id.btnFrontLoad).setOnClickListener {
-            this.dialog_load_project { path : String ->
+            this.dialog_load_project { uri : Uri ->
                 startActivity(
                     Intent(this, ActivityEditor::class.java).apply {
-                        data = path.toUri()
+                        data = uri
                     }
                 )
             }

@@ -235,6 +235,7 @@
     <string name="btn_settings_set_soundfont_directory">Set Location</string>
     <string name="label_settings_soundfont_directory">Soundfont Directory</string>
     <string name="label_settings_projects_directory">Projects Directory</string>
+    <string name="settings_need_soundfont_directory">First, set a location to store soundfonts.</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

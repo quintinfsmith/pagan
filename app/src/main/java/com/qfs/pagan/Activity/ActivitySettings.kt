@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -89,6 +90,35 @@ class ActivitySettings : PaganActivity() {
             }
         }
     }
+
+    internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this@ActivitySettings.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this@ActivitySettings.configuration.project_directory = uri
+                    this@ActivitySettings.project_manager.change_project_path(uri)
+                    this@ActivitySettings.ucheck_update_move_project_files()
+                    this@ActivitySettings.set_project_directory_button_text()
+                }
+            }
+        }
+    }
+
+    internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this@ActivitySettings.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this@ActivitySettings.set_soundfont_directory(uri)
+                    this@ActivitySettings.set_soundfont_directory_button_text()
+                }
+            }
+        }
+    }
+
 
     private fun update_result() {
         // RESULT_OK lets the other activities know they need to reload the configuration
@@ -238,10 +268,53 @@ class ActivitySettings : PaganActivity() {
             }
         }
 
+        this.findViewById<Button>(R.id.btn_set_project_directory).setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            this.configuration.project_directory?.let {
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+            }
+            this._set_project_directory_intent_launcher.launch(intent)
+        }
+
+        this.findViewById<Button>(R.id.btn_settings_set_soundfont_directory).setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            intent.putExtra(Intent.EXTRA_TITLE, "Soundfonts")
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            this.configuration.soundfont_directory?.let {
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+            }
+            this._set_soundfont_directory_intent_launcher.launch(intent)
+        }
+
+        this.set_project_directory_button_text()
+        this.set_soundfont_directory_button_text()
+
+
+
         this.setResult(RESULT_CANCELED)
 
         if (this.configuration.soundfont_directory == null) {
             this.initial_dialog_select_soundfont_directory()
+        }
+    }
+
+    fun set_project_directory_button_text() {
+        this.findViewById<Button>(R.id.btn_set_project_directory).text = if (this.configuration.project_directory == null) {
+            this.getString(R.string.btn_settings_set_project_directory)
+        } else {
+            val last_segment = this.configuration.project_directory!!.pathSegments.last()
+            last_segment.substring(last_segment.indexOf(":") + 1, last_segment.length)
+        }
+    }
+
+    fun set_soundfont_directory_button_text() {
+        this.findViewById<Button>(R.id.btn_settings_set_soundfont_directory).text = if (this.configuration.soundfont_directory == null) {
+            this.getString(R.string.btn_settings_set_soundfont_directory)
+        } else {
+            val last_segment = this.configuration.soundfont_directory!!.pathSegments.last()
+            last_segment.substring(last_segment.indexOf(":") + 1, last_segment.length)
         }
     }
 

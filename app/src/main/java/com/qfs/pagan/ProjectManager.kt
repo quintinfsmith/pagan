@@ -24,7 +24,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
     var active_project: DocumentFile? = null
 
     init {
-        this._cache_project_list()
+        this.recache_project_list()
     }
     fun move_old_projects_directory(old_path: Uri) {
         val old_directory = DocumentFile.fromTreeUri(this.context, old_path) ?: return
@@ -33,7 +33,11 @@ class ProjectManager(val context: Context, var path: Uri?) {
         }
 
         for (project in old_directory.listFiles()) {
+            if (!project.isFile) {
+                continue
+            }
             // Use new path instead of copying file name to avoid collisions
+            println("${project.uri}")
             val new_file = this.get_new_file() ?: continue
             val output_stream = this.context.contentResolver.openOutputStream(new_file.uri)
             val input_stream = this.context.contentResolver.openInputStream(project.uri)
@@ -52,7 +56,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
             output_stream?.flush()
             output_stream?.close()
         }
-        this._cache_project_list()
+        this.recache_project_list()
     }
 
     fun set_new_project() {
@@ -157,7 +161,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         return this.context.getString(R.string.untitled_op, now.format(formatter))
     }
 
-    private fun _cache_project_list() {
+    fun recache_project_list() {
         val file = File(this._cache_path)
         if (!this.has_projects_saved()) {
             if (file.exists()) {
@@ -210,7 +214,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         }
 
         if (!File(this._cache_path).exists()) {
-            this._cache_project_list()
+            this.recache_project_list()
         }
 
         val file = File(this._cache_path)
@@ -226,7 +230,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         } catch (_: Exception) {
             // Corruption Protection: if the cache file is bad json, delete and rebuild
             File(this._cache_path).delete()
-            this._cache_project_list()
+            this.recache_project_list()
             string_content = File(this._cache_path).readText(Charsets.UTF_8)
 
             json.decodeFromString(string_content)

@@ -231,6 +231,10 @@
     <string name="unknown_midi_device">Unknown Device #%1$d</string>
     <string name="fira_sans_license_blurb">Fira Sans bundled under the terms of the SIL Open Font License.</string>
     <string name="soundfont_not_found">Soundfont Not Found.</string>
+    <string name="btn_settings_set_project_directory">Set Location</string>
+    <string name="btn_settings_set_soundfont_directory">Set Location</string>
+    <string name="label_settings_soundfont_directory">Soundfont Directory</string>
+    <string name="label_settings_projects_directory">Projects Directory</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

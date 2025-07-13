@@ -17,6 +17,7 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.DocumentsContract
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.DisplayMetrics
@@ -369,11 +370,13 @@ class ActivityEditor : PaganActivity() {
         if (result.resultCode == RESULT_OK) {
             result?.data?.also { result_data ->
                 result_data.data?.also { tree_uri  ->
+
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
                     this@ActivityEditor.configuration.project_directory = tree_uri
                     this@ActivityEditor.save_configuration()
                     this@ActivityEditor.project_manager.change_project_path(tree_uri)
+                    this@ActivityEditor.ucheck_update_move_project_files()
 
                     this._project_save()
                 }
@@ -1407,6 +1410,9 @@ class ActivityEditor : PaganActivity() {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
             intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
             intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            this.configuration.project_directory?.let {
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+            }
             this.set_project_directory_and_save_intent_launcher.launch(intent)
         } else {
             this._project_save()

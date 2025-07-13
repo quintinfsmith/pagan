@@ -45,61 +45,39 @@ open class PaganActivity: AppCompatActivity() {
     internal lateinit var project_manager: ProjectManager
     private var _progress_bar: ConstraintLayout? = null
 
-    internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this@PaganActivity.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this@PaganActivity.configuration.project_directory = uri
-                    this@PaganActivity.project_manager.change_project_path(uri)
-                }
-            }
-        }
-    }
+    //
+    fun ucheck_move_soundfonts() {
+        val uri = this.configuration.soundfont_directory ?: return
+        DocumentFile.fromTreeUri(this, uri)?.let { new_directory ->
+            this.get_soundfont_directory().let { old_directory ->
+                for (soundfont in old_directory.listFiles()) {
+                    val soundfont_name = soundfont.uri.pathSegments.last().split("/").last()
+                    new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
+                        val input_stream = this.contentResolver.openInputStream(soundfont.uri)
+                        val output_stream = this.contentResolver.openOutputStream(new_file.uri)
 
-    internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this@PaganActivity.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this@PaganActivity.set_soundfont_directory(uri)
+                        val buffer = ByteArray(1024)
+                        while (true) {
+                            val read_size = input_stream?.read(buffer) ?: break
+                            if (read_size == -1) {
+                                break
+                            }
+                            output_stream?.write(buffer, 0, read_size)
+                        }
+
+                        input_stream?.close()
+                        output_stream?.flush()
+                        output_stream?.close()
+                    }
                 }
             }
         }
     }
 
     fun set_soundfont_directory(uri: Uri) {
-        if (this.configuration.soundfont_directory == null) {
-            DocumentFile.fromTreeUri(this,uri)?.let { new_directory ->
-                this.get_soundfont_directory().let { old_directory ->
-                    for (soundfont in old_directory.listFiles()) {
-                        val soundfont_name = soundfont.uri.pathSegments.last().split("/").last()
-                        new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
-                            val input_stream = this.contentResolver.openInputStream(soundfont.uri)
-                            val output_stream = this.contentResolver.openOutputStream(new_file.uri)
-
-                            val buffer = ByteArray(1024)
-                            while (true) {
-                                val read_size = input_stream?.read(buffer) ?: break
-                                if (read_size == -1) {
-                                    break
-                                }
-                                output_stream?.write(buffer, 0, read_size)
-                            }
-
-                            input_stream?.close()
-                            output_stream?.flush()
-                            output_stream?.close()
-                        }
-                    }
-                }
-            }
-        }
-
         this.configuration.soundfont_directory = uri
         this.save_configuration()
+        this.ucheck_update_move_project_files()
     }
 
     fun get_soundfont_directory(): DocumentFile {
@@ -165,13 +143,6 @@ open class PaganActivity: AppCompatActivity() {
         if (this.configuration.project_directory != original.project_directory && this.configuration.project_directory != null) {
             this.project_manager.change_project_path(this.configuration.project_directory!!)
 
-            // Do ExternalFilesDir() check, Changed for 1.7.7
-            this.getExternalFilesDir(null)?.let {
-                TODO("TEST THIS")
-                val old_uri = "$it/projects".toUri()
-                this.project_manager.move_old_projects_directory(old_uri)
-                old_uri.toFile().deleteRecursively()
-            }
         }
     }
 
@@ -500,9 +471,10 @@ open class PaganActivity: AppCompatActivity() {
     fun loading_reticle_hide() {
         thread {
             this.runOnUiThread {
-                val progressBar = this._progress_bar ?: return@runOnUiThread
-                if (progressBar.parent != null) {
-                    (progressBar.parent as ViewGroup).removeView(progressBar)
+                this._progress_bar?.let {
+                    if (it.parent != null) {
+                        (it.parent as ViewGroup).removeView(it)
+                    }
                 }
             }
         }
@@ -543,4 +515,36 @@ open class PaganActivity: AppCompatActivity() {
         return coaxed_segments.joinToString("/")
     }
 
+    // v1.7.7: Using custom projects directories rather than forcing external directory
+    fun ucheck_update_move_project_files() {
+        // Do ExternalFilesDir() check, Changed for 1.7.7
+        this.getExternalFilesDir(null)?.let {
+            val old_directory = File("$it/projects")
+            if (!old_directory.isDirectory) {
+                return
+            }
+
+            for (project in old_directory.listFiles()) {
+                // Use new path instead of copying file name to avoid collisions
+                val new_file = this.project_manager.get_new_file() ?: continue
+                val output_stream = this.contentResolver.openOutputStream(new_file.uri)
+                val input_stream = project.inputStream()
+
+                val buffer = ByteArray(4096)
+                while (true) {
+                    val read_size = input_stream.read(buffer)
+                    if (read_size == -1) {
+                        break
+                    }
+                    output_stream?.write(buffer, 0, read_size)
+                }
+
+                input_stream.close()
+                output_stream?.flush()
+                output_stream?.close()
+            }
+            this.project_manager.recache_project_list()
+            old_directory.deleteRecursively()
+        }
+    }
 }

@@ -993,12 +993,15 @@ class ActivityEditor : PaganActivity() {
             val backup_path_file = File(this.bkp_path_path)
             if (backup_path_file.exists()) {
                 val backup_path: String = backup_path_file.readText()
-                this.project_manager.set_project(backup_path.toUri())
+                if (DocumentFile.fromSingleUri(this, backup_path.toUri())?.exists() == true) {
+                    this.project_manager.set_project(backup_path.toUri())
+                } else {
+                    this.project_manager.set_new_project()
+                }
             } else {
                 this.project_manager.set_new_project()
             }
         }
-
     }
 
     private fun handle_uri(uri: Uri) {
@@ -1400,9 +1403,15 @@ class ActivityEditor : PaganActivity() {
     }
 
     private fun _project_save() {
+        this.loading_reticle_show()
         this.project_manager.save(this.get_opus_manager())
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
+        val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
+        val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
+        btnDeleteProject.isEnabled = true
+        btnCopyProject.isEnabled = true
+        this.loading_reticle_hide()
     }
 
     fun project_save() {
@@ -2469,6 +2478,11 @@ class ActivityEditor : PaganActivity() {
             return !opus_manager.history_cache.isEmpty()
         }
         val other = OpusLayerBase()
+
+        if (!this.project_manager.active_project!!.exists()) {
+            return true
+        }
+
         val input_stream = this.contentResolver.openInputStream(this.project_manager.active_project!!.uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
         val content: ByteArray = reader.readText().toByteArray(Charsets.UTF_8)

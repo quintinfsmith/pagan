@@ -180,7 +180,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
             val project_name = try {
                 this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name()
             } catch (e: Exception) {
-                this.context.getString(R.string.corrupted_project)
+                continue
             }
             project_list.add(Pair(json_file.uri.toString(), project_name))
         }

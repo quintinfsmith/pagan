@@ -36,6 +36,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.NumberPicker
+import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
@@ -43,6 +44,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -257,12 +259,9 @@ class ActivityEditor : PaganActivity() {
             }
 
             this.activity.runOnUiThread {
-                val btnExportProject = this.activity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
-                btnExportProject.setIconResource(R.drawable.baseline_cancel_42)
-                val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
-                llExportProgress.visibility = View.VISIBLE
-                val tvExportProgress = this.activity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
-                tvExportProgress.text = "0%"
+                this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.INVISIBLE
+                this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.VISIBLE
+                this.activity.findViewById<ProgressBar>(R.id.export_progress_bar).progress = 0
             }
 
             val builder = this.activity.get_notification() ?: return
@@ -308,10 +307,8 @@ class ActivityEditor : PaganActivity() {
             this.activity.feedback_msg(this.activity.getString(R.string.export_wav_feedback_complete))
 
             this.activity.runOnUiThread {
-                val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
-                llExportProgress.visibility = View.GONE
-                val btnExportProject = this.activity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
-                btnExportProject.setIconResource(R.drawable.export)
+                this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
+                this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
             }
             this.activity._active_notification = null
         }
@@ -320,10 +317,8 @@ class ActivityEditor : PaganActivity() {
             this.cancelled = true
             this.activity.feedback_msg(this.activity.getString(R.string.export_cancelled))
             this.activity.runOnUiThread {
-                val llExportProgress = this.activity.findViewById<View>(R.id.llExportProgress) ?: return@runOnUiThread
-                llExportProgress.visibility = View.GONE
-                val btnExportProject = this.activity.findViewById<MaterialButton>(R.id.btnExportProject) ?: return@runOnUiThread
-                btnExportProject.setIconResource(R.drawable.export)
+                this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
+                this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
             }
 
             val builder = this.activity.get_notification() ?: return
@@ -344,8 +339,8 @@ class ActivityEditor : PaganActivity() {
         override fun on_progress_update(progress: Double) {
             val progress_rounded = ((progress + this.working_y) * 100.0 / this.total_count.toDouble()).roundToInt()
             this.activity.runOnUiThread {
-                val tvExportProgress = this.activity.findViewById<TextView>(R.id.tvExportProgress) ?: return@runOnUiThread
-                tvExportProgress.text = this.activity.getString(R.string.label_export_progress, progress_rounded)
+                val progress_bar = this.activity.findViewById<ProgressBar>(R.id.export_progress_bar) ?: return@runOnUiThread
+                progress_bar.progress = progress_rounded
             }
 
             val builder = this.activity.get_notification() ?: return
@@ -687,19 +682,9 @@ class ActivityEditor : PaganActivity() {
 
                             override fun on_start() {
                                 this@ActivityEditor.runOnUiThread {
-                                    val btnExportProject =
-                                        this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)
-                                            ?: return@runOnUiThread
-                                    btnExportProject.setIconResource(R.drawable.baseline_cancel_42)
-                                    val llExportProgress =
-                                        this@ActivityEditor.findViewById<View>(R.id.llExportProgress)
-                                            ?: return@runOnUiThread
-                                    llExportProgress.visibility = View.VISIBLE
-
-                                    val tvExportProgress =
-                                        this@ActivityEditor.findViewById<TextView>(R.id.tvExportProgress)
-                                            ?: return@runOnUiThread
-                                    tvExportProgress.text = "0%"
+                                    this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.INVISIBLE
+                                    this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.VISIBLE
+                                    this@ActivityEditor.findViewById<ProgressBar>(R.id.export_progress_bar).progress = 0
                                 }
                                 this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_wav_feedback))
                                 val builder = this@ActivityEditor.get_notification() ?: return
@@ -749,14 +734,8 @@ class ActivityEditor : PaganActivity() {
                                 this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_wav_feedback_complete))
 
                                 this@ActivityEditor.runOnUiThread {
-                                    val llExportProgress =
-                                        this@ActivityEditor.findViewById<View>(R.id.llExportProgress)
-                                            ?: return@runOnUiThread
-                                    llExportProgress.visibility = View.GONE
-                                    val btnExportProject =
-                                        this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)
-                                            ?: return@runOnUiThread
-                                    btnExportProject.setIconResource(R.drawable.export)
+                                    this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
+                                    this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
                                 }
                                 this@ActivityEditor._active_notification = null
                             }
@@ -766,14 +745,8 @@ class ActivityEditor : PaganActivity() {
 
                                 this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_cancelled))
                                 this@ActivityEditor.runOnUiThread {
-                                    val llExportProgress =
-                                        this@ActivityEditor.findViewById<View>(R.id.llExportProgress)
-                                            ?: return@runOnUiThread
-                                    llExportProgress.visibility = View.GONE
-                                    val btnExportProject =
-                                        this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)
-                                            ?: return@runOnUiThread
-                                    btnExportProject.setIconResource(R.drawable.export)
+                                    this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
+                                    this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
                                 }
 
                                 val builder = this@ActivityEditor.get_notification() ?: return
@@ -798,11 +771,7 @@ class ActivityEditor : PaganActivity() {
                             override fun on_progress_update(progress: Double) {
                                 val progress_rounded = (progress * 100.0).roundToInt()
                                 this@ActivityEditor.runOnUiThread {
-                                    val tvExportProgress =
-                                        this@ActivityEditor.findViewById<TextView>(R.id.tvExportProgress)
-                                            ?: return@runOnUiThread
-                                    tvExportProgress.text =
-                                        getString(R.string.label_export_progress, progress_rounded)
+                                    this@ActivityEditor.findViewById<ProgressBar>(R.id.export_progress_bar)?.progress = progress_rounded
                                 }
 
                                 val builder = this@ActivityEditor.get_notification() ?: return
@@ -1697,6 +1666,7 @@ class ActivityEditor : PaganActivity() {
             true
         }
 
+
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
 
@@ -1717,6 +1687,10 @@ class ActivityEditor : PaganActivity() {
                 this.get_action_interface().project_copy()
             }
         }
+
+        this.findViewById<View>(R.id.export_progress_cancel).setOnClickListener {
+            this.export_wav_cancel()
+        }
     }
 
     internal fun _build_dialog_title_view(text: String): TextView {
@@ -1726,41 +1700,35 @@ class ActivityEditor : PaganActivity() {
     }
 
     internal fun setup_project_config_drawer_export_button() {
-        val export_options = this.get_exportable_options()
-        val export_button = this.findViewById<MaterialButton>(R.id.btnExportProject) ?: return
-        val export_progress_wrapper = this.findViewById<LinearLayout>(R.id.llExportProgress) ?: return
-        if (!this.editor_view_model.is_exporting()) {
-            export_button.setIconResource(R.drawable.export)
-            export_progress_wrapper.visibility = View.GONE
-        } else {
-            export_button.setIconResource(R.drawable.baseline_cancel_42)
-            export_progress_wrapper.visibility = View.VISIBLE
+        this.findViewById<ConstraintLayout>(R.id.clExportProgress)?.let { export_progress_wrapper ->
+            export_progress_wrapper.visibility = if (!this.editor_view_model.is_exporting()) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
         }
 
-        if (export_options.isNotEmpty()) {
-            export_button.setOnClickListener {
-                if (!this.editor_view_model.is_exporting()) {
-                    this.dialog_popup_menu(
-                        getString(R.string.dlg_export),
-                        export_options,
-                        default = null
-                    ) { _: Int, value: Int ->
-                        when (value) {
-                            0 -> this.export_project()
-                            1 -> this.export_midi_check()
-                            2 -> this.export_wav() // DEBUG
-                            3 -> this.export_multi_lines_wav() // DEBUG
-                            4 -> this.export_multi_channels_wav() // DEBUG
-                        }
+        this.findViewById<View>(R.id.btnExportProject).let {
+            val export_options = this.get_exportable_options()
+            it.visibility = if (export_options.isEmpty() || this.editor_view_model.is_exporting()) {
+                View.INVISIBLE
+            } else {
+                View.VISIBLE
+            }
+
+            it.setOnClickListener {
+                this.dialog_popup_menu(getString(R.string.dlg_export), export_options, default = null) { _: Int, value: Int ->
+                    when (value) {
+                        0 -> this.export_project()
+                        1 -> this.export_midi_check()
+                        2 -> this.export_wav()
+                        3 -> this.export_multi_lines_wav()
+                        4 -> this.export_multi_channels_wav()
                     }
-                } else {
-                    this.export_wav_cancel()
                 }
             }
-            export_button.visibility = View.VISIBLE
-        } else {
-            export_button.visibility = View.GONE
         }
+
     }
 
     private fun get_exportable_options(): List<Pair<Int, String>> {

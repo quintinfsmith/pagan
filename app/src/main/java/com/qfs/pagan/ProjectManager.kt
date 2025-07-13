@@ -21,7 +21,6 @@ class ProjectManager(val context: Context, var path: Uri?) {
     class InvalidDirectory(path: Uri): Exception("Real Directory Required ($path)")
     class PathNotSetException(): Exception("Projects path has not been set.")
     private val _cache_path = "${context.applicationContext.dataDir}/project_list.json"
-    var active_project: DocumentFile? = null
 
     init {
         this.recache_project_list()
@@ -37,9 +36,8 @@ class ProjectManager(val context: Context, var path: Uri?) {
                 continue
             }
             // Use new path instead of copying file name to avoid collisions
-            println("${project.uri}")
-            val new_file = this.get_new_file() ?: continue
-            val output_stream = this.context.contentResolver.openOutputStream(new_file.uri)
+            val new_uri = this.get_new_file_uri() ?: continue
+            val output_stream = this.context.contentResolver.openOutputStream(new_uri)
             val input_stream = this.context.contentResolver.openInputStream(project.uri)
 
 
@@ -57,14 +55,6 @@ class ProjectManager(val context: Context, var path: Uri?) {
             output_stream?.close()
         }
         this.recache_project_list()
-    }
-
-    fun set_new_project() {
-        this.active_project = null
-    }
-
-    fun set_project(uri: Uri) {
-        this.active_project = DocumentFile.fromSingleUri(this.context, uri)
     }
 
     fun change_project_path(new_uri: Uri) {
@@ -85,7 +75,10 @@ class ProjectManager(val context: Context, var path: Uri?) {
             return false
         }
 
-        val output = uri.authority == this.path?.authority && uri.pathSegments.size > this.path!!.pathSegments.size  && uri.pathSegments.subList(0, this.path!!.pathSegments.size) == this.path!!.pathSegments
+        val parent_segments = this.path!!.pathSegments.last().split("/")
+        val child_segments = uri.pathSegments.last().split("/")
+
+        val output = uri.authority == this.path?.authority && child_segments.size > parent_segments.size  && child_segments.subList(0, parent_segments.size) == parent_segments
         return output
     }
 
@@ -106,17 +99,13 @@ class ProjectManager(val context: Context, var path: Uri?) {
             "$old_title (Copy)"
         }
 
-        this.active_project = null
         opus_manager.project_name = new_title
     }
 
-    fun save(opus_manager: OpusManager) {
-        if (this.active_project == null) {
-            this.active_project = this.get_new_file()
-        }
-
+    fun save(opus_manager: OpusManager, uri: Uri?): Uri {
+        val active_project_uri = uri ?: this.get_new_file_uri() ?: throw Exception("Failed To create new file")
         // Untrack then track in order to update the project title in the cache
-        this.active_project?.uri?.let {
+        active_project_uri.let {
             val content = opus_manager.to_json()
             val output_stream = this.context.contentResolver.openOutputStream(it)
             val stream_writer = OutputStreamWriter(output_stream)
@@ -129,8 +118,10 @@ class ProjectManager(val context: Context, var path: Uri?) {
             this._untrack_uri(it)
             this._track_path(it)
         }
+
+        return active_project_uri
     }
-    fun get_new_file(): DocumentFile? {
+    fun get_new_file_uri(): Uri? {
         if (this.path == null) {
             throw PathNotSetException()
         }
@@ -140,7 +131,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
             i += 1
         }
 
-        return working_directory.createFile("application/json", "opus_$i.json")
+        return working_directory.createFile("application/json", "opus_$i.json")?.uri
     }
 
     fun has_projects_saved(): Boolean {
@@ -190,7 +181,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         file.writeText(json_string)
     }
 
-    private fun get_file_project_name(uri: Uri): String? {
+    fun get_file_project_name(uri: Uri): String? {
         val input_stream = this.context.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
         val content = reader.readText()
@@ -303,13 +294,5 @@ class ProjectManager(val context: Context, var path: Uri?) {
         val json_string = json.encodeToString(adj_project_list)
         val file = File(this._cache_path)
         file.writeText(json_string)
-    }
-
-    fun get_active_project_name(): String? {
-        return if (this.active_project == null) {
-            null
-        } else {
-            this.get_file_project_name(this.active_project!!.uri) ?: this.context.getString(R.string.untitled_opus)
-        }
     }
 }

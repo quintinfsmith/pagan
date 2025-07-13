@@ -1216,7 +1216,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
             }
         }
-        activity.project_manager.set_new_project()
+        activity.active_project = null
     }
 
     // This function is called from the Base Layer within th project_change_wrapper.
@@ -1224,7 +1224,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
         val activity = this.get_activity()!!
-        activity.project_manager.set_new_project()
+        activity.active_project = null
     }
 
 

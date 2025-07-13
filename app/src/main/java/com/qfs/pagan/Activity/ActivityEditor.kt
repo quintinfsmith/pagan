@@ -157,6 +157,7 @@ class ActivityEditor : PaganActivity() {
         var export_handle: WavConverter? = null
         var action_interface = ActionTracker()
         var opus_manager = OpusLayerInterface()
+        var active_project: Uri? = null
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -198,7 +199,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    val view_model: MainViewModel by viewModels()
+    val editor_view_model: MainViewModel by viewModels()
     private var initial_load = true // Used to prevent save dialog from popping up on first load/new/import
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _integer_dialog_defaults = HashMap<String, Int>()
@@ -225,6 +226,12 @@ class ActivityEditor : PaganActivity() {
     private var _blocker_scroll_y: Float? = null
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
+
+    var active_project: Uri?
+        get() = this.editor_view_model.active_project
+        set(value) {
+            this.editor_view_model.active_project = value
+        }
 
     lateinit private var bkp_path: String
     lateinit private var bkp_path_path: String
@@ -375,7 +382,7 @@ class ActivityEditor : PaganActivity() {
                     this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
                     this@ActivityEditor.configuration.project_directory = tree_uri
                     this@ActivityEditor.save_configuration()
-                    this@ActivityEditor.project_manager.change_project_path(tree_uri)
+                    this@ActivityEditor.get_project_manager().change_project_path(tree_uri)
                     this@ActivityEditor.ucheck_update_move_project_files()
 
                     this._project_save()
@@ -395,7 +402,7 @@ class ActivityEditor : PaganActivity() {
         thread {
             if (result.resultCode == RESULT_OK) {
                 result?.data?.data?.also { tree_uri ->
-                    if (this.view_model.export_handle != null) {
+                    if (this.editor_view_model.export_handle != null) {
                         return@thread
                     }
                     val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
@@ -476,7 +483,7 @@ class ActivityEditor : PaganActivity() {
                             val data_output_buffer = DataOutputStream(buffered_output_stream)
 
                             export_event_handler.update(y++, file_uri)
-                            this.view_model.export_wav(
+                            this.editor_view_model.export_wav(
                                 opus_manager_copy,
                                 exporter_sample_handle_manager,
                                 data_output_buffer,
@@ -516,7 +523,7 @@ class ActivityEditor : PaganActivity() {
         thread {
             if (result.resultCode == RESULT_OK) {
                 result?.data?.data?.also { tree_uri ->
-                    if (this.view_model.export_handle != null) {
+                    if (this.editor_view_model.export_handle != null) {
                         return@thread
                     }
                     val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
@@ -598,7 +605,7 @@ class ActivityEditor : PaganActivity() {
                         val data_output_buffer = DataOutputStream(buffered_output_stream)
 
                         export_event_handler.update(y++, file_uri)
-                        this.view_model.export_wav(
+                        this.editor_view_model.export_wav(
                             opus_manager_copy,
                             exporter_sample_handle_manager,
                             data_output_buffer,
@@ -636,7 +643,7 @@ class ActivityEditor : PaganActivity() {
         thread {
             if (result.resultCode == RESULT_OK) {
                 result?.data?.data?.also { uri ->
-                    if (this.view_model.export_handle != null) {
+                    if (this.editor_view_model.export_handle != null) {
                         return@thread
                     }
 
@@ -660,7 +667,7 @@ class ActivityEditor : PaganActivity() {
                     val buffered_output_stream = BufferedOutputStream(output_stream)
                     val data_output_buffer = DataOutputStream(buffered_output_stream)
 
-                    this.view_model.export_wav(
+                    this.editor_view_model.export_wav(
                         this.get_opus_manager(),
                         exporter_sample_handle_manager,
                         data_output_buffer,
@@ -928,7 +935,7 @@ class ActivityEditor : PaganActivity() {
 
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
-        val uri = this.project_manager.active_project?.uri
+        val uri = this.active_project
 
         val path_file = File(this.bkp_path_path)
         if (uri == null) {
@@ -979,7 +986,7 @@ class ActivityEditor : PaganActivity() {
         input_stream?.close()
 
         this.get_opus_manager().load(content) {
-            this.project_manager.set_project(uri)
+            this.active_project = uri
         }
     }
 
@@ -991,15 +998,16 @@ class ActivityEditor : PaganActivity() {
         val bytes = FileInputStream(this.bkp_path).readBytes()
         opus_manager.load(bytes) {
             val backup_path_file = File(this.bkp_path_path)
+
             if (backup_path_file.exists()) {
                 val backup_path: String = backup_path_file.readText()
                 if (DocumentFile.fromSingleUri(this, backup_path.toUri())?.exists() == true) {
-                    this.project_manager.set_project(backup_path.toUri())
+                    this.active_project = backup_path.toUri()
                 } else {
-                    this.project_manager.set_new_project()
+                    this.active_project = null
                 }
             } else {
-                this.project_manager.set_new_project()
+                this.active_project = null
             }
         }
     }
@@ -1182,8 +1190,8 @@ class ActivityEditor : PaganActivity() {
             true
         }
 
-        this.view_model.action_interface.attach_activity(this)
-        this.view_model.opus_manager.attach_activity(this)
+        this.editor_view_model.action_interface.attach_activity(this)
+        this.editor_view_model.opus_manager.attach_activity(this)
 
 
         //////////////////////////////////////////
@@ -1295,7 +1303,7 @@ class ActivityEditor : PaganActivity() {
             this.setup_new()
         } else if (this.is_bkp(this.intent.data!!)) {
             this.load_from_bkp()
-        } else if (this.project_manager.contains(this.intent.data!!)) {
+        } else if (this.get_project_manager().contains(this.intent.data!!)) {
             this.load_project(this.intent.data!!)
         } else {
             this.handle_uri(this.intent.data!!)
@@ -1404,7 +1412,7 @@ class ActivityEditor : PaganActivity() {
 
     private fun _project_save() {
         this.loading_reticle_show()
-        this.project_manager.save(this.get_opus_manager())
+        this.active_project = this.get_project_manager().save(this.get_opus_manager(), this.active_project)
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
@@ -1430,7 +1438,8 @@ class ActivityEditor : PaganActivity() {
 
     fun project_move_to_copy() {
         this.dialog_save_project {
-            this.project_manager.move_to_copy(this.get_opus_manager())
+            this.get_project_manager().move_to_copy(this.get_opus_manager())
+            this.active_project = null
             this.update_title_text()
             this.feedback_msg(getString(R.string.feedback_on_copy))
 
@@ -1691,13 +1700,13 @@ class ActivityEditor : PaganActivity() {
         val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
         val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
 
-        val file_exists = this.project_manager.active_project != null
+        val file_exists = this.active_project != null
         btnDeleteProject.isEnabled = file_exists
         btnCopyProject.isEnabled = file_exists
 
         btnDeleteProject.setOnClickListener {
             if (it.isEnabled) {
-                this.project_manager.active_project?.uri?.let { uri ->
+                this.active_project?.let { uri ->
                     this.dialog_delete_project(uri)
                 }
             }
@@ -1720,7 +1729,7 @@ class ActivityEditor : PaganActivity() {
         val export_options = this.get_exportable_options()
         val export_button = this.findViewById<MaterialButton>(R.id.btnExportProject) ?: return
         val export_progress_wrapper = this.findViewById<LinearLayout>(R.id.llExportProgress) ?: return
-        if (!this.view_model.is_exporting()) {
+        if (!this.editor_view_model.is_exporting()) {
             export_button.setIconResource(R.drawable.export)
             export_progress_wrapper.visibility = View.GONE
         } else {
@@ -1730,7 +1739,7 @@ class ActivityEditor : PaganActivity() {
 
         if (export_options.isNotEmpty()) {
             export_button.setOnClickListener {
-                if (!this.view_model.is_exporting()) {
+                if (!this.editor_view_model.is_exporting()) {
                     this.dialog_popup_menu(
                         getString(R.string.dlg_export),
                         export_options,
@@ -1889,7 +1898,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun get_opus_manager(): OpusLayerInterface {
-        return this.view_model.opus_manager
+        return this.editor_view_model.opus_manager
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Float = .6F) {
@@ -1967,7 +1976,7 @@ class ActivityEditor : PaganActivity() {
         this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             this.get_opus_manager().load(bytes)
-            this.project_manager.set_new_project()
+            this.active_project = null
         }
     }
 
@@ -1988,7 +1997,7 @@ class ActivityEditor : PaganActivity() {
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(
             R.string.default_imported_midi_title))
         opus_manager.clear_history()
-        this.project_manager.set_new_project()
+        this.active_project = null
     }
 
     fun populate_supported_soundfont_instrument_names() {
@@ -2474,19 +2483,19 @@ class ActivityEditor : PaganActivity() {
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
 
-        if (this.project_manager.active_project == null) {
+        if (this.active_project == null) {
             return !opus_manager.history_cache.isEmpty()
         }
-        val other = OpusLayerBase()
 
-        if (!this.project_manager.active_project!!.exists()) {
+        if (DocumentFile.fromSingleUri(this, this.active_project!!)?.exists() != true) {
             return true
         }
 
-        val input_stream = this.contentResolver.openInputStream(this.project_manager.active_project!!.uri)
+        val input_stream = this.contentResolver.openInputStream(this.active_project!!)
         val reader = BufferedReader(InputStreamReader(input_stream))
         val content: ByteArray = reader.readText().toByteArray(Charsets.UTF_8)
 
+        val other = OpusLayerBase()
         other.load(content)
 
         reader.close()
@@ -2556,7 +2565,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_wav_cancel() {
-        this.view_model.cancel_export()
+        this.editor_view_model.cancel_export()
     }
 
     fun export_midi_check() {
@@ -2824,7 +2833,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun get_action_interface(): ActionTracker {
-        return this.view_model.action_interface
+        return this.editor_view_model.action_interface
     }
 
     fun save_actions() {
@@ -3375,7 +3384,7 @@ class ActivityEditor : PaganActivity() {
         this.drawer_close()
         super.on_project_delete(uri)
         this.update_menu_options()
-        if (this.project_manager.active_project?.uri == uri) {
+        if (this.active_project == uri) {
             this.delete_backup()
             this.setup_new()
         }

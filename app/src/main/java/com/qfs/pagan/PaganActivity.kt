@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
@@ -18,13 +17,11 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.net.toFile
-import androidx.core.net.toUri
-import androidx.core.text.htmlEncode
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusLayerBase
@@ -36,15 +33,22 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.concurrent.thread
+import kotlin.getValue
 import kotlin.math.roundToInt
 
 open class PaganActivity: AppCompatActivity() {
+    class PaganViewModel: ViewModel() {
+        internal lateinit var project_manager: ProjectManager
+    }
     internal lateinit var configuration_path: String
     lateinit var configuration: PaganConfiguration
     internal var _popup_active: Boolean = false
-    internal lateinit var project_manager: ProjectManager
     private var _progress_bar: ConstraintLayout? = null
+    val view_model: PaganViewModel by viewModels()
 
+    fun get_project_manager(): ProjectManager {
+        return this.view_model.project_manager
+    }
     //
     fun ucheck_move_soundfonts() {
         val uri = this.configuration.soundfont_directory ?: return
@@ -99,7 +103,7 @@ open class PaganActivity: AppCompatActivity() {
 
 
     fun has_projects_saved(): Boolean {
-        return this.project_manager.has_projects_saved()
+        return this.get_project_manager().has_projects_saved()
     }
 
     internal fun save_configuration() {
@@ -118,9 +122,7 @@ open class PaganActivity: AppCompatActivity() {
         }
         this.requestedOrientation = this.configuration.force_orientation
 
-
-        this.project_manager = ProjectManager(this, this.configuration.project_directory)
-
+        this.view_model.project_manager = ProjectManager(this, this.configuration.project_directory)
     }
 
     private fun reload_config() {
@@ -139,10 +141,8 @@ open class PaganActivity: AppCompatActivity() {
 
     open fun on_paganconfig_change(original: PaganConfiguration) {
         this.requestedOrientation = this.configuration.force_orientation
-
         if (this.configuration.project_directory != original.project_directory && this.configuration.project_directory != null) {
-            this.project_manager.change_project_path(this.configuration.project_directory!!)
-
+            this.get_project_manager().change_project_path(this.configuration.project_directory!!)
         }
     }
 
@@ -151,7 +151,6 @@ open class PaganActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Default to empty path, it gets set in
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
-
         this.load_config()
     }
 
@@ -184,6 +183,7 @@ open class PaganActivity: AppCompatActivity() {
             result = uri.path!!
             result = result.substring(result.lastIndexOf("/") + 1)
         }
+
         return result
     }
 
@@ -327,7 +327,7 @@ open class PaganActivity: AppCompatActivity() {
             return
         }
 
-        val project_list = this.project_manager.get_project_list()
+        val project_list = this.get_project_manager().get_project_list()
         val sort_options = listOf(
             Pair(getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
                 original.sortedBy { (_, label): Pair<Uri, String> -> label }
@@ -369,9 +369,7 @@ open class PaganActivity: AppCompatActivity() {
                 val content = reader.readText().toByteArray(Charsets.UTF_8)
                 reader.close()
                 input_stream?.close()
-                opus_manager.load(content) {
-                    this@PaganActivity.project_manager.set_project(value)
-                }
+                opus_manager.load(content)
 
                 if (opus_manager.project_notes != null) {
                     view.findViewById<TextView>(R.id.project_notes)?.let {
@@ -423,11 +421,12 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     internal fun dialog_delete_project(uri: Uri, deleted_callback: ((Uri) -> Unit)? = null) {
-        val title = this.project_manager.get_active_project_name()
+        val project_manager = this.get_project_manager()
+        val title = project_manager.get_file_project_name(uri)
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setTitle(resources.getString(R.string.dlg_delete_title, title))
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                this.project_manager.delete(uri)
+                this.get_project_manager().delete(uri)
                 if (deleted_callback != null) {
                     deleted_callback(uri)
                 }
@@ -524,10 +523,11 @@ open class PaganActivity: AppCompatActivity() {
                 return
             }
 
+            val project_manager = this.get_project_manager()
             for (project in old_directory.listFiles()) {
                 // Use new path instead of copying file name to avoid collisions
-                val new_file = this.project_manager.get_new_file() ?: continue
-                val output_stream = this.contentResolver.openOutputStream(new_file.uri)
+                val new_uri = project_manager.get_new_file_uri() ?: continue
+                val output_stream = this.contentResolver.openOutputStream(new_uri)
                 val input_stream = project.inputStream()
 
                 val buffer = ByteArray(4096)
@@ -543,7 +543,7 @@ open class PaganActivity: AppCompatActivity() {
                 output_stream?.flush()
                 output_stream?.close()
             }
-            this.project_manager.recache_project_list()
+            project_manager.recache_project_list()
             old_directory.deleteRecursively()
         }
     }

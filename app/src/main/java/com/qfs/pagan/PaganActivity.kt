@@ -180,8 +180,8 @@ open class PaganActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Default to empty path, it gets set in
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
-        this.load_config()
 
+        this.load_config()
     }
 
     override fun onResume() {
@@ -516,6 +516,10 @@ open class PaganActivity: AppCompatActivity() {
         var working_file = DocumentFile.fromTreeUri(this, this.configuration.soundfont_directory!!) ?: return null
         for (node in this.configuration.soundfont!!.split("/")) {
             working_file = working_file.findFile(node) ?: return null
+        }
+
+        if (!working_file.exists()) {
+            return null
         }
 
         return working_file.uri

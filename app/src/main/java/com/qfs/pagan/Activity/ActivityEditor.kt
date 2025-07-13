@@ -872,6 +872,18 @@ class ActivityEditor : PaganActivity() {
     //    }
     //}
 
+    // Check if the soundfont was removed
+    fun soundfont_file_check() {
+        if (this.configuration.soundfont == null) {
+            return
+        }
+
+        if (this.get_soundfont_uri() == null) {
+            this.disable_soundfont()
+            this.update_menu_options()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         this.drawer_lock()
@@ -894,6 +906,7 @@ class ActivityEditor : PaganActivity() {
             this.playback_state_midi = PlaybackState.Ready
         }
         this.update_title_text()
+        this.soundfont_file_check()
     }
 
     fun delete_backup() {
@@ -1989,8 +2002,8 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun set_soundfont() {
-        val filename = this.configuration.soundfont
-        if (filename == null) {
+        val file_path = this.configuration.soundfont
+        if (file_path == null) {
             this.disable_soundfont()
             return
         }
@@ -2001,8 +2014,13 @@ class ActivityEditor : PaganActivity() {
         }
 
         val soundfont_directory = this.get_soundfont_directory()
-        val soundfont_file = soundfont_directory.findFile(filename)
-        if (soundfont_file == null || !soundfont_file.exists()) {
+
+        var soundfont_file = soundfont_directory
+        for (segment in file_path.split("/")) {
+            soundfont_file = soundfont_file.findFile(segment) ?: return
+        }
+
+        if (!soundfont_file.exists()) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(getString(R.string.soundfont_not_found))
             return

@@ -43,12 +43,25 @@ import kotlin.math.roundToInt
 open class PaganActivity: AppCompatActivity() {
     class PaganViewModel: ViewModel() {
         internal lateinit var project_manager: ProjectManager
+        var active_project: Uri? = null
     }
+
+    val view_model: PaganViewModel by viewModels()
+
     internal lateinit var configuration_path: String
     lateinit var configuration: PaganConfiguration
     internal var _popup_active: Boolean = false
     private var _progress_bar: ConstraintLayout? = null
-    val view_model: PaganViewModel by viewModels()
+
+    internal lateinit var bkp_path: String
+    internal lateinit var bkp_path_path: String
+
+    var active_project: Uri?
+        get() = this.view_model.active_project
+        set(value) {
+            this.view_model.active_project = value
+        }
+
 
     internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -71,7 +84,13 @@ open class PaganActivity: AppCompatActivity() {
                     this.contentResolver.takePersistableUriPermission(uri, new_flags)
                     this.configuration.project_directory = uri
                     this.save_configuration()
-                    this.get_project_manager().change_project_path(uri)
+                    this.get_project_manager().change_project_path(uri, this.active_project)?.let {
+                        this.active_project = it
+                        // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
+                        // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
+                        val path_file = File(this.bkp_path_path)
+                        path_file.writeText(it.toString())
+                    }
                     this.ucheck_update_move_project_files()
                     this.on_project_directory_set(uri)
                 }
@@ -82,7 +101,8 @@ open class PaganActivity: AppCompatActivity() {
     fun get_project_manager(): ProjectManager {
         return this.view_model.project_manager
     }
-    //
+
+    // v1.7.7, Using user-specified soundfont directories. Check if externalfiles/soundfonts exists and move to new directory
     fun ucheck_move_soundfonts() {
         val uri = this.configuration.soundfont_directory ?: return
         DocumentFile.fromTreeUri(this, uri)?.let { new_directory ->
@@ -178,7 +198,9 @@ open class PaganActivity: AppCompatActivity() {
     open fun on_paganconfig_change(original: PaganConfiguration) {
         this.requestedOrientation = this.configuration.force_orientation
         if (this.configuration.project_directory != original.project_directory && this.configuration.project_directory != null) {
-            this.get_project_manager().change_project_path(this.configuration.project_directory!!)
+            this.get_project_manager().change_project_path(this.configuration.project_directory!!, this.active_project)?.let { new_project_uri ->
+                this.active_project = new_project_uri
+            }
         }
     }
 
@@ -188,6 +210,9 @@ open class PaganActivity: AppCompatActivity() {
         // Default to empty path, it gets set in
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
         this.load_config()
+
+        this.bkp_path = "${applicationInfo.dataDir}/.bkp.json"
+        this.bkp_path_path = "${applicationInfo.dataDir}/.bkp_path"
     }
 
     override fun onResume() {
@@ -566,6 +591,14 @@ open class PaganActivity: AppCompatActivity() {
                 val output_stream = this.contentResolver.openOutputStream(new_uri)
                 val input_stream = project.inputStream()
 
+                // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
+                // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
+                if (project == this.active_project) {
+                    this.active_project = new_uri
+                    val path_file = File(this.bkp_path_path)
+                    path_file.writeText(new_uri.toString())
+                }
+
                 val buffer = ByteArray(4096)
                 while (true) {
                     val read_size = input_stream.read(buffer)
@@ -581,8 +614,24 @@ open class PaganActivity: AppCompatActivity() {
             }
             project_manager.recache_project_list()
             old_directory.deleteRecursively()
+
         }
     }
+
+    fun delete_backup() {
+        File(this.bkp_path).let { file ->
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+
+        File(this.bkp_path_path).let { file ->
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+    }
+
 
     open fun on_soundfont_directory_set(uri: Uri) {}
     open fun on_project_directory_set(uri: Uri) {}

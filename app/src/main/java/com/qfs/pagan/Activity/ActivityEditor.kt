@@ -159,7 +159,6 @@ class ActivityEditor : PaganActivity() {
         var export_handle: WavConverter? = null
         var action_interface = ActionTracker()
         var opus_manager = OpusLayerInterface()
-        var active_project: Uri? = null
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -228,15 +227,6 @@ class ActivityEditor : PaganActivity() {
     private var _blocker_scroll_y: Float? = null
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
-
-    var active_project: Uri?
-        get() = this.editor_view_model.active_project
-        set(value) {
-            this.editor_view_model.active_project = value
-        }
-
-    lateinit private var bkp_path: String
-    lateinit private var bkp_path_path: String
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
@@ -377,9 +367,9 @@ class ActivityEditor : PaganActivity() {
                     this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
                     this@ActivityEditor.configuration.project_directory = tree_uri
                     this@ActivityEditor.save_configuration()
-                    this@ActivityEditor.get_project_manager().change_project_path(tree_uri)
+                    // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
+                    this@ActivityEditor.get_project_manager().change_project_path(tree_uri, this.active_project)
                     this@ActivityEditor.ucheck_update_move_project_files()
-
                     this._project_save()
                 }
             }
@@ -888,20 +878,6 @@ class ActivityEditor : PaganActivity() {
         this.soundfont_file_check()
     }
 
-    fun delete_backup() {
-        File(this.bkp_path).let { file ->
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-
-        File(this.bkp_path_path).let { file ->
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-    }
-
     fun save_to_backup() {
         val opus_manager = this.get_opus_manager()
         val uri = this.active_project
@@ -1031,9 +1007,6 @@ class ActivityEditor : PaganActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        this.bkp_path = "${applicationInfo.dataDir}/.bkp.json"
-        this.bkp_path_path = "${applicationInfo.dataDir}/.bkp_path"
 
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
@@ -2015,7 +1988,7 @@ class ActivityEditor : PaganActivity() {
         if (!soundfont_file.exists()) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(getString(R.string.soundfont_not_found))
-            return throw FileNotFoundException()
+            throw FileNotFoundException()
 
         }
         try {
@@ -2025,6 +1998,7 @@ class ActivityEditor : PaganActivity() {
             this.feedback_msg(getString(R.string.invalid_soundfont))
             return
         } catch (e: SoundFont.InvalidSoundFont) {
+            // Possible if user puts the sf2 in their files manually
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg("Invalid Soundfont")
             return

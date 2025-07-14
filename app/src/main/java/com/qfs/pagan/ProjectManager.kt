@@ -25,10 +25,16 @@ class ProjectManager(val context: Context, var path: Uri?) {
     init {
         this.recache_project_list()
     }
-    fun move_old_projects_directory(old_path: Uri) {
-        val old_directory = DocumentFile.fromTreeUri(this.context, old_path) ?: return
+
+    /**
+     * Move files from [old_path] to the ProjectManger's current [path],
+     * return the new uri associated with given [active_project_uri] if it was moved
+     **/
+    fun move_old_projects_directory(old_path: Uri, active_project_uri: Uri? = null): Uri? {
+        var output: Uri? = null
+        val old_directory = DocumentFile.fromTreeUri(this.context, old_path) ?: return output
         if (!old_directory.isDirectory) {
-            return
+            return output
         }
 
         for (project in old_directory.listFiles()) {
@@ -40,6 +46,9 @@ class ProjectManager(val context: Context, var path: Uri?) {
             val output_stream = this.context.contentResolver.openOutputStream(new_uri)
             val input_stream = this.context.contentResolver.openInputStream(project.uri)
 
+            if (project == active_project_uri) {
+                output = new_uri
+            }
 
             val buffer = ByteArray(1024)
             while (true) {
@@ -53,11 +62,14 @@ class ProjectManager(val context: Context, var path: Uri?) {
             input_stream?.close()
             output_stream?.flush()
             output_stream?.close()
+
         }
+
         this.recache_project_list()
+        return output
     }
 
-    fun change_project_path(new_uri: Uri) {
+    fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null): Uri? {
         val new_directory = DocumentFile.fromTreeUri(this.context, new_uri)
         if (new_directory == null || !new_directory.isDirectory) {
             throw InvalidDirectory(new_uri)
@@ -65,8 +77,10 @@ class ProjectManager(val context: Context, var path: Uri?) {
 
         val old_path = this.path
         this.path = new_uri
-        if (old_path != null) {
-            this.move_old_projects_directory(old_path)
+        return if (old_path != null) {
+            this.move_old_projects_directory(old_path, active_project_uri)
+        } else {
+            null
         }
     }
 
@@ -181,7 +195,6 @@ class ProjectManager(val context: Context, var path: Uri?) {
             } catch (e: Exception) {
                 continue
             }
-            println("${json_file.uri}, ${project_name}")
             project_list.add(Pair(json_file.uri.toString(), project_name))
         }
 

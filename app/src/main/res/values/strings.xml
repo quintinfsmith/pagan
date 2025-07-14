@@ -237,7 +237,8 @@
     <string name="label_settings_projects_directory">Projects Directory</string>
     <string name="settings_need_soundfont_directory">First, set a location to store soundfonts.</string>
     <string name="cancel_export">Cancel Export</string>
-    <string name="ucheck_move_projects_dialog">Pagan now stores it\'s projects in a user-specified location rather than in an inaccessible location. Select that location now and your existing project files will be moved there.</string>
+    <string name="ucheck_move_projects_dialog">Pagan now stores it\'s projects in a user-specified location. Select that location now and your existing project files will be moved there.</string>
+    <string name="settings_external_projects_warning">Missing Projects? Set the "Projects Directory" and they\'ll be accessible</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

@@ -70,6 +70,10 @@ class ProjectManager(val context: Context, var path: Uri?) {
     }
 
     fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null): Uri? {
+        if (new_uri == this.path) {
+            return null
+        }
+
         val new_directory = DocumentFile.fromTreeUri(this.context, new_uri)
         if (new_directory == null || !new_directory.isDirectory) {
             throw InvalidDirectory(new_uri)
@@ -82,6 +86,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         } else {
             null
         }
+        this.recache_project_list()
     }
 
     fun contains(uri: Uri): Boolean {

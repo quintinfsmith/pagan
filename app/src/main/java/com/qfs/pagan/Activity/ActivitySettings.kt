@@ -295,6 +295,12 @@ class ActivitySettings : PaganActivity() {
             this._set_soundfont_directory_intent_launcher.launch(intent)
         }
 
+        this.findViewById<View>(R.id.ll_external_projects_warning).visibility = if (this.get_project_manager().has_external_storage_projects()) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+
         this.set_project_directory_button_text()
         this.set_soundfont_directory_button_text()
 
@@ -453,5 +459,11 @@ class ActivitySettings : PaganActivity() {
 
     override fun on_project_directory_set(uri: Uri) {
         this.set_project_directory_button_text()
+
+        this.findViewById<View>(R.id.ll_external_projects_warning).visibility = if (this.get_project_manager().has_external_storage_projects()) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 }

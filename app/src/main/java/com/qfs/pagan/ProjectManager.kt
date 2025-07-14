@@ -16,7 +16,7 @@ import java.io.OutputStreamWriter
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
-class ProjectManager(val context: Context, var path: Uri?) {
+class ProjectManager(val context: Context, var uri: Uri?) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     class InvalidDirectory(path: Uri): Exception("Real Directory Required ($path)")
     class PathNotSetException(): Exception("Projects path has not been set.")
@@ -27,13 +27,13 @@ class ProjectManager(val context: Context, var path: Uri?) {
     }
 
     /**
-     * Move files from [old_path] to the ProjectManger's current [path],
+     * Move files from [old_uri] to the ProjectManger's current [uri],
      * return the new uri associated with given [active_project_uri] if it was moved
      **/
-    fun move_old_projects_directory(old_path: Uri, active_project_uri: Uri? = null): Uri? {
+    fun move_old_projects_directory(old_uri: Uri, active_project_uri: Uri? = null): Uri? {
         var output: Uri? = null
-        val old_directory = DocumentFile.fromTreeUri(this.context, old_path) ?: return output
-        if (!old_directory.isDirectory) {
+        val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return output
+        if (!old_directory.isDirectory || old_uri == this.uri) {
             return output
         }
 
@@ -70,34 +70,31 @@ class ProjectManager(val context: Context, var path: Uri?) {
     }
 
     fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null): Uri? {
-        if (new_uri == this.path) {
-            return null
-        }
-
         val new_directory = DocumentFile.fromTreeUri(this.context, new_uri)
         if (new_directory == null || !new_directory.isDirectory) {
             throw InvalidDirectory(new_uri)
         }
 
-        val old_path = this.path
-        this.path = new_uri
-        return if (old_path != null) {
-            this.move_old_projects_directory(old_path, active_project_uri)
+        val old_uri = this.uri
+        this.uri = new_uri
+        val output = if (old_uri != null) {
+            this.move_old_projects_directory(old_uri, active_project_uri)
         } else {
             null
         }
         this.recache_project_list()
+        return output
     }
 
     fun contains(uri: Uri): Boolean {
-        if (this.path == null) {
+        if (this.uri == null) {
             return false
         }
 
-        val parent_segments = this.path!!.pathSegments.last().split("/")
+        val parent_segments = this.uri!!.pathSegments.last().split("/")
         val child_segments = uri.pathSegments.last().split("/")
 
-        val output = uri.authority == this.path?.authority && child_segments.size > parent_segments.size  && child_segments.subList(0, parent_segments.size) == parent_segments
+        val output = uri.authority == this.uri?.authority && child_segments.size > parent_segments.size  && child_segments.subList(0, parent_segments.size) == parent_segments
         return output
     }
 
@@ -141,10 +138,10 @@ class ProjectManager(val context: Context, var path: Uri?) {
         return active_project_uri
     }
     fun get_new_file_uri(): Uri? {
-        if (this.path == null) {
+        if (this.uri == null) {
             throw PathNotSetException()
         }
-        val working_directory = DocumentFile.fromTreeUri(this.context, this.path!!)!!
+        val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!)!!
         var i = 0
         while (working_directory.findFile("opus_$i.json") != null) {
             i += 1
@@ -154,11 +151,11 @@ class ProjectManager(val context: Context, var path: Uri?) {
     }
 
     fun has_projects_saved(): Boolean {
-        if (this.path == null) {
+        if (this.uri == null) {
             return false
         }
 
-        val working_directory = DocumentFile.fromTreeUri(this.context, this.path!!) ?: return false
+        val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!) ?: return false
         if (!working_directory.isDirectory) {
             return false
         }
@@ -223,7 +220,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
             return
         }
 
-        val working_directory = DocumentFile.fromTreeUri(this.context, this.path!!) ?: return
+        val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!) ?: return
         val json = Json {
             ignoreUnknownKeys = true
         }

@@ -103,40 +103,6 @@ class ActivitySettings : PaganActivity() {
         }
     }
 
-    internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this.configuration.project_directory = uri
-                    this.get_project_manager().change_project_path(uri)
-                    this.ucheck_update_move_project_files()
-                    this.set_project_directory_button_text()
-                }
-            }
-        }
-    }
-
-    internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this.set_soundfont_directory(uri)
-                    this.set_soundfont_directory_button_text()
-
-                    this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = if (this.is_soundfont_available()) {
-                        View.GONE
-                    } else {
-                        View.VISIBLE
-                    }
-
-                }
-            }
-        }
-    }
 
     internal var _set_soundfont_directory_and_import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -473,5 +439,19 @@ class ActivitySettings : PaganActivity() {
                 dialog.dismiss()
             }
             .show()
+    }
+
+    override fun on_soundfont_directory_set(uri: Uri) {
+        this.set_soundfont_directory_button_text()
+
+        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = if (this.is_soundfont_available()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+    }
+
+    override fun on_project_directory_set(uri: Uri) {
+        this.set_project_directory_button_text()
     }
 }

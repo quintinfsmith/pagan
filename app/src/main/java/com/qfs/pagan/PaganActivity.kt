@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
@@ -17,6 +18,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -47,6 +49,34 @@ open class PaganActivity: AppCompatActivity() {
     internal var _popup_active: Boolean = false
     private var _progress_bar: ConstraintLayout? = null
     val view_model: PaganViewModel by viewModels()
+
+    internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this.set_soundfont_directory(uri)
+                    this.on_soundfont_directory_set(uri)
+                }
+            }
+        }
+    }
+
+    internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this.configuration.project_directory = uri
+                    this.get_project_manager().change_project_path(uri)
+                    this.ucheck_update_move_project_files()
+                    this.on_project_directory_set(uri)
+                }
+            }
+        }
+    }
 
     fun get_project_manager(): ProjectManager {
         return this.view_model.project_manager
@@ -107,7 +137,8 @@ open class PaganActivity: AppCompatActivity() {
 
 
     fun has_projects_saved(): Boolean {
-        return this.get_project_manager().has_projects_saved()
+        val project_manager = this.get_project_manager()
+        return project_manager.has_projects_saved()
     }
 
     internal fun save_configuration() {
@@ -551,4 +582,8 @@ open class PaganActivity: AppCompatActivity() {
             old_directory.deleteRecursively()
         }
     }
+
+    open fun on_soundfont_directory_set(uri: Uri) {}
+    open fun on_project_directory_set(uri: Uri) {}
+
 }

@@ -138,6 +138,7 @@ class ProjectManager(val context: Context, var path: Uri?) {
         if (this.path == null) {
             return false
         }
+
         val working_directory = DocumentFile.fromTreeUri(this.context, this.path!!) ?: return false
         if (!working_directory.isDirectory) {
             return false
@@ -152,8 +153,51 @@ class ProjectManager(val context: Context, var path: Uri?) {
         return this.context.getString(R.string.untitled_op, now.format(formatter))
     }
 
+    fun has_external_storage_projects(): Boolean {
+        // V1.7.7, moved project storage out of ExternalFilesDir
+        val external_path = this.context.getExternalFilesDir(null) ?: return false
+        val old_directory = File("$external_path/projects")
+        return old_directory.isDirectory && old_directory.listFiles()?.isNotEmpty() ?: false
+    }
+
+    fun ucheck_recache_external_storage_projects(): Boolean {
+        // V1.7.7, moved project storage out of ExternalFilesDir
+        val external_path = this.context.getExternalFilesDir(null) ?: return false
+        val old_directory = File("$external_path/projects")
+        if (!old_directory.isDirectory || old_directory.listFiles()?.isEmpty() ?: false) {
+            return false
+        }
+
+        val working_directory = DocumentFile.fromFile(old_directory)
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
+
+        val project_list = mutableListOf<Pair<String, String>>()
+        for (json_file in working_directory.listFiles()) {
+
+            val project_name = try {
+                this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name()
+            } catch (e: Exception) {
+                continue
+            }
+            println("${json_file.uri}, ${project_name}")
+            project_list.add(Pair(json_file.uri.toString(), project_name))
+        }
+
+        project_list.sortBy { it.second }
+        val json_string = json.encodeToString(project_list)
+        val file = File(this._cache_path)
+        file.writeText(json_string)
+        return true
+    }
+
     fun recache_project_list() {
         val file = File(this._cache_path)
+        if (this.ucheck_recache_external_storage_projects()) {
+            return
+        }
+
         if (!this.has_projects_saved()) {
             if (file.exists()) {
                 file.delete()

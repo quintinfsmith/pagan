@@ -51,7 +51,6 @@ class ActivityLanding : PaganActivity() {
         }
     }
 
-
     fun check_for_crash_report() {
         val path = this.getExternalFilesDir(null).toString()
         val file = File("$path/bkp_crashreport.log")
@@ -147,6 +146,21 @@ class ActivityLanding : PaganActivity() {
             intent.data = Uri.parse(url)
             startActivity(intent)
         }
+
+        if (this.get_project_manager().has_external_storage_projects()) {
+            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+                .setMessage(getString(R.string.ucheck_move_projects_dialog))
+                .setOnDismissListener {
+                    this._popup_active = false
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    this._set_project_directory_intent_launcher.launch(intent)
+                }
+                .setPositiveButton(getString(android.R.string.ok)) { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        }
     }
 
     fun update_view_visibilities() {
@@ -177,6 +191,14 @@ class ActivityLanding : PaganActivity() {
         } else {
             View.VISIBLE
         }
+    }
+
+    override fun on_soundfont_directory_set(uri: Uri) {
+        this.get_project_manager().recache_project_list()
+    }
+
+    override fun on_project_directory_set(uri: Uri) {
+        this.update_view_visibilities()
     }
 
     override fun onResume() {

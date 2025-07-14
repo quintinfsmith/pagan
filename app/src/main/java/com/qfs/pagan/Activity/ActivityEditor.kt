@@ -2009,13 +2009,13 @@ class ActivityEditor : PaganActivity() {
 
         var soundfont_file = soundfont_directory
         for (segment in file_path.split("/")) {
-            soundfont_file = soundfont_file.findFile(segment) ?: return
+            soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
         }
 
         if (!soundfont_file.exists()) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(getString(R.string.soundfont_not_found))
-            return
+            return throw FileNotFoundException()
 
         }
         try {

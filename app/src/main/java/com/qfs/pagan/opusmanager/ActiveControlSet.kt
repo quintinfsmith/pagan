@@ -25,10 +25,10 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
     }
 
     fun get_all(): Array<Pair<ControlEventType, ActiveController<out OpusControlEvent>>> {
-        val keys = this.controllers.keys.toList().sorted()
-        return Array(this.controllers.size) {
-            Pair(keys[it], this.controllers[keys[it]]!!)
-        }.reversedArray()
+        val items = this.controllers.entries.sortedByDescending { it.key }
+        return Array(items.size) { i: Int ->
+            Pair(items[i].key, items[i].value)
+        }
     }
 
     fun new_controller(type: ControlEventType, controller: ActiveController<*>? = null) {

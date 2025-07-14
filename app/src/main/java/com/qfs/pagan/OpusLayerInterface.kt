@@ -1179,14 +1179,25 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun on_project_changed() {
         super.on_project_changed()
+
+        this.get_activity()?.let { activity ->
+            activity.disconnect_feedback_device()
+            activity.update_channel_instruments()
+        }
+
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
-        this.get_activity()?.disconnect_feedback_device()
         this.initialized = true
+
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {
         this.lock_ui_full {
+            this.get_activity()?.let { activity ->
+                activity.disconnect_feedback_device()
+                activity.active_percussion_names.clear()
+            }
+
             this._ui_clear()
             super.project_change_wrapper(callback)
         }
@@ -1204,18 +1215,21 @@ class OpusLayerInterface : OpusLayerHistory() {
         val activity = this.get_activity()!!
         super._project_change_new()
 
+
         // set the default instrument to the first available in the soundfont (if applicable)
-        val percussion_keys = activity.active_percussion_names.keys.sorted()
-        if (percussion_keys.isNotEmpty()) {
-            for (c in this.channels.indices) {
-                if (!this.is_percussion(c)) {
-                    continue
-                }
-                for (l in 0 until this.get_channel(c).size) {
-                    this.percussion_set_instrument(c, l, percussion_keys.first() - 27)
-                }
+        for (c in this.channels.indices) {
+            if (!this.is_percussion(c)) {
+                continue
+            }
+            // Need to prematurely update the channel instrument to find the lowest possible instrument
+            activity.update_channel_instruments(c)
+            activity.populate_active_percussion_names(c, true)
+            val percussion_keys = activity.active_percussion_names[c]?.keys?.sorted() ?: continue
+            for (l in 0 until this.get_channel(c).size) {
+                this.percussion_set_instrument(c, l, max(0, percussion_keys.first() - 27))
             }
         }
+
         activity.active_project = null
     }
 
@@ -2477,10 +2491,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                         this._init_editor_table_width_map()
                         editor_table.setup(this.get_row_count(), this.length)
-
-                        activity.update_channel_instruments()
-                        activity.active_percussion_names.clear()
-
                         activity.update_title_text()
                         activity.clear_context_menu()
                     }

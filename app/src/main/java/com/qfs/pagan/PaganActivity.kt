@@ -70,6 +70,7 @@ open class PaganActivity: AppCompatActivity() {
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     this.contentResolver.takePersistableUriPermission(uri, new_flags)
                     this.configuration.project_directory = uri
+                    this.save_configuration()
                     this.get_project_manager().change_project_path(uri)
                     this.ucheck_update_move_project_files()
                     this.on_project_directory_set(uri)

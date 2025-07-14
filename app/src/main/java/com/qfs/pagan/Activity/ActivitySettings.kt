@@ -126,6 +126,13 @@ class ActivitySettings : PaganActivity() {
                     this.contentResolver.takePersistableUriPermission(uri, new_flags)
                     this.set_soundfont_directory(uri)
                     this.set_soundfont_directory_button_text()
+
+                    this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = if (this.is_soundfont_available()) {
+                        View.GONE
+                    } else {
+                        View.VISIBLE
+                    }
+
                 }
             }
         }
@@ -140,12 +147,14 @@ class ActivitySettings : PaganActivity() {
                     this.set_soundfont_directory(uri)
                     this.set_soundfont_directory_button_text()
                     if (!this.is_soundfont_available()) {
+                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.VISIBLE
                         this._import_soundfont_intent_listener.launch(
                             Intent()
                                 .setType("*/*")
                                 .setAction(Intent.ACTION_GET_CONTENT)
                         )
                     } else {
+                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
                         this.dialog_select_soundfont()
                     }
                 }

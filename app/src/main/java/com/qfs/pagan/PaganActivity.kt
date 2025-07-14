@@ -20,6 +20,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.RecyclerView
@@ -32,6 +33,7 @@ import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.collections.listOf
 import kotlin.concurrent.thread
 import kotlin.getValue
 import kotlin.math.roundToInt
@@ -53,27 +55,29 @@ open class PaganActivity: AppCompatActivity() {
     fun ucheck_move_soundfonts() {
         val uri = this.configuration.soundfont_directory ?: return
         DocumentFile.fromTreeUri(this, uri)?.let { new_directory ->
-            this.get_soundfont_directory().let { old_directory ->
-                for (soundfont in old_directory.listFiles()) {
-                    val soundfont_name = soundfont.uri.pathSegments.last().split("/").last()
+            File("${this.applicationContext.getExternalFilesDir(null)}/SoundFonts").let { old_directory ->
+                val file_list = old_directory.listFiles() ?: arrayOf<File>()
+                for (soundfont in file_list) {
+                    val soundfont_name = soundfont.toUri().pathSegments.last().split("/").last()
                     new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
-                        val input_stream = this.contentResolver.openInputStream(soundfont.uri)
+                        val input_stream = soundfont.inputStream()
                         val output_stream = this.contentResolver.openOutputStream(new_file.uri)
 
                         val buffer = ByteArray(1024)
                         while (true) {
-                            val read_size = input_stream?.read(buffer) ?: break
+                            val read_size = input_stream.read(buffer)
                             if (read_size == -1) {
                                 break
                             }
                             output_stream?.write(buffer, 0, read_size)
                         }
 
-                        input_stream?.close()
+                        input_stream.close()
                         output_stream?.flush()
                         output_stream?.close()
                     }
                 }
+                old_directory.deleteRecursively()
             }
         }
     }
@@ -81,7 +85,7 @@ open class PaganActivity: AppCompatActivity() {
     fun set_soundfont_directory(uri: Uri) {
         this.configuration.soundfont_directory = uri
         this.save_configuration()
-        this.ucheck_update_move_project_files()
+        this.ucheck_move_soundfonts()
     }
 
     fun get_soundfont_directory(): DocumentFile {

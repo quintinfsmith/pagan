@@ -22,6 +22,8 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     class InvalidDirectory(path: Uri): Exception("Real Directory Required ($path)")
     class PathNotSetException(): Exception("Projects path has not been set.")
     private val _cache_path = "${context.applicationContext.dataDir}/project_list.json"
+    private val bkp_path = "${this.context.applicationInfo.dataDir}/.bkp.json"
+    private val bkp_path_path = "${this.context.applicationInfo.dataDir}/.bkp_path"
 
     init {
         this.recache_project_list()
@@ -32,6 +34,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * return the new uri associated with given [active_project_uri] if it was moved
      **/
     fun move_old_projects_directory(old_uri: Uri, active_project_uri: Uri? = null): Uri? {
+        println("MOVING PROJECTS DIRECTORY $old_uri ($active_project_uri)")
         val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return null
         if (!old_directory.isDirectory || old_uri == this.uri) {
             return null
@@ -51,7 +54,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                 output = new_uri
             }
 
-            val buffer = ByteArray(1024)
+            val buffer = ByteArray(4096)
             while (true) {
                 val read_size = input_stream?.read(buffer) ?: break
                 if (read_size == -1) {
@@ -76,6 +79,8 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         if (new_directory == null || !new_directory.isDirectory) {
             throw InvalidDirectory(new_uri)
         }
+
+        this.ucheck_update_move_project_files(active_project_uri)
 
         val old_uri = this.uri
         this.uri = new_uri
@@ -353,5 +358,52 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val json_string = json.encodeToString(adj_project_list)
         val file = File(this._cache_path)
         file.writeText(json_string)
+    }
+
+    // v1.7.7: Using custom projects directories rather than forcing external directory
+    fun ucheck_update_move_project_files(active_uri: Uri? = null): Uri? {
+        val bkp_path_file = File(this.bkp_path_path)
+        val bkp_uri = bkp_path_file.readText().toUri()
+
+        var output: Uri? = null
+        this.context.getExternalFilesDir(null)?.let {
+            val old_directory = File("$it/projects")
+            if (!old_directory.isDirectory) {
+                return null
+            }
+
+            for (project in old_directory.listFiles()) {
+                // Use new path instead of copying file name to avoid collisions
+                val new_uri = this.get_new_file_uri() ?: continue
+                val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
+                val input_stream = project.inputStream()
+
+                // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
+                // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
+                when (project.toUri()) {
+                    active_uri -> { output = new_uri }
+                    bkp_uri -> { bkp_path_file.writeText(new_uri.toString()) }
+                    else -> { }
+                }
+
+                val buffer = ByteArray(4096)
+                while (true) {
+                    val read_size = input_stream.read(buffer)
+                    if (read_size == -1) {
+                        break
+                    }
+                    output_stream?.write(buffer, 0, read_size)
+                }
+
+                input_stream.close()
+                output_stream?.flush()
+                output_stream?.close()
+            }
+
+            this.recache_project_list()
+            old_directory.deleteRecursively()
+        }
+
+        return output
     }
 }

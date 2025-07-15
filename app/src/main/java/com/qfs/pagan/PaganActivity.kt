@@ -43,7 +43,6 @@ import kotlin.math.roundToInt
 open class PaganActivity: AppCompatActivity() {
     class PaganViewModel: ViewModel() {
         internal lateinit var project_manager: ProjectManager
-        var active_project: Uri? = null
     }
 
     val view_model: PaganViewModel by viewModels()
@@ -55,14 +54,6 @@ open class PaganActivity: AppCompatActivity() {
 
     internal lateinit var bkp_path: String
     internal lateinit var bkp_path_path: String
-
-    var active_project: Uri?
-        get() = this.view_model.active_project
-        set(value) {
-            this.view_model.active_project = value
-        }
-
-
     internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.also { result_data ->
@@ -71,44 +62,6 @@ open class PaganActivity: AppCompatActivity() {
                     this.contentResolver.takePersistableUriPermission(uri, new_flags)
                     this.set_soundfont_directory(uri)
                     this.on_soundfont_directory_set(uri)
-                }
-            }
-        }
-    }
-
-    internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this.configuration.project_directory = uri
-                    this.save_configuration()
-
-                    val path_file = File(this.bkp_path_path)
-                    // If  the active_project is set, that means we are currently editting a project,
-                    // Otherwise we aren't and the backup path needs to be handled
-                    if (this.active_project != null) {
-                        println("??======= ${this.active_project}")
-                        this.get_project_manager().change_project_path(uri, this.active_project)?.let {
-                            this.active_project = it
-                            println("===??=== $it")
-                            // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
-                            // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
-                            path_file.writeText(it.toString())
-                        }
-                    } else {
-                        val backup_file = DocumentFile.fromSingleUri(this, path_file.readText().toUri())
-                        println("!!======= ${backup_file?.uri}")
-                        if (backup_file?.exists() == true) {
-                            this.get_project_manager().change_project_path(uri, backup_file.uri)?.let {
-                                println("===??=== $it")
-                                path_file.writeText(it.toString())
-                            }
-                        }
-                    }
-                    this.ucheck_update_move_project_files()
-                    this.on_project_directory_set(uri)
                 }
             }
         }
@@ -227,8 +180,6 @@ open class PaganActivity: AppCompatActivity() {
         this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
         this.load_config()
 
-        this.bkp_path = "${applicationInfo.dataDir}/.bkp.json"
-        this.bkp_path_path = "${applicationInfo.dataDir}/.bkp_path"
     }
 
     override fun onResume() {
@@ -591,48 +542,6 @@ open class PaganActivity: AppCompatActivity() {
         return coaxed_segments.joinToString("/")
     }
 
-    // v1.7.7: Using custom projects directories rather than forcing external directory
-    fun ucheck_update_move_project_files() {
-        // Do ExternalFilesDir() check, Changed for 1.7.7
-        this.getExternalFilesDir(null)?.let {
-            val old_directory = File("$it/projects")
-            if (!old_directory.isDirectory) {
-                return
-            }
-
-            val project_manager = this.get_project_manager()
-            for (project in old_directory.listFiles()) {
-                // Use new path instead of copying file name to avoid collisions
-                val new_uri = project_manager.get_new_file_uri() ?: continue
-                val output_stream = this.contentResolver.openOutputStream(new_uri, "wt")
-                val input_stream = project.inputStream()
-
-                // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
-                // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
-                if (project == this.active_project) {
-                    this.active_project = new_uri
-                    val path_file = File(this.bkp_path_path)
-                    path_file.writeText(new_uri.toString())
-                }
-
-                val buffer = ByteArray(4096)
-                while (true) {
-                    val read_size = input_stream.read(buffer)
-                    if (read_size == -1) {
-                        break
-                    }
-                    output_stream?.write(buffer, 0, read_size)
-                }
-
-                input_stream.close()
-                output_stream?.flush()
-                output_stream?.close()
-            }
-            project_manager.recache_project_list()
-            old_directory.deleteRecursively()
-
-        }
-    }
 
     fun delete_backup() {
         File(this.bkp_path).let { file ->

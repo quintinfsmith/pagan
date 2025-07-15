@@ -159,6 +159,7 @@ class ActivityEditor : PaganActivity() {
         var export_handle: WavConverter? = null
         var action_interface = ActionTracker()
         var opus_manager = OpusLayerInterface()
+        var active_project: Uri? = null
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -235,6 +236,12 @@ class ActivityEditor : PaganActivity() {
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
     var active_context_menu: ContextMenuView? = null
+
+    var active_project: Uri?
+        get() = this.editor_view_model.active_project
+        set(value) {
+            this.editor_view_model.active_project = value
+        }
 
     class MultiExporterEventHandler(var activity: ActivityEditor, var total_count: Int): WavConverter.ExporterEventHandler {
         var working_y = 0
@@ -350,6 +357,14 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
+    internal var settings_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.data?.also { uri ->
+                this.active_project = uri
+            }
+        }
+    }
+
     internal var import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.data?.also { uri ->
@@ -362,14 +377,12 @@ class ActivityEditor : PaganActivity() {
         if (result.resultCode == RESULT_OK) {
             result?.data?.also { result_data ->
                 result_data.data?.also { tree_uri  ->
-
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
                     this@ActivityEditor.configuration.project_directory = tree_uri
                     this@ActivityEditor.save_configuration()
                     // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
                     this@ActivityEditor.get_project_manager().change_project_path(tree_uri, this.active_project)
-                    this@ActivityEditor.ucheck_update_move_project_files()
                     this._project_save()
                 }
             }
@@ -1345,7 +1358,13 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun open_settings() {
-        startActivity(Intent(this, ActivitySettings::class.java))
+        this.settings_intent_launcher.launch(
+            Intent(this, ActivitySettings::class.java).apply {
+                this@ActivityEditor.active_project?.let {
+                    this.putExtra("active_project", it.toString())
+                }
+            }
+        )
     }
 
     fun open_about() {

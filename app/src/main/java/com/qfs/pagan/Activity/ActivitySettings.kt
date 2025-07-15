@@ -18,11 +18,13 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivitySettingsBinding
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import kotlin.concurrent.thread
@@ -34,7 +36,6 @@ class ActivitySettings : PaganActivity() {
         if (result.resultCode == RESULT_OK) {
             result?.data?.data?.also { uri ->
                 if (uri.path != null) {
-
                     // Check if this selected file is within the soundfont_directory ////
                     // We can directory is set here.
                     val parent_segments = this.configuration.soundfont_directory!!.pathSegments!!.last()!!.split("/")
@@ -87,10 +88,10 @@ class ActivitySettings : PaganActivity() {
                                 }
                             }
 
-
                             runOnUiThread {
                                 this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
                             }
+
                             this.set_soundfont_button_text()
                             this.update_result()
                         }
@@ -103,6 +104,24 @@ class ActivitySettings : PaganActivity() {
         }
     }
 
+    internal var _set_project_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result?.data?.also { result_data ->
+                result_data.data?.also { uri  ->
+                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
+                    this.configuration.project_directory = uri
+
+                    this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
+                        this.intent.data = it
+                    }
+
+                    this.update_result()
+                    this.on_project_directory_set(uri)
+                }
+            }
+        }
+    }
 
     internal var _set_soundfont_directory_and_import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -112,6 +131,7 @@ class ActivitySettings : PaganActivity() {
                     this.contentResolver.takePersistableUriPermission(uri, new_flags)
                     this.set_soundfont_directory(uri)
                     this.set_soundfont_directory_button_text()
+
                     if (!this.is_soundfont_available()) {
                         this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.VISIBLE
                         this._import_soundfont_intent_listener.launch(
@@ -127,6 +147,7 @@ class ActivitySettings : PaganActivity() {
             }
         }
     }
+
     private fun update_result() {
         // RESULT_OK lets the other activities know they need to reload the configuration
         this.save_configuration()
@@ -142,7 +163,7 @@ class ActivitySettings : PaganActivity() {
         val toolbar = this._binding.toolbar
         toolbar.background = null
 
-        //toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        this.intent.data = this.intent.getStringExtra("active_project")?.toUri()
 
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
             it.setOnClickListener {
@@ -220,6 +241,7 @@ class ActivitySettings : PaganActivity() {
                 }
             })
         }
+
         this.findViewById<SwitchCompat>(R.id.sUsePreferredSF).let {
             it.isChecked = this.configuration.use_preferred_soundfont
             it.setOnCheckedChangeListener { _, enabled: Boolean ->
@@ -303,7 +325,6 @@ class ActivitySettings : PaganActivity() {
 
         this.set_project_directory_button_text()
         this.set_soundfont_directory_button_text()
-
 
 
         this.setResult(RESULT_CANCELED)

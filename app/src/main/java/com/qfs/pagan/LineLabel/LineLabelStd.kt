@@ -85,7 +85,12 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
 
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
-        val line = this.get_opus_manager().get_all_channels()[this.channel].lines[this.line_offset]
+        val channels = this.get_opus_manager().get_all_channels()
+        if (this.channel >= channels.size || this.line_offset >= channels[this.channel].lines.size) {
+            return
+        }
+
+        val line = channels[this.channel].lines[this.line_offset]
         val line_color = line.color
         if (line_color != null) {
             val line_height = resources.getDimension(R.dimen.line_height)

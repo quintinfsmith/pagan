@@ -359,7 +359,7 @@ class ActivityEditor : PaganActivity() {
 
     internal var result_launcher_settings = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            result?.data?.data?.also { uri ->
+            result?.data?.getStringExtra("active_project")?.toUri()?.also { uri ->
                 this.active_project = uri
             }
         }
@@ -886,6 +886,7 @@ class ActivityEditor : PaganActivity() {
         if (this.is_connected_to_physical_device()) {
             this.playback_state_midi = PlaybackState.Ready
         }
+
         this.update_title_text()
         this.soundfont_file_check()
     }
@@ -3314,6 +3315,10 @@ class ActivityEditor : PaganActivity() {
             if (this.active_context_menu is ContextMenuLeaf) {
                 this.active_context_menu!!.refresh()
             }
+        }
+
+        if (original.project_directory != this.configuration.project_directory) {
+            this.get_project_manager().uri = this.configuration.project_directory
         }
 
         this.update_menu_options()

@@ -204,7 +204,6 @@ class ActivityLanding : PaganActivity() {
     }
 
     override fun on_soundfont_directory_set(uri: Uri) {
-        this.get_project_manager().recache_project_list()
     }
 
     override fun onResume() {

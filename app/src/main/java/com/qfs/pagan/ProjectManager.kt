@@ -90,6 +90,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         } else {
             null
         }
+
         this.recache_project_list()
         return output
     }
@@ -364,9 +365,12 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     // v1.7.7: Using custom projects directories rather than forcing external directory
     fun ucheck_update_move_project_files(active_uri: Uri? = null): Uri? {
         val bkp_path_file = File(this.bkp_path_path)
-        if (!bkp_path_file.exists()) return null
+        val bkp_uri = if (!bkp_path_file.exists()) {
+            null
+        } else {
+            bkp_path_file.readText().toUri()
+        }
 
-        val bkp_uri = bkp_path_file.readText().toUri()
 
         var output: Uri? = null
         this.context.getExternalFilesDir(null)?.let {

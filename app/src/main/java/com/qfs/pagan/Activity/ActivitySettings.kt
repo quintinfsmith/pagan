@@ -30,6 +30,8 @@ import kotlin.concurrent.thread
 class ActivitySettings : PaganActivity() {
     private lateinit var _binding: ActivitySettingsBinding
 
+    var result_intent = Intent()
+
     var result_launcher_import_soundfont = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result.data?.data?.also { uri ->
@@ -111,7 +113,7 @@ class ActivitySettings : PaganActivity() {
                     this.configuration.project_directory = uri
 
                     this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
-                        this.intent.data = it
+                        this.result_intent.putExtra("active_project", it.toString())
                     }
 
                     this.update_result()
@@ -149,7 +151,7 @@ class ActivitySettings : PaganActivity() {
     private fun update_result() {
         // RESULT_OK lets the other activities know they need to reload the configuration
         this.save_configuration()
-        this.setResult(RESULT_OK, Intent())
+        this.setResult(RESULT_OK, this.result_intent)
     }
 
     override fun onCreate(bundle: Bundle?) {

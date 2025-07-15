@@ -1204,6 +1204,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
     override fun project_refresh() {
         this.lock_ui_full {
+            this.get_editor_table().clear()
             this._ui_clear()
             super.project_refresh()
         }
@@ -2701,7 +2702,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     // END UI FUNCS -----------------------
 
     private fun _ui_clear() {
-        this.get_editor_table().clear()
         this.run_on_ui_thread { main ->
             val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
             if (channel_recycler.adapter != null) {

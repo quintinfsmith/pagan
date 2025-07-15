@@ -52,8 +52,6 @@ open class PaganActivity: AppCompatActivity() {
     internal var _popup_active: Boolean = false
     private var _progress_bar: ConstraintLayout? = null
 
-    internal lateinit var bkp_path: String
-    internal lateinit var bkp_path_path: String
     internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.also { result_data ->
@@ -166,11 +164,6 @@ open class PaganActivity: AppCompatActivity() {
 
     open fun on_paganconfig_change(original: PaganConfiguration) {
         this.requestedOrientation = this.configuration.force_orientation
-        if (this.configuration.project_directory != original.project_directory && this.configuration.project_directory != null) {
-            this.get_project_manager().change_project_path(this.configuration.project_directory!!, this.active_project)?.let { new_project_uri ->
-                this.active_project = new_project_uri
-            }
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -541,22 +534,6 @@ open class PaganActivity: AppCompatActivity() {
 
         return coaxed_segments.joinToString("/")
     }
-
-
-    fun delete_backup() {
-        File(this.bkp_path).let { file ->
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-
-        File(this.bkp_path_path).let { file ->
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-    }
-
 
     open fun on_soundfont_directory_set(uri: Uri) {}
     open fun on_project_directory_set(uri: Uri) {}

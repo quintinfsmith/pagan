@@ -9,9 +9,11 @@ import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.w3c.dom.Document
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.time.LocalDateTime
@@ -34,7 +36,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * return the new uri associated with given [active_project_uri] if it was moved
      **/
     fun move_old_projects_directory(old_uri: Uri, active_project_uri: Uri? = null): Uri? {
-        println("MOVING PROJECTS DIRECTORY $old_uri ($active_project_uri)")
         val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return null
         if (!old_directory.isDirectory || old_uri == this.uri) {
             return null
@@ -363,6 +364,8 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     // v1.7.7: Using custom projects directories rather than forcing external directory
     fun ucheck_update_move_project_files(active_uri: Uri? = null): Uri? {
         val bkp_path_file = File(this.bkp_path_path)
+        if (!bkp_path_file.exists()) return null
+
         val bkp_uri = bkp_path_file.readText().toUri()
 
         var output: Uri? = null
@@ -405,5 +408,54 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         return output
+    }
+
+
+    fun save_to_backup(opus_manager: OpusLayerInterface, uri: Uri?) {
+        val path_file = File(this.bkp_path_path)
+        if (uri == null) {
+            if (path_file.exists()) {
+                path_file.delete()
+            }
+        } else {
+            path_file.writeText(uri.toString())
+        }
+
+        File(this.bkp_path).writeText(opus_manager.to_json().to_string())
+    }
+
+    fun read_backup(): Pair<Uri?, ByteArray> {
+        val path_file = File(this.bkp_path_path)
+        return Pair(
+            if (path_file.exists()) {
+                val uri = path_file.readText().toUri()
+                if (DocumentFile.fromSingleUri(this.context, uri)?.exists() == true) {
+                    uri
+                } else {
+                    null
+                }
+            } else {
+                null
+           },
+            FileInputStream(this.bkp_path).readBytes()
+        )
+    }
+
+    fun delete_backup() {
+        File(this.bkp_path).let { file ->
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+
+        File(this.bkp_path_path).let { file ->
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+    }
+
+    fun has_backup_saved(): Boolean {
+        return File(this.bkp_path).exists()
     }
 }

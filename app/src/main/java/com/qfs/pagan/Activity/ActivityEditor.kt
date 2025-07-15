@@ -357,7 +357,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    internal var settings_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    internal var result_launcher_settings = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.data?.also { uri ->
                 this.active_project = uri
@@ -365,7 +365,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    internal var import_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    internal var result_launcher_import = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.data?.also { uri ->
                 this.handle_uri(uri)
@@ -373,7 +373,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private val set_project_directory_and_save_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val result_launcher_set_project_directory = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result?.data?.also { result_data ->
                 result_data.data?.also { tree_uri  ->
@@ -387,10 +387,9 @@ class ActivityEditor : PaganActivity() {
                 }
             }
         }
-
     }
 
-    private var _export_multi_line_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var result_launcher_export_multi_line_wav = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
             return@registerForActivityResult
@@ -510,7 +509,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private var _export_multi_channel_wav_intent_launcher = registerForActivityResult(
+    private var result_launcher_export_multi_channel_wav = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
@@ -631,7 +630,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private var _export_wav_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var result_launcher_export_wav = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
             return@registerForActivityResult
@@ -796,7 +795,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private var _export_project_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var result_launcher_export_project = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
@@ -809,7 +808,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private var _export_midi_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private var result_launcher_export_midi = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             val opus_manager = this.get_opus_manager()
             result?.data?.data?.also { uri ->
@@ -892,19 +891,10 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun save_to_backup() {
-        val opus_manager = this.get_opus_manager()
-        val uri = this.active_project
-
-        val path_file = File(this.bkp_path_path)
-        if (uri == null) {
-            if (path_file.exists()) {
-                path_file.delete()
-            }
-        } else {
-            path_file.writeText(uri.toString())
-        }
-
-        File(this.bkp_path).writeText(opus_manager.to_json().to_string())
+        this.view_model.project_manager.save_to_backup(
+            this.get_opus_manager(),
+            this.active_project
+        )
     }
 
 
@@ -953,20 +943,11 @@ class ActivityEditor : PaganActivity() {
         editor_table.clear()
 
         val opus_manager = this.get_opus_manager()
-        val bytes = FileInputStream(this.bkp_path).readBytes()
-        opus_manager.load(bytes) {
-            val backup_path_file = File(this.bkp_path_path)
+        val project_manager = this.view_model.project_manager
+        val (backup_uri, bytes) = project_manager.read_backup()
 
-            if (backup_path_file.exists()) {
-                val backup_path: String = backup_path_file.readText()
-                if (DocumentFile.fromSingleUri(this, backup_path.toUri())?.exists() == true) {
-                    this.active_project = backup_path.toUri()
-                } else {
-                    this.active_project = null
-                }
-            } else {
-                this.active_project = null
-            }
+        opus_manager.load(bytes) {
+            this.active_project = backup_uri
         }
     }
 
@@ -1254,10 +1235,10 @@ class ActivityEditor : PaganActivity() {
             } else {
                 this.load_from_bkp()
             }
+        } else if (this.intent.getBooleanExtra("load_backup", false)) {
+            this.load_from_bkp()
         } else if (this.intent.data == null) {
             this.setup_new()
-        } else if (this.is_bkp(this.intent.data!!)) {
-            this.load_from_bkp()
         } else if (this.get_project_manager().contains(this.intent.data!!)) {
             this.load_project(this.intent.data!!)
         } else {
@@ -1301,7 +1282,7 @@ class ActivityEditor : PaganActivity() {
             }
 
             R.id.itmImportMidi -> {
-                this.import_intent_launcher.launch(
+                this.result_launcher_import.launch(
                     Intent().apply {
                         setAction(Intent.ACTION_GET_CONTENT)
                         setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
@@ -1358,7 +1339,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun open_settings() {
-        this.settings_intent_launcher.launch(
+        this.result_launcher_settings.launch(
             Intent(this, ActivitySettings::class.java).apply {
                 this@ActivityEditor.active_project?.let {
                     this.putExtra("active_project", it.toString())
@@ -1391,7 +1372,7 @@ class ActivityEditor : PaganActivity() {
             this.configuration.project_directory?.let {
                 intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
             }
-            this.set_project_directory_and_save_intent_launcher.launch(intent)
+            this.result_launcher_set_project_directory.launch(intent)
         } else {
             this._project_save()
         }
@@ -1649,6 +1630,7 @@ class ActivityEditor : PaganActivity() {
             }
             this.get_action_interface().save()
         }
+
         this.findViewById<View>(R.id.btnSaveProject).setOnLongClickListener {
             if (!it.isEnabled) {
                 return@setOnLongClickListener false
@@ -2503,26 +2485,29 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_multi_lines_wav() {
-        val name = this.get_export_name()
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        intent.putExtra(Intent.EXTRA_TITLE, name)
-        this._export_multi_line_wav_intent_launcher.launch(intent)
+        this.result_launcher_export_multi_line_wav.launch(
+            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                it.putExtra(Intent.EXTRA_TITLE, this.get_export_name())
+            }
+        )
     }
 
     fun export_multi_channels_wav() {
-        val name = this.get_export_name()
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        intent.putExtra(Intent.EXTRA_TITLE, name)
-        this._export_multi_channel_wav_intent_launcher.launch(intent)
+        this.result_launcher_export_multi_channel_wav.launch(
+            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                it.putExtra(Intent.EXTRA_TITLE, this.get_export_name())
+            }
+        )
     }
 
     fun export_wav() {
-        val name = this.get_export_name()
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.type = "audio/wav"
-        intent.putExtra(Intent.EXTRA_TITLE, "$name.wav")
-        this._export_wav_intent_launcher.launch(intent)
+        this.result_launcher_export_wav.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also {
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.type = "audio/wav"
+                intent.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.wav")
+            }
+        )
     }
 
     fun export_wav_cancel() {
@@ -2552,25 +2537,24 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_midi() {
-        val name = this.get_export_name()
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        //intent.type = MimeTypes.AUDIO_MIDI
-        intent.type = "audio/midi"
-        intent.putExtra(Intent.EXTRA_TITLE, "$name.mid")
-
-        this._export_midi_intent_launcher.launch(intent)
+        this.result_launcher_export_midi.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also {
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "audio/midi"
+                //type = MimeTypes.AUDIO_MIDI
+                it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.mid")
+            }
+        )
     }
 
     fun export_project() {
-        val name = this.get_export_name()
-
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        intent.type = "application/json"
-        intent.putExtra(Intent.EXTRA_TITLE, "$name.json")
-
-        this._export_project_intent_launcher.launch(intent)
+        this.result_launcher_export_project.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also {
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "application/json"
+                it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.json")
+            }
+        )
     }
 
     /**
@@ -2581,11 +2565,6 @@ class ActivityEditor : PaganActivity() {
         val path = this.applicationInfo.dataDir
         val file = File("$path/bkp_crashreport.log")
         file.writeText(e.stackTraceToString())
-    }
-
-    fun is_bkp(uri: Uri): Boolean {
-        val result = uri == "${applicationInfo.dataDir}/.bkp.json".toUri()
-        return result
     }
 
     fun reinit_playback_device() {
@@ -3346,7 +3325,7 @@ class ActivityEditor : PaganActivity() {
         super.on_project_delete(uri)
         this.update_menu_options()
         if (this.active_project == uri) {
-            this.delete_backup()
+            this.view_model.project_manager.delete_backup()
             this.setup_new()
         }
     }

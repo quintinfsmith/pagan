@@ -54,7 +54,7 @@ class ActivitySettings : PaganActivity() {
                             soundfont_dir.createFile("*/*", file_name)?.let { new_file ->
                                 this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
                                     try {
-                                        val output_stream = this.contentResolver.openOutputStream(new_file.uri)
+                                        val output_stream = this.contentResolver.openOutputStream(new_file.uri, "wt")
                                         val input_stream = FileInputStream(it.fileDescriptor)
 
                                         val buffer = ByteArray(1024)

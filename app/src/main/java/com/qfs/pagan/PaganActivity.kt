@@ -84,12 +84,28 @@ open class PaganActivity: AppCompatActivity() {
                     this.contentResolver.takePersistableUriPermission(uri, new_flags)
                     this.configuration.project_directory = uri
                     this.save_configuration()
-                    this.get_project_manager().change_project_path(uri, this.active_project)?.let {
-                        this.active_project = it
-                        // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
-                        // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
-                        val path_file = File(this.bkp_path_path)
-                        path_file.writeText(it.toString())
+
+                    val path_file = File(this.bkp_path_path)
+                    // If  the active_project is set, that means we are currently editting a project,
+                    // Otherwise we aren't and the backup path needs to be handled
+                    if (this.active_project != null) {
+                        println("??======= ${this.active_project}")
+                        this.get_project_manager().change_project_path(uri, this.active_project)?.let {
+                            this.active_project = it
+                            println("===??=== $it")
+                            // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
+                            // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
+                            path_file.writeText(it.toString())
+                        }
+                    } else {
+                        val backup_file = DocumentFile.fromSingleUri(this, path_file.readText().toUri())
+                        println("!!======= ${backup_file?.uri}")
+                        if (backup_file?.exists() == true) {
+                            this.get_project_manager().change_project_path(uri, backup_file.uri)?.let {
+                                println("===??=== $it")
+                                path_file.writeText(it.toString())
+                            }
+                        }
                     }
                     this.ucheck_update_move_project_files()
                     this.on_project_directory_set(uri)
@@ -112,7 +128,7 @@ open class PaganActivity: AppCompatActivity() {
                     val soundfont_name = soundfont.toUri().pathSegments.last().split("/").last()
                     new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
                         val input_stream = soundfont.inputStream()
-                        val output_stream = this.contentResolver.openOutputStream(new_file.uri)
+                        val output_stream = this.contentResolver.openOutputStream(new_file.uri, "wt")
 
                         val buffer = ByteArray(1024)
                         while (true) {
@@ -588,7 +604,7 @@ open class PaganActivity: AppCompatActivity() {
             for (project in old_directory.listFiles()) {
                 // Use new path instead of copying file name to avoid collisions
                 val new_uri = project_manager.get_new_file_uri() ?: continue
-                val output_stream = this.contentResolver.openOutputStream(new_uri)
+                val output_stream = this.contentResolver.openOutputStream(new_uri, "wt")
                 val input_stream = project.inputStream()
 
                 // Necessary for when user goes into settings, changes project directory, then leaves the app for a while

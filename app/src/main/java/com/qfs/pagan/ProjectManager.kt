@@ -1,6 +1,7 @@
 package com.qfs.pagan
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.json.JSONHashMap
@@ -31,22 +32,22 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * return the new uri associated with given [active_project_uri] if it was moved
      **/
     fun move_old_projects_directory(old_uri: Uri, active_project_uri: Uri? = null): Uri? {
-        var output: Uri? = null
-        val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return output
+        val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return null
         if (!old_directory.isDirectory || old_uri == this.uri) {
-            return output
+            return null
         }
 
+        var output: Uri? = null
         for (project in old_directory.listFiles()) {
             if (!project.isFile) {
                 continue
             }
             // Use new path instead of copying file name to avoid collisions
             val new_uri = this.get_new_file_uri() ?: continue
-            val output_stream = this.context.contentResolver.openOutputStream(new_uri)
+            val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
             val input_stream = this.context.contentResolver.openInputStream(project.uri)
 
-            if (project == active_project_uri) {
+            if (project.uri == active_project_uri) {
                 output = new_uri
             }
 
@@ -63,6 +64,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             output_stream?.flush()
             output_stream?.close()
 
+            project.delete()
         }
 
         this.recache_project_list()
@@ -123,13 +125,12 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         // Untrack then track in order to update the project title in the cache
         active_project_uri.let {
             val content = opus_manager.to_json()
-            val output_stream = this.context.contentResolver.openOutputStream(it)
-            val stream_writer = OutputStreamWriter(output_stream)
-            val writer = BufferedWriter(stream_writer)
-            writer.write(content.to_string())
 
-            writer.flush()
-            writer.close()
+            this.context.contentResolver.openOutputStream(it, "wt")?.let { output_stream ->
+                output_stream.write(content.to_string().toByteArray(Charsets.UTF_8))
+                output_stream.flush()
+                output_stream.close()
+            }
 
             this._untrack_uri(it)
             this._track_path(it)
@@ -246,7 +247,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val content = reader.readText()
 
         reader.close()
-        input_stream?.close()
 
         val json_obj = JSONParser.parse<JSONHashMap>(content) ?: return null
         val version = OpusManagerJSONInterface.detect_version(json_obj)

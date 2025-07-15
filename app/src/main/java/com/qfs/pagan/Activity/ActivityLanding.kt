@@ -203,9 +203,7 @@ class ActivityLanding : PaganActivity() {
         }
     }
 
-    override fun on_soundfont_directory_set(uri: Uri) {
-    }
-
+    override fun on_soundfont_directory_set(uri: Uri) {}
     override fun onResume() {
         super.onResume()
         this.update_view_visibilities()

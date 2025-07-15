@@ -3317,10 +3317,6 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-        if (original.project_directory != this.configuration.project_directory) {
-            this.get_project_manager().uri = this.configuration.project_directory
-        }
-
         this.update_menu_options()
     }
 

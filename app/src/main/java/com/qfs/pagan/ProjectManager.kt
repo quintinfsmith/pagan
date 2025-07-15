@@ -36,6 +36,14 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * return the new uri associated with given [active_project_uri] if it was moved
      **/
     fun move_old_projects_directory(old_uri: Uri, active_project_uri: Uri? = null): Uri? {
+        val bkp_path_file = File(this.bkp_path_path)
+        val bkp_uri = if (!bkp_path_file.exists()) {
+            null
+        } else {
+            bkp_path_file.readText().toUri()
+        }
+
+
         val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return null
         if (!old_directory.isDirectory || old_uri == this.uri) {
             return null
@@ -51,8 +59,10 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
             val input_stream = this.context.contentResolver.openInputStream(project.uri)
 
-            if (project.uri == active_project_uri) {
-                output = new_uri
+            when (project.uri) {
+                active_project_uri -> { output = new_uri }
+                bkp_uri -> { bkp_path_file.writeText(new_uri.toString()) }
+                else -> { }
             }
 
             val buffer = ByteArray(4096)
@@ -85,6 +95,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         val old_uri = this.uri
         this.uri = new_uri
+        println("CHANGING $old_uri to $new_uri")
         val output = if (old_uri != null) {
             this.move_old_projects_directory(old_uri, active_project_uri)
         } else {

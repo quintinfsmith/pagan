@@ -164,6 +164,10 @@ open class PaganActivity: AppCompatActivity() {
 
     open fun on_paganconfig_change(original: PaganConfiguration) {
         this.requestedOrientation = this.configuration.force_orientation
+        if (original.project_directory != this.configuration.project_directory) {
+            this.get_project_manager().uri = this.configuration.project_directory
+        }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

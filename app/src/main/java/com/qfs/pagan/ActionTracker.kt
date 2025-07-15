@@ -29,6 +29,7 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import kotlinx.coroutines.runBlocking
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -871,7 +872,12 @@ class ActionTracker {
 
     fun load_project(uri: Uri) {
         this.track(TrackedAction.LoadProject, string_to_ints(uri.toString()))
-        this.get_activity().load_project(uri)
+        val activity = this.get_activity()
+        thread {
+            activity.loading_reticle_show()
+            activity.load_project(uri)
+            activity.loading_reticle_hide()
+        }
     }
 
 

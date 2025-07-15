@@ -140,7 +140,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     fun connect_virtual_output_device(device: VirtualMidiOutputDevice) {
         runBlocking {
-            this@MidiController.virtual_output_mutex.withLock{
+            this@MidiController.virtual_output_mutex.withLock {
                 this@MidiController.virtual_output_devices.add(device)
             }
         }

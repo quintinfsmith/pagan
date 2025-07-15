@@ -23,8 +23,7 @@ import java.time.format.DateTimeFormatter
 class ActivityLanding : PaganActivity() {
     private lateinit var _binding: ActivityLandingBinding
     private var result_launcher_save_crash_report = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val path = this.getExternalFilesDir(null).toString()
-        val file = File("$path/bkp_crashreport.log")
+        val file = File("$dataDir/bkp_crashreport.log")
         if (result.resultCode == RESULT_OK) {
             result?.data?.data?.also { uri ->
                 val content = file.readText()
@@ -66,8 +65,7 @@ class ActivityLanding : PaganActivity() {
     }
 
     fun check_for_crash_report() {
-        val path = this.getExternalFilesDir(null).toString()
-        val file = File("$path/bkp_crashreport.log")
+        val file = File("$dataDir/bkp_crashreport.log")
         if (file.isFile) {
             AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
                 .setTitle(R.string.crash_report_save)

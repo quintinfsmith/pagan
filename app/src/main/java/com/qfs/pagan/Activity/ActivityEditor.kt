@@ -931,6 +931,7 @@ class ActivityEditor : PaganActivity() {
         val input_stream = this.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
         val content = reader.readText().toByteArray(Charsets.UTF_8)
+
         reader.close()
         input_stream?.close()
 

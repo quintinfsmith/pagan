@@ -1374,9 +1374,9 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun project_save() {
-        if (this.configuration.project_directory == null) {
+        if (this.configuration.project_directory == null || DocumentFile.fromSingleUri(this, this.configuration.project_directory!!)?.exists() != true) {
             this.result_launcher_set_project_directory.launch(
-                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).let { intent ->
+                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
                     intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
                     intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     this.configuration.project_directory?.let {

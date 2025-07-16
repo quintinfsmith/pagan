@@ -1004,23 +1004,6 @@ class ActivityEditor : PaganActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
-            Log.d("pagandebug", "$paramThrowable")
-            if (this@ActivityEditor.is_debug_on()) {
-                this@ActivityEditor.save_actions()
-            }
-            this@ActivityEditor.save_to_backup()
-            this@ActivityEditor.bkp_crash_report(paramThrowable)
-
-            val ctx = applicationContext
-            val pm = ctx.packageManager
-            val intent = pm.getLaunchIntentForPackage(ctx.packageName)
-            val mainIntent = Intent.makeRestartActivityTask(intent!!.component)
-            ctx.startActivity(mainIntent)
-            Runtime.getRuntime().exit(0)
-
-        }
-
         this._midi_interface = object : MidiController(this) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 if (!this@ActivityEditor.update_playback_state_midi(PlaybackState.Ready)) {
@@ -1279,6 +1262,7 @@ class ActivityEditor : PaganActivity() {
                 this.dialog_load_project { uri: Uri ->
                     this.dialog_save_project {
                         val editor_table = this.findViewById<View?>(R.id.etEditorTable)
+                        this.get_opus_manager().cursor_clear()
                         thread {
                             this.loading_reticle_show()
                             this.runOnUiThread { editor_table?.visibility = View.GONE }
@@ -1374,7 +1358,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun project_save() {
-        if (this.configuration.project_directory == null || DocumentFile.fromSingleUri(this, this.configuration.project_directory!!)?.exists() != true) {
+        if (this.configuration.project_directory == null || DocumentFile.fromTreeUri(this, this.configuration.project_directory!!)?.exists() != true) {
             this.result_launcher_set_project_directory.launch(
                 Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
                     intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
@@ -2577,16 +2561,6 @@ class ActivityEditor : PaganActivity() {
         )
     }
 
-    /**
-     * Save text file in storage of a crash report.
-     * To be copied and saved somewhere accessible on reload.
-     */
-    fun bkp_crash_report(e: Throwable) {
-        val path = this.applicationInfo.dataDir
-        val file = File("$path/bkp_crashreport.log")
-        file.writeText(e.stackTraceToString())
-    }
-
     fun reinit_playback_device() {
         this._midi_playback_device?.kill()
 
@@ -2798,16 +2772,19 @@ class ActivityEditor : PaganActivity() {
 
     fun save_actions() {
         val generated_code = this.get_action_interface().to_json().to_string()
-        val path = this.getExternalFilesDir(null).toString()
         val timestamp = System.currentTimeMillis()
-        val file_name = "$path/generated_$timestamp.json"
+        val file_name = "${this.dataDir}/generated_$timestamp.json"
+
         val file = File(file_name)
         file.writeText(generated_code)
         this.get_action_interface().clear()
     }
 
-    fun is_debug_on(): Boolean {
-        return this.packageName.contains("pagandev")
+    override fun on_crash() {
+        if (this.is_debug_on()) {
+            this.save_actions()
+        }
+        this.save_to_backup()
     }
 
     override fun onDestroy() {
@@ -2819,7 +2796,6 @@ class ActivityEditor : PaganActivity() {
     fun set_forced_orientation(value: Int) {
         this.requestedOrientation = value
     }
-
 
     internal fun dialog_popup_selection_offset() {
         val view_inflated: View = LayoutInflater.from(this)

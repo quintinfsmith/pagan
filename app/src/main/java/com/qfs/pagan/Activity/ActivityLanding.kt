@@ -86,14 +86,13 @@ class ActivityLanding : PaganActivity() {
     fun export_crash_report() {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-        //intent.type = MimeTypes.AUDIO_MIDI
-        intent.type = "text/plain"
-        intent.putExtra(Intent.EXTRA_TITLE, "pagan.cr-${now.format(formatter)}.log")
-
-        this.result_launcher_save_crash_report.launch(intent)
+        this.result_launcher_save_crash_report.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also { intent ->
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.type = "text/plain"
+                intent.putExtra(Intent.EXTRA_TITLE, "pagan.cr-${now.format(formatter)}.log")
+            }
+        )
     }
 
     override fun onCreate(bundle: Bundle?) {

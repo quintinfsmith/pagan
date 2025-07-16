@@ -6,7 +6,9 @@ import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -75,31 +77,36 @@ open class PaganActivity: AppCompatActivity() {
     // v1.7.7, Using user-specified soundfont directories. Check if externalfiles/soundfonts exists and move to new directory
     fun ucheck_move_soundfonts() {
         val uri = this.configuration.soundfont_directory ?: return
-        DocumentFile.fromTreeUri(this, uri)?.let { new_directory ->
+        try {
             File("${this.applicationContext.getExternalFilesDir(null)}/SoundFonts").let { old_directory ->
-                val file_list = old_directory.listFiles() ?: arrayOf<File>()
-                for (soundfont in file_list) {
-                    val soundfont_name = soundfont.toUri().pathSegments.last().split("/").last()
-                    new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
-                        val input_stream = soundfont.inputStream()
-                        val output_stream = this.contentResolver.openOutputStream(new_file.uri, "wt")
+                DocumentFile.fromTreeUri(this, uri)?.let { new_directory ->
+                    val buffer_size = 1024 * 1024
+                    val file_list = old_directory.listFiles() ?: arrayOf<File>()
+                    for (soundfont in file_list) {
+                        val soundfont_name = soundfont.toUri().pathSegments.last().split("/").last()
+                        new_directory.createFile("*/*", soundfont_name)?.let { new_file ->
+                            val input_stream = soundfont.inputStream()
+                            val output_stream = this.contentResolver.openOutputStream(new_file.uri, "wt")
 
-                        val buffer = ByteArray(1024)
-                        while (true) {
-                            val read_size = input_stream.read(buffer)
-                            if (read_size == -1) {
-                                break
+                            val buffer = ByteArray(buffer_size)
+                            while (true) {
+                                val read_size = input_stream.read(buffer)
+                                if (read_size == -1) {
+                                    break
+                                }
+                                output_stream?.write(buffer, 0, read_size)
                             }
-                            output_stream?.write(buffer, 0, read_size)
-                        }
 
-                        input_stream.close()
-                        output_stream?.flush()
-                        output_stream?.close()
+                            input_stream.close()
+                            output_stream?.flush()
+                            output_stream?.close()
+                        }
                     }
+                    old_directory.deleteRecursively()
                 }
-                old_directory.deleteRecursively()
             }
+        } catch (e: SecurityException) {
+            return
         }
     }
 
@@ -113,10 +120,11 @@ open class PaganActivity: AppCompatActivity() {
         return if (this.configuration.soundfont_directory != null) {
             DocumentFile.fromTreeUri(this,this.configuration.soundfont_directory!!)!!
         } else {
-            val soundfont_dir = File("${this.applicationContext.dataDir}/SoundFonts")
+            val soundfont_dir = this.applicationContext.getDir("SoundFonts", MODE_PRIVATE)
             if (!soundfont_dir.exists()) {
                 soundfont_dir.mkdirs()
             }
+
             DocumentFile.fromFile(soundfont_dir)
         }
     }
@@ -173,13 +181,60 @@ open class PaganActivity: AppCompatActivity() {
 
     }
 
+    fun is_debug_on(): Boolean {
+        return this.packageName.contains("pagandev")
+    }
+    open fun on_crash() { }
+
+    /**
+     * Save text file in storage of a crash report.
+     * To be copied and saved somewhere accessible on reload.
+     */
+    fun bkp_crash_report(e: Throwable) {
+        val file = File("${this.dataDir}/bkp_crashreport.log")
+        file.writeText(e.stackTraceToString())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+            Log.d("pagandebug", "$paramThrowable")
+            this.bkp_crash_report(paramThrowable)
+            this.on_crash()
+
+            val ctx = applicationContext
+            val pm = ctx.packageManager
+            val intent = pm.getLaunchIntentForPackage(ctx.packageName) ?: return@setDefaultUncaughtExceptionHandler
+            ctx.startActivity(
+                Intent.makeRestartActivityTask(intent.component)
+            )
+            Runtime.getRuntime().exit(0)
+        }
+
         // Default to empty path, it gets set in
-        this.configuration_path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+
+        this.configuration_path = "${this.applicationContext.cacheDir}/pagan.cfg"
+
+        this.ucheck_move_configuration()
         this.load_config()
 
+    }
+
+    // changed v.1.7.7
+    fun ucheck_move_configuration() {
+        try {
+            val path = "${this.getExternalFilesDir(null)}/pagan.cfg"
+            val file = File(path)
+            if (file.exists()) {
+                if (!File(this.configuration_path).exists()) {
+                    file.copyTo(File(this.configuration_path))
+                }
+                file.deleteOnExit()
+            }
+        } catch (e: SecurityException) {
+            return
+        }
     }
 
     override fun onResume() {

@@ -23,9 +23,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     class InvalidDirectory(path: Uri): Exception("Real Directory Required ($path)")
     class PathNotSetException(): Exception("Projects path has not been set.")
-    private val _cache_path = "${context.applicationContext.dataDir}/project_list.json"
-    private val bkp_path = "${this.context.applicationInfo.dataDir}/.bkp.json"
-    private val bkp_path_path = "${this.context.applicationInfo.dataDir}/.bkp_path"
+    private val _cache_path = "${context.cacheDir}/project_list.json"
+    private val bkp_path = "${this.context.cacheDir}/.bkp.json"
+    private val bkp_path_path = "${this.context.cacheDir}/.bkp_path"
 
     init {
         this.recache_project_list()
@@ -50,6 +50,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         var output: Uri? = null
+        val buffer_size = 1024 * 1024
         for (project in old_directory.listFiles()) {
             if (!project.isFile) {
                 continue
@@ -65,7 +66,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                 else -> { }
             }
 
-            val buffer = ByteArray(4096)
+            val buffer = ByteArray(buffer_size)
             while (true) {
                 val read_size = input_stream?.read(buffer) ?: break
                 if (read_size == -1) {
@@ -190,15 +191,23 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
     fun has_external_storage_projects(): Boolean {
         // V1.7.7, moved project storage out of ExternalFilesDir
-        val external_path = this.context.getExternalFilesDir(null) ?: return false
-        val old_directory = File("$external_path/projects")
-        return old_directory.isDirectory && old_directory.listFiles()?.isNotEmpty() ?: false
+        return try {
+            val external_path = this.context.getExternalFilesDir(null) ?: return false
+            val old_directory = File("$external_path/projects")
+            old_directory.isDirectory && old_directory.listFiles()?.isNotEmpty() ?: false
+        } catch (e: SecurityException) {
+            false
+        }
     }
 
     fun ucheck_recache_external_storage_projects(): Boolean {
         // V1.7.7, moved project storage out of ExternalFilesDir
-        val external_path = this.context.getExternalFilesDir(null) ?: return false
-        val old_directory = File("$external_path/projects")
+        val old_directory = try {
+            val external_path = this.context.getExternalFilesDir(null) ?: return false
+            File("$external_path/projects")
+        } catch (e: SecurityException) {
+            return false
+        }
         if (!old_directory.isDirectory || old_directory.listFiles()?.isEmpty() ?: false) {
             return false
         }
@@ -384,42 +393,53 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
 
         var output: Uri? = null
-        this.context.getExternalFilesDir(null)?.let {
-            val old_directory = File("$it/projects")
-            if (!old_directory.isDirectory) {
-                return null
-            }
-
-            for (project in old_directory.listFiles()) {
-                // Use new path instead of copying file name to avoid collisions
-                val new_uri = this.get_new_file_uri() ?: continue
-                val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
-                val input_stream = project.inputStream()
-
-                // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
-                // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
-                when (project.toUri()) {
-                    active_uri -> { output = new_uri }
-                    bkp_uri -> { bkp_path_file.writeText(new_uri.toString()) }
-                    else -> { }
+        try {
+            this.context.getExternalFilesDir(null)?.let {
+                val old_directory = File("$it/projects")
+                if (!old_directory.isDirectory) {
+                    return null
                 }
 
-                val buffer = ByteArray(4096)
-                while (true) {
-                    val read_size = input_stream.read(buffer)
-                    if (read_size == -1) {
-                        break
+                val buffer_size = 1024 * 1024
+                for (project in old_directory.listFiles() ?: arrayOf()) {
+                    // Use new path instead of copying file name to avoid collisions
+                    val new_uri = this.get_new_file_uri() ?: continue
+                    val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
+                    val input_stream = project.inputStream()
+
+                    // Necessary for when user goes into settings, changes project directory, then leaves the app for a while
+                    // and the context is lost. When the project is loaded from bkp, the reloaded active project would OTHERWISE be incorrect
+                    when (project.toUri()) {
+                        active_uri -> {
+                            output = new_uri
+                        }
+
+                        bkp_uri -> {
+                            bkp_path_file.writeText(new_uri.toString())
+                        }
+
+                        else -> {}
                     }
-                    output_stream?.write(buffer, 0, read_size)
+
+                    val buffer = ByteArray(buffer_size)
+                    while (true) {
+                        val read_size = input_stream.read(buffer)
+                        if (read_size == -1) {
+                            break
+                        }
+                        output_stream?.write(buffer, 0, read_size)
+                    }
+
+                    input_stream.close()
+                    output_stream?.flush()
+                    output_stream?.close()
                 }
 
-                input_stream.close()
-                output_stream?.flush()
-                output_stream?.close()
+                this.recache_project_list()
+                old_directory.deleteRecursively()
             }
-
-            this.recache_project_list()
-            old_directory.deleteRecursively()
+        } catch (e: SecurityException) {
+            // pass
         }
 
         return output

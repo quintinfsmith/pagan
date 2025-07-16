@@ -471,6 +471,7 @@ open class PaganActivity: AppCompatActivity() {
     open fun on_project_delete(uri: Uri) { }
 
     fun loading_reticle_show() {
+        this.on_reticle_show()
         this.runOnUiThread {
             if (this._progress_bar == null) {
                 this._progress_bar = LayoutInflater.from(this)
@@ -496,16 +497,17 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     fun loading_reticle_hide() {
-        thread {
-            this.runOnUiThread {
-                this._progress_bar?.let {
-                    if (it.parent != null) {
-                        (it.parent as ViewGroup).removeView(it)
-                    }
+        this.runOnUiThread {
+            this._progress_bar?.let {
+                if (it.parent != null) {
+                    (it.parent as ViewGroup).removeView(it)
                 }
             }
         }
+        this.on_reticle_hide()
     }
+    open fun on_reticle_show() { }
+    open fun on_reticle_hide() { }
 
     fun get_soundfont_uri(): Uri? {
         if (this.configuration.soundfont == null || this.configuration.soundfont_directory == null) {

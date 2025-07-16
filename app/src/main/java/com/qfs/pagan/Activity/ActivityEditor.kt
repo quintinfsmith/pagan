@@ -1588,7 +1588,9 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun set_title_text(new_text: String) {
-        this._binding.toolbar.title = new_text
+        this.runOnUiThread {
+            this._binding.toolbar.title = new_text
+        }
     }
 
     fun force_title_text(msg: String) {
@@ -1599,6 +1601,16 @@ class ActivityEditor : PaganActivity() {
     fun clear_forced_title() {
         this._forced_title_text = null
         this.update_title_text()
+    }
+
+    override fun on_reticle_hide() {
+        super.on_reticle_hide()
+        this.clear_forced_title()
+    }
+
+    override fun on_reticle_show() {
+        super.on_reticle_show()
+        this.force_title_text(getString(R.string.reticle_msg_load))
     }
 
     fun update_menu_options() {

@@ -995,7 +995,8 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.get_activity()?.swap_percussion_channels(channel_a, channel_b)
             this.get_editor_table().swap_mapped_channels(vis_line_b, channel_a_size, vis_line_a, channel_b_size)
             this._swap_line_ui_update(channel_a, 0, channel_b, 0)
-
+            this._ui_change_bill.queue_refresh_channel(channel_a)
+            this._ui_change_bill.queue_refresh_channel(channel_b)
         }
     }
 

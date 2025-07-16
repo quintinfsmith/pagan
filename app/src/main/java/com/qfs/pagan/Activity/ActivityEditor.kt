@@ -359,7 +359,7 @@ class ActivityEditor : PaganActivity() {
 
     internal var result_launcher_settings = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            result?.data?.getStringExtra("active_project")?.toUri()?.also { uri ->
+            result?.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()?.also { uri ->
                 this.active_project = uri
             }
         }
@@ -378,11 +378,11 @@ class ActivityEditor : PaganActivity() {
             result?.data?.also { result_data ->
                 result_data.data?.also { tree_uri  ->
                     val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this@ActivityEditor.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
-                    this@ActivityEditor.configuration.project_directory = tree_uri
-                    this@ActivityEditor.save_configuration()
+                    this.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
+                    this.configuration.project_directory = tree_uri
+                    this.save_configuration()
                     // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
-                    this@ActivityEditor.get_project_manager().change_project_path(tree_uri, this.active_project)
+                    this.get_project_manager().change_project_path(tree_uri, this.active_project)
                     this._project_save()
                 }
             }
@@ -1278,7 +1278,14 @@ class ActivityEditor : PaganActivity() {
             R.id.itmLoadProject -> {
                 this.dialog_load_project { uri: Uri ->
                     this.dialog_save_project {
-                        this.get_action_interface().load_project(uri)
+                        val editor_table = this.findViewById<View?>(R.id.etEditorTable)
+                        thread {
+                            this.loading_reticle_show()
+                            this.runOnUiThread { editor_table?.visibility = View.GONE }
+                            this.get_action_interface().load_project(uri)
+                            this.runOnUiThread { editor_table?.visibility = View.VISIBLE }
+                            this.loading_reticle_hide()
+                        }
                     }
                 }
             }

@@ -41,6 +41,9 @@ import kotlin.getValue
 import kotlin.math.roundToInt
 
 open class PaganActivity: AppCompatActivity() {
+    companion object {
+        const val EXTRA_ACTIVE_PROJECT = "active_project"
+    }
     class PaganViewModel: ViewModel() {
         internal lateinit var project_manager: ProjectManager
     }

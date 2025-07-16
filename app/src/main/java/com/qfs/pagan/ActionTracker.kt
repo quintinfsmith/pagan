@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
+import android.view.View
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -873,11 +874,7 @@ class ActionTracker {
     fun load_project(uri: Uri) {
         this.track(TrackedAction.LoadProject, string_to_ints(uri.toString()))
         val activity = this.get_activity()
-        thread {
-            activity.loading_reticle_show()
-            activity.load_project(uri)
-            activity.loading_reticle_hide()
-        }
+        activity.load_project(uri)
     }
 
 

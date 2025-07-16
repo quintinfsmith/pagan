@@ -113,7 +113,7 @@ class ActivitySettings : PaganActivity() {
                     this.configuration.project_directory = uri
 
                     this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
-                        this.result_intent.putExtra("active_project", it.toString())
+                        this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
                     }
 
                     this.update_result()
@@ -163,7 +163,7 @@ class ActivitySettings : PaganActivity() {
         val toolbar = this._binding.toolbar
         toolbar.background = null
 
-        this.intent.data = this.intent.getStringExtra("active_project")?.toUri()
+        this.intent.data = this.intent.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()
 
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
             it.setOnClickListener {

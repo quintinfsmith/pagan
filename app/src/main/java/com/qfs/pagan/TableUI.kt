@@ -629,7 +629,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val beat_key = BeatKey(j, k, i)
                         val tree = opus_manager.get_tree(beat_key, listOf())
                         this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
-                            val state = this.get_standard_leaf_state(beat_key, position)
+                            // It's technically possible for this to be called during a project change. I've only had it happen once, but...
+                            // TODO: ensure that *cannot* happen
+                            val state = try {
+                                this.get_standard_leaf_state(beat_key, position)
+                            } catch (e: IndexOutOfBoundsException) {
+                                return@draw_tree
+                            }
 
                             val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
                             leaf_drawable.setState(state)

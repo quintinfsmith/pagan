@@ -1351,7 +1351,7 @@ class ActivityEditor : PaganActivity() {
         this.result_launcher_settings.launch(
             Intent(this, ActivitySettings::class.java).apply {
                 this@ActivityEditor.active_project?.let {
-                    this.putExtra("active_project", it.toString())
+                    this.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
                 }
             }
         )
@@ -1366,22 +1366,24 @@ class ActivityEditor : PaganActivity() {
         this.active_project = this.get_project_manager().save(this.get_opus_manager(), this.active_project)
         this.feedback_msg(getString(R.string.feedback_project_saved))
         this.update_menu_options()
-        val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
-        val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
-        btnDeleteProject.isEnabled = true
-        btnCopyProject.isEnabled = true
+        this.findViewById<View?>(R.id.btnDeleteProject)?.isEnabled = true
+        this.findViewById<View?>(R.id.btnCopyProject)?.isEnabled = true
+
+        this.drawer_close()
         this.loading_reticle_hide()
     }
 
     fun project_save() {
         if (this.configuration.project_directory == null) {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-            intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
-            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            this.configuration.project_directory?.let {
-                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
-            }
-            this.result_launcher_set_project_directory.launch(intent)
+            this.result_launcher_set_project_directory.launch(
+                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).let { intent ->
+                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    this.configuration.project_directory?.let {
+                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+                    }
+                }
+            )
         } else {
             this._project_save()
         }
@@ -1394,10 +1396,8 @@ class ActivityEditor : PaganActivity() {
             this.update_title_text()
             this.feedback_msg(getString(R.string.feedback_on_copy))
 
-            val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
-            val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
-            btnDeleteProject.isEnabled = false
-            btnCopyProject.isEnabled = false
+            this.findViewById<View>(R.id.btnDeleteProject).isEnabled = false
+            this.findViewById<View>(R.id.btnCopyProject).isEnabled = false
         }
     }
 
@@ -1613,14 +1613,12 @@ class ActivityEditor : PaganActivity() {
 
     fun setup_project_config_drawer() {
         val opus_manager = this.get_opus_manager()
-        val tvChangeProjectName: MaterialButton = this.findViewById(R.id.btnChangeProjectName)
-        tvChangeProjectName.setOnClickListener {
+
+        this.findViewById<MaterialButton?>(R.id.btnChangeProjectName)?.setOnClickListener {
             this.get_action_interface().set_project_name_and_notes()
         }
-
         //-------------------------------------------
-        val btnRadix: MaterialButton = this.findViewById(R.id.btnRadix)
-        btnRadix.setOnClickListener {
+        this.findViewById<MaterialButton?>(R.id.btnRadix)?.setOnClickListener {
             this.get_action_interface().set_tuning_table_and_transpose()
         }
         //-------------------------------------------
@@ -1650,24 +1648,25 @@ class ActivityEditor : PaganActivity() {
         }
 
 
-        val btnDeleteProject = this.findViewById<View>(R.id.btnDeleteProject)
-        val btnCopyProject = this.findViewById<View>(R.id.btnCopyProject)
-
         val file_exists = this.active_project != null
-        btnDeleteProject.isEnabled = file_exists
-        btnCopyProject.isEnabled = file_exists
 
-        btnDeleteProject.setOnClickListener {
-            if (it.isEnabled) {
-                this.active_project?.let { uri ->
-                    this.dialog_delete_project(uri)
+        this.findViewById<View?>(R.id.btnDeleteProject)?.let { button ->
+            button.isEnabled = file_exists
+            button.setOnClickListener {
+                if (it.isEnabled) {
+                    this.active_project?.let { uri ->
+                        this.dialog_delete_project(uri)
+                    }
                 }
             }
         }
 
-        btnCopyProject.setOnClickListener {
-            if (it.isEnabled) {
-                this.get_action_interface().project_copy()
+        this.findViewById<View?>(R.id.btnCopyProject)?.let { button ->
+            button.isEnabled = file_exists
+            button.setOnClickListener {
+                if (it.isEnabled) {
+                    this.get_action_interface().project_copy()
+                }
             }
         }
 

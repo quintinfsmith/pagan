@@ -16,6 +16,7 @@ import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.net.toUri
 import com.qfs.apres.soundfont.SoundFont
@@ -262,6 +263,24 @@ class ActivitySettings : PaganActivity() {
             }
         }
 
+        this.findViewById<RadioGroup>(R.id.rgNightMode).let {
+            it.check(when (this.configuration.night_mode) {
+                AppCompatDelegate.MODE_NIGHT_NO -> R.id.rbNightModeNo
+                AppCompatDelegate.MODE_NIGHT_YES -> R.id.rbNightModeYes
+                else -> R.id.rbNightModeSystem
+            })
+
+            it.setOnCheckedChangeListener { _, value: Int ->
+                this.set_night_mode(
+                    when (value) {
+                        R.id.rbNightModeNo -> AppCompatDelegate.MODE_NIGHT_NO
+                        R.id.rbNightModeYes -> AppCompatDelegate.MODE_NIGHT_YES
+                        else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                    }
+                )
+            }
+        }
+
         if (this.is_soundfont_available()) {
             this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
         } else {
@@ -332,6 +351,12 @@ class ActivitySettings : PaganActivity() {
     fun set_forced_orientation(value: Int) {
         this.configuration.force_orientation = value
         this.requestedOrientation = value
+        this.update_result()
+    }
+
+    fun set_night_mode(value: Int) {
+        this.configuration.night_mode = value
+        AppCompatDelegate.setDefaultNightMode(value)
         this.update_result()
     }
 

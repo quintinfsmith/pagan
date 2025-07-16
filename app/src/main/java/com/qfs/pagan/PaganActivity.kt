@@ -23,6 +23,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -155,6 +156,7 @@ open class PaganActivity: AppCompatActivity() {
             PaganConfiguration()
         }
         this.requestedOrientation = this.configuration.force_orientation
+        AppCompatDelegate.setDefaultNightMode(this.configuration.night_mode)
 
         this.view_model.project_manager = ProjectManager(this, this.configuration.project_directory)
     }
@@ -175,10 +177,10 @@ open class PaganActivity: AppCompatActivity() {
 
     open fun on_paganconfig_change(original: PaganConfiguration) {
         this.requestedOrientation = this.configuration.force_orientation
+        AppCompatDelegate.setDefaultNightMode(this.configuration.night_mode)
         if (original.project_directory != this.configuration.project_directory) {
             this.get_project_manager().uri = this.configuration.project_directory
         }
-
     }
 
     fun is_debug_on(): Boolean {

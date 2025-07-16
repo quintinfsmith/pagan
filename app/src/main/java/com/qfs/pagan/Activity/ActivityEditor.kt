@@ -44,6 +44,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -1098,6 +1099,7 @@ class ActivityEditor : PaganActivity() {
         this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
 
         this.requestedOrientation = this.configuration.force_orientation
+        AppCompatDelegate.setDefaultNightMode(this.configuration.night_mode)
 
         this._binding = ActivityEditorBinding.inflate(this.layoutInflater)
         this.setContentView(this._binding.root)
@@ -2791,10 +2793,6 @@ class ActivityEditor : PaganActivity() {
         this._sample_handle_manager?.destroy()
         this._feedback_sample_manager?.destroy()
         super.onDestroy()
-    }
-
-    fun set_forced_orientation(value: Int) {
-        this.requestedOrientation = value
     }
 
     internal fun dialog_popup_selection_offset() {

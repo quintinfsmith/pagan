@@ -239,6 +239,10 @@
     <string name="cancel_export">Cancel Export</string>
     <string name="ucheck_move_projects_dialog">Pagan now stores it\'s projects in a user-specified location. Select that location now and your existing project files will be moved there.</string>
     <string name="settings_external_projects_warning">Missing Projects? Set the "Projects Directory" and they\'ll be accessible</string>
+    <string name="settings_night_mode">Night Mode</string>
+    <string name="settings_night_mode_yes">Night</string>
+    <string name="settings_night_mode_system">System</string>
+    <string name="settings_night_mode_no">Day</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

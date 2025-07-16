@@ -22,6 +22,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@color/main_fg"
                 android:text="@string/label_settings_sf"
                 android:paddingTop="@dimen/normal_padding"
                 android:paddingEnd="15dp" />
@@ -87,6 +88,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@color/main_fg"
                 android:text="@string/label_settings_projects_directory"
                 android:paddingTop="@dimen/normal_padding"
                 android:paddingEnd="15dp" />
@@ -135,6 +137,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@color/main_fg"
                 android:text="@string/label_settings_soundfont_directory"
                 android:paddingTop="@dimen/normal_padding"
                 android:paddingEnd="15dp" />
@@ -157,7 +160,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
                 <TextView
-
+                    android:textColor="@color/main_fg"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_playback_quality"
@@ -181,47 +184,12 @@
                     android:paddingStart="15dp"/>
         </LinearLayout>
         <LinearLayout
-            android:visibility="gone"
-            android:id="@+id/llPlaybackStereo"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <TextView
-                android:text="@string/label_settings_playback_stereo"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:labelFor="@+id/sPlaybackStereo"
-                android:layout_height="wrap_content"/>
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:theme="@style/Theme.Pagan.Switch"
-                android:id="@+id/sPlaybackStereo"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"/>
-        </LinearLayout>
-        <LinearLayout
-            android:visibility="gone"
-            android:id="@+id/llLimitSamples"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <TextView
-                android:text="@string/label_settings_playback_limit_samples"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:labelFor="@+id/sLimitSamples"
-                android:layout_height="wrap_content"/>
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:theme="@style/Theme.Pagan.Switch"
-                android:id="@+id/sLimitSamples"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"/>
-        </LinearLayout>
-        <LinearLayout
             android:id="@+id/llClipSameLineRelease"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:textColor="@color/main_fg"
                 android:text="@string/label_settings_same_line_release"
                 android:layout_weight="1"
                 android:layout_width="0dp"
@@ -239,6 +207,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
                 <TextView
+                    android:textColor="@color/main_fg"
                     android:text="@string/label_settings_relative"
                     android:layout_weight="1"
                     android:layout_width="0dp"
@@ -256,6 +225,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:textColor="@color/main_fg"
                 android:text="@string/label_settings_use_preferred_sf"
                 android:layout_weight="1"
                 android:layout_width="0dp"
@@ -274,6 +244,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:textColor="@color/main_fg"
                 android:text="@string/label_settings_enable_midi_playback"
                 android:layout_weight="1"
                 android:layout_width="0dp"
@@ -313,6 +284,8 @@
             android:layout_height="wrap_content">
 
             <TextView
+                android:textColor="@color/main_fg"
+                android:textAlignment="center"
                 android:paddingBottom="4dp"
                 android:text="@string/settings_screen_orientation"
                 android:layout_width="match_parent"
@@ -377,6 +350,91 @@
                     android:paddingEnd="@dimen/setting_radio_padding_h"
                     android:paddingBottom="@dimen/setting_radio_padding_v"
                     android:text="@string/settings_orientation_portrait" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="match_parent" />
+
+            </RadioGroup>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:id="@+id/llNightMode"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:textColor="@color/main_fg"
+                android:paddingBottom="4dp"
+                android:textAlignment="center"
+                android:text="@string/settings_night_mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <RadioGroup
+                android:id="@+id/rgNightMode"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:orientation="horizontal">
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="match_parent" />
+
+                <RadioButton
+                    android:id="@+id/rbNightModeYes"
+                    style="@style/radio_button_start"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:drawablePadding="0dp"
+                    android:lines="1"
+                    android:paddingStart="@dimen/setting_radio_padding_h"
+                    android:paddingTop="@dimen/setting_radio_padding_v"
+                    android:paddingEnd="@dimen/setting_radio_padding_h"
+                    android:paddingBottom="@dimen/setting_radio_padding_v"
+                    android:text="@string/settings_night_mode_yes" />
+
+                <Space
+                    android:layout_width="3dp"
+                    android:layout_height="match_parent" />
+
+                <RadioButton
+                    android:id="@+id/rbNightModeSystem"
+                    style="@style/radio_button_center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:lines="1"
+                    android:paddingStart="@dimen/setting_radio_padding_h"
+                    android:paddingTop="@dimen/setting_radio_padding_v"
+                    android:paddingEnd="@dimen/setting_radio_padding_h"
+                    android:paddingBottom="@dimen/setting_radio_padding_v"
+                    android:text="@string/settings_night_mode_system" />
+
+                <Space
+                    android:layout_width="3dp"
+                    android:layout_height="match_parent" />
+
+                <RadioButton
+                    android:id="@+id/rbNightModeNo"
+                    style="@style/radio_button_end"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:lines="1"
+                    android:paddingStart="@dimen/setting_radio_padding_h"
+                    android:paddingTop="@dimen/setting_radio_padding_v"
+                    android:paddingEnd="@dimen/setting_radio_padding_h"
+                    android:paddingBottom="@dimen/setting_radio_padding_v"
+                    android:text="@string/settings_night_mode_no" />
 
                 <Space
                     android:layout_width="0dp"

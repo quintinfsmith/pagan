@@ -2,6 +2,8 @@ package com.qfs.pagan
 
 import android.content.pm.ActivityInfo
 import android.net.Uri
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
@@ -18,7 +20,8 @@ data class PaganConfiguration(
     var allow_midi_playback: Boolean = true,
     var allow_std_percussion: Boolean = false,
     var project_directory: Uri? = null,
-    var soundfont_directory: Uri? = null
+    var soundfont_directory: Uri? = null,
+    var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
 ) {
     enum class MoveMode {
         MOVE,
@@ -39,7 +42,8 @@ data class PaganConfiguration(
                 allow_midi_playback = content.get_boolean("allow_midi_playback", true),
                 allow_std_percussion = content.get_boolean("allow_std_percussion", false),
                 project_directory = content.get_stringn("project_directory")?.toUri(),
-                soundfont_directory = content.get_stringn("soundfont_directory")?.toUri()
+                soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
+                night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
             )
         }
 
@@ -78,6 +82,7 @@ data class PaganConfiguration(
         output["allow_std_percussion"] = this.allow_std_percussion
         output["project_directory"] = this.project_directory?.toString()
         output["soundfont_directory"] = this.soundfont_directory?.toString()
+        output["night_mode"] = this.night_mode
         return output
     }
 }

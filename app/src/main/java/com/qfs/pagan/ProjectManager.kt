@@ -92,11 +92,12 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             throw InvalidDirectory(new_uri)
         }
 
-        this.ucheck_update_move_project_files(active_project_uri)
 
         val old_uri = this.uri
         this.uri = new_uri
-        println("CHANGING $old_uri to $new_uri")
+
+        this.ucheck_update_move_project_files(active_project_uri)
+
         val output = if (old_uri != null) {
             this.move_old_projects_directory(old_uri, active_project_uri)
         } else {

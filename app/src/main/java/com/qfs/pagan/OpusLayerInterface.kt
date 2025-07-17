@@ -2554,7 +2554,10 @@ class OpusLayerInterface : OpusLayerHistory() {
                         }
 
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        if (channel_recycler.adapter != null) {
+                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
+                            for (i in adapter.itemCount until this.channels.size) {
+                                adapter.add_channel()
+                            }
                             (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
                         }
                     }

@@ -2562,9 +2562,10 @@ class OpusLayerInterface : OpusLayerHistory() {
                     BillableItem.ChannelAdd -> {
                         val channel = this._ui_change_bill.get_next_int()
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        if (channel_recycler.adapter != null) {
-                            val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-                            channel_adapter.add_channel()
+                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
+                            for (i in adapter.itemCount until this.channels.size) {
+                                adapter.add_channel()
+                            }
                         }
 
                         activity.update_channel_instruments(channel)
@@ -2573,9 +2574,11 @@ class OpusLayerInterface : OpusLayerHistory() {
                     BillableItem.ChannelRemove -> {
                         val channel = this._ui_change_bill.get_next_int()
                         val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        if (channel_recycler.adapter != null) {
-                            val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-                            channel_adapter.remove_channel(channel)
+                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
+                            for (i in adapter.itemCount until this.channels.size + 1) {
+                                adapter.add_channel()
+                            }
+                            adapter.remove_channel(channel)
                         }
                     }
 

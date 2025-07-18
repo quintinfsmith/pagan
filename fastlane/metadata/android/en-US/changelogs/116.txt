@@ -1,0 +1,7 @@
+- Fixed broken wav export
+- User Specified project and soundfont directories for easier management
+- Night/Day mode can now be forced
+- Replaced Export-Progress text in drawer with progress bar
+- Fixed potential crash on some Samsung devices
+- Fixed small-screen landscape modes not displaying relative input correctly
+

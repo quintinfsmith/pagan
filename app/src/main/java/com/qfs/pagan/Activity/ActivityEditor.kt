@@ -2509,9 +2509,9 @@ class ActivityEditor : PaganActivity() {
     fun export_wav() {
         this.result_launcher_export_wav.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
-                intent.addCategory(Intent.CATEGORY_OPENABLE)
-                intent.type = "audio/wav"
-                intent.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.wav")
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "audio/wav"
+                it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.wav")
             }
         )
     }

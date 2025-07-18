@@ -63,7 +63,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         val profiles = this.midi_frame_map.get_effect_buffers()
-        val merged_array = merge_arrays(
+        val merged_array = this.merge_arrays(
             arrays_to_merge,
             this.buffer_size,
             layers,
@@ -201,7 +201,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
           this.activate_active_handles(frame)
         }
         this.frame = frame
-        for ((_,_,buffer) in midi_frame_map.get_effect_buffers()) {
+        for ((_,_,buffer) in this.midi_frame_map.get_effect_buffers()) {
             buffer.set_frame(this.frame)
         }
     }

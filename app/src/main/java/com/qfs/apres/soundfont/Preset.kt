@@ -10,7 +10,7 @@ class Preset(
     companion object {
         var next_uid: Int = 0
         fun gen_uid(): Int {
-            return next_uid++
+            return this.next_uid++
         }
     }
     var instruments = HashMap<Int, InstrumentDirective>()

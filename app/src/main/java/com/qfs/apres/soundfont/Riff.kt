@@ -36,7 +36,7 @@ class Riff(var context: Context, private var uri: Uri) {
             val header_check = this.get_string(0, 4) // fourcc
             if (header_check != "RIFF") {
                 this.close_stream()
-                throw InvalidRiff(uri)
+                throw InvalidRiff(this.uri)
             }
             val riff_size = this.get_little_endian(4, 4)
             this.type_cc = this.get_string(8, 4)

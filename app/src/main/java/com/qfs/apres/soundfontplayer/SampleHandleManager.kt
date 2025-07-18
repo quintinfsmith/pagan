@@ -26,7 +26,7 @@ class SampleHandleManager(
         val adj_target_buffer_size = max(
             target_buffer_size,
             AudioTrack.getMinBufferSize(
-                sample_rate,
+                this.sample_rate,
                 AudioFormat.ENCODING_PCM_FLOAT,
                 AudioFormat.CHANNEL_OUT_STEREO
             ) * 2 // too small causes clipping

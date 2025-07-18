@@ -195,7 +195,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             val working_sample = sample_directive.sample!![i]
             SampleHandle(
                 data = working_sample.data,
-                sample_rate = sample_rate,
+                sample_rate = this.sample_rate,
                 pan = pan,
                 pitch_shift = pitch_shift,
                 initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels

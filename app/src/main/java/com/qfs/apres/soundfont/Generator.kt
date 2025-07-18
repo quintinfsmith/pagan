@@ -98,7 +98,7 @@ class Generator(
     }
 
     fun asInt(): Int {
-        return shAmount + (wAmount * 256)
+        return this.shAmount + (this.wAmount * 256)
     }
 
     fun asIntSigned(): Int {

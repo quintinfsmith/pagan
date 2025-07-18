@@ -7,7 +7,6 @@ import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.SetTempo
-import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 

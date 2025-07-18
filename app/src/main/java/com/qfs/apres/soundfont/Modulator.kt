@@ -206,7 +206,7 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
 
 
     fun to_string(): String {
-        return "Mod Amount: ${Integer.toHexString(amount.toInt())}\n" +
+        return "Mod Amount: ${Integer.toHexString(this.amount.toInt())}\n" +
         "V: ${this.value.to_string().replace("\n", "\n    ")}\n" +
         "D: ${this.destination}\n" +
         "Source Mod: ${this.source_operator.to_string().replace("\n", "\n    ")}\n" +

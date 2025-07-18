@@ -9,7 +9,7 @@ abstract class Generated {
     companion object {
         var next_uid = 0
         fun gen_uid(): Int {
-            return next_uid++
+            return this.next_uid++
         }
     }
     val uid = Generated.gen_uid()

@@ -4,7 +4,7 @@ import com.qfs.apres.soundfont.SampleData
 
 class PitchedBuffer(var ptr: Long) {
     constructor(data: SampleData, pitch: Float, known_max: Int? = null, range: IntRange? = null, is_loop: Boolean = false): this(
-        create(
+        PitchedBuffer.create(
             data.ptr,
             pitch,
             range?.first ?: 0,
@@ -23,10 +23,10 @@ class PitchedBuffer(var ptr: Long) {
     class PitchedBufferOverflow : Exception()
 
     val size: Int
-        get() = get_virtual_size(this.ptr)
+        get() = this.get_virtual_size(this.ptr)
 
     val position: Int
-        get() = get_virtual_position(this.ptr)
+        get() = this.get_virtual_position(this.ptr)
 
     external fun get_range_inner(ptr: Long, output: IntArray)
     external fun get_virtual_size(ptr: Long): Int
@@ -45,17 +45,17 @@ class PitchedBuffer(var ptr: Long) {
 
     fun get_range(): IntRange {
         var array = IntArray(2) { 0 }
-        get_range_inner(this.ptr, array)
+        this.get_range_inner(this.ptr, array)
         // TODO: Double check '..' or 'until'
         return array[0] .. array[1]
     }
 
     fun is_overflowing(): Boolean {
-        return is_overflowing_inner(this.ptr)
+        return this.is_overflowing_inner(this.ptr)
     }
 
     fun repitch(new_pitch_adjustment: Float) {
-        repitch_inner(this.ptr, new_pitch_adjustment)
+        this.repitch_inner(this.ptr, new_pitch_adjustment)
     }
 
     fun reset_pitch() {
@@ -63,14 +63,14 @@ class PitchedBuffer(var ptr: Long) {
     }
 
     fun set_position(value: Int) {
-        set_virtual_position(this.ptr, value)
+        this.set_virtual_position(this.ptr, value)
     }
 
     fun get(): Float {
-        return get_inner(this.ptr)
+        return this.get_inner(this.ptr)
     }
 
     fun copy(): PitchedBuffer {
-        return PitchedBuffer(copy_inner(this.ptr))
+        return PitchedBuffer(this.copy_inner(this.ptr))
     }
 }

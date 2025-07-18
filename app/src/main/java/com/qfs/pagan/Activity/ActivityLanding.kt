@@ -128,9 +128,7 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<View>(R.id.btnFrontNew).setOnClickListener {
-            this.startActivity(
-                Intent(this, ActivityEditor::class.java)
-            )
+            this.startActivity(Intent(this, ActivityEditor::class.java))
         }
 
         this.findViewById<View>(R.id.btnFrontLoad).setOnClickListener {

@@ -1,7 +1,5 @@
 package com.qfs.apres.soundfont
 
-import com.qfs.apres.soundfont.SoundFont.InvalidSampleIdPosition
-
 class SampleDirective: Generated() {
     var sample: List<Sample>? = null
     var sampleStartOffset: Int? = null

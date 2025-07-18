@@ -21,7 +21,6 @@ class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val chan
 
     override fun on_long_click(): Boolean {
         val tracker = this.get_activity().get_action_interface()
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 

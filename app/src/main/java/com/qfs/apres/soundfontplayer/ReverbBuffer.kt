@@ -20,7 +20,7 @@ class ReverbBuffer(var sample_rate: Int, var reverb: ReverbDynamics) {
         reverb_cache[next_frame]!!.add(
             Pair(
                 this.reverb.bounces,
-                value * reverb.factor
+                value * this.reverb.factor
             )
         )
     }

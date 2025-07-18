@@ -18,7 +18,7 @@ abstract class VirtualMidiInputDevice {
     }
 
     fun send_event(event: GeneralMIDIEvent) {
-        if (is_connected()) {
+        if (this.is_connected()) {
             this.midi_controller!!.broadcast_event(event)
         } else {
             throw DisconnectedException()

@@ -25,7 +25,7 @@ class SampleHandle(var ptr: Long) {
         //modulation_lfo: LFO?,
         //modulators: HashMap<Operation, Set<Modulator>> = hashMapOf()
     ): this(
-        create(
+        SampleHandle.create(
             data.ptr,
             sample_rate,
             initial_attenuation,
@@ -73,7 +73,7 @@ class SampleHandle(var ptr: Long) {
             release: Float = 0F,
             sustain_attenuation: Float = 0F
         ): this(
-            create(sample_rate, delay, attack, hold, decay, release, sustain_attenuation)
+            VolumeEnvelope.create(sample_rate, delay, attack, hold, decay, release, sustain_attenuation)
         )
 
         companion object {
@@ -98,7 +98,7 @@ class SampleHandle(var ptr: Long) {
         external fun set_release(ptr: Long, release: Float)
         var release: Float
             get() = this.get_release(this.ptr)
-            set(v: Float) = set_release(ptr, v)
+            set(v: Float) = this.set_release(this.ptr, v)
 
         external fun destroy_jni(ptr: Long)
         fun destroy() {
@@ -147,7 +147,7 @@ class SampleHandle(var ptr: Long) {
         val filter: Int,
         val volume: Float
     ) {
-        val wave_length = sample_rate.toFloat() / this.frequency
+        val wave_length = this.sample_rate.toFloat() / this.frequency
         val frames_delay = 0 // (this.sample_rate.toFloat() * this.delay).toInt()
 
         fun get_frame(i: Int): Float? {
@@ -213,12 +213,12 @@ class SampleHandle(var ptr: Long) {
 
     external fun get_release_duration_jni(ptr: Long): Int
     fun get_release_duration(): Int {
-        return this.get_release_duration_jni(ptr)
+        return this.get_release_duration_jni(this.ptr)
     }
 
     external fun get_next_frames_jni(ptr: Long, size: Int, left_padding: Int): FloatArray
     fun get_next_frames(left_padding: Int, size: Int): FloatArray {
-        return get_next_frames_jni(this.ptr, size, left_padding)
+        return this.get_next_frames_jni(this.ptr, size, left_padding)
     }
 
     external fun release_note_jni(ptr: Long)

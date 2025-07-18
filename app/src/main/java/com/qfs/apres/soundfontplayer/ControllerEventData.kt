@@ -2,12 +2,12 @@ package com.qfs.apres.soundfontplayer
 
 class ControllerEventData(val ptr: Long) {
     constructor(frames: Array<Pair<Pair<Int, Int>, Pair<Float, Float>>>, type: Int): this(
-        intermediary_create(frames, type)
+        ControllerEventData.intermediary_create(frames, type)
     )
 
     companion object {
         fun intermediary_create(frames: Array<Pair<Pair<Int, Int>, Pair<Float, Float>>>, type: Int): Long {
-            return create(
+            return this.create(
                 IntArray(frames.size) { i: Int -> frames[i].first.first },
                 IntArray(frames.size) { i: Int -> frames[i].first.second },
                 FloatArray(frames.size) { i: Int -> frames[i].second.first },

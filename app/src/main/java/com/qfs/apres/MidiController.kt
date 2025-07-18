@@ -34,7 +34,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                 } catch (e: Exception) {
                     return
                 }
-                broadcast_event(event)
+                this@MidiController.broadcast_event(event)
             }
         }
     }

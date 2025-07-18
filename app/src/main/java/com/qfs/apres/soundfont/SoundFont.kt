@@ -54,14 +54,14 @@ class SoundFont(val context: Context, uri: Uri) {
 
     init {
         this.riff.with {
-            if (riff.type_cc != "sfbk") {
+            if (this.riff.type_cc != "sfbk") {
                 throw InvalidSoundFont(uri)
             }
 
-            val info_chunk = riff.get_chunk_data(riff.list_chunks[0])
-            val pdta_chunk = riff.get_chunk_data(riff.list_chunks[2])
-            val info_offset = riff.list_chunks[0].index
-            for (header in riff.sub_chunks[0]) {
+            val info_chunk = this.riff.get_chunk_data(this.riff.list_chunks[0])
+            val pdta_chunk = this.riff.get_chunk_data(this.riff.list_chunks[2])
+            val info_offset = this.riff.list_chunks[0].index
+            for (header in this.riff.sub_chunks[0]) {
                 // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
                 val header_offset = header.index + 8 - info_offset - 12
                 when (header.tag) {
@@ -146,8 +146,8 @@ class SoundFont(val context: Context, uri: Uri) {
                 }
             }
 
-            val pdta_offset = riff.list_chunks[2].index
-            for (header in riff.sub_chunks[2]) {
+            val pdta_offset = this.riff.list_chunks[2].index
+            for (header in this.riff.sub_chunks[2]) {
                 // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
                 val offset = header.index + 8 - pdta_offset - 12
                 this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
@@ -284,7 +284,7 @@ class SoundFont(val context: Context, uri: Uri) {
             val pbag_pairs = mutableListOf<Pair<Pair<Int, Int>, Pair<Int, Int>>>()
             for (j in 0 until zone_count) {
                 val pbag_bytes = ByteArray(pbag_entry_size * 2) { k: Int ->
-                    pdta_chunks["pbag"]!![((j + wPresetBagIndex) * pbag_entry_size) + k]
+                    this.pdta_chunks["pbag"]!![((j + wPresetBagIndex) * pbag_entry_size) + k]
                 }
 
                 pbag_pairs.add(
@@ -361,7 +361,7 @@ class SoundFont(val context: Context, uri: Uri) {
         })
     }
 
-    open fun read_rom_hook(start: Int, end: Int): SampleData {
+    fun read_rom_hook(start: Int, end: Int): SampleData {
         return SampleData(0)
     }
 
@@ -570,11 +570,12 @@ class SoundFont(val context: Context, uri: Uri) {
         }
 
         val smpl = this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][0],  (start_index * 2), 2 * (end_index - start_index))
-        val sm24 = if (this.riff.sub_chunks[1].size == 2) {
-            this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][1], start_index, end_index - start_index)
-        } else {
-            null
-        }
+        // TODO: Implement sm24 usage
+        // val sm24 = if (this.riff.sub_chunks[1].size == 2) {
+        //     this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][1], start_index, end_index - start_index)
+        // } else {
+        //     null
+        // }
 
         val inbuffer = ByteBuffer.wrap(smpl)
         inbuffer.order(ByteOrder.LITTLE_ENDIAN)

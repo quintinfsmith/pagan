@@ -3,7 +3,7 @@ package com.qfs.apres.soundfontplayer
 class ProfileBuffer(val ptr: Long) {
     // TODO: Memory Management
     constructor(data: ControllerEventData, start_frame: Int = 0): this(
-        create(data.ptr, start_frame)
+        ProfileBuffer.create(data.ptr, start_frame)
     )
 
     companion object {

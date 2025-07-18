@@ -14,7 +14,7 @@ class PseudoArray<T>(var size: Int) {
     operator fun get(i: Int): T? {
         for ((index, chunk) in this.array_sections) {
             if (i >= index && i < index + chunk.size) {
-                return chunk[i - index];
+                return chunk[i - index]
             }
         }
         return null
@@ -58,13 +58,13 @@ class PseudoArray<T>(var size: Int) {
     }
 
     fun get_overlapping_sections(index: Int, size: Int): List<Int> {
-        var incoming_f = index + size
-        var output = mutableListOf<Int>()
+        val incoming_f = index + size
+        val output = mutableListOf<Int>()
         val sorted_indices = this.array_sections.keys.sorted()
 
         for (i in sorted_indices) {
             val section = this.array_sections[i]!!
-            var working_f = i + section.size
+            val working_f = i + section.size
             if (index >= i && index <= working_f) {
                 output.add(i)
             } else if (i >= index && i <= incoming_f) {

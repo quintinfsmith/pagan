@@ -3,8 +3,8 @@ package com.qfs.apres.event2
 import com.qfs.apres.event.GeneralMIDIEvent
 import kotlin.experimental.or
 
-abstract interface UMPEvent: GeneralMIDIEvent
-abstract interface UtilityMessage: GeneralMIDIEvent
+interface UMPEvent: GeneralMIDIEvent
+interface UtilityMessage: GeneralMIDIEvent
 
 private infix fun Byte.shl(i: Int): Byte {
     var n = this.toInt()
@@ -14,15 +14,15 @@ private infix fun Byte.shl(i: Int): Byte {
     return n.toByte()
 }
 
-abstract interface FlexDataMessage: UMPEvent {
-    abstract fun get_group(): Byte
-    abstract fun get_form(): Byte
-    abstract fun get_addrs(): Byte
-    abstract fun get_channel(): Byte
-    abstract fun get_status_bank(): Byte
-    abstract fun get_status(): Byte
+interface FlexDataMessage: UMPEvent {
+    fun get_group(): Byte
+    fun get_form(): Byte
+    fun get_addrs(): Byte
+    fun get_channel(): Byte
+    fun get_status_bank(): Byte
+    fun get_status(): Byte
 
-    abstract fun get_data(): ByteArray
+    fun get_data(): ByteArray
 
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
@@ -101,10 +101,10 @@ class InitiateProtocolNegotiation(
     }
 
     fun get_preferred_protocol_bytes(): ByteArray {
-        val output = ByteArray(5 * this.preferred_protocol_types.size) { 0.toByte() }
+        val output = ByteArray(5 * this.preferred_protocol_types.size)
 
         for (i in this.preferred_protocol_types.indices) {
-            var (version, subversion) = this.preferred_protocol_types[i]
+            val (version, subversion) = this.preferred_protocol_types[i]
             val offset = i * 5
             output[offset] = version.toByte()
             output[offset + 1] = subversion.toByte()
@@ -134,10 +134,10 @@ class InitiateProtocolNegotiationResponse(
     }
 
     fun get_preferred_protocol_bytes(): ByteArray {
-        val output = ByteArray(5 * this.preferred_protocol_types.size) { 0.toByte() }
+        val output = ByteArray(5 * this.preferred_protocol_types.size)
 
         for (i in this.preferred_protocol_types.indices) {
-            var (version, subversion) = this.preferred_protocol_types[i]
+            val (version, subversion) = this.preferred_protocol_types[i]
             val offset = i * 5
             output[offset] = version.toByte()
             output[offset + 1] = subversion.toByte()
@@ -215,14 +215,14 @@ class ProfileInquiryResponse(
     var disabled: Array<ProfileID>
 ): CapabilitiesInquiry(source, destination, 0x21, channel) {
     override fun get_payload_bytes(): ByteArray {
-        val enabled_profiles = ByteArray(this.enabled.size * 5) { 0x00.toByte() }
+        val enabled_profiles = ByteArray(this.enabled.size * 5)
         for (i in 0 until this.enabled.size) {
             this.enabled[i].as_bytes().forEachIndexed { j: Int, byte: Byte ->
                 enabled_profiles[(i * 5) + j] = byte
             }
         }
 
-        val disabled_profiles = ByteArray(this.disabled.size * 5) { 0x00.toByte() }
+        val disabled_profiles = ByteArray(this.disabled.size * 5)
         for (i in 0 until this.disabled.size) {
             this.disabled[i].as_bytes().forEachIndexed { j: Int, byte: Byte ->
                 disabled_profiles[(i * 5) + j] = byte
@@ -330,7 +330,7 @@ class StartOfClip(): UMPEvent {
         return byteArrayOf(
             0xF0.toByte(),
             0x20.toByte(),
-            *(ByteArray(14) { 0.toByte() })
+            *(ByteArray(14))
         )
     }
 }
@@ -340,7 +340,7 @@ class EndOfClip(): UMPEvent {
         return byteArrayOf(
             0xF0.toByte(),
             0x21.toByte(),
-            *(ByteArray(14) { 0.toByte() })
+            *(ByteArray(14))
         )
     }
 }
@@ -584,7 +584,7 @@ class SetTimeSignatureMessage(var numerator: Int, var denominator: Int, var thir
             this.denominator.toByte(),
             this.thirtysecondths_per_quarter.toByte(),
             0
-        ) + ByteArray(8) { 0 }
+        ) + ByteArray(8)
     }
 }
 
@@ -628,7 +628,7 @@ class SetMetronomeMessage(
             this.accent_third.toByte(),
             this.subdivision_clicks_first.toByte(),
             this.subdivision_clicks_second.toByte()
-        ) + ByteArray(6) { 0 }
+        ) + ByteArray(6)
     }
 
 }

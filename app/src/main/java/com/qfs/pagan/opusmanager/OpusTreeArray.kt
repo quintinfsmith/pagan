@@ -114,7 +114,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
         val new_cache = Array(needs_decrement.size) { i: Int ->
             val original_blocked = this._cache_blocked_tree_map.remove(needs_decrement[i])!!
-            var (beat, position) = needs_decrement[i]
+            val (beat, position) = needs_decrement[i]
             val new_beat = beat - count
 
             Pair(
@@ -333,7 +333,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                 }
 
                 val (before_offset, before_width) = this.get_leaf_offset_and_width(before.first, before.second)
-                var duration = this.get_tree(before.first, before.second).get_event()?.duration ?: 1
+                val duration = this.get_tree(before.first, before.second).get_event()?.duration ?: 1
 
                 var (after_offset, _) = this.get_leaf_offset_and_width(working_beat, working_position)
                 after_offset -= count
@@ -749,7 +749,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
 
     fun get_leaf_offset_and_width(beat: Int, position: List<Int>, mod_position: List<Int>? = null, mod_amount: Int = 0): Pair<Rational, Int> {
         /* use mod amount/mod_position to calculate size if a leaf were removed or added */
-        var beat_tree = this.get_tree(beat).copy()
+        val beat_tree = this.get_tree(beat).copy()
         var working_tree = beat_tree
         val adj_position = Array(position.size) { position[it] }
         if (mod_position != null && mod_amount != 0) {
@@ -776,8 +776,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
         var output = Rational(0, 1)
         var width_denominator = 1
         for (i in adj_position.indices) {
-            var p = adj_position[i]
-            var new_width_factor = working_tree.size
+            val p = adj_position[i]
+            val new_width_factor = working_tree.size
             width_denominator *= new_width_factor
             output += Rational(p, width_denominator)
             working_tree = working_tree[adj_position[i]]
@@ -979,7 +979,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<OpusTree<T>>) 
                     this.get_leaf_offset_and_width(check_pair.first, check_pair.second)
                 }
 
-                var duration = this.get_tree(working_beat, working_position).get_event()?.duration ?: 1
+                val duration = this.get_tree(working_beat, working_position).get_event()?.duration ?: 1
 
                 if (check_offset >= offset && check_offset < offset + Rational(duration, width)) {
                     throw BlockedTreeException(working_beat, working_position, check_pair.first, check_pair.second)

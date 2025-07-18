@@ -1,9 +1,7 @@
 package com.qfs.pagan
 
 import android.annotation.SuppressLint
-import android.view.DragEvent
 import android.view.LayoutInflater
-import android.view.MotionEvent.ACTION_DOWN
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView

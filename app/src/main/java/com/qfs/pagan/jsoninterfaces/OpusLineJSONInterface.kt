@@ -1,6 +1,5 @@
 package com.qfs.pagan.opusmanager
 
-import android.graphics.Color
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
@@ -70,7 +69,7 @@ class OpusLineJSONInterface {
                 beat_list
             )
 
-            _interpret_general(input, output)
+            this._interpret_general(input, output)
 
             return output
         }
@@ -95,7 +94,7 @@ class OpusLineJSONInterface {
 
             val output = OpusLine(beat_list)
 
-            _interpret_general(input, output)
+            this._interpret_general(input, output)
 
             return output
         }

@@ -2,7 +2,6 @@ package com.qfs.pagan
 import android.content.res.Configuration
 import android.view.View
 import android.widget.TextView
-import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
@@ -1934,7 +1933,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             CursorMode.Unset -> Triple(null, Rational(0,1), Rational(1,1))
         }
 
-        this._ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, _activity?.in_playback() == true)
+        this._ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, this._activity?.in_playback() == true)
     }
 
     private fun _queue_cursor_update(cursor: OpusManagerCursor, deep_update: Boolean = true) {

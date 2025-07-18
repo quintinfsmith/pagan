@@ -8,7 +8,7 @@ data class Rational(var n: Int, var d: Int) {
     }
     override fun toString(): String {
         this.reduce()
-        return "($n / $d)"
+        return "(${this.n} / ${this.d})"
     }
 
     fun toFloat(): Float {

@@ -33,7 +33,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         private var _state_active: Boolean = false
 
         init {
-            this.text = resources.getString(this._value)
+            this.text = this.resources.getString(this._value)
             this.setOnClickListener {
                 this._relative_option_selector.set_active_button(this)
                 this.set_active(true)
@@ -48,18 +48,18 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
                 new_state.add(R.attr.state_active)
             }
 
-            mergeDrawableStates(drawable_state, new_state.toIntArray())
+            LinearLayout.mergeDrawableStates(drawable_state, new_state.toIntArray())
             return drawable_state
         }
 
         fun set_active(value: Boolean) {
             this._state_active = value
-            refreshDrawableState()
+            this.refreshDrawableState()
         }
 
         override fun onLayout(is_changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
             super.onLayout(is_changed, left, top, right, bottom)
-            this.text = resources.getString(this._value)
+            this.text = this.resources.getString(this._value)
             this.gravity = CENTER
         }
     }

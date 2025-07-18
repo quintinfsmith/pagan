@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
@@ -55,7 +54,7 @@ data class PaganConfiguration(
                 if (content == null) {
                     PaganConfiguration()
                 } else {
-                    from_json(content)
+                    this.from_json(content)
                 }
             } else {
                 PaganConfiguration()

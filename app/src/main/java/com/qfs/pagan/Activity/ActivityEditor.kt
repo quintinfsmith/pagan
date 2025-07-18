@@ -202,7 +202,7 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    val editor_view_model: MainViewModel by viewModels()
+    val editor_view_model: MainViewModel by this.viewModels()
     private var initial_load = true // Used to prevent save dialog from popping up on first load/new/import
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _integer_dialog_defaults = HashMap<String, Int>()
@@ -358,159 +358,165 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    internal var result_launcher_settings = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()?.also { uri ->
-                this.active_project = uri
-            }
-        }
-    }
-
-    internal var result_launcher_import = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.data?.also { uri ->
-                this.handle_uri(uri)
-            }
-        }
-    }
-
-    private val result_launcher_set_project_directory = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.also { result_data ->
-                result_data.data?.also { tree_uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
-                    this.configuration.project_directory = tree_uri
-                    this.save_configuration()
-                    // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
-                    this.get_project_manager().change_project_path(tree_uri, this.active_project)
-                    this._project_save()
-                }
-            }
-        }
-    }
-
-    private var result_launcher_export_multi_line_wav = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (this._soundfont == null) {
-            // Throw Error. Currently unreachable by ui
-            return@registerForActivityResult
-        }
-
-        this.getNotificationPermission()
-        thread {
+    internal var result_launcher_settings =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                result?.data?.data?.also { tree_uri ->
-                    if (this.editor_view_model.export_handle != null) {
-                        return@thread
-                    }
-                    val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
-                    val opus_manager_copy = OpusLayerBase()
-                    opus_manager_copy.project_change_json(this.get_opus_manager().to_json())
+                result?.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()?.also { uri ->
+                    this.active_project = uri
+                }
+            }
+        }
 
-                    var line_count = 0
-                    val skip_lines = mutableSetOf<Pair<Int, Int>>()
+    internal var result_launcher_import =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result?.data?.data?.also { uri ->
+                    this.handle_uri(uri)
+                }
+            }
+        }
 
-                    opus_manager_copy.get_all_channels()
-                        .forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
-                            channel.lines.forEachIndexed line_loop@{ j: Int, line: OpusLineAbstract<*> ->
-                                if (line.muted || channel.muted) {
-                                    skip_lines.add(Pair(i, j))
-                                    return@line_loop
-                                }
-
-                                var skip = true
-                                for (beat in line.beats) {
-                                    if (!beat.is_eventless()) {
-                                        skip = false
-                                        break
-                                    }
-                                }
-
-                                if (skip) {
-                                    skip_lines.add(Pair(i, j))
-                                } else {
-                                    line_count += 1
-                                }
-                            }
-                        }
-
-                    val export_event_handler = MultiExporterEventHandler(this, line_count)
-
-                    var y = 0
-                    var c = 0
-                    outer@ for (channel in opus_manager_copy.get_all_channels()) {
-                        for (l in channel.lines.indices) {
-                            if (skip_lines.contains(Pair(c, l))) {
-                                continue
-                            }
-
-                            val file = directory.createFile("audio/wav", getString(R.string.export_wav_lines_filename, c, l)) ?: continue
-                            val file_uri = file.uri
-
-                            /* TMP file is necessary since we can't easily predict the exact frame count. */
-                            val tmp_file = File("${this.filesDir}/.tmp_wav_data")
-                            if (tmp_file.exists()) {
-                                tmp_file.delete()
-                            }
-
-                            tmp_file.deleteOnExit()
-                            val exporter_sample_handle_manager =
-                                SampleHandleManager(this._soundfont!!, 44100, 22050)
-
-                            var c_b = 0
-                            for (channel_copy in opus_manager_copy.get_all_channels()) {
-                                var l_b = 0
-                                for (line_copy in channel_copy.lines) {
-                                    if (c_b == c && l_b == l) {
-                                        line_copy.unmute()
-                                    } else {
-                                        line_copy.mute()
-                                    }
-                                    l_b += 1
-                                }
-                                c_b += 1
-                            }
-
-
-                            val parcel_file_descriptor =
-                                applicationContext.contentResolver.openFileDescriptor(file_uri, "w")
-                                    ?: continue@outer
-                            val output_stream =
-                                FileOutputStream(parcel_file_descriptor.fileDescriptor)
-                            val buffered_output_stream = BufferedOutputStream(output_stream)
-                            val data_output_buffer = DataOutputStream(buffered_output_stream)
-
-                            export_event_handler.update(y++, file_uri)
-                            this.editor_view_model.export_wav(
-                                opus_manager_copy,
-                                exporter_sample_handle_manager,
-                                data_output_buffer,
-                                tmp_file,
-                                this.configuration,
-                                export_event_handler,
-                                true,
-                                true,
-                                false
-                            )
-
-                            data_output_buffer.close()
-                            buffered_output_stream.close()
-                            output_stream.close()
-                            parcel_file_descriptor.close()
-                            tmp_file.delete()
-
-                            if (export_event_handler.cancelled) {
-                                break@outer
-                            }
-                        }
-                        c++
+    private val result_launcher_set_project_directory =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result?.data?.also { result_data ->
+                    result_data.data?.also { tree_uri  ->
+                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        this.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
+                        this.configuration.project_directory = tree_uri
+                        this.save_configuration()
+                        // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
+                        this.get_project_manager().change_project_path(tree_uri, this.active_project)
+                        this._project_save()
                     }
                 }
             }
         }
-    }
 
-    private var result_launcher_export_multi_channel_wav = registerForActivityResult(
+    private var result_launcher_export_multi_line_wav =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (this._soundfont == null) {
+                // Throw Error. Currently unreachable by ui
+                return@registerForActivityResult
+            }
+
+            this.getNotificationPermission()
+            thread {
+                if (result.resultCode == RESULT_OK) {
+                    result?.data?.data?.also { tree_uri ->
+                        if (this.editor_view_model.export_handle != null) {
+                            return@thread
+                        }
+                        val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
+                        val opus_manager_copy = OpusLayerBase()
+                        opus_manager_copy.project_change_json(this.get_opus_manager().to_json())
+
+                        var line_count = 0
+                        val skip_lines = mutableSetOf<Pair<Int, Int>>()
+
+                        opus_manager_copy.get_all_channels()
+                            .forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
+                                channel.lines.forEachIndexed line_loop@{ j: Int, line: OpusLineAbstract<*> ->
+                                    if (line.muted || channel.muted) {
+                                        skip_lines.add(Pair(i, j))
+                                        return@line_loop
+                                    }
+
+                                    var skip = true
+                                    for (beat in line.beats) {
+                                        if (!beat.is_eventless()) {
+                                            skip = false
+                                            break
+                                        }
+                                    }
+
+                                    if (skip) {
+                                        skip_lines.add(Pair(i, j))
+                                    } else {
+                                        line_count += 1
+                                    }
+                                }
+                            }
+
+                        val export_event_handler = MultiExporterEventHandler(this, line_count)
+
+                        var y = 0
+                        var c = 0
+                        outer@ for (channel in opus_manager_copy.get_all_channels()) {
+                            for (l in channel.lines.indices) {
+                                if (skip_lines.contains(Pair(c, l))) {
+                                    continue
+                                }
+
+                                val file = directory.createFile("audio/wav",
+                                    this.getString(R.string.export_wav_lines_filename, c, l)
+                                ) ?: continue
+                                val file_uri = file.uri
+
+                                /* TMP file is necessary since we can't easily predict the exact frame count. */
+                                val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                                if (tmp_file.exists()) {
+                                    tmp_file.delete()
+                                }
+
+                                tmp_file.deleteOnExit()
+                                val exporter_sample_handle_manager =
+                                    SampleHandleManager(this._soundfont!!, 44100, 22050)
+
+                                var c_b = 0
+                                for (channel_copy in opus_manager_copy.get_all_channels()) {
+                                    var l_b = 0
+                                    for (line_copy in channel_copy.lines) {
+                                        if (c_b == c && l_b == l) {
+                                            line_copy.unmute()
+                                        } else {
+                                            line_copy.mute()
+                                        }
+                                        l_b += 1
+                                    }
+                                    c_b += 1
+                                }
+
+
+                                val parcel_file_descriptor =
+                                    this.applicationContext.contentResolver.openFileDescriptor(file_uri, "w")
+                                        ?: continue@outer
+                                val output_stream =
+                                    FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                                val buffered_output_stream = BufferedOutputStream(output_stream)
+                                val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                                export_event_handler.update(y++, file_uri)
+                                this.editor_view_model.export_wav(
+                                    opus_manager_copy,
+                                    exporter_sample_handle_manager,
+                                    data_output_buffer,
+                                    tmp_file,
+                                    this.configuration,
+                                    export_event_handler,
+                                    true,
+                                    true,
+                                    false
+                                )
+
+                                data_output_buffer.close()
+                                buffered_output_stream.close()
+                                output_stream.close()
+                                parcel_file_descriptor.close()
+                                tmp_file.delete()
+
+                                if (export_event_handler.cancelled) {
+                                    break@outer
+                                }
+                            }
+                            c++
+                        }
+                    }
+                }
+            }
+        }
+
+    private var result_launcher_export_multi_channel_wav = this.registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
@@ -570,7 +576,7 @@ class ActivityEditor : PaganActivity() {
 
                         val file = directory.createFile(
                             "audio/wav",
-                            getString(R.string.export_wav_channels_filename, c)
+                            this.getString(R.string.export_wav_channels_filename, c)
                         ) ?: continue
                         val file_uri = file.uri
 
@@ -596,7 +602,7 @@ class ActivityEditor : PaganActivity() {
 
 
                         val parcel_file_descriptor =
-                            applicationContext.contentResolver.openFileDescriptor(file_uri, "w")
+                            this.applicationContext.contentResolver.openFileDescriptor(file_uri, "w")
                                 ?: continue@outer
                         val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
                         val buffered_output_stream = BufferedOutputStream(output_stream)
@@ -631,100 +637,67 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private var result_launcher_export_wav = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (this._soundfont == null) {
-            // Throw Error. Currently unreachable by ui
-            return@registerForActivityResult
-        }
+    private var result_launcher_export_wav =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (this._soundfont == null) {
+                // Throw Error. Currently unreachable by ui
+                return@registerForActivityResult
+            }
 
-        this.getNotificationPermission()
-        thread {
-            if (result.resultCode == RESULT_OK) {
-                result?.data?.data?.also { uri ->
-                    if (this.editor_view_model.export_handle != null) {
-                        return@thread
-                    }
+            this.getNotificationPermission()
+            thread {
+                if (result.resultCode == RESULT_OK) {
+                    result?.data?.data?.also { uri ->
+                        if (this.editor_view_model.export_handle != null) {
+                            return@thread
+                        }
 
-                    /* TMP file is necessary since we can't easily predict the exact frame count. */
-                    val tmp_file = File("${this.filesDir}/.tmp_wav_data")
-                    if (tmp_file.exists()) {
-                        tmp_file.delete()
-                    }
+                        /* TMP file is necessary since we can't easily predict the exact frame count. */
+                        val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                        if (tmp_file.exists()) {
+                            tmp_file.delete()
+                        }
 
-                    tmp_file.deleteOnExit()
-                    val exporter_sample_handle_manager = SampleHandleManager(
-                        this._soundfont!!,
-                        44100,
-                        22050
-                    )
+                        tmp_file.deleteOnExit()
+                        val exporter_sample_handle_manager = SampleHandleManager(
+                            this._soundfont!!,
+                            44100,
+                            22050
+                        )
 
-                    val parcel_file_descriptor =
-                        applicationContext.contentResolver.openFileDescriptor(uri, "w")
-                            ?: return@thread
-                    val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
-                    val buffered_output_stream = BufferedOutputStream(output_stream)
-                    val data_output_buffer = DataOutputStream(buffered_output_stream)
+                        val parcel_file_descriptor =
+                            this.applicationContext.contentResolver.openFileDescriptor(uri, "w")
+                                ?: return@thread
+                        val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                        val buffered_output_stream = BufferedOutputStream(output_stream)
+                        val data_output_buffer = DataOutputStream(buffered_output_stream)
 
-                    this.editor_view_model.export_wav(
-                        this.get_opus_manager(),
-                        exporter_sample_handle_manager,
-                        data_output_buffer,
-                        tmp_file,
-                        this.configuration,
-                        object : WavConverter.ExporterEventHandler {
-                            val notification_manager =
-                                NotificationManagerCompat.from(this@ActivityEditor)
+                        this.editor_view_model.export_wav(
+                            this.get_opus_manager(),
+                            exporter_sample_handle_manager,
+                            data_output_buffer,
+                            tmp_file,
+                            this.configuration,
+                            object : WavConverter.ExporterEventHandler {
+                                val notification_manager =
+                                    NotificationManagerCompat.from(this@ActivityEditor)
 
-                            fun close_buffers() {
-                                data_output_buffer.close()
-                                buffered_output_stream.close()
-                                output_stream.close()
-                                parcel_file_descriptor.close()
-                                tmp_file.delete()
-                            }
-
-                            override fun on_start() {
-                                this@ActivityEditor.runOnUiThread {
-                                    this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.INVISIBLE
-                                    this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.VISIBLE
-                                    this@ActivityEditor.findViewById<ProgressBar>(R.id.export_progress_bar).progress = 0
+                                fun close_buffers() {
+                                    data_output_buffer.close()
+                                    buffered_output_stream.close()
+                                    output_stream.close()
+                                    parcel_file_descriptor.close()
+                                    tmp_file.delete()
                                 }
-                                this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_wav_feedback))
-                                val builder = this@ActivityEditor.get_notification() ?: return
-                                @SuppressLint("MissingPermission")
-                                if (this@ActivityEditor.has_notification_permission()) {
-                                    this.notification_manager.notify(
-                                        this@ActivityEditor.NOTIFICATION_ID,
-                                        builder.build()
-                                    )
-                                }
-                            }
 
-                            override fun on_complete() {
-                                this.close_buffers()
-
-                                val builder = this@ActivityEditor.get_notification()
-                                if (builder != null) {
-                                    // NON functional ATM, Open file from notification
-                                    val go_to_file_intent = Intent()
-                                    go_to_file_intent.action = Intent.ACTION_VIEW
-                                    go_to_file_intent.setDataAndType(uri, "*/*")
-
-                                    val pending_go_to_intent = PendingIntent.getActivity(
-                                        this@ActivityEditor,
-                                        0,
-                                        go_to_file_intent,
-                                        PendingIntent.FLAG_IMMUTABLE
-                                    )
-
-                                    builder.setContentText(this@ActivityEditor.getString(R.string.export_wav_notification_complete))
-                                        .clearActions()
-                                        .setAutoCancel(true)
-                                        .setProgress(0, 0, false)
-                                        .setTimeoutAfter(5000)
-                                        .setSilent(false)
-                                        .setContentIntent(pending_go_to_intent)
-
+                                override fun on_start() {
+                                    this@ActivityEditor.runOnUiThread {
+                                        this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.INVISIBLE
+                                        this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.VISIBLE
+                                        this@ActivityEditor.findViewById<ProgressBar>(R.id.export_progress_bar).progress = 0
+                                    }
+                                    this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_wav_feedback))
+                                    val builder = this@ActivityEditor.get_notification() ?: return
                                     @SuppressLint("MissingPermission")
                                     if (this@ActivityEditor.has_notification_permission()) {
                                         this.notification_manager.notify(
@@ -734,92 +707,128 @@ class ActivityEditor : PaganActivity() {
                                     }
                                 }
 
-                                this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_wav_feedback_complete))
+                                override fun on_complete() {
+                                    this.close_buffers()
 
-                                this@ActivityEditor.runOnUiThread {
-                                    this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
-                                    this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
+                                    val builder = this@ActivityEditor.get_notification()
+                                    if (builder != null) {
+                                        // NON functional ATM, Open file from notification
+                                        val go_to_file_intent = Intent()
+                                        go_to_file_intent.action = Intent.ACTION_VIEW
+                                        go_to_file_intent.setDataAndType(uri, "*/*")
+
+                                        val pending_go_to_intent = PendingIntent.getActivity(
+                                            this@ActivityEditor,
+                                            0,
+                                            go_to_file_intent,
+                                            PendingIntent.FLAG_IMMUTABLE
+                                        )
+
+                                        builder.setContentText(this@ActivityEditor.getString(R.string.export_wav_notification_complete))
+                                            .clearActions()
+                                            .setAutoCancel(true)
+                                            .setProgress(0, 0, false)
+                                            .setTimeoutAfter(5000)
+                                            .setSilent(false)
+                                            .setContentIntent(pending_go_to_intent)
+
+                                        @SuppressLint("MissingPermission")
+                                        if (this@ActivityEditor.has_notification_permission()) {
+                                            this.notification_manager.notify(
+                                                this@ActivityEditor.NOTIFICATION_ID,
+                                                builder.build()
+                                            )
+                                        }
+                                    }
+
+                                    this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_wav_feedback_complete))
+
+                                    this@ActivityEditor.runOnUiThread {
+                                        this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
+                                        this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
+                                    }
+                                    this@ActivityEditor._active_notification = null
                                 }
-                                this@ActivityEditor._active_notification = null
-                            }
 
-                            override fun on_cancel() {
-                                this.close_buffers()
+                                override fun on_cancel() {
+                                    this.close_buffers()
 
-                                this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_cancelled))
-                                this@ActivityEditor.runOnUiThread {
-                                    this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
-                                    this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
+                                    this@ActivityEditor.feedback_msg(this@ActivityEditor.getString(R.string.export_cancelled))
+                                    this@ActivityEditor.runOnUiThread {
+                                        this@ActivityEditor.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
+                                        this@ActivityEditor.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
+                                    }
+
+                                    val builder = this@ActivityEditor.get_notification() ?: return
+                                    builder.setContentText(this@ActivityEditor.getString(R.string.export_cancelled))
+                                        .setProgress(0, 0, false)
+                                        .setAutoCancel(true)
+                                        .setTimeoutAfter(5000)
+                                        .clearActions()
+
+                                    @SuppressLint("MissingPermission")
+                                    if (this@ActivityEditor.has_notification_permission()) {
+                                        val notification_manager =
+                                            NotificationManagerCompat.from(this@ActivityEditor)
+                                        notification_manager.notify(
+                                            this@ActivityEditor.NOTIFICATION_ID,
+                                            builder.build()
+                                        )
+                                    }
+                                    this@ActivityEditor._active_notification = null
                                 }
 
-                                val builder = this@ActivityEditor.get_notification() ?: return
-                                builder.setContentText(this@ActivityEditor.getString(R.string.export_cancelled))
-                                    .setProgress(0, 0, false)
-                                    .setAutoCancel(true)
-                                    .setTimeoutAfter(5000)
-                                    .clearActions()
+                                override fun on_progress_update(progress: Double) {
+                                    val progress_rounded = (progress * 100.0).roundToInt()
+                                    this@ActivityEditor.runOnUiThread {
+                                        this@ActivityEditor.findViewById<ProgressBar>(R.id.export_progress_bar)?.progress = progress_rounded
+                                    }
 
-                                @SuppressLint("MissingPermission")
-                                if (this@ActivityEditor.has_notification_permission()) {
-                                    val notification_manager =
-                                        NotificationManagerCompat.from(this@ActivityEditor)
-                                    notification_manager.notify(
-                                        this@ActivityEditor.NOTIFICATION_ID,
-                                        builder.build()
-                                    )
+                                    val builder = this@ActivityEditor.get_notification() ?: return
+                                    builder.setProgress(100, progress_rounded, false)
+
+                                    @SuppressLint("MissingPermission")
+                                    if (this@ActivityEditor.has_notification_permission()) {
+                                        this.notification_manager.notify(
+                                            this@ActivityEditor.NOTIFICATION_ID,
+                                            builder.build()
+                                        )
+                                    }
                                 }
-                                this@ActivityEditor._active_notification = null
-                            }
+                            })
 
-                            override fun on_progress_update(progress: Double) {
-                                val progress_rounded = (progress * 100.0).roundToInt()
-                                this@ActivityEditor.runOnUiThread {
-                                    this@ActivityEditor.findViewById<ProgressBar>(R.id.export_progress_bar)?.progress = progress_rounded
-                                }
-
-                                val builder = this@ActivityEditor.get_notification() ?: return
-                                builder.setProgress(100, progress_rounded, false)
-
-                                @SuppressLint("MissingPermission")
-                                if (this@ActivityEditor.has_notification_permission()) {
-                                    this.notification_manager.notify(
-                                        this@ActivityEditor.NOTIFICATION_ID,
-                                        builder.build()
-                                    )
-                                }
-                            }
-                        })
-
-                    exporter_sample_handle_manager.destroy()
+                        exporter_sample_handle_manager.destroy()
+                    }
                 }
             }
         }
-    }
 
-    private var result_launcher_export_project = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val opus_manager = this.get_opus_manager()
-            result?.data?.data?.also { uri ->
-                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                    val json_string = opus_manager.to_json().to_string()
-                    FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
-                    this.feedback_msg(getString(R.string.feedback_exported))
+    private var result_launcher_export_project =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val opus_manager = this.get_opus_manager()
+                result?.data?.data?.also { uri ->
+                    this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                        val json_string = opus_manager.to_json().to_string()
+                        FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
+                        this.feedback_msg(this.getString(R.string.feedback_exported))
+                    }
                 }
             }
         }
-    }
 
-    private var result_launcher_export_midi = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val opus_manager = this.get_opus_manager()
-            result?.data?.data?.also { uri ->
-                applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                    FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
-                    this.feedback_msg(getString(R.string.feedback_exported_to_midi))
+    private var result_launcher_export_midi =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val opus_manager = this.get_opus_manager()
+                result?.data?.data?.also { uri ->
+                    this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                        FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
+                        this.feedback_msg(this.getString(R.string.feedback_exported_to_midi))
+                    }
                 }
             }
         }
-    }
 
     override fun onPause() {
         this.playback_stop()
@@ -870,7 +879,7 @@ class ActivityEditor : PaganActivity() {
         super.onResume()
         this.drawer_lock()
 
-        registerReceiver(
+        this.registerReceiver(
             this.broadcast_receiver,
             this.receiver_intent_filter,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -980,9 +989,9 @@ class ActivityEditor : PaganActivity() {
                     null
                 } catch (e: Exception) {
                     when (type) {
-                        CompatibleFileType.Midi1 -> getString(R.string.feedback_midi_fail)
-                        CompatibleFileType.Pagan -> getString(R.string.feedback_import_fail)
-                        null -> getString(R.string.feedback_file_not_found)
+                        CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
+                        CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
+                        null -> this.getString(R.string.feedback_file_not_found)
                     }
                 }
 
@@ -1193,7 +1202,7 @@ class ActivityEditor : PaganActivity() {
             }
         )
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+        this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val that = this@ActivityEditor
                 val opus_manager = that.get_opus_manager()
@@ -1279,8 +1288,8 @@ class ActivityEditor : PaganActivity() {
             R.id.itmImportMidi -> {
                 this.result_launcher_import.launch(
                     Intent().apply {
-                        setAction(Intent.ACTION_GET_CONTENT)
-                        setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+                        this.setAction(Intent.ACTION_GET_CONTENT)
+                        this.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
                     }
                 )
             }
@@ -1344,13 +1353,13 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun open_about() {
-        startActivity(Intent(this, ActivityAbout::class.java))
+        this.startActivity(Intent(this, ActivityAbout::class.java))
     }
 
     private fun _project_save() {
         this.loading_reticle_show()
         this.active_project = this.get_project_manager().save(this.get_opus_manager(), this.active_project)
-        this.feedback_msg(getString(R.string.feedback_project_saved))
+        this.feedback_msg(this.getString(R.string.feedback_project_saved))
         this.update_menu_options()
         this.findViewById<View?>(R.id.btnDeleteProject)?.isEnabled = true
         this.findViewById<View?>(R.id.btnCopyProject)?.isEnabled = true
@@ -1380,7 +1389,7 @@ class ActivityEditor : PaganActivity() {
             this.get_project_manager().move_to_copy(this.get_opus_manager())
             this.active_project = null
             this.update_title_text()
-            this.feedback_msg(getString(R.string.feedback_on_copy))
+            this.feedback_msg(this.getString(R.string.feedback_on_copy))
 
             this.findViewById<View>(R.id.btnDeleteProject).isEnabled = false
             this.findViewById<View>(R.id.btnCopyProject).isEnabled = false
@@ -1432,14 +1441,14 @@ class ActivityEditor : PaganActivity() {
 
     private fun playback_start() {
         if (!this.update_playback_state_soundfont(PlaybackState.Queued)) {
-            this.feedback_msg(getString(R.string.playback_failed))
+            this.feedback_msg(this.getString(R.string.playback_failed))
             return
         }
 
         this._enable_blocker_view()
         this.runOnUiThread {
             this.set_playback_button(R.drawable.baseline_play_disabled_24)
-            this.force_title_text(getString(R.string.reticle_msg_start_playback))
+            this.force_title_text(this.getString(R.string.reticle_msg_start_playback))
             this.loading_reticle_show()
         }
 
@@ -1463,11 +1472,11 @@ class ActivityEditor : PaganActivity() {
 
     private fun playback_start_midi_output() {
         if (!this.update_playback_state_midi(PlaybackState.Queued)) {
-            this.feedback_msg(getString(R.string.playback_failed))
+            this.feedback_msg(this.getString(R.string.playback_failed))
             return
         }
 
-        this.force_title_text(getString(R.string.reticle_msg_start_playback))
+        this.force_title_text(this.getString(R.string.reticle_msg_start_playback))
         this.loading_reticle_show()
         this._enable_blocker_view()
 
@@ -1568,7 +1577,7 @@ class ActivityEditor : PaganActivity() {
             if (this._forced_title_text != null) {
                 this._forced_title_text!!
             } else {
-                this.get_opus_manager().project_name ?: getString(R.string.untitled_opus)
+                this.get_opus_manager().project_name ?: this.getString(R.string.untitled_opus)
             }
         )
     }
@@ -1596,7 +1605,7 @@ class ActivityEditor : PaganActivity() {
 
     override fun on_reticle_show() {
         super.on_reticle_show()
-        this.force_title_text(getString(R.string.reticle_msg_load))
+        this.force_title_text(this.getString(R.string.reticle_msg_load))
     }
 
     fun update_menu_options() {
@@ -1697,7 +1706,7 @@ class ActivityEditor : PaganActivity() {
             }
 
             it.setOnClickListener {
-                this.dialog_popup_menu(getString(R.string.dlg_export), export_options, default = null) { _: Int, value: Int ->
+                this.dialog_popup_menu(this.getString(R.string.dlg_export), export_options, default = null) { _: Int, value: Int ->
                     when (value) {
                         0 -> this.export_project()
                         1 -> this.export_midi_check()
@@ -1713,16 +1722,16 @@ class ActivityEditor : PaganActivity() {
 
     private fun get_exportable_options(): List<Pair<Int, String>> {
         val export_options = mutableListOf<Pair<Int, String>>(
-            Pair(0, getString(R.string.export_option_json))
+            Pair(0, this.getString(R.string.export_option_json))
         )
         if (this.get_opus_manager().is_tuning_standard()) {
-            export_options.add( Pair(1, getString(R.string.export_option_midi)) )
+            export_options.add( Pair(1, this.getString(R.string.export_option_midi)) )
         }
 
         if (this.get_soundfont() != null) {
-            export_options.add( Pair(2, getString(R.string.export_option_wav)) )
-            export_options.add( Pair(3, getString(R.string.export_option_wav_lines)) )
-            export_options.add( Pair(4, getString(R.string.export_option_wav_channels)) )
+            export_options.add( Pair(2, this.getString(R.string.export_option_wav)) )
+            export_options.add( Pair(3, this.getString(R.string.export_option_wav_lines)) )
+            export_options.add( Pair(4, this.getString(R.string.export_option_wav_channels)) )
         }
 
         return export_options
@@ -1942,8 +1951,9 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_midi(midi)
         val filename = this.parse_file_name(uri)
-        opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: getString(
-            R.string.default_imported_midi_title))
+        opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString(
+            R.string.default_imported_midi_title)
+        )
         opus_manager.clear_history()
         this.active_project = null
     }
@@ -1994,7 +2004,7 @@ class ActivityEditor : PaganActivity() {
 
         if (!soundfont_file.exists()) {
             // Possible if user puts the sf2 in their files manually
-            this.feedback_msg(getString(R.string.soundfont_not_found))
+            this.feedback_msg(this.getString(R.string.soundfont_not_found))
             throw FileNotFoundException()
 
         }
@@ -2002,7 +2012,7 @@ class ActivityEditor : PaganActivity() {
             this._soundfont = SoundFont(this, soundfont_file.uri)
         } catch (e: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
-            this.feedback_msg(getString(R.string.invalid_soundfont))
+            this.feedback_msg(this.getString(R.string.invalid_soundfont))
             return
         } catch (e: SoundFont.InvalidSoundFont) {
             // Possible if user puts the sf2 in their files manually
@@ -2285,7 +2295,7 @@ class ActivityEditor : PaganActivity() {
 
         flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(getString(R.string.dlg_title_set_line_color))
+            .setTitle(this.getString(R.string.dlg_title_set_line_color))
             .setView(viewInflated)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 val new_color = Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0)
@@ -2297,7 +2307,7 @@ class ActivityEditor : PaganActivity() {
             .setNeutralButton(android.R.string.cancel) { dialog, _ ->
                 dialog.dismiss()
             }
-            .setNegativeButton(getString(R.string.color_picker_clear)) { dialog, _ ->
+            .setNegativeButton(this.getString(R.string.color_picker_clear)) { dialog, _ ->
                 callback(null)
                 dialog.dismiss()
             }
@@ -2360,7 +2370,7 @@ class ActivityEditor : PaganActivity() {
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_float,
-                window.decorView.rootView as ViewGroup,
+                this.window.decorView.rootView as ViewGroup,
                 false
             )
 
@@ -2397,7 +2407,7 @@ class ActivityEditor : PaganActivity() {
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_split,
-                window.decorView.rootView as ViewGroup,
+                this.window.decorView.rootView as ViewGroup,
                 false
             )
 
@@ -2460,12 +2470,12 @@ class ActivityEditor : PaganActivity() {
             AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
                 .setTitle(R.string.dialog_save_warning_title)
                 .setCancelable(true)
-                .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+                .setPositiveButton(this.getString(R.string.dlg_confirm)) { dialog, _ ->
                     this@ActivityEditor.project_save()
                     dialog.dismiss()
                     callback(true)
                 }
-                .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+                .setNegativeButton(this.getString(R.string.dlg_decline)) { dialog, _ ->
                     dialog.dismiss()
                     callback(false)
                 }
@@ -2524,7 +2534,7 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         if (opus_manager.get_percussion_channels().size > 1) {
             val text_view: TextView = TextView(this)
-            text_view.text = getString(R.string.multiple_kit_warning)
+            text_view.text = this.getString(R.string.multiple_kit_warning)
 
             AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
                 .setTitle(R.string.generic_warning)
@@ -2706,7 +2716,7 @@ class ActivityEditor : PaganActivity() {
                 PendingIntent.FLAG_IMMUTABLE
             )
 
-            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            val builder = NotificationCompat.Builder(this, this.CHANNEL_ID)
                 .setContentTitle(this.getString(R.string.export_wav_notification_title, this.get_opus_manager().project_name ?: "Untitled Project"))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.small_logo_rowan)
@@ -2728,7 +2738,7 @@ class ActivityEditor : PaganActivity() {
             val name = this.getString(R.string.export_wav_file_progress)
             val descriptionText = this.getString(R.string.export_wav_notification_description)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+            val mChannel = NotificationChannel(this.CHANNEL_ID, name, importance)
             mChannel.description = descriptionText
             // Register the channel with the system. You can't change the importance
             // or other notification behaviors after this.
@@ -2745,7 +2755,7 @@ class ActivityEditor : PaganActivity() {
             vibratorManager.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
+            this.getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -2799,7 +2809,7 @@ class ActivityEditor : PaganActivity() {
         val view_inflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_note_offset,
-                window.decorView.rootView as ViewGroup,
+                this.window.decorView.rootView as ViewGroup,
                 false
             )
 
@@ -3150,13 +3160,13 @@ class ActivityEditor : PaganActivity() {
         scroll_bar.progress = editor_table.get_first_visible_column_index()
 
 
-        title_text.text = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
-        title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
+        title_text.text = this.resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
+        title_text.contentDescription = this.resources.getString(R.string.label_shortcut_scrollbar, scroll_bar.progress)
 
         scroll_bar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                title_text.text = resources.getString(R.string.label_shortcut_scrollbar, p1)
-                title_text.contentDescription = resources.getString(R.string.label_shortcut_scrollbar, p1)
+                title_text.text = this@ActivityEditor.resources.getString(R.string.label_shortcut_scrollbar, p1)
+                title_text.contentDescription = this@ActivityEditor.resources.getString(R.string.label_shortcut_scrollbar, p1)
                 opus_manager.force_cursor_select_column(p1)
             }
             override fun onStartTrackingTouch(p0: SeekBar?) { }
@@ -3178,7 +3188,7 @@ class ActivityEditor : PaganActivity() {
                 } else {
                     val section_name = opus_manager.marked_sections[keys[i - 1]]
                     if (section_name == null) {
-                        getString(R.string.section_spinner_item, i, keys[i - 1])
+                        this.getString(R.string.section_spinner_item, i, keys[i - 1])
                     } else {
                         "${keys[i - 1]}: ${section_name}"
                     }
@@ -3339,7 +3349,7 @@ class ActivityEditor : PaganActivity() {
 
 
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(getString(R.string.dialog_connected_midi_devices))
+            .setTitle(this.getString(R.string.dialog_connected_midi_devices))
             .setView(device_management_view)
             .setNeutralButton(android.R.string.ok) { dialog, _ ->
                 dialog.dismiss()

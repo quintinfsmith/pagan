@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
-import android.view.View
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -30,7 +29,6 @@ import com.qfs.pagan.opusmanager.OpusManagerCursor
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import kotlinx.coroutines.runBlocking
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -137,8 +135,8 @@ class ActionTracker {
                     TrackedAction.SetProjectNameAndNotes -> {
                         val name = entry.get_string(1)
                         val notes = entry.get_string(2)
-                        val name_ints = string_to_ints(name)
-                        listOf(name_ints.size) + name_ints + string_to_ints(notes)
+                        val name_ints = this.string_to_ints(name)
+                        listOf(name_ints.size) + name_ints + this.string_to_ints(notes)
                     }
                     // STRING
                     TrackedAction.SetTransitionAtCursor,
@@ -148,7 +146,7 @@ class ActionTracker {
                     TrackedAction.SetCopyMode,
                     TrackedAction.LoadProject -> {
                         val string = entry.get_string(1)
-                        string_to_ints(string)
+                        this.string_to_ints(string)
                     }
 
                     // Boolean
@@ -179,7 +177,7 @@ class ActionTracker {
                         listOf(entry.get_int(1)) + if (title == null) {
                             listOf()
                         } else {
-                            string_to_ints(title)
+                            this.string_to_ints(title)
                         }
                     }
                     TrackedAction.RepeatSelectionCtlLine,
@@ -195,7 +193,7 @@ class ActionTracker {
                     TrackedAction.CursorSelectLineCtlRange,
                     TrackedAction.CursorSelectLeafCtlLine -> {
                         val name = entry.get_string(1)
-                        val string_ints = string_to_ints(name)
+                        val string_ints = this.string_to_ints(name)
                         listOf(string_ints.size) + string_ints + List(entry.size - 2) { i: Int ->
                             entry.get_intn(i + 2)
                         }
@@ -229,7 +227,7 @@ class ActionTracker {
         }
 
         fun <E : Enum<E>> enum_to_ints(enum_value: Enum<E>): List<Int?> {
-            val initial = string_to_ints(enum_value.name)
+            val initial = this.string_to_ints(enum_value.name)
             return listOf(initial.size) + initial
         }
 
@@ -261,8 +259,8 @@ class ActionTracker {
                 when (token) {
                     TrackedAction.SetProjectNameAndNotes -> {
                         val name_length = integers[0]!!
-                        val name = string_from_ints(integers.subList(1, name_length + 1))
-                        val notes = string_from_ints(integers.subList(name_length + 1, integers.size))
+                        val name = this.string_from_ints(integers.subList(1, name_length + 1))
+                        val notes = this.string_from_ints(integers.subList(name_length + 1, integers.size))
                         arrayOf(
                             JSONString(name),
                             JSONString(notes)
@@ -276,7 +274,7 @@ class ActionTracker {
                     TrackedAction.SetCopyMode,
                     TrackedAction.ImportSong,
                     TrackedAction.LoadProject -> {
-                        arrayOf(JSONString(string_from_ints(integers)))
+                        arrayOf(JSONString(this.string_from_ints(integers)))
                     }
                     // Boolean
                     TrackedAction.GoBack -> {
@@ -291,7 +289,7 @@ class ActionTracker {
                         arrayOf(
                             JSONInteger(integers[0]!!),
                             if (integers.size > 1) {
-                                JSONString(string_from_ints(integers.subList(1, integers.size)))
+                                JSONString(this.string_from_ints(integers.subList(1, integers.size)))
                             } else {
                                 null
                             }
@@ -317,7 +315,7 @@ class ActionTracker {
                         val str_len = integers[0]!!
                         Array(integers.size - str_len) { i: Int ->
                             if (i == 0) {
-                                JSONString(sized_string_from_ints(integers))
+                                JSONString(this.sized_string_from_ints(integers))
                             } else {
                                 JSONInteger(integers[i + str_len]!!)
                             }
@@ -546,7 +544,7 @@ class ActionTracker {
     fun cursor_select_ctl_at_line(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeafCtlLine,
-                enum_to_ints(type) + listOf(beat_key.channel, beat_key.line_offset, beat_key.beat) + position
+                ActionTracker.enum_to_ints(type) + listOf(beat_key.channel, beat_key.line_offset, beat_key.beat) + position
         )
 
         this.get_opus_manager().cursor_select_ctl_at_line(type, beat_key, position)
@@ -555,14 +553,14 @@ class ActionTracker {
     fun cursor_select_ctl_at_channel(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeafCtlChannel,
-            enum_to_ints(type) + listOf(channel, beat) + position
+            ActionTracker.enum_to_ints(type) + listOf(channel, beat) + position
         )
 
         this.get_opus_manager().cursor_select_ctl_at_channel(type, channel, beat, position)
     }
 
     fun cursor_select_ctl_at_global(type: ControlEventType, beat: Int, position: List<Int>) {
-        this.track(TrackedAction.CursorSelectLeafCtlGlobal, enum_to_ints(type) + listOf(beat) + position)
+        this.track(TrackedAction.CursorSelectLeafCtlGlobal, ActionTracker.enum_to_ints(type) + listOf(beat) + position)
         this.get_opus_manager().cursor_select_ctl_at_global(type, beat, position)
     }
 
@@ -624,7 +622,7 @@ class ActionTracker {
     }
 
     fun cursor_select_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
-        this.track(TrackedAction.CursorSelectLineCtlLine, enum_to_ints(type) + listOf(channel, line_offset))
+        this.track(TrackedAction.CursorSelectLineCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset))
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -648,7 +646,7 @@ class ActionTracker {
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
                     } else {
@@ -659,7 +657,7 @@ class ActionTracker {
 
             CtlLineLevel.Channel -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat, repeat)
                     } else {
@@ -670,7 +668,7 @@ class ActionTracker {
 
             CtlLineLevel.Global -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat, repeat)
                     } else {
@@ -679,14 +677,14 @@ class ActionTracker {
                 }
             }
             null -> {
-                this.track(TrackedAction.RepeatSelectionCtlLine, enum_to_ints(type) + listOf(channel, line_offset, repeat))
+                this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                 opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
             }
         }
     }
 
     fun cursor_select_channel_ctl_line(type: ControlEventType, channel: Int) {
-        this.track(TrackedAction.CursorSelectChannelCtlLine, enum_to_ints(type) + listOf(channel))
+        this.track(TrackedAction.CursorSelectChannelCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel))
 
         val opus_manager = this.get_opus_manager()
 
@@ -710,7 +708,7 @@ class ActionTracker {
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_line_to_channel_overwrite_range_horizontally(type, channel, first, second, repeat)
                     } else {
@@ -720,7 +718,7 @@ class ActionTracker {
             }
             CtlLineLevel.Channel -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_channel_overwrite_range_horizontally(type, channel, first.channel, first.beat, second.beat, repeat)
                     } else {
@@ -730,7 +728,7 @@ class ActionTracker {
             }
             CtlLineLevel.Global -> {
                 this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-                    this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
+                    this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_global_to_channel_overwrite_range_horizontally(type, first.channel, first.beat, second.beat, repeat)
                     } else {
@@ -739,14 +737,14 @@ class ActionTracker {
                 }
             }
             null -> {
-                this.track(TrackedAction.RepeatSelectionCtlChannel, enum_to_ints(type) + listOf(channel, repeat))
+                this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
                 opus_manager.cursor_select_channel_ctl_line(type, channel)
             }
         }
     }
 
     fun cursor_select_global_ctl_line(type: ControlEventType) {
-        this.track(TrackedAction.CursorSelectGlobalCtlLine, enum_to_ints(type))
+        this.track(TrackedAction.CursorSelectGlobalCtlLine, ActionTracker.enum_to_ints(type))
         val opus_manager = this.get_opus_manager()
         opus_manager.cursor_select_global_ctl_line(type)
     }
@@ -762,7 +760,7 @@ class ActionTracker {
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
 
         this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
-            this.track(TrackedAction.RepeatSelectionCtlGlobal, enum_to_ints(type) + listOf(repeat))
+            this.track(TrackedAction.RepeatSelectionCtlGlobal, ActionTracker.enum_to_ints(type) + listOf(repeat))
             when (cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first_key != second_key) {
@@ -821,7 +819,7 @@ class ActionTracker {
     fun cursor_select_line_ctl_range(type: ControlEventType, first_key: BeatKey, second_key: BeatKey) {
         this.track(
             TrackedAction.CursorSelectLineCtlRange,
-            enum_to_ints(type) +
+            ActionTracker.enum_to_ints(type) +
             listOf(
                 first_key.channel,
                 first_key.line_offset,
@@ -838,7 +836,7 @@ class ActionTracker {
     }
 
     fun cursor_select_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
-        this.track(TrackedAction.CursorSelectChannelCtlRange, enum_to_ints(type) + listOf(first_beat, second_beat))
+        this.track(TrackedAction.CursorSelectChannelCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
 
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
@@ -847,7 +845,7 @@ class ActionTracker {
 
 
     fun cursor_select_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
-        this.track(TrackedAction.CursorSelectGlobalCtlRange, enum_to_ints(type) + listOf(first_beat, second_beat))
+        this.track(TrackedAction.CursorSelectGlobalCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
 
         val activity = this.get_activity()
         val opus_manager = activity.get_opus_manager()
@@ -872,7 +870,7 @@ class ActionTracker {
     }
 
     fun load_project(uri: Uri) {
-        this.track(TrackedAction.LoadProject, string_to_ints(uri.toString()))
+        this.track(TrackedAction.LoadProject, ActionTracker.string_to_ints(uri.toString()))
         val activity = this.get_activity()
         activity.load_project(uri)
     }
@@ -903,7 +901,7 @@ class ActionTracker {
 
         val event = context_menu.get_control_event<OpusControlEvent>().copy()
         this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: ControlTransition ->
-            this.track(TrackedAction.SetTransitionAtCursor, string_to_ints(transition.name))
+            this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
             event.transition = transition
             context_menu.widget.set_event(event)
         }
@@ -959,7 +957,7 @@ class ActionTracker {
         }
 
         this.dialog_popup_menu(this.get_activity().getString(R.string.show_line_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
-            this.track(TrackedAction.ShowLineController, string_to_ints(ctl_type.name))
+            this.track(TrackedAction.ShowLineController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
         }
     }
@@ -978,7 +976,7 @@ class ActionTracker {
         }
 
         this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
-            this.track(TrackedAction.ShowChannelController, string_to_ints(ctl_type.name))
+            this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
         }
     }
@@ -1435,10 +1433,10 @@ class ActionTracker {
         val default = Pair(opus_manager.project_name ?: "", opus_manager.project_notes ?: "")
 
         this.dialog_name_and_notes_popup(default, project_name_and_notes) { name: String, notes: String ->
-            val name_ints = string_to_ints(name)
+            val name_ints = ActionTracker.string_to_ints(name)
             this.track(
                 TrackedAction.SetProjectNameAndNotes,
-                listOf(name_ints.size) + name_ints + string_to_ints(notes)
+                listOf(name_ints.size) + name_ints + ActionTracker.string_to_ints(notes)
             )
 
             val opus_manager = this.get_opus_manager()
@@ -1565,14 +1563,14 @@ class ActionTracker {
                 this.new_project()
             }
             TrackedAction.LoadProject -> {
-                this.load_project(string_from_ints(integers).toUri())
+                this.load_project(ActionTracker.string_from_ints(integers).toUri())
             }
             TrackedAction.CursorSelectColumn -> {
                 this.cursor_select_column(integers[0]!!)
             }
             TrackedAction.CursorSelectGlobalCtlRange -> {
                 this.cursor_select_global_ctl_range(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1]!!,
                     integers[2]!!
                 )
@@ -1580,7 +1578,7 @@ class ActionTracker {
             TrackedAction.CursorSelectChannelCtlRange -> {
                 val offset = integers[0]!!
                 this.cursor_select_channel_ctl_range(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!,
                     integers[2 + offset]!!,
                     integers[3 + offset]!!
@@ -1589,7 +1587,7 @@ class ActionTracker {
             TrackedAction.CursorSelectLineCtlRange -> {
                 val offset = integers[0]!!
                 this.cursor_select_line_ctl_range(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     BeatKey(
                         integers[1 + offset]!!,
                         integers[2 + offset]!!,
@@ -1629,7 +1627,7 @@ class ActionTracker {
             TrackedAction.CursorSelectLeafCtlLine -> {
                 val offset = integers[0]!!
                 this.cursor_select_ctl_at_line(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     BeatKey(
                         integers[1 + offset]!!,
                         integers[2 + offset]!!,
@@ -1641,7 +1639,7 @@ class ActionTracker {
             TrackedAction.CursorSelectLeafCtlChannel -> {
                 val offset = integers[0]!!
                 this.cursor_select_ctl_at_channel(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!,
                     integers[2 + offset]!!,
                     List(integers.size - 3 - offset) { i: Int -> integers[i + 3 + offset]!! }
@@ -1650,7 +1648,7 @@ class ActionTracker {
             TrackedAction.CursorSelectLeafCtlGlobal -> {
                 val offset = integers[0]!!
                 this.cursor_select_ctl_at_global(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!,
                     List(integers.size - 2 - offset) { i: Int -> integers[i + 2 + offset]!! }
                 )
@@ -1664,7 +1662,7 @@ class ActionTracker {
             TrackedAction.CursorSelectLineCtlLine -> {
                 val offset = integers[0]!!
                 this.cursor_select_line_ctl_line(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!,
                     integers[2 + offset]!!
                 )
@@ -1672,12 +1670,12 @@ class ActionTracker {
             TrackedAction.CursorSelectChannelCtlLine -> {
                 val offset = integers[0]!!
                 this.cursor_select_channel_ctl_line(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!
                 )
             }
             TrackedAction.CursorSelectGlobalCtlLine -> {
-                this.cursor_select_global_ctl_line(type_from_ints(integers))
+                this.cursor_select_global_ctl_line(ActionTracker.type_from_ints(integers))
             }
             TrackedAction.RepeatSelectionStd -> {
                 this.repeat_selection_std(
@@ -1689,7 +1687,7 @@ class ActionTracker {
             TrackedAction.RepeatSelectionCtlLine -> {
                 val offset = integers[0]!!
                 this.repeat_selection_ctl_line(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!,
                     integers[2 + offset]!!,
                     integers[3 + offset]
@@ -1698,7 +1696,7 @@ class ActionTracker {
             TrackedAction.RepeatSelectionCtlChannel -> {
                 val offset = integers[0]!!
                 this.repeat_selection_ctl_channel(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!,
                     integers[2 + offset]!!
                 )
@@ -1706,7 +1704,7 @@ class ActionTracker {
             TrackedAction.RepeatSelectionCtlGlobal -> {
                 val offset = integers[0]!!
                 this.repeat_selection_ctl_global(
-                    type_from_ints(integers),
+                    ActionTracker.type_from_ints(integers),
                     integers[1 + offset]!!
                 )
             }
@@ -1807,7 +1805,7 @@ class ActionTracker {
                 this.remove_line(integers[0])
             }
             TrackedAction.SetTransitionAtCursor -> {
-                this.set_ctl_transition(ControlTransition.valueOf(string_from_ints(integers)))
+                this.set_ctl_transition(ControlTransition.valueOf(ActionTracker.string_from_ints(integers)))
             }
             TrackedAction.SetVolumeAtCursor -> {
                 this.set_volume(integers[0])
@@ -1878,7 +1876,7 @@ class ActionTracker {
             TrackedAction.SetCopyMode -> {
                 this.set_copy_mode(
                     PaganConfiguration.MoveMode.valueOf(
-                        string_from_ints(integers)
+                        ActionTracker.string_from_ints(integers)
                     )
                 )
             }
@@ -1898,20 +1896,20 @@ class ActionTracker {
 
             TrackedAction.SetProjectNameAndNotes -> {
                 val size = integers[0]!!
-                val project_name = string_from_ints(integers.subList(1, size + 1))
-                val project_notes = string_from_ints(integers.subList(size + 1, integers.size))
+                val project_name = ActionTracker.string_from_ints(integers.subList(1, size + 1))
+                val project_notes = ActionTracker.string_from_ints(integers.subList(size + 1, integers.size))
 
                 this.set_project_name_and_notes(Pair(project_name, project_notes))
             }
 
             TrackedAction.ShowLineController -> {
                 this.show_hidden_line_controller(
-                    ControlEventType.valueOf(string_from_ints(integers))
+                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
                 )
             }
             TrackedAction.ShowChannelController -> {
                 this.show_hidden_channel_controller(
-                    ControlEventType.valueOf(string_from_ints(integers))
+                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
                 )
             }
             TrackedAction.SaveProject -> {
@@ -1967,7 +1965,7 @@ class ActionTracker {
             }
             TrackedAction.TagColumn -> {
                 if (integers.size > 1) {
-                    this.tag_column(integers[0]!!, string_from_ints(integers.subList(1, integers.size)))
+                    this.tag_column(integers[0]!!, ActionTracker.string_from_ints(integers.subList(1, integers.size)))
                 } else {
                     this.tag_column(integers[0]!!, null, true)
                 }
@@ -1990,7 +1988,7 @@ class ActionTracker {
             return
         }
 
-        this.track(TrackedAction.SetCopyMode, string_to_ints(mode.name))
+        this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
 
         context_menu.label.text = when (mode) {
             PaganConfiguration.MoveMode.MOVE -> {
@@ -2183,7 +2181,7 @@ class ActionTracker {
     fun to_json(): JSONObject {
         return JSONList(
             *Array(this.action_queue.size) { i: Int ->
-                item_to_json(this.action_queue[i])
+                ActionTracker.item_to_json(this.action_queue[i])
             }
         )
     }
@@ -2192,7 +2190,7 @@ class ActionTracker {
         this.action_queue.clear()
         for (i in 0 until json_list.size) {
             val entry = json_list.get_listn(i) ?: continue
-            val (token, ints) = from_json_entry(entry)
+            val (token, ints) = ActionTracker.from_json_entry(entry)
             this.track(token, ints)
         }
     }

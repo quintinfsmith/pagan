@@ -46,7 +46,7 @@ fun get_prime_factors(n: Int): List<Int> {
         }
     }
     // No Primes found, n is prime
-    if (factors.size == 0) {
+    if (factors.isEmpty()) {
         factors.add(n)
     }
 

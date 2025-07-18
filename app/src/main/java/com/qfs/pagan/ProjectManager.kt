@@ -1,7 +1,6 @@
 package com.qfs.pagan
 import android.content.Context
 import android.net.Uri
-import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.json.JSONHashMap
@@ -9,13 +8,10 @@ import com.qfs.json.JSONParser
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.w3c.dom.Document
 import java.io.BufferedReader
-import java.io.BufferedWriter
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
-import java.io.OutputStreamWriter
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.qfs.pagan.opusmanager.OpusLayerBase as OpusManager
@@ -23,7 +19,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     class MKDirFailedException(dir: String): Exception("Failed to create directory $dir")
     class InvalidDirectory(path: Uri): Exception("Real Directory Required ($path)")
     class PathNotSetException(): Exception("Projects path has not been set.")
-    private val _cache_path = "${context.cacheDir}/project_list.json"
+    private val _cache_path = "${this.context.cacheDir}/project_list.json"
     private val bkp_path = "${this.context.cacheDir}/.bkp.json"
     private val bkp_path_path = "${this.context.cacheDir}/.bkp_path"
 
@@ -215,7 +211,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         val working_directory = DocumentFile.fromFile(old_directory)
         val json = Json {
-            ignoreUnknownKeys = true
+            this.ignoreUnknownKeys = true
         }
 
         val project_list = mutableListOf<Pair<String, String>>()
@@ -251,7 +247,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!) ?: return
         val json = Json {
-            ignoreUnknownKeys = true
+            this.ignoreUnknownKeys = true
         }
 
         val project_list = mutableListOf<Pair<String, String>>()
@@ -288,7 +284,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
     fun get_project_list(): List<Pair<Uri, String>> {
         val json = Json {
-            ignoreUnknownKeys = true
+            this.ignoreUnknownKeys = true
         }
 
         if (!File(this._cache_path).exists()) {
@@ -344,7 +340,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         val json = Json {
-            ignoreUnknownKeys = true
+            this.ignoreUnknownKeys = true
         }
 
         val json_string = json.encodeToString(adj_project_list)
@@ -370,7 +366,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         project_list.sortBy { it.second }
 
         val json = Json {
-            ignoreUnknownKeys = true
+            this.ignoreUnknownKeys = true
         }
 
         // Convert Uris to strings for storage

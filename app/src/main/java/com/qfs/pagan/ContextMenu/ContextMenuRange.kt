@@ -19,7 +19,7 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
     override fun init_properties() {
         this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
         this.button_adjust = this.primary.findViewById(R.id.btnAdjust)
-        this.label = if (context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        this.label = if (this.context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             this.secondary!!.findViewById(R.id.tvMoveModeLabelB)
         } else {
             this.primary.findViewById(R.id.tvMoveModeLabel)

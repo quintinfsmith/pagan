@@ -24,7 +24,6 @@ import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface.Companion.LATEST_VERSION
 import com.qfs.pagan.opusmanager.activecontroller.ActiveController
 import com.qfs.pagan.structure.OpusTree
-import java.io.File
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -78,7 +77,7 @@ open class OpusLayerBase {
         }
 
         fun gen_channel_uuid(): Int {
-            return _channel_uuid_generator++
+            return this._channel_uuid_generator++
         }
 
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
@@ -319,7 +318,7 @@ open class OpusLayerBase {
     }
 
     var length: Int = 1
-    var controllers = ActiveControlSet(length, setOf(ControlEventType.Tempo))
+    var controllers = ActiveControlSet(this.length, setOf(ControlEventType.Tempo))
     var channels: MutableList<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> = mutableListOf()
     var project_name: String? = null
     var project_notes: String? = null
@@ -697,7 +696,7 @@ open class OpusLayerBase {
         val working_tree = this.get_tree(beat_key, position).copy()
         working_tree.traverse { tree: OpusTree<out InstrumentEvent>, event: InstrumentEvent? ->
             if (event != null) {
-                checked_cast<OpusTree<InstrumentEvent>>(tree).set_event(event.copy())
+                OpusLayerBase.checked_cast<OpusTree<InstrumentEvent>>(tree).set_event(event.copy())
             }
         }
         return working_tree
@@ -1486,14 +1485,14 @@ open class OpusLayerBase {
                     beat_key.line_offset,
                     beat_key.beat,
                     position,
-                    checked_cast<OpusTree<PercussionEvent>>(tree)
+                    OpusLayerBase.checked_cast<OpusTree<PercussionEvent>>(tree)
                 )
             } else {
                 (this.get_channel(beat_key.channel) as OpusChannel).replace_tree(
                     beat_key.line_offset,
                     beat_key.beat,
                     position,
-                    checked_cast<OpusTree<TunedInstrumentEvent>>(tree)
+                    OpusLayerBase.checked_cast<OpusTree<TunedInstrumentEvent>>(tree)
                 )
             }
         }
@@ -1534,14 +1533,14 @@ open class OpusLayerBase {
      * [uuid] is the unique identifier used when rebuilding a channel
      */
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null, is_percussion: Boolean = false) {
-        val actual_uuid = uuid ?: gen_channel_uuid()
+        val actual_uuid = uuid ?: OpusLayerBase.gen_channel_uuid()
         val new_channel = if (is_percussion) {
             OpusPercussionChannel(actual_uuid).apply {
-                midi_channel = 9
+                this.midi_channel = 9
             }
         } else {
             OpusChannel(actual_uuid).apply {
-                midi_channel = this@OpusLayerBase.get_next_available_midi_channel()
+                this.midi_channel = this@OpusLayerBase.get_next_available_midi_channel()
             }
         }
         new_channel.set_beat_count(this.length)
@@ -2235,7 +2234,7 @@ open class OpusLayerBase {
             this.insert_beat(this.length)
         }
 
-        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
@@ -2434,7 +2433,7 @@ open class OpusLayerBase {
             this.insert_beat(this.length)
         }
 
-        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
 
 
@@ -2501,7 +2500,7 @@ open class OpusLayerBase {
             this.insert_beats(this.length, max_beat - this.length)
         }
 
-        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
@@ -2938,7 +2937,7 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_to_channel_overwrite_range_horizontally(type: ControlEventType, channel: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
-        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
 
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
@@ -3003,7 +3002,7 @@ open class OpusLayerBase {
     }
 
     open fun controller_line_overwrite_range_horizontally(type: ControlEventType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
-        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
         val count = repeat ?: ceil((this.length - from_key.beat).toFloat() / width.toFloat()).toInt()
@@ -3578,7 +3577,7 @@ open class OpusLayerBase {
                 this.replace_tree(
                     beat_key,
                     listOf(),
-                    checked_cast<OpusTree<TunedInstrumentEvent>>(beats_in_column[y++])
+                    OpusLayerBase.checked_cast<OpusTree<TunedInstrumentEvent>>(beats_in_column[y++])
                 )
             }
         }
@@ -4075,7 +4074,7 @@ open class OpusLayerBase {
     }
 
     open fun _project_change_new() {
-        this.import_from_other(initialize_basic())
+        this.import_from_other(OpusLayerBase.initialize_basic())
     }
 
     fun project_change_json(json_data: JSONHashMap, on_load_callback: (() -> Unit)? = null) {
@@ -4098,7 +4097,7 @@ open class OpusLayerBase {
                 this.length
             )
 
-            channel.uuid = gen_channel_uuid()
+            channel.uuid = OpusLayerBase.gen_channel_uuid()
             this.channels.add(channel)
             this._channel_uuid_map[channel.uuid] = channel
         }
@@ -4114,7 +4113,7 @@ open class OpusLayerBase {
 
         this.transpose = Pair(
             inner_map.get_int("transpose", 0),
-            inner_map.get_int("transpose_radix", tuning_map.size)
+            inner_map.get_int("transpose_radix", this.tuning_map.size)
         )
 
         this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
@@ -4139,7 +4138,7 @@ open class OpusLayerBase {
     }
 
     open fun _project_change_midi(midi: Midi) {
-        val (settree, tempo_line, instrument_map) = tree_from_midi(midi)
+        val (settree, tempo_line, instrument_map) = OpusLayerBase.tree_from_midi(midi)
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
         val channel_sizes = mutableListOf<Int>()
@@ -4642,7 +4641,7 @@ open class OpusLayerBase {
     }
 
     private fun _get_beat_keys_for_overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, count: Int): List<Pair<BeatKey, List<BeatKey>>> {
-        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
         val width = to_key.beat - from_key.beat + 1
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
         val y_index_main = this.get_instrument_line_index(channel, line_offset)

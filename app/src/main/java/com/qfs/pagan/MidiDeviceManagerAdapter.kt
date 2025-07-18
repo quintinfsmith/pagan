@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.apres.MidiController
-import java.util.function.Supplier
 
 class MidiDeviceManagerAdapter<T>(val midi_controller: MidiController): RecyclerView.Adapter<MidiDeviceManagerAdapter.MidiDeviceViewHolder>() {
     lateinit var recycler_view: RecyclerView

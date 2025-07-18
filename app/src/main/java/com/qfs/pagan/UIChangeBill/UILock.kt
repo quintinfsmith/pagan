@@ -9,15 +9,15 @@ class UILock {
         const val NONE = 0
     }
 
-    var flag = NONE
+    var flag = UILock.NONE
     var level = 0
     fun lock_partial() {
-        this.flag = max(this.flag, PARTIAL)
+        this.flag = max(this.flag, UILock.PARTIAL)
         this.level += 1
     }
 
     fun lock_full() {
-        this.flag = max(this.flag, FULL)
+        this.flag = max(this.flag, UILock.FULL)
         this.level += 1
     }
 

@@ -2,11 +2,7 @@ package com.qfs.pagan.opusmanager.activecontroller
 
 import com.qfs.pagan.opusmanager.ControlTransition
 import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusPanEvent
-import com.qfs.pagan.opusmanager.OpusReverbEvent
-import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusTreeArray
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.structure.OpusTree
 
 abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): OpusTreeArray<T>(MutableList(beat_count) { OpusTree() }) {

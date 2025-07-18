@@ -17,7 +17,7 @@ abstract class DraggableAdapter<T: RecyclerView.ViewHolder> : RecyclerView.Adapt
         override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
 
         override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
-            return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
+            return ItemTouchHelper.Callback.makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
         }
 
         override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {

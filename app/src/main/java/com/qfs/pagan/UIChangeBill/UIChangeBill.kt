@@ -23,10 +23,10 @@ class UIChangeBill {
         val queued_column_labels = mutableSetOf<Int>()
         var queued_context_menu: BillableItem? = null
         var queued_cursor_scroll: Array<Int>? = null
-        var stack = mutableListOf<Node>(this._tree)
+        val stack = mutableListOf<Node>(this._tree)
         this._tree = Node()
         while (stack.isNotEmpty()) {
-            var node = stack.removeAt(0)
+            val node = stack.removeAt(0)
             for (bill_item in node.bill) {
                 // The Specified BillableItems will be manually added to the end of the queue after some calculations
                 // The rest can be handled FIFO

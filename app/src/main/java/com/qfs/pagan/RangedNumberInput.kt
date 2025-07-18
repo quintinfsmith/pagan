@@ -89,7 +89,7 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
     }
 
     override fun init_range() {
-        val styled_attributes = context.theme.obtainStyledAttributes(null, R.styleable.Ranged, 0, 0)
+        val styled_attributes = this.context.theme.obtainStyledAttributes(null, R.styleable.Ranged, 0, 0)
 
         try {
             this.max = styled_attributes.getInteger(R.styleable.Ranged_max, 1)
@@ -123,7 +123,7 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
     }
 
     override fun init_range() {
-        val styled_attributes = context.theme.obtainStyledAttributes(null, R.styleable.Ranged, 0, 0)
+        val styled_attributes = this.context.theme.obtainStyledAttributes(null, R.styleable.Ranged, 0, 0)
         try {
             this.max = styled_attributes.getFloat(R.styleable.Ranged_maxf, 1f)
             this.min = styled_attributes.getFloat(R.styleable.Ranged_minf, 0f)

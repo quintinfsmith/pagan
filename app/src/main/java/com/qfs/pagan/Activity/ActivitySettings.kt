@@ -33,121 +33,124 @@ class ActivitySettings : PaganActivity() {
 
     var result_intent = Intent()
 
-    var result_launcher_import_soundfont = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result.data?.data?.also { uri ->
-                if (uri.path != null) {
-                    // Check if this selected file is within the soundfont_directory ////
-                    // We can directory is set here.
-                    val parent_segments = this.configuration.soundfont_directory!!.pathSegments!!.last()!!.split("/")
-                    val child_segments = uri.pathSegments!!.last()!!.split("/")
-                    val is_within_soundfont_directory = parent_segments.size < child_segments.size && parent_segments == child_segments.subList(0, parent_segments.size)
-                    //-----------------------------------------------------
-                    if (is_within_soundfont_directory) {
-                        this.configuration.soundfont = child_segments.subList(parent_segments.size, child_segments.size).joinToString("/")
-                        this.set_soundfont_button_text()
-                        this.update_result()
-                    } else {
-                        thread {
-                            val soundfont_dir = this.get_soundfont_directory()
-                            val file_name = this.parse_file_name(uri)!!
+    var result_launcher_import_soundfont =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.also { uri ->
+                    if (uri.path != null) {
+                        // Check if this selected file is within the soundfont_directory ////
+                        // We can directory is set here.
+                        val parent_segments = this.configuration.soundfont_directory!!.pathSegments!!.last()!!.split("/")
+                        val child_segments = uri.pathSegments!!.last()!!.split("/")
+                        val is_within_soundfont_directory = parent_segments.size < child_segments.size && parent_segments == child_segments.subList(0, parent_segments.size)
+                        //-----------------------------------------------------
+                        if (is_within_soundfont_directory) {
+                            this.configuration.soundfont = child_segments.subList(parent_segments.size, child_segments.size).joinToString("/")
+                            this.set_soundfont_button_text()
+                            this.update_result()
+                        } else {
+                            thread {
+                                val soundfont_dir = this.get_soundfont_directory()
+                                val file_name = this.parse_file_name(uri)!!
 
-                            this.loading_reticle_show()
-                            soundfont_dir.createFile("*/*", file_name)?.let { new_file ->
-                                this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-                                    try {
-                                        val output_stream = this.contentResolver.openOutputStream(new_file.uri, "wt")
-                                        val input_stream = FileInputStream(it.fileDescriptor)
+                                this.loading_reticle_show()
+                                soundfont_dir.createFile("*/*", file_name)?.let { new_file ->
+                                    this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                                        try {
+                                            val output_stream = this.contentResolver.openOutputStream(new_file.uri, "wt")
+                                            val input_stream = FileInputStream(it.fileDescriptor)
 
-                                        val buffer = ByteArray(4096)
-                                        while (true) {
-                                            val read_size = input_stream.read(buffer)
-                                            if (read_size == -1) {
-                                                break
+                                            val buffer = ByteArray(4096)
+                                            while (true) {
+                                                val read_size = input_stream.read(buffer)
+                                                if (read_size == -1) {
+                                                    break
+                                                }
+                                                output_stream?.write(buffer, 0, read_size)
                                             }
-                                            output_stream?.write(buffer, 0, read_size)
+
+                                            input_stream.close()
+                                            output_stream?.flush()
+                                            output_stream?.close()
+
+                                        } catch (e: FileNotFoundException) {
+                                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
                                         }
+                                    }
 
-                                        input_stream.close()
-                                        output_stream?.flush()
-                                        output_stream?.close()
-
-                                    } catch (e: FileNotFoundException) {
-                                        // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
+                                    try {
+                                        SoundFont(this, new_file.uri)
+                                        this.configuration.soundfont = this@ActivitySettings.coax_relative_soundfont_path(new_file.uri)
+                                        this.loading_reticle_hide()
+                                    } catch (e: Exception) {
+                                        this.feedback_msg(this.getString(R.string.feedback_invalid_sf2_file))
+                                        new_file.delete()
+                                        this.loading_reticle_hide()
+                                        return@thread
                                     }
                                 }
 
-                                try {
-                                    SoundFont(this, new_file.uri)
-                                    this.configuration.soundfont = this@ActivitySettings.coax_relative_soundfont_path(new_file.uri)
-                                    this.loading_reticle_hide()
-                                } catch (e: Exception) {
-                                    this.feedback_msg(getString(R.string.feedback_invalid_sf2_file))
-                                    new_file.delete()
-                                    this.loading_reticle_hide()
-                                    return@thread
+                                this.runOnUiThread {
+                                    this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
                                 }
-                            }
 
-                            runOnUiThread {
-                                this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                                this.set_soundfont_button_text()
+                                this.update_result()
                             }
+                        }
 
-                            this.set_soundfont_button_text()
-                            this.update_result()
+                    } else {
+                        throw FileNotFoundException()
+                    }
+                }
+            }
+        }
+
+    internal var result_launcher_set_project_directory =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.also { result_data ->
+                    result_data.data?.also { uri  ->
+                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        this.contentResolver.takePersistableUriPermission(uri, new_flags)
+                        this.configuration.project_directory = uri
+
+                        this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
+                            this.result_intent.putExtra(PaganActivity.EXTRA_ACTIVE_PROJECT, it.toString())
+                        }
+
+                        this.update_result()
+                        this.on_project_directory_set(uri)
+                    }
+                }
+            }
+        }
+
+    internal var result_launcher_set_soundfont_directory_and_import =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.also { result_data ->
+                    result_data.data?.also { uri  ->
+                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        this.contentResolver.takePersistableUriPermission(uri, new_flags)
+                        this.set_soundfont_directory(uri)
+                        this.set_soundfont_directory_button_text()
+
+                        if (!this.is_soundfont_available()) {
+                            this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.VISIBLE
+                            this.result_launcher_import_soundfont.launch(
+                                Intent()
+                                    .setType("*/*")
+                                    .setAction(Intent.ACTION_GET_CONTENT)
+                            )
+                        } else {
+                            this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                            this.dialog_select_soundfont()
                         }
                     }
-
-                } else {
-                    throw FileNotFoundException()
                 }
             }
         }
-    }
-
-    internal var result_launcher_set_project_directory = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this.configuration.project_directory = uri
-
-                    this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
-                        this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
-                    }
-
-                    this.update_result()
-                    this.on_project_directory_set(uri)
-                }
-            }
-        }
-    }
-
-    internal var result_launcher_set_soundfont_directory_and_import = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this.set_soundfont_directory(uri)
-                    this.set_soundfont_directory_button_text()
-
-                    if (!this.is_soundfont_available()) {
-                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.VISIBLE
-                        this.result_launcher_import_soundfont.launch(
-                            Intent()
-                                .setType("*/*")
-                                .setAction(Intent.ACTION_GET_CONTENT)
-                        )
-                    } else {
-                        this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
-                        this.dialog_select_soundfont()
-                    }
-                }
-            }
-        }
-    }
 
     private fun update_result() {
         // RESULT_OK lets the other activities know they need to reload the configuration
@@ -164,7 +167,7 @@ class ActivitySettings : PaganActivity() {
         val toolbar = this._binding.toolbar
         toolbar.background = null
 
-        this.intent.data = this.intent.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()
+        this.intent.data = this.intent.getStringExtra(PaganActivity.EXTRA_ACTIVE_PROJECT)?.toUri()
 
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
             it.setOnClickListener {
@@ -190,7 +193,7 @@ class ActivitySettings : PaganActivity() {
         }
 
         val sample_rate_value_text = this.findViewById<TextView>(R.id.tvSampleRate)
-        sample_rate_value_text.text = getString(R.string.config_label_sample_rate, this.configuration.sample_rate)
+        sample_rate_value_text.text = this.getString(R.string.config_label_sample_rate, this.configuration.sample_rate)
         this.findViewById<SeekBar>(R.id.sbPlaybackQuality).let {
             val options = listOf(8000, 22050, 32000, 44100, 48000)
             var index = 0
@@ -207,7 +210,7 @@ class ActivitySettings : PaganActivity() {
                 SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                     val v = options[p1]
-                    sample_rate_value_text.text = getString(R.string.config_label_sample_rate, v)
+                    sample_rate_value_text.text = this@ActivitySettings.getString(R.string.config_label_sample_rate, v)
                 }
                 override fun onStartTrackingTouch(p0: SeekBar?) {}
                 override fun onStopTrackingTouch(seekbar: SeekBar?) {
@@ -285,9 +288,9 @@ class ActivitySettings : PaganActivity() {
             this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
         } else {
             this.findViewById<TextView>(R.id.tvFluidUrl).setOnClickListener {
-                startActivity(
+                this.startActivity(
                     Intent(Intent.ACTION_VIEW).also {
-                        it.data = getString(R.string.url_fluid).toUri()
+                        it.data = this.getString(R.string.url_fluid).toUri()
                     }
                 )
             }
@@ -375,7 +378,7 @@ class ActivitySettings : PaganActivity() {
 
     fun set_soundfont_button_text() {
         this.findViewById<TextView>(R.id.btnChooseSoundFont).text = when (this.get_soundfont_uri()) {
-            null -> getString(R.string.no_soundfont)
+            null -> this.getString(R.string.no_soundfont)
             else -> {
                 this.configuration.soundfont!!.split("/").last()
             }
@@ -410,12 +413,12 @@ class ActivitySettings : PaganActivity() {
         }
 
         val sort_options = listOf(
-            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
+            Pair(this.getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
                 original.sortedBy { item: Pair<Uri, String> -> item.second }
             }
         )
 
-        val dialog = this.dialog_popup_sortable_menu(getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
+        val dialog = this.dialog_popup_sortable_menu(this.getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
             override fun on_submit(index: Int, value: Uri) {
                 this@ActivitySettings.configuration.soundfont = this@ActivitySettings.coax_relative_soundfont_path(value)
                 this@ActivitySettings.set_soundfont_button_text()
@@ -468,7 +471,7 @@ class ActivitySettings : PaganActivity() {
                     }
                 )
             }
-            .setPositiveButton(getString(android.R.string.ok)) { dialog, _ ->
+            .setPositiveButton(this.getString(android.R.string.ok)) { dialog, _ ->
                 dialog.dismiss()
             }
             .show()

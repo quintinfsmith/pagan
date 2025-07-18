@@ -51,31 +51,31 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
         var invalidate_queued = false
         init {
-            this.table_line_paint.color = ContextCompat.getColor(context, R.color.table_lines)
+            this.table_line_paint.color = ContextCompat.getColor(this.context, R.color.table_lines)
             this.table_line_paint.strokeWidth = 1F
 
-            this.text_paint_offset.textSize = resources.getDimension(R.dimen.text_size_offset)
-            this.text_paint_offset.color = ContextCompat.getColor(context, R.color.leaf_text_selector)
+            this.text_paint_offset.textSize = this.resources.getDimension(R.dimen.text_size_offset)
+            this.text_paint_offset.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
             this.text_paint_offset.isFakeBoldText = true
             this.text_paint_offset.isAntiAlias = true
-            this.text_paint_offset.typeface = context.resources.getFont(R.font.fira_sans)
+            this.text_paint_offset.typeface = this.context.resources.getFont(R.font.fira_sans)
 
-            this.text_paint_octave.textSize = resources.getDimension(R.dimen.text_size_octave)
-            this.text_paint_octave.color = ContextCompat.getColor(context, R.color.leaf_text_selector)
+            this.text_paint_octave.textSize = this.resources.getDimension(R.dimen.text_size_octave)
+            this.text_paint_octave.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
             this.text_paint_octave.isAntiAlias = true
-            this.text_paint_octave.typeface = context.resources.getFont(R.font.fira_sans)
+            this.text_paint_octave.typeface = this.context.resources.getFont(R.font.fira_sans)
 
-            this.text_paint_ctl.textSize = resources.getDimension(R.dimen.text_size_ctl)
-            this.text_paint_ctl.color = ContextCompat.getColor(context, R.color.ctl_leaf_text_selector)
+            this.text_paint_ctl.textSize = this.resources.getDimension(R.dimen.text_size_ctl)
+            this.text_paint_ctl.color = ContextCompat.getColor(this.context, R.color.ctl_leaf_text_selector)
             this.text_paint_ctl.isAntiAlias = true
-            this.text_paint_ctl.typeface = context.resources.getFont(R.font.fira_sans)
+            this.text_paint_ctl.typeface = this.context.resources.getFont(R.font.fira_sans)
 
             //this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_column.isFakeBoldText = true
             this.text_paint_column.isAntiAlias = true
             this.text_paint_column.strokeWidth = 3F
-            this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
-            this.text_paint_column.typeface = context.resources.getFont(R.font.fira_sans)
+            this.text_paint_column.textSize = this.resources.getDimension(R.dimen.text_size_octave)
+            this.text_paint_column.typeface = this.context.resources.getFont(R.font.fira_sans)
 
             this.tagged_paint_column.style = Paint.Style.STROKE
             this.tagged_paint_column.strokeWidth = 3F
@@ -106,10 +106,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val y = this.touch_position_y
             val x = this.touch_position_x
 
-            var row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return null
+            val row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return null
 
             val opus_manager = this.editor_table.get_opus_manager()
-            val min_leaf_width = resources.getDimension(R.dimen.base_leaf_width).toInt()
+            val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
             val reduced_x = x / min_leaf_width
             val beat = this.editor_table.get_column_from_leaf(reduced_x.toInt())
 
@@ -594,10 +594,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             // TODO: deal with draw Allocations. preallocate in different function?
             super.draw(canvas)
 
-            val base_width = resources.getDimension(R.dimen.base_leaf_width)
-            val line_height = resources.getDimension(R.dimen.line_height).toInt().toFloat()
-            val ctl_line_height = resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
-            val channel_gap_height = resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
+            val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+            val line_height = this.resources.getDimension(R.dimen.line_height).toInt().toFloat()
+            val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
+            val channel_gap_height = this.resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
 
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()
@@ -652,7 +652,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 canvas.drawRect(
                                     x,
                                     y + (line_height * 1 / 16),
-                                    x + width - resources.getDimension(R.dimen.stroke_leaf),
+                                    x + width - this.resources.getDimension(R.dimen.stroke_leaf),
                                     y + (line_height * 4 / 16),
                                     colored_line_paint
                                 )
@@ -672,8 +672,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     val octave_text_bounds = Rect()
                                     this.text_paint_octave.getTextBounds(octave_text, 0, octave_text.length, octave_text_bounds)
 
-                                    val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
-                                    val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
+                                    val padding_y = this.resources.getDimension(R.dimen.octave_label_padding_y)
+                                    //val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
                                     val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
                                     val offset_text_x = x + ((width - offset_text_bounds.width()) / 2)
 
@@ -703,15 +703,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     this.text_paint_octave.getTextBounds(octave_text, 0, octave_text.length, octave_text_bounds)
 
                                     val prefix_text = if (event.offset < 0) {
-                                        context.getString(R.string.pfx_subtract)
+                                        this.context.getString(R.string.pfx_subtract)
                                     } else {
-                                        context.getString(R.string.pfx_add)
+                                        this.context.getString(R.string.pfx_add)
                                     }
                                     val prefix_text_bounds = Rect()
                                     this.text_paint_octave.getTextBounds(prefix_text, 0, prefix_text.length, prefix_text_bounds)
 
-                                    val padding_y = resources.getDimension(R.dimen.octave_label_padding_y)
-                                    val padding_x = resources.getDimension(R.dimen.octave_label_padding_x)
+                                    val padding_y = this.resources.getDimension(R.dimen.octave_label_padding_y)
+                                    // val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
                                     val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
 
                                     canvas.drawText(
@@ -739,7 +739,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 }
 
                                 is PercussionEvent -> {
-                                    val offset_text = resources.getString(R.string.percussion_label)
+                                    val offset_text = this.resources.getString(R.string.percussion_label)
                                     val bounds = Rect()
                                     this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, bounds)
 
@@ -979,7 +979,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
-    val painted_layer = PaintedLayer(editor_table)
+    val painted_layer = PaintedLayer(this.editor_table)
     private var _scroll_locked: Boolean = false
     private var queued_scroll_x: Int? = null
     private var queued_scroll_y: Int? = null

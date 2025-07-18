@@ -11,7 +11,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<OpusTree<
 
     init {
         // Default volume to hidden
-        for ((_, controller) in controllers.get_all()) {
+        for ((_, controller) in this.controllers.get_all()) {
             controller.visible = false
         }
     }

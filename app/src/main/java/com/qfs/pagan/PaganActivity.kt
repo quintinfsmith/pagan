@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.Gravity
@@ -39,7 +38,6 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.collections.listOf
-import kotlin.concurrent.thread
 import kotlin.getValue
 import kotlin.math.roundToInt
 
@@ -51,25 +49,26 @@ open class PaganActivity: AppCompatActivity() {
         internal lateinit var project_manager: ProjectManager
     }
 
-    val view_model: PaganViewModel by viewModels()
+    val view_model: PaganViewModel by this.viewModels()
 
     internal lateinit var configuration_path: String
     lateinit var configuration: PaganConfiguration
     internal var _popup_active: Boolean = false
     private var _progress_bar: ConstraintLayout? = null
 
-    internal var _set_soundfont_directory_intent_launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result?.data?.also { result_data ->
-                result_data.data?.also { uri  ->
-                    val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                    this.set_soundfont_directory(uri)
-                    this.on_soundfont_directory_set(uri)
+    internal var _set_soundfont_directory_intent_launcher =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result?.data?.also { result_data ->
+                    result_data.data?.also { uri  ->
+                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        this.contentResolver.takePersistableUriPermission(uri, new_flags)
+                        this.set_soundfont_directory(uri)
+                        this.on_soundfont_directory_set(uri)
+                    }
                 }
             }
         }
-    }
 
     fun get_project_manager(): ProjectManager {
         return this.view_model.project_manager
@@ -145,7 +144,7 @@ open class PaganActivity: AppCompatActivity() {
         try {
             this.configuration.save(this.configuration_path)
         } catch (e: FileNotFoundException) {
-            this.feedback_msg(resources.getString(R.string.config_file_not_found))
+            this.feedback_msg(this.resources.getString(R.string.config_file_not_found))
         }
     }
 
@@ -198,14 +197,14 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        this.enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
             this.bkp_crash_report(paramThrowable)
             this.on_crash()
 
-            val ctx = applicationContext
+            val ctx = this.applicationContext
             val pm = ctx.packageManager
             val intent = pm.getLaunchIntentForPackage(ctx.packageName) ?: return@setDefaultUncaughtExceptionHandler
             ctx.startActivity(
@@ -252,7 +251,7 @@ open class PaganActivity: AppCompatActivity() {
     fun parse_file_name(uri: Uri): String? {
         var result: String? = null
         if (uri.scheme == "content") {
-            val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
+            val cursor: Cursor? = this.contentResolver.query(uri, null, null, null, null)
             if (cursor != null) {
                 if (cursor.moveToFirst()) {
                     val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
@@ -290,7 +289,7 @@ open class PaganActivity: AppCompatActivity() {
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_menu,
-                window.decorView.rootView as ViewGroup,
+                this.window.decorView.rootView as ViewGroup,
                 false
             )
 
@@ -303,7 +302,7 @@ open class PaganActivity: AppCompatActivity() {
             if (i % 2 == 0) {
                 sort_options[i / 2].first
             } else {
-                getString(R.string.sorted_list_desc, sort_options[i / 2].first)
+                this.getString(R.string.sorted_list_desc, sort_options[i / 2].first)
             }
         }
 
@@ -314,7 +313,7 @@ open class PaganActivity: AppCompatActivity() {
             .setOnDismissListener {
                 this._popup_active = false
             }
-            .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
+            .setNegativeButton(this.getString(android.R.string.cancel)) { dialog, _ ->
                 dialog.dismiss()
             }
             .show()
@@ -352,11 +351,11 @@ open class PaganActivity: AppCompatActivity() {
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
             .setTitle(title)
             .setCancelable(true)
-            .setPositiveButton(getString(R.string.dlg_confirm)) { dialog, _ ->
+            .setPositiveButton(this.getString(R.string.dlg_confirm)) { dialog, _ ->
                 dialog.dismiss()
                 callback()
             }
-            .setNegativeButton(getString(R.string.dlg_decline)) { dialog, _ ->
+            .setNegativeButton(this.getString(R.string.dlg_decline)) { dialog, _ ->
                 dialog.dismiss()
             }
             .show()
@@ -383,7 +382,7 @@ open class PaganActivity: AppCompatActivity() {
         val viewInflated: View = LayoutInflater.from(this)
             .inflate(
                 R.layout.dialog_menu,
-                window.decorView.rootView as ViewGroup,
+                this.window.decorView.rootView as ViewGroup,
                 false
             )
 
@@ -394,7 +393,7 @@ open class PaganActivity: AppCompatActivity() {
             .setOnDismissListener {
                 this._popup_active = false
             }
-            .setNegativeButton(getString(android.R.string.cancel)) { dialog, _ ->
+            .setNegativeButton(this.getString(android.R.string.cancel)) { dialog, _ ->
                 dialog.dismiss()
             }
             .show()
@@ -414,10 +413,10 @@ open class PaganActivity: AppCompatActivity() {
 
         val project_list = this.get_project_manager().get_project_list()
         val sort_options = listOf(
-            Pair(getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
+            Pair(this.getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
                 original.sortedBy { (_, label): Pair<Uri, String> -> label }
             },
-            Pair(getString(R.string.sort_option_date_modified)) { original: List<Pair<Uri, String>> ->
+            Pair(this.getString(R.string.sort_option_date_modified)) { original: List<Pair<Uri, String>> ->
                 original.sortedBy { (uri, _): Pair<Uri, String> ->
                     val f = DocumentFile.fromSingleUri(this, uri)
                     f?.lastModified()
@@ -435,7 +434,7 @@ open class PaganActivity: AppCompatActivity() {
             //}
         )
 
-        this.dialog_popup_sortable_menu<Uri>(getString(R.string.menu_item_load_project), project_list, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
+        this.dialog_popup_sortable_menu<Uri>(this.getString(R.string.menu_item_load_project), project_list, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
             override fun on_submit(index: Int, value: Uri) {
                 callback(value)
             }
@@ -443,7 +442,7 @@ open class PaganActivity: AppCompatActivity() {
                 val view: View = LayoutInflater.from(this@PaganActivity)
                     .inflate(
                         R.layout.dialog_project_info,
-                        window.decorView.rootView as ViewGroup,
+                        this@PaganActivity.window.decorView.rootView as ViewGroup,
                         false
                     )
 
@@ -464,14 +463,14 @@ open class PaganActivity: AppCompatActivity() {
                 }
 
                 view.findViewById<TextView>(R.id.project_size)?.let {
-                    it.text = getString(R.string.project_info_beat_count, opus_manager.length)
+                    it.text = this@PaganActivity.getString(R.string.project_info_beat_count, opus_manager.length)
                 }
                 view.findViewById<TextView>(R.id.project_channel_count)?.let {
                     var count = opus_manager.channels.size
-                    it.text = getString(R.string.project_info_channel_count, count)
+                    it.text = this@PaganActivity.getString(R.string.project_info_channel_count, count)
                 }
                 view.findViewById<TextView>(R.id.project_tempo)?.let {
-                    it.text = getString(R.string.project_info_tempo, opus_manager.get_global_controller<OpusTempoEvent>(ControlEventType.Tempo).initial_event.value.roundToInt())
+                    it.text = this@PaganActivity.getString(R.string.project_info_tempo, opus_manager.get_global_controller<OpusTempoEvent>(ControlEventType.Tempo).initial_event.value.roundToInt())
                 }
                 view.findViewById<TextView>(R.id.project_last_modified)?.let {
                     DocumentFile.fromSingleUri(this@PaganActivity, value)?.let { f ->
@@ -482,7 +481,7 @@ open class PaganActivity: AppCompatActivity() {
                 }
 
                 AlertDialog.Builder(this@PaganActivity, R.style.Theme_Pagan_Dialog)
-                    .setTitle(opus_manager.project_name ?: getString(R.string.untitled_opus))
+                    .setTitle(opus_manager.project_name ?: this@PaganActivity.getString(R.string.untitled_opus))
                     .setView(view)
                     .setOnDismissListener { }
                     .setPositiveButton(R.string.details_load_project) { dialog, _ ->
@@ -509,13 +508,13 @@ open class PaganActivity: AppCompatActivity() {
         val project_manager = this.get_project_manager()
         val title = project_manager.get_file_project_name(uri)
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(resources.getString(R.string.dlg_delete_title, title))
+            .setTitle(this.resources.getString(R.string.dlg_delete_title, title))
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 this.get_project_manager().delete(uri)
                 if (deleted_callback != null) {
                     deleted_callback(uri)
                 }
-                this.feedback_msg(resources.getString(R.string.feedback_delete, title))
+                this.feedback_msg(this.resources.getString(R.string.feedback_delete, title))
                 this@PaganActivity.on_project_delete(uri)
                 dialog.dismiss()
             }
@@ -534,7 +533,7 @@ open class PaganActivity: AppCompatActivity() {
                 this._progress_bar = LayoutInflater.from(this)
                     .inflate(
                         R.layout.loading_reticle,
-                        window.decorView as ViewGroup,
+                        this.window.decorView as ViewGroup,
                         false
                     ) as ConstraintLayout
             }
@@ -546,7 +545,7 @@ open class PaganActivity: AppCompatActivity() {
             }
 
             try {
-                (window.decorView as ViewGroup).addView(this._progress_bar)
+                (this.window.decorView as ViewGroup).addView(this._progress_bar)
             } catch (e: UninitializedPropertyAccessException) {
                 // pass
             }

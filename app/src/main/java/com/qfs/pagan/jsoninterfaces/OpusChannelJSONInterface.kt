@@ -72,8 +72,8 @@ class OpusChannelJSONInterface {
 
         fun interpret(input_map: JSONHashMap, beat_count: Int): OpusChannelAbstract<*,*> {
             val channel = when (input_map.get_stringn("type")) {
-                "std" -> _interpret_std(input_map, beat_count)
-                "kit" -> _interpret_percussion(input_map, beat_count)
+                "std" -> this._interpret_std(input_map, beat_count)
+                "kit" -> this._interpret_percussion(input_map, beat_count)
                 else -> throw Exception("Unknown Channel Type")
             }
 
@@ -199,7 +199,7 @@ class OpusChannelJSONInterface {
                 working_tree.set_size(beat_splits.size)
 
                 beat_splits.forEachIndexed { j: Int, beat_string: String ->
-                    val beat_tree = interpret_v0_string(beat_string, radix, 0)
+                    val beat_tree = this.interpret_v0_string(beat_string, radix, 0)
                     beat_tree.clear_singles()
                     working_tree[j] = beat_tree
                 }

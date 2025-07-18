@@ -916,7 +916,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val beat_key = cursor.get_beatkey()
                 val position = cursor.get_position().toMutableList()
 
-                var working_tree = this.get_tree(beat_key).copy()
+                val working_tree = this.get_tree(beat_key).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, position, count)
 
                 this.remove_repeat(beat_key, position, real_count)
@@ -1623,7 +1623,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                var working_beat_key = cursor.get_beatkey()
+                val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {
@@ -1692,7 +1692,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                var working_beat_key = cursor.get_beatkey()
+                val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
                 val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
@@ -1827,7 +1827,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                var working_beat_key = cursor.get_beatkey()
+                val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
                 for (i in 0 until repeat) {
@@ -2356,7 +2356,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun select_first_in_beat(beat: Int) {
         when (this.cursor.ctl_level) {
             null -> {
-                val new_beat_key = BeatKey(this.cursor.channel, cursor.line_offset, beat)
+                val new_beat_key = BeatKey(this.cursor.channel, this.cursor.line_offset, beat)
                 val new_position = this.get_first_position(new_beat_key, listOf())
                 this.cursor_select(
                     new_beat_key,
@@ -2364,7 +2364,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 )
             }
             CtlLineLevel.Line -> {
-                val new_beat_key = BeatKey(this.cursor.channel, cursor.line_offset, beat)
+                val new_beat_key = BeatKey(this.cursor.channel, this.cursor.line_offset, beat)
                 val new_position = this.get_first_position_line_ctl(this.cursor.ctl_type!!, new_beat_key, listOf())
                 this.cursor_select_ctl_at_line(
                     this.cursor.ctl_type!!,
@@ -2373,7 +2373,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 )
             }
             CtlLineLevel.Channel -> {
-                val new_position = this.get_first_position_channel_ctl(this.cursor.ctl_type!!, cursor.channel, beat, listOf())
+                val new_position = this.get_first_position_channel_ctl(this.cursor.ctl_type!!, this.cursor.channel, beat, listOf())
                 this.cursor_select_ctl_at_channel(
                     this.cursor.ctl_type!!,
                     this.cursor.channel,
@@ -2421,15 +2421,15 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     fun get_nth_next_channel_at_cursor(n: Int): Int? {
-        return when (cursor.mode) {
+        return when (this.cursor.mode) {
             OpusManagerCursor.CursorMode.Channel,
             OpusManagerCursor.CursorMode.Line,
             OpusManagerCursor.CursorMode.Single -> {
-                val start_channel = when (cursor.ctl_level) {
+                val start_channel = when (this.cursor.ctl_level) {
                     CtlLineLevel.Global -> 0
                     null,
                     CtlLineLevel.Line,
-                    CtlLineLevel.Channel -> cursor.channel
+                    CtlLineLevel.Channel -> this.cursor.channel
                 }
 
                 kotlin.math.max(0, kotlin.math.min(start_channel + n, this.channels.size - 1))

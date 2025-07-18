@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.Gravity.CENTER
 import android.view.ViewGroup
@@ -58,13 +57,13 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 new_state.add(R.attr.state_active)
             }
 
-            mergeDrawableStates(drawable_state, new_state.toIntArray())
+            LinearLayout.mergeDrawableStates(drawable_state, new_state.toIntArray())
             return drawable_state
         }
 
         fun set_active(value: Boolean) {
             this._state_active = value
-            refreshDrawableState()
+            this.refreshDrawableState()
         }
     }
 
@@ -72,7 +71,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         var styled_attributes = context.theme.obtainStyledAttributes(attrs, R.styleable.NumberSelector, 0, 0)
         try {
             this._button_theme = styled_attributes.getInteger(R.styleable.NumberSelector_button_theme, 0)
-            this._entries_per_line = styled_attributes.getInteger(R.styleable.NumberSelector_entries_per_line, resources.getInteger(R.integer.entries_per_line))
+            this._entries_per_line = styled_attributes.getInteger(R.styleable.NumberSelector_entries_per_line, this.resources.getInteger(R.integer.entries_per_line))
         } finally {
             styled_attributes.recycle()
         }
@@ -150,14 +149,14 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
     private fun populate() {
         val orientation = this.orientation
-        val margin = resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
+        val margin = this.resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
         for (i in 0 .. ((this.max - this.min) / this._entries_per_line)) {
             val new_linear_layout = LinearLayout(this.context)
             this.addView(new_linear_layout)
 
             (new_linear_layout.layoutParams as LayoutParams).weight = 1F
             if (orientation == HORIZONTAL) {
-                new_linear_layout.layoutParams.width = resources.getDimension(R.dimen.number_selector_button_width).toInt()
+                new_linear_layout.layoutParams.width = this.resources.getDimension(R.dimen.number_selector_button_width).toInt()
                 new_linear_layout.layoutParams.height = MATCH_PARENT
                 new_linear_layout.orientation = VERTICAL
                 if (i != 0) {
@@ -165,7 +164,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 }
             } else {
                 new_linear_layout.layoutParams.width = MATCH_PARENT
-                new_linear_layout.layoutParams.height = resources.getDimension(R.dimen.number_selector_button_height).toInt()
+                new_linear_layout.layoutParams.height = this.resources.getDimension(R.dimen.number_selector_button_height).toInt()
                 new_linear_layout.orientation = HORIZONTAL
 
                 if (i != 0) {
@@ -194,7 +193,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 layout_params.width = MATCH_PARENT
                 layout_params.height = 0
             } else {
-                layout_params.height = resources.getDimension(R.dimen.number_selector_button_height).toInt()
+                layout_params.height = this.resources.getDimension(R.dimen.number_selector_button_height).toInt()
                 layout_params.width = 0
             }
             this._button_map[current_view] = i
@@ -206,10 +205,10 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 row.addView(space, j)
 
                 if (this.orientation == HORIZONTAL) {
-                    space.layoutParams.height = context.resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
+                    space.layoutParams.height = this.context.resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
                     space.layoutParams.width = MATCH_PARENT
                 } else {
-                    space.layoutParams.width = context.resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
+                    space.layoutParams.width = this.context.resources.getDimension(R.dimen.number_selector_spacing).roundToInt()
                     space.layoutParams.height = MATCH_PARENT
                 }
             }

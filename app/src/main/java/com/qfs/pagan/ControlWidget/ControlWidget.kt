@@ -17,7 +17,7 @@ abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this.inner = LayoutInflater.from(context)
+        this.inner = LayoutInflater.from(this.context)
             .inflate(
                 this.layout_id,
                 this.parent as ViewGroup?,

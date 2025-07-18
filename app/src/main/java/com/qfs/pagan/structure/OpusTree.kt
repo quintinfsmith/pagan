@@ -94,7 +94,7 @@ class OpusTree<T> {
             )
         )
 
-        while (stack.size > 0) {
+        while (stack.isNotEmpty()) {
             val element = stack.removeAt(0)
             val denominator: Int = element.denominator
             val original_size: Int = element.original_size
@@ -164,7 +164,7 @@ class OpusTree<T> {
         } else {
             this.set_size(place_holder.size)
             for ((key, value) in place_holder.divisions) {
-                this.set(key, value)
+                this[key] = value
             }
         }
     }
@@ -276,7 +276,7 @@ class OpusTree<T> {
     }
 
     fun is_leaf(): Boolean {
-        return this.event != null || (this.divisions.size == 0 && this._size == 0)
+        return this.event != null || (this.divisions.isEmpty() && this._size == 0)
     }
 
     fun is_event(): Boolean {

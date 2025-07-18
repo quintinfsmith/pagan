@@ -127,7 +127,7 @@ class OpusManagerJSONInterface {
 
 
             return JSONHashMap(
-                "v" to JSONInteger(LATEST_VERSION),
+                "v" to JSONInteger(OpusManagerJSONInterface.LATEST_VERSION),
                 "d" to JSONHashMap(
                     "size" to JSONInteger(beat_count),
                     "title" to input_map["name"],

@@ -26,7 +26,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
-    private val FADE_LIMIT = _sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
+    private val FADE_LIMIT = this._sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
     private val _handle_map = HashMap<Int, Pair<SampleHandle, IntArray>>() // Handle UUID::(Handle::Merge Keys)
     private val _handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
     private val _frame_map = HashMap<Int, MutableSet<Int>>() // Frame::Handle UUIDs
@@ -174,8 +174,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private fun _map_real_handle(handle: Pair<SampleHandle, IntArray>, start_frame: Int) {
         val end_frame = handle.first.release_frame!! + start_frame
-        var sample_start_frame = start_frame
-        var sample_end_frame = end_frame + handle.first.get_release_duration()
+        val sample_start_frame = start_frame
+        val sample_end_frame = end_frame + handle.first.get_release_duration()
         val uuid = handle.first.uuid
         this._handle_range_map[uuid] = sample_start_frame .. sample_end_frame
         this._handle_map[uuid] = handle
@@ -631,7 +631,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val (start_frame, end_frame) = this.calculate_event_frame_range(beat_key.beat, event.duration, relative_width, relative_offset)
 
-        val start_event = this._gen_midi_event(
+        // Don't add negative notes since they can't be played, BUT keep track
+        // of it so the rest of the song isn't messed up
+        this._gen_midi_event(
             when (event) {
                 is RelativeNoteEvent -> {
                     AbsoluteNoteEvent(
@@ -642,13 +644,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 else -> event
             },
             beat_key
-        )
-
-        val line_pair = Pair(beat_key.channel, beat_key.line_offset)
-
-        // Don't add negative notes since they can't be played, BUT keep track
-        // of it so the rest of the song isn't messed up
-        if (start_event != null) {
+        )?.let { start_event ->
             val merge_key_array = this.generate_merge_keys(beat_key.channel, beat_key.line_offset)
             this._add_handles(start_frame, end_frame, start_event, next_event_frame, merge_key_array)
         }

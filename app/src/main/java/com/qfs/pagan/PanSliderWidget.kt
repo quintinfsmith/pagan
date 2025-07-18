@@ -83,7 +83,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
                 (height / 2F) + (padding / 3f),
                 this.paint
             )
-            canvas.drawLine(width / 2F, that.stroke_width * 4f, width / 2F, height - (that.stroke_width * 4f), paint)
+            canvas.drawLine(width / 2F, that.stroke_width * 4f, width / 2F, height - (that.stroke_width * 4f), this.paint)
 
             this.paint.strokeWidth = 1F
             this.paint.color = purple

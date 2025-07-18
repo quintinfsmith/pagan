@@ -1,7 +1,6 @@
 package com.qfs.pagan.Activity
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -37,27 +36,27 @@ class ActivityAbout: PaganActivity() {
 
         this.findViewById<View>(R.id.linkManual).setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = getString(R.string.url_manual).toUri()
-            startActivity(intent)
+            intent.data = this.getString(R.string.url_manual).toUri()
+            this.startActivity(intent)
         }
 
         this.findViewById<View>(R.id.linkSource).setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = getString(R.string.url_git).toUri()
-            startActivity(intent)
+            intent.data = this.getString(R.string.url_git).toUri()
+            this.startActivity(intent)
         }
 
         this.findViewById<View>(R.id.linkIssues).setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = getString(R.string.url_issues).toUri()
-            startActivity(intent)
+            intent.data = this.getString(R.string.url_issues).toUri()
+            this.startActivity(intent)
         }
 
         this.findViewById<View>(R.id.linkSuggestions).setOnClickListener {
             val intent = Intent(Intent.ACTION_SENDTO)
             intent.data = "mailto:".toUri()
             intent.putExtra(Intent.EXTRA_EMAIL, this.getString(R.string.support_email))
-            startActivity(intent);
+            this.startActivity(intent);
         }
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

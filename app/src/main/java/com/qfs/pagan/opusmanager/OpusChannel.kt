@@ -86,7 +86,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
             this.lines.removeAt(this.lines.size - 1)
         } else if (index < this.lines.size) {
             this.size -= 1
-            lines.removeAt(index)
+            this.lines.removeAt(index)
         } else {
             throw IndexOutOfBoundsException()
         }
@@ -392,7 +392,7 @@ class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, Op
     }
 
     override fun gen_line(): OpusLinePercussion {
-        return OpusLinePercussion(DEFAULT_INSTRUMENT, this.get_beat_count())
+        return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 
     fun set_instrument(line: Int, offset: Int) {

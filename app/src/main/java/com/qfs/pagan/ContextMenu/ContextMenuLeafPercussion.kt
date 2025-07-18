@@ -35,7 +35,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
-        if (current_event_tree.is_event()) {
+        if (current_event_tree.has_event()) {
             val event = current_event_tree.get_event()!!
             (this.button_unset as MaterialButton).setIconResource(R.drawable.unset)
             this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
@@ -47,7 +47,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         this.button_split.isEnabled = true
         this.button_split.isClickable = this.button_split.isEnabled
 
-        this.button_duration.isEnabled = current_event_tree.is_event()
+        this.button_duration.isEnabled = current_event_tree.has_event()
         this.button_duration.isClickable = this.button_duration.isEnabled
 
         this.button_remove.isEnabled = position.isNotEmpty()

@@ -1,4 +1,4 @@
-package com.qfs.pagan.opusmanager
+package com.qfs.pagan.structure.opusmanager
 
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONFloat
@@ -18,7 +18,7 @@ import com.qfs.pagan.REL_CHARS
 import com.qfs.pagan.SPECIAL_CHARS
 import com.qfs.pagan.char_to_int
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class OpusChannelJSONInterface {
     companion object {
@@ -87,7 +87,7 @@ class OpusChannelJSONInterface {
             return channel
         }
 
-        fun interpret_v0_string(input_string: String, radix: Int, channel: Int): OpusTree<JSONHashMap> {
+        fun interpret_v0_string(input_string: String, radix: Int, channel: Int): ReducibleTree<JSONHashMap> {
             val repstring = input_string
                 .trim()
                 .replace(" ", "")
@@ -95,7 +95,7 @@ class OpusChannelJSONInterface {
                 .replace("\t", "")
                 .replace("_", "")
 
-            val output = OpusTree<JSONHashMap>()
+            val output = ReducibleTree<JSONHashMap>()
 
             val tree_stack = mutableListOf(output)
             var register: Int? = null
@@ -125,7 +125,7 @@ class OpusChannelJSONInterface {
                     }
 
                     val new_tree = last[last.size - 1]
-                    if (! new_tree.is_leaf() && ! new_tree.is_event()) {
+                    if (! new_tree.is_leaf() && ! new_tree.has_event()) {
                         throw Exception("MISSING COMMA")
                     }
                     tree_stack.add(new_tree)
@@ -195,7 +195,7 @@ class OpusChannelJSONInterface {
 
             val new_lines = JSONList(lines.size) { i: Int ->
                 val beat_splits = lines.get_string(i).split("|")
-                val working_tree = OpusTree<JSONHashMap>()
+                val working_tree = ReducibleTree<JSONHashMap>()
                 working_tree.set_size(beat_splits.size)
 
                 beat_splits.forEachIndexed { j: Int, beat_string: String ->
@@ -265,7 +265,7 @@ class OpusChannelJSONInterface {
                         JSONHashMap(
                             "type" to JSONString("Volume"),
                             "initial_value" to JSONHashMap(
-                                "type" to JSONString("com.qfs.pagan.opusmanager.OpusVolumeEvent"),
+                                "type" to JSONString("com.qfs.pagan.structure.opusmanager.OpusVolumeEvent"),
                                 "value" to JSONInteger(line_volumes.get_int(i))
                             ),
                             "children" to JSONList()
@@ -276,7 +276,7 @@ class OpusChannelJSONInterface {
                     JSONHashMap(
                         "type" to JSONString("Tempo"),
                         "initial_value" to JSONHashMap(
-                            "type" to JSONString("com.qfs.pagan.opusmanager.OpusTempoEvent"),
+                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.OpusTempoEvent"),
                             "value" to JSONFloat(input_map.get_float("tempo", 120F))
                         ),
                         "children" to JSONList()

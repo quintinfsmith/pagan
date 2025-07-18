@@ -6,9 +6,9 @@ import android.widget.Button
 import com.qfs.pagan.NumberSelector
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeOptionSelector
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.opusmanager.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.TunedInstrumentEvent
 import kotlin.math.abs
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
@@ -175,10 +175,10 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_split.isEnabled = true
         this.button_split.isClickable = this.button_split.isEnabled
 
-        this.button_duration.isEnabled = current_event_tree.is_event()
+        this.button_duration.isEnabled = current_event_tree.has_event()
         this.button_duration.isClickable = this.button_duration.isEnabled
 
-        this.button_unset.isEnabled = !(current_event_tree.is_leaf() && !current_event_tree.is_event())
+        this.button_unset.isEnabled = !(current_event_tree.is_leaf() && !current_event_tree.has_event())
         this.button_unset.isClickable = this.button_unset.isEnabled
 
         this.button_remove.isEnabled = opus_manager.cursor.get_position().isNotEmpty()

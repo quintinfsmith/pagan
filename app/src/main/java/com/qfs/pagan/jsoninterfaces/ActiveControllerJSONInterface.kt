@@ -1,15 +1,15 @@
-package com.qfs.pagan.opusmanager
+package com.qfs.pagan.structure.opusmanager
 
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
-import com.qfs.pagan.opusmanager.activecontroller.ActiveController
-import com.qfs.pagan.opusmanager.activecontroller.PanController
-import com.qfs.pagan.opusmanager.activecontroller.TempoController
-import com.qfs.pagan.opusmanager.activecontroller.VolumeController
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.activecontroller.PanController
+import com.qfs.pagan.structure.opusmanager.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.activecontroller.VolumeController
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class ActiveControllerJSONInterface {
     class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
@@ -96,7 +96,7 @@ class ActiveControllerJSONInterface {
         fun to_json(controller: ActiveController<out OpusControlEvent>): JSONHashMap {
             val map = JSONHashMap()
             val event_list = JSONList()
-            controller.beats.forEachIndexed { i: Int, event_tree: OpusTree<out OpusControlEvent>? ->
+            controller.beats.forEachIndexed { i: Int, event_tree: ReducibleTree<out OpusControlEvent>? ->
                 if (event_tree == null) {
                     return@forEachIndexed
                 }

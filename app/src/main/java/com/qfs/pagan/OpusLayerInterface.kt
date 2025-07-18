@@ -5,26 +5,30 @@ import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
+import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.UIChangeBill.UIChangeBill
 import com.qfs.pagan.UIChangeBill.BillableItem
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.activecontroller.ActiveController
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.InstrumentEvent
-import com.qfs.pagan.opusmanager.OpusChannelAbstract
-import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusEvent
-import com.qfs.pagan.opusmanager.OpusLayerHistory
-import com.qfs.pagan.opusmanager.OpusLineAbstract
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
-import com.qfs.pagan.opusmanager.OpusPercussionChannel
-import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.opusmanager.TunedInstrumentEvent
-import com.qfs.pagan.opusmanager.UnreachableException
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.BeatKey
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.OpusChannelAbstract
+import com.qfs.pagan.structure.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.OpusEvent
+import com.qfs.pagan.structure.opusmanager.OpusLayerHistory
+import com.qfs.pagan.structure.opusmanager.OpusLineAbstract
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.OpusPercussionChannel
+import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.UnreachableException
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -392,7 +396,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: OpusTree<out InstrumentEvent>) {
+    override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<out InstrumentEvent>) {
         this.lock_ui_partial {
             super.replace_tree(beat_key, position, tree)
             this._queue_cell_change(beat_key)
@@ -640,21 +644,21 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun <T: OpusControlEvent> controller_global_replace_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+    override fun <T: OpusControlEvent> controller_global_replace_tree(type: ControlEventType, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
         this.lock_ui_partial {
             super.controller_global_replace_tree(type, beat, position, tree)
             this._queue_global_ctl_cell_change(type, beat)
         }
     }
 
-    override fun <T: OpusControlEvent> controller_channel_replace_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: OpusTree<T>) {
+    override fun <T: OpusControlEvent> controller_channel_replace_tree(type: ControlEventType, channel: Int, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
         this.lock_ui_partial {
             super.controller_channel_replace_tree(type, channel, beat, position, tree)
             this._queue_channel_ctl_cell_change(type, channel, beat)
         }
     }
 
-    override fun <T: OpusControlEvent> controller_line_replace_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: OpusTree<T>) {
+    override fun <T: OpusControlEvent> controller_line_replace_tree(type: ControlEventType, beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<T>) {
         this.lock_ui_partial {
             super.controller_line_replace_tree(type, beat_key, position, tree)
             this._queue_line_ctl_cell_change(type, beat_key)
@@ -1091,7 +1095,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<OpusTree<OpusEvent>>?) {
+    override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
         this.lock_ui_partial {
             if (!this._ui_change_bill.is_full_locked()) {
                 this._queue_cursor_update(this.cursor)
@@ -1623,7 +1627,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.cursor_select(beat_key, position)
 
             val current_tree = this.get_tree()
-            if (!this.is_percussion(beat_key.channel) && current_tree.is_event()) {
+            if (!this.is_percussion(beat_key.channel) && current_tree.has_event()) {
                 this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
             }
 
@@ -1907,30 +1911,30 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         val (beat, offset, offset_width) = when (cursor.mode) {
-            CursorMode.Channel -> Triple(null, Rational(0,1), Rational(1,1))
-            CursorMode.Line -> Triple(null,  Rational(0,1), Rational(1,1))
-            CursorMode.Column -> Triple(cursor.beat, Rational(0,1), Rational(1,1))
+            CursorMode.Channel -> Triple(null, Rational(0, 1), Rational(1, 1))
+            CursorMode.Line -> Triple(null, Rational(0, 1), Rational(1, 1))
+            CursorMode.Column -> Triple(cursor.beat, Rational(0, 1), Rational(1, 1))
             CursorMode.Single -> {
-                var tree: OpusTree<out OpusEvent> = when (cursor.ctl_level) {
+                var tree: ReducibleTree<out OpusEvent> = when (cursor.ctl_level) {
                     CtlLineLevel.Line -> this.get_line_ctl_tree(cursor.ctl_type!!, cursor.get_beatkey())
                     CtlLineLevel.Channel -> this.get_channel_ctl_tree(cursor.ctl_type!!, cursor.channel, cursor.beat)
                     CtlLineLevel.Global -> this.get_global_ctl_tree(cursor.ctl_type!!, cursor.beat)
                     null -> this.get_tree(cursor.get_beatkey())
                 }
 
-                val width = Rational(1,1)
-                var offset = Rational(0,1)
+                val width = Rational(1, 1)
+                var offset = Rational(0, 1)
                 for (p in cursor.get_position()) {
-                    width.d *= tree.size
-                    offset += Rational(p, width.d)
+                    width.denominator *= tree.size
+                    offset += Rational(p, width.denominator)
                     tree = tree[p]
                 }
 
                 Triple(cursor.beat, offset, width)
             }
 
-            CursorMode.Range -> Triple(cursor.range!!.second.beat, Rational(0,1), Rational(1,1))
-            CursorMode.Unset -> Triple(null, Rational(0,1), Rational(1,1))
+            CursorMode.Range -> Triple(cursor.range!!.second.beat, Rational(0, 1), Rational(1, 1))
+            CursorMode.Unset -> Triple(null, Rational(0, 1), Rational(1, 1))
         }
 
         this._ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, this._activity?.in_playback() == true)
@@ -1940,7 +1944,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (cursor != this._cache_cursor) {
             try {
                 this._queue_cursor_update(this._cache_cursor, deep_update)
-            } catch (_: OpusTree.InvalidGetCall) {
+            } catch (_: InvalidGetCall) {
                 // Pass
             }
 
@@ -2480,8 +2484,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                         editor_table.scroll_to_position(
                             y = if (y == -1) null else y,
                             x = if (x == -1) null else x,
-                            offset = offset.n.toFloat() / offset.d.toFloat(),
-                            offset_width = offset_width.n.toFloat() / offset_width.d.toFloat(),
+                            offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
+                            offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
                             force = force
                         )
                     }

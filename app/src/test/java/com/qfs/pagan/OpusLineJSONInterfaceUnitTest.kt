@@ -3,14 +3,14 @@ package com.qfs.pagan
 import com.qfs.pagan.opusmanager.OpusLine
 import com.qfs.pagan.opusmanager.OpusLineJSONInterface
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class OpusLineJSONInterfaceUnitTest {
     @Test
     fun test_color() {
-        val working_line = OpusLine(MutableList(4) { OpusTree<TunedInstrumentEvent>() })
+        val working_line = OpusLine(MutableList(4) { ReducibleTree<TunedInstrumentEvent>() })
         working_line.color = (255 * 256 * 256) + (0 * 256) + (0)
         val working_json_obj = OpusLineJSONInterface.to_json(working_line)
         assertEquals(

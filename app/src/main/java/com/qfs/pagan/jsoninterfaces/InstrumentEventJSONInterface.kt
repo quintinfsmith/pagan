@@ -1,4 +1,4 @@
-package com.qfs.pagan.opusmanager
+package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONString
 

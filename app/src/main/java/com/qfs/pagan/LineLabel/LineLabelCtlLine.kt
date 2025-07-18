@@ -1,8 +1,8 @@
 package com.qfs.pagan.LineLabel
 
 import android.content.Context
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
 
 class LineLabelCtlLine(context: Context, ctl_type: ControlEventType, val channel: Int, val line_offset: Int): LineLabelCtl(context, CtlLineLevel.Line, ctl_type) {
     override fun on_click() {

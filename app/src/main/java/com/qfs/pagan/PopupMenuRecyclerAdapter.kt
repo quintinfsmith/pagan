@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.qfs.pagan.Activity.PaganActivity
 
 class PopupMenuRecyclerAdapter<T>(
     private val _recycler: RecyclerView,

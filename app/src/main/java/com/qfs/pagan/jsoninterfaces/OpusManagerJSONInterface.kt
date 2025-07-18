@@ -4,8 +4,8 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
-import com.qfs.pagan.opusmanager.ActiveControlSetJSONInterface
-import com.qfs.pagan.opusmanager.OpusChannelJSONInterface
+import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
+import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
 
 class OpusManagerJSONInterface {
     companion object {
@@ -55,7 +55,7 @@ class OpusManagerJSONInterface {
                     JSONHashMap(
                         "type" to JSONString("Tempo"),
                         "initial_value" to JSONHashMap(
-                            "type" to JSONString("com.qfs.pagan.opusmanager.OpusTempoEvent"),
+                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.OpusTempoEvent"),
                             "value" to JSONFloat(input.get_float("tempo", 120F))
                         ),
                         "children" to JSONList()

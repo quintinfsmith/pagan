@@ -21,7 +21,6 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.core.net.toUri
 import com.qfs.apres.soundfont.SoundFont
 import com.qfs.pagan.MenuDialogEventHandler
-import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivitySettingsBinding
 import java.io.FileInputStream
@@ -116,7 +115,7 @@ class ActivitySettings : PaganActivity() {
                         this.configuration.project_directory = uri
 
                         this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
-                            this.result_intent.putExtra(PaganActivity.EXTRA_ACTIVE_PROJECT, it.toString())
+                            this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
                         }
 
                         this.update_result()
@@ -167,7 +166,7 @@ class ActivitySettings : PaganActivity() {
         val toolbar = this._binding.toolbar
         toolbar.background = null
 
-        this.intent.data = this.intent.getStringExtra(PaganActivity.EXTRA_ACTIVE_PROJECT)?.toUri()
+        this.intent.data = this.intent.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()
 
         this.findViewById<TextView>(R.id.btnChooseSoundFont).let {
             it.setOnClickListener {

@@ -6,7 +6,7 @@ import com.qfs.pagan.opusmanager.ControlEventType
 import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -246,7 +246,7 @@ class HistoryCacheUnitTest {
     fun test_replace_tree() {
         var manager = OpusManager()
         manager._project_change_new()
-        var new_tree = OpusTree<TunedInstrumentEvent>()
+        var new_tree = ReducibleTree<TunedInstrumentEvent>()
         new_tree.set_size(5)
 
         this.undo_and_check(manager) {

@@ -18,17 +18,17 @@ import com.qfs.pagan.ControlWidget.ControlWidgetPan
 import com.qfs.pagan.ControlWidget.ControlWidgetTempo
 import com.qfs.pagan.ControlWidget.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.ControlTransition
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
-import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.BeatKey
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.ControlTransition
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -38,7 +38,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 
 /**
- * Handle all the logic between a user action and the OpusManager.
+ * Handle all (or as much of as possible) of the logic between a user action and the OpusManager.
  * This class is meant for recording and playing back UI tests and eventually debugging so
  * not every action directed through here at the moment.
  */
@@ -477,7 +477,7 @@ class ActionTracker {
 
         val tree = opus_manager.get_tree()
         thread {
-            if (tree.is_event()) {
+            if (tree.has_event()) {
                 val note = if (opus_manager.is_percussion(beat_key.channel)) {
                     opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
                 } else {
@@ -1101,7 +1101,7 @@ class ActionTracker {
         val position = cursor.get_position()
         val current_tree_position = opus_manager.get_actual_position(beat_key, position)
 
-        if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).is_event()) {
+        if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).has_event()) {
             opus_manager.unset()
         } else {
             opus_manager.set_percussion_event_at_cursor()

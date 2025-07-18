@@ -1,13 +1,13 @@
 package com.qfs.pagan
 import android.view.KeyEvent
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.BeatKey
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -526,7 +526,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 
                 val tree = opus_manager.get_tree()
 
-                if (tree.is_event()) {
+                if (tree.has_event()) {
                     val event = tree.get_event()
                     if (event is AbsoluteNoteEvent) {
                         opus_manager.convert_event_to_relative(

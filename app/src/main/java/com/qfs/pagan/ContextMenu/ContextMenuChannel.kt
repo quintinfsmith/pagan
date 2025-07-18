@@ -6,7 +6,7 @@ import android.widget.Button
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
 
 /*
     CHANNEL_CTLS. Channel controls are not currently considered in playback, so I'll comment out the controls for a future release

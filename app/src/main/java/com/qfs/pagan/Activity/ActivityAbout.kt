@@ -5,10 +5,9 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
-import com.qfs.pagan.PaganActivity
+import androidx.core.net.toUri
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivityAboutBinding
-import androidx.core.net.toUri
 
 class ActivityAbout: PaganActivity() {
     private lateinit var _binding: ActivityAboutBinding

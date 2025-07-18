@@ -78,7 +78,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <com.qfs.pagan.ChannelOptionRecycler
+    <com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
         android:id="@+id/rvActiveChannels"
         android:layout_width="match_parent"
         android:layout_height="0dp"

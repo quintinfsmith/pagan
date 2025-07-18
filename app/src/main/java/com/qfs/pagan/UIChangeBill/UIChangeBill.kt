@@ -1,8 +1,7 @@
 package com.qfs.pagan.UIChangeBill
 
 import com.qfs.pagan.EditorTable
-import com.qfs.pagan.Rational
-import kotlin.math.max
+import com.qfs.pagan.structure.Rational
 
 /**
 * A queue of UI update commands to be executed once it is safe to do so.
@@ -585,10 +584,10 @@ class UIChangeBill {
         val working_tree = this.get_working_tree() ?: return
         working_tree.int_queue.add(y)
         working_tree.int_queue.add(x)
-        working_tree.int_queue.add(offset.n)
-        working_tree.int_queue.add(offset.d)
-        working_tree.int_queue.add(offset_width.n)
-        working_tree.int_queue.add(offset_width.d)
+        working_tree.int_queue.add(offset.numerator)
+        working_tree.int_queue.add(offset.denominator)
+        working_tree.int_queue.add(offset_width.numerator)
+        working_tree.int_queue.add(offset_width.denominator)
         working_tree.int_queue.add(if (force) 1 else 0)
         working_tree.bill.add(BillableItem.ForceScroll)
     }

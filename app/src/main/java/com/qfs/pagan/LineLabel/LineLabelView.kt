@@ -9,8 +9,8 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.LineLabelColumnLayout
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusManagerCursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor.CursorMode
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context) {

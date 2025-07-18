@@ -12,11 +12,11 @@ import com.qfs.pagan.ControlWidget.ControlWidget
 import com.qfs.pagan.ControlWidget.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.OpusVolumeEvent
 
 class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container),

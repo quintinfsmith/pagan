@@ -8,19 +8,19 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.activecontroller.ActiveController
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.ControlTransition
-import com.qfs.pagan.opusmanager.InstrumentEvent
-import com.qfs.pagan.opusmanager.OpusChannelAbstract
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLineAbstract
-import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.PercussionEvent
-import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.BeatKey
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.ControlTransition
+import com.qfs.pagan.structure.opusmanager.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.OpusChannelAbstract
+import com.qfs.pagan.structure.opusmanager.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.OpusLineAbstract
+import com.qfs.pagan.structure.opusmanager.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -389,7 +389,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this._tempo_ratio_map.add(Pair(0f, working_tempo))
 
-        controller.beats.forEachIndexed { i: Int, tree: OpusTree<OpusTempoEvent>? ->
+        controller.beats.forEachIndexed { i: Int, tree: ReducibleTree<OpusTempoEvent>? ->
             if (tree == null) {
                 return@forEachIndexed
             }
@@ -398,7 +398,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             while (stack.isNotEmpty()) {
                 val (working_tree, working_ratio, working_offset) = stack.removeAt(0)
 
-                if (working_tree.is_event()) {
+                if (working_tree.has_event()) {
                     working_tempo = working_tree.get_event()!!.value
                     this._tempo_ratio_map.add(
                         Pair(
@@ -586,7 +586,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return Pair(start_frame, end_frame)
     }
 
-    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: OpusTree<out InstrumentEvent>, relative_width: Float, relative_offset: Float, bkp_note_value: Int): Int {
+    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: ReducibleTree<out InstrumentEvent>, relative_width: Float, relative_offset: Float, bkp_note_value: Int): Int {
         if (!working_tree.is_leaf()) {
             val new_width = relative_width / working_tree.size.toFloat()
             var new_working_value = bkp_note_value
@@ -596,7 +596,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 new_working_value = this.map_tree(beat_key, new_position, working_tree[i], new_width, relative_offset + (new_width * i), new_working_value)
             }
             return new_working_value
-        } else if (!working_tree.is_event()) {
+        } else if (!working_tree.has_event()) {
             return bkp_note_value
         }
 

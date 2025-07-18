@@ -8,9 +8,9 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget.ControlWidget
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusControlEvent
 
 class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container),
@@ -194,10 +194,10 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         }
 
         this.button_remove.isEnabled = cursor.get_position().isNotEmpty()
-        this.button_unset.isEnabled = ctl_tree.is_event()
-        this.button_duration.isEnabled = ctl_tree.is_event()
+        this.button_unset.isEnabled = ctl_tree.has_event()
+        this.button_duration.isEnabled = ctl_tree.has_event()
 
-        this.button_duration.text = if (ctl_tree.is_event()) {
+        this.button_duration.text = if (ctl_tree.has_event()) {
            this.context.getString(R.string.label_duration, ctl_tree.get_event()!!.duration)
         } else {
             ""

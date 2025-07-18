@@ -5,8 +5,8 @@ import android.widget.Button
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusTempoEvent
 import kotlin.math.roundToInt
 
 class ControlWidgetTempo(default: OpusTempoEvent, _level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusTempoEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, default, CtlLineLevel.Global, is_initial_event, R.layout.control_widget_tempo, callback) {

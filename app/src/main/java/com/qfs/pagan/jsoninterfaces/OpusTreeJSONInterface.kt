@@ -4,17 +4,17 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class OpusTreeJSONInterface {
     companion object {
-        fun <T> to_json(input: OpusTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
-            if (input.is_leaf() && !input.is_event()) {
+        fun <T> to_json(input: ReducibleTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
+            if (input.is_leaf() && !input.has_event()) {
                 return null
             }
 
             val map = JSONHashMap()
-            if (input.is_event()) {
+            if (input.has_event()) {
                 map["event"] = event_generalizer_callback(input.get_event()!!)
             } else {
                 map["size"] = JSONInteger(input.size)
@@ -37,8 +37,8 @@ class OpusTreeJSONInterface {
             return map
         }
 
-        fun <T> from_json(input: JSONHashMap, event_generalizer_callback: (JSONHashMap?) -> T?): OpusTree<T> {
-            val new_tree = OpusTree<T>()
+        fun <T> from_json(input: JSONHashMap, event_generalizer_callback: (JSONHashMap?) -> T?): ReducibleTree<T> {
+            val new_tree = ReducibleTree<T>()
             val event_hashmap = input.get_hashmapn("event")
             if (event_hashmap != null) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
@@ -60,8 +60,8 @@ class OpusTreeJSONInterface {
             return new_tree
         }
 
-        fun <T> from_v1_json(input: JSONHashMap, event_generalizer_callback: (JSONHashMap?) -> T?): OpusTree<T> {
-            val new_tree = OpusTree<T>()
+        fun <T> from_v1_json(input: JSONHashMap, event_generalizer_callback: (JSONHashMap?) -> T?): ReducibleTree<T> {
+            val new_tree = ReducibleTree<T>()
             val event_hashmap = input.get_hashmapn("event")
             if (event_hashmap != null) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
@@ -80,13 +80,13 @@ class OpusTreeJSONInterface {
             return new_tree
         }
 
-        fun <T> to_v1_json(input: OpusTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
-            if (input.is_leaf() && !input.is_event()) {
+        fun <T> to_v1_json(input: ReducibleTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
+            if (input.is_leaf() && !input.has_event()) {
                 return null
             }
 
             val map = JSONHashMap()
-            if (input.is_event()) {
+            if (input.has_event()) {
                 map["event"] = event_generalizer_callback(input.get_event()!!)
                 map["children"] = null
             } else {

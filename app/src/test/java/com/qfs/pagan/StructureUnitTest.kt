@@ -1,6 +1,6 @@
 package com.qfs.pagan
 
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.greatest_common_denominator
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -8,18 +8,18 @@ import org.junit.Test
 class StructureUnitTest {
     @Test
     fun test_merge() {
-        val tree_a = OpusTree<Int>()
+        val tree_a = ReducibleTree<Int>()
         tree_a.set_size(120)
         tree_a[80].set_size(40)
         tree_a[80][0].set_event(1)
         tree_a[0].set_event(1)
 
-        val tree_b = OpusTree<Int>()
+        val tree_b = ReducibleTree<Int>()
         tree_b.set_size(3)
         tree_b[0].set_size(3)
         tree_b[0][0].set_event(0)
 
-        val tree_c: OpusTree<Set<Int>> = tree_a.merge(tree_b.get_set_tree())
+        val tree_c: ReducibleTree<Set<Int>> = tree_a.merge(tree_b.get_set_tree())
 
         assertEquals(
             setOf(0, 1),
@@ -32,13 +32,13 @@ class StructureUnitTest {
     @Test
     fun test_merge_flatten_reduce_0() {
 
-        val tree_aa = OpusTree<Int>()
+        val tree_aa = ReducibleTree<Int>()
         tree_aa.set_size(2)
         tree_aa[1].set_size(2)
         tree_aa[0].set_event(0)
         tree_aa[1][1].set_event(1)
 
-        val tree_ab = OpusTree<Int>()
+        val tree_ab = ReducibleTree<Int>()
         tree_ab.set_size(2)
         tree_ab[0].set_size(2)
         tree_ab[0][1].set_event(2)
@@ -55,7 +55,7 @@ class StructureUnitTest {
 
     @Test
     fun test_merge_1() {
-        val tree_aa = OpusTree<Int>()
+        val tree_aa = ReducibleTree<Int>()
         tree_aa.set_size(4)
         tree_aa[0].set_event(0)
         tree_aa[1].set_size(2)
@@ -64,7 +64,7 @@ class StructureUnitTest {
         tree_aa[3].set_event(3)
 
 
-        val tree_ab = OpusTree<Int>()
+        val tree_ab = ReducibleTree<Int>()
         tree_ab.set_size(1)
 
         val tree_ac = tree_aa.merge(tree_ab.get_set_tree())
@@ -79,7 +79,7 @@ class StructureUnitTest {
 
     @Test
     fun test_reduce() {
-        val tree = OpusTree<Int>()
+        val tree = ReducibleTree<Int>()
         tree.set_size(120)
         tree[0].set_event(0)
         tree[30].set_event(1)
@@ -88,7 +88,7 @@ class StructureUnitTest {
         tree.reduce(4)
         assertEquals(4, tree.size)
 
-        val tree_a = OpusTree<Int>()
+        val tree_a = ReducibleTree<Int>()
         tree_a.set_size(8)
         tree_a[0].set_event(0)
         tree_a[2].set_event(1)
@@ -106,7 +106,7 @@ class StructureUnitTest {
 
     @Test
     fun test_clear_singles() {
-        val tree = OpusTree<Int>()
+        val tree = ReducibleTree<Int>()
         tree.set_size(1)
         tree[0].set_size(1)
         tree[0][0].set_size(4)

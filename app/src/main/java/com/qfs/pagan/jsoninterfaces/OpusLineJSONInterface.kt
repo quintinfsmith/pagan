@@ -1,10 +1,10 @@
-package com.qfs.pagan.opusmanager
+package com.qfs.pagan.structure.opusmanager
 
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class OpusLineJSONInterface {
     companion object {
@@ -49,7 +49,7 @@ class OpusLineJSONInterface {
 
         fun percussion_line(input: JSONHashMap, size: Int): OpusLinePercussion {
             val beats = input.get_list("beats")
-            val beat_list = MutableList<OpusTree<PercussionEvent>>(size) { OpusTree() }
+            val beat_list = MutableList<ReducibleTree<PercussionEvent>>(size) { ReducibleTree() }
             for (i in 0 until beats.size) {
                 val pair = beats.get_list(i)
                 val beat_index = pair.get_int(0)
@@ -77,7 +77,7 @@ class OpusLineJSONInterface {
         fun opus_line(input: JSONHashMap, size: Int): OpusLine {
             val beats = input.get_list("beats")
 
-            val beat_list = MutableList<OpusTree<TunedInstrumentEvent>>(size) { OpusTree() }
+            val beat_list = MutableList<ReducibleTree<TunedInstrumentEvent>>(size) { ReducibleTree() }
             for (i in 0 until beats.size) {
                 val pair = beats.get_list(i)
                 val beat_index = pair.get_int(0)

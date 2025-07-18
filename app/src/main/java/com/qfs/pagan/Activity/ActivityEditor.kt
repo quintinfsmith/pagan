@@ -21,7 +21,6 @@ import android.provider.DocumentsContract
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.Menu
@@ -79,8 +78,8 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.ChannelOptionAdapter
-import com.qfs.pagan.ChannelOptionRecycler
+import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
+import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.ContextMenu.ContextMenuChannel
 import com.qfs.pagan.ContextMenu.ContextMenuColumn
@@ -93,7 +92,6 @@ import com.qfs.pagan.ContextMenu.ContextMenuLine
 import com.qfs.pagan.ContextMenu.ContextMenuRange
 import com.qfs.pagan.ContextMenu.ContextMenuView
 import com.qfs.pagan.ControlWidget.ControlWidgetPan
-import com.qfs.pagan.ControlWidget.ControlWidgetReverb
 import com.qfs.pagan.ControlWidget.ControlWidgetTempo
 import com.qfs.pagan.ControlWidget.ControlWidgetVolume
 import com.qfs.pagan.EditorTable
@@ -102,7 +100,6 @@ import com.qfs.pagan.HexEditText
 import com.qfs.pagan.MidiDeviceManagerAdapter
 import com.qfs.pagan.MidiFeedbackDispatcher
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.PaganActivity
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
@@ -113,17 +110,16 @@ import com.qfs.pagan.RangedIntegerInput
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
 import com.qfs.pagan.databinding.ActivityEditorBinding
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusChannelAbstract
-import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLineAbstract
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.OpusPanEvent
-import com.qfs.pagan.opusmanager.OpusReverbEvent
-import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusChannelAbstract
+import com.qfs.pagan.structure.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.OpusLineAbstract
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.OpusVolumeEvent
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -2956,17 +2952,6 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_initial_event(event)
                 }
             }
-            ControlEventType.Reverb -> {
-                val controller = controller_set.get_controller<OpusReverbEvent>(cursor.ctl_type!!)
-                ControlWidgetReverb(
-                    controller.initial_event,
-                    cursor.ctl_level!!,
-                    true,
-                    this
-                ) { event: OpusReverbEvent ->
-                    opus_manager.set_initial_event(event)
-                }
-            }
 
             ControlEventType.Pan -> {
                 val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
@@ -3005,7 +2990,7 @@ class ActivityEditor : PaganActivity() {
 
         val (actual_beat, actual_position) = controller.get_blocking_position(cursor.beat, cursor.get_position()) ?: Pair(cursor.beat, cursor.get_position())
         val tree = controller.get_tree(actual_beat, actual_position)
-        if (!tree.is_event()) {
+        if (!tree.has_event()) {
             default.duration = 1
         }
 
@@ -3027,16 +3012,6 @@ class ActivityEditor : PaganActivity() {
                     false,
                     this
                 ) { event: OpusVolumeEvent ->
-                    opus_manager.set_event_at_cursor(event)
-                }
-            }
-            ControlEventType.Reverb -> {
-                ControlWidgetReverb(
-                    default as OpusReverbEvent,
-                    cursor.ctl_level!!,
-                    false,
-                    this
-                ) { event: OpusReverbEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }

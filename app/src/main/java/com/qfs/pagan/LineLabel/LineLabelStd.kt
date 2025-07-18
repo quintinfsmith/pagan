@@ -18,7 +18,7 @@ import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.LineLabelColumnLayout
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.OpusPercussionChannel
+import com.qfs.pagan.structure.opusmanager.OpusPercussionChannel
 import kotlin.concurrent.thread
 import kotlin.math.pow
 import kotlin.math.sqrt

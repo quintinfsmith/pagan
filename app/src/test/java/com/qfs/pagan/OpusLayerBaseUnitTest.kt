@@ -20,7 +20,7 @@ import com.qfs.pagan.opusmanager.OpusTempoEvent
 import com.qfs.pagan.opusmanager.OpusVolumeEvent
 import com.qfs.pagan.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.opusmanager.TunedInstrumentEvent
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -550,7 +550,7 @@ class OpusLayerBaseUnitTest {
         manager._project_change_new()
 
         val beatkey = BeatKey(0, 0, 0)
-        val top_tree = OpusTree<TunedInstrumentEvent>()
+        val top_tree = ReducibleTree<TunedInstrumentEvent>()
         top_tree.set_size(5)
         manager.replace_tree(beatkey, listOf(), top_tree)
 
@@ -560,7 +560,7 @@ class OpusLayerBaseUnitTest {
             top_tree.size
         )
 
-        var new_tree = OpusTree<TunedInstrumentEvent>()
+        var new_tree = ReducibleTree<TunedInstrumentEvent>()
         manager.split_tree(beatkey, listOf(), 12)
         var position = listOf<Int>(0)
         var old_parent = manager.get_tree(beatkey, position).parent

@@ -16,22 +16,22 @@ import android.widget.ScrollView
 import android.widget.Space
 import androidx.core.content.ContextCompat
 import com.qfs.pagan.Activity.ActivityEditor
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusControlEvent
-import com.qfs.pagan.opusmanager.OpusEvent
-import com.qfs.pagan.opusmanager.OpusLayerBase
-import com.qfs.pagan.opusmanager.OpusLayerCursor
-import com.qfs.pagan.opusmanager.OpusManagerCursor
-import com.qfs.pagan.opusmanager.OpusPanEvent
-import com.qfs.pagan.opusmanager.OpusReverbEvent
-import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
-import com.qfs.pagan.opusmanager.PercussionEvent
-import com.qfs.pagan.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.structure.OpusTree
+import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.BeatKey
+import com.qfs.pagan.structure.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.OpusEvent
+import com.qfs.pagan.structure.opusmanager.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.OpusLayerCursor
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -374,7 +374,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        fun <T: OpusEvent> calc_position(tree: OpusTree<T>, initial_width: Int, target_x: Float): List<Int> {
+        fun <T: OpusEvent> calc_position(tree: ReducibleTree<T>, initial_width: Int, target_x: Float): List<Int> {
             var working_width = initial_width.toFloat()
             var working_tree = tree
             var working_x = target_x.toInt()
@@ -397,7 +397,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val tree_original = opus_manager.get_tree(original_position.first, original_position.second)
 
             val new_state = mutableListOf<Int>()
-            if (tree.is_event()) {
+            if (tree.has_event()) {
                 new_state.add(R.attr.state_active)
                 val match_cursor = OpusManagerCursor(
                     OpusManagerCursor.CursorMode.Single,
@@ -462,7 +462,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val tree_original = controller.get_tree(original_position.first, original_position.second)
 
 
-            if (tree.is_event()) {
+            if (tree.has_event()) {
                 val match_cursor = OpusManagerCursor(
                     mode = OpusManagerCursor.CursorMode.Single,
                     ctl_type = type,
@@ -498,7 +498,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val tree_original = controller.get_tree(original_position.first, original_position.second)
 
 
-            if (tree.is_event()) {
+            if (tree.has_event()) {
                 val match_cursor = OpusManagerCursor(
                     mode = OpusManagerCursor.CursorMode.Single,
                     ctl_type = type,
@@ -539,7 +539,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
             val tree_original = controller.get_tree(original_position.first, original_position.second)
 
-            if (tree.is_event()) {
+            if (tree.has_event()) {
                 val match_cursor = OpusManagerCursor(
                     mode = OpusManagerCursor.CursorMode.Single,
                     ctl_type = type,
@@ -573,7 +573,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: OpusTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
+        fun <T: OpusEvent> draw_tree(canvas: Canvas, tree: ReducibleTree<T>, position: List<Int>, x: Float, y: Float, width: Float, callback: (T?, List<Int>, Canvas, Float, Float, Float) -> Unit) {
             if (tree.is_leaf()) {
                 val horizontal_scroll_view = (this.parent.parent as HorizontalScrollView)
                 // Don't draw outside of the view

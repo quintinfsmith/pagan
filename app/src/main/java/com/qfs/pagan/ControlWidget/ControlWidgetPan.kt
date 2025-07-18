@@ -6,9 +6,9 @@ import android.widget.Button
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.PanSliderWidget
 import com.qfs.pagan.R
-import com.qfs.pagan.opusmanager.ControlTransition
-import com.qfs.pagan.opusmanager.CtlLineLevel
-import com.qfs.pagan.opusmanager.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.ControlTransition
+import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusPanEvent
 
 class ControlWidgetPan(default: OpusPanEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusPanEvent) -> Unit): ControlWidget<OpusPanEvent>(ContextThemeWrapper(context, R.style.pan_widget), default, level, is_initial_event, R.layout.control_widget_pan, callback) {
     private lateinit var _slider: PanSliderWidget

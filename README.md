@@ -17,6 +17,9 @@
 <p align="center">
 <a style="display: inline-block; text-decoration: none important!;" href="https://f-droid.org/en/packages/com.qfs.pagan/"><img alt="Get it on FDroid" src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" style="display: block; width: 10em;" /></a>
 <a style="display: inline-block; text-decoration: none important!;" href='https://play.google.com/store/apps/details?id=com.qfs.pagan'><img alt='Get it on Google Play' src='https://burnsomni.net/content/google-play-badge.png' style="display: block; width: 10em;"/></a>
+ <a href="http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://app/%7B%22id%22%3A%22com.qfs.pagan%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fquintinfsmith%2Fpagan%22%2C%22author%22%3A%22Quintin%20Smith%22%2C%22name%22%3A%22Pagan%22%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%7D%22%7D" title="Get Pagan on Obtainium" target="_blank" rel="nofollow" onclick="gtag('event', 'Ontainium', {'mod': 'com.qfs.pagan'});">
+  <img src="https://burnsomni.net/content/badge_obtainium.png" style="display: block; width: 10em;">
+ </a>
 </p>
 
 <p align="center">

@@ -23,8 +23,11 @@ import java.time.format.DateTimeFormatter
  * Handles project file management. ie caching files, generating file names, etc
  */
 class ProjectManager(val context: Context, var uri: Uri?) {
+    // Where the cached list of projects is stored
     private val _cache_path = "${this.context.cacheDir}/project_list.json"
+    // Where backup data is stored
     private val _bkp_path = "${this.context.cacheDir}/.bkp.json"
+    // Where the uri of the backed up data is stored, if it has a uri associated.
     private val _bkp_path_path = "${this.context.cacheDir}/.bkp_path"
 
     init {
@@ -85,12 +88,16 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return output
     }
 
+    /**
+     * Change the where projects are saved to [new_uri]. Also moves existing projects.
+     * [active_project_uri] is a uri that may be changed by the move and the returned Uri
+     * is the altered version of that, if it is altered.
+     */
     fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null): Uri? {
         val new_directory = DocumentFile.fromTreeUri(this.context, new_uri)
         if (new_directory == null || !new_directory.isDirectory) {
             throw InvalidDirectoryException(new_uri)
         }
-
 
         val old_uri = this.uri
         this.uri = new_uri
@@ -107,6 +114,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return output
     }
 
+    /**
+     * Check if [uri] is a uri contained by the ProjectManager's Uri.
+     */
     fun contains(uri: Uri): Boolean {
         if (this.uri == null) {
             return false
@@ -119,6 +129,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return output
     }
 
+    /**
+     * Delete a project at [uri].
+     */
     fun delete(uri: Uri) {
         val document_file = DocumentFile.fromSingleUri(this.context, uri) ?: return
         if (document_file.isFile) {
@@ -128,17 +141,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         this._untrack_uri(uri)
     }
 
-    fun move_to_copy(opus_manager: OpusLayerBase) {
-        val old_title = opus_manager.project_name
-        val new_title: String? = if (old_title == null) {
-            null
-        } else {
-            "$old_title (Copy)"
-        }
-
-        opus_manager.project_name = new_title
-    }
-
+    /**
+     * Store [opus_manager] at [uri]
+     */
     fun save(opus_manager: OpusLayerBase, uri: Uri?): Uri {
         val active_project_uri = uri ?: this.get_new_file_uri() ?: throw Exception("Failed To create new file")
         // Untrack then track in order to update the project title in the cache
@@ -157,6 +162,10 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         return active_project_uri
     }
+
+    /**
+     * Generate a new uri that will *definitely not* collide with existing project files.
+     */
     fun get_new_file_uri(): Uri? {
         if (this.uri == null) {
             throw PathNotSetException()
@@ -170,6 +179,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return working_directory.createFile("application/json", "opus_$i.json")?.uri
     }
 
+    /**
+     * Check if there are any projects saved in the ProjectManager's Uri
+     */
     fun has_projects_saved(): Boolean {
         if (this.uri == null) {
             return false
@@ -183,12 +195,19 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return working_directory.listFiles().isNotEmpty()
     }
 
+    /**
+     * Generate a default project name.
+     */
     private fun generate_file_project_name(): String {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         return this.context.getString(R.string.untitled_op, now.format(formatter))
     }
 
+    /**
+     * Temporary function. Check if the user has projects saved in the ExternalFilesDir where
+     * projects were stored before v1.7.7.
+     */
     fun has_external_storage_projects(): Boolean {
         // V1.7.7, moved project storage out of ExternalFilesDir
         return try {
@@ -200,6 +219,11 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
+    /**
+     * Temporary Function.
+     * Move projects from external storage (where projects were stored before v1.7.7) to
+     * the current uri
+     */
     fun ucheck_recache_external_storage_projects(): Boolean {
         // V1.7.7, moved project storage out of ExternalFilesDir
         val old_directory = try {
@@ -228,13 +252,20 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             project_list.add(Pair(json_file.uri.toString(), project_name))
         }
 
-        project_list.sortBy { it.second }
+        project_list.sortBy {
+            it.second
+        }
+
         val json_string = json.encodeToString(project_list)
         val file = File(this._cache_path)
         file.writeText(json_string)
         return true
     }
 
+    /**
+     * Read through and cache all of the projects with their titles.
+     * Reduces lag when opening "Load Project".
+     */
     fun recache_project_list() {
         val file = File(this._cache_path)
         if (this.ucheck_recache_external_storage_projects()) {
@@ -268,6 +299,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         file.writeText(json_string)
     }
 
+    /**
+     * Get the stored project's title given the projects location at [uri]
+     */
     fun get_file_project_name(uri: Uri): String? {
         val input_stream = this.context.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
@@ -285,6 +319,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
+    /**
+     * Get a List of Uris paired with their Projects' titles.
+     */
     fun get_project_list(): List<Pair<Uri, String>> {
         val json = Json {
             this.ignoreUnknownKeys = true
@@ -319,6 +356,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
+    /**
+     * Add [uri] to cached list of projects.
+     */
     private fun _track_path(uri: Uri) {
         val project_list = this.get_project_list().toMutableList()
         var is_tracking = false
@@ -352,6 +392,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         file.writeText(json_string)
     }
 
+    /**
+     * Remove [uri] from cached list of projects
+     */
     private fun _untrack_uri(uri: Uri) {
         val project_list = this.get_project_list().toMutableList()
         var index_to_pop = 0
@@ -446,7 +489,10 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return output
     }
 
-
+    /**
+     * Save [opus_manager] to a known path.
+     * [uri] is the Uri the user would otherwise save [opus_manger] to.
+     */
     fun save_to_backup(opus_manager: OpusLayerInterface, uri: Uri?) {
         val path_file = File(this._bkp_path_path)
         if (uri == null) {
@@ -460,6 +506,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         File(this._bkp_path).writeText(opus_manager.to_json().to_string())
     }
 
+    /**
+     * Retrieve the backed up project as a byte array and get the uri of where it is to be saved (should the uri exist).
+     */
     fun read_backup(): Pair<Uri?, ByteArray> {
         val path_file = File(this._bkp_path_path)
         return Pair(
@@ -477,6 +526,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         )
     }
 
+    /**
+     * Clear backed up project.
+     */
     fun delete_backup() {
         File(this._bkp_path).let { file ->
             if (file.exists()) {
@@ -491,6 +543,9 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
+    /**
+     * Check if there is currently a project backed up in the backup location.
+     */
     fun has_backup_saved(): Boolean {
         return File(this._bkp_path).exists()
     }

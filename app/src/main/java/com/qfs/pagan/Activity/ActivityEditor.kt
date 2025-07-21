@@ -1382,7 +1382,15 @@ class ActivityEditor : PaganActivity() {
 
     fun project_move_to_copy() {
         this.dialog_save_project {
-            this.get_project_manager().move_to_copy(this.get_opus_manager())
+            val opus_manager = this.get_opus_manager()
+            val old_title = opus_manager.project_name
+            val new_title: String? = if (old_title == null) {
+                null
+            } else {
+                "$old_title (Copy)"
+            }
+            opus_manager.project_name = new_title
+
             this.active_project = null
             this.update_title_text()
             this.feedback_msg(this.getString(R.string.feedback_on_copy))

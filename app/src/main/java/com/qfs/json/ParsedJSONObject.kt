@@ -42,6 +42,10 @@ data class JSONString(var value: String): JSONObject {
     override fun copy(): JSONObject {
         return JSONString(this.value)
     }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
 }
 
 data class JSONFloat(var value: Float): JSONObject {
@@ -57,6 +61,10 @@ data class JSONFloat(var value: Float): JSONObject {
 
     override fun copy(): JSONObject {
         return JSONFloat(this.value)
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
     }
 }
 
@@ -74,6 +82,10 @@ data class JSONInteger(var value: Int): JSONObject {
     override fun copy(): JSONInteger {
         return JSONInteger(this.value)
     }
+
+    override fun hashCode(): Int {
+        return value
+    }
 }
 data class JSONBoolean(var value: Boolean): JSONObject {
     override fun to_string(): String {
@@ -89,6 +101,10 @@ data class JSONBoolean(var value: Boolean): JSONObject {
 
     override fun copy(): JSONBoolean {
         return JSONBoolean(this.value)
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
     }
 }
 
@@ -301,6 +317,12 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
             output.hash_map[key] = value?.copy()
         }
         return output
+    }
+
+    override fun hashCode(): Int {
+        var result = hash_map.hashCode()
+        result = 31 * result + keys.hashCode()
+        return result
     }
 }
 

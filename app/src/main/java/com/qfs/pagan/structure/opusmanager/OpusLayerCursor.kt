@@ -1,10 +1,12 @@
 package com.qfs.pagan.structure.opusmanager
+import com.qfs.pagan.structure.opusmanager.OpusManagerCursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import java.lang.Integer.max
 import java.lang.Integer.min
 
 open class OpusLayerCursor: OpusLayerBase() {
     class InvalidCursorState: Exception()
+    class IncorrectCursorMode(val current_mode: CursorMode, vararg required_mode: CursorMode): Exception("Incorrect Cursor Mode. Found: $current_mode. Requires: $required_mode.")
     var cursor = OpusManagerCursor()
     private var _cursor_lock = 0
 
@@ -1494,7 +1496,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun move_to_previous_visible_line(repeat: Int = 1) {
         val cursor = this.cursor
         if (cursor.mode != OpusManagerCursor.CursorMode.Line) {
-            throw Exception("Incorrect Cursor Mode ${cursor.mode}")
+            throw IncorrectCursorMode(this.cursor.mode, CursorMode.Line)
         }
 
         var visible_row = when (cursor.ctl_level) {
@@ -1558,7 +1560,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun move_to_next_visible_line(repeat: Int = 1) {
         val cursor = this.cursor
         if (cursor.mode != OpusManagerCursor.CursorMode.Line) {
-            throw Exception("Incorrect Cursor Mode ${cursor.mode}")
+            throw IncorrectCursorMode(this.cursor.mode, CursorMode.Line)
         }
 
         var visible_row = when (cursor.ctl_level) {

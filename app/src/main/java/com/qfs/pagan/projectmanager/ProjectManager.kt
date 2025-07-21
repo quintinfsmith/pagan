@@ -146,7 +146,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Store [opus_manager] at [uri]
      */
     fun save(opus_manager: OpusLayerBase, uri: Uri?): Uri {
-        val active_project_uri = uri ?: this.get_new_file_uri() ?: throw Exception("Failed To create new file")
+        val active_project_uri = uri ?: this.get_new_file_uri() ?: throw NewFileFailException()
         // Untrack then track in order to update the project title in the cache
         active_project_uri.let {
             val content = opus_manager.to_json()

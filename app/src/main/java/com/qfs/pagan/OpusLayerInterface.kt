@@ -7,10 +7,10 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
-import com.qfs.pagan.UIChangeBill.UIChangeBill
 import com.qfs.pagan.UIChangeBill.BillableItem
+import com.qfs.pagan.UIChangeBill.UIChangeBill
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
 import com.qfs.pagan.structure.opusmanager.BeatKey
 import com.qfs.pagan.structure.opusmanager.ControlEventType
 import com.qfs.pagan.structure.opusmanager.CtlLineLevel
@@ -26,9 +26,9 @@ import com.qfs.pagan.structure.opusmanager.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.UnreachableException
-import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -2870,7 +2870,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     fun set_note_octave_at_cursor(octave: Int) {
         if (this.cursor.mode != CursorMode.Single) {
-            throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
+            throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
         }
         val current_tree_position = this.get_actual_position(
             this.cursor.get_beatkey(),
@@ -2881,7 +2881,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     fun set_note_offset_at_cursor(offset: Int) {
         if (this.cursor.mode != CursorMode.Single) {
-            throw Exception("Incorrect Cursor Mode: ${this.cursor.mode}")
+            throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
         }
         val current_tree_position = this.get_actual_position(
             this.cursor.get_beatkey(),

@@ -18,8 +18,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         internal fun get_buffer_value(default: Int = 0, minimum: Int? = null, maximum: Int? = null): Int {
             return this.keyboard_interface.get_buffer_value(default, minimum, maximum)
         }
-
-
     }
 
     abstract class CursorSpecificKeyStrokeNode(keyboard_interface: KeyboardInputInterface): KeyStrokeNode(keyboard_interface) {

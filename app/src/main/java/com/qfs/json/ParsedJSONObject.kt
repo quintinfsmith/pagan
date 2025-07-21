@@ -357,6 +357,11 @@ class JSONList(vararg args: JSONObject?): JSONObject {
         }
         this.list.add(JSONBoolean(value))
     }
+
+    fun remove_at(index: Int) {
+        this.list.removeAt(index)
+    }
+
     fun add_null() {
         this.list.add(null)
     }
@@ -529,6 +534,9 @@ class JSONList(vararg args: JSONObject?): JSONObject {
         return JSONList(*Array(this.size) { i: Int ->
             this.list[i]?.copy()
         })
+    }
+    fun <R: Comparable<R>> sort_by(sortfunc: (JSONObject?) -> R) {
+        this.list.sortBy(sortfunc)
     }
 }
 

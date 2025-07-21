@@ -4,14 +4,15 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.qfs.json.InvalidJSON
 import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
+import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.opusmanager.OpusLayerBase
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -214,7 +215,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             val external_path = this.context.getExternalFilesDir(null) ?: return false
             val old_directory = File("$external_path/projects")
             old_directory.isDirectory && old_directory.listFiles()?.isNotEmpty() ?: false
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             false
         }
     }
@@ -229,7 +230,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val old_directory = try {
             val external_path = this.context.getExternalFilesDir(null) ?: return false
             File("$external_path/projects")
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             return false
         }
         if (!old_directory.isDirectory || old_directory.listFiles()?.isEmpty() ?: false) {
@@ -237,28 +238,29 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         val working_directory = DocumentFile.fromFile(old_directory)
-        val json = Json {
-            this.ignoreUnknownKeys = true
-        }
 
-        val project_list = mutableListOf<Pair<String, String>>()
+        val project_list = JSONList()
         for (json_file in working_directory.listFiles()) {
-
             val project_name = try {
                 this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 continue
             }
-            project_list.add(Pair(json_file.uri.toString(), project_name))
+
+            project_list.add(
+                JSONList(
+                    JSONString(json_file.uri.toString()),
+                    JSONString(project_name)
+                )
+            )
         }
 
-        project_list.sortBy {
-            it.second
+        project_list.sort_by { it ->
+            (it as JSONList).get_string(1)
         }
 
-        val json_string = json.encodeToString(project_list)
         val file = File(this._cache_path)
-        file.writeText(json_string)
+        file.writeText(project_list.to_string())
         return true
     }
 
@@ -280,23 +282,26 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!) ?: return
-        val json = Json {
-            this.ignoreUnknownKeys = true
-        }
 
-        val project_list = mutableListOf<Pair<String, String>>()
+        val project_list = JSONList()
         for (json_file in working_directory.listFiles()) {
             val project_name = try {
                 this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 continue
             }
-            project_list.add(Pair(json_file.uri.toString(), project_name))
+
+            project_list.add(JSONList(
+                JSONString(json_file.uri.toString()),
+                JSONString(project_name)
+            ))
         }
 
-        project_list.sortBy { it.second }
-        val json_string = json.encodeToString(project_list)
-        file.writeText(json_string)
+        project_list.sort_by { it ->
+            (it as JSONList).get_string(1)
+        }
+
+        file.writeText(project_list.to_string())
     }
 
     /**
@@ -323,48 +328,51 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Get a List of Uris paired with their Projects' titles.
      */
     fun get_project_list(): List<Pair<Uri, String>> {
-        val json = Json {
-            this.ignoreUnknownKeys = true
+        val json_list = this.get_json_project_list()
+        return List(json_list.size) { i: Int ->
+            val entry = json_list.get_list(i)
+            Pair(
+                entry.get_string(0).toUri(),
+                entry.get_string(1)
+            )
         }
+    }
 
+    /**
+     * Same as get_project_list, but a json version.
+     */
+    fun get_json_project_list(): JSONList {
         if (!File(this._cache_path).exists()) {
             this.recache_project_list()
         }
 
         val file = File(this._cache_path)
         if (!file.exists()) {
-            return listOf()
+            return JSONList()
         }
 
         var string_content = file.readText(Charsets.UTF_8)
 
-        // TODO: Convert to my json library
-        val tmp_list: List<Pair<String, String>> = try {
-            json.decodeFromString(string_content)
-        } catch (_: Exception) {
-            // Corruption Protection: if the cache file is bad json, delete and rebuild
+        return try {
+            JSONParser.parse(string_content)!!
+        } catch (_: InvalidJSON) {
             File(this._cache_path).delete()
             this.recache_project_list()
             string_content = File(this._cache_path).readText(Charsets.UTF_8)
-
-            json.decodeFromString(string_content)
+            JSONParser.parse(string_content)!!
         }
 
-        return List(tmp_list.size) { i: Int ->
-            val uri = tmp_list[i].first.toUri()
-            Pair(uri, tmp_list[i].second)
-        }
     }
 
     /**
      * Add [uri] to cached list of projects.
      */
     private fun _track_path(uri: Uri) {
-        val project_list = this.get_project_list().toMutableList()
+        val project_list = this.get_json_project_list()
         var is_tracking = false
 
-        for ((check_path, _) in project_list) {
-            if (check_path == uri) {
+        for (i in 0 until project_list.size) {
+            if (project_list.get_list(i).get_string(0).toUri() == uri) {
                 is_tracking = true
                 break
             }
@@ -375,31 +383,29 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         val project_name = this.get_file_project_name(uri) ?: return
+        project_list.add(
+            JSONList(
+                JSONString(uri.toString()),
+                JSONString(project_name)
+            )
+        )
 
-        project_list.add(Pair(uri, project_name))
-        project_list.sortBy { it.second }
-        // Convert Uris to strings for storage
-        val adj_project_list = List(project_list.size) { i: Int ->
-             Pair(project_list[i].first.toString(), project_list[i].second)
+        project_list.sort_by { it ->
+            (it as JSONList).get_string(1)
         }
 
-        val json = Json {
-            this.ignoreUnknownKeys = true
-        }
-
-        val json_string = json.encodeToString(adj_project_list)
         val file = File(this._cache_path)
-        file.writeText(json_string)
+        file.writeText(project_list.to_string())
     }
 
     /**
      * Remove [uri] from cached list of projects
      */
     private fun _untrack_uri(uri: Uri) {
-        val project_list = this.get_project_list().toMutableList()
+        val project_list = this.get_json_project_list()
         var index_to_pop = 0
-        for ((check_path, _) in project_list) {
-            if (check_path == uri) {
+        for (i in 0 until project_list.size) {
+            if (project_list.get_list(i).get_string(0).toUri() == uri) {
                 break
             }
             index_to_pop += 1
@@ -409,21 +415,13 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             return
         }
 
-        project_list.removeAt(index_to_pop)
-        project_list.sortBy { it.second }
-
-        val json = Json {
-            this.ignoreUnknownKeys = true
+        project_list.remove_at(index_to_pop)
+        project_list.sort_by { it ->
+            (it as JSONList).get_string(1)
         }
 
-        // Convert Uris to strings for storage
-        val adj_project_list = List(project_list.size) { i: Int ->
-            Pair(project_list[i].first.toString(), project_list[i].second)
-        }
-
-        val json_string = json.encodeToString(adj_project_list)
         val file = File(this._cache_path)
-        file.writeText(json_string)
+        file.writeText(project_list.to_string())
     }
 
     // v1.7.7: Using custom projects directories rather than forcing external directory
@@ -482,7 +480,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                 this.recache_project_list()
                 old_directory.deleteRecursively()
             }
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             // pass
         }
 
@@ -491,7 +489,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
     /**
      * Save [opus_manager] to a known path.
-     * [uri] is the Uri the user would otherwise save [opus_manger] to.
+     * [uri] is the Uri the user would otherwise save [opus_manager] to.
      */
     fun save_to_backup(opus_manager: OpusLayerInterface, uri: Uri?) {
         val path_file = File(this._bkp_path_path)

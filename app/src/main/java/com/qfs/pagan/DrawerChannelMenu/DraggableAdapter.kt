@@ -45,7 +45,7 @@ abstract class DraggableAdapter<T: RecyclerView.ViewHolder> : RecyclerView.Adapt
     abstract fun on_row_selected(view_holder: ViewHolder)
     abstract fun on_row_clear(view_holder: ViewHolder)
 
-    private val _touch_helper = ItemTouchHelper(ItemMoveCallback(this))
+    internal val _touch_helper = ItemTouchHelper(ItemMoveCallback(this))
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         this._touch_helper.attachToRecyclerView(recyclerView)

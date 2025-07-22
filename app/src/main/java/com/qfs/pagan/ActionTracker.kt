@@ -25,10 +25,10 @@ import com.qfs.pagan.structure.opusmanager.base.ControlTransition
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -1311,8 +1311,8 @@ class ActionTracker {
         }
     }
 
-    fun set_relative_mode(mode: Int) {
-        this.track(TrackedAction.SetRelativeMode, listOf(mode))
+    fun set_relative_mode(mode: RelativeInputMode) {
+        this.track(TrackedAction.SetRelativeMode, listOf(mode.ordinal))
 
         val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
@@ -1337,7 +1337,7 @@ class ActionTracker {
             is RelativeNoteEvent -> {
                 when (mode) {
                     /* Abs */
-                    0 -> {
+                    RelativeInputMode.Absolute -> {
                         try {
                             opus_manager.convert_event_to_absolute()
                             //val current_tree = opus_manager.get_tree()
@@ -1351,7 +1351,7 @@ class ActionTracker {
                         }
                     }
                     /* + */
-                    1 -> {
+                    RelativeInputMode.Positive -> {
                         if (event.offset < 0) {
                             val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
                             opus_manager.set_event_at_cursor(new_event)
@@ -1359,25 +1359,23 @@ class ActionTracker {
                         abs(event.offset)
                     }
                     /* - */
-                    2 -> {
+                    RelativeInputMode.Negative -> {
                         if (event.offset > 0) {
                             val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
                             opus_manager.set_event_at_cursor(new_event)
                         }
                         abs(event.offset)
                     }
-
-                    else -> null
                 }
             }
             is AbsoluteNoteEvent -> {
                 when (mode) {
                     /* Abs */
-                    0 -> {
+                    RelativeInputMode.Absolute -> {
                         event.note
                     }
                     /* + */
-                    1 -> {
+                    RelativeInputMode.Positive -> {
                         val cursor = opus_manager.cursor
                         val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
                         if (value >= 0) {
@@ -1387,13 +1385,13 @@ class ActionTracker {
                             val new_event = current_tree.get_event()!!
                             abs((new_event as RelativeNoteEvent).offset)
                         } else {
-                            opus_manager.relative_mode = 1
+                            opus_manager.relative_mode = RelativeInputMode.Positive
                             null
                         }
 
                     }
                     /* - */
-                    2 -> {
+                    RelativeInputMode.Negative -> {
                         val cursor = opus_manager.cursor
                         val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
                         if (value <= 0) {
@@ -1403,12 +1401,10 @@ class ActionTracker {
                             val new_event = current_tree.get_event()!!
                             abs((new_event as RelativeNoteEvent).offset)
                         } else {
-                            opus_manager.relative_mode = 2
+                            opus_manager.relative_mode = RelativeInputMode.Negative
                             null
                         }
                     }
-
-                    else -> null
                 }
             }
 
@@ -1941,7 +1937,7 @@ class ActionTracker {
             }
 
             TrackedAction.SetRelativeMode -> {
-                this.set_relative_mode(integers[0]!!)
+                this.set_relative_mode(RelativeInputMode.entries[integers[0]!!])
             }
 
             TrackedAction.SwapLines -> {

@@ -2,17 +2,18 @@ package com.qfs.pagan.structure.opusmanager
 
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
+import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
+import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.ActiveControlSet
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 
 class ActiveControlSetJSONInterface {
-    class UnknownControllerException : Exception()
     companion object {
         fun from_json(json_obj: JSONHashMap, size: Int): ActiveControlSet {
             val control_set = ActiveControlSet(size)
@@ -35,7 +36,7 @@ class ActiveControlSetJSONInterface {
                     is VolumeController -> ControlEventType.Volume
                     is PanController -> ControlEventType.Pan
                     //is ReverbController -> ControlEventType.Reverb
-                    else -> throw UnknownControllerException()
+                    else -> throw UnhandledControllerException(controller)
                 }
                 control_set.new_controller(key, controller)
             }

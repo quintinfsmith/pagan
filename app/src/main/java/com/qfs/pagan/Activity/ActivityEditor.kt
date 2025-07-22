@@ -2972,6 +2972,8 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_initial_event(event)
                 }
             }
+
+            ControlEventType.Reverb -> TODO()
         }
 
 
@@ -3034,6 +3036,8 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_event_at_cursor(event)
                 }
             }
+
+            ControlEventType.Reverb -> TODO()
         }
 
         this.active_context_menu = ContextMenuControlLeaf(
@@ -3228,7 +3232,6 @@ class ActivityEditor : PaganActivity() {
     }
 
     // ^^ Formerly Fragment Functions ---------------------------------------------------------
-
     fun dialog_tuning_table() {
         val opus_manager = this.get_opus_manager()
 

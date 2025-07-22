@@ -80,7 +80,7 @@ class ChannelOptionAdapter(
         this.set_text(option_button, position)
 
         option_button.setOnLongClickListener { v ->
-            this.touch_helper.startDrag(holder)
+            this._touch_helper.startDrag(holder)
             false
         }
 

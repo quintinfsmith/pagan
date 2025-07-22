@@ -6,8 +6,8 @@ import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -499,14 +499,15 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         },
 
         Pair(KeyEvent.KEYCODE_R, true) to object: CursorSpecificKeyStrokeNode(this) {
-            private fun _set_relative_mode(opus_manager: OpusManager, force_mode: Int = 1) {
-                if (opus_manager.relative_mode == 0) {
+            private fun _set_relative_mode(opus_manager: OpusManager, force_mode: RelativeInputMode = RelativeInputMode.Absolute) {
+                if (opus_manager.relative_mode == RelativeInputMode.Absolute) {
                     val activity = opus_manager.get_activity()
                     if (activity != null) {
                         activity.configuration.relative_mode = true
                         activity.save_configuration()
                     }
                 }
+
                 if (opus_manager.relative_mode != force_mode) {
                     opus_manager.set_relative_mode(force_mode)
                 }
@@ -533,9 +534,9 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                         )
 
                         val force_mode = if ((tree.get_event() as RelativeNoteEvent).offset >= 0) {
-                            2
+                            RelativeInputMode.Negative
                         } else {
-                            1
+                            RelativeInputMode.Positive
                         }
 
                         this._set_relative_mode(opus_manager, force_mode)
@@ -549,10 +550,10 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 } else {
                     this._set_relative_mode(
                         opus_manager,
-                        if (opus_manager.relative_mode == 1) {
-                            2
+                        if (opus_manager.relative_mode == RelativeInputMode.Positive) {
+                            RelativeInputMode.Negative
                         } else {
-                            1
+                            RelativeInputMode.Positive
                         }
                     )
                 }
@@ -567,7 +568,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_R, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun column(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 opus_manager.convert_events_in_beat_to_absolute(opus_manager.cursor.beat)
-                opus_manager.set_relative_mode(0)
+                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
             }
             override fun single(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
@@ -586,12 +587,12 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                         )
                     )
                 }
-                opus_manager.set_relative_mode(0)
+                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
             }
 
             override fun line(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 opus_manager.convert_events_in_line_to_absolute(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
-                opus_manager.set_relative_mode(0)
+                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
             }
         },
 

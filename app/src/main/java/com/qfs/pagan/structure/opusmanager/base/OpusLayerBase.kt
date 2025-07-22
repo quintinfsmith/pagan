@@ -4454,8 +4454,8 @@ open class OpusLayerBase {
             If the first leaf sets the tempo, use that as initial value instead of as a control event.
          */
         val first_tempo_tree = tempo_controller.get_tree(0)
-        val position = first_tempo_tree.get_first_event_tree_position()
-        val first_tempo_leaf = first_tempo_tree.get(position ?: listOf())
+        val position = first_tempo_tree.get_first_event_tree_position()?.toIntArray() ?: intArrayOf()
+        val first_tempo_leaf = first_tempo_tree.get(*position)
 
         if (first_tempo_leaf.has_event()) {
             tempo_controller.set_initial_event(first_tempo_leaf.event!!)

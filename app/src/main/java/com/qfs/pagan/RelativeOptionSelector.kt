@@ -12,11 +12,11 @@ import androidx.appcompat.view.ContextThemeWrapper
 class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
     class InvalidOptionException(option: Int): Exception("Invalid Option selected: $option")
     private var _active_button: RelativeOptionSelectorButton? = null
-    private var _button_map = HashMap<RelativeOptionSelectorButton, Int>()
-    private var _item_list: List<Int> = listOf(
-        R.string.absolute_label,
-        R.string.pfx_add,
-        R.string.pfx_subtract
+    private var _button_map = HashMap<RelativeOptionSelectorButton, RelativeInputMode>()
+    private var _item_list = listOf(
+        Pair(R.string.absolute_label, RelativeInputMode.Absolute),
+        Pair(R.string.pfx_add, RelativeInputMode.Positive),
+        Pair(R.string.pfx_subtract, RelativeInputMode.Negative)
     )
     private var _on_change_hook: ((RelativeOptionSelector) -> Unit)? = null
 
@@ -68,14 +68,14 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
         this.populate()
     }
 
-    fun get_state(): Int? {
+    fun get_state(): RelativeInputMode? {
         if (this._active_button == null) {
             return null
         }
         return this._button_map[this._active_button!!]!!
     }
 
-    fun set_state(new_state: Int, manual: Boolean = false, suppress: Boolean = false) {
+    fun set_state(new_state: RelativeInputMode, manual: Boolean = false, suppress: Boolean = false) {
         for ((button, value) in this._button_map) {
             if (value == new_state) {
                 this.set_active_button(button, suppress)
@@ -94,8 +94,8 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
     }
 
     private fun populate() {
-        this._item_list.forEachIndexed { i, string_index ->
-            RelativeOptionSelectorButton(this, string_index).let { current_view ->
+        this._item_list.forEachIndexed { i, pair: Pair<Int, RelativeInputMode> ->
+            RelativeOptionSelectorButton(this, pair.first).let { current_view ->
                 this.addView(current_view)
                 if (this.orientation == HORIZONTAL) {
                     (current_view.layoutParams as LayoutParams).height = MATCH_PARENT
@@ -113,7 +113,7 @@ class RelativeOptionSelector(context: Context, attrs: AttributeSet) : LinearLayo
                     }
                 }
 
-                this._button_map[current_view] = i
+                this._button_map[current_view] = pair.second
             }
         }
     }

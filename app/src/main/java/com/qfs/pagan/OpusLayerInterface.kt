@@ -54,7 +54,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     var initialized = false
-    var relative_mode: Int = 0
+    var relative_mode: RelativeInputMode = RelativeInputMode.Absolute
     private var _activity: ActivityEditor? = null
 
     private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(CursorMode.Unset)
@@ -2721,7 +2721,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    fun set_relative_mode(mode: Int, update_ui: Boolean = true) {
+    fun set_relative_mode(mode: RelativeInputMode, update_ui: Boolean = true) {
         this.relative_mode = mode
         this.lock_ui_partial {
             if (update_ui) {
@@ -2734,19 +2734,19 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = when (event) {
                 is AbsoluteNoteEvent -> {
-                    0
+                    RelativeInputMode.Absolute
                 }
                 is RelativeNoteEvent -> {
                     if (event.offset >= 0) {
-                        1
+                        RelativeInputMode.Positive
                     } else {
-                        2
+                        RelativeInputMode.Negative
                     }
                 }
                 else -> throw UnreachableException()
             }
         } else {
-            this.relative_mode = 0
+            this.relative_mode = RelativeInputMode.Absolute
         }
     }
 
@@ -2762,7 +2762,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val radix = this.tuning_map.size
 
         val new_event = when (this.relative_mode) {
-            0 -> {
+            RelativeInputMode.Absolute -> {
                 AbsoluteNoteEvent(
                     when (current_event) {
                         is AbsoluteNoteEvent -> (octave * radix) + (current_event.note % radix)
@@ -2779,7 +2779,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     duration
                 )
             }
-            1 -> {
+            RelativeInputMode.Positive -> {
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> (octave * radix) + (current_event.offset % radix)
@@ -2792,7 +2792,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     duration
                 )
             }
-            2 -> {
+            RelativeInputMode.Negative -> {
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> 0 - ((octave * radix) + (abs(current_event.offset) % radix))
@@ -2820,7 +2820,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val radix = this.tuning_map.size
 
         val new_event = when (this.relative_mode) {
-            0 -> {
+            RelativeInputMode.Absolute -> {
                 AbsoluteNoteEvent(
                     when (current_event) {
                         is AbsoluteNoteEvent -> ((current_event.note / radix) * radix) + offset
@@ -2836,7 +2836,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     duration
                 )
             }
-            1 -> {
+            RelativeInputMode.Positive -> {
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> ((current_event.offset / radix) * radix) + offset
@@ -2849,7 +2849,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     duration
                 )
             }
-            2 -> {
+            RelativeInputMode.Negative -> {
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> ((current_event.offset / radix) * radix) - offset
@@ -2862,7 +2862,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     duration
                 )
             }
-            else -> throw UnreachableException()
         }
 
         this.set_event(beat_key, position, new_event)

@@ -17,7 +17,9 @@ import com.qfs.pagan.CH_UP
 import com.qfs.pagan.REL_CHARS
 import com.qfs.pagan.SPECIAL_CHARS
 import com.qfs.pagan.char_to_int
+import com.qfs.pagan.jsoninterfaces.ExpectedCharacterException
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
+import com.qfs.pagan.jsoninterfaces.UnknownChannelTypeException
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class OpusChannelJSONInterface {
@@ -71,10 +73,11 @@ class OpusChannelJSONInterface {
         }
 
         fun interpret(input_map: JSONHashMap, beat_count: Int): OpusChannelAbstract<*,*> {
-            val channel = when (input_map.get_stringn("type")) {
+            val channel_type = input_map.get_stringn("type")
+            val channel = when (channel_type) {
                 "std" -> this._interpret_std(input_map, beat_count)
                 "kit" -> this._interpret_percussion(input_map, beat_count)
-                else -> throw Exception("Unknown Channel Type")
+                else -> throw UnknownChannelTypeException(channel_type)
             }
 
             channel.size = channel.lines.size
@@ -126,7 +129,7 @@ class OpusChannelJSONInterface {
 
                     val new_tree = last[last.size - 1]
                     if (! new_tree.is_leaf() && ! new_tree.has_event()) {
-                        throw Exception("MISSING COMMA")
+                        throw ExpectedCharacterException(CH_NEXT, i, repstring)
                     }
                     tree_stack.add(new_tree)
                     opened_indices.add(i)
@@ -184,7 +187,7 @@ class OpusChannelJSONInterface {
             }
 
             if (tree_stack.size > 1) {
-                throw Exception("Unclosed Opus Tree Error")
+                throw ExpectedCharacterException(CH_CLOSE, repstring.length, repstring)
             }
 
             return output

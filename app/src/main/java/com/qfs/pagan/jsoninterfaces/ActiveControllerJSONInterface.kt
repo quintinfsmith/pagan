@@ -5,6 +5,8 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
+import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
+import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
 import com.qfs.pagan.structure.opusmanager.activecontroller.PanController
 import com.qfs.pagan.structure.opusmanager.activecontroller.TempoController
@@ -12,7 +14,6 @@ import com.qfs.pagan.structure.opusmanager.activecontroller.VolumeController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class ActiveControllerJSONInterface {
-    class UnknownControllerException(label: String): Exception("Unknown Controller: \"$label\"")
     companion object {
         fun <T: OpusControlEvent> from_json(obj: JSONHashMap, size: Int): ActiveController<out OpusControlEvent> {
             val output = when (val label = obj.get_string("type")) {
@@ -79,14 +80,16 @@ class ActiveControllerJSONInterface {
                 )
             }
 
+            val controller_type = input.get_stringn("type")
             return JSONHashMap(
                 "events" to events,
                 "type" to JSONString(
-                    when (input.get_string("type")) {
+
+                    when (controller_type) {
                         "Tempo" -> "tempo"
                         "Volume" -> "volume"
                         "Pan" -> "pan"
-                        else -> throw Exception() // Nothing else was implemented
+                        else -> throw UnknownControllerException(controller_type)
                     }
                 ),
                 "initial" to OpusControlEventJSONInterface.convert_v2_to_v3(input.get_hashmap("initial_value")),
@@ -118,7 +121,7 @@ class ActiveControllerJSONInterface {
                 is TempoController -> "tempo"
                 is VolumeController -> "volume"
                 is PanController -> "pan"
-                else -> throw Exception()
+                else -> throw UnhandledControllerException(controller)
             }
             map["visible"] = controller.visible
 

@@ -1,6 +1,7 @@
 package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONString
+import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
 
 class InstrumentEventJSONInterface {
     companion object {
@@ -48,12 +49,12 @@ when (event) {
         }
 
         fun from_json(input: JSONHashMap): InstrumentEvent {
-            val output = when (input.get_string("type")) {
+            val event_type = input.get_stringn("type")
+            val output = when (event_type) {
                 "rel" -> RelativeNoteEvent(input.get_int("offset"))
                 "abs" -> AbsoluteNoteEvent(input.get_int("note"))
                 "perc" -> PercussionEvent()
-                // TODO: SPECIFY Exception
-                else -> throw Exception()
+                else -> throw UnknownEventTypeException(event_type)
             }
             output.duration = input.get_int("duration", 1)
             return output

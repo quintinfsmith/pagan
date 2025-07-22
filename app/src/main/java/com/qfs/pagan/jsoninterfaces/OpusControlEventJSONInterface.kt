@@ -1,6 +1,7 @@
 package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
+import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
 
 class OpusControlEventJSONInterface {
     companion object {
@@ -28,7 +29,8 @@ class OpusControlEventJSONInterface {
 
         fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {
             val output = JSONHashMap()
-            when (input.get_string("type")) {
+            val type = input.get_stringn("type")
+            when (type) {
                 "com.qfs.pagan.structure.opusmanager.OpusTempoEvent" -> {
                     output["tempo"] = input["value"]
                 }
@@ -36,7 +38,7 @@ class OpusControlEventJSONInterface {
                     output["volume"] = input["value"]
                     output["transition"] = JSONInteger(0)
                 }
-                else -> throw Exception() // Unreachable, nothing else was implemented
+                else -> throw UnknownEventTypeException(type)
             }
 
             return output

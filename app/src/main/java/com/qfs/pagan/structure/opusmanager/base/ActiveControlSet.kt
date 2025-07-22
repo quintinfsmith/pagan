@@ -7,7 +7,7 @@ import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 
 class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
-    val controllers = HashMap<ControlEventType, ActiveController<out OpusControlEvent>>()
+    val controllers = HashMap<ControlEventType, ActiveController<*>>()
 
     init {
         for (type in default_enabled ?: setOf()) {
@@ -68,7 +68,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         if (!this.controllers.containsKey(type)) {
             this.new_controller(type)
         }
-        return this.controllers[type] as ActiveController<T>
+        return this.controllers[type]!! as ActiveController<T>
     }
 
     fun has_controller(type: ControlEventType): Boolean {

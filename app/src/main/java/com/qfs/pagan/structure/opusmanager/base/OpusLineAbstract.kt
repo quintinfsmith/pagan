@@ -73,21 +73,21 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
         }
     }
 
-    fun <T: OpusControlEvent> replace_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: ReducibleTree<T>) {
+    fun <U: OpusControlEvent> replace_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: ReducibleTree<U>) {
         try {
-            this.get_controller<T>(type).replace_tree(beat, position, tree)
+            this.get_controller<U>(type).replace_tree(beat, position, tree)
         } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
 
-    fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {
+    fun <U: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<U> {
         return this.controllers.get_controller(type)
     }
 
-    fun <T: OpusControlEvent> set_controller_event(type: ControlEventType, beat: Int, position: List<Int>, event: T) {
+    fun <U: OpusControlEvent> set_controller_event(type: ControlEventType, beat: Int, position: List<Int>, event: U) {
         try {
-            this.get_controller<T>(type).set_event(beat, position, event)
+            this.get_controller<U>(type).set_event(beat, position, event)
         } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }

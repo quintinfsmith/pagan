@@ -22,7 +22,6 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
-import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
@@ -238,7 +237,7 @@ open class OpusLayerBase {
             val opus = ReducibleTree<Set<Array<Int>>>()
 
             if (beat_values.isEmpty()) {
-                (0 until 4).forEach {
+                for (i in 0 until 4) {
                     beat_values.add(ReducibleTree())
                 }
             }
@@ -518,7 +517,7 @@ open class OpusLayerBase {
 
             for (j in remap_trees.size - 1 downTo 0) {
                 val (lines_to_insert, remaps) = remap_trees[j]
-                (0 until lines_to_insert - 1).forEach {
+                for (k in 0 until lines_to_insert - 1) {
                     this.new_line(i, j + 1)
                     for ((type, controller) in working_channel.lines[j].controllers.get_all()) {
 
@@ -679,7 +678,7 @@ open class OpusLayerBase {
      * Get the tree structure found within the BeatKey [beat_key] at [position]
      * [position] defaults to null, indicating the root tree of the beat
      */
-    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): ReducibleTree<out InstrumentEvent> {
+    fun get_tree(beat_key: BeatKey, position: List<Int>? = null): ReducibleTree<InstrumentEvent> {
         val working_channel = try {
             this.get_channel(beat_key.channel)
         } catch (_: IndexOutOfBoundsException) {
@@ -699,14 +698,11 @@ open class OpusLayerBase {
      * Get a copy of the tree structure found within the BeatKey [beat_key] at [position]
      * [position] defaults to null, indicating the root tree of the beat
     */
-    fun get_tree_copy(beat_key: BeatKey, position: List<Int>? = null): ReducibleTree<out InstrumentEvent> {
+    fun get_tree_copy(beat_key: BeatKey, position: List<Int>? = null): ReducibleTree<InstrumentEvent> {
         // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
         // Instead just copy the events here
-        val working_tree = this.get_tree(beat_key, position).copy()
-        working_tree.traverse { tree: ReducibleTree<out InstrumentEvent>, event: InstrumentEvent? ->
-            if (event != null) {
-                checked_cast<ReducibleTree<InstrumentEvent>>(tree).set_event(event.copy())
-            }
+        val working_tree = this.get_tree(beat_key, position).copy { event ->
+            event.copy()
         }
         return working_tree
     }
@@ -1077,7 +1073,7 @@ open class OpusLayerBase {
      * Get the [type] Controller of the line at [channel], [line_offset]
      */
     fun <T: OpusControlEvent> get_line_controller(type: ControlEventType, channel: Int, line_offset: Int): ActiveController<T> {
-        return this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type)
+        return this.get_channel(channel).lines[line_offset].controllers.get_controller(type)
     }
 
     /**
@@ -1092,7 +1088,7 @@ open class OpusLayerBase {
      * Get the [type] controller of the project.
      */
     fun <T : OpusControlEvent> get_global_controller(type: ControlEventType): ActiveController<T> {
-        return this.controllers.get_controller<T>(type)
+        return this.controllers.get_controller(type)
     }
 
     /**
@@ -1840,7 +1836,7 @@ open class OpusLayerBase {
     }
 
     open fun move_channel(channel_index: Int, new_channel_index: Int) {
-        var channel = this.channels.removeAt(channel_index)
+        val channel = this.channels.removeAt(channel_index)
         this.channels.add(new_channel_index, channel)
         this.recache_line_maps()
     }
@@ -2461,7 +2457,7 @@ open class OpusLayerBase {
         for (o_key in original_keys) {
             val control_tree_map = HashMap<ControlEventType, ReducibleTree<OpusControlEvent>>()
             for ((type, _) in this.get_all_channels()[o_key.channel].lines[o_key.line_offset].controllers.get_all()) {
-                control_tree_map[type] = this.get_line_ctl_tree_copy<OpusControlEvent>(type, o_key, listOf())
+                control_tree_map[type] = this.get_line_ctl_tree_copy(type, o_key, listOf())
             }
 
             trees.add(
@@ -2527,7 +2523,7 @@ open class OpusLayerBase {
         for (o_key in original_keys) {
             val control_tree_map = HashMap<ControlEventType, ReducibleTree<OpusControlEvent>>()
             for ((type, _) in this.get_all_channels()[o_key.channel].lines[o_key.line_offset].controllers.get_all()) {
-                control_tree_map[type] = this.get_line_ctl_tree_copy<OpusControlEvent>(type, o_key, listOf())
+                control_tree_map[type] = this.get_line_ctl_tree_copy(type, o_key, listOf())
             }
 
             trees.add(
@@ -3366,7 +3362,7 @@ open class OpusLayerBase {
     }
 
     open fun convert_events_in_tree_to_relative(beat_key: BeatKey, position: List<Int>) {
-        val stack = mutableListOf<Pair<BeatKey, List<Int>>>(Pair(beat_key, position))
+        val stack = mutableListOf(Pair(beat_key, position))
         while (stack.isNotEmpty()) {
             val (working_beat_key, working_position) = stack.removeAt(0)
             val working_tree = this.get_tree(working_beat_key, working_position)
@@ -3374,7 +3370,7 @@ open class OpusLayerBase {
                 this.convert_event_to_relative(working_beat_key, working_position)
             } else if (!working_tree.is_leaf()) {
                 for ((i, _) in working_tree.divisions) {
-                    stack.add(Pair(beat_key, List<Int>(working_position.size + 1) { j: Int ->
+                    stack.add(Pair(beat_key, List(working_position.size + 1) { j: Int ->
                         if (j != working_position.size) {
                             working_position[j]
                         } else {
@@ -3387,7 +3383,7 @@ open class OpusLayerBase {
     }
 
     open fun convert_events_in_tree_to_absolute(beat_key: BeatKey, position: List<Int>) {
-        val stack = mutableListOf<Pair<BeatKey, List<Int>>>(Pair(beat_key, position))
+        val stack = mutableListOf(Pair(beat_key, position))
         while (stack.isNotEmpty()) {
             val (working_beat_key, working_position) = stack.removeAt(0)
             val working_tree = this.get_tree(working_beat_key, working_position)
@@ -3395,7 +3391,7 @@ open class OpusLayerBase {
                 this.convert_event_to_absolute(working_beat_key, working_position)
             } else if (!working_tree.is_leaf()) {
                 for ((i, _) in working_tree.divisions) {
-                    stack.add(Pair(beat_key, List<Int>(working_position.size + 1) { j: Int ->
+                    stack.add(Pair(beat_key, List(working_position.size + 1) { j: Int ->
                         if (j != working_position.size) {
                             working_position[j]
                         } else {
@@ -4330,7 +4326,7 @@ open class OpusLayerBase {
                     } else {
                         if (this.get_tree(working_beatkey!!, working_position).size != size) {
                             val c = System.currentTimeMillis()
-                            this.split_tree(working_beatkey!!, working_position, size)
+                            this.split_tree(working_beatkey, working_position, size)
                             split_dur += System.currentTimeMillis() - c
                         }
                         working_position.add(x)
@@ -4513,11 +4509,7 @@ open class OpusLayerBase {
         return this.get_beatkeys_in_range(beat_key, target_second_key)
     }
 
-    fun <T: OpusControlEvent> copy_control_event(event: T?): T? {
-        if (event == null) {
-            return null
-        }
-
+    fun <T: OpusControlEvent> copy_control_event(event: T): T {
         return event.copy() as T
     }
 
@@ -4651,7 +4643,7 @@ open class OpusLayerBase {
 
     private fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
         val working_key = BeatKey(channel, line_offset, beat_key.beat)
-        return List<BeatKey>(this.length - beat_key.beat) { i: Int ->
+        return List(this.length - beat_key.beat) { i: Int ->
             working_key.beat = i + beat_key.beat
             working_key
         }
@@ -4690,7 +4682,7 @@ open class OpusLayerBase {
         every entry is also ((some number) / 12)
      */
     fun is_tuning_standard(): Boolean {
-        val actuals = List<Double>(12) { i: Int ->
+        val actuals = List(12) { i: Int ->
             i.toDouble() / 12.0
         }
 

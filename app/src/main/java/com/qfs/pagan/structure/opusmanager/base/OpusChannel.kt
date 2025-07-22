@@ -92,14 +92,14 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         }
     }
 
-    fun replace_tree(line_offset: Int, beat: Int, position: List<Int>?, tree: ReducibleTree<U>) {
+    fun <U: InstrumentEvent> replace_tree(line_offset: Int, beat: Int, position: List<Int>?, tree: ReducibleTree<U>) {
         this.catch_blocked_tree_exception(line_offset) {
-            this.lines[line_offset].replace_tree(beat, position, tree)
+            (this.lines[line_offset] as OpusLineAbstract<U>).replace_tree(beat, position, tree)
         }
     }
 
-    fun get_tree(line: Int, beat: Int, position: List<Int>? = null): ReducibleTree<U> {
-        return this.lines[line].get_tree(beat, position)
+    fun <U> get_tree(line: Int, beat: Int, position: List<Int>? = null): ReducibleTree<U> {
+        return (this.lines[line] as OpusLineAbstract<U>).get_tree(beat, position)
     }
 
     fun <T: OpusControlEvent> get_ctl_tree(line: Int, type: ControlEventType, beat: Int, position: List<Int>? = null): ReducibleTree<T> {
@@ -142,7 +142,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         return Pair(this.get_midi_bank(), this.midi_program)
     }
 
-    fun get_line(index: Int): T {
+    fun get_line(index: Int): OpusLineAbstract<U> {
         return this.lines[index]
     }
 
@@ -237,7 +237,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is OpusChannelAbstract<*, *>) {
+        if (other !is OpusChannelAbstract<U, T>) {
             return false
         }
 
@@ -392,7 +392,7 @@ class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, Op
     }
 
     override fun gen_line(): OpusLinePercussion {
-        return OpusLinePercussion(DEFAULT_INSTRUMENT, this.get_beat_count())
+        return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 
     fun set_instrument(line: Int, offset: Int) {

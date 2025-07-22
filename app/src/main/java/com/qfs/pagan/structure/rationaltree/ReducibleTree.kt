@@ -234,7 +234,7 @@ class ReducibleTree<T> {
      * Copy the tree. If set, [copy_func] Should be a function that returns a copy of the event,
      * But could return any event of type [T] if you know what you're doing.
      */
-    fun copy(copy_func: ((event: T?) -> T?)? = null): ReducibleTree<T> {
+    fun copy(copy_func: ((event: T) -> T)? = null): ReducibleTree<T> {
         val copied = ReducibleTree<T>()
         copied._real_size = this._real_size
         for (key in this.divisions.keys) {
@@ -243,8 +243,12 @@ class ReducibleTree<T> {
             subcopy.set_parent(copied)
             copied.divisions[key] = subcopy
         }
-        copy_func?.let {
-            copied.event = it(copied.event)
+        if (this.event != null) {
+            copied.event = if (copy_func == null) {
+                this.event
+            } else {
+                 copy_func(this.event!!)
+            }
         }
         return copied
     }

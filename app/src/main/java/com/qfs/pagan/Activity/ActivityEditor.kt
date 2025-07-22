@@ -112,6 +112,7 @@ import com.qfs.pagan.TuningMapRecyclerAdapter
 import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
@@ -412,10 +413,11 @@ class ActivityEditor : PaganActivity() {
 
                         opus_manager_copy.get_all_channels()
                             .forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
-                                channel.lines.forEachIndexed line_loop@{ j: Int, line: OpusLineAbstract<*> ->
+                                line_loop@ for (j in 0 until channel.lines.size) {
+                                    val line = channel.lines[j]
                                     if (line.muted || channel.muted) {
                                         skip_lines.add(Pair(i, j))
-                                        return@line_loop
+                                        continue
                                     }
 
                                     var skip = true
@@ -541,15 +543,15 @@ class ActivityEditor : PaganActivity() {
                             }
 
                             var skip = true
-                            channel.lines.forEachIndexed line_loop@{ j: Int, line: OpusLineAbstract<*> ->
+                            line_loop@ for (line in channel.lines) {
                                 if (line.muted || !skip) {
-                                    return@line_loop
+                                    break
                                 }
 
                                 for (beat in line.beats) {
                                     if (!beat.is_eventless()) {
                                         skip = false
-                                        return@line_loop
+                                        continue@line_loop
                                     }
                                 }
                             }

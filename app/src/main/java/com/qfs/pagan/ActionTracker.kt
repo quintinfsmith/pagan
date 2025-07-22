@@ -18,17 +18,17 @@ import com.qfs.pagan.ControlWidget.ControlWidgetPan
 import com.qfs.pagan.ControlWidget.ControlWidgetTempo
 import com.qfs.pagan.ControlWidget.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.BeatKey
-import com.qfs.pagan.structure.opusmanager.ControlEventType
-import com.qfs.pagan.structure.opusmanager.ControlTransition
-import com.qfs.pagan.structure.opusmanager.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
-import com.qfs.pagan.structure.opusmanager.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -1805,7 +1805,7 @@ class ActionTracker {
                 this.remove_line(integers[0])
             }
             TrackedAction.SetTransitionAtCursor -> {
-                this.set_ctl_transition(ControlTransition.valueOf(ActionTracker.string_from_ints(integers)))
+                this.set_ctl_transition(ControlTransition.valueOf(string_from_ints(integers)))
             }
             TrackedAction.SetVolumeAtCursor -> {
                 this.set_volume(integers[0])
@@ -1904,12 +1904,12 @@ class ActionTracker {
 
             TrackedAction.ShowLineController -> {
                 this.show_hidden_line_controller(
-                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
+                    ControlEventType.valueOf(string_from_ints(integers))
                 )
             }
             TrackedAction.ShowChannelController -> {
                 this.show_hidden_channel_controller(
-                    ControlEventType.valueOf(ActionTracker.string_from_ints(integers))
+                    ControlEventType.valueOf(string_from_ints(integers))
                 )
             }
             TrackedAction.SaveProject -> {

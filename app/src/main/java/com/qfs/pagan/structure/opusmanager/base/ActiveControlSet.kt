@@ -1,10 +1,10 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
-import com.qfs.pagan.structure.opusmanager.activecontroller.PanController
-import com.qfs.pagan.structure.opusmanager.activecontroller.ReverbController
-import com.qfs.pagan.structure.opusmanager.activecontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.activecontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.ReverbController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 
 class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
     val controllers = HashMap<ControlEventType, ActiveController<out OpusControlEvent>>()

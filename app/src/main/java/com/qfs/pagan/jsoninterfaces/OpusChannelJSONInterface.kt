@@ -20,11 +20,14 @@ import com.qfs.pagan.char_to_int
 import com.qfs.pagan.jsoninterfaces.ExpectedCharacterException
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnknownChannelTypeException
+import com.qfs.pagan.structure.opusmanager.base.OpusChannel
+import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
+import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class OpusChannelJSONInterface {
     companion object {
-        fun generalize(channel: OpusChannelAbstract<*,*>): JSONHashMap {
+        fun generalize(channel: OpusChannelAbstract<*, *>): JSONHashMap {
             val channel_map = JSONHashMap()
             val lines = JSONList(channel.size) { i: Int ->
                 OpusLineJSONInterface.to_json(channel.lines[i])
@@ -72,7 +75,7 @@ class OpusChannelJSONInterface {
             return channel
         }
 
-        fun interpret(input_map: JSONHashMap, beat_count: Int): OpusChannelAbstract<*,*> {
+        fun interpret(input_map: JSONHashMap, beat_count: Int): OpusChannelAbstract<*, *> {
             val channel_type = input_map.get_stringn("type")
             val channel = when (channel_type) {
                 "std" -> this._interpret_std(input_map, beat_count)
@@ -268,7 +271,7 @@ class OpusChannelJSONInterface {
                         JSONHashMap(
                             "type" to JSONString("Volume"),
                             "initial_value" to JSONHashMap(
-                                "type" to JSONString("com.qfs.pagan.structure.opusmanager.OpusVolumeEvent"),
+                                "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent"),
                                 "value" to JSONInteger(line_volumes.get_int(i))
                             ),
                             "children" to JSONList()
@@ -279,7 +282,7 @@ class OpusChannelJSONInterface {
                     JSONHashMap(
                         "type" to JSONString("Tempo"),
                         "initial_value" to JSONHashMap(
-                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.OpusTempoEvent"),
+                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent"),
                             "value" to JSONFloat(input_map.get_float("tempo", 120F))
                         ),
                         "children" to JSONList()

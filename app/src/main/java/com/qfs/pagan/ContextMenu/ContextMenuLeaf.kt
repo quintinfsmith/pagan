@@ -6,9 +6,9 @@ import android.widget.Button
 import com.qfs.pagan.NumberSelector
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeOptionSelector
-import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
-import com.qfs.pagan.structure.opusmanager.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import kotlin.math.abs
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(

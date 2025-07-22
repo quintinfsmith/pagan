@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
 abstract class OpusEvent(var duration: Int = 1) {
     override fun equals(other: Any?): Boolean {

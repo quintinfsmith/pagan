@@ -2,10 +2,14 @@ package com.qfs.pagan.structure.opusmanager
 
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
-import com.qfs.pagan.structure.opusmanager.ActiveControllerJSONInterface.UnknownControllerException
-import com.qfs.pagan.structure.opusmanager.activecontroller.PanController
-import com.qfs.pagan.structure.opusmanager.activecontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.activecontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.ActiveControlSet
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 
 class ActiveControlSetJSONInterface {
     class UnknownControllerException : Exception()

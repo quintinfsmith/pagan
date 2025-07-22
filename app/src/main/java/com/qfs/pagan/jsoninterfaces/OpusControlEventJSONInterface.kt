@@ -2,6 +2,12 @@ package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
+import com.qfs.pagan.structure.opusmanager.base.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 
 class OpusControlEventJSONInterface {
     companion object {
@@ -31,10 +37,10 @@ class OpusControlEventJSONInterface {
             val output = JSONHashMap()
             val type = input.get_stringn("type")
             when (type) {
-                "com.qfs.pagan.structure.opusmanager.OpusTempoEvent" -> {
+                "com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent" -> {
                     output["tempo"] = input["value"]
                 }
-                "com.qfs.pagan.structure.opusmanager.OpusVolumeEvent" -> {
+                "com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent" -> {
                     output["volume"] = input["value"]
                     output["transition"] = JSONInteger(0)
                 }

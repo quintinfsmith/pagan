@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 

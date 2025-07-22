@@ -1,4 +1,9 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.cursor
+
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 
 data class OpusManagerCursor(
     var mode: CursorMode = CursorMode.Unset,
@@ -246,8 +251,8 @@ data class OpusManagerCursor(
 
     fun select_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
         this.range = Pair(
-            BeatKey(0,0, first_beat),
-            BeatKey(0,0, second_beat)
+            BeatKey(0, 0, first_beat),
+            BeatKey(0, 0, second_beat)
         )
         this.mode = CursorMode.Range
         this.ctl_type = type
@@ -260,8 +265,8 @@ data class OpusManagerCursor(
 
     fun select_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
         this.range = Pair(
-            BeatKey(channel,0, first_beat),
-            BeatKey(channel,0, second_beat)
+            BeatKey(channel, 0, first_beat),
+            BeatKey(channel, 0, second_beat)
         )
         this.mode = CursorMode.Range
         this.ctl_type = type

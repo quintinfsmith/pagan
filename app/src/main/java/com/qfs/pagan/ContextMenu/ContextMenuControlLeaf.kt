@@ -8,9 +8,9 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.ControlWidget.ControlWidget
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.ControlEventType
-import com.qfs.pagan.structure.opusmanager.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 
 class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container),

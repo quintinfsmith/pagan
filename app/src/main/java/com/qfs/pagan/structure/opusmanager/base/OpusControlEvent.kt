@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
 enum class ControlEventType(val i: Int) {
     Tempo(0),

@@ -12,7 +12,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import com.qfs.pagan.structure.opusmanager.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream

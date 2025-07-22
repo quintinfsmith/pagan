@@ -1,6 +1,6 @@
-package com.qfs.pagan.structure.opusmanager.activecontroller
+package com.qfs.pagan.structure.opusmanager.base.activecontroller
 
-import com.qfs.pagan.structure.opusmanager.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.ControlTransition
 
 class ControllerProfile() {
     val values = mutableListOf<Triple<Pair<Float, Float>, Pair<Float, Float>, ControlTransition>>()

@@ -1,6 +1,6 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): OpusTreeArray<T>(beats) {

@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.history
 
 enum class HistoryToken {
     // Meta

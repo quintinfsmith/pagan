@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BalanceMSB
@@ -19,19 +19,21 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
-import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
-import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface.Companion.LATEST_VERSION
-import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
+import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.collections.iterator
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
-
 
 /**
  * The logic of the Opus Manager.
@@ -61,6 +63,10 @@ open class OpusLayerBase {
     class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey) : Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
     class BlockedTreeException(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
     class PercussionChannelRequired(channel: Int) : Exception("Channel $channel is not a Percussion Channel")
+    class UnhandledLineType(line: OpusLineAbstract<*>): Exception("Unhandled Line Implementation: ${line::class.java.name}")
+    class TrivialBranchException(beat_key: BeatKey, position: List<Int>): Exception("Trivial Branch found at @ $beat_key, $position")
+    class UnknownSaveVersion(v: Int): Exception("Unknown Save Version $v")
+
     /**
      * Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
      */
@@ -476,7 +482,9 @@ open class OpusLayerBase {
 
                 while (true) {
                     val (offset, width) = this.get_leaf_offset_and_width(beat_key, position)
-                    val end_position = offset + Rational(this.get_tree(beat_key, position).get_event()!!.duration, width)
+                    val end_position = offset + Rational(
+                        this.get_tree(beat_key, position).get_event()!!.duration, width
+                    )
 
                     var lane_index = 0
                     while (lane_index < overlap_lanes.size) {
@@ -697,7 +705,7 @@ open class OpusLayerBase {
         val working_tree = this.get_tree(beat_key, position).copy()
         working_tree.traverse { tree: ReducibleTree<out InstrumentEvent>, event: InstrumentEvent? ->
             if (event != null) {
-                OpusLayerBase.checked_cast<ReducibleTree<InstrumentEvent>>(tree).set_event(event.copy())
+                checked_cast<ReducibleTree<InstrumentEvent>>(tree).set_event(event.copy())
             }
         }
         return working_tree
@@ -1640,18 +1648,20 @@ open class OpusLayerBase {
      */
     open fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         val is_percussion = this.is_percussion(channel)
-        if (line is OpusLine) {
-            if (is_percussion) {
-                throw InvalidLineException()
+        when (line) {
+            is OpusLine -> {
+                if (is_percussion) {
+                    throw InvalidLineException()
+                }
+                (this.get_channel(channel) as OpusChannel).insert_line(line_offset, line)
             }
-            (this.get_channel(channel) as OpusChannel).insert_line(line_offset, line)
-        } else if (line is OpusLinePercussion) {
-            if (!is_percussion) {
-                throw InvalidPercussionLineException()
+            is OpusLinePercussion -> {
+                if (!is_percussion) {
+                    throw InvalidPercussionLineException()
+                }
+                (this.get_channel(channel) as OpusPercussionChannel).insert_line(line_offset, line)
             }
-            (this.get_channel(channel) as OpusPercussionChannel).insert_line(line_offset, line)
-        } else {
-            throw Exception("Unknown Line Type")
+            else -> throw UnhandledLineType(line)
         }
         this.recache_line_maps()
     }
@@ -2665,7 +2675,7 @@ open class OpusLayerBase {
 
         when (parent_tree.size) {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
-            1 -> throw Exception("SINGLE")
+            1 -> throw TrivialBranchException(beat_key, position)
             2 -> this.remove_one_of_two(beat_key, position)
             else -> this.remove_standard(beat_key, position)
         }
@@ -3724,13 +3734,14 @@ open class OpusLayerBase {
         val tempo_controller = this.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
         apply_active_controller(tempo_controller) { event: OpusTempoEvent, _: OpusTempoEvent?, _: Int ->
             listOf(
-                Pair(0, SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F))
+                Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F))
             )
         }
 
         val channels = this.get_all_channels()
         for (c in channels.indices) {
-            val pan_controller = channels[c].controllers.get_controller<OpusPanEvent>(ControlEventType.Pan)
+            val pan_controller = channels[c].controllers.get_controller<OpusPanEvent>(
+                ControlEventType.Pan)
             apply_active_controller(pan_controller) { event: OpusPanEvent, previous_event: OpusPanEvent?, frames: Int ->
                 when (event.transition) {
                     ControlTransition.Instant -> {
@@ -3756,7 +3767,8 @@ open class OpusLayerBase {
             }
 
             if (channels[c].controllers.has_controller(ControlEventType.Volume)) {
-                val volume_controller = channels[c].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
+                val volume_controller = channels[c].controllers.get_controller<OpusVolumeEvent>(
+                    ControlEventType.Volume)
                 apply_active_controller(volume_controller) { event: OpusVolumeEvent, previous_event: OpusVolumeEvent?, frames: Int ->
                     when (event.transition) {
                         ControlTransition.Instant -> {
@@ -3832,7 +3844,9 @@ open class OpusLayerBase {
                                 val transpose_offset = 12.0 * this.transpose.first.toDouble() / this.transpose.second.toDouble()
                                 val std_offset = offset.first.toDouble() * 12.0 / offset.second.toDouble()
 
-                                val bend = ((std_offset - floor(std_offset) + transpose_offset - floor(transpose_offset)) * 512.0).toInt()
+                                val bend = ((std_offset - floor(std_offset) + transpose_offset - floor(
+                                    transpose_offset
+                                )) * 512.0).toInt()
 
                                 prev_note = current_note
 
@@ -3952,7 +3966,7 @@ open class OpusLayerBase {
 
         val channels: MutableList<JSONHashMap> = mutableListOf()
         for (channel in this.channels) {
-            channels.add(OpusChannelJSONInterface.generalize(channel))
+            channels.add(OpusChannelJSONInterface.Companion.generalize(channel))
         }
         output["size"] = this.length
         output["tuning_map"] = JSONList(this.tuning_map.size) { i: Int ->
@@ -3969,10 +3983,10 @@ open class OpusLayerBase {
 
         output["transpose"] = JSONInteger(this.transpose.first)
         output["transpose_radix"] = JSONInteger(this.transpose.second)
-        output["controllers"] = ActiveControlSetJSONInterface.to_json(this.controllers)
+        output["controllers"] = ActiveControlSetJSONInterface.Companion.to_json(this.controllers)
 
         output["channels"] = JSONList(this.channels.size) { i: Int ->
-            OpusChannelJSONInterface.generalize(this.channels[i])
+            OpusChannelJSONInterface.Companion.generalize(this.channels[i])
         }
 
         output["title"] = if (this.project_name == null) {
@@ -3988,7 +4002,7 @@ open class OpusLayerBase {
 
         return JSONHashMap(
             "d" to output,
-            "v" to JSONInteger(LATEST_VERSION)
+            "v" to JSONInteger(OpusManagerJSONInterface.Companion.LATEST_VERSION)
         )
     }
 
@@ -4037,15 +4051,15 @@ open class OpusLayerBase {
 
     open fun load(bytes: ByteArray, on_load_callback: (() -> Unit)? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
-        var version = OpusManagerJSONInterface.detect_version(generalized_object)
-        while (version < LATEST_VERSION) {
+        var generalized_object = JSONParser.Companion.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
+        var version = OpusManagerJSONInterface.Companion.detect_version(generalized_object)
+        while (version < OpusManagerJSONInterface.Companion.LATEST_VERSION) {
             generalized_object = when (version++) {
-                3 -> OpusManagerJSONInterface.convert_v3_to_v4(generalized_object)
-                2 -> OpusManagerJSONInterface.convert_v2_to_v3(generalized_object)
-                1 -> OpusManagerJSONInterface.convert_v1_to_v2(generalized_object)
-                0 -> OpusManagerJSONInterface.convert_v0_to_v1(generalized_object)
-                else -> throw Exception()
+                3 -> OpusManagerJSONInterface.Companion.convert_v3_to_v4(generalized_object)
+                2 -> OpusManagerJSONInterface.Companion.convert_v2_to_v3(generalized_object)
+                1 -> OpusManagerJSONInterface.Companion.convert_v1_to_v2(generalized_object)
+                0 -> OpusManagerJSONInterface.Companion.convert_v0_to_v1(generalized_object)
+                else -> throw UnknownSaveVersion(version - 1)
             }
         }
 
@@ -4093,7 +4107,7 @@ open class OpusLayerBase {
 
         this.set_beat_count(inner_map.get_int("size"))
         for (generalized_channel in inner_map.get_list("channels")) {
-            val channel = OpusChannelJSONInterface.interpret(
+            val channel = OpusChannelJSONInterface.Companion.interpret(
                 generalized_channel as JSONHashMap,
                 this.length
             )
@@ -4117,7 +4131,7 @@ open class OpusLayerBase {
             inner_map.get_int("transpose_radix", this.tuning_map.size)
         )
 
-        this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
+        this.controllers = ActiveControlSetJSONInterface.Companion.from_json(inner_map.get_hashmap("controllers"), this.length)
 
         this.marked_sections.clear()
         val tags = inner_map.get_hashmapn("tags")
@@ -4375,7 +4389,10 @@ open class OpusLayerBase {
 
                         // Not worrying too much about duration accuracy. would inevitably cause overly divided beats
                         // val leaf_ratio = 1f / denominator.toFloat() // (commented for clarity as to why I called the variable 'denominator', but don't use it as one)
-                        event.duration = max(1, (event.duration * denominator.toFloat() / original_size).roundToInt())
+                        event.duration = max(
+                            1,
+                            (event.duration * denominator.toFloat() / original_size).roundToInt()
+                        )
                     }
                 }
             }
@@ -4654,7 +4671,9 @@ open class OpusLayerBase {
             val y_index_new = this.get_instrument_line_index(beat_key.channel, beat_key.line_offset)
             val (new_channel, new_line_offset) = this.get_channel_and_line_offset(y_index_new + y_diff)
             if (this.is_percussion(new_channel) != this.is_percussion(beat_key.channel)) {
-                throw MixedInstrumentException(beat_key,  BeatKey(new_channel, new_line_offset, beat_key.beat))
+                throw MixedInstrumentException(beat_key,
+                    BeatKey(new_channel, new_line_offset, beat_key.beat)
+                )
             }
             Pair(
                 beat_key,
@@ -4854,7 +4873,7 @@ open class OpusLayerBase {
     open fun on_action_blocked_channel_ctl(type: ControlEventType, blocker_channel: Int, blocker_beat: Int, blocker_position: List<Int>) {}
     open fun on_action_blocked_line_ctl(type: ControlEventType, blocker_key: BeatKey, blocker_position: List<Int>) {}
 
-    fun get_visible_channels(): List<OpusChannelAbstract<*,*>> {
+    fun get_visible_channels(): List<OpusChannelAbstract<*, *>> {
         return this.channels
     }
 

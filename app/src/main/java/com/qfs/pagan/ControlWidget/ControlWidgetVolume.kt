@@ -7,9 +7,9 @@ import android.widget.SeekBar
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.ControlTransition
-import com.qfs.pagan.structure.opusmanager.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 
 class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, level, is_initial_event, R.layout.control_widget_volume, callback) {
     private lateinit var _slider: SeekBar

@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
 abstract class InstrumentEvent(duration: Int = 1): OpusEvent(duration) {
     abstract override fun copy(): InstrumentEvent

@@ -2,6 +2,10 @@ package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 
 class InstrumentEventJSONInterface {
     companion object {

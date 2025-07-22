@@ -7,10 +7,11 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
-import com.qfs.pagan.structure.opusmanager.activecontroller.ActiveController
-import com.qfs.pagan.structure.opusmanager.activecontroller.PanController
-import com.qfs.pagan.structure.opusmanager.activecontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.activecontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class ActiveControllerJSONInterface {

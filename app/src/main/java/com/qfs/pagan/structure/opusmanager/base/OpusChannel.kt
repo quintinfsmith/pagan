@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlinx.serialization.Serializable
@@ -392,7 +392,7 @@ class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, Op
     }
 
     override fun gen_line(): OpusLinePercussion {
-        return OpusLinePercussion(OpusPercussionChannel.DEFAULT_INSTRUMENT, this.get_beat_count())
+        return OpusLinePercussion(DEFAULT_INSTRUMENT, this.get_beat_count())
     }
 
     fun set_instrument(line: Int, offset: Int) {

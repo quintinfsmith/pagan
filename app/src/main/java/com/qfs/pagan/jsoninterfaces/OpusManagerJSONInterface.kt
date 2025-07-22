@@ -55,7 +55,7 @@ class OpusManagerJSONInterface {
                     JSONHashMap(
                         "type" to JSONString("Tempo"),
                         "initial_value" to JSONHashMap(
-                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.OpusTempoEvent"),
+                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent"),
                             "value" to JSONFloat(input.get_float("tempo", 120F))
                         ),
                         "children" to JSONList()

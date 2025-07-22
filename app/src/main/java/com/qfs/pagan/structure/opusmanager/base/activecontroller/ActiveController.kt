@@ -1,8 +1,8 @@
-package com.qfs.pagan.structure.opusmanager.activecontroller
+package com.qfs.pagan.structure.opusmanager.base.activecontroller
 
-import com.qfs.pagan.structure.opusmanager.ControlTransition
-import com.qfs.pagan.structure.opusmanager.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.OpusTreeArray
+import com.qfs.pagan.structure.opusmanager.base.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusTreeArray
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): OpusTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {

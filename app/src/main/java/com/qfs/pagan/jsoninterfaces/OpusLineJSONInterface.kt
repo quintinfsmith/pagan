@@ -4,6 +4,12 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
+import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusLine
+import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
+import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
+import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class OpusLineJSONInterface {

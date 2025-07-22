@@ -1,8 +1,8 @@
 package com.qfs.pagan.LineLabel
 
 import android.content.Context
-import com.qfs.pagan.structure.opusmanager.ControlEventType
-import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 
 class LineLabelCtlChannel(context: Context, ctl_type: ControlEventType, val channel: Int): LineLabelCtl(context, CtlLineLevel.Channel, ctl_type) {
 

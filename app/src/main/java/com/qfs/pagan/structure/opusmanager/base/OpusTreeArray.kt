@@ -1,10 +1,11 @@
-package com.qfs.pagan.structure.opusmanager
+package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.OpusLayerBase.BadInsertPosition
-import com.qfs.pagan.structure.opusmanager.OpusLayerBase.Companion.next_position
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase.BadInsertPosition
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase.Companion.next_position
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.collections.iterator
 
 abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<ReducibleTree<T>>) {
     class BlockedTreeException(var beat: Int, var position: List<Int>, var blocker_beat: Int, var blocker_position: List<Int>): Exception("$beat | $position is blocked by event @ $blocker_beat $blocker_position")

@@ -6,8 +6,8 @@ import androidx.appcompat.widget.AppCompatImageView
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.ControlEventType
-import com.qfs.pagan.structure.opusmanager.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 
 abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): AppCompatImageView(
     ContextThemeWrapper(context, R.style.ctl_line_label)

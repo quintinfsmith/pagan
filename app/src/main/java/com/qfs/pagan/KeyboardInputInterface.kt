@@ -1,13 +1,13 @@
 package com.qfs.pagan
 import android.view.KeyEvent
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.structure.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.BeatKey
-import com.qfs.pagan.structure.opusmanager.ControlEventType
-import com.qfs.pagan.structure.opusmanager.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.OpusManagerCursor
-import com.qfs.pagan.structure.opusmanager.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager

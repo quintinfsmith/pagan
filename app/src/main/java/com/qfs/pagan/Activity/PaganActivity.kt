@@ -32,9 +32,9 @@ import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PopupMenuRecyclerAdapter
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.ControlEventType
-import com.qfs.pagan.structure.opusmanager.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException

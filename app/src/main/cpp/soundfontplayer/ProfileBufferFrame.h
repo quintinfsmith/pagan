@@ -8,8 +8,8 @@
 struct ProfileBufferFrame {
     int frame;
     int end;
-    float initial_value;
-    float increment;
+    float* initial_value;
+    float* increment;
 };
 
 #endif //PAGAN_PROFILEBUFFERFRAME_H

@@ -297,7 +297,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private fun convert_controller_to_event_data(type_key: Int, controller: ActiveController<*>): ControllerEventData {
         val controller_profile = controller.generate_profile()
 
-        val control_event_data = HashMap<Int, Triple<Int, Float, Float>>()
+        val control_event_data = HashMap<Int, Triple<Int, FloatArray, FloatArray>>()
         for (entry in controller_profile.values) {
             for ((frames, pair) in this.adjust_effect_profile_event_to_tempo(entry.third, entry.first.first, entry.first.second, entry.second.first, entry.second.second)) {
                 control_event_data[frames.first] = Triple(frames.second, pair.first, pair.second)
@@ -423,8 +423,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     // TODO: NEEDS BETTER NAME
-    private fun adjust_effect_profile_event_to_tempo(transition: ControlTransition, relative_start: Float, relative_end: Float, start_value: Float, end_value: Float): List<Pair<Pair<Int, Int>, Pair<Float, Float>>> {
-        val output = mutableListOf<Pair<Pair<Int, Int>, Pair<Float, Float>>>()
+    private fun adjust_effect_profile_event_to_tempo(transition: ControlTransition, relative_start: Float, relative_end: Float, start_values: FloatArray, end_values: FloatArray): List<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>> {
+        val output = mutableListOf<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>>()
 
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         // Find the tempo active at the beginning of the beat
@@ -466,7 +466,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return listOf(
                 Pair(
                     Pair(start_frame, start_frame),
-                    Pair(end_value, 0F)
+                    Pair(end_values, FloatArray(end_values.size))
                 )
             )
         }
@@ -474,7 +474,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // Calculate End Position
         working_position = relative_start
         var end_frame = start_frame
-        var working_value = start_value
+        var working_values = start_values
         // Note: divide duration to keep in-line with 0-1 range
 
         while (tempo_index < this._tempo_ratio_map.size) {
@@ -482,22 +482,27 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             if (tempo_change_position < relative_end) {
                 val next_end_frame = end_frame + (frames_per_beat * (tempo_change_position - working_position)).toInt() * this.opus_manager.length
 
-                val (next_value, increment) = if (start_value != end_value && next_end_frame != end_frame) {
-                    val p = (tempo_change_position - relative_start) / (relative_end - relative_start)
-                    val n = (end_value - start_value) * p
-                    Pair(n + start_value, n / (next_end_frame - end_frame))
+                val (next_values, increments) = if (!start_values.contentEquals(end_values) && next_end_frame != end_frame) {
+                    Pair(FloatArray(start_values.size), FloatArray(start_values.size)).also {
+                        val p = (tempo_change_position - relative_start) / (relative_end - relative_start)
+                        for (i in 0 until start_values.size) {
+                            val n = (end_values[i] - start_values[i]) * p
+                            it.first[i] = n + start_values[i]
+                            it.second[i] = n / (next_end_frame - end_frame)
+                        }
+                    }
                 } else {
-                     Pair(working_value, 0F)
+                     Pair(working_values, FloatArray(working_values.size))
                 }
 
                 output.add(
                     Pair(
                         Pair(end_frame, next_end_frame - 1),
-                        Pair(working_value, increment)
+                        Pair(working_values, increments)
                     )
                 )
 
-                working_value = next_value
+                working_values = next_values
                 end_frame = next_end_frame
 
                 working_position = tempo_change_position
@@ -509,16 +514,18 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         val next_end_frame = end_frame + (frames_per_beat * (relative_end - working_position)).toInt() * this.opus_manager.length
-        val increment = if (start_value != end_value && next_end_frame != end_frame) {
-            (end_value - working_value) / (next_end_frame - end_frame).toFloat()
+        val increment = if (!start_values.contentEquals(end_values) && next_end_frame != end_frame) {
+            FloatArray(start_values.size) { i ->
+                (end_values[i] - working_values[i]) / (next_end_frame - end_frame).toFloat()
+            }
         } else {
-            0F
+            FloatArray(start_values.size)
         }
 
         output.add(
             Pair(
                 Pair(end_frame, next_end_frame - 1),
-                Pair(working_value, increment)
+                Pair(working_values, increment)
             )
         )
 

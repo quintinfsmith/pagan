@@ -8,6 +8,7 @@ Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
         jobject,
         jintArray indices,
         jintArray end_indices,
+        jint value_width,
         jfloatArray values,
         jfloatArray increments,
         jint type

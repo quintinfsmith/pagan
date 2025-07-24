@@ -4,6 +4,7 @@ import com.qfs.pagan.structure.opusmanager.base.ControlTransition
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTreeArray
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.math.max
 
 abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): OpusTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
@@ -16,9 +17,9 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
     fun generate_profile(): ControllerProfile {
         data class StackItem(val position: List<Int>, val tree: ReducibleTree<T>?, val relative_width: Float, val relative_offset: Float)
 
-        var initial_value = this.initial_event.to_float()
+        val initial_value = this.initial_event.to_float_array()
         val output = ControllerProfile()
-        output.add(0F, 0F, 0F, initial_value, ControlTransition.Instant)
+        output.add(0F, 0F, floatArrayOf(0F), initial_value, ControlTransition.Instant)
         var previous_tail = Pair(0F, initial_value)
 
 
@@ -26,16 +27,17 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
         val default_size = 1F / size.toFloat()
         for (b in 0 until size) {
             val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), this.get_tree(b), default_size, 0F))
-            while (stack.isNotEmpty()) {
+            stack_traverse@ while (stack.isNotEmpty()) {
                 val working_item = stack.removeAt(0)
                 val working_tree = working_item.tree ?: continue
 
                 if (working_tree.has_event()) {
                     val working_event = working_tree.get_event()!!
-                    val working_value = working_event.to_float()
-                    val diff = working_value - previous_tail.second
-                    if (diff == 0F) {
-                        continue
+                    val working_values = working_event.to_float_array()
+                    for (i in 0 until working_values.size) {
+                        if (working_values[i] - previous_tail.second[i] != 0F) {
+                            continue@stack_traverse
+                        }
                     }
 
                     val start_position = (b.toFloat() / size.toFloat()) + working_item.relative_offset
@@ -45,8 +47,8 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
                         output.add(previous_tail.first, start_position, previous_tail.second, previous_tail.second, ControlTransition.Instant)
                     }
 
-                    output.add(start_position, end_position, previous_tail.second, working_value, working_event.transition)
-                    previous_tail = Pair(end_position, working_value)
+                    output.add(start_position, end_position, previous_tail.second, working_values, working_event.transition)
+                    previous_tail = Pair(end_position, working_values)
                 } else if (!working_tree.is_leaf()) {
                     val new_width = working_item.relative_width / working_tree.size.toFloat()
                     for (i in 0 until working_tree.size) {

@@ -17,7 +17,7 @@ enum class ControlTransition(val i: Int) {
 abstract class OpusControlEvent(duration: Int = 1, var transition: ControlTransition = ControlTransition.Instant): OpusEvent(duration) {
     // TODO: within hashCodes, account for transition being moved here
     abstract override fun copy(): OpusControlEvent
-    abstract fun to_float(): Float
+    abstract fun to_float_array(): FloatArray
 }
 
 class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
@@ -33,8 +33,8 @@ class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(dura
         return OpusTempoEvent(this.value, this.duration)
     }
 
-    override fun to_float(): Float {
-        return this.value
+    override fun to_float_array(): FloatArray {
+        return floatArrayOf(this.value)
     }
 }
 
@@ -42,8 +42,8 @@ class OpusVolumeEvent(var value: Float, transition: ControlTransition = ControlT
     override fun copy(): OpusVolumeEvent {
         return OpusVolumeEvent(this.value, this.transition, this.duration)
     }
-    override fun to_float(): Float {
-        return this.value / 1.27F // 1.27 == 1
+    override fun to_float_array(): FloatArray {
+        return floatArrayOf(this.value / 1.27F) // 1.27 == 1
     }
     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
@@ -63,8 +63,8 @@ class OpusReverbEvent(var value: Float, duration: Int = 1): OpusControlEvent(dur
         return OpusReverbEvent(this.value, this.duration)
     }
 
-    override fun to_float(): Float {
-        return this.value
+    override fun to_float_array(): FloatArray {
+        return floatArrayOf(this.value)
     }
 
     override fun hashCode(): Int {
@@ -80,8 +80,8 @@ class OpusPanEvent(var value: Float, transition: ControlTransition = ControlTran
         return OpusPanEvent(this.value, this.transition, this.duration)
     }
 
-    override fun to_float(): Float {
-        return this.value
+    override fun to_float_array(): FloatArray {
+        return floatArrayOf(this.value)
     }
 
     override fun equals(other: Any?): Boolean {

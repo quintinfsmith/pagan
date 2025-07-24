@@ -20,10 +20,16 @@ public:
 
         for (auto & frame : frames) {
             ProfileBufferFrame* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
+            ptr->data_width = frame.data_width;
             ptr->frame = frame.frame;
-            ptr->initial_value = frame.initial_value;
             ptr->end = frame.end;
-            ptr->increment = frame.increment;
+
+            ptr->initial_value = (float*)malloc(sizeof(float) * frame.data_width);
+            ptr->increment = (float*)malloc(sizeof(float) * frame.data_width);
+            for (int i = 0; i < frame.data_width; i++) {
+                ptr->initial_value[i] = frame.initial_value[i];
+                ptr->increment[i] = frame.increment[i];
+            }
         }
     }
 
@@ -43,10 +49,19 @@ public:
                 auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
                 ptr->frame = frame->frame;
                 ptr->end = frame->end;
+                ptr->data_width = frame->data_width;
+
+                ptr->initial_value = (float*)malloc(sizeof(float) * frame->data_width);
+                ptr->increment = (float*)malloc(sizeof(float) * frame->data_width);
+                for (int j = 0; j < ptr->data_width; j++) {
+                    ptr->initial_value[j] = frame->initial_value[(i * frame->data_width) + j];
+                    ptr->increment[j] = frame->increment[(i * frame->data_width) + j];
+                }
                 ptr->increment = frame->increment;
                 ptr->initial_value = frame->initial_value;
                 new_buffer->frames[i] = ptr;
             }
+
             new_buffer->frame_count = this->frame_count;
         } else {
             new_buffer->frames = nullptr;

@@ -13,12 +13,15 @@ public:
     ControllerEventData* data;
     int current_frame;
     int current_index;
-    float current_value;
+    int data_width;
+    float* current_value;
 
-    ~ProfileBuffer() = default;
+    ~ProfileBuffer() {
+        delete this->current_value;
+    }
 
-    float get_next() {
-        float output = this->current_value;
+    float* get_next() {
+        float* output = this->current_value;
         this->_move_to_next_frame();
         return output;
     }
@@ -38,16 +41,27 @@ public:
 
         if (this->current_index >= this->data->frame_count) {
             ProfileBufferFrame* bframe_data = this->data->frames[this->data->frame_count - 1];
-            this->current_value = bframe_data->initial_value + ((bframe_data->end - bframe_data->frame) * bframe_data->increment);
+            auto frame_diff = (float)(bframe_data->end - bframe_data->frame);
+            for (int i = 0; i < this->data_width; i++) {
+                this->current_value[i] = bframe_data->initial_value[i] + (frame_diff * bframe_data->increment[i]);
+            }
         } else {
             ProfileBufferFrame* bframe_data = this->data->frames[this->current_index];
             if (this->current_frame >= bframe_data->frame) {
-                this->current_value = bframe_data->initial_value + ((this->current_frame - bframe_data->frame) * bframe_data->increment);
+                auto frame_diff = (float)(this->current_frame - bframe_data->frame);
+                for (int i = 0; i < this->data_width; i++) {
+                    this->current_value[i] = bframe_data->initial_value[i] + (frame_diff * bframe_data->increment[i]);
+                }
             } else if (this->current_index > 0) {
                 bframe_data = this->data->frames[this->current_index - 1];
-                this->current_value = bframe_data->initial_value + ((bframe_data->end - bframe_data->frame) * bframe_data->increment);
+                auto frame_diff = (float)(bframe_data->end - bframe_data->frame);
+                for (int i = 0; i < this->data_width; i++) {
+                    this->current_value[i] = bframe_data->initial_value[i] + (frame_diff * bframe_data->increment[i]);
+                }
             } else {
-                this->current_value = 0; // Shouldn't be reachable
+                for (int i = 0; i < this->data_width; i++) {
+                    this->current_value[i] = 0; // Shouldn't be reachable
+                }
             }
         }
     }
@@ -55,7 +69,10 @@ public:
     void copy_to(ProfileBuffer* new_buffer) const {
         new_buffer->data = this->data;
         new_buffer->current_index = this->current_index;
-        new_buffer->current_value = this->current_value;
+        new_buffer->data_width = this->data_width;
+        for (int i = 0; i < this->data_width; i++) {
+            new_buffer->current_value[i] = this->current_value[i];
+        }
         new_buffer->current_frame = this->current_frame;
         new_buffer->set_frame(0);
     }
@@ -82,9 +99,13 @@ private:
             }
 
             if (this->current_frame == bframe->frame) {
-                this->current_value = bframe->initial_value;
+                for (int i = 0; i < this->data_width; i++) {
+                    this->current_value[i] = bframe->initial_value[i];
+                }
             } else if (this->current_frame > bframe->frame) {
-                this->current_value += bframe->increment;
+                for (int i = 0; i < this->data_width; i++) {
+                    this->current_value[i] += bframe->increment[i];
+                }
             }
         }
     }

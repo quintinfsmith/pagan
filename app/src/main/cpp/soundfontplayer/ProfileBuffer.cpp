@@ -13,7 +13,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
     buffer->data = (ControllerEventData *)cev_ptr;
     buffer->current_frame = start_frame;
     buffer->current_index = 0;
-    buffer->current_value = 0;
+    buffer->data_width = buffer->data->frames[0]->data_width;
+    buffer->current_value = (float*)malloc(sizeof(float) * buffer->data_width);
+    for (int i = 0; i < buffer->data_width; i++) {
+        buffer->current_value[i] = 0;
+    }
+
     buffer->set_frame(0);
 
     return (jlong)buffer;

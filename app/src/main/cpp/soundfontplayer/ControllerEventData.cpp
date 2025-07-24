@@ -26,8 +26,15 @@ Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
         auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
         ptr->frame = (int)_indices[i];
         ptr->end = (int)_end_indices[i];
-        ptr->initial_value = (float)_values[i];
-        ptr->increment = (float)_increments[i];
+        ptr->data_width = value_width;
+
+        ptr->initial_value = (float*)malloc(sizeof(float) * value_width);
+        ptr->increment = (float*)malloc(sizeof(float) * value_width);
+        for (int j = 0; j < value_width; j++) {
+            ptr->initial_value[j] = (float)_values[(i * value_width) + j];
+            ptr->increment[j] = (float)_increments[(i * value_width) + j];
+        }
+
         vec[i] = ptr;
     }
 

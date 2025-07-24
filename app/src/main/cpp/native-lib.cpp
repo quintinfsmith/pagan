@@ -29,7 +29,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
 
 void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
     for (int i = 0; i < frames; i++) {
-        float pan_value = effect_buffer->get_next();
+        float pan_value = effect_buffer->get_next()[0];
         working_array[i] *= 1 + pan_value;
         working_array[i + frames] *= (-1 + pan_value) * -1;
     }
@@ -37,7 +37,7 @@ void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
 
 void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames) {
     for (int i = 0; i < frames; i++) {
-        float volume = effect_buffer->get_next();
+        float volume = effect_buffer->get_next()[0];
         working_array[i] *= volume;
         working_array[i + frames] *= volume;
     }

@@ -41,36 +41,6 @@ import kotlin.math.roundToInt
  * @constructor Creates an unusably empty object. new() / load() / import() need to be called still
  */
 open class OpusLayerBase {
-    class BadBeatKey(beat_key: BeatKey) : Exception("BeatKey $beat_key doesn't exist")
-    class NonEventConversion(beat_key: BeatKey, position: List<Int>) : Exception("Attempting to convert non-event @ $beat_key:$position")
-    class PercussionEventSet : Exception("Attempting to set percussion event on non-percussion channel")
-    class PercussionBankException : Exception("Can't set percussion channel bank. It is always 128")
-    class BadInsertPosition : Exception("Can't insert tree at top level")
-    class RemovingLastBeatException : Exception("OpusManager requires at least 1 beat")
-    class IncompatibleChannelException(channel_old: Int, channel_new: Int) : Exception("Can't move lines into or out of the percussion channel ($channel_old -> $channel_new)")
-    class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exception("Range($from_key .. $to_key) @ $startkey overflows")
-    class EventlessTreeException : Exception("Tree requires event for operation")
-    class InvalidOverwriteCall : Exception()
-    class InvalidMergeException : Exception()
-    class RemovingRootException : Exception()
-    class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
-    class NoteOutOfRange(var n: Int) : Exception("Attempting to use unsupported note $n")
-    class InvalidPercussionLineException: Exception("Attempting to add a non-percussion line to the percussion channel")
-    class InvalidLineException: Exception("Attempting to add a percussion line to the non-percussion channel")
-    class EmptyPath : Exception("Path Required but not given")
-    class EmptyJSONException: Exception("JSON object was NULL")
-    class MixedInstrumentException(first_key: BeatKey, second_key: BeatKey) : Exception("Can't mix percussion with non-percussion instruments here (${first_key.channel} & ${second_key.channel})")
-    class BlockedTreeException(beat_key: BeatKey, position: List<Int>, blocker_key: BeatKey, blocker_position: List<Int>): Exception("$beat_key | $position is blocked by event @ $blocker_key $blocker_position")
-    class PercussionChannelRequired(channel: Int) : Exception("Channel $channel is not a Percussion Channel")
-    class UnhandledLineType(line: OpusLineAbstract<*>): Exception("Unhandled Line Implementation: ${line::class.java.name}")
-    class TrivialBranchException(beat_key: BeatKey, position: List<Int>): Exception("Trivial Branch found at @ $beat_key, $position")
-    class UnknownSaveVersion(v: Int): Exception("Unknown Save Version $v")
-
-    /**
-     * Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer
-     */
-    class BlockedActionException(msg: String? = null) : Exception(msg)
-
     companion object {
         private var _channel_uuid_generator: Int = 0x00
 

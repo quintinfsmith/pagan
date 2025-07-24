@@ -1,11 +1,12 @@
 package com.qfs.pagan.structure.opusmanager.cursor
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.ActiveControlSet
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
+import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -16,8 +17,6 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 
 open class OpusLayerCursor: OpusLayerBase() {
-    class InvalidCursorState: Exception()
-    class IncorrectCursorMode(val current_mode: CursorMode, vararg required_mode: CursorMode): Exception("Incorrect Cursor Mode. Found: $current_mode. Requires: $required_mode.")
     var cursor = OpusManagerCursor()
     private var _cursor_lock = 0
 
@@ -34,7 +33,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
         return output
     }
-
 
     // BASE FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     /* ------------------- 1st Order Functions ---------------------------------- */

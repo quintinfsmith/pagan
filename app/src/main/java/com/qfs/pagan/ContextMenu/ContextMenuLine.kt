@@ -15,8 +15,9 @@ import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
 
 class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container),
@@ -67,8 +68,8 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (cursor.mode != OpusManagerCursor.CursorMode.Line) {
-            throw OpusManagerCursor.InvalidModeException(cursor.mode, OpusManagerCursor.CursorMode.Line)
+        if (cursor.mode != CursorMode.Line) {
+            throw InvalidModeException(cursor.mode, CursorMode.Line)
         }
 
         val channel = cursor.channel

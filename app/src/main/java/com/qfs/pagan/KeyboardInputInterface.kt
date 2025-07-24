@@ -3,11 +3,12 @@ import android.view.KeyEvent
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.BlockedTreeException
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -28,12 +29,12 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         var _no_function_called = false
         override fun call(opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
             when (opus_manager.cursor.mode) {
-                OpusManagerCursor.CursorMode.Line -> this.line(opus_manager, ctrl_pressed)
-                OpusManagerCursor.CursorMode.Column -> this.column(opus_manager, ctrl_pressed)
-                OpusManagerCursor.CursorMode.Single -> this.single(opus_manager, ctrl_pressed)
-                OpusManagerCursor.CursorMode.Range -> this.range(opus_manager, ctrl_pressed)
-                OpusManagerCursor.CursorMode.Unset -> this.unset(opus_manager, ctrl_pressed)
-                OpusManagerCursor.CursorMode.Channel -> this.channel(opus_manager, ctrl_pressed)
+                CursorMode.Line -> this.line(opus_manager, ctrl_pressed)
+                CursorMode.Column -> this.column(opus_manager, ctrl_pressed)
+                CursorMode.Single -> this.single(opus_manager, ctrl_pressed)
+                CursorMode.Range -> this.range(opus_manager, ctrl_pressed)
+                CursorMode.Unset -> this.unset(opus_manager, ctrl_pressed)
+                CursorMode.Channel -> this.channel(opus_manager, ctrl_pressed)
             }
 
             val output = this._no_function_called
@@ -137,7 +138,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1)
-                        } catch (e: OpusLayerBase.BlockedTreeException) {
+                        } catch (e: BlockedTreeException) {
                             // pass
                         }
                     } else {
@@ -186,7 +187,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
         Pair(KeyEvent.KEYCODE_B, true) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean): Boolean {
-                val default = if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Single) {
+                val default = if (opus_manager.cursor.mode == CursorMode.Single) {
                     opus_manager.cursor.beat
                 } else {
                     opus_manager.length - 1
@@ -322,7 +323,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1, true)
-                        } catch (e: OpusLayerBase.BlockedTreeException) {
+                        } catch (e: BlockedTreeException) {
                             // pass
                         }
                     } else {
@@ -577,7 +578,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
                 try {
                     opus_manager.convert_event_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
-                } catch (e: OpusLayerBase.NoteOutOfRange) {
+                } catch (e: NoteOutOfRange) {
                     val tree = opus_manager.get_tree()
                     val event = tree.get_event()!! as RelativeNoteEvent
                     opus_manager.set_event_at_cursor(
@@ -604,7 +605,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     null -> {
                         try {
                             opus_manager.split_tree_at_cursor(splits)
-                        } catch (e: OpusLayerBase.BlockedTreeException) {
+                        } catch (e: BlockedTreeException) {
                             // ignore
                         }
                     }

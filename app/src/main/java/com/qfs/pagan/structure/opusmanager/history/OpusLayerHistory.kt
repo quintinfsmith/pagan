@@ -112,7 +112,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> push_replace_tree(beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<out InstrumentEvent>? = null, callback: () -> T): T {
-        return if (!this.history_cache.isLocked()) {
+        return if (!this.history_cache.is_locked()) {
             val use_tree = tree ?: this.get_tree_copy(beat_key, position)
             val output = callback()
             this.push_to_history_stack(
@@ -126,7 +126,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> push_replace_global_ctl(type: ControlEventType, beat: Int, position: List<Int>, callback: () -> T): T {
-        return if (!this.history_cache.isLocked()) {
+        return if (!this.history_cache.is_locked()) {
             val use_tree = this.get_global_ctl_tree<OpusControlEvent>(type, beat, position).copy()
 
             val output = callback()
@@ -143,7 +143,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> push_replace_channel_ctl(type: ControlEventType, channel: Int, beat: Int, position: List<Int>, callback: () -> T): T {
-        return if (!this.history_cache.isLocked()) {
+        return if (!this.history_cache.is_locked()) {
             val use_tree = this.get_channel_ctl_tree<OpusControlEvent>(type, channel, beat, position).copy()
 
             val output = callback()
@@ -159,7 +159,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> push_replace_line_ctl(type: ControlEventType, beat_key: BeatKey, position: List<Int>, callback: () -> T): T {
-        return if (!this.history_cache.isLocked()) {
+        return if (!this.history_cache.is_locked()) {
             val use_tree = this.get_line_ctl_tree<OpusControlEvent>(type, beat_key, position).copy()
 
             val output = callback()

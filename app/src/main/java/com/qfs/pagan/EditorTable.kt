@@ -11,7 +11,7 @@ import android.widget.LinearLayout
 import androidx.core.view.isGone
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 

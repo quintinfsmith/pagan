@@ -1,7 +1,6 @@
 package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase.BadInsertPosition
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase.Companion.next_position
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree

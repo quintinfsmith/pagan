@@ -112,15 +112,13 @@ import com.qfs.pagan.TuningMapRecyclerAdapter
 import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -1208,7 +1206,7 @@ class ActivityEditor : PaganActivity() {
 
                 if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
                     that.drawer_close()
-                } else if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Unset) {
+                } else if (opus_manager.cursor.mode != CursorMode.Unset) {
                     opus_manager.cursor_clear()
                 } else {
                     that.dialog_save_project {
@@ -2449,7 +2447,7 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
 
         if (this.active_project == null) {
-            return !opus_manager.history_cache.isEmpty()
+            return !opus_manager.history_cache.is_empty()
         }
 
         if (DocumentFile.fromSingleUri(this, this.active_project!!)?.exists() != true) {
@@ -2634,11 +2632,11 @@ class ActivityEditor : PaganActivity() {
     fun get_working_column(): Int {
         val cursor = this.get_opus_manager().cursor
         return when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Column -> {
+            CursorMode.Single,
+            CursorMode.Column -> {
                 cursor.beat
             }
-            OpusManagerCursor.CursorMode.Range -> {
+            CursorMode.Range -> {
                 cursor.get_ordered_range()!!.first.beat
             }
             else -> {
@@ -3201,11 +3199,11 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         return when (cursor.mode) {
-            OpusManagerCursor.CursorMode.Single,
-            OpusManagerCursor.CursorMode.Column -> {
+            CursorMode.Single,
+            CursorMode.Column -> {
                 cursor.beat
             }
-            OpusManagerCursor.CursorMode.Range -> {
+            CursorMode.Range -> {
                 cursor.range!!.first.beat
             }
             else -> {

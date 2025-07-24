@@ -10,9 +10,9 @@ import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.UIChangeBill.BillableItem
 import com.qfs.pagan.UIChangeBill.UIChangeBill
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.UnreachableException
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
@@ -25,7 +25,8 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -2733,9 +2734,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     fun set_relative_mode(event: TunedInstrumentEvent) {
         if (this._activity != null && this._activity!!.configuration.relative_mode) {
             this.relative_mode = when (event) {
-                is AbsoluteNoteEvent -> {
-                    RelativeInputMode.Absolute
-                }
                 is RelativeNoteEvent -> {
                     if (event.offset >= 0) {
                         RelativeInputMode.Positive
@@ -2743,7 +2741,9 @@ class OpusLayerInterface : OpusLayerHistory() {
                         RelativeInputMode.Negative
                     }
                 }
-                else -> throw UnreachableException()
+                else -> {
+                    RelativeInputMode.Absolute
+                }
             }
         } else {
             this.relative_mode = RelativeInputMode.Absolute
@@ -2805,7 +2805,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     duration
                 )
             }
-            else -> throw UnreachableException()
         }
 
         this.set_event(beat_key, position, new_event)

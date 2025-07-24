@@ -16,18 +16,6 @@ data class OpusManagerCursor(
     var ctl_type: ControlEventType? = null
 ) {
 
-    enum class CursorMode {
-        Line,
-        Column,
-        Single,
-        Range,
-        Channel,
-        Unset
-    }
-
-    class InvalidModeException(actual: CursorMode, expected: CursorMode): Exception("Incorrect Cursor Mode. expected $expected but got $actual")
-    class InvalidControlLevelException(actual: CtlLineLevel?, expected: CtlLineLevel?): Exception("Incorrect Control Level. Expected: $expected but got $actual")
-
     override fun equals(other: Any?): Boolean {
         if (other !is OpusManagerCursor) {
             return false

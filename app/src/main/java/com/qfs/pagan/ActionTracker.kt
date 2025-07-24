@@ -23,12 +23,15 @@ import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.ControlTransition
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
+import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
+import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
+import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -453,7 +456,7 @@ class ActionTracker {
                 to_channel,
                 to_line
             )
-        } catch (_: OpusLayerBase.IncompatibleChannelException) {
+        } catch (_: IncompatibleChannelException) {
             val activity = this.get_activity()
             activity.feedback_msg(activity.getString(R.string.std_percussion_swap))
         }
@@ -587,9 +590,9 @@ class ActionTracker {
                         second_key,
                         repeat
                     )
-                } catch (_: OpusLayerBase.MixedInstrumentException) {
+                } catch (_: MixedInstrumentException) {
                     opus_manager.cursor_select_line(channel, line_offset)
-                } catch (_: OpusLayerBase.InvalidOverwriteCall) {
+                } catch (_: InvalidOverwriteCall) {
                     opus_manager.cursor_select_line(channel, line_offset)
                 }
             }
@@ -598,7 +601,7 @@ class ActionTracker {
                 this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
                 try {
                     opus_manager.overwrite_line(channel, line_offset, first_key, repeat)
-                } catch (_: OpusLayerBase.InvalidOverwriteCall) {
+                } catch (_: InvalidOverwriteCall) {
                     opus_manager.cursor_select_line(channel, line_offset)
                 }
             }
@@ -614,7 +617,7 @@ class ActionTracker {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
-        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == null) {
+        if (cursor.mode == CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == null) {
             opus_manager.cursor_select_channel(channel)
         } else {
             opus_manager.cursor_select_line(channel, line_offset)
@@ -626,7 +629,7 @@ class ActionTracker {
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == CtlLineLevel.Line && type == cursor.ctl_type) {
+        if (cursor.mode == CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == CtlLineLevel.Line && type == cursor.ctl_type) {
             opus_manager.cursor_select_channel(channel)
         } else {
             opus_manager.cursor_select_line_ctl_line(type, channel, line_offset)
@@ -689,7 +692,7 @@ class ActionTracker {
         val opus_manager = this.get_opus_manager()
 
         val cursor = opus_manager.cursor
-        if (cursor.mode == OpusManagerCursor.CursorMode.Line && cursor.channel == channel && cursor.ctl_level == CtlLineLevel.Channel && type == cursor.ctl_type) {
+        if (cursor.mode == CursorMode.Line && cursor.channel == channel && cursor.ctl_level == CtlLineLevel.Channel && type == cursor.ctl_type) {
             opus_manager.cursor_select_channel(channel)
         } else {
             opus_manager.cursor_select_channel_ctl_line(type, channel)
@@ -1343,7 +1346,7 @@ class ActionTracker {
                             //val current_tree = opus_manager.get_tree()
                             val new_event = current_tree.get_event()!!
                             (new_event as AbsoluteNoteEvent).note
-                        } catch (_: OpusLayerBase.NoteOutOfRange) {
+                        } catch (_: NoteOutOfRange) {
                             opus_manager.set_event_at_cursor(
                                 AbsoluteNoteEvent(0, event.duration)
                             )
@@ -1988,21 +1991,21 @@ class ActionTracker {
 
         context_menu.label.text = when (mode) {
             PaganConfiguration.MoveMode.MOVE -> {
-                if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                if (opus_manager.cursor.mode == CursorMode.Range) {
                     main.resources.getString(R.string.label_move_range)
                 } else {
                     main.resources.getString(R.string.label_move_beat)
                 }
             }
             PaganConfiguration.MoveMode.COPY -> {
-                if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                if (opus_manager.cursor.mode == CursorMode.Range) {
                     main.resources.getString(R.string.label_copy_range)
                 } else {
                     main.resources.getString(R.string.label_copy_beat)
                 }
             }
             PaganConfiguration.MoveMode.MERGE -> {
-                if (opus_manager.cursor.mode == OpusManagerCursor.CursorMode.Range) {
+                if (opus_manager.cursor.mode == CursorMode.Range) {
                     main.resources.getString(R.string.label_merge_range)
                 } else {
                     main.resources.getString(R.string.label_merge_beat)

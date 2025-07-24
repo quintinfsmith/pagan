@@ -20,17 +20,22 @@ import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.InvalidMergeException
+import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
+import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
 import kotlin.math.floor
@@ -170,19 +175,19 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                 } catch (e: Exception) {
                     when (e) {
-                        is OpusLayerBase.MixedInstrumentException -> {
+                        is MixedInstrumentException -> {
                             tracker.ignore().cursor_select(beat_key, opus_manager.get_first_position(beat_key))
                             context.feedback_msg(context.getString(R.string.feedback_mixed_copy))
                         }
-                        is OpusLayerBase.RangeOverflow -> {
+                        is RangeOverflow -> {
                             tracker.ignore().cursor_select(beat_key, position)
                             context.feedback_msg(context.getString(R.string.feedback_bad_range))
                         }
-                        is OpusLayerCursor.InvalidCursorState -> {
+                        is InvalidCursorState -> {
                             // Shouldn't ever actually be possible
                             throw e
                         }
-                        is OpusLayerBase.InvalidMergeException -> {
+                        is InvalidMergeException -> {
                             tracker.ignore().cursor_select(beat_key, opus_manager.get_first_position(beat_key))
                         }
                         else -> {
@@ -211,7 +216,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 } catch (e: Exception) {
                     when (e) {
                         is IndexOutOfBoundsException,
-                        is OpusLayerBase.InvalidOverwriteCall -> {
+                        is InvalidOverwriteCall -> {
                             tracker.ignore().cursor_select_ctl_at_line(type, beat_key, position)
                         }
                         else -> throw e
@@ -239,7 +244,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 } catch (e: Exception) {
                     when (e) {
                         is IndexOutOfBoundsException,
-                        is OpusLayerBase.InvalidOverwriteCall -> {
+                        is InvalidOverwriteCall -> {
                             tracker.ignore().cursor_select_ctl_at_channel(type, channel, beat, position)
                         }
                         else -> throw e
@@ -265,7 +270,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 } catch (e: Exception) {
                     when (e) {
                         is IndexOutOfBoundsException,
-                        is OpusLayerBase.InvalidOverwriteCall -> {
+                        is InvalidOverwriteCall -> {
                             tracker.cursor_select_ctl_at_global(type, beat, position)
                         }
                         else -> {
@@ -400,7 +405,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             if (tree.has_event()) {
                 new_state.add(R.attr.state_active)
                 val match_cursor = OpusManagerCursor(
-                    OpusManagerCursor.CursorMode.Single,
+                    CursorMode.Single,
                     original_position.first.channel,
                     original_position.first.line_offset,
                     original_position.first.beat,
@@ -464,7 +469,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             if (tree.has_event()) {
                 val match_cursor = OpusManagerCursor(
-                    mode = OpusManagerCursor.CursorMode.Single,
+                    mode = CursorMode.Single,
                     ctl_type = type,
                     ctl_level = CtlLineLevel.Global,
                     beat = original_position.first,
@@ -500,7 +505,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             if (tree.has_event()) {
                 val match_cursor = OpusManagerCursor(
-                    mode = OpusManagerCursor.CursorMode.Single,
+                    mode = CursorMode.Single,
                     ctl_type = type,
                     ctl_level = CtlLineLevel.Channel,
                     channel = channel,
@@ -541,7 +546,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             if (tree.has_event()) {
                 val match_cursor = OpusManagerCursor(
-                    mode = OpusManagerCursor.CursorMode.Single,
+                    mode = CursorMode.Single,
                     ctl_type = type,
                     ctl_level = CtlLineLevel.Line,
                     channel = beat_key.channel,

@@ -10,7 +10,7 @@ import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.LineLabelColumnLayout
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context) {

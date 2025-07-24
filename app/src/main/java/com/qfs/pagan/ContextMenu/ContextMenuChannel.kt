@@ -6,7 +6,8 @@ import android.widget.Button
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
 
 /*
     CHANNEL_CTLS. Channel controls are not currently considered in playback, so I'll comment out the controls for a future release
@@ -37,8 +38,8 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     override fun refresh() {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
-        if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Channel) {
-            throw OpusManagerCursor.InvalidModeException(opus_manager.cursor.mode, OpusManagerCursor.CursorMode.Line)
+        if (opus_manager.cursor.mode != CursorMode.Channel) {
+            throw InvalidModeException(opus_manager.cursor.mode, CursorMode.Line)
         }
 
         this.button_choose_instrument.visibility = View.VISIBLE

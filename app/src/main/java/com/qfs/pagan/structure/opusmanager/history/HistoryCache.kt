@@ -9,16 +9,16 @@ class HistoryCache {
     private var _history_lock = 0
     private var _history: MutableList<HistoryNode> = mutableListOf()
     private var _working_node: HistoryNode? = null
-    fun isLocked(): Boolean {
+    fun is_locked(): Boolean {
         return this._history_lock != 0
     }
 
-    fun isEmpty(): Boolean {
+    fun is_empty(): Boolean {
         return this._history.isEmpty()
     }
 
     fun prepend_undoer(token: HistoryToken, args: List<Any>) {
-        if (this.isLocked()) {
+        if (this.is_locked()) {
             return
         }
         val new_node = HistoryNode(token, args)
@@ -34,7 +34,7 @@ class HistoryCache {
     }
 
     fun append_undoer(token: HistoryToken, args: List<Any>) {
-        if (this.isLocked()) {
+        if (this.is_locked()) {
             return
         }
         val new_node = HistoryNode(token, args)
@@ -76,7 +76,7 @@ class HistoryCache {
     }
 
     private fun _open_multi() {
-        if (this.isLocked()) {
+        if (this.is_locked()) {
             return
         }
 
@@ -92,7 +92,7 @@ class HistoryCache {
     }
 
     private fun _close_multi() {
-        if (this.isLocked()) {
+        if (this.is_locked()) {
             return
         }
         if (this._working_node != null) {

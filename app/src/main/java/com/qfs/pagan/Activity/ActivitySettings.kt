@@ -19,7 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.net.toUri
-import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivitySettingsBinding

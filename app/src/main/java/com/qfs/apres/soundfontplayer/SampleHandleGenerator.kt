@@ -2,11 +2,11 @@ package com.qfs.apres.soundfontplayer
 
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.Generator
-import com.qfs.apres.soundfont.InstrumentDirective
-import com.qfs.apres.soundfont.Modulator
-import com.qfs.apres.soundfont.Preset
-import com.qfs.apres.soundfont.SampleDirective
+import com.qfs.apres.soundfont2.Generator
+import com.qfs.apres.soundfont2.InstrumentDirective
+import com.qfs.apres.soundfont2.Modulator
+import com.qfs.apres.soundfont2.Preset
+import com.qfs.apres.soundfont2.SampleDirective
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow

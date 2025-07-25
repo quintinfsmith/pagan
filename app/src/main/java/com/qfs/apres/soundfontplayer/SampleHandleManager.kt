@@ -4,10 +4,10 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.InstrumentDirective
-import com.qfs.apres.soundfont.Preset
-import com.qfs.apres.soundfont.SampleDirective
-import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfont2.InstrumentDirective
+import com.qfs.apres.soundfont2.Preset
+import com.qfs.apres.soundfont2.SampleDirective
+import com.qfs.apres.soundfont2.SoundFont
 import kotlin.math.max
 
 class SampleHandleManager(

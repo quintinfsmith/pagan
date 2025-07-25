@@ -1,7 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import android.util.Log
-import com.qfs.apres.soundfont.SampleData
+import com.qfs.apres.soundfont2.SampleData
 import kotlin.math.abs
 
 class SampleHandle(var ptr: Long) {

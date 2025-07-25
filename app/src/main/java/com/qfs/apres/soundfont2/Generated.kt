@@ -1,6 +1,6 @@
-package com.qfs.apres.soundfont
+package com.qfs.apres.soundfont2
 
-import com.qfs.apres.soundfont.Generator.Operation
+import com.qfs.apres.soundfont2.Generator.Operation
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

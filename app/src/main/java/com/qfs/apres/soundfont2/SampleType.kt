@@ -1,4 +1,4 @@
-package com.qfs.apres.soundfont
+package com.qfs.apres.soundfont2
 
 enum class SampleType(val i: Int) {
     Mono(0x0001),

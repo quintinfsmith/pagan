@@ -1,6 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.apres.soundfont.SampleData
+import com.qfs.apres.soundfont2.SampleData
 
 class PitchedBuffer(var ptr: Long) {
     constructor(data: SampleData, pitch: Float, known_max: Int? = null, range: IntRange? = null, is_loop: Boolean = false): this(

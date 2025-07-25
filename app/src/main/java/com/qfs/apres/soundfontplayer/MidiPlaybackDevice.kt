@@ -1,7 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 import com.qfs.apres.Midi
-import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfont2.SoundFont
 
 class MidiPlaybackDevice(sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(MidiFrameMap(sample_handle_manager), sample_handle_manager.sample_rate, sample_handle_manager.buffer_size) {
     class Builder {

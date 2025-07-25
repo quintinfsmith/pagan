@@ -72,8 +72,8 @@ import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event2.NoteOn79
-import com.qfs.apres.soundfont.Riff
-import com.qfs.apres.soundfont.SoundFont
+import com.qfs.apres.soundfont2.Riff
+import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator

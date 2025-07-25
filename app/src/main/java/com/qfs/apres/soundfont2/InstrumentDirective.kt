@@ -1,4 +1,4 @@
-package com.qfs.apres.soundfont
+package com.qfs.apres.soundfont2
 
 class InstrumentDirective: Generated() {
     var instrument: Instrument? = null

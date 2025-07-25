@@ -1,4 +1,4 @@
-package com.qfs.apres.soundfont
+package com.qfs.apres.soundfont2
 
 class SampleData(var ptr: Long) {
     var size: Int = 0

@@ -1,4 +1,4 @@
-package com.qfs.apres.soundfont
+package com.qfs.apres.soundfont2
 
 data class Sample(
     var name: String,

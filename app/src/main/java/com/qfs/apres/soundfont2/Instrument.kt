@@ -1,4 +1,4 @@
-package com.qfs.apres.soundfont
+package com.qfs.apres.soundfont2
 
 class Instrument(var name: String) {
     var sample_directives = HashMap<Int, SampleDirective>()

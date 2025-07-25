@@ -1,4 +1,4 @@
-package com.qfs.apres.soundfont
+package com.qfs.apres.soundfont2
 
 
 class Modulator(val source_operator: Operator, val value: Operator, val destination: Generator.Operation, val transform: TransformOperation, val amount: Short) {

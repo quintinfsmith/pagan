@@ -1,10 +1,10 @@
-package com.qfs.pagan.ContextMenu
+package com.qfs.pagan.contextmenu
 
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import com.qfs.pagan.ContextMenuWithController
-import com.qfs.pagan.ControlWidget.ControlWidget
+import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent

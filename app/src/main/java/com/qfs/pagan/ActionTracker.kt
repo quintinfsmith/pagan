@@ -12,11 +12,11 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.Activity.ActivityEditor
-import com.qfs.pagan.ContextMenu.ContextMenuControlLeaf
-import com.qfs.pagan.ContextMenu.ContextMenuRange
-import com.qfs.pagan.ControlWidget.ControlWidgetPan
-import com.qfs.pagan.ControlWidget.ControlWidgetTempo
-import com.qfs.pagan.ControlWidget.ControlWidgetVolume
+import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
+import com.qfs.pagan.contextmenu.ContextMenuRange
+import com.qfs.pagan.controlwidgets.ControlWidgetPan
+import com.qfs.pagan.controlwidgets.ControlWidgetTempo
+import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey

@@ -1,4 +1,4 @@
-package com.qfs.pagan.ContextMenu
+package com.qfs.pagan.contextmenu
 
 import android.content.res.Configuration
 import android.view.View
@@ -26,7 +26,7 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
         }
         this.label.visibility = View.VISIBLE
 
-        this.radio_mode = this.secondary!!.findViewById<RadioGroup?>(R.id.rgMoveMode)
+        this.radio_mode = this.secondary!!.findViewById(R.id.rgMoveMode)
     }
 
     override fun setup_interactions() {

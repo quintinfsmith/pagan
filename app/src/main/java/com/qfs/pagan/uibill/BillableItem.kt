@@ -1,4 +1,4 @@
-package com.qfs.pagan.UIChangeBill
+package com.qfs.pagan.uibill
 
 enum class BillableItem {
     RowAdd,

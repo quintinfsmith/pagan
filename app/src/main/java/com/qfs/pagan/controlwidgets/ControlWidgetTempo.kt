@@ -1,4 +1,4 @@
-package com.qfs.pagan.ControlWidget
+package com.qfs.pagan.controlwidgets
 
 import android.content.Context
 import android.widget.Button

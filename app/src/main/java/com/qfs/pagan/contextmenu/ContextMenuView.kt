@@ -1,4 +1,4 @@
-package com.qfs.pagan.ContextMenu
+package com.qfs.pagan.contextmenu
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

@@ -7,8 +7,8 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
-import com.qfs.pagan.UIChangeBill.BillableItem
-import com.qfs.pagan.UIChangeBill.UIChangeBill
+import com.qfs.pagan.uibill.BillableItem
+import com.qfs.pagan.uibill.UIChangeBill
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey

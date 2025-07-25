@@ -1,4 +1,4 @@
-package com.qfs.pagan.UIChangeBill
+package com.qfs.pagan.uibill
 
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.structure.Rational

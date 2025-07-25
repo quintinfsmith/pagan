@@ -1,4 +1,4 @@
-package com.qfs.pagan.ContextMenu
+package com.qfs.pagan.contextmenu
 
 import android.content.res.Configuration
 import android.view.View
@@ -8,8 +8,8 @@ import android.widget.LinearLayout
 import android.widget.Space
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ContextMenuWithController
-import com.qfs.pagan.ControlWidget.ControlWidget
-import com.qfs.pagan.ControlWidget.ControlWidgetVolume
+import com.qfs.pagan.controlwidgets.ControlWidget
+import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType

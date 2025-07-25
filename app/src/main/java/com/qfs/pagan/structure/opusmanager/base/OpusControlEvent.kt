@@ -43,7 +43,8 @@ class OpusVolumeEvent(var value: Float, transition: ControlTransition = ControlT
         return OpusVolumeEvent(this.value, this.transition, this.duration)
     }
     override fun to_float_array(): FloatArray {
-        return floatArrayOf(this.value / 1.27F) // 1.27 == 1
+        val adjusted = this.value / 1.27F
+        return floatArrayOf(adjusted * adjusted) // 1.27 == 1
     }
     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())

@@ -109,6 +109,7 @@ import com.qfs.pagan.RangedFloatInput
 import com.qfs.pagan.RangedIntegerInput
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
+import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -117,6 +118,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import java.io.BufferedOutputStream
@@ -2960,6 +2962,17 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_initial_event(event)
                 }
             }
+            ControlEventType.Velocity -> {
+                val controller = controller_set.get_controller<OpusVelocityEvent>(cursor.ctl_type!!)
+                ControlWidgetVelocity(
+                    controller.initial_event,
+                    cursor.ctl_level!!,
+                    true,
+                    this
+                ) { event: OpusVelocityEvent ->
+                    opus_manager.set_initial_event(event)
+                }
+            }
 
             ControlEventType.Pan -> {
                 val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
@@ -3022,6 +3035,16 @@ class ActivityEditor : PaganActivity() {
                     false,
                     this
                 ) { event: OpusVolumeEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+            ControlEventType.Velocity -> {
+                ControlWidgetVelocity(
+                    default as OpusVelocityEvent,
+                    cursor.ctl_level!!,
+                    false,
+                    this
+                ) { event: OpusVelocityEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }

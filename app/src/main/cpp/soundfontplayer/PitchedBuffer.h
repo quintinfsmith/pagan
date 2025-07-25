@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 #include <exception>
-#include "../soundfont/SampleData.h"
+#include "../soundfont2/SampleData.h"
 
 class PitchedBufferOverflow : public std::exception {};
 

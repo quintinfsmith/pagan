@@ -7,6 +7,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 
 class OpusControlEventJSONInterface {
@@ -20,6 +21,10 @@ class OpusControlEventJSONInterface {
                 }
                 is OpusVolumeEvent -> {
                     output["volume"] = input.value
+                    output["transition"] = input.transition.name
+                }
+                is OpusVelocityEvent -> {
+                    output["velocity"] = input.value
                     output["transition"] = input.transition.name
                 }
                 is OpusReverbEvent -> {
@@ -54,8 +59,9 @@ class OpusControlEventJSONInterface {
         fun tempo_event(map: JSONHashMap): OpusTempoEvent {
             return OpusTempoEvent(map.get_float("tempo"), map.get_int("duration", 1))
         }
+
         fun volume_event(map: JSONHashMap): OpusVolumeEvent {
-            val value = if (map.get("volume") is JSONInteger) {
+            val value = if (map["volume"] is JSONInteger) {
                 map.get_int("volume").toFloat() / 128F
             } else {
                 map.get_float("volume")
@@ -71,6 +77,25 @@ class OpusControlEventJSONInterface {
                 map.get_int("duration", 1)
             )
         }
+
+        fun velocity_event(map: JSONHashMap): OpusVelocityEvent {
+            val value = if (map["velocity"] is JSONInteger) {
+                map.get_int("velocity").toFloat() / 128F
+            } else {
+                map.get_float("velocity")
+            }
+            return OpusVelocityEvent(
+                value,
+                /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
+                try {
+                    ControlTransition.valueOf(map.get_string("transition", "Instant"))
+                } catch (e: ClassCastException) {
+                    ControlTransition.Instant
+                },
+                map.get_int("duration", 1)
+            )
+        }
+
         fun reverb_event(map: JSONHashMap): OpusReverbEvent {
             return OpusReverbEvent(
                 map.get_float("wetness"),

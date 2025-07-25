@@ -2,7 +2,7 @@
 #include "SampleData.h"
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfont_SampleData_set_1data_1jni(JNIEnv* env, jobject, jshortArray input) {
+Java_com_qfs_apres_soundfont2_SampleData_set_1data_1jni(JNIEnv* env, jobject, jshortArray input) {
     auto *ptr = (SampleData *)malloc(sizeof(SampleData));
     int size = env->GetArrayLength(input);
 
@@ -22,7 +22,7 @@ Java_com_qfs_apres_soundfont_SampleData_set_1data_1jni(JNIEnv* env, jobject, jsh
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfont_SampleData_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
+Java_com_qfs_apres_soundfont2_SampleData_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleData *)ptr_long;
     delete ptr;
 }

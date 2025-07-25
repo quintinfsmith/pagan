@@ -315,13 +315,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return ControllerEventData(array, type_key)
     }
 
-    private fun get_control_type_key(control_type: ControlEventType): Int? {
-        return when (control_type) {
-            ControlEventType.Pan -> 1
-            ControlEventType.Volume -> 2
-            ControlEventType.Reverb -> 3
-            ControlEventType.Tempo -> null
-        }
+    private fun get_control_type_key(control_type: ControlEventType): Int {
+        return control_type.i
     }
 
     fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
@@ -335,7 +330,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
                 if (!ignore_line_controls) {
                     for ((control_type, controller) in line.controllers.get_all()) {
-                        val control_type_key = this.get_control_type_key(control_type) ?: continue
+                        val control_type_key = this.get_control_type_key(control_type)
                         this._effect_profiles.add(
                             Triple(
                                 0, // layer ( line)
@@ -353,7 +348,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             }
             if (!ignore_channel_controls) {
                 for ((control_type, controller) in channel.controllers.get_all()) {
-                    val control_type_key = this.get_control_type_key(control_type) ?: continue
+                    val control_type_key = this.get_control_type_key(control_type)
                     this._effect_profiles.add(
                         Triple(
                             1, // layer (channel)
@@ -369,7 +364,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         if (!ignore_global_controls) {
             for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
-                val control_type_key = this.get_control_type_key(control_type) ?: continue
+                val control_type_key = this.get_control_type_key(control_type)
                 this._effect_profiles.add(
                     Triple(
                         2, // layer (global)

@@ -11,6 +11,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
@@ -28,6 +29,12 @@ class ActiveControllerJSONInterface {
                     val controller = VolumeController(size)
                     controller.set_initial_event(OpusControlEventJSONInterface.volume_event(obj.get_hashmap("initial")))
                     this.populate_controller(obj, controller, OpusControlEventJSONInterface::volume_event)
+                    controller
+                }
+                "velocity" -> {
+                    val controller = VelocityController(size)
+                    controller.set_initial_event(OpusControlEventJSONInterface.velocity_event(obj.get_hashmap("initial")))
+                    this.populate_controller(obj, controller, OpusControlEventJSONInterface::velocity_event)
                     controller
                 }
                 "pan" -> {
@@ -121,6 +128,7 @@ class ActiveControllerJSONInterface {
             map["type"] = when (controller) {
                 is TempoController -> "tempo"
                 is VolumeController -> "volume"
+                is VelocityController -> "velocity"
                 is PanController -> "pan"
                 else -> throw UnhandledControllerException(controller)
             }

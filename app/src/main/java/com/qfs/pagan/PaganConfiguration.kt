@@ -31,7 +31,7 @@ data class PaganConfiguration(
     companion object {
         fun from_json(content: JSONHashMap): PaganConfiguration {
             return PaganConfiguration(
-                soundfont = content.get_stringn("soundfont"),
+                soundfont = content.get_stringn("soundfont2"),
                 sample_rate = content.get_int("sample_rate", 32000),
                 relative_mode = content.get_boolean("relative_mode", false),
                 move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
@@ -70,7 +70,7 @@ data class PaganConfiguration(
 
     fun to_json(): JSONHashMap {
         val output = JSONHashMap()
-        output["soundfont"] = this.soundfont
+        output["soundfont2"] = this.soundfont
         output["sample_rate"] = this.sample_rate
         output["relative_mode"] = this.relative_mode
         output["move_mode"] = this.move_mode.name

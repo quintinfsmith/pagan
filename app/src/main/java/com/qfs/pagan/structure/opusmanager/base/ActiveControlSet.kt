@@ -4,6 +4,7 @@ import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveControlle
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.ReverbController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 
 class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
@@ -38,6 +39,7 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
                 ControlEventType.Volume -> VolumeController(this.beat_count)
                 ControlEventType.Reverb -> ReverbController(this.beat_count)
                 ControlEventType.Pan -> PanController(this.beat_count)
+                ControlEventType.Velocity -> VelocityController(this.beat_count)
             }
         } else {
             this.controllers[type] = controller

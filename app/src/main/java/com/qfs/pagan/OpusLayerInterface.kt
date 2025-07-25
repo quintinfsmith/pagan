@@ -50,6 +50,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
         val line_controller_domain = listOf(
             ControlEventType.Volume,
+            ControlEventType.Velocity,
             ControlEventType.Pan
         )
     }

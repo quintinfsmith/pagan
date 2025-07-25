@@ -1,6 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
 class ControllerEventData(val ptr: Long) {
+
     constructor(frames: Array<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>>, type: Int): this(
         ControllerEventData.intermediary_create(frames, type)
     )
@@ -27,6 +28,7 @@ class ControllerEventData(val ptr: Long) {
                 type
             )
         }
+
         external fun create(frame_indices: IntArray, frame_end_indices: IntArray, value_width: Int, values: FloatArray, increments: FloatArray, type: Int): Long
     }
 

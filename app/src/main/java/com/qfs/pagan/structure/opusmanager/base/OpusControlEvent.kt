@@ -1,10 +1,12 @@
 package com.qfs.pagan.structure.opusmanager.base
 
+
 enum class ControlEventType(val i: Int) {
     Tempo(0),
     Volume(1),
     Reverb(2),
-    Pan(3)
+    Pan(3),
+    Velocity(4)
 }
 
 enum class ControlTransition(val i: Int) {
@@ -98,3 +100,25 @@ class OpusPanEvent(var value: Float, transition: ControlTransition = ControlTran
         return (code shl shift) + (code shr (32 - shift))
     }
 }
+
+class OpusVelocityEvent(var value: Float, transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration, transition) {
+    override fun copy(): OpusVelocityEvent {
+        return OpusVelocityEvent(this.value, this.transition, this.duration)
+    }
+    override fun to_float_array(): FloatArray {
+        val adjusted = this.value / 1.27F
+        return floatArrayOf(adjusted) // 1.27 == 1
+    }
+    override fun hashCode(): Int {
+        val code = super.hashCode().xor(this.value.toRawBits())
+        val shift = when (this.transition) {
+            ControlTransition.Instant -> 0
+            ControlTransition.Linear -> 1
+        }
+        return (code shl shift) + (code shr (32 - shift))
+    }
+    override fun equals(other: Any?): Boolean {
+        return other is OpusVelocityEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
+    }
+}
+

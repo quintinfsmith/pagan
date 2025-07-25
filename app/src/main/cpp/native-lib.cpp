@@ -3,7 +3,7 @@
 #include <string>
 #include <android/log.h>
 
-#include "soundfont/SampleData.cpp"
+#include "soundfont2/SampleData.cpp"
 #include "soundfontplayer/PitchedBuffer.cpp"
 #include "soundfontplayer/VolumeEnvelope.cpp"
 #include "soundfontplayer/ControllerEventData.cpp"
@@ -130,10 +130,10 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 }
                 auto* effect_buffer = (ProfileBuffer*)effect_buffers[j];
 
-                if (effect_buffer->data->type == 1) { // PAN
+                if (effect_buffer->data->type == 3) { // PAN
                     apply_pan(effect_buffer, working_arrays[i], (int)frames);
                     shifted_buffers[shift_buffers_size++] = j;
-                } else if (effect_buffer->data->type == 2) { // VOLUME
+                } else if (effect_buffer->data->type == 1) { // VOLUME
                     apply_volume(effect_buffer, working_arrays[i], (int)frames);
                     shifted_buffers[shift_buffers_size++] = j;
                 }

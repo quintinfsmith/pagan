@@ -7,7 +7,7 @@
 
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
+Java_com_qfs_apres_soundfont2_Sample_00024Companion_create(
         JNIEnv* env,
         jobject,
         jstring name,
@@ -20,7 +20,6 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
         jint placeholder_start,
         jint placeholder_end
 ) {
-
     auto* sample = (Sample*)malloc(sizeof(Sample));
     sample->name = env->GetStringUTFChars(name, nullptr);
 
@@ -37,7 +36,7 @@ Java_com_qfs_apres_soundfont_Sample_00024Companion_create(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_qfs_apres_soundfont_Sample_set_1data_1inner(JNIEnv* env, jobject, jlong ptr, jshortArray data) {
+Java_com_qfs_apres_soundfont2_Sample_set_1data_1inner(JNIEnv* env, jobject, jlong ptr, jshortArray data) {
     auto* sample = (Sample*)ptr;
     jshort* raw_shorts = env->GetShortArrayElements(data, 0);
     int length = env->GetArrayLength(data);
@@ -48,7 +47,7 @@ Java_com_qfs_apres_soundfont_Sample_set_1data_1inner(JNIEnv* env, jobject, jlong
 }
 
 extern "C" JNIEXPORT jshortArray JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1data_1inner(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1data_1inner(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     jshortArray jshort_output = env->NewShortArray(sample->data_placeholder_end - sample->data_placeholder_start);
     env->SetShortArrayRegion(jshort_output, 0, sample->data_placeholder_end - sample->data_placeholder_start, (jshort *)sample->data);
@@ -56,30 +55,30 @@ Java_com_qfs_apres_soundfont_Sample_get_1data_1inner(JNIEnv* env, jobject, jlong
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1sample_1type_1inner(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1sample_1type_1inner(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->sample_type;
 }
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1sample_1rate_1inner(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1sample_1rate_1inner(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->sample_rate;
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1placeholder_1start(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1placeholder_1start(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->data_placeholder_start;
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1placeholder_1end(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1placeholder_1end(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->data_placeholder_end;
 }
 
 extern "C" JNIEXPORT jintArray JNICALL
-Java_com_qfs_apres_soundfont_Sample_jni_1data_1placeholders(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_jni_1data_1placeholders(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     int c_array[2];
     c_array[0] = sample->data_placeholder_start;
@@ -92,29 +91,29 @@ Java_com_qfs_apres_soundfont_Sample_jni_1data_1placeholders(JNIEnv* env, jobject
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1name_1inner(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1name_1inner(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return env->NewStringUTF(sample->name);
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1original_1pitch(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1original_1pitch(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->original_pitch;
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1pitch_1correction(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1pitch_1correction(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->pitch_correction;
 }
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1loop_1start(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1loop_1start(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->loop_start;
 }
 extern "C" JNIEXPORT jint JNICALL
-Java_com_qfs_apres_soundfont_Sample_get_1loop_1end(JNIEnv* env, jobject, jlong ptr) {
+Java_com_qfs_apres_soundfont2_Sample_get_1loop_1end(JNIEnv* env, jobject, jlong ptr) {
     auto* sample = (Sample*)ptr;
     return sample->loop_end;
 }

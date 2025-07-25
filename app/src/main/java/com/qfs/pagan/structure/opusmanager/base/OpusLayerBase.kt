@@ -24,6 +24,7 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
 import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.collections.iterator
@@ -43,14 +44,6 @@ import kotlin.math.roundToInt
 open class OpusLayerBase {
     companion object {
         private var _channel_uuid_generator: Int = 0x00
-
-        inline fun <reified T> checked_cast(value: Any): T {
-            if (value is T) {
-                return value
-            }  else {
-                throw ClassCastException()
-            }
-        }
 
         fun gen_channel_uuid(): Int {
             return this._channel_uuid_generator++
@@ -1460,14 +1453,14 @@ open class OpusLayerBase {
                     beat_key.line_offset,
                     beat_key.beat,
                     position,
-                    OpusLayerBase.checked_cast<ReducibleTree<PercussionEvent>>(tree)
+                    checked_cast<ReducibleTree<PercussionEvent>>(tree)
                 )
             } else {
                 (this.get_channel(beat_key.channel) as OpusChannel).replace_tree(
                     beat_key.line_offset,
                     beat_key.beat,
                     position,
-                    OpusLayerBase.checked_cast<ReducibleTree<TunedInstrumentEvent>>(tree)
+                    checked_cast<ReducibleTree<TunedInstrumentEvent>>(tree)
                 )
             }
         }
@@ -3554,7 +3547,7 @@ open class OpusLayerBase {
                 this.replace_tree(
                     beat_key,
                     listOf(),
-                    OpusLayerBase.checked_cast<ReducibleTree<TunedInstrumentEvent>>(beats_in_column[y++])
+                    checked_cast<ReducibleTree<TunedInstrumentEvent>>(beats_in_column[y++])
                 )
             }
         }
@@ -4810,7 +4803,7 @@ open class OpusLayerBase {
     private fun <T> _catch_global_ctl_blocked_tree_exception(type: ControlEventType, callback: () -> T): T {
         return try {
             callback()
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: ReducibleTreeArray.BlockedTreeException) {
             this.on_action_blocked_global_ctl(type, e.blocker_beat, e.blocker_position)
             throw BlockedActionException()
         }

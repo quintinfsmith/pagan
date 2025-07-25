@@ -26,7 +26,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
-    class BlockedTreeException(var line_offset: Int, var e: OpusTreeArray.BlockedTreeException): Exception()
+    class BlockedTreeException(var line_offset: Int, var e: ReducibleTreeArray.BlockedTreeException): Exception()
     class BlockedLineCtlTreeException(var line_offset: Int, var e: OpusLineAbstract.BlockedCtlTreeException): Exception()
     class BlockedCtlTreeException(var e: OpusLineAbstract.BlockedCtlTreeException): Exception()
 
@@ -179,7 +179,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     fun <T> catch_blocked_tree_exception_channel_controller(type: ControlEventType, callback: () -> T): T {
         return try {
             callback()
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: ReducibleTreeArray.BlockedTreeException) {
             throw BlockedCtlTreeException(OpusLineAbstract.BlockedCtlTreeException(type, e))
         }
     }
@@ -187,7 +187,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     fun <T> catch_blocked_tree_exception(line_offset: Int, callback: () -> T): T {
         return try {
             callback()
-        } catch (e: OpusTreeArray.BlockedTreeException) {
+        } catch (e: ReducibleTreeArray.BlockedTreeException) {
             throw BlockedTreeException(line_offset, e)
         } catch (e: OpusLineAbstract.BlockedCtlTreeException) {
             throw BlockedLineCtlTreeException(line_offset, e)

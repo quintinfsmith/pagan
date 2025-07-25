@@ -1,16 +1,16 @@
 package com.qfs.pagan
 
-import com.qfs.pagan.opusmanager.AbsoluteNoteEvent
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
-import com.qfs.pagan.opusmanager.OpusTempoEvent
-import com.qfs.pagan.opusmanager.OpusVolumeEvent
-import com.qfs.pagan.opusmanager.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.qfs.pagan.opusmanager.OpusLayerHistory as OpusManager
+import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory as OpusManager
 
 class HistoryCacheUnitTest {
     fun undo_and_check(manager: OpusManager, callback: (OpusManager) -> Unit) {
@@ -32,13 +32,13 @@ class HistoryCacheUnitTest {
 
         assertTrue(
             "Some actions weren't applied",
-            manager.history_cache.isEmpty()
+            manager.history_cache.is_empty()
         )
     }
 
     @Test
     fun test_set_project_name() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
         this.undo_and_check(manager) {
             it.set_project_name("Test Project Name")
@@ -47,10 +47,10 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_remove() {
-        var key = BeatKey(0,0,0)
-        var test_event = AbsoluteNoteEvent(12)
+        val key = BeatKey(0,0,0)
+        val test_event = AbsoluteNoteEvent(12)
 
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         manager.split_tree(key, listOf(), 2)
@@ -68,11 +68,11 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_controller_global_remove() {
-        var key = 0
-        var test_event = OpusTempoEvent(25F)
+        val key = 0
+        val test_event = OpusTempoEvent(25F)
         val type = ControlEventType.Tempo
 
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         manager.controller_global_split_tree(type, key, listOf(), 2)
@@ -90,11 +90,11 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_controller_channel_remove() {
-        var key = 0
-        var test_event = OpusVolumeEvent(.25f)
+        val key = 0
+        val test_event = OpusVolumeEvent(.25f)
         val type = ControlEventType.Volume
 
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         manager.controller_channel_split_tree(type, key, 0, listOf(), 2)
@@ -112,11 +112,11 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_controller_line_remove() {
-        var key = BeatKey(0,0,0)
-        var test_event = OpusVolumeEvent(.25f)
+        val key = BeatKey(0,0,0)
+        val test_event = OpusVolumeEvent(.25f)
         val type = ControlEventType.Volume
 
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         manager.controller_line_split_tree(type, key, listOf(), 2)
@@ -134,7 +134,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_set_percussion_event() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {
@@ -148,9 +148,9 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_set_event() {
-        var event = AbsoluteNoteEvent(12)
-        var event_b = AbsoluteNoteEvent(5)
-        var manager = OpusManager()
+        val event = AbsoluteNoteEvent(12)
+        val event_b = AbsoluteNoteEvent(5)
+        val manager = OpusManager()
         manager._project_change_new()
 
         manager.set_event(BeatKey(0,0,0), listOf(), event_b)
@@ -162,8 +162,8 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_unset() {
-        var event = AbsoluteNoteEvent(12)
-        var manager = OpusManager()
+        val event = AbsoluteNoteEvent(12)
+        val manager = OpusManager()
         manager._project_change_new()
         manager.set_event(BeatKey(0,0,0), listOf(), event)
 
@@ -174,7 +174,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_new_channel() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {
@@ -184,7 +184,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_remove_beat() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {
@@ -194,7 +194,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_remove_channel() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
         manager.new_channel()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
@@ -206,7 +206,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_remove_line() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
         manager.new_line(0,0)
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
@@ -220,7 +220,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_new_line() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {
@@ -231,7 +231,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_swap_lines() {
-        var manager = OpusManager() 
+        val manager = OpusManager()
         manager._project_change_new()
         manager.new_line(0)
         manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(0))
@@ -244,9 +244,9 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_replace_tree() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
-        var new_tree = ReducibleTree<TunedInstrumentEvent>()
+        val new_tree = ReducibleTree<TunedInstrumentEvent>()
         new_tree.set_size(5)
 
         this.undo_and_check(manager) {
@@ -257,7 +257,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_insert_after() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
@@ -268,7 +268,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_split_tree() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {
@@ -278,7 +278,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_split_channel_ctl_tree() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {
@@ -288,7 +288,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_split_global_ctl_tree() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {
@@ -298,7 +298,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_split_line_ctl_tree() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
         this.undo_and_check(manager) {
             it.controller_line_split_tree(ControlEventType.Volume, BeatKey(0,0,0), listOf(), 3)
@@ -307,7 +307,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_insert() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
@@ -319,7 +319,7 @@ class HistoryCacheUnitTest {
 
     @Test
     fun test_set_tuning_map() {
-        var manager = OpusManager()
+        val manager = OpusManager()
         manager._project_change_new()
 
         this.undo_and_check(manager) {

@@ -13,18 +13,21 @@ disclaimer_text = f"""/*
 
 # Classes In heirarchichal order
 test_classes = [
-    "OpusLayerBase",
-    "OpusLayerCursor",
-    "OpusLayerHistory"
+    ("base", "OpusLayerBase"),
+    ("cursor", "OpusLayerCursor"),
+    ("history", "OpusLayerHistory")
 ]
+
 working_directory = __file__[0:__file__.rfind("/")]
 TEST_FILE_DIR = f"{working_directory}/../app/src/test/java/com/qfs/pagan"
 
-for (i, test_class) in enumerate(test_classes):
+for (i, ipair) in enumerate(test_classes):
+    (iparent, test_class) = ipair
     with open(f"{TEST_FILE_DIR}/{test_class}UnitTest.kt", "r", encoding="utf8") as fp:
         file_content = fp.read()
-    for (j, retest_class) in enumerate(test_classes[i + 1:]):
-        new_content = file_content.replace(f"com.qfs.pagan.opusmanager.{test_class} as OpusManager", f"com.qfs.pagan.opusmanager.{retest_class} as OpusManager")
+    for (j, jpair) in enumerate(test_classes[i + 1:]):
+        (jparent, retest_class) = jpair
+        new_content = file_content.replace(f"com.qfs.pagan.structure.opusmanager.{iparent}.{test_class} as OpusManager", f"com.qfs.pagan.structure.opusmanager.{jparent}.{retest_class} as OpusManager")
         new_content = new_content.replace(f"class {test_class}UnitTest", f"class {test_class}UnitReTestAs{retest_class}")
         new_file_name = f"{test_class}UnitReTestAs{retest_class}.kt"
         with open(f"{TEST_FILE_DIR}/{new_file_name}", "w", encoding="utf8") as fp:

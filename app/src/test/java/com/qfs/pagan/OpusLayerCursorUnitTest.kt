@@ -1,11 +1,11 @@
 package com.qfs.pagan
 
-import com.qfs.pagan.opusmanager.BeatKey
-import com.qfs.pagan.opusmanager.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import org.junit.Test
-import com.qfs.pagan.opusmanager.OpusLayerCursor as OpusManager
+import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor as OpusManager
 
 
 class OpusLayerCursorUnitTest {
@@ -32,23 +32,23 @@ class OpusLayerCursorUnitTest {
         val channels = manager.get_all_channels()
         for (i in channels.indices) {
             val channel = channels[i]
-            assert_channel_selection(manager, i)
+            this.assert_channel_selection(manager, i)
             for (j in channel.lines.indices) {
-                assert_line_selections(manager, i, j)
+                this.assert_line_selections(manager, i, j)
                 for (i in 0 until manager.length) {
-                    assert_beat_selection(manager, i)
+                    this.assert_beat_selection(manager, i)
                 }
                 for ((type, _) in channel.lines[j].controllers.get_all()) {
-                    assert_line_controller_line_selection(manager, i, j, type)
+                    this.assert_line_controller_line_selection(manager, i, j, type)
                 }
             }
             for ((type, _) in channel.controllers.get_all()) {
-                assert_channel_controller_line_selection(manager, i, type)
+                this.assert_channel_controller_line_selection(manager, i, type)
             }
         }
 
         for ((type, _) in manager.controllers.get_all()) {
-            assert_global_controller_line_selection(manager, type)
+            this.assert_global_controller_line_selection(manager, type)
         }
     }
 

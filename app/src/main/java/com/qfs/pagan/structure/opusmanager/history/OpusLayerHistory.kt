@@ -10,6 +10,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLine
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
+import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.max
 import kotlin.math.min
@@ -554,7 +555,10 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                 HistoryToken.INSERT_BEAT -> {
                     val instrument_events = checked_cast<List<ReducibleTree<OpusEvent>>>(current_node.args[1])
-                    val control_events = checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, ReducibleTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, ReducibleTree<OpusControlEvent>>>, List<Pair<ControlEventType, ReducibleTree<OpusControlEvent>>>>>(current_node.args[2])
+                    val control_events =
+                        checked_cast<Triple<List<Triple<Pair<Int, Int>, ControlEventType, ReducibleTree<OpusControlEvent>>>, List<Triple<Int, ControlEventType, ReducibleTree<OpusControlEvent>>>, List<Pair<ControlEventType, ReducibleTree<OpusControlEvent>>>>>(
+                            current_node.args[2]
+                        )
                     val beat_index = current_node.args[0] as Int
                     this.insert_beat(beat_index, instrument_events)
 

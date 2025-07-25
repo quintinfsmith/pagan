@@ -18,8 +18,7 @@ class StructureUnitTest {
         tree_b.set_size(3)
         tree_b[0].set_size(3)
         tree_b[0][0].set_event(0)
-
-        val tree_c: ReducibleTree<Set<Int>> = tree_a.merge(tree_b.get_set_tree())
+        val tree_c: ReducibleTree<Set<Int>> = tree_a.merge(ReducibleTree.get_set_tree(tree_b))
 
         assertEquals(
             setOf(0, 1),
@@ -43,7 +42,7 @@ class StructureUnitTest {
         tree_ab[0].set_size(2)
         tree_ab[0][1].set_event(2)
 
-        val tree_ac = tree_aa.merge(tree_ab.get_set_tree())
+        val tree_ac = tree_aa.merge(ReducibleTree.get_set_tree(tree_ab))
         tree_ac.flatten()
         tree_ac.reduce(4)
 
@@ -63,11 +62,10 @@ class StructureUnitTest {
         tree_aa[2].set_event(2)
         tree_aa[3].set_event(3)
 
-
         val tree_ab = ReducibleTree<Int>()
         tree_ab.set_size(1)
 
-        val tree_ac = tree_aa.merge(tree_ab.get_set_tree())
+        val tree_ac = tree_aa.merge(ReducibleTree.get_set_tree(tree_ab))
         tree_ac.flatten()
         assertEquals(8, tree_ac.size)
         assertEquals(0, tree_ac[0].get_event()!!.first())

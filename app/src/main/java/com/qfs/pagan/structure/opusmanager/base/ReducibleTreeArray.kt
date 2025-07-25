@@ -6,7 +6,7 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.collections.iterator
 
-abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<ReducibleTree<T>>) {
+abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<ReducibleTree<T>>) {
     class BlockedTreeException(var beat: Int, var position: List<Int>, var blocker_beat: Int, var blocker_position: List<Int>): Exception("$beat | $position is blocked by event @ $blocker_beat $blocker_position")
     private val _cache_blocked_tree_map = HashMap<Pair<Int, List<Int>>, MutableList<Triple<Int, List<Int>, Rational>>>()
     private val _cache_inv_blocked_tree_map = HashMap<Pair<Int, List<Int>>, Triple<Int, List<Int>, Rational>>()
@@ -296,9 +296,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<ReducibleTree<
 
     /* Check if setting an event would cause overlap */
     private fun is_blocked_set_event(beat: Int, position: List<Int>, duration: Int): Pair<Int, List<Int>>? {
-        val blocker = this.get_blocking_position(beat, position)
-        if (blocker != null) {
-            return blocker
+        this.get_blocking_position(beat, position)?.let {
+            return it
         }
 
         val (next_beat, next_position) = this.get_proceding_event_position(beat, position) ?: return null
@@ -437,8 +436,8 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<ReducibleTree<
     private fun _decache_overlapping_leaf(beat: Int, position: List<Int>): List<Pair<Int, List<Int>>> {
         val cache_key = Pair(beat, position)
         val output: MutableList<Pair<Int, List<Int>>> = mutableListOf()
-        val blocker = this._cache_inv_blocked_tree_map.remove(Pair(beat, position))
-        if (blocker != null) {
+
+        this._cache_inv_blocked_tree_map.remove(Pair(beat, position))?.let { blocker ->
             output.add(Pair(blocker.first, blocker.second))
         }
 
@@ -571,7 +570,7 @@ abstract class OpusTreeArray<T: OpusEvent>(var beats: MutableList<ReducibleTree<
         val new_beats = mutableListOf<ReducibleTree<T>>()
         for (b in 0 until this.beats.size) {
             if (b % factor == 0) {
-                new_beats.add(ReducibleTree<T>())
+                new_beats.add(ReducibleTree())
             }
             val working_beat = new_beats.last()
             working_beat.insert(b % factor, this.beats[b])

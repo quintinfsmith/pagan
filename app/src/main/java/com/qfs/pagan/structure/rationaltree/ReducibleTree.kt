@@ -2,6 +2,9 @@ package com.qfs.pagan.structure.rationaltree
 
 import com.qfs.pagan.structure.greatest_common_denominator
 import com.qfs.pagan.structure.lowest_common_multiple
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
 import kotlin.math.max
 import kotlin.math.round
 
@@ -10,6 +13,24 @@ import kotlin.math.round
  * positions of its data in-tact.
  */
 class ReducibleTree<T> {
+    companion object {
+
+        fun <T> get_set_tree(input: ReducibleTree<T>): ReducibleTree<Set<T>> {
+            val output = ReducibleTree<Set<T>>()
+
+            if (!input.has_event()) {
+                output.set_size(input.size)
+                for ((index, tree) in input.divisions) {
+                    output[index] = this.get_set_tree(tree)
+                }
+            } else {
+                output.event = setOf(input.get_event()!!)
+            }
+
+            return output
+        }
+
+    }
     private data class ReducerTuple<T>(
         var denominator: Int,
         var indices: MutableList<Pair<Int, ReducibleTree<T>>>,
@@ -539,27 +560,13 @@ class ReducibleTree<T> {
         return max_weight * this.size
     }
 
-    private fun _get_set_tree(): ReducibleTree<Set<T>> {
-        val output = ReducibleTree<Set<T>>()
-        if (!this.has_event()) {
-            output.set_size(this.size)
-            for ((index, tree) in this.divisions) {
-                output[index] = tree._get_set_tree()
-            }
-        } else {
-            output.event = setOf(this.get_event()!!)
-        }
-
-        return output
-    }
-
     /**
      * Get a copy of this tree merged with another where conflicts are avoided by
      * converted event data into sets of event data
      */
     fun merge(tree: ReducibleTree<Set<T>>): ReducibleTree<Set<T>> {
         if ((tree.is_leaf() && ! tree.has_event()) || tree.is_eventless()) {
-            return this._get_set_tree()
+            return ReducibleTree.get_set_tree(this)
         }
         if ((this.is_leaf() && ! this.has_event()) || this.is_eventless()) {
             return tree
@@ -604,7 +611,7 @@ class ReducibleTree<T> {
      * merge a tree without children and an event into a tree that has no event and some number of children
      */
     private fun __merge_event_into_structural(e_tree: ReducibleTree<Set<T>>): ReducibleTree<Set<T>> {
-        val output = this._get_set_tree()
+        val output = ReducibleTree.get_set_tree(this)
 
         var working_tree = output
         while (!working_tree.is_leaf()) {
@@ -642,7 +649,7 @@ class ReducibleTree<T> {
     private fun __merge_structural(tree: ReducibleTree<Set<T>>): ReducibleTree<Set<T>> {
         val other = tree.copy()
 
-        val this_multi = this._get_set_tree()
+        val this_multi = ReducibleTree.get_set_tree(this)
         other.flatten()
         this_multi.flatten()
 
@@ -654,7 +661,7 @@ class ReducibleTree<T> {
             val subtree_into = this_multi[new_index]
 
             if (subtree.has_event()) {
-                val eventset = if (subtree_into.has_event()) {
+                val eventset: MutableSet<T> = if (subtree_into.has_event()) {
                     subtree_into.get_event()!!.toMutableSet()
                 } else {
                     mutableSetOf()
@@ -663,6 +670,7 @@ class ReducibleTree<T> {
                 for (elm in subtree.get_event()!!) {
                     eventset.add(elm)
                 }
+
                 subtree_into.set_event(eventset)
             }
         }

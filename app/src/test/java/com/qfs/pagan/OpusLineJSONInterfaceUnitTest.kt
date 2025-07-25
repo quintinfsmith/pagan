@@ -1,8 +1,8 @@
 package com.qfs.pagan
 
-import com.qfs.pagan.opusmanager.OpusLine
-import com.qfs.pagan.opusmanager.OpusLineJSONInterface
-import com.qfs.pagan.opusmanager.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.OpusLineJSONInterface
+import com.qfs.pagan.structure.opusmanager.base.OpusLine
+import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Test

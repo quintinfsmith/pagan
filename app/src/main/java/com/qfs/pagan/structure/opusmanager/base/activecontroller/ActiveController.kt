@@ -2,11 +2,10 @@ package com.qfs.pagan.structure.opusmanager.base.activecontroller
 
 import com.qfs.pagan.structure.opusmanager.base.ControlTransition
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusTreeArray
+import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import kotlin.math.max
 
-abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): OpusTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
+abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
     fun set_initial_event(value: T) {
         this.initial_event = value

@@ -63,7 +63,6 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         }
     }
 
-
     fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {
         if (!this.controllers.containsKey(type)) {
             this.new_controller(type)

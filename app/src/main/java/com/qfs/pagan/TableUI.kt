@@ -30,6 +30,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
@@ -890,6 +891,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val text = when (event) {
                 null -> return
                 is OpusVolumeEvent -> (event.value).toString()
+                is OpusVelocityEvent -> (event.value).toString()
                 is OpusTempoEvent -> event.value.roundToInt().toString()
                 is OpusReverbEvent -> "TODO"
                 is OpusPanEvent -> {

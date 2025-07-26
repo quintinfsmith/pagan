@@ -18,6 +18,7 @@ import com.qfs.pagan.controlwidgets.ControlWidgetPan
 import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
@@ -28,7 +29,9 @@ import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -103,6 +106,7 @@ class ActionTracker {
         RemoveChannel,
         SetTransitionAtCursor,
         SetVolumeAtCursor,
+        SetVelocityAtCursor,
         SetTempoAtCursor,
         SetPanAtCursor,
         RemoveBeat,
@@ -910,6 +914,28 @@ class ActionTracker {
         }
     }
 
+    fun set_velocity(velocity: Int? = null) {
+        val main = this.get_activity()
+
+        val context_menu = main.active_context_menu
+        if (context_menu !is ContextMenuWithController<*>) {
+            return
+        }
+
+        val widget: ControlWidgetVelocity = context_menu.get_widget() as ControlWidgetVelocity
+
+        val dlg_default = (widget.get_event().value * 100F).toInt()
+        val dlg_title = main.getString(R.string.dlg_set_velocity)
+        this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, velocity) { new_value: Int ->
+            this.track(TrackedAction.SetVelocityAtCursor, listOf(new_value))
+            val new_event = OpusVelocityEvent(
+                new_value.toFloat() / 100F,
+                widget.working_event.duration,
+                widget.get_event().transition,
+            )
+            widget.set_event(new_event)
+        }
+    }
     fun set_volume(volume: Int? = null) {
         val main = this.get_activity()
 
@@ -924,7 +950,11 @@ class ActionTracker {
         val dlg_title = main.getString(R.string.dlg_set_volume)
         this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, volume) { new_value: Int ->
             this.track(TrackedAction.SetVolumeAtCursor, listOf(new_value))
-            val new_event = OpusVolumeEvent(new_value.toFloat() / 100F, widget.get_event().transition, widget.working_event.duration)
+            val new_event = OpusVolumeEvent(
+                new_value.toFloat() / 100F,
+                widget.working_event.duration,
+                widget.get_event().transition
+            )
             widget.set_event(new_event)
         }
     }
@@ -1276,7 +1306,7 @@ class ActionTracker {
         }
 
         val widget = context_menu.get_widget() as ControlWidgetPan
-        val new_event = widget.working_event.copy()
+        val new_event = widget.working_event.copy() as OpusPanEvent
         new_event.value = (value.toFloat() / widget.max.toFloat()) * -1F
         widget.set_event(new_event)
     }
@@ -1808,6 +1838,9 @@ class ActionTracker {
             }
             TrackedAction.SetVolumeAtCursor -> {
                 this.set_volume(integers[0])
+            }
+            TrackedAction.SetVelocityAtCursor -> {
+                this.set_velocity(integers[0])
             }
             TrackedAction.SetTempoAtCursor -> {
                 this.set_tempo_at_cursor(

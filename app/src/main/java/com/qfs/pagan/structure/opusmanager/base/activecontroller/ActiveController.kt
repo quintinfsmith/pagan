@@ -1,9 +1,11 @@
 package com.qfs.pagan.structure.opusmanager.base.activecontroller
 
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.ControlTransition
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.time.Instant
 
 abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
@@ -13,6 +15,67 @@ abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initia
     fun get_initial_event(): T {
         return this.initial_event
     }
+
+    fun coerce_event(beat: Int, position: List<Int>): T {
+        val (event_beat, event_position) = this.get_latest_event_position(beat, position) ?: return this.initial_event
+        val working_event = this.get_tree(event_beat, event_position).get_event()!!
+
+        if (beat == event_beat && event_position == position) {
+            return working_event
+        }
+
+        // If transition is instant, no need for further calculations
+        when (working_event.transition) {
+            ControlTransition.Instant -> {
+                return working_event
+            }
+            else -> {}
+        }
+
+        var working_tree = this.get_tree(beat)
+        val target_rational = Rational(beat, this.beat_count())
+        for (p in position) {
+            target_rational.numerator *= working_tree.size
+            target_rational.denominator *= working_tree.size
+            target_rational.numerator += p
+
+            working_tree = working_tree[p]
+        }
+
+        working_tree = this.get_tree(event_beat)
+        val event_rational = Rational(event_beat, this.beat_count())
+        for (p in event_position) {
+            event_rational.numerator *= working_tree.size
+            event_rational.denominator *= working_tree.size
+            event_rational.numerator += p
+
+            working_tree = working_tree[p]
+        }
+
+        if (target_rational >= event_rational + working_event.duration) {
+            val event_copy = working_event.copy()
+            event_copy.transition = ControlTransition.Instant
+            return event_copy as T
+        }
+
+        var pair = this.get_preceding_event_position(event_beat, event_position)
+        while (pair != null) {
+            val event = this.get_tree(pair.first, pair.second).get_event()!!
+            if (!event.is_reset_transition()) {
+                break
+            }
+            pair = this.get_preceding_event_position(event_beat, event_position)
+        }
+
+        val preceding_event = if (pair == null) {
+            this.initial_event
+        } else {
+            this.get_tree(pair.first, pair.second).get_event()!!
+        }
+
+        return working_event.get_event_instant(target_rational - event_rational, preceding_event) as T
+    }
+
     fun generate_profile(): ControllerProfile {
         data class StackItem(val position: List<Int>, val tree: ReducibleTree<T>?, val relative_width: Float, val relative_offset: Float)
 

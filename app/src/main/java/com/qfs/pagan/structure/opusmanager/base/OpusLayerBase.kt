@@ -3726,8 +3726,7 @@ open class OpusLayerBase {
             }
 
             if (channels[c].controllers.has_controller(ControlEventType.Volume)) {
-                val volume_controller = channels[c].controllers.get_controller<OpusVolumeEvent>(
-                    ControlEventType.Volume)
+                val volume_controller = channels[c].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
                 apply_active_controller(volume_controller) { event: OpusVolumeEvent, previous_event: OpusVolumeEvent?, frames: Int ->
                     when (event.transition) {
                         ControlTransition.Instant -> {
@@ -3781,6 +3780,7 @@ open class OpusLayerBase {
 
                 var current_tick = 0
                 var prev_note = 0
+                val has_velocity_controller = line.controllers.has_controller(ControlEventType.Velocity)
                 line.beats.forEachIndexed { b: Int, beat_tree: ReducibleTree<out InstrumentEvent> ->
                     val stack: MutableList<StackItem<out InstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {
@@ -3820,7 +3820,11 @@ open class OpusLayerBase {
                                     channel.get_midi_channel(),
                                     note,
                                     bend,
-                                    (line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value * 100F).toInt(),
+                                    (if (has_velocity_controller) {
+                                        line.get_controller<OpusVelocityEvent>(ControlEventType.Velocity).initial_event.value
+                                    } else {
+                                        line.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event.value
+                                    } * 100F).toInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -4448,6 +4452,21 @@ open class OpusLayerBase {
 
     fun get_line_volume(channel: Int, line_offset: Int): Float {
         return (this.get_line_controller_initial_event(ControlEventType.Volume, channel, line_offset) as OpusVolumeEvent).value
+    }
+
+    fun get_current_velocity(beat_key: BeatKey, position: List<Int>): Float {
+        val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
+
+
+        return if (line.controllers.has_controller(ControlEventType.Velocity)) {
+            val controller = line.controllers.get_controller<OpusVelocityEvent>(ControlEventType.Velocity)
+            val event = controller.coerce_event(beat_key.beat, position)
+            event.value
+        } else {
+            val controller = line.controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
+            val event = controller.coerce_event(beat_key.beat, position)
+            event.value
+        }
     }
 
     internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {

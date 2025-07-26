@@ -8,6 +8,7 @@ import com.qfs.pagan.structure.opusmanager.base.ActiveControlSet
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
@@ -19,15 +20,10 @@ class ActiveControlSetJSONInterface {
             val control_set = ActiveControlSet(size)
             for (json_controller in json_obj.get_listn("controllers") ?: JSONList()) {
                 val controller = when (val label = (json_controller as JSONHashMap).get_string("type")) {
-                    "tempo" -> {
-                        ActiveControllerJSONInterface.from_json<OpusTempoEvent>(json_controller, size)
-                    }
-                    "volume" -> {
-                        ActiveControllerJSONInterface.from_json<OpusVolumeEvent>(json_controller, size)
-                    }
-                    "pan" -> {
-                        ActiveControllerJSONInterface.from_json<OpusPanEvent>(json_controller, size)
-                    }
+                    "tempo" -> ActiveControllerJSONInterface.from_json<OpusTempoEvent>(json_controller, size)
+                    "volume" -> ActiveControllerJSONInterface.from_json<OpusVolumeEvent>(json_controller, size)
+                    "velocity" -> ActiveControllerJSONInterface.from_json<OpusVelocityEvent>(json_controller, size)
+                    "pan" -> ActiveControllerJSONInterface.from_json<OpusPanEvent>(json_controller, size)
                     else -> throw UnknownControllerException(label)
                 }
 

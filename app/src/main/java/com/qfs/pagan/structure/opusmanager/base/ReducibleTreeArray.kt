@@ -502,6 +502,12 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
     }
 
     fun get_latest_event(beat: Int, position: List<Int>): T? {
+        val (event_beat, event_position) = this.get_latest_event_position(beat, position) ?: return null
+        return this.get_tree(event_beat, event_position).get_event()
+
+    }
+
+    fun get_latest_event_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         var current_tree = this.get_tree(beat)
         val adj_position = mutableListOf<Int>()
         for (p in position) {
@@ -514,26 +520,23 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         }
 
         if (current_tree.has_event()) {
-            return current_tree.get_event()!!
+            return Pair(beat, position)
         }
 
         var working_beat = beat
         var working_position = adj_position.toList()
-        var output: T? = null
 
         while (true) {
-            val pair = this.get_preceding_leaf_position(working_beat, working_position) ?: return output
+            val pair = this.get_preceding_leaf_position(working_beat, working_position) ?: break
             working_beat = pair.first
             working_position = pair.second
 
-            val working_tree = this.get_tree(working_beat, working_position).copy()
-            if (working_tree.has_event()) {
-                val working_event = working_tree.get_event()!!
-                output = working_event.copy() as T
-                break
+            if (this.get_tree(working_beat, working_position).has_event()) {
+                return Pair(working_beat, working_position)
             }
         }
-        return output
+
+        return null
     }
 
     fun cache_tree_overlaps(beat: Int, position: List<Int>) {
@@ -709,6 +712,28 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
             working_tree = working_tree[0]
         }
         return Pair(working_beat, working_position)
+    }
+
+    fun get_preceding_event_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+        var working_beat = beat
+        var working_position = position.toList()
+
+        while (true) {
+            val pair = this.get_preceding_leaf_position(working_beat, working_position) ?: break
+            working_beat = pair.first
+            working_position = pair.second
+
+            if (this.get_tree(working_beat, working_position).has_event()) {
+                return Pair(working_beat, working_position)
+            }
+        }
+
+        return null
+    }
+
+    fun get_preceding_event(beat: Int, position: List<Int>): T? {
+        val (event_beat, event_position) = this.get_preceding_event_position(beat, position) ?: return null
+        return this.get_tree(beat, position).get_event()
     }
 
     fun get_preceding_leaf_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {

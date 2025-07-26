@@ -68,13 +68,13 @@ class OpusControlEventJSONInterface {
             }
             return OpusVolumeEvent(
                 value,
+                map.get_int("duration", 1),
                 /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
                 try {
                     ControlTransition.valueOf(map.get_string("transition", "Instant"))
                 } catch (e: ClassCastException) {
                     ControlTransition.Instant
-                },
-                map.get_int("duration", 1)
+                }
             )
         }
 
@@ -86,13 +86,13 @@ class OpusControlEventJSONInterface {
             }
             return OpusVelocityEvent(
                 value,
+                map.get_int("duration", 1),
                 /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
                 try {
                     ControlTransition.valueOf(map.get_string("transition", "Instant"))
                 } catch (e: ClassCastException) {
                     ControlTransition.Instant
-                },
-                map.get_int("duration", 1)
+                }
             )
         }
 
@@ -105,8 +105,8 @@ class OpusControlEventJSONInterface {
         fun pan_event(map: JSONHashMap): OpusPanEvent {
             return OpusPanEvent(
                 map.get_float("value"),
-                ControlTransition.valueOf(map.get_string("transition", "Instant")),
-                map.get_int("duration", 1)
+                map.get_int("duration", 1),
+                ControlTransition.valueOf(map.get_string("transition", "Instant"))
             )
         }
         // ------------------------

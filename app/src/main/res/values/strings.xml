@@ -137,6 +137,7 @@
     <string name="label_export_progress_no_value">Exporting...</string>
     <string name="label_tuning_index">%1$02d:</string>
     <string name="dlg_set_volume">Set Volume(%)</string>
+    <string name="dlg_set_velocity">Set Velocity(%)</string>
     <string name="untitled_opus">Untitled</string>
     <string name="error_caught_from_keyboard_input">Error caught from keyboard input: %1$s</string>
     <string name="playback_failed">Playback Failed</string>

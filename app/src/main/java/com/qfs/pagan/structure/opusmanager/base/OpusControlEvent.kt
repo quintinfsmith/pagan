@@ -1,5 +1,7 @@
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.pagan.structure.Rational
+
 
 enum class ControlEventType(val i: Int) {
     Tempo(0),
@@ -20,34 +22,20 @@ abstract class OpusControlEvent(duration: Int = 1, var transition: ControlTransi
     // TODO: within hashCodes, account for transition being moved here
     abstract override fun copy(): OpusControlEvent
     abstract fun to_float_array(): FloatArray
+    abstract fun get_event_instant(position: Rational, preceding_event: OpusControlEvent): OpusControlEvent
+
+    fun is_reset_transition(): Boolean {
+        // reset types not implemented yet
+        return false
+    }
+
 }
 
-class OpusTempoEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
+open class SingleFloatEvent(var value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): OpusControlEvent(duration, transition) {
     override fun equals(other: Any?): Boolean {
-        return other is OpusTempoEvent && this.value == other.value && super.equals(other)
+        return other is SingleFloatEvent && this.value == other.value && super.equals(other)
     }
 
-    override fun hashCode(): Int {
-        return super.hashCode().xor(this.value.toRawBits())
-    }
-
-    override fun copy(): OpusTempoEvent {
-        return OpusTempoEvent(this.value, this.duration)
-    }
-
-    override fun to_float_array(): FloatArray {
-        return floatArrayOf(this.value)
-    }
-}
-
-class OpusVolumeEvent(var value: Float, transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration, transition) {
-    override fun copy(): OpusVolumeEvent {
-        return OpusVolumeEvent(this.value, this.transition, this.duration)
-    }
-    override fun to_float_array(): FloatArray {
-        val adjusted = this.value / 1.27F
-        return floatArrayOf(adjusted * adjusted) // 1.27 == 1
-    }
     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
         val shift = when (this.transition) {
@@ -56,16 +44,42 @@ class OpusVolumeEvent(var value: Float, transition: ControlTransition = ControlT
         }
         return (code shl shift) + (code shr (32 - shift))
     }
+
+    override fun copy(): SingleFloatEvent {
+        return SingleFloatEvent(this.value, this.duration, this.transition)
+    }
+
+    override fun to_float_array(): FloatArray {
+        return floatArrayOf(this.value)
+    }
+
+    override fun get_event_instant(position: Rational, preceding_event: OpusControlEvent): OpusControlEvent {
+        val copy_event = this.copy()
+        when (this.transition) {
+            ControlTransition.Linear -> {
+                val diff = this.value - (preceding_event as SingleFloatEvent).value
+                copy_event.value = preceding_event.value + (diff * position.toFloat())
+            }
+            ControlTransition.Instant -> {}
+        }
+
+        return copy_event
+    }
+}
+
+class OpusTempoEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition)
+
+class OpusVolumeEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    override fun to_float_array(): FloatArray {
+        val adjusted = this.value / 1.27F
+        return floatArrayOf(adjusted * adjusted) // 1.27 == 1
+    }
     override fun equals(other: Any?): Boolean {
         return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
     }
 }
 
-class OpusReverbEvent(var value: Float, duration: Int = 1): OpusControlEvent(duration) {
-    override fun copy(): OpusReverbEvent {
-        return OpusReverbEvent(this.value, this.duration)
-    }
-
+class OpusReverbEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)
     }
@@ -78,11 +92,7 @@ class OpusReverbEvent(var value: Float, duration: Int = 1): OpusControlEvent(dur
     }
 }
 
-class OpusPanEvent(var value: Float, transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration, transition) {
-    override fun copy(): OpusPanEvent {
-        return OpusPanEvent(this.value, this.transition, this.duration)
-    }
-
+class OpusPanEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)
     }
@@ -101,15 +111,11 @@ class OpusPanEvent(var value: Float, transition: ControlTransition = ControlTran
     }
 }
 
-class OpusVelocityEvent(var value: Float, transition: ControlTransition = ControlTransition.Instant, duration: Int = 1): OpusControlEvent(duration, transition) {
-    override fun copy(): OpusVelocityEvent {
-        return OpusVelocityEvent(this.value, this.transition, this.duration)
-    }
+class OpusVelocityEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
     override fun to_float_array(): FloatArray {
-        val adjusted = this.value / 1.27F
-        return floatArrayOf(adjusted) // 1.27 == 1
+        return floatArrayOf(this.value) // 1.27 == 1
     }
-    override fun hashCode(): Int {
+     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
         val shift = when (this.transition) {
             ControlTransition.Instant -> 0
@@ -117,6 +123,7 @@ class OpusVelocityEvent(var value: Float, transition: ControlTransition = Contro
         }
         return (code shl shift) + (code shr (32 - shift))
     }
+
     override fun equals(other: Any?): Boolean {
         return other is OpusVelocityEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
     }

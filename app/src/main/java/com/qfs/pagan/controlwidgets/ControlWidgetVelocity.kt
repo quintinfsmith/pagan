@@ -25,7 +25,6 @@ class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_
         this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
 
         this.set_text((this.working_event.value * 100).toInt())
-        //this._button.set_icon(R.drawable.volume_widget)
         this._button.minEms = 2
 
         if (this.is_initial_event) {
@@ -53,7 +52,7 @@ class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_
             context = (context as ContextThemeWrapper).baseContext
         }
         this._button.setOnClickListener {
-            (context as ActivityEditor).get_action_interface().set_volume()
+            (context as ActivityEditor).get_action_interface().set_velocity()
         }
 
         this._slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -69,7 +68,7 @@ class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(seekbar: SeekBar) {
-                context.get_action_interface().set_volume(seekbar.progress)
+                context.get_action_interface().set_velocity(seekbar.progress)
             }
         })
     }

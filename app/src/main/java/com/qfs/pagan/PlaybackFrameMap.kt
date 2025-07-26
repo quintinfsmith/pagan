@@ -18,6 +18,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -195,6 +196,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         for ((_, handle) in this._handle_map) {
             handle.first.destroy()
         }
+
         this._handle_map.clear()
         this._handle_range_map.clear()
         this._tempo_ratio_map.clear()
@@ -645,7 +647,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
                 else -> event
             },
-            beat_key
+            beat_key,
+            position
         )?.let { start_event ->
             val merge_key_array = this.generate_merge_keys(beat_key.channel, beat_key.line_offset)
             this._add_handles(start_frame, end_frame, start_event, next_event_frame, merge_key_array)
@@ -659,8 +662,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey): GeneralMIDIEvent? {
-        val velocity = min((this.opus_manager.get_line_volume(beat_key.channel, beat_key.line_offset) * 100F).toInt(), 127)
+    private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey, position: List<Int>): GeneralMIDIEvent? {
+        val line = this.opus_manager.channels[beat_key.channel].lines[beat_key.line_offset]
+        var velocity = min((this.opus_manager.get_current_velocity(beat_key, position) * 100F).toInt(), 127)
 
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called
         val (note, bend) = when (event) {

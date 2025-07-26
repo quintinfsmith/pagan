@@ -1,5 +1,6 @@
 package com.qfs.pagan.structure.rationaltree
 
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.greatest_common_denominator
 import com.qfs.pagan.structure.lowest_common_multiple
 import kotlin.collections.component1
@@ -837,5 +838,28 @@ class ReducibleTree<T> {
             }
             output
         }
+    }
+
+    fun get_closest_position(rational_position: Rational): List<Int> {
+        var working_tree = this
+        var working_position = rational_position.copy()
+        val output = mutableListOf<Int>()
+
+        println(" --------------- $rational_position -------------")
+        while (!working_tree.is_leaf()) {
+            var child_position = working_position.numerator * this.size / working_position.denominator
+
+            println("A: $working_position | ($child_position, ${this.size})")
+            working_position -= Rational(child_position, this.size)
+            working_position *= this.size
+            println("B: $working_position")
+
+
+            working_tree = working_tree[child_position]
+
+            output.add(child_position)
+        }
+
+        return output
     }
 }

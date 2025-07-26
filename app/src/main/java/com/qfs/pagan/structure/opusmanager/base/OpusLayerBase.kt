@@ -4457,7 +4457,6 @@ open class OpusLayerBase {
     fun get_current_velocity(beat_key: BeatKey, position: List<Int>): Float {
         val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
 
-
         return if (line.controllers.has_controller(ControlEventType.Velocity)) {
             val controller = line.controllers.get_controller<OpusVelocityEvent>(ControlEventType.Velocity)
             val event = controller.coerce_event(beat_key.beat, position)

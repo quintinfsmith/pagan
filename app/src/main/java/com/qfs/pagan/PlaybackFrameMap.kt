@@ -663,7 +663,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun _gen_midi_event(event: InstrumentEvent, beat_key: BeatKey, position: List<Int>): GeneralMIDIEvent? {
-        val line = this.opus_manager.channels[beat_key.channel].lines[beat_key.line_offset]
         var velocity = min((this.opus_manager.get_current_velocity(beat_key, position) * 100F).toInt(), 127)
 
         // Assume event is *not* relative as it is modified in map_tree() before _gen_midi_event is called

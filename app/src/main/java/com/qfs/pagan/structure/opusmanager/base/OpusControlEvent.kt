@@ -2,7 +2,6 @@ package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.structure.Rational
 
-
 enum class ControlEventType(val i: Int) {
     Tempo(0),
     Volume(1),
@@ -31,7 +30,7 @@ abstract class OpusControlEvent(duration: Int = 1, var transition: ControlTransi
 
 }
 
-open class SingleFloatEvent(var value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): OpusControlEvent(duration, transition) {
+abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): OpusControlEvent(duration, transition) {
     override fun equals(other: Any?): Boolean {
         return other is SingleFloatEvent && this.value == other.value && super.equals(other)
     }
@@ -43,10 +42,6 @@ open class SingleFloatEvent(var value: Float, duration: Int = 1, transition: Con
             ControlTransition.Linear -> 1
         }
         return (code shl shift) + (code shr (32 - shift))
-    }
-
-    override fun copy(): SingleFloatEvent {
-        return SingleFloatEvent(this.value, this.duration, this.transition)
     }
 
     override fun to_float_array(): FloatArray {
@@ -65,9 +60,15 @@ open class SingleFloatEvent(var value: Float, duration: Int = 1, transition: Con
 
         return copy_event
     }
+
+    abstract override fun copy(): SingleFloatEvent
 }
 
-class OpusTempoEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition)
+class OpusTempoEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    override fun copy(): OpusTempoEvent {
+        return OpusTempoEvent(this.value, this.duration, this.transition)
+    }
+}
 
 class OpusVolumeEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
     override fun to_float_array(): FloatArray {
@@ -77,11 +78,18 @@ class OpusVolumeEvent(value: Float, duration: Int = 1, transition: ControlTransi
     override fun equals(other: Any?): Boolean {
         return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
     }
+    override fun copy(): OpusVolumeEvent {
+        return OpusVolumeEvent(this.value, this.duration, this.transition)
+    }
 }
 
 class OpusReverbEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)
+    }
+
+    override fun copy(): OpusReverbEvent {
+        return OpusReverbEvent(this.value, this.duration, this.transition)
     }
 
     override fun hashCode(): Int {
@@ -95,6 +103,9 @@ class OpusReverbEvent(value: Float, duration: Int = 1, transition: ControlTransi
 class OpusPanEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)
+    }
+    override fun copy(): OpusPanEvent {
+        return OpusPanEvent(this.value, this.duration, this.transition)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -115,7 +126,11 @@ class OpusVelocityEvent(value: Float, duration: Int = 1, transition: ControlTran
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value) // 1.27 == 1
     }
-     override fun hashCode(): Int {
+    override fun copy(): OpusVelocityEvent {
+        return OpusVelocityEvent(this.value, this.duration, this.transition)
+    }
+
+    override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
         val shift = when (this.transition) {
             ControlTransition.Instant -> 0

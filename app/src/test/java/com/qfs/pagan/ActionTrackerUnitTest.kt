@@ -76,6 +76,7 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.InsertBeat,
                 ActionTracker.TrackedAction.SetDurationCtl,
                 ActionTracker.TrackedAction.SetVolumeAtCursor,
+                ActionTracker.TrackedAction.SetVelocityAtCursor,
                 ActionTracker.TrackedAction.SetOffset,
                 ActionTracker.TrackedAction.SetOctave,
                 ActionTracker.TrackedAction.SplitLeaf,
@@ -206,6 +207,7 @@ class ActionTrackerUnitTest {
                     val test_ints = arrayOf(0, 0, 1, 0)
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
+
             }
 
             val json_name = JSONString(enum.name)
@@ -270,6 +272,7 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.InsertBeat,
                     ActionTracker.TrackedAction.SetDurationCtl,
                     ActionTracker.TrackedAction.SetVolumeAtCursor,
+                    ActionTracker.TrackedAction.SetVelocityAtCursor,
                     ActionTracker.TrackedAction.SetOffset,
                     ActionTracker.TrackedAction.SetOctave,
                     ActionTracker.TrackedAction.SplitLeaf,

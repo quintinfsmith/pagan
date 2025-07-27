@@ -4455,15 +4455,17 @@ open class OpusLayerBase {
     }
 
     fun get_current_velocity(beat_key: BeatKey, position: List<Int>): Float {
+        // If the velocity controller exists, use that otherwise consider velocity to be volume
         val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
+        val event_position = line.get_tree(beat_key.beat).get_rational_position(position)
 
         return if (line.controllers.has_controller(ControlEventType.Velocity)) {
             val controller = line.controllers.get_controller<OpusVelocityEvent>(ControlEventType.Velocity)
-            val event = controller.coerce_event(beat_key.beat, position)
+            val event = controller.coerce_event(beat_key.beat, event_position)
             event.value
         } else {
             val controller = line.controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
-            val event = controller.coerce_event(beat_key.beat, position)
+            val event = controller.coerce_event(beat_key.beat, event_position)
             event.value
         }
     }

@@ -840,21 +840,52 @@ class ReducibleTree<T> {
         }
     }
 
+    fun get_rational_position(position: List<Int>): Rational {
+        var rational_position = Rational(0, 1)
+        var working_tree = this
+        var r = 1
+        for (p in position) {
+            r *= working_tree.size
+            rational_position += Rational(p, r)
+            try {
+                working_tree = working_tree[p]
+            } catch (e: InvalidGetCall) {
+                break
+            }
+        }
+
+        return rational_position
+    }
+
+    fun get_closest_position(position: List<Int>): List<Int> {
+        return this.get_closest_position(this.get_rational_position(position))
+    }
+
+    fun get_tree_width(position: List<Int>): Int {
+        var output = 1
+        var working_tree = this
+        for (p in position) {
+            if (working_tree.is_leaf()) {
+                break
+            }
+
+            output *= working_tree.size
+            working_tree = working_tree[p]
+        }
+
+        return output
+    }
+
     fun get_closest_position(rational_position: Rational): List<Int> {
         var working_tree = this
         var working_position = rational_position.copy()
         val output = mutableListOf<Int>()
 
-        println(" --------------- $rational_position -------------")
         while (!working_tree.is_leaf()) {
-            var child_position = working_position.numerator * this.size / working_position.denominator
+            val child_position = working_position.numerator * working_tree.size / working_position.denominator
 
-            println("A: $working_position | ($child_position, ${this.size})")
-            working_position -= Rational(child_position, this.size)
-            working_position *= this.size
-            println("B: $working_position")
-
-
+            working_position -= Rational(child_position, working_tree.size)
+            working_position *= working_tree.size
             working_tree = working_tree[child_position]
 
             output.add(child_position)

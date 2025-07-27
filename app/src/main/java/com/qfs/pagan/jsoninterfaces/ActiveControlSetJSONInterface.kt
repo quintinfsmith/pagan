@@ -12,6 +12,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 
 class ActiveControlSetJSONInterface {
@@ -31,6 +32,7 @@ class ActiveControlSetJSONInterface {
                     is TempoController -> ControlEventType.Tempo
                     is VolumeController -> ControlEventType.Volume
                     is PanController -> ControlEventType.Pan
+                    is VelocityController -> ControlEventType.Velocity
                     //is ReverbController -> ControlEventType.Reverb
                     else -> throw UnhandledControllerException(controller)
                 }

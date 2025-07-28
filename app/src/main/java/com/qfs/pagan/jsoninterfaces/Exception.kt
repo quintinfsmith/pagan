@@ -1,7 +1,7 @@
 package com.qfs.pagan.jsoninterfaces
 
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontroller.EffectController
 import kotlin.math.max
 import kotlin.math.min
 

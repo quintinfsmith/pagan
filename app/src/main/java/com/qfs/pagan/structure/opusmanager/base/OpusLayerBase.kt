@@ -23,7 +23,7 @@ import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
 import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree

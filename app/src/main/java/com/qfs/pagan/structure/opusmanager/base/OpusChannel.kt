@@ -1,6 +1,6 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontroller.EffectController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlinx.serialization.Serializable
 

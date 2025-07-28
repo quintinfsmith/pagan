@@ -1,4 +1,4 @@
-package com.qfs.pagan.structure.opusmanager.base.activecontroller
+package com.qfs.pagan.structure.opusmanager.base.effectcontroller
 
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 

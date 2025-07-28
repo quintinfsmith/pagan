@@ -10,10 +10,10 @@ import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.VelocityController
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.effectcontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.effectcontroller.VelocityController
+import com.qfs.pagan.structure.opusmanager.base.effectcontroller.VolumeController
 
 class ActiveControlSetJSONInterface {
     companion object {

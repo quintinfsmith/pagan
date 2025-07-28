@@ -4,7 +4,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
 import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
-import com.qfs.pagan.structure.opusmanager.base.ActiveControlSet
+import com.qfs.pagan.structure.opusmanager.base.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
@@ -17,8 +17,8 @@ import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeControlle
 
 class ActiveControlSetJSONInterface {
     companion object {
-        fun from_json(json_obj: JSONHashMap, size: Int): ActiveControlSet {
-            val control_set = ActiveControlSet(size)
+        fun from_json(json_obj: JSONHashMap, size: Int): EffectControlSet {
+            val control_set = EffectControlSet(size)
             for (json_controller in json_obj.get_listn("controllers") ?: JSONList()) {
                 val controller = when (val label = (json_controller as JSONHashMap).get_string("type")) {
                     "tempo" -> ActiveControllerJSONInterface.from_json<OpusTempoEvent>(json_controller, size)
@@ -41,7 +41,7 @@ class ActiveControlSetJSONInterface {
             return control_set
         }
 
-        fun to_json(control_set: ActiveControlSet): JSONHashMap {
+        fun to_json(control_set: EffectControlSet): JSONHashMap {
             val output = JSONHashMap()
             output["beat_count"] = control_set.beat_count
 

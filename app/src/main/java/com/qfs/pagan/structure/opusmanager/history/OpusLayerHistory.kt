@@ -1,5 +1,4 @@
 package com.qfs.pagan.structure.opusmanager.history
-import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
@@ -10,6 +9,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLine
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
+import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.max
@@ -1621,7 +1621,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT,
                 listOf(
                     type,
-                    this.controllers.get_controller<T>(type).initial_event
+                    this.get_controller<T>(type).initial_event
                 )
             )
             super.controller_global_set_initial_event(type, event)
@@ -1635,7 +1635,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 listOf(
                     type,
                     channel,
-                    this.get_channel(channel).controllers.get_controller<T>(type).initial_event
+                    this.get_channel(channel).get_controller<T>(type).initial_event
                 )
             )
             super.controller_channel_set_initial_event(type, channel, event)
@@ -1650,7 +1650,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     type,
                     channel,
                     line_offset,
-                    this.get_channel(channel).lines[line_offset].controllers.get_controller<T>(type).initial_event
+                    this.get_channel(channel).lines[line_offset].get_controller<T>(type).initial_event
                 )
             )
             super.controller_line_set_initial_event(type, channel, line_offset, event)
@@ -1702,7 +1702,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     override fun remove_channel_controller(type: ControlEventType, channel_index: Int) {
         this._remember {
             if (this.has_channel_controller(type, channel_index)) {
-                val controller = this.get_all_channels()[channel_index].controllers.get_controller<OpusControlEvent>(type)
+                val controller = this.get_all_channels()[channel_index].get_controller<OpusControlEvent>(type)
                 for (beat in controller.beats.indices) {
                     if (controller.beats[beat].is_leaf() && !controller.beats[beat].has_event()) {
                         continue
@@ -1724,7 +1724,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun set_global_controller_visibility(type: ControlEventType, visibility: Boolean) {
         this._remember {
-            val controller = this.controllers.get_controller<OpusControlEvent>(type)
+            val controller = this.get_controller<OpusControlEvent>(type)
             this.push_to_history_stack(
                 HistoryToken.SET_GLOBAL_CTL_VISIBILITY,
                 listOf(type, controller.visible)
@@ -1736,7 +1736,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun set_channel_controller_visibility(type: ControlEventType, channel_index: Int, visibility: Boolean) {
         this._remember {
-            val controller = this.get_all_channels()[channel_index].controllers.get_controller<OpusControlEvent>(type)
+            val controller = this.get_all_channels()[channel_index].get_controller<OpusControlEvent>(type)
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_CTL_VISIBILITY,
                 listOf(type, channel_index, controller.visible)
@@ -1748,7 +1748,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun set_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int, visibility: Boolean) {
         this._remember {
-            val controller = this.get_all_channels()[channel_index].lines[line_offset].controllers.get_controller<OpusControlEvent>(type)
+            val controller = this.get_all_channels()[channel_index].lines[line_offset].get_controller<OpusControlEvent>(type)
 
             this.push_to_history_stack(
                 HistoryToken.SET_LINE_CTL_VISIBILITY,

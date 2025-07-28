@@ -6,7 +6,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-abstract class ActiveController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
+abstract class EffectController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
     fun set_initial_event(value: T) {
         this.initial_event = value

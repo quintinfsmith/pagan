@@ -9,7 +9,6 @@ import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.ControlTransition
@@ -18,9 +17,9 @@ import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.floor
 import kotlin.math.max
@@ -296,7 +295,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    private fun convert_controller_to_event_data(type_key: Int, controller: ActiveController<*>): ControllerEventData {
+    private fun convert_controller_to_event_data(type_key: Int, controller: EffectController<*>): ControllerEventData {
         val controller_profile = controller.generate_profile()
 
         val control_event_data = HashMap<Int, Triple<Int, FloatArray, FloatArray>>()
@@ -381,7 +380,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     fun map_tempo_changes() {
-        val controller = this.opus_manager.controllers.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
+        val controller = this.opus_manager.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
         var working_tempo = controller.initial_event.value
 
         this._tempo_ratio_map.add(Pair(0f, working_tempo))

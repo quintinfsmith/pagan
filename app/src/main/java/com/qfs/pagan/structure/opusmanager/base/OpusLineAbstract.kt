@@ -1,11 +1,11 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats) {
+abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats), Effectable {
     class BlockedCtlTreeException(var type: ControlEventType, var e: BlockedTreeException): Exception(e.message)
-    var controllers = ActiveControlSet(this.beats.size, setOf(ControlEventType.Volume))
+    var controllers = EffectControlSet(this.beats.size, setOf(ControlEventType.Volume))
     var muted = false
     var color: Int? = null
 
@@ -81,10 +81,6 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
         }
     }
 
-    fun <U: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<U> {
-        return this.controllers.get_controller(type)
-    }
-
     fun <U: OpusControlEvent> set_controller_event(type: ControlEventType, beat: Int, position: List<Int>, event: U) {
         try {
             this.get_controller<U>(type).set_event(beat, position, event)
@@ -92,6 +88,11 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
             throw BlockedCtlTreeException(type, e)
         }
     }
+
+    override fun <U: OpusControlEvent> get_controller(type: ControlEventType): EffectController<U> {
+        return this.controllers.get_controller<U>(type)
+    }
+
 
 }
 

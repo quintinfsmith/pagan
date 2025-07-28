@@ -1,5 +1,6 @@
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlinx.serialization.Serializable
 
@@ -22,7 +23,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     }
 }
 
-abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int) {
+abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int): Effectable {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
@@ -31,7 +32,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     class BlockedCtlTreeException(var e: OpusLineAbstract.BlockedCtlTreeException): Exception()
 
     var lines: MutableList<T> = mutableListOf()
-    var controllers = ActiveControlSet(0)
+    var controllers = EffectControlSet(0)
     var midi_channel: Int = 0
     var midi_program = 0
     private var _beat_count: Int = 0
@@ -103,7 +104,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     fun <T: OpusControlEvent> get_ctl_tree(line: Int, type: ControlEventType, beat: Int, position: List<Int>? = null): ReducibleTree<T> {
-        var tree = this.lines[line].controllers.get_controller<T>(type).get_tree(beat)
+        var tree = this.lines[line].get_controller<T>(type).get_tree(beat)
 
         if (position != null) {
             for (i in position) {
@@ -115,7 +116,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     fun <T: OpusControlEvent> get_ctl_tree(type: ControlEventType, beat: Int, position: List<Int>? = null): ReducibleTree<T> {
-        var tree = this.controllers.get_controller<T>(type).get_tree(beat)
+        var tree = this.get_controller<T>(type).get_tree(beat)
 
         if (position != null) {
             for (i in position) {
@@ -227,7 +228,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     fun set_line_volume(line_offset: Int, volume: Float) {
-        this.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event = OpusVolumeEvent(volume)
+        this.lines[line_offset].get_controller<OpusVolumeEvent>(ControlEventType.Volume).initial_event = OpusVolumeEvent(volume)
     }
 
     fun squish(factor: Int) {
@@ -275,7 +276,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
 
     fun <K: OpusControlEvent> set_controller_event(type: ControlEventType, index: Int, position: List<Int>, event: K) {
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.controllers.get_controller<K>(type).set_event(index, position, event)
+            this.get_controller<K>(type).set_event(index, position, event)
         }
     }
 
@@ -291,19 +292,19 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
     fun controller_channel_remove_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.controllers.get_controller<OpusControlEvent>(type).remove_node(beat, position)
+            this.get_controller<OpusControlEvent>(type).remove_node(beat, position)
         }
     }
 
     fun controller_channel_insert_leaf(type: ControlEventType, beat: Int, position: List<Int>){
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.controllers.get_controller<OpusControlEvent>(type).insert(beat, position)
+            this.get_controller<OpusControlEvent>(type).insert(beat, position)
         }
     }
 
     fun controller_channel_insert_leaf_after(type: ControlEventType, beat: Int, position: List<Int>){
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.controllers.get_controller<OpusControlEvent>(type).insert_after(beat, position)
+            this.get_controller<OpusControlEvent>(type).insert_after(beat, position)
         }
     }
 
@@ -326,7 +327,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
     fun <K: OpusControlEvent> replace_channel_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: ReducibleTree<K>) {
         this.catch_blocked_tree_exception_channel_controller(type) {
-            this.controllers.get_controller<K>(type).replace_tree(beat, position, tree)
+            this.get_controller<K>(type).replace_tree(beat, position, tree)
         }
     }
 
@@ -366,6 +367,9 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     fun unmute() {
         this.muted = false
     }
+    override fun <T : OpusControlEvent> get_controller(type: ControlEventType): EffectController<T> {
+        return this.controllers.get_controller<T>(type)
+    }
 }
 
 class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>(uuid) {
@@ -384,6 +388,7 @@ class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine
         super.clear()
         this.midi_bank = 0
     }
+
 }
 
 class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, OpusLinePercussion>(uuid) {

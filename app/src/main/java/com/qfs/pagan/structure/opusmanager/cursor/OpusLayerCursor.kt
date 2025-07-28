@@ -1,9 +1,9 @@
 package com.qfs.pagan.structure.opusmanager.cursor
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.base.ActiveControlSet
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
@@ -1663,7 +1663,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
                 var working_position = cursor.get_position()
-                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                val controller = this.channels[channel].get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_proceding_leaf_position(
@@ -1713,7 +1713,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Line -> {
                 val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
-                val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -1732,7 +1732,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
                 var working_position = cursor.get_position()
-                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                val controller = this.channels[channel].get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -1748,7 +1748,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
                 var working_position = cursor.get_position()
-                val controller = this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                val controller = this.get_controller<OpusControlEvent>(cursor.ctl_type!!)
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat,
@@ -1781,7 +1781,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Line -> {
                 var working_beat = this.cursor.beat
                 var working_position = this.cursor.get_position()
-                val controller = this.channels[this.cursor.channel].lines[this.cursor.line_offset].controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
+                val controller = this.channels[this.cursor.channel].lines[this.cursor.line_offset].get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -1799,7 +1799,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat = this.cursor.beat
                 val channel = this.cursor.channel
                 var working_position = this.cursor.get_position()
-                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
+                val controller = this.channels[channel].get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -1814,7 +1814,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Global -> {
                 var working_beat = this.cursor.beat
                 var working_position = this.cursor.get_position()
-                val controller = this.controllers.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
+                val controller = this.get_controller<OpusControlEvent>(this.cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
@@ -1867,7 +1867,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat = cursor.beat
                 val channel = cursor.channel
                 var working_position = cursor.get_position()
-                val controller = this.channels[channel].controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                val controller = this.channels[channel].get_controller<OpusControlEvent>(cursor.ctl_type!!)
 
                 for (i in 0 until repeat) {
                     val next_pair = controller.get_proceding_leaf_position(
@@ -2061,7 +2061,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                     }
 
                     var output = false
-                    val controller = this.controllers.get_controller<OpusControlEvent>(control_type)
+                    val controller = this.get_controller<OpusControlEvent>(control_type)
                     for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
                         if (working_beat == beat && position == working_position) {
                             continue
@@ -2135,7 +2135,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                     }
 
                     var output = false
-                    val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(control_type)
+                    val controller = this.get_all_channels()[channel].get_controller<OpusControlEvent>(control_type)
                     for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
                         if (working_beat == beat && position == working_position) {
                             continue
@@ -2214,7 +2214,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                     }
 
                     var output = false
-                    val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(control_type)
+                    val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<OpusControlEvent>(control_type)
                     for ((working_beat, working_position) in controller.get_all_blocked_positions(beat, position)) {
                         if (working_beat == beat && position == working_position) {
                             continue
@@ -2421,7 +2421,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
-    fun get_active_active_control_set(): ActiveControlSet? {
+    fun get_active_active_control_set(): EffectControlSet? {
         val channels = this.get_all_channels()
 
         val cursor = this.cursor

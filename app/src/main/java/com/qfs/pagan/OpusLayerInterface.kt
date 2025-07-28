@@ -7,8 +7,6 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
-import com.qfs.pagan.uibill.BillableItem
-import com.qfs.pagan.uibill.UIChangeBill
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -23,13 +21,15 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.uibill.BillableItem
+import com.qfs.pagan.uibill.UIChangeBill
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -203,7 +203,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_global_ctl_cell_change(type: ControlEventType, beat: Int) {
-        val controller = this.controllers.get_controller<OpusControlEvent>(type)
+        val controller = this.get_controller<OpusControlEvent>(type)
         if (!controller.visible) {
             return
         }
@@ -229,7 +229,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_channel_ctl_cell_change(type: ControlEventType, channel: Int, beat: Int) {
-        val controller = this.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
+        val controller = this.get_all_channels()[channel].get_controller<OpusControlEvent>(type)
         if (!controller.visible) {
             return
         }
@@ -254,7 +254,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_line_ctl_cell_change(type: ControlEventType, beat_key: BeatKey) {
-        val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_controller<OpusControlEvent>(type)
+        val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<OpusControlEvent>(type)
         if (!controller.visible) {
            return
         }
@@ -335,7 +335,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                 val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
                 val working_channel = this.get_channel(channel_index)
-                val controller = working_channel.controllers.get_controller<OpusControlEvent>(type)
+                val controller = working_channel.get_controller<OpusControlEvent>(type)
                 this._add_controller_to_column_width_map(visible_row, controller)
             } else {
                 val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
@@ -350,7 +350,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             if (visibility) {
                 super.set_global_controller_visibility(type, true)
                 val visible_row = this.get_visible_row_from_ctl_line_global(type)
-                val controller = this.controllers.get_controller<OpusControlEvent>(type)
+                val controller = this.get_controller<OpusControlEvent>(type)
                 this._add_controller_to_column_width_map(visible_row, controller)
             } else {
                 val visible_row = this.get_visible_row_from_ctl_line_global(type)
@@ -2047,7 +2047,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 try {
                                     Pair(
                                         this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
-                                        this.get_all_channels()[cursor.channel].controllers.get_controller(cursor.ctl_type!!)
+                                        this.get_all_channels()[cursor.channel].get_controller(cursor.ctl_type!!)
                                     )
                                 } catch (_: NullPointerException) {
                                     // Dead cursor
@@ -2059,7 +2059,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 try {
                                     Pair(
                                         this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
-                                        this.controllers.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+                                        this.get_controller<OpusControlEvent>(cursor.ctl_type!!)
                                     )
                                 } catch (_: NullPointerException) {
                                     // Dead cursor
@@ -2377,7 +2377,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this._ui_change_bill.queue_column_changes(column_updates, false)
     }
 
-    private fun _add_controller_to_column_width_map(y: Int, line: ActiveController<*>) {
+    private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>) {
         if (this._ui_change_bill.is_full_locked()) {
             return
         }
@@ -2416,7 +2416,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this._add_line_to_column_width_map(visible_row, new_line)
 
         val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
-        controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, ActiveController<*>> ->
+        controllers.forEachIndexed { i: Int, (_, controller): Pair<ControlEventType, EffectController<*>> ->
             if (controller.visible) {
                 this._add_controller_to_column_width_map(visible_row + i + 1, controller)
             }

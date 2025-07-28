@@ -26,7 +26,6 @@ import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
@@ -37,6 +36,7 @@ import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
 import kotlin.math.floor
@@ -461,7 +461,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         fun get_global_control_leaf_state(type: ControlEventType, beat: Int, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
-            val controller = opus_manager.controllers.get_controller<OpusControlEvent>(type)
+            val controller = opus_manager.get_controller<OpusControlEvent>(type)
 
             val tree = controller.get_tree(beat, position)
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
@@ -497,7 +497,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         fun get_channel_control_leaf_state(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
-            val controller = opus_manager.get_all_channels()[channel].controllers.get_controller<OpusControlEvent>(type)
+            val controller = opus_manager.get_all_channels()[channel].get_controller<OpusControlEvent>(type)
 
             val tree = controller.get_tree(beat, position)
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)

@@ -8,7 +8,7 @@ import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.VelocityController
@@ -17,7 +17,7 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class ActiveControllerJSONInterface {
     companion object {
-        fun <T: OpusControlEvent> from_json(obj: JSONHashMap, size: Int): ActiveController<out OpusControlEvent> {
+        fun <T: OpusControlEvent> from_json(obj: JSONHashMap, size: Int): EffectController<out OpusControlEvent> {
             val output = when (val label = obj.get_string("type")) {
                 "tempo" -> {
                     val controller = TempoController(size)
@@ -51,7 +51,7 @@ class ActiveControllerJSONInterface {
             return output
         }
 
-        private fun <T: OpusControlEvent> populate_controller(obj: JSONHashMap, controller: ActiveController<T>, converter: (JSONHashMap) -> T) {
+        private fun <T: OpusControlEvent> populate_controller(obj: JSONHashMap, controller: EffectController<T>, converter: (JSONHashMap) -> T) {
             for (pair in obj.get_list("events")) {
                 val index = (pair as JSONList).get_int(0)
                 val value = pair.get_hashmapn(1) ?: continue
@@ -104,7 +104,7 @@ class ActiveControllerJSONInterface {
             )
         }
 
-        fun to_json(controller: ActiveController<out OpusControlEvent>): JSONHashMap {
+        fun to_json(controller: EffectController<out OpusControlEvent>): JSONHashMap {
             val map = JSONHashMap()
             val event_list = JSONList()
             controller.beats.forEachIndexed { i: Int, event_tree: ReducibleTree<out OpusControlEvent>? ->

@@ -19,6 +19,7 @@ enum class ControlTransition(val i: Int) {
 }
 
 abstract class OpusControlEvent(duration: Int = 1, var transition: ControlTransition = ControlTransition.Instant): OpusEvent(duration) {
+    abstract val event_type: ControlEventType
     // TODO: within hashCodes, account for transition being moved here
     abstract override fun copy(): OpusControlEvent
     abstract fun to_float_array(): FloatArray
@@ -66,12 +67,14 @@ abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition:
 }
 
 class OpusTempoEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    override val event_type = ControlEventType.Tempo
     override fun copy(): OpusTempoEvent {
         return OpusTempoEvent(this.value, this.duration, this.transition)
     }
 }
 
 class OpusVolumeEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    override val event_type = ControlEventType.Volume
     override fun to_float_array(): FloatArray {
         val adjusted = this.value / 1.27F
         return floatArrayOf(adjusted.pow(1.5F)) // 1.27 == 1
@@ -85,6 +88,7 @@ class OpusVolumeEvent(value: Float, duration: Int = 1, transition: ControlTransi
 }
 
 class OpusReverbEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    override val event_type = ControlEventType.Reverb
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)
     }
@@ -102,6 +106,7 @@ class OpusReverbEvent(value: Float, duration: Int = 1, transition: ControlTransi
 }
 
 class OpusPanEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    override val event_type = ControlEventType.Pan
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)
     }
@@ -124,6 +129,7 @@ class OpusPanEvent(value: Float, duration: Int = 1, transition: ControlTransitio
 }
 
 class OpusVelocityEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    override val event_type = ControlEventType.Velocity
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value) // 1.27 == 1
     }

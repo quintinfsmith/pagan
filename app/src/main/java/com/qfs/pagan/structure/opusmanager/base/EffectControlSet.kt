@@ -1,14 +1,14 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.base.activecontroller.ActiveController
+import com.qfs.pagan.structure.opusmanager.base.activecontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.ReverbController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.activecontroller.VolumeController
 
-class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
-    val controllers = HashMap<ControlEventType, ActiveController<*>>()
+class EffectControlSet(var beat_count: Int, default_enabled: Set<ControlEventType>? = null) {
+    val controllers = HashMap<ControlEventType, EffectController<*>>()
 
     init {
         for (type in default_enabled ?: setOf()) {
@@ -25,14 +25,14 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         return this.controllers.size
     }
 
-    fun get_all(): Array<Pair<ControlEventType, ActiveController<out OpusControlEvent>>> {
+    fun get_all(): Array<Pair<ControlEventType, EffectController<out OpusControlEvent>>> {
         val items = this.controllers.entries.sortedByDescending { it.key }
         return Array(items.size) { i: Int ->
             Pair(items[i].key, items[i].value)
         }
     }
 
-    fun new_controller(type: ControlEventType, controller: ActiveController<*>? = null) {
+    fun new_controller(type: ControlEventType, controller: EffectController<*>? = null) {
         if (controller == null) {
             this.controllers[type] = when (type) {
                 ControlEventType.Tempo -> TempoController(this.beat_count)
@@ -65,11 +65,11 @@ class ActiveControlSet(var beat_count: Int, default_enabled: Set<ControlEventTyp
         }
     }
 
-    fun <T: OpusControlEvent> get_controller(type: ControlEventType): ActiveController<T> {
+    fun <T: OpusControlEvent> get_controller(type: ControlEventType): EffectController<T> {
         if (!this.controllers.containsKey(type)) {
             this.new_controller(type)
         }
-        return this.controllers[type]!! as ActiveController<T>
+        return this.controllers[type]!! as EffectController<T>
     }
 
     fun has_controller(type: ControlEventType): Boolean {

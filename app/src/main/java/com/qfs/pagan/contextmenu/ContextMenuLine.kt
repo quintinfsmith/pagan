@@ -8,10 +8,10 @@ import android.widget.LinearLayout
 import android.widget.Space
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.ContextMenuWithController
-import com.qfs.pagan.controlwidgets.ControlWidget
-import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
+import com.qfs.pagan.controlwidgets.ControlWidget
+import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
@@ -131,7 +131,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         )
 
         // Show the volume control regardless of if line control is visible. redundancy is probably better.
-        val controller = working_channel.lines[line_offset].controllers.get_controller<OpusVolumeEvent>(ControlEventType.Volume)
+        val controller = working_channel.lines[line_offset].get_controller<OpusVolumeEvent>(ControlEventType.Volume)
         this.widget_volume.set_event(controller.initial_event, true)
         this.widget_volume.visibility = View.VISIBLE
     }

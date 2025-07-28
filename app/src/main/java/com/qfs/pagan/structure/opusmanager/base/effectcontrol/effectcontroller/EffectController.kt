@@ -80,22 +80,27 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         output.add(0F, 0F, floatArrayOf(0F), initial_value, EffectTransition.Instant)
         var previous_tail = Pair(0F, initial_value)
 
-
         val size = this.beat_count()
         val default_size = 1F / size.toFloat()
         for (b in 0 until size) {
             val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), this.get_tree(b), default_size, 0F))
-            stack_traverse@ while (stack.isNotEmpty()) {
+            while (stack.isNotEmpty()) {
                 val working_item = stack.removeAt(0)
                 val working_tree = working_item.tree ?: continue
 
                 if (working_tree.has_event()) {
                     val working_event = working_tree.get_event()!!
                     val working_values = working_event.to_float_array()
+                    var is_difference = false
                     for (i in 0 until working_values.size) {
                         if (working_values[i] - previous_tail.second[i] != 0F) {
-                            continue@stack_traverse
+                            is_difference = true
+                            break
                         }
+                    }
+
+                    if (!is_difference) {
+                        continue
                     }
 
                     val start_position = (b.toFloat() / size.toFloat()) + working_item.relative_offset

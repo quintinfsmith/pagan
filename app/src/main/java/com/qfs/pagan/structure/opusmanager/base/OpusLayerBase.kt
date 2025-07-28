@@ -3829,11 +3829,7 @@ open class OpusLayerBase: Effectable {
                                     channel.get_midi_channel(),
                                     note,
                                     bend,
-                                    (if (has_velocity_controller) {
-                                        line.get_controller<OpusVelocityEvent>(EffectType.Velocity).initial_event.value
-                                    } else {
-                                        line.get_controller<OpusVolumeEvent>(EffectType.Volume).initial_event.value
-                                    } * 100F).toInt(),
+                                    (this.get_current_velocity(BeatKey(c, l, b), Rational(current.offset, current.size)) * 100F).toInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -4477,6 +4473,22 @@ open class OpusLayerBase: Effectable {
             val event = controller.coerce_event(beat_key.beat, event_position)
             event.value
         }
+    }
+
+    fun get_current_velocity(beat_key: BeatKey, event_position: Rational): Float {
+        // If the velocity controller exists, use that otherwise consider velocity to be volume
+        val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
+
+        return if (line.controllers.has_controller(EffectType.Velocity)) {
+            val controller = line.get_controller<OpusVelocityEvent>(EffectType.Velocity)
+            val event = controller.coerce_event(beat_key.beat, event_position)
+            event.value
+        } else {
+            val controller = line.get_controller<OpusVolumeEvent>(EffectType.Volume)
+            val event = controller.coerce_event(beat_key.beat, event_position)
+            event.value
+        }
+
     }
 
     internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {

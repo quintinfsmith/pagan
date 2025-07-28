@@ -1,6 +1,7 @@
 package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.structure.Rational
+import kotlin.math.pow
 
 enum class ControlEventType(val i: Int) {
     Tempo(0),
@@ -73,7 +74,7 @@ class OpusTempoEvent(value: Float, duration: Int = 1, transition: ControlTransit
 class OpusVolumeEvent(value: Float, duration: Int = 1, transition: ControlTransition = ControlTransition.Instant): SingleFloatEvent(value, duration, transition) {
     override fun to_float_array(): FloatArray {
         val adjusted = this.value / 1.27F
-        return floatArrayOf(adjusted) // 1.27 == 1
+        return floatArrayOf(adjusted.pow(1.5F)) // 1.27 == 1
     }
     override fun equals(other: Any?): Boolean {
         return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition && super.equals(other)

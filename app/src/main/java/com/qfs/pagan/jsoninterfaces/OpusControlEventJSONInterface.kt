@@ -2,17 +2,17 @@ package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
-import com.qfs.pagan.structure.opusmanager.base.ControlTransition
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusReverbEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 
 class OpusControlEventJSONInterface {
     companion object {
-        fun to_json(input: OpusControlEvent): JSONHashMap {
+        fun to_json(input: EffectEvent): JSONHashMap {
             val output = JSONHashMap()
             output["duration"] = input.duration
             when (input) {
@@ -42,10 +42,10 @@ class OpusControlEventJSONInterface {
             val output = JSONHashMap()
             val type = input.get_stringn("type")
             when (type) {
-                "com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent" -> {
+                "com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent" -> {
                     output["tempo"] = input["value"]
                 }
-                "com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent" -> {
+                "com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent" -> {
                     output["volume"] = input["value"]
                     output["transition"] = JSONInteger(0)
                 }
@@ -71,9 +71,9 @@ class OpusControlEventJSONInterface {
                 map.get_int("duration", 1),
                 /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
                 try {
-                    ControlTransition.valueOf(map.get_string("transition", "Instant"))
+                    EffectTransition.valueOf(map.get_string("transition", "Instant"))
                 } catch (e: ClassCastException) {
-                    ControlTransition.Instant
+                    EffectTransition.Instant
                 }
             )
         }
@@ -89,9 +89,9 @@ class OpusControlEventJSONInterface {
                 map.get_int("duration", 1),
                 /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
                 try {
-                    ControlTransition.valueOf(map.get_string("transition", "Instant"))
+                    EffectTransition.valueOf(map.get_string("transition", "Instant"))
                 } catch (e: ClassCastException) {
-                    ControlTransition.Instant
+                    EffectTransition.Instant
                 }
             )
         }
@@ -106,7 +106,7 @@ class OpusControlEventJSONInterface {
             return OpusPanEvent(
                 map.get_float("value"),
                 map.get_int("duration", 1),
-                ControlTransition.valueOf(map.get_string("transition", "Instant"))
+                EffectTransition.valueOf(map.get_string("transition", "Instant"))
             )
         }
         // ------------------------

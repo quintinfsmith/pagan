@@ -18,19 +18,19 @@ import androidx.core.content.ContextCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InvalidMergeException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusReverbEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
@@ -108,7 +108,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        private fun _get_current_line_info_and_position(): Triple<Triple<Int, CtlLineLevel?, ControlEventType?>?, Int, List<Int>?>?  {
+        private fun _get_current_line_info_and_position(): Triple<Triple<Int, CtlLineLevel?, EffectType?>?, Int, List<Int>?>?  {
             val y = this.touch_position_y
             val x = this.touch_position_x
 
@@ -201,7 +201,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        private fun _process_ctl_line_on_click(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+        private fun _process_ctl_line_on_click(type: EffectType, beat_key: BeatKey, position: List<Int>) {
             val activity = this.get_activity()
             val opus_manager = activity.get_opus_manager()
             val cursor = opus_manager.cursor
@@ -228,7 +228,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        private fun _process_ctl_channel_on_click(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+        private fun _process_ctl_channel_on_click(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
             val activity = this.get_activity()
             val opus_manager = activity.get_opus_manager()
             val cursor = opus_manager.cursor
@@ -256,7 +256,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        private fun _process_ctl_global_on_click(type: ControlEventType, beat: Int, position: List<Int>) {
+        private fun _process_ctl_global_on_click(type: EffectType, beat: Int, position: List<Int>) {
             val opus_manager = this.get_activity().get_opus_manager()
             val cursor = opus_manager.cursor
             val tracker = this.get_action_interface()
@@ -292,7 +292,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return this.get_activity().get_action_interface()
         }
 
-        fun on_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?) {
+        fun on_click_listener(line_info: Triple<Int, CtlLineLevel?, EffectType?>?, beat: Int, position: List<Int>?) {
             val action_interface = this.get_action_interface()
 
             if (line_info == null) {
@@ -323,7 +323,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
-        fun on_long_click_listener(line_info: Triple<Int, CtlLineLevel?, ControlEventType?>?, beat: Int, position: List<Int>?): Boolean {
+        fun on_long_click_listener(line_info: Triple<Int, CtlLineLevel?, EffectType?>?, beat: Int, position: List<Int>?): Boolean {
             val action_tracker = this.get_action_interface()
             val opus_manager = action_tracker.get_opus_manager()
             return if (line_info == null) {
@@ -458,10 +458,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun get_global_control_leaf_state(type: ControlEventType, beat: Int, position: List<Int>): IntArray {
+        fun get_global_control_leaf_state(type: EffectType, beat: Int, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
-            val controller = opus_manager.get_controller<OpusControlEvent>(type)
+            val controller = opus_manager.get_controller<EffectEvent>(type)
 
             val tree = controller.get_tree(beat, position)
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
@@ -494,10 +494,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun get_channel_control_leaf_state(type: ControlEventType, channel: Int, beat: Int, position: List<Int>): IntArray {
+        fun get_channel_control_leaf_state(type: EffectType, channel: Int, beat: Int, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
-            val controller = opus_manager.get_all_channels()[channel].get_controller<OpusControlEvent>(type)
+            val controller = opus_manager.get_all_channels()[channel].get_controller<EffectEvent>(type)
 
             val tree = controller.get_tree(beat, position)
             val original_position = controller.get_blocking_position(beat, position) ?: Pair(beat, position)
@@ -535,10 +535,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun get_line_control_leaf_state(type: ControlEventType, beat_key: BeatKey, position: List<Int>): IntArray {
+        fun get_line_control_leaf_state(type: EffectType, beat_key: BeatKey, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
-            val controller = opus_manager.get_line_controller<OpusControlEvent>(type, beat_key.channel, beat_key.line_offset)
+            val controller = opus_manager.get_line_controller<EffectEvent>(type, beat_key.channel, beat_key.line_offset)
 
             val beat = beat_key.beat
             val tree = controller.get_tree(beat, position)
@@ -879,7 +879,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun process_ctl_event_layout(state: IntArray, event: OpusControlEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
+        fun process_ctl_event_layout(state: IntArray, event: EffectEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
             val ctl_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.ctl_leaf)!!
             ctl_drawable.setState(state)
             ctl_drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + ctl_line_height).toInt())

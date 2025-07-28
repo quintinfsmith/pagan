@@ -8,9 +8,9 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
-abstract class ControlWidget<T: OpusControlEvent>(context: Context, var working_event: T, var level: CtlLineLevel, var is_initial_event: Boolean, val layout_id: Int, val callback: (T) -> Unit): LinearLayoutCompat(context, null) {
+abstract class ControlWidget<T: EffectEvent>(context: Context, var working_event: T, var level: CtlLineLevel, var is_initial_event: Boolean, val layout_id: Int, val callback: (T) -> Unit): LinearLayoutCompat(context, null) {
     abstract fun on_set(event: T)
     abstract fun on_inflated()
     internal lateinit var inner: View

@@ -1,10 +1,10 @@
 package com.qfs.pagan.LineLabel
 
 import android.content.Context
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 
-class LineLabelCtlGlobal(context: Context, ctl_type: ControlEventType): LineLabelCtl(context, CtlLineLevel.Global, ctl_type) {
+class LineLabelCtlGlobal(context: Context, ctl_type: EffectType): LineLabelCtl(context, CtlLineLevel.Global, ctl_type) {
     override fun on_click() {
         val tracker = this.get_activity().get_action_interface()
         val opus_manager = this.get_opus_manager()

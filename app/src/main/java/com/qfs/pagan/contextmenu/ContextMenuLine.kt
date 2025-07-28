@@ -12,10 +12,10 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
 
@@ -46,11 +46,11 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
             CtlLineLevel.Line,
             true,
             this.context
-        ) { event: OpusControlEvent ->
+        ) { event: EffectEvent ->
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             opus_manager.controller_line_set_initial_event(
-                ControlEventType.Volume,
+                EffectType.Volume,
                 cursor.channel,
                 cursor.line_offset,
                 event
@@ -131,7 +131,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         )
 
         // Show the volume control regardless of if line control is visible. redundancy is probably better.
-        val controller = working_channel.lines[line_offset].get_controller<OpusVolumeEvent>(ControlEventType.Volume)
+        val controller = working_channel.lines[line_offset].get_controller<OpusVolumeEvent>(EffectType.Volume)
         this.widget_volume.set_event(controller.initial_event, true)
         this.widget_volume.visibility = View.VISIBLE
     }

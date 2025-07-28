@@ -7,9 +7,9 @@ import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
-class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(
+class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(
     R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent),
     ContextMenuWithController<T> {
     lateinit var button_toggle_line_control: Button
@@ -55,7 +55,7 @@ class ContextMenuControlLine<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         (this.widget as View).layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
     }
 
-    fun <T: OpusControlEvent> get_control_event(): T {
+    fun <T: EffectEvent> get_control_event(): T {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         return when (cursor.ctl_level!!) {

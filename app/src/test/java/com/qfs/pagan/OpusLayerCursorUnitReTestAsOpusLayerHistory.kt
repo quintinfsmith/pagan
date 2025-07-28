@@ -4,7 +4,7 @@
 package com.qfs.pagan
 
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import org.junit.Test
@@ -21,15 +21,15 @@ class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         manager.new_line(0, 0)
         manager.new_channel(1, 2)
 
-        manager.new_line_controller(ControlEventType.Volume, 0, 0)
-        manager.new_line_controller(ControlEventType.Volume, 0, 1)
-        manager.new_line_controller(ControlEventType.Pan, 0, 0)
-        manager.new_line_controller(ControlEventType.Pan, 0, 1)
+        manager.new_line_controller(EffectType.Volume, 0, 0)
+        manager.new_line_controller(EffectType.Volume, 0, 1)
+        manager.new_line_controller(EffectType.Pan, 0, 0)
+        manager.new_line_controller(EffectType.Pan, 0, 1)
 
-        manager.new_line_controller(ControlEventType.Volume, 1, 0)
-        manager.new_line_controller(ControlEventType.Volume, 1, 1)
-        manager.new_line_controller(ControlEventType.Pan, 1, 0)
-        manager.new_line_controller(ControlEventType.Pan, 1, 1)
+        manager.new_line_controller(EffectType.Volume, 1, 0)
+        manager.new_line_controller(EffectType.Volume, 1, 1)
+        manager.new_line_controller(EffectType.Pan, 1, 0)
+        manager.new_line_controller(EffectType.Pan, 1, 1)
 
 
         val channels = manager.get_all_channels()
@@ -293,7 +293,7 @@ class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         }
     }
 
-    private fun assert_line_controller_line_selection(manager: OpusManager, selected_channel: Int, selected_line_offset: Int, selected_type: ControlEventType) {
+    private fun assert_line_controller_line_selection(manager: OpusManager, selected_channel: Int, selected_line_offset: Int, selected_type: EffectType) {
         val channels = manager.get_all_channels()
         manager.cursor_select_line_ctl_line(selected_type, selected_channel, selected_line_offset)
 
@@ -371,7 +371,7 @@ class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         }
     }
 
-    private fun assert_channel_controller_line_selection(manager: OpusManager, selected_channel: Int, selected_type: ControlEventType) {
+    private fun assert_channel_controller_line_selection(manager: OpusManager, selected_channel: Int, selected_type: EffectType) {
         val channels = manager.get_all_channels()
         manager.cursor_select_channel_ctl_line(selected_type, selected_channel)
 
@@ -459,7 +459,7 @@ class OpusLayerCursorUnitReTestAsOpusLayerHistory {
         }
     }
 
-    private fun assert_global_controller_line_selection(manager: OpusManager, selected_type: ControlEventType) {
+    private fun assert_global_controller_line_selection(manager: OpusManager, selected_type: EffectType) {
         val channels = manager.get_all_channels()
         manager.cursor_select_global_ctl_line(selected_type)
 

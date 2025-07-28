@@ -1,7 +1,7 @@
 package com.qfs.pagan.structure.opusmanager.cursor
 
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 
@@ -13,7 +13,7 @@ data class OpusManagerCursor(
     var position: List<Int> = listOf(),
     var range: Pair<BeatKey, BeatKey>? = null,
     var ctl_level: CtlLineLevel? = null,
-    var ctl_type: ControlEventType? = null
+    var ctl_type: EffectType? = null
 ) {
 
     override fun equals(other: Any?): Boolean {
@@ -146,7 +146,7 @@ data class OpusManagerCursor(
         this.ctl_level = null
     }
 
-    fun select_ctl_at_line(beat_key: BeatKey, position: List<Int>, type: ControlEventType) {
+    fun select_ctl_at_line(beat_key: BeatKey, position: List<Int>, type: EffectType) {
         this.mode = CursorMode.Single
         this.channel = beat_key.channel
         this.line_offset = beat_key.line_offset
@@ -156,7 +156,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Line
     }
 
-    fun select_ctl_at_channel(channel: Int, beat: Int, position: List<Int>, type: ControlEventType) {
+    fun select_ctl_at_channel(channel: Int, beat: Int, position: List<Int>, type: EffectType) {
         this.mode = CursorMode.Single
         this.channel = channel
         this.line_offset = 0
@@ -166,7 +166,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Channel
     }
 
-    fun select_ctl_at_global(beat: Int, position: List<Int>, type: ControlEventType) {
+    fun select_ctl_at_global(beat: Int, position: List<Int>, type: EffectType) {
         this.mode = CursorMode.Single
         this.channel = 0
         this.line_offset = 0
@@ -176,7 +176,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Global
     }
 
-    fun select_line_ctl_line(channel: Int, line_offset: Int, type: ControlEventType) {
+    fun select_line_ctl_line(channel: Int, line_offset: Int, type: EffectType) {
         this.mode = CursorMode.Line
         this.channel = channel
         this.line_offset = line_offset
@@ -184,7 +184,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Line
     }
 
-    fun select_channel_ctl_line(channel: Int, type: ControlEventType) {
+    fun select_channel_ctl_line(channel: Int, type: EffectType) {
         this.mode = CursorMode.Line
         this.channel = channel
         this.line_offset = 0
@@ -192,7 +192,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Channel
     }
 
-    fun select_global_ctl_line(type: ControlEventType) {
+    fun select_global_ctl_line(type: EffectType) {
         this.mode = CursorMode.Line
         this.channel = 0
         this.line_offset = 0
@@ -223,13 +223,13 @@ data class OpusManagerCursor(
         this.ctl_level = null
     }
 
-    fun select_line_ctl_first_corner(type: ControlEventType, beat_key: BeatKey) {
+    fun select_line_ctl_first_corner(type: EffectType, beat_key: BeatKey) {
         this.select_range(beat_key, beat_key)
         this.ctl_type = type
         this.ctl_level = CtlLineLevel.Line
     }
 
-    fun select_line_ctl_range(type: ControlEventType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
+    fun select_line_ctl_range(type: EffectType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
         this.select_range(beat_key_a, beat_key_b)
 
         this.ctl_type = type
@@ -237,7 +237,7 @@ data class OpusManagerCursor(
     }
 
 
-    fun select_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
+    fun select_global_ctl_range(type: EffectType, first_beat: Int, second_beat: Int) {
         this.range = Pair(
             BeatKey(0, 0, first_beat),
             BeatKey(0, 0, second_beat)
@@ -247,11 +247,11 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Global
     }
 
-    fun select_global_ctl_end_point(type: ControlEventType, beat: Int) {
+    fun select_global_ctl_end_point(type: EffectType, beat: Int) {
         this.select_global_ctl_range(type, beat, beat)
     }
 
-    fun select_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+    fun select_channel_ctl_range(type: EffectType, channel: Int, first_beat: Int, second_beat: Int) {
         this.range = Pair(
             BeatKey(channel, 0, first_beat),
             BeatKey(channel, 0, second_beat)
@@ -261,7 +261,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Channel
     }
 
-    fun select_channel_ctl_end_point(type: ControlEventType, channel: Int, beat: Int) {
+    fun select_channel_ctl_end_point(type: EffectType, channel: Int, beat: Int) {
         this.select_channel_ctl_range(type,channel, beat, beat)
     }
 

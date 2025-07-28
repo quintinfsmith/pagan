@@ -1,7 +1,7 @@
 package com.qfs.pagan.jsoninterfaces
 
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import kotlin.math.max
 import kotlin.math.min
 
@@ -11,4 +11,4 @@ class UnknownChannelTypeException(type_string: String?): Exception("Unknown Chan
 class ExpectedCharacterException(char: Char, i: Int, string: String): Exception("Excpected \"$char\": ${if (i > 5) {"..."} else { }}${string.substring(max(0, i - 5) until min(string.length, i + 5))}${if (i < string.length - 5) { "..." } else { "" } }")
 
 class UnknownControllerException(label: String?): Exception("Unknown Controller: \"$label\"")
-class UnhandledControllerException(controller: EffectController<out OpusControlEvent>): Exception("Unhandled Controller: ${controller::class.java.name}")
+class UnhandledControllerException(controller: EffectController<out EffectEvent>): Exception("Unhandled Controller: ${controller::class.java.name}")

@@ -6,10 +6,10 @@ import androidx.appcompat.widget.AppCompatImageView
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 
-abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: ControlEventType): AppCompatImageView(
+abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var ctl_type: EffectType): AppCompatImageView(
     ContextThemeWrapper(context, R.style.ctl_line_label)
 ) {
     init {
@@ -65,11 +65,11 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
 
     fun get_label_icon(): Int {
         return when (this.ctl_type) {
-            ControlEventType.Tempo -> R.drawable.tempo
-            ControlEventType.Volume -> R.drawable.volume
-            ControlEventType.Velocity -> R.drawable.velocity
-            ControlEventType.Reverb -> R.drawable.volume // Placeholder TODO
-            ControlEventType.Pan -> R.drawable.pan_icon
+            EffectType.Tempo -> R.drawable.tempo
+            EffectType.Volume -> R.drawable.volume
+            EffectType.Velocity -> R.drawable.velocity
+            EffectType.Reverb -> R.drawable.volume // Placeholder TODO
+            EffectType.Pan -> R.drawable.pan_icon
         }
     }
 

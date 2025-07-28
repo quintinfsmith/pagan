@@ -271,7 +271,7 @@ class OpusChannelJSONInterface {
                         JSONHashMap(
                             "type" to JSONString("Volume"),
                             "initial_value" to JSONHashMap(
-                                "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent"),
+                                "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent"),
                                 "value" to JSONInteger(line_volumes.get_int(i))
                             ),
                             "children" to JSONList()
@@ -282,7 +282,7 @@ class OpusChannelJSONInterface {
                     JSONHashMap(
                         "type" to JSONString("Tempo"),
                         "initial_value" to JSONHashMap(
-                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent"),
+                            "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent"),
                             "value" to JSONFloat(input_map.get_float("tempo", 120F))
                         ),
                         "children" to JSONList()

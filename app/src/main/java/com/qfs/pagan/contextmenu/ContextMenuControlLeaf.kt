@@ -8,11 +8,11 @@ import androidx.core.view.isEmpty
 import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
-class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
+class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container),
     ContextMenuWithController<T> {
     lateinit var widget_wrapper: LinearLayout
@@ -166,7 +166,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
 
         val ctl_tree = when (cursor.ctl_level!!) {
             CtlLineLevel.Global -> {
-                val (actual_beat, actual_position) = opus_manager.controller_global_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
+                val (actual_beat, actual_position) = opus_manager.controller_global_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
                 opus_manager.get_global_ctl_tree<T>(
                     cursor.ctl_type!!,
                     actual_beat,
@@ -174,7 +174,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
                 )
             }
             CtlLineLevel.Channel -> {
-                val (actual_beat, actual_position) = opus_manager.controller_channel_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
+                val (actual_beat, actual_position) = opus_manager.controller_channel_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
                 opus_manager.get_channel_ctl_tree<T>(
                     cursor.ctl_type!!,
                     cursor.channel,
@@ -183,7 +183,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
                 )
             }
             CtlLineLevel.Line -> {
-                val (actual_beat_key, actual_position) = opus_manager.controller_line_get_actual_position<OpusControlEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
+                val (actual_beat_key, actual_position) = opus_manager.controller_line_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
 
                 opus_manager.get_line_ctl_tree<T>(
                     cursor.ctl_type!!,
@@ -203,7 +203,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
             ""
         }
 
-        if (cursor.ctl_type != ControlEventType.Tempo) {
+        if (cursor.ctl_type != EffectType.Tempo) {
             this.button_duration.visibility = View.VISIBLE
         } else {
             this.button_duration.visibility = View.GONE
@@ -212,7 +212,7 @@ class ContextMenuControlLeaf<T: OpusControlEvent>(val widget: ControlWidget<T>, 
         this.widget.set_event(current_event, true)
     }
 
-    fun <T: OpusControlEvent> get_control_event(): T {
+    fun <T: EffectEvent> get_control_event(): T {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         return when (cursor.ctl_level!!) {

@@ -10,16 +10,16 @@ import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
-import com.qfs.pagan.structure.opusmanager.base.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
-import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.floor
 import kotlin.math.max
@@ -316,7 +316,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return ControllerEventData(array, type_key)
     }
 
-    private fun get_control_type_key(control_type: ControlEventType): Int {
+    private fun get_control_type_key(control_type: EffectType): Int {
         return control_type.i
     }
 
@@ -380,7 +380,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     fun map_tempo_changes() {
-        val controller = this.opus_manager.get_controller<OpusTempoEvent>(ControlEventType.Tempo)
+        val controller = this.opus_manager.get_controller<OpusTempoEvent>(EffectType.Tempo)
         var working_tempo = controller.initial_event.value
 
         this._tempo_ratio_map.add(Pair(0f, working_tempo))
@@ -419,7 +419,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     // TODO: NEEDS BETTER NAME
-    private fun adjust_effect_profile_event_to_tempo(transition: ControlTransition, relative_start: Float, relative_end: Float, start_values: FloatArray, end_values: FloatArray): List<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>> {
+    private fun adjust_effect_profile_event_to_tempo(transition: EffectTransition, relative_start: Float, relative_end: Float, start_values: FloatArray, end_values: FloatArray): List<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>> {
         val output = mutableListOf<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>>()
 
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
@@ -458,7 +458,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         start_frame += (frames_per_beat * (relative_start - working_position)).toInt() * this.opus_manager.length
 
-        if (transition == ControlTransition.Instant) {
+        if (transition == EffectTransition.Instant) {
             return listOf(
                 Pair(
                     Pair(start_frame, start_frame),

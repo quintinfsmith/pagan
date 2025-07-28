@@ -4,7 +4,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedTreeException
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
@@ -236,8 +236,8 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
         Pair(KeyEvent.KEYCODE_E, true) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val ctl_type_map = ControlEventType.values().associateBy { it.i }
-                val ctl_type = ctl_type_map [this.get_buffer_value(ControlEventType.Volume.i)]
+                val ctl_type_map = EffectType.values().associateBy { it.i }
+                val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)]
                 if (ctl_type == null || !OpusLayerInterface.line_controller_domain.contains(ctl_type)) {
                     return
                 }
@@ -248,8 +248,8 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun channel(opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val ctl_type_map = ControlEventType.values().associateBy { it.i }
-                val ctl_type = ctl_type_map [this.get_buffer_value(ControlEventType.Volume.i)]
+                val ctl_type_map = EffectType.values().associateBy { it.i }
+                val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)]
                 if (ctl_type == null || !OpusLayerInterface.channel_controller_domain.contains(ctl_type)) {
                     return
                 }

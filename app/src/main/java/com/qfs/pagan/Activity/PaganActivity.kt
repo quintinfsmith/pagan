@@ -32,9 +32,9 @@ import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PopupMenuRecyclerAdapter
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
@@ -479,7 +479,7 @@ open class PaganActivity: AppCompatActivity() {
                 view.findViewById<TextView>(R.id.project_tempo)?.let {
                     it.text = this@PaganActivity.getString(
                         R.string.project_info_tempo, opus_manager.get_global_controller<OpusTempoEvent>(
-                            ControlEventType.Tempo).initial_event.value.roundToInt())
+                            EffectType.Tempo).initial_event.value.roundToInt())
                 }
                 view.findViewById<TextView>(R.id.project_last_modified)?.let {
                     DocumentFile.fromSingleUri(this@PaganActivity, value)?.let { f ->

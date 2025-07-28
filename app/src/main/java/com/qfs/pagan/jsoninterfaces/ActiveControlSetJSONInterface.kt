@@ -4,16 +4,16 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
 import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
-import com.qfs.pagan.structure.opusmanager.base.EffectControlSet
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
-import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.PanController
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.VelocityController
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
 
 class ActiveControlSetJSONInterface {
     companion object {
@@ -29,10 +29,10 @@ class ActiveControlSetJSONInterface {
                 }
 
                 val key = when (controller) {
-                    is TempoController -> ControlEventType.Tempo
-                    is VolumeController -> ControlEventType.Volume
-                    is PanController -> ControlEventType.Pan
-                    is VelocityController -> ControlEventType.Velocity
+                    is TempoController -> EffectType.Tempo
+                    is VolumeController -> EffectType.Volume
+                    is PanController -> EffectType.Pan
+                    is VelocityController -> EffectType.Velocity
                     //is ReverbController -> ControlEventType.Reverb
                     else -> throw UnhandledControllerException(controller)
                 }

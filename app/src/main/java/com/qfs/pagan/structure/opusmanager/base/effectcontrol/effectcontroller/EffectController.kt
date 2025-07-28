@@ -1,12 +1,12 @@
-package com.qfs.pagan.structure.opusmanager.base.effectcontroller
+package com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller
 
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.base.ControlTransition
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-abstract class EffectController<T: OpusControlEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
+abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
     fun set_initial_event(value: T) {
         this.initial_event = value
@@ -23,7 +23,7 @@ abstract class EffectController<T: OpusControlEvent>(beat_count: Int, var initia
 
         // If transition is instant, no need for further calculations
         when (working_event.transition) {
-            ControlTransition.Instant -> {
+            EffectTransition.Instant -> {
                 return working_event
             }
             else -> {}
@@ -46,7 +46,7 @@ abstract class EffectController<T: OpusControlEvent>(beat_count: Int, var initia
 
         if (target_position + beat >= event_end) {
             val event_copy = working_event.copy()
-            event_copy.transition = ControlTransition.Instant
+            event_copy.transition = EffectTransition.Instant
             return event_copy as T
         }
 
@@ -77,7 +77,7 @@ abstract class EffectController<T: OpusControlEvent>(beat_count: Int, var initia
 
         val initial_value = this.initial_event.to_float_array()
         val output = ControllerProfile()
-        output.add(0F, 0F, floatArrayOf(0F), initial_value, ControlTransition.Instant)
+        output.add(0F, 0F, floatArrayOf(0F), initial_value, EffectTransition.Instant)
         var previous_tail = Pair(0F, initial_value)
 
 
@@ -102,7 +102,7 @@ abstract class EffectController<T: OpusControlEvent>(beat_count: Int, var initia
                     val end_position = start_position + (working_event.duration * working_item.relative_width)
 
                     if (start_position > previous_tail.first) {
-                        output.add(previous_tail.first, start_position, previous_tail.second, previous_tail.second, ControlTransition.Instant)
+                        output.add(previous_tail.first, start_position, previous_tail.second, previous_tail.second, EffectTransition.Instant)
                     }
 
                     output.add(start_position, end_position, previous_tail.second, working_values, working_event.transition)

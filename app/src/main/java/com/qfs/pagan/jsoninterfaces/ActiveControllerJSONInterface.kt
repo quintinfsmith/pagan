@@ -7,17 +7,17 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.EffectController
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.PanController
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.VelocityController
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class ActiveControllerJSONInterface {
     companion object {
-        fun <T: OpusControlEvent> from_json(obj: JSONHashMap, size: Int): EffectController<out OpusControlEvent> {
+        fun <T: EffectEvent> from_json(obj: JSONHashMap, size: Int): EffectController<out EffectEvent> {
             val output = when (val label = obj.get_string("type")) {
                 "tempo" -> {
                     val controller = TempoController(size)
@@ -51,7 +51,7 @@ class ActiveControllerJSONInterface {
             return output
         }
 
-        private fun <T: OpusControlEvent> populate_controller(obj: JSONHashMap, controller: EffectController<T>, converter: (JSONHashMap) -> T) {
+        private fun <T: EffectEvent> populate_controller(obj: JSONHashMap, controller: EffectController<T>, converter: (JSONHashMap) -> T) {
             for (pair in obj.get_list("events")) {
                 val index = (pair as JSONList).get_int(0)
                 val value = pair.get_hashmapn(1) ?: continue
@@ -104,14 +104,14 @@ class ActiveControllerJSONInterface {
             )
         }
 
-        fun to_json(controller: EffectController<out OpusControlEvent>): JSONHashMap {
+        fun to_json(controller: EffectController<out EffectEvent>): JSONHashMap {
             val map = JSONHashMap()
             val event_list = JSONList()
-            controller.beats.forEachIndexed { i: Int, event_tree: ReducibleTree<out OpusControlEvent>? ->
+            controller.beats.forEachIndexed { i: Int, event_tree: ReducibleTree<out EffectEvent>? ->
                 if (event_tree == null) {
                     return@forEachIndexed
                 }
-                val generalized_tree = OpusTreeJSONInterface.to_json(event_tree) { event: OpusControlEvent ->
+                val generalized_tree = OpusTreeJSONInterface.to_json(event_tree) { event: EffectEvent ->
                     OpusControlEventJSONInterface.to_json(event)
                 } ?: return@forEachIndexed
 

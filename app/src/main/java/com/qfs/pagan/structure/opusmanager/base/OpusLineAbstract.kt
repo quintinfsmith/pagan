@@ -1,11 +1,16 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.base.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.Effectable
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats), Effectable {
-    class BlockedCtlTreeException(var type: ControlEventType, var e: BlockedTreeException): Exception(e.message)
-    var controllers = EffectControlSet(this.beats.size, setOf(ControlEventType.Volume))
+abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats),
+    Effectable {
+    class BlockedCtlTreeException(var type: EffectType, var e: BlockedTreeException): Exception(e.message)
+    var controllers = EffectControlSet(this.beats.size, setOf(EffectType.Volume))
     var muted = false
     var color: Int? = null
 
@@ -49,31 +54,31 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
         }
     }
 
-    fun remove_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
+    fun remove_control_leaf(type: EffectType, beat: Int, position: List<Int>) {
         try {
-            this.get_controller<OpusControlEvent>(type).remove_node(beat, position)
+            this.get_controller<EffectEvent>(type).remove_node(beat, position)
         } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
 
-    fun insert_control_leaf(type: ControlEventType, beat: Int, position: List<Int>) {
+    fun insert_control_leaf(type: EffectType, beat: Int, position: List<Int>) {
         try {
-            this.get_controller<OpusControlEvent>(type).insert(beat, position)
+            this.get_controller<EffectEvent>(type).insert(beat, position)
         } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
 
-    fun insert_control_leaf_after(type: ControlEventType, beat: Int, position: List<Int>) {
+    fun insert_control_leaf_after(type: EffectType, beat: Int, position: List<Int>) {
         try {
-            this.get_controller<OpusControlEvent>(type).insert_after(beat, position)
+            this.get_controller<EffectEvent>(type).insert_after(beat, position)
         } catch (e: BlockedTreeException) {
             throw BlockedCtlTreeException(type, e)
         }
     }
 
-    fun <U: OpusControlEvent> replace_control_leaf(type: ControlEventType, beat: Int, position: List<Int>, tree: ReducibleTree<U>) {
+    fun <U: EffectEvent> replace_control_leaf(type: EffectType, beat: Int, position: List<Int>, tree: ReducibleTree<U>) {
         try {
             this.get_controller<U>(type).replace_tree(beat, position, tree)
         } catch (e: BlockedTreeException) {
@@ -81,7 +86,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
         }
     }
 
-    fun <U: OpusControlEvent> set_controller_event(type: ControlEventType, beat: Int, position: List<Int>, event: U) {
+    fun <U: EffectEvent> set_controller_event(type: EffectType, beat: Int, position: List<Int>, event: U) {
         try {
             this.get_controller<U>(type).set_event(beat, position, event)
         } catch (e: BlockedTreeException) {
@@ -89,8 +94,8 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
         }
     }
 
-    override fun <U: OpusControlEvent> get_controller(type: ControlEventType): EffectController<U> {
-        return this.controllers.get_controller<U>(type)
+    override fun <U: EffectEvent> get_controller(type: EffectType): EffectController<U> {
+        return this.controllers.get<U>(type)
     }
 
 

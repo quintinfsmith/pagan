@@ -21,18 +21,18 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
-import com.qfs.pagan.structure.opusmanager.base.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.concurrent.thread
@@ -245,18 +245,18 @@ class ActionTracker {
             return name
         }
 
-        fun type_from_ints(int_list: List<Int?>, first_index: Int = 0): ControlEventType {
+        fun type_from_ints(int_list: List<Int?>, first_index: Int = 0): EffectType {
             val name = ByteArray(int_list[first_index]!!) { i: Int ->
                 int_list[i + first_index + 1]!!.toByte()
             }.decodeToString()
-            return ControlEventType.valueOf(name)
+            return EffectType.valueOf(name)
         }
 
-        fun transition_from_ints(int_list: List<Int?>, first_index: Int = 0): ControlTransition {
+        fun transition_from_ints(int_list: List<Int?>, first_index: Int = 0): EffectTransition {
             val name = ByteArray(int_list[first_index]!!) { i: Int ->
                 int_list[i + first_index + 1]!!.toByte()
             }.decodeToString()
-            return ControlTransition.valueOf(name)
+            return EffectTransition.valueOf(name)
         }
 
         fun item_to_json(item: Pair<TrackedAction, List<Int?>?>): JSONList {
@@ -548,7 +548,7 @@ class ActionTracker {
         this.get_opus_manager().copy_global_ctl_to_beat(beat)
     }
 
-    fun cursor_select_ctl_at_line(type: ControlEventType, beat_key: BeatKey, position: List<Int>) {
+    fun cursor_select_ctl_at_line(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeafCtlLine,
                 ActionTracker.enum_to_ints(type) + listOf(beat_key.channel, beat_key.line_offset, beat_key.beat) + position
@@ -557,7 +557,7 @@ class ActionTracker {
         this.get_opus_manager().cursor_select_ctl_at_line(type, beat_key, position)
     }
 
-    fun cursor_select_ctl_at_channel(type: ControlEventType, channel: Int, beat: Int, position: List<Int>) {
+    fun cursor_select_ctl_at_channel(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         this.track(
             TrackedAction.CursorSelectLeafCtlChannel,
             ActionTracker.enum_to_ints(type) + listOf(channel, beat) + position
@@ -566,7 +566,7 @@ class ActionTracker {
         this.get_opus_manager().cursor_select_ctl_at_channel(type, channel, beat, position)
     }
 
-    fun cursor_select_ctl_at_global(type: ControlEventType, beat: Int, position: List<Int>) {
+    fun cursor_select_ctl_at_global(type: EffectType, beat: Int, position: List<Int>) {
         this.track(TrackedAction.CursorSelectLeafCtlGlobal, ActionTracker.enum_to_ints(type) + listOf(beat) + position)
         this.get_opus_manager().cursor_select_ctl_at_global(type, beat, position)
     }
@@ -628,7 +628,7 @@ class ActionTracker {
         }
     }
 
-    fun cursor_select_line_ctl_line(type: ControlEventType, channel: Int, line_offset: Int) {
+    fun cursor_select_line_ctl_line(type: EffectType, channel: Int, line_offset: Int) {
         this.track(TrackedAction.CursorSelectLineCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset))
 
         val opus_manager = this.get_opus_manager()
@@ -640,7 +640,7 @@ class ActionTracker {
         }
     }
 
-    fun repeat_selection_ctl_line(type: ControlEventType, channel: Int, line_offset: Int, repeat: Int? = null) {
+    fun repeat_selection_ctl_line(type: EffectType, channel: Int, line_offset: Int, repeat: Int? = null) {
 
         val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
@@ -690,7 +690,7 @@ class ActionTracker {
         }
     }
 
-    fun cursor_select_channel_ctl_line(type: ControlEventType, channel: Int) {
+    fun cursor_select_channel_ctl_line(type: EffectType, channel: Int) {
         this.track(TrackedAction.CursorSelectChannelCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel))
 
         val opus_manager = this.get_opus_manager()
@@ -703,7 +703,7 @@ class ActionTracker {
         }
     }
 
-    fun repeat_selection_ctl_channel(type: ControlEventType, channel: Int, repeat: Int? = null) {
+    fun repeat_selection_ctl_channel(type: EffectType, channel: Int, repeat: Int? = null) {
 
         val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
@@ -750,13 +750,13 @@ class ActionTracker {
         }
     }
 
-    fun cursor_select_global_ctl_line(type: ControlEventType) {
+    fun cursor_select_global_ctl_line(type: EffectType) {
         this.track(TrackedAction.CursorSelectGlobalCtlLine, ActionTracker.enum_to_ints(type))
         val opus_manager = this.get_opus_manager()
         opus_manager.cursor_select_global_ctl_line(type)
     }
 
-    fun repeat_selection_ctl_global(type: ControlEventType, repeat: Int? = null) {
+    fun repeat_selection_ctl_global(type: EffectType, repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val activity = this.get_activity()
@@ -823,7 +823,7 @@ class ActionTracker {
         opus_manager.cursor_select_range(first_key, second_key)
     }
 
-    fun cursor_select_line_ctl_range(type: ControlEventType, first_key: BeatKey, second_key: BeatKey) {
+    fun cursor_select_line_ctl_range(type: EffectType, first_key: BeatKey, second_key: BeatKey) {
         this.track(
             TrackedAction.CursorSelectLineCtlRange,
             ActionTracker.enum_to_ints(type) +
@@ -842,7 +842,7 @@ class ActionTracker {
         opus_manager.cursor_select_line_ctl_range(type, first_key, second_key)
     }
 
-    fun cursor_select_channel_ctl_range(type: ControlEventType, channel: Int, first_beat: Int, second_beat: Int) {
+    fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first_beat: Int, second_beat: Int) {
         this.track(TrackedAction.CursorSelectChannelCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
 
         val activity = this.get_activity()
@@ -851,7 +851,7 @@ class ActionTracker {
     }
 
 
-    fun cursor_select_global_ctl_range(type: ControlEventType, first_beat: Int, second_beat: Int) {
+    fun cursor_select_global_ctl_range(type: EffectType, first_beat: Int, second_beat: Int) {
         this.track(TrackedAction.CursorSelectGlobalCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
 
         val activity = this.get_activity()
@@ -883,7 +883,7 @@ class ActionTracker {
     }
 
 
-    fun <K: OpusControlEvent> set_ctl_duration(duration: Int? = null) {
+    fun <K: EffectEvent> set_ctl_duration(duration: Int? = null) {
         val main = this.get_activity()
         val context_menu = main.active_context_menu as ContextMenuControlLeaf<K>
         val event = context_menu.get_control_event<K>().copy() as K
@@ -896,18 +896,18 @@ class ActionTracker {
         }
     }
 
-    fun set_ctl_transition(transition: ControlTransition? = null) {
-        val control_transitions = ControlTransition.values()
+    fun set_ctl_transition(transition: EffectTransition? = null) {
+        val control_transitions = EffectTransition.values()
         val options = List(control_transitions.size) { i: Int ->
             Pair(control_transitions[i], control_transitions[i].name)
         }
 
         val main = this.get_activity()
 
-        val context_menu = main.active_context_menu as ContextMenuControlLeaf<OpusControlEvent>
+        val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
 
-        val event = context_menu.get_control_event<OpusControlEvent>().copy()
-        this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: ControlTransition ->
+        val event = context_menu.get_control_event<EffectEvent>().copy()
+        this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: EffectTransition ->
             this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
             event.transition = transition
             context_menu.widget.set_event(event)
@@ -976,9 +976,9 @@ class ActionTracker {
         }
     }
 
-    fun show_hidden_line_controller(forced_value: ControlEventType? = null) {
+    fun show_hidden_line_controller(forced_value: EffectType? = null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<ControlEventType, String>>( )
+        val options = mutableListOf<Pair<EffectType, String>>( )
         val cursor = opus_manager.cursor
 
         for (ctl_type in OpusLayerInterface.line_controller_domain) {
@@ -989,16 +989,16 @@ class ActionTracker {
             options.add(Pair(ctl_type, ctl_type.name))
         }
 
-        this.dialog_popup_menu(this.get_activity().getString(R.string.show_line_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
+        this.dialog_popup_menu(this.get_activity().getString(R.string.show_line_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
             this.track(TrackedAction.ShowLineController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
         }
     }
 
-    fun show_hidden_channel_controller(forced_value: ControlEventType? =  null) {
+    fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val options = mutableListOf<Pair<ControlEventType, String>>( )
+        val options = mutableListOf<Pair<EffectType, String>>( )
 
         for (ctl_type in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
@@ -1008,7 +1008,7 @@ class ActionTracker {
             options.add(Pair(ctl_type, ctl_type.name))
         }
 
-        this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: ControlEventType ->
+        this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
             this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
         }
@@ -1819,7 +1819,7 @@ class ActionTracker {
                 this.set_duration(integers[0])
             }
             TrackedAction.SetDurationCtl -> {
-                this.set_ctl_duration<OpusControlEvent>(integers[0])
+                this.set_ctl_duration<EffectEvent>(integers[0])
             }
             TrackedAction.SetPercussionInstrument -> {
                 this.set_percussion_instrument(integers[0])
@@ -1834,7 +1834,7 @@ class ActionTracker {
                 this.remove_line(integers[0])
             }
             TrackedAction.SetTransitionAtCursor -> {
-                this.set_ctl_transition(ControlTransition.valueOf(string_from_ints(integers)))
+                this.set_ctl_transition(EffectTransition.valueOf(string_from_ints(integers)))
             }
             TrackedAction.SetVolumeAtCursor -> {
                 this.set_volume(integers[0])
@@ -1936,12 +1936,12 @@ class ActionTracker {
 
             TrackedAction.ShowLineController -> {
                 this.show_hidden_line_controller(
-                    ControlEventType.valueOf(string_from_ints(integers))
+                    EffectType.valueOf(string_from_ints(integers))
                 )
             }
             TrackedAction.ShowChannelController -> {
                 this.show_hidden_channel_controller(
-                    ControlEventType.valueOf(string_from_ints(integers))
+                    EffectType.valueOf(string_from_ints(integers))
                 )
             }
             TrackedAction.SaveProject -> {

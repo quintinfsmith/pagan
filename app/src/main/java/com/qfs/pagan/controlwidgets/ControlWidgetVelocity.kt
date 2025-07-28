@@ -7,9 +7,9 @@ import android.widget.SeekBar
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.base.ControlTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 
 class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusVelocityEvent) -> Unit): ControlWidget<OpusVelocityEvent>(context, default, level, is_initial_event, R.layout.control_widget_volume, callback) {
     private lateinit var _slider: SeekBar
@@ -32,8 +32,8 @@ class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_
         } else {
             (this._transition_button as MaterialButton).setIconResource(
                 when (this.working_event.transition) {
-                    ControlTransition.Instant -> R.drawable.immediate
-                    ControlTransition.Linear -> R.drawable.linear
+                    EffectTransition.Instant -> R.drawable.immediate
+                    EffectTransition.Linear -> R.drawable.linear
                 }
             )
 
@@ -86,8 +86,8 @@ class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_
         val value = (event.value * 100).toInt()
         this.set_text(value)
         (this._transition_button as MaterialButton).setIconResource(when (event.transition) {
-            ControlTransition.Instant -> R.drawable.immediate
-            ControlTransition.Linear -> R.drawable.linear
+            EffectTransition.Instant -> R.drawable.immediate
+            EffectTransition.Linear -> R.drawable.linear
         })
     }
 

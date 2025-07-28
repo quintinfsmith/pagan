@@ -78,22 +78,9 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
-import com.qfs.pagan.CompatibleFileType
-import com.qfs.pagan.contextmenu.ContextMenuChannel
-import com.qfs.pagan.contextmenu.ContextMenuColumn
-import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
-import com.qfs.pagan.contextmenu.ContextMenuControlLeafB
-import com.qfs.pagan.contextmenu.ContextMenuControlLine
-import com.qfs.pagan.contextmenu.ContextMenuLeaf
-import com.qfs.pagan.contextmenu.ContextMenuLeafPercussion
-import com.qfs.pagan.contextmenu.ContextMenuLine
-import com.qfs.pagan.contextmenu.ContextMenuRange
-import com.qfs.pagan.contextmenu.ContextMenuView
-import com.qfs.pagan.controlwidgets.ControlWidgetPan
-import com.qfs.pagan.controlwidgets.ControlWidgetTempo
-import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.FeedbackDevice
 import com.qfs.pagan.HexEditText
@@ -109,17 +96,31 @@ import com.qfs.pagan.RangedFloatInput
 import com.qfs.pagan.RangedIntegerInput
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
+import com.qfs.pagan.contextmenu.ContextMenuChannel
+import com.qfs.pagan.contextmenu.ContextMenuColumn
+import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
+import com.qfs.pagan.contextmenu.ContextMenuControlLeafB
+import com.qfs.pagan.contextmenu.ContextMenuControlLine
+import com.qfs.pagan.contextmenu.ContextMenuLeaf
+import com.qfs.pagan.contextmenu.ContextMenuLeafPercussion
+import com.qfs.pagan.contextmenu.ContextMenuLine
+import com.qfs.pagan.contextmenu.ContextMenuRange
+import com.qfs.pagan.contextmenu.ContextMenuView
+import com.qfs.pagan.controlwidgets.ControlWidgetPan
+import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
+import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.databinding.ActivityEditorBinding
-import com.qfs.pagan.structure.opusmanager.base.ControlEventType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
-import com.qfs.pagan.structure.opusmanager.base.OpusControlEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.OpusPanEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVelocityEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -2940,8 +2941,8 @@ class ActivityEditor : PaganActivity() {
         }
 
         val widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> {
-                val controller = controller_set.get_controller<OpusTempoEvent>(cursor.ctl_type!!)
+            EffectType.Tempo -> {
+                val controller = controller_set.get<OpusTempoEvent>(cursor.ctl_type!!)
                 ControlWidgetTempo(
                     controller.initial_event,
                     cursor.ctl_level!!,
@@ -2951,8 +2952,8 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_initial_event(event)
                 }
             }
-            ControlEventType.Volume -> {
-                val controller = controller_set.get_controller<OpusVolumeEvent>(cursor.ctl_type!!)
+            EffectType.Volume -> {
+                val controller = controller_set.get<OpusVolumeEvent>(cursor.ctl_type!!)
                 ControlWidgetVolume(
                     controller.initial_event,
                     cursor.ctl_level!!,
@@ -2962,8 +2963,8 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_initial_event(event)
                 }
             }
-            ControlEventType.Velocity -> {
-                val controller = controller_set.get_controller<OpusVelocityEvent>(cursor.ctl_type!!)
+            EffectType.Velocity -> {
+                val controller = controller_set.get<OpusVelocityEvent>(cursor.ctl_type!!)
                 ControlWidgetVelocity(
                     controller.initial_event,
                     cursor.ctl_level!!,
@@ -2974,8 +2975,8 @@ class ActivityEditor : PaganActivity() {
                 }
             }
 
-            ControlEventType.Pan -> {
-                val controller = controller_set.get_controller<OpusPanEvent>(cursor.ctl_type!!)
+            EffectType.Pan -> {
+                val controller = controller_set.get<OpusPanEvent>(cursor.ctl_type!!)
                 ControlWidgetPan(
                     controller.initial_event,
                     cursor.ctl_level!!,
@@ -2986,7 +2987,7 @@ class ActivityEditor : PaganActivity() {
                 }
             }
 
-            ControlEventType.Reverb -> TODO()
+            EffectType.Reverb -> TODO()
         }
 
 
@@ -3007,7 +3008,7 @@ class ActivityEditor : PaganActivity() {
         val cursor = opus_manager.cursor
         val controller_set = opus_manager.get_active_active_control_set() ?: return
 
-        val controller = controller_set.get_controller<OpusControlEvent>(cursor.ctl_type!!)
+        val controller = controller_set.get<EffectEvent>(cursor.ctl_type!!)
         val default = controller.get_latest_event(cursor.beat, cursor.get_position())?.copy() ?: controller.initial_event.copy()
 
 
@@ -3018,7 +3019,7 @@ class ActivityEditor : PaganActivity() {
         }
 
         val widget = when (cursor.ctl_type!!) {
-            ControlEventType.Tempo -> {
+            EffectType.Tempo -> {
                 ControlWidgetTempo(
                     default as OpusTempoEvent,
                     cursor.ctl_level!!,
@@ -3028,7 +3029,7 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_event_at_cursor(event)
                 }
             }
-            ControlEventType.Volume -> {
+            EffectType.Volume -> {
                 ControlWidgetVolume(
                     default as OpusVolumeEvent,
                     cursor.ctl_level!!,
@@ -3038,7 +3039,7 @@ class ActivityEditor : PaganActivity() {
                     opus_manager.set_event_at_cursor(event)
                 }
             }
-            ControlEventType.Velocity -> {
+            EffectType.Velocity -> {
                 ControlWidgetVelocity(
                     default as OpusVelocityEvent,
                     cursor.ctl_level!!,
@@ -3049,7 +3050,7 @@ class ActivityEditor : PaganActivity() {
                 }
             }
 
-            ControlEventType.Pan -> {
+            EffectType.Pan -> {
                 ControlWidgetPan(
                     default as OpusPanEvent,
                     cursor.ctl_level!!,
@@ -3060,7 +3061,7 @@ class ActivityEditor : PaganActivity() {
                 }
             }
 
-            ControlEventType.Reverb -> TODO()
+            EffectType.Reverb -> TODO()
         }
 
         this.active_context_menu = ContextMenuControlLeaf(

@@ -2213,7 +2213,7 @@ class ActionTracker {
     fun to_json(): JSONObject {
         return JSONList(
             *Array(this.action_queue.size) { i: Int ->
-                ActionTracker.item_to_json(this.action_queue[i])
+                item_to_json(this.action_queue[i])
             }
         )
     }

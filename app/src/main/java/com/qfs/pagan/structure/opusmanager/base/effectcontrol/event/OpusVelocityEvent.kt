@@ -14,10 +14,7 @@ class OpusVelocityEvent(value: Float, duration: Int = 1, transition: EffectTrans
 
     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
-        val shift = when (this.transition) {
-            EffectTransition.Instant -> 0
-            EffectTransition.Linear -> 1
-        }
+        val shift = this.transition.i
         return (code shl shift) + (code shr (32 - shift))
     }
 

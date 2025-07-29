@@ -902,13 +902,12 @@ class ActionTracker {
         val options = List(control_transitions.size) { i: Int ->
             Triple(
                 control_transitions[i],
-                when (control_transitions[i]) {
-                    EffectTransition.Instant -> R.drawable.immediate
-                    EffectTransition.Linear -> R.drawable.linear
-                },
+                main.get_effect_transition_icon(control_transitions[i]),
                 when (control_transitions[i]) {
                     EffectTransition.Instant -> main.getString(R.string.effect_transition_instant)
                     EffectTransition.Linear -> main.getString(R.string.effect_transition_linear)
+                    EffectTransition.RInstant -> main.getString(R.string.effect_transition_rinstant)
+                    EffectTransition.RLinear -> main.getString(R.string.effect_transition_rlinear)
                 }
             )
         }

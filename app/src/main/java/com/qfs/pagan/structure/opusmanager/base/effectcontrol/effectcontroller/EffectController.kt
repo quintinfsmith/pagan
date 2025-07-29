@@ -1,9 +1,9 @@
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller
 
 import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
@@ -109,9 +109,24 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                     if (start_position > previous_tail.first) {
                         output.add(previous_tail.first, start_position, previous_tail.second, previous_tail.second, EffectTransition.Instant)
                     }
-
-                    output.add(start_position, end_position, previous_tail.second, working_values, working_event.transition)
-                    previous_tail = Pair(end_position, working_values)
+                    if (working_event.is_reset_transition()) {
+                        output.add(
+                            start_position,
+                            end_position,
+                            working_values, // Note this is switched with the previous_tail.second
+                            previous_tail.second,
+                            when (working_event.transition) {
+                                EffectTransition.RInstant -> EffectTransition.Instant
+                                EffectTransition.RLinear -> EffectTransition.Linear
+                                else -> throw Exception("This should be unreachable. Theres's a transition registered as a reset-type but not handled here")
+                            }
+                        )
+                        // don't change the values for reset transitions
+                        previous_tail = Pair(end_position, previous_tail.second)
+                    } else {
+                        output.add(start_position, end_position, previous_tail.second, working_values, working_event.transition)
+                        previous_tail = Pair(end_position, working_values)
+                    }
                 } else if (!working_tree.is_leaf()) {
                     val new_width = working_item.relative_width / working_tree.size.toFloat()
                     for (i in 0 until working_tree.size) {

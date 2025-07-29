@@ -7,7 +7,6 @@ import android.widget.SeekBar
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 
@@ -31,10 +30,7 @@ class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_
             this._transition_button.visibility = GONE
         } else {
             (this._transition_button as MaterialButton).setIconResource(
-                when (this.working_event.transition) {
-                    EffectTransition.Instant -> R.drawable.immediate
-                    EffectTransition.Linear -> R.drawable.linear
-                }
+                this.get_activity().get_effect_transition_icon(this.working_event.transition)
             )
 
             this._transition_button.setOnClickListener {
@@ -85,10 +81,9 @@ class ControlWidgetVelocity(default: OpusVelocityEvent, level: CtlLineLevel, is_
         this._slider.progress = (event.value * 100F).toInt()
         val value = (event.value * 100).toInt()
         this.set_text(value)
-        (this._transition_button as MaterialButton).setIconResource(when (event.transition) {
-            EffectTransition.Instant -> R.drawable.immediate
-            EffectTransition.Linear -> R.drawable.linear
-        })
+        (this._transition_button as MaterialButton).setIconResource(
+            this.get_activity().get_effect_transition_icon(event.transition)
+        )
     }
 
 }

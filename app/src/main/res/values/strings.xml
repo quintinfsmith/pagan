@@ -246,6 +246,8 @@
     <string name="settings_night_mode_no">Day</string>
     <string name="effect_transition_instant">Instant</string>
     <string name="effect_transition_linear">Linear</string>
+    <string name="effect_transition_rlinear">Instant, Linear Return</string>
+    <string name="effect_transition_rinstant">Instant, Temporary</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

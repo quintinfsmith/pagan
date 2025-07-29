@@ -114,6 +114,7 @@ import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -3377,5 +3378,14 @@ class ActivityEditor : PaganActivity() {
             this.windowManager.defaultDisplay.getMetrics(display_metrics)
             display_metrics.heightPixels
         } / 3
+    }
+
+    fun get_effect_transition_icon(transition: EffectTransition): Int {
+        return when (transition) {
+            EffectTransition.Instant -> R.drawable.immediate
+            EffectTransition.Linear -> R.drawable.linear
+            EffectTransition.RInstant -> R.drawable.rimmediate
+            EffectTransition.RLinear -> R.drawable.rlinear
+        }
     }
 }

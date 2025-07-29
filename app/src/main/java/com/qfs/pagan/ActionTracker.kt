@@ -905,10 +905,14 @@ class ActionTracker {
                 when (control_transitions[i]) {
                     EffectTransition.Instant -> R.drawable.immediate
                     EffectTransition.Linear -> R.drawable.linear
+                    EffectTransition.RLinear -> R.drawable.rlinear
+                    EffectTransition.RInstant -> R.drawable.rimmediate
                 },
                 when (control_transitions[i]) {
                     EffectTransition.Instant -> main.getString(R.string.effect_transition_instant)
                     EffectTransition.Linear -> main.getString(R.string.effect_transition_linear)
+                    EffectTransition.RInstant -> main.getString(R.string.effect_transition_rinstant)
+                    EffectTransition.RLinear -> main.getString(R.string.effect_transition_rlinear)
                 }
             )
         }

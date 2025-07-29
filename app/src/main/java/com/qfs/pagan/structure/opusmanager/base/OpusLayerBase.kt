@@ -23,16 +23,16 @@ import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
 import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.Effectable
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -3676,7 +3676,12 @@ open class OpusLayerBase: Effectable {
                         for ((j, midi_event) in gen_event_callback(event, latest_event, current.size)) {
                             midi.insert_event(0, current.offset + j, midi_event)
                         }
-                        latest_event = event
+
+                        // Don't track reset_transitions, since their values will not affect next events
+                        if (!event.is_reset_transition()) {
+                            latest_event = event
+                        }
+
                     } else if (!current.tree.is_leaf()) {
                         val working_subdiv_size = current.size / current.tree.size
                         for ((j, subtree) in current.tree.divisions) {
@@ -3708,21 +3713,32 @@ open class OpusLayerBase: Effectable {
 
         val channels = this.get_all_channels()
         for (c in channels.indices) {
-            val pan_controller = channels[c].get_controller<OpusPanEvent>(
-                EffectType.Pan)
+            val pan_controller = channels[c].get_controller<OpusPanEvent>(EffectType.Pan)
+
             apply_active_controller(pan_controller) { event: OpusPanEvent, previous_event: OpusPanEvent?, frames: Int ->
                 when (event.transition) {
                     EffectTransition.Instant -> {
                         val value = min(((event.value + 1F) * 64).toInt(), 127)
                         listOf(Pair(0, BalanceMSB(c, value)))
                     }
+
+                    EffectTransition.RInstant -> {
+                        val return_value = min((((previous_event?.value ?: 0F) + 1F) * 64).toInt(), 127)
+                        val value = min(((event.value + 1F) * 64).toInt(), 127)
+                        listOf(
+                            Pair(0, BalanceMSB(c, value)),
+                            Pair(frames, BalanceMSB(c, return_value)),
+
+                        )
+                    }
+
                     EffectTransition.Linear -> {
-                        val working_value = previous_event?.value ?: 0F
-                        val diff = (event.value - working_value) / (frames * event.duration).toFloat()
+                        val latest_value = (previous_event?.value ?: 0F)
+                        val diff = (event.value - latest_value) / (frames * event.duration).toFloat()
                         val working_list = mutableListOf<Pair<Int, MIDIEvent>>()
                         var last_val: Int? = null
                         for (x in 0 until frames * event.duration) {
-                            val mid_val = working_value + (x * diff)
+                            val mid_val = latest_value + (x * diff)
                             val value = min(((mid_val + 1F) * 64).toInt(), 127)
                             if (last_val != value) {
                                 working_list.add(Pair(x, BalanceMSB(c, value)))
@@ -3731,6 +3747,23 @@ open class OpusLayerBase: Effectable {
                         }
                         working_list
                     }
+
+                    EffectTransition.RLinear -> {
+                        val latest_value = (previous_event?.value ?: 0F)
+                        val diff = (latest_value - event.value) / (frames * event.duration).toFloat()
+                        val working_list = mutableListOf<Pair<Int, MIDIEvent>>()
+                        var last_val: Int? = null
+                        for (x in 0 until frames * event.duration) {
+                            val mid_val = event.value + (x * diff)
+                            val value = min(((mid_val + 1F) * 64).toInt(), 127)
+                            if (last_val != value) {
+                                working_list.add(Pair(x, BalanceMSB(c, value)))
+                            }
+                            last_val = value
+                        }
+                        working_list
+                    }
+
                 }
             }
 
@@ -3743,6 +3776,15 @@ open class OpusLayerBase: Effectable {
                             listOf(Pair(0, VolumeMSB(c, value.toInt())))
                         }
 
+                        EffectTransition.RInstant -> {
+                            val return_value = (previous_event?.value ?: 0F) * 100
+                            val value = event.value * 100
+                            listOf(
+                                Pair(0, VolumeMSB(c, value.toInt())),
+                                Pair(frames, VolumeMSB(c, return_value.toInt())),
+                            )
+                        }
+
                         EffectTransition.Linear -> {
                             val working_value = previous_event?.value ?: 64F
                             val diff = (event.value - working_value) / (frames * event.duration).toFloat()
@@ -3750,6 +3792,22 @@ open class OpusLayerBase: Effectable {
                             var last_val: Int? = null
                             for (x in 0 until frames * event.duration) {
                                 val mid_val = working_value + (x * diff)
+                                val value = min((mid_val * 100).toInt(), 127)
+                                if (last_val != value) {
+                                    working_list.add(Pair(x, VolumeMSB(c, value)))
+                                }
+                                last_val = value
+                            }
+                            working_list
+                        }
+
+                        EffectTransition.RLinear -> {
+                            val latest_value = previous_event?.value ?: 64F
+                            val diff = (latest_value - event.value) / (frames * event.duration).toFloat()
+                            val working_list = mutableListOf<Pair<Int, MIDIEvent>>()
+                            var last_val: Int? = null
+                            for (x in 0 until frames * event.duration) {
+                                val mid_val = event.value + (x * diff)
                                 val value = min((mid_val * 100).toInt(), 127)
                                 if (last_val != value) {
                                     working_list.add(Pair(x, VolumeMSB(c, value)))
@@ -3789,7 +3847,7 @@ open class OpusLayerBase: Effectable {
 
                 var current_tick = 0
                 var prev_note = 0
-                val has_velocity_controller = line.controllers.has_controller(EffectType.Velocity)
+
                 line.beats.forEachIndexed { b: Int, beat_tree: ReducibleTree<out InstrumentEvent> ->
                     val stack: MutableList<StackItem<out InstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
                     while (stack.isNotEmpty()) {

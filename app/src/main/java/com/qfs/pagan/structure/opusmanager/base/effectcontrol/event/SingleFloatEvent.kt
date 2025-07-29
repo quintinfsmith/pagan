@@ -10,10 +10,7 @@ abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition:
 
     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
-        val shift = when (this.transition) {
-            EffectTransition.Instant -> 0
-            EffectTransition.Linear -> 1
-        }
+        val shift = this.transition.i
         return (code shl shift) + (code shr (32 - shift))
     }
 
@@ -28,7 +25,12 @@ abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition:
                 val diff = this.value - (preceding_event as SingleFloatEvent).value
                 copy_event.value = preceding_event.value + (diff * position.toFloat())
             }
+            EffectTransition.RLinear -> {
+                val diff = (preceding_event as SingleFloatEvent).value - this.value
+                copy_event.value = this.value + (diff * position.toFloat())
+            }
             EffectTransition.Instant -> {}
+            EffectTransition.RInstant -> {}
         }
 
         return copy_event

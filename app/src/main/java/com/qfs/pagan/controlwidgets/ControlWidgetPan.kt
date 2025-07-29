@@ -60,6 +60,8 @@ class ControlWidgetPan(default: OpusPanEvent, level: CtlLineLevel, is_initial_ev
         (this._transition_button as MaterialButton).setIconResource(when (event.transition) {
             EffectTransition.Instant -> R.drawable.immediate
             EffectTransition.Linear -> R.drawable.linear
+            EffectTransition.RLinear -> R.drawable.rlinear
+            EffectTransition.RInstant -> R.drawable.rimmediate
         })
     }
 }

@@ -12,28 +12,28 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
 import com.qfs.pagan.contextmenu.ContextMenuRange
 import com.qfs.pagan.controlwidgets.ControlWidgetPan
 import com.qfs.pagan.controlwidgets.ControlWidgetTempo
-import com.qfs.pagan.controlwidgets.ControlWidgetVolume
-import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
+import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.concurrent.thread
 import kotlin.math.abs
@@ -897,16 +897,22 @@ class ActionTracker {
     }
 
     fun set_ctl_transition(transition: EffectTransition? = null) {
+        val main = this.get_activity()
         val control_transitions = EffectTransition.entries.toTypedArray()
-        val effect_icons = hashMapOf(
-            EffectTransition.Instant to R.drawable.immediate,
-            EffectTransition.Linear to R.drawable.linear
-        )
         val options = List(control_transitions.size) { i: Int ->
-            Triple(control_transitions[i], effect_icons[control_transitions[i]], control_transitions[i].name)
+            Triple(
+                control_transitions[i],
+                when (control_transitions[i]) {
+                    EffectTransition.Instant -> R.drawable.immediate
+                    EffectTransition.Linear -> R.drawable.linear
+                },
+                when (control_transitions[i]) {
+                    EffectTransition.Instant -> main.getString(R.string.effect_transition_instant)
+                    EffectTransition.Linear -> main.getString(R.string.effect_transition_linear)
+                }
+            )
         }
 
-        val main = this.get_activity()
 
         val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
 

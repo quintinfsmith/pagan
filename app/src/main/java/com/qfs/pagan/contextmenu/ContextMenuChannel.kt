@@ -67,7 +67,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         this.button_remove.isEnabled = opus_manager.channels.size > 1
 
         var show_control_toggle = false
-        for (ctl_type in OpusLayerInterface.Companion.channel_controller_domain) {
+        for ((ctl_type, icon_id) in OpusLayerInterface.Companion.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
                 continue
             }

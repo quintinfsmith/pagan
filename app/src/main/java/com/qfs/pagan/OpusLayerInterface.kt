@@ -30,6 +30,7 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.BillableItem
 import com.qfs.pagan.uibill.UIChangeBill
+import kotlin.Pair
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -42,16 +43,18 @@ class OpusLayerInterface : OpusLayerHistory() {
     companion object {
         @Suppress("unused")
         val global_controller_domain = listOf(
-            EffectType.Tempo
+            Pair(EffectType.Tempo, R.drawable.tempo)
         )
+
         val channel_controller_domain = listOf(
-            EffectType.Volume,
-            EffectType.Pan
+            Pair(EffectType.Volume, R.drawable.volume),
+            Pair(EffectType.Pan, R.drawable.pan_icon)
         )
+
         val line_controller_domain = listOf(
-            EffectType.Volume,
-            EffectType.Velocity,
-            EffectType.Pan
+            Pair(EffectType.Volume, R.drawable.volume),
+            Pair(EffectType.Velocity, R.drawable.velocity),
+            Pair(EffectType.Pan, R.drawable.pan_icon)
         )
     }
 

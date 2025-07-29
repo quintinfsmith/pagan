@@ -279,7 +279,7 @@ open class PaganActivity: AppCompatActivity() {
         }
     }
 
-    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Pair<T, String>>, default: T? = null, sort_options: List<Pair<String, (List<Pair<T, String>>) -> List<Pair<T, String>>>>, default_sort_option: Int = 0, event_handler: MenuDialogEventHandler<T>): AlertDialog? {
+    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Triple<T, Int?, String>>, default: T? = null, sort_options: List<Pair<String, (List<Triple<T, Int?, String>>) -> List<Triple<T, Int?, String>>>>, default_sort_option: Int = 0, event_handler: MenuDialogEventHandler<T>): AlertDialog? {
         if (this._popup_active) {
             return null
         }
@@ -296,8 +296,7 @@ open class PaganActivity: AppCompatActivity() {
             )
 
         if (options.size > 1) {
-            viewInflated.findViewById<View>(R.id.spinner_sort_options_wrapper).visibility =
-                View.VISIBLE
+            viewInflated.findViewById<View>(R.id.spinner_sort_options_wrapper).visibility = View.VISIBLE
         }
         val spinner = viewInflated.findViewById<Spinner>(R.id.spinner_sort_options)
         val sortable_labels = List(sort_options.size * 2) { i: Int ->
@@ -368,7 +367,7 @@ open class PaganActivity: AppCompatActivity() {
             .show()
     }
 
-    internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit): AlertDialog? {
+    internal fun <T> dialog_popup_menu(title: String, options: List<Triple<T, Int?, String>>, default: T? = null, callback: (index: Int, value: T) -> Unit): AlertDialog? {
         return this.dialog_popup_menu(title, options, default, object : MenuDialogEventHandler<T>() {
             override fun on_submit(index: Int, value: T) {
                 callback(index, value)
@@ -376,7 +375,7 @@ open class PaganActivity: AppCompatActivity() {
         })
     }
 
-    internal fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, event_handler: MenuDialogEventHandler<T>): AlertDialog? {
+    internal fun <T> dialog_popup_menu(title: String, options: List<Triple<T, Int?, String>>, default: T? = null, event_handler: MenuDialogEventHandler<T>): AlertDialog? {
         if (this._popup_active) {
             return null
         }
@@ -418,13 +417,17 @@ open class PaganActivity: AppCompatActivity() {
             return
         }
 
-        val project_list = this.get_project_manager().get_project_list()
+        val tmp_project_list = this.get_project_manager().get_project_list()
+        val project_list = List(tmp_project_list.size) { i: Int ->
+            val (uri, path) = tmp_project_list[i]
+            Triple(uri, null, path)
+        }
         val sort_options = listOf(
-            Pair(this.getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
-                original.sortedBy { (_, label): Pair<Uri, String> -> label }
+            Pair(this.getString(R.string.sort_option_abc)) { original: List<Triple<Uri, Int?, String>> ->
+                original.sortedBy { (_, label): Triple<Uri, Int?, String> -> label }
             },
-            Pair(this.getString(R.string.sort_option_date_modified)) { original: List<Pair<Uri, String>> ->
-                original.sortedBy { (uri, _): Pair<Uri, String> ->
+            Pair(this.getString(R.string.sort_option_date_modified)) { original: List<Triple<Uri, Int?, String>> ->
+                original.sortedBy { (uri, _): Triple<Uri, Int?, String> ->
                     val f = DocumentFile.fromSingleUri(this, uri)
                     f?.lastModified()
                 }

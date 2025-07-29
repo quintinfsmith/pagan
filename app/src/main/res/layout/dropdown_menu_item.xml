@@ -1,20 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:backgroundTint="@color/table_lines"
     android:paddingBottom="@dimen/stroke_leaf"
+    android:orientation="horizontal"
     android:layout_height="wrap_content">
-    <TextView
-        android:id="@+id/tvTextView"
-        android:background="#000000"
-        android:textSize="@dimen/dropdown_textsize"
+    <ImageView
+        android:id="@+id/menu_item_icon"
+        android:background="#00000000"
         android:paddingTop="@dimen/dropdown_item_padding_top"
         android:paddingBottom="@dimen/dropdown_item_padding_top"
         android:paddingStart="@dimen/dropdown_item_padding_sides"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:layout_height="41dp"/>
+    <Space
+        android:background="#00000000"
+        android:id="@+id/menu_space"
+        android:layout_width="@dimen/dropdown_item_padding_sides"
+        android:layout_height="41dp" />
+    <TextView
+        android:id="@+id/tvTextView"
+        android:background="#00000000"
+        android:textSize="@dimen/dropdown_textsize"
+        android:paddingTop="@dimen/dropdown_item_padding_top"
+        android:paddingBottom="@dimen/dropdown_item_padding_top"
         android:paddingEnd="@dimen/dropdown_item_padding_sides"
         android:minWidth="@dimen/dropdown_item_min_width"
         android:ellipsize="end"
         android:maxLines="1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        android:layout_height="41dp"/>
 </LinearLayout>

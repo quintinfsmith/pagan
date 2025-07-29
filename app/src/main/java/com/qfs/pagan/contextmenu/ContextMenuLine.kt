@@ -107,7 +107,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_remove.isEnabled = working_channel.size > 1
 
         var show_control_toggle = false
-        for (ctl_type in OpusLayerInterface.Companion.line_controller_domain) {
+        for ((ctl_type, icon_id) in OpusLayerInterface.Companion.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }

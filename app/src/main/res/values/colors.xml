@@ -36,6 +36,9 @@
     <color name="label_ctl_selected_secondary">#3e6e91</color>
     <color name="label_ctl_selected_secondary_text">#e1e1e1</color>
 
+    <color name="popup_menu_item_selected_bg">@color/empty_selected</color>
+    <color name="popup_menu_item_selected_fg">@color/empty_selected_text</color>
+
     <color name="radio_unchecked">#55000000</color>
     <color name="radio_checked">@color/primary</color>
 

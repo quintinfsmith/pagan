@@ -897,9 +897,13 @@ class ActionTracker {
     }
 
     fun set_ctl_transition(transition: EffectTransition? = null) {
-        val control_transitions = EffectTransition.values()
+        val control_transitions = EffectTransition.entries.toTypedArray()
+        val effect_icons = hashMapOf(
+            EffectTransition.Instant to R.drawable.immediate,
+            EffectTransition.Linear to R.drawable.linear
+        )
         val options = List(control_transitions.size) { i: Int ->
-            Pair(control_transitions[i], control_transitions[i].name)
+            Triple(control_transitions[i], effect_icons[control_transitions[i]], control_transitions[i].name)
         }
 
         val main = this.get_activity()
@@ -978,15 +982,15 @@ class ActionTracker {
 
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<EffectType, String>>( )
+        val options = mutableListOf<Triple<EffectType, Int?, String>>( )
         val cursor = opus_manager.cursor
 
-        for (ctl_type in OpusLayerInterface.line_controller_domain) {
+        for ((ctl_type, icon_id) in OpusLayerInterface.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
                 continue
             }
 
-            options.add(Pair(ctl_type, ctl_type.name))
+            options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
         this.dialog_popup_menu(this.get_activity().getString(R.string.show_line_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
@@ -998,14 +1002,14 @@ class ActionTracker {
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val options = mutableListOf<Pair<EffectType, String>>( )
+        val options = mutableListOf<Triple<EffectType, Int?, String>>( )
 
-        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
+        for ((ctl_type, icon_id) in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
                 continue
             }
 
-            options.add(Pair(ctl_type, ctl_type.name))
+            options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
         this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
@@ -1154,7 +1158,7 @@ class ActionTracker {
         val is_percussion = opus_manager.is_percussion(channel)
         val default_position = opus_manager.get_channel_instrument(channel)
 
-        val options = mutableListOf<Pair<Pair<Int, Int>, String>>()
+        val options = mutableListOf<Triple<Pair<Int, Int>, Int?, String>>()
         val current_instrument_supported = sorted_keys.contains(default_position)
 
         fun padded_hex(i: Int): String {
@@ -1169,7 +1173,7 @@ class ActionTracker {
             val name = supported_instrument_names[key]
             if (is_percussion) {
                 if (key.first == 128) {
-                    options.add(Pair(key, "${padded_hex(key.second)}] $name"))
+                    options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
                 }
             } else if (key.first != 128) {
                 val pairstring = if (key.first == 0) {
@@ -1177,9 +1181,9 @@ class ActionTracker {
                 } else {
                     "${padded_hex(key.second)}.${padded_hex(key.first)}"
                 }
-                options.add(Pair(key, "$pairstring) $name"))
+                options.add(Triple(key, null, "$pairstring) $name"))
             } else if (activity.configuration.allow_std_percussion) {
-                options.add(Pair(key, "${padded_hex(key.second)}] $name"))
+                options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
             }
         }
 
@@ -1281,12 +1285,12 @@ class ActionTracker {
         val cursor = opus_manager.cursor
         val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
-        val options = mutableListOf<Pair<Int, String>>()
+        val options = mutableListOf<Triple<Int, Int?, String>>()
         val sorted_keys = main.active_percussion_names[cursor.channel]!!.keys.toMutableList()
         sorted_keys.sort()
         for (note in sorted_keys) {
             val name = main.active_percussion_names[cursor.channel]!![note]
-            options.add(Pair(note - 27, "${note - 27}: $name"))
+            options.add(Triple(note - 27, null, "${note - 27}: $name"))
         }
 
         this.dialog_popup_menu(main.getString(R.string.dropdown_choose_percussion), options, default_instrument, stub_output = value) { _: Int, value: Int ->
@@ -1529,7 +1533,7 @@ class ActionTracker {
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: String, options: List<Pair<T, String>>, default: T? = null, stub_output: T? = null, callback: (index: Int, value: T) -> Unit) {
+    private fun <T> dialog_popup_menu(title: String, options: List<Triple<T, Int?, String>>, default: T? = null, stub_output: T? = null, callback: (index: Int, value: T) -> Unit) {
         if (stub_output != null) {
             callback(-1, stub_output)
         } else {

@@ -236,26 +236,29 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
         Pair(KeyEvent.KEYCODE_E, true) to object: CursorSpecificKeyStrokeNode(this) {
             override fun line(opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val ctl_type_map = EffectType.values().associateBy { it.i }
-                val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)]
-                if (ctl_type == null || !OpusLayerInterface.line_controller_domain.contains(ctl_type)) {
-                    return
+                val ctl_type_map = EffectType.entries.associateBy { it.i }
+                val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)] ?: return
+                for ((check_type, _) in OpusLayerInterface.line_controller_domain) {
+                    if (check_type == ctl_type) {
+                        val channel = opus_manager.cursor.channel
+                        val line_offset = opus_manager.cursor.line_offset
+                        opus_manager.toggle_line_controller_visibility(ctl_type, channel, line_offset)
+                        break
+                    }
                 }
 
-                val channel = opus_manager.cursor.channel
-                val line_offset = opus_manager.cursor.line_offset
-                opus_manager.toggle_line_controller_visibility(ctl_type, channel, line_offset)
             }
 
             override fun channel(opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val ctl_type_map = EffectType.values().associateBy { it.i }
-                val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)]
-                if (ctl_type == null || !OpusLayerInterface.channel_controller_domain.contains(ctl_type)) {
-                    return
+                val ctl_type_map = EffectType.entries.associateBy { it.i }
+                val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)] ?: return
+                for ((check_type, _) in OpusLayerInterface.channel_controller_domain) {
+                    if (check_type == ctl_type) {
+                        val channel = opus_manager.cursor.channel
+                        opus_manager.toggle_channel_controller_visibility(ctl_type, channel)
+                        break
+                    }
                 }
-
-                val channel = opus_manager.cursor.channel
-                opus_manager.toggle_channel_controller_visibility(ctl_type, channel)
             }
         },
 

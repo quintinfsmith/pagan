@@ -404,16 +404,16 @@ class ActivitySettings : PaganActivity() {
             return
         }
 
-        val soundfonts = mutableListOf<Pair<Uri, String>>()
+        val soundfonts = mutableListOf<Triple<Uri, Int?, String>>()
         for (uri in file_list) {
             val relative_path_segments = uri.pathSegments.last().split("/")
             val relative_path = relative_path_segments.subList(1, relative_path_segments.size).joinToString("/")
-            soundfonts.add(Pair(uri, relative_path))
+            soundfonts.add(Triple(uri, null, relative_path))
         }
 
         val sort_options = listOf(
-            Pair(this.getString(R.string.sort_option_abc)) { original: List<Pair<Uri, String>> ->
-                original.sortedBy { item: Pair<Uri, String> -> item.second }
+            Pair(this.getString(R.string.sort_option_abc)) { original: List<Triple<Uri, Int?, String>> ->
+                original.sortedBy { item: Triple<Uri, Int?, String> -> item.third }
             }
         )
 

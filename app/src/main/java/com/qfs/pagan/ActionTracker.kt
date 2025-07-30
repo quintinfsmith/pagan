@@ -898,20 +898,28 @@ class ActionTracker {
 
     fun set_ctl_transition(transition: EffectTransition? = null) {
         val main = this.get_activity()
-        val control_transitions = EffectTransition.entries.toTypedArray()
-        val options = List(control_transitions.size) { i: Int ->
+        val options = listOf(
             Triple(
-                control_transitions[i],
-                main.get_effect_transition_icon(control_transitions[i]),
-                when (control_transitions[i]) {
-                    EffectTransition.Instant -> main.getString(R.string.effect_transition_instant)
-                    EffectTransition.Linear -> main.getString(R.string.effect_transition_linear)
-                    EffectTransition.RInstant -> main.getString(R.string.effect_transition_rinstant)
-                    EffectTransition.RLinear -> main.getString(R.string.effect_transition_rlinear)
-                }
-            )
-        }
-
+                EffectTransition.Instant,
+                main.get_effect_transition_icon(EffectTransition.Instant),
+                main.getString(R.string.effect_transition_instant)
+            ),
+            Triple(
+                EffectTransition.Linear,
+                main.get_effect_transition_icon(EffectTransition.Linear),
+                main.getString(R.string.effect_transition_linear)
+            ),
+            //Triple(
+            //    EffectTransition.RInstant,
+            //    main.get_effect_transition_icon(EffectTransition.RInstant),
+            //    main.getString(R.string.effect_transition_rinstant)
+            //),
+            //Triple(
+            //    EffectTransition.RLinear,
+            //    main.get_effect_transition_icon(EffectTransition.RLinear),
+            //    main.getString(R.string.effect_transition_rlinear)
+            //)
+        )
 
         val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
 

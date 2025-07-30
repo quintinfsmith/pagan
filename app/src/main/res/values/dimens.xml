@@ -10,7 +10,7 @@
     <dimen name="dropdown_item_padding_top">4dp</dimen>
     <dimen name="dropdown_item_padding_sides">16dp</dimen>
     <dimen name="dropdown_item_min_width">248dp</dimen>
-    <dimen name="dropdown_textsize">20sp</dimen>
+    <dimen name="dropdown_textsize">18sp</dimen>
     <dimen name="dropdown_title_textsize">18sp</dimen>
     <dimen name="config_padding_outer">5dp</dimen>
     <dimen name="config_button_width">62dp</dimen>

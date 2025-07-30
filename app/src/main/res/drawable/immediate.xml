@@ -1,5 +1,18 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="@dimen/contextmenu_secondary_button_height" android:viewportHeight="64" android:viewportWidth="64" android:width="@dimen/contextmenu_secondary_button_height">
-      
-    <path android:fillColor="#FFFFFF" android:pathData="M28,8.036V45.821l-9.172,-7.478 -5.657,4.612 16,13.045h5.657l16,-13.045 -5.656,-4.612 -9.172,7.479V8.036Z" android:strokeColor="#00000000" android:strokeLineJoin="bevel" android:strokeWidth="0.902948"/>
-    
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+  <path
+      android:pathData="m32.051,56 l6.474,-10 6.474,-10 -12.949,0 -12.949,0 6.474,10z"
+      android:strokeLineJoin="miter"
+      android:strokeWidth="1.569"
+      android:fillColor="#FFFFFF"
+      android:strokeColor="#00000000"/>
+  <path
+      android:pathData="M32,8V48"
+      android:strokeLineJoin="miter"
+      android:strokeWidth="4.23333"
+      android:fillColor="#FFFFFF"
+      android:strokeColor="#FFFFFF"/>
 </vector>

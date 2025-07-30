@@ -124,7 +124,13 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                         // don't change the values for reset transitions
                         previous_tail = Pair(end_position, previous_tail.second)
                     } else {
-                        output.add(start_position, end_position, previous_tail.second, working_values, working_event.transition)
+                        output.add(
+                            start_position,
+                            end_position,
+                            previous_tail.second,
+                            working_values,
+                            working_event.transition
+                        )
                         previous_tail = Pair(end_position, working_values)
                     }
                 } else if (!working_tree.is_leaf()) {

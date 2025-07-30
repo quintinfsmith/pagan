@@ -10,9 +10,9 @@
         android:paddingTop="@dimen/dropdown_item_padding_top"
         android:paddingBottom="@dimen/dropdown_item_padding_top"
         android:paddingStart="@dimen/dropdown_item_padding_sides"
-        android:layout_width="wrap_content"
         android:layout_gravity="center_vertical|center_horizontal"
-        android:layout_height="41dp"/>
+        android:layout_height="41dp"
+        android:layout_width="41dp"/>
     <Space
         android:background="#00000000"
         android:id="@+id/menu_space"

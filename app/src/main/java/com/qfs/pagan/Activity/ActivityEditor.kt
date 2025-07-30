@@ -2043,6 +2043,13 @@ class ActivityEditor : PaganActivity() {
                 val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
                 channel_adapter.notify_soundfont_changed()
             }
+            when (this.get_opus_manager().cursor.mode) {
+                CursorMode.Line,
+                CursorMode.Channel -> {
+                    this.refresh_context_menu()
+                }
+                else -> {}
+            }
         }
     }
 

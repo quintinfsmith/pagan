@@ -49,7 +49,6 @@ class ReducibleTree<T> {
         var output: ReducibleTree<T> = this
         var depth = 0
         for (rel_index in rel_indices) {
-            println("$rel_index / ${output.size} || ${depth++}")
             if (output.is_leaf()) {
                 throw InvalidGetCall()
             }

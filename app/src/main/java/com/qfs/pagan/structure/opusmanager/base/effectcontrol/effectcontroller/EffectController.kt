@@ -109,19 +109,18 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                     if (start_position > previous_tail.first) {
                         output.add(previous_tail.first, start_position, previous_tail.second, previous_tail.second, EffectTransition.Instant)
                     }
+
                     if (working_event.is_reset_transition()) {
-                        output.add(
-                            start_position,
-                            end_position,
-                            working_values, // Note this is switched with the previous_tail.second
-                            previous_tail.second,
-                            when (working_event.transition) {
-                                EffectTransition.RInstant -> EffectTransition.Instant
-                                EffectTransition.RLinear -> EffectTransition.Linear
-                                else -> throw Exception("This should be unreachable. Theres's a transition registered as a reset-type but not handled here")
+                        output.add(start_position, start_position, previous_tail.second, working_values, EffectTransition.Instant)
+                        when (working_event.transition) {
+                            EffectTransition.RLinear ->  {
+                                output.add(start_position, end_position, previous_tail.second, working_values, EffectTransition.Linear)
                             }
-                        )
-                        // don't change the values for reset transitions
+                            EffectTransition.RInstant -> {
+                                output.add(end_position, end_position, previous_tail.second, working_values, EffectTransition.Instant)
+                            }
+                            else -> {}
+                        }
                         previous_tail = Pair(end_position, previous_tail.second)
                     } else {
                         output.add(

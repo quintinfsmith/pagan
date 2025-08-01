@@ -3467,7 +3467,7 @@ open class OpusLayerBase: Effectable {
         var value = this.get_absolute_value(beat_key, position) ?: event.offset
         val radix = this.tuning_map.size
         if (value < 0 || value >= radix * 8) {
-            value = min(max(abs(value), 0), (radix * 8) - 1)
+            value = min(abs(value), (radix * 8) - 1)
         }
         this.set_event(
             beat_key,

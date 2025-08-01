@@ -208,7 +208,10 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             this.context.getString(R.string.untitled_op, now.format(formatter))
         } else {
             val file = DocumentFile.fromSingleUri(this.context, uri) ?: return "Untitled Op."
-            val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId())
+            val date = LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(file.lastModified()),
+                TimeZone.getDefault().toZoneId()
+            )
             this.context.getString(R.string.untitled_op, date.format(formatter))
         }
     }

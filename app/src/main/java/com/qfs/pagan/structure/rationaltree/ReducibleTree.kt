@@ -47,28 +47,30 @@ class ReducibleTree<T> {
 
     operator fun get(vararg rel_indices: Int): ReducibleTree<T> {
         var output: ReducibleTree<T> = this
+        var depth = 0
         for (rel_index in rel_indices) {
+            println("$rel_index / ${output.size} || ${depth++}")
             if (output.is_leaf()) {
                 throw InvalidGetCall()
             }
 
             val index = if (rel_index < 0) {
-                this._real_size + rel_index
+                output._real_size + rel_index
             } else {
                 rel_index
             }
 
-            if (index >= this._real_size) {
+            if (index >= output._real_size) {
                 throw InvalidGetCall()
             }
 
-            if (this.divisions.containsKey(index)) {
-                output = this.divisions[index]!!
-            } else {
-                output = ReducibleTree()
-                output.set_parent(this)
-                this.divisions[index] = output
+            if (!output.divisions.containsKey(index)) {
+                val new_tree = ReducibleTree<T>()
+                new_tree.set_parent(output)
+                output.divisions[index] = new_tree
             }
+
+            output = output.divisions[index]!!
         }
 
         return output

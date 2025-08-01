@@ -935,8 +935,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val beat_key = cursor.get_beatkey()
                 val position = cursor.get_position().toMutableList()
 
-                val working_tree = this.get_tree(beat_key).copy()
-                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, position, count)
+                val (real_count, cursor_position) = this._calculate_new_position_after_remove(this.get_tree_copy(beat_key), position, count)
 
                 this.remove_repeat(beat_key, position, real_count)
             }

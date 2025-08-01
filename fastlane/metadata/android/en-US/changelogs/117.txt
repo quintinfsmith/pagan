@@ -1,0 +1,5 @@
+- Added icons to effect transition & effect control menus
+- Added velocity controller for soundfonts that support velocity
+- Added Monochrome Icon
+- Fixed crash when editing deep leafs
+- Volume is now exponential rather than linear

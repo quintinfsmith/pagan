@@ -47,7 +47,6 @@ class ReducibleTree<T> {
 
     operator fun get(vararg rel_indices: Int): ReducibleTree<T> {
         var output: ReducibleTree<T> = this
-        var depth = 0
         for (rel_index in rel_indices) {
             if (output.is_leaf()) {
                 throw InvalidGetCall()

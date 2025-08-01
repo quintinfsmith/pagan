@@ -36,6 +36,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -3463,10 +3464,10 @@ open class OpusLayerBase: Effectable {
         }
 
         // The implied first value can be 0
-        val value = this.get_absolute_value(beat_key, position) ?: event.offset
+        var value = this.get_absolute_value(beat_key, position) ?: event.offset
         val radix = this.tuning_map.size
         if (value < 0 || value >= radix * 8) {
-            throw NoteOutOfRange(value)
+            value = min(max(abs(value), 0), (radix * 8) - 1)
         }
         this.set_event(
             beat_key,

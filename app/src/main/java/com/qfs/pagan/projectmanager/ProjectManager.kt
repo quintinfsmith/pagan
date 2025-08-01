@@ -17,8 +17,10 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.TimeZone
 
 /**
  * Handles project file management. ie caching files, generating file names, etc
@@ -199,10 +201,16 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     /**
      * Generate a default project name.
      */
-    private fun generate_file_project_name(): String {
-        val now = LocalDateTime.now()
+    private fun generate_file_project_name(uri: Uri? = null): String {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        return this.context.getString(R.string.untitled_op, now.format(formatter))
+        return if (uri == null) {
+            val now = LocalDateTime.now()
+            this.context.getString(R.string.untitled_op, now.format(formatter))
+        } else {
+            val file = DocumentFile.fromSingleUri(this.context, uri) ?: return "Untitled Op."
+            val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId())
+            this.context.getString(R.string.untitled_op, date.format(formatter))
+        }
     }
 
     /**
@@ -242,7 +250,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val project_list = JSONList()
         for (json_file in working_directory.listFiles()) {
             val project_name = try {
-                this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name()
+                this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name(json_file.uri)
             } catch (_: Exception) {
                 continue
             }
@@ -286,7 +294,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val project_list = JSONList()
         for (json_file in working_directory.listFiles()) {
             val project_name = try {
-                this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name()
+                this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name(json_file.uri)
             } catch (_: Exception) {
                 continue
             }
@@ -319,7 +327,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return when (version) {
             0, 1, 2 -> json_obj.get_string("name")
             else -> {
-                json_obj.get_hashmap("d").get_string("title", this.generate_file_project_name())
+                json_obj.get_hashmap("d").get_string("title", this.generate_file_project_name(uri))
             }
         }
     }

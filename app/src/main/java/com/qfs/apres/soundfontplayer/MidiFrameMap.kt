@@ -18,6 +18,9 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
         return this.final_frame
     }
 
+    override fun get_marked_frame(i: Int): Int? {
+        TODO("Not yet implemented")
+    }
     override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
         TODO("Not yet implemented")
     }
@@ -97,10 +100,6 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
             last_tick = tick
         }
         this.max_overlap = this.calculate_max_overlap()
-    }
-
-    override fun get_marked_frames(): Array<Int> {
-        TODO("Not yet implemented")
     }
 
     override fun has_frames_remaining(frame: Int): Boolean {

@@ -13,7 +13,6 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
     var play_queued = false
     var is_playing = false
     var play_cancelled = false // need a away to cancel between parsing and playing
-    var marked_frames: Array<Int>? = null// MarkIndex::Frame
 
 
     abstract fun on_buffer()
@@ -49,12 +48,11 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
         val audio_track_handle = this.active_audio_track_handle!!
         this.play_queued = false
         this.is_playing = true
-        this.setup_frame_markers()
         this.wave_generator.set_position(start_frame, true)
         thread {
             val buffer_millis = this.BUFFER_NANO / 1_000_000
             var ts: Long = System.currentTimeMillis()
-            val empty_chunk = FloatArray(this.buffer_size * 2) { 0f }
+            val empty_chunk = FloatArray(this.buffer_size * 2)
             var chunk: FloatArray? = null
 
             while (this.is_playing) {
@@ -96,25 +94,28 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                 var current_mark_index = 0
                 init {
                     val track_handle = this@MappedPlaybackDevice.active_audio_track_handle
-                    val marked_frames = this@MappedPlaybackDevice.marked_frames
-                    if (!marked_frames.isNullOrEmpty()) {
-                        for (i in 0 until marked_frames.size - 1) {
-                            val next_frame = marked_frames[i + 1]
-                            val previous_frame = marked_frames[i]
-
-                            if ((previous_frame until next_frame).contains(start_frame)) {
-                                this.current_mark_index = i
+                    this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(0)?.let { _ ->
+                        var i = 0
+                        var beat_frame = -1
+                        while (true) {
+                            beat_frame = this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(i) ?: break
+                            if (beat_frame >= start_frame) {
                                 break
                             }
+                            i++
                         }
 
-                        if (marked_frames[this.current_mark_index] - start_frame == 0) {
+                        this.current_mark_index = i
+
+                        if (beat_frame == start_frame) {
                             this@MappedPlaybackDevice.on_mark(this.current_mark_index++)
                         }
 
-                        track_handle?.set_next_notification_position(
-                            marked_frames[this.current_mark_index] - start_frame
-                        )
+                        this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index)?.let { next_frame ->
+                            track_handle?.set_next_notification_position(
+                                next_frame - start_frame
+                            )
+                        }
                     }
                 }
 
@@ -136,11 +137,15 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                     }
 
                     if (that.wave_generator.kill_frame == null) {
-                        while (that.marked_frames!![this.current_mark_index] - start_frame + frame_delay < 1) {
+                        while (true) {
+                            val beat_frame = this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) ?: break
+                            if (beat_frame - start_frame + frame_delay >= 1) {
+                                break
+                            }
                             this.current_mark_index += 1
                         }
 
-                        if (this.current_mark_index >= that.marked_frames!!.size) {
+                        if (this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) == null) {
                             return
                         }
                     }
@@ -148,12 +153,7 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
 
                     that.on_mark(this.current_mark_index++)
 
-                    if (this.current_mark_index >= that.marked_frames!!.size) {
-                        return
-                    }
-
-
-                    val frame = that.marked_frames!![this.current_mark_index]
+                    val frame = this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) ?: return
 
                     that.active_audio_track_handle?.set_next_notification_position(
                         if (that.wave_generator.kill_frame != null) {
@@ -203,9 +203,5 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
         this.play_cancelled = false
         this.play_queued = true
         this.start_playback(start_frame)
-    }
-
-    private fun setup_frame_markers() {
-        this.marked_frames = this.sample_frame_map.get_marked_frames()
     }
 }

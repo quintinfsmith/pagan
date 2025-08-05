@@ -10,7 +10,6 @@ data class JSONString(var value: String): JSONObject {
                 'b' -> '\b'
                 'f' -> '\u000c'
                 't' -> '\t'
-                '\\' -> '\\'
                 else -> throw InvalidEscapeChar(input_char)
             }
         }
@@ -21,13 +20,7 @@ data class JSONString(var value: String): JSONObject {
                 '\b' -> "\\b"
                 '\u000c' -> "\\f"
                 '\t' -> "\\t"
-                else -> {
-                    if (input_char.code > 127) {
-                        String.format("\\u%04x", input_char.code)
-                    } else {
-                        input_char.toString()
-                    }
-                }
+                else -> input_char.toString()
             }
         }
 
@@ -35,7 +28,6 @@ data class JSONString(var value: String): JSONObject {
             val new_strings = mutableListOf<Char>()
             var skip = 0
             val chars = string.toList()
-            println("ECAPING $string")
             for (i in 0 until chars.size) {
                 if (skip > 0) {
                     skip -= 1
@@ -44,29 +36,11 @@ data class JSONString(var value: String): JSONObject {
 
                 val char = chars[i]
                 if (char == '\\') {
-                    when (chars[i + 1]) {
-                        'u' -> {
-                            skip = 4
-                            val t = Char(
-                                (chars[i + 2].digitToInt(16) shl 12) +
-                                (chars[i + 3].digitToInt(16) shl 8) +
-                                (chars[i + 4].digitToInt(16) shl 4) +
-                                chars[i + 5].digitToInt(16)
-                            )
-                            print(t)
-                            t
-                        }
-                        else -> {
-                            skip = 1
-                            try {
-                                new_strings.add(
-                                    JSONString.unescape_char(chars[i + 1])
-                                )
-                            } catch (_: InvalidEscapeChar) {
-                                new_strings.add('\\')
-                                new_strings.add(chars[i+1])
-                            }
-                        }
+                    try {
+                        new_strings.add(JSONString.unescape_char(chars[i + 1]))
+                        skip = 1
+                    } catch (_: InvalidEscapeChar) {
+                        new_strings.add(char)
                     }
                 } else {
                     new_strings.add(char)
@@ -75,13 +49,10 @@ data class JSONString(var value: String): JSONObject {
             return JSONString(new_strings.joinToString(""))
         }
     }
-    init {
-        println("String: $value")
-    }
 
     override fun to_string(indent: Int?): String {
         val escaped_string = List<String>(this.value.length) { i ->
-            JSONString.escape_char(this.value.get(i))
+            JSONString.escape_char(this.value[i])
         }.joinToString("")
 
         return "\"$escaped_string\""

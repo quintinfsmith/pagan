@@ -20,7 +20,7 @@ class SerializationUnitTest {
                 "key1": false,
                 "key2": true,
                 "key3": 0.54,
-                "key4": "🔥 \ud83d\udd25",
+                "key4": "🔥 \ud83d\udd25 \\ud83d\\udd25"
             }
         ],
         null,

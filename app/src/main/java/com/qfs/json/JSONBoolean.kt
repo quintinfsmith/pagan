@@ -1,7 +1,7 @@
 package com.qfs.json
 
 data class JSONBoolean(var value: Boolean): JSONObject {
-    override fun to_string(): String {
+    override fun to_string(indent: Int?): String {
         return this.value.toString()
     }
 

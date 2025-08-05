@@ -1,5 +1,9 @@
 package com.qfs.json
 
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
+
 class JSONList(vararg args: JSONObject?): JSONObject {
     constructor(size: Int, callback: (Int) -> JSONObject?): this(*Array(size) { i: Int -> callback(i) })
     private val list = args.toMutableList()
@@ -9,19 +13,24 @@ class JSONList(vararg args: JSONObject?): JSONObject {
     val indices: IntRange
         get() = this.list.indices
 
-    override fun to_string(): String {
-        var output = "["
+    override fun to_string(indent: Int?): String {
+        val lines = mutableListOf<String>()
         for (value in this.list) {
-            output = "$output${value?.to_string() ?: "null"},"
+            lines.add(value?.to_string(indent) ?: "null")
         }
 
-        // remove trailing comma
-        if (this.list.isNotEmpty()) {
-            output = output.substring(0, output.length - 1)
+        return if (indent == null) {
+            "[ ${lines.joinToString(", ")} ]"
+        } else {
+            val indent_string = " ".repeat(indent)
+            for (i in 0 until lines.size) {
+                val sublines = lines[i].split("\n")
+                lines[i] = sublines.joinToString("\n$indent_string")
+            }
+            "[\n$indent_string" + lines.joinToString(",\n$indent_string") + "\n]"
         }
-        output = "$output]"
-        return output
     }
+
     fun forEachIndexed(callback: (Int, JSONObject?) -> Unit) {
         this.list.forEachIndexed(callback)
     }

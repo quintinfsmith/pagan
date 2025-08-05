@@ -165,19 +165,25 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
         return (this.hash_map[key] as JSONList)
     }
 
-    override fun to_string(): String {
-        var output = "{"
-        for ((key, value) in this.hash_map) {
+    override fun to_string(indent: Int?): String {
+        val lines = mutableListOf<String>()
+        for (key in this.hash_map.keys.sorted()) {
+            val value = this.hash_map[key]
             val escaped_key = key.replace("\"", "\\\"")
-            output = "$output\"$escaped_key\": ${value?.to_string() ?: "null"},"
+            lines.add("\"$escaped_key\": ${value?.to_string(indent) ?: "null"}")
         }
 
-        // remove trailing comma
-        if (this.hash_map.isNotEmpty()) {
-            output = output.substring(0, output.length - 1)
+        return if (indent == null) {
+            "{ ${lines.joinToString(", ")} }"
+        } else {
+            val indent_string = " ".repeat(indent)
+            for (i in 0 until lines.size) {
+                val line = lines[i]
+                val sublines = line.split("\n")
+                lines[i] = sublines.joinToString("\n$indent_string")
+            }
+            "{\n$indent_string" + lines.joinToString(",\n$indent_string") + "\n}"
         }
-        output = "$output}"
-        return output
     }
 
     override fun equals(other: Any?): Boolean {

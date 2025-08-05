@@ -15,9 +15,9 @@ class SerializationUnitTest {
             "key0": 0
         }"""
         val ob = JSONParser.parse<JSONObject>(test_string)
-        if (ob != null) {
-            println("${ob.to_string()}")
-        }
+        //if (ob != null) {
+        //    println("${ob.to_string()}")
+        //}
         assertTrue( ob is JSONHashMap )
         assertEquals(
             0,
@@ -25,6 +25,35 @@ class SerializationUnitTest {
         )
     }
 
+    @Test
+    fun test_indent() {
+        val test_string = """{
+    "key0": 0,
+    "key1": [
+        [
+            0,
+            1,
+            {
+                "key0": "blargh",
+                "key1": false,
+                "key2": true
+            }
+        ],
+        1,
+        2,
+        3
+    ]
+}"""
+        val ob = JSONParser.parse<JSONObject>(test_string)
+        println("------------")
+        println(ob!!.to_string(4))
+        println(ob!!.to_string())
+        println("------------")
+        assertEquals(
+            test_string,
+            ob!!.to_string(4)
+        )
+    }
     @Test
     fun test_missing_colon_hashmap() {
         val test_string = """{ "key0" "0" }"""

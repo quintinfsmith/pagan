@@ -9,15 +9,30 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SerializationUnitTest {
+    val string_rep = """{
+    "key0": 0,
+    "key1": [
+        [
+            0,
+            1,
+            {
+                "key0": "blargh",
+                "key1": false,
+                "key2": true,
+                "key3": 0.54,
+                "key4": "🔥 \ud83d\udd25",
+            }
+        ],
+        null,
+        1.4,
+        2,
+        3
+    ]
+}"""
+
     @Test
     fun test_json() {
-        val test_string = """{
-            "key0": 0
-        }"""
-        val ob = JSONParser.parse<JSONObject>(test_string)
-        //if (ob != null) {
-        //    println("${ob.to_string()}")
-        //}
+        val ob = JSONParser.parse<JSONObject>(this.string_rep)
         assertTrue( ob is JSONHashMap )
         assertEquals(
             0,
@@ -27,30 +42,9 @@ class SerializationUnitTest {
 
     @Test
     fun test_indent() {
-        val test_string = """{
-    "key0": 0,
-    "key1": [
-        [
-            0,
-            1,
-            {
-                "key0": "blargh",
-                "key1": false,
-                "key2": true
-            }
-        ],
-        1,
-        2,
-        3
-    ]
-}"""
-        val ob = JSONParser.parse<JSONObject>(test_string)
-        println("------------")
-        println(ob!!.to_string(4))
-        println(ob!!.to_string())
-        println("------------")
+        val ob = JSONParser.parse<JSONObject>(this.string_rep)
         assertEquals(
-            test_string,
+            this.string_rep,
             ob!!.to_string(4)
         )
     }
@@ -113,6 +107,7 @@ class SerializationUnitTest {
             JSONParser.parse<JSONObject>(test_string)
         }
     }
+
     @Test
     fun test_unterminated_string_2() {
         val test_string = "\"test"

@@ -44,6 +44,7 @@ class JSONParser {
                     }
                 } else if (working_string != null) {
                     if (string_escape_flagged) {
+                        working_string += '\\'
                         working_string += working_char
                         string_escape_flagged = false
                     } else {
@@ -53,8 +54,7 @@ class JSONParser {
                             }
 
                             '"' -> {
-                                val new_string_item = JSONString(working_string)
-                                object_stack.add(new_string_item)
+                                object_stack.add(JSONString.unescape(working_string))
                                 close_expected = true
 
                                 working_string = null

@@ -5,6 +5,6 @@ enum class EffectTransition(val i: Int) {
     Linear(1),
     RInstant(2),
     RLinear(3),
-   // Concave,
-   // Convex
+    // EaseIn(4),
+    // EaseOut(5)
 }

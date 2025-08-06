@@ -20,7 +20,8 @@ data class PaganConfiguration(
     var allow_std_percussion: Boolean = false,
     var project_directory: Uri? = null,
     var soundfont_directory: Uri? = null,
-    var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+    var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+    var indent_json: Boolean = false
 ) {
     enum class MoveMode {
         MOVE,
@@ -42,7 +43,8 @@ data class PaganConfiguration(
                 allow_std_percussion = content.get_boolean("allow_std_percussion", false),
                 project_directory = content.get_stringn("project_directory")?.toUri(),
                 soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
-                night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
+                indent_json = content.get_boolean("indent_json", false)
             )
         }
 
@@ -82,6 +84,7 @@ data class PaganConfiguration(
         output["project_directory"] = this.project_directory?.toString()
         output["soundfont_directory"] = this.soundfont_directory?.toString()
         output["night_mode"] = this.night_mode
+        output["indent_json"] = this.indent_json
         return output
     }
 }

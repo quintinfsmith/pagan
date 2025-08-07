@@ -30,10 +30,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PopupMenuRecyclerAdapter
-import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import java.io.BufferedReader
 import java.io.File
@@ -424,7 +424,9 @@ open class PaganActivity: AppCompatActivity() {
         }
         val sort_options = listOf(
             Pair(this.getString(R.string.sort_option_abc)) { original: List<Triple<Uri, Int?, String>> ->
-                original.sortedBy { (_, label): Triple<Uri, Int?, String> -> label }
+                original.sortedBy { (_, _, label): Triple<Uri, Int?, String> ->
+                    label.lowercase()
+                }
             },
             Pair(this.getString(R.string.sort_option_date_modified)) { original: List<Triple<Uri, Int?, String>> ->
                 original.sortedBy { (uri, _): Triple<Uri, Int?, String> ->

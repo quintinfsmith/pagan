@@ -413,7 +413,7 @@ class ActivitySettings : PaganActivity() {
 
         val sort_options = listOf(
             Pair(this.getString(R.string.sort_option_abc)) { original: List<Triple<Uri, Int?, String>> ->
-                original.sortedBy { item: Triple<Uri, Int?, String> -> item.third }
+                original.sortedBy { item: Triple<Uri, Int?, String> -> item.third.lowercase() }
             }
         )
 

@@ -55,35 +55,42 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         this.sample_data_map.clear()
     }
 
-    fun get(event: NoteOn, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?> {
+    fun get(event: NoteOn, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?>? {
         // set the key index to some hash of the note to allow for indexing byte note AS WELL as indexing by index
         val map_key = this.cache_or_create_new(event.get_note(), 0, sample_directive, instrument_directive, preset)
-        val handles = this.sample_data_map[map_key]!!
+        val handles = this.sample_data_map[map_key] ?: return null
 
-        return Pair(
-            handles.first().copy(),
-            if (handles.size > 1) {
-                val tmp = handles.last().copy()
-                tmp
-            } else {
-                null
-            }
-        )
+        return if (handles.isEmpty()) {
+            null
+        } else {
+            Pair(
+                handles.first().copy(),
+                if (handles.size > 1) {
+                    val tmp = handles.last().copy()
+                    tmp
+                } else {
+                    null
+                }
+            )
+        }
     }
 
-    fun get(event: NoteOn79, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?> {
+    fun get(event: NoteOn79, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): Pair<SampleHandle, SampleHandle?>? {
         val map_key = this.cache_or_create_new(event.note, event.bend, sample_directive, instrument_directive, preset)
-        val handles = this.sample_data_map[map_key]!!
-
-        return Pair(
-            handles.first().copy(),
-            if (handles.size > 1) {
-                val tmp = handles.last().copy()
-                tmp
-            } else {
-                null
-            }
-        )
+        val handles = this.sample_data_map[map_key] ?: return null
+        return if (handles.isEmpty()) {
+            null
+        } else {
+            Pair(
+                handles.first().copy(),
+                if (handles.size > 1) {
+                    val tmp = handles.last().copy()
+                    tmp
+                } else {
+                    null
+                }
+            )
+        }
     }
 
     fun cache_or_create_new(note: Int, bend: Int, sample_directive: SampleDirective, instrument_directive: InstrumentDirective, preset: Preset): MapKey {
@@ -191,50 +198,59 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
 
         val pan = (sample_directive.pan ?: global_sample_directive.pan ?: instrument_directive.pan ?: global_instrument_directive.pan ?: 0F) / 50F
         val loop_mode  = sample_directive.sampleMode ?: global_sample_directive.sampleMode
-        return List(sample_directive.sample!!.size) { i: Int ->
-            val working_sample = sample_directive.sample!![i]
-            SampleHandle(
-                data = working_sample.data,
-                sample_rate = this.sample_rate,
-                pan = pan,
-                pitch_shift = pitch_shift,
-                initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
-                stereo_mode = working_sample.sample_type,
-                loop_points = if (loop_mode != null && (loop_mode!! and 1) == 1) {
-                    val tmp = Pair(
-                        working_sample.loop_start + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
-                        working_sample.loop_end + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
-                    )
-                    if (tmp.first == tmp.second) {
-                        null
-                    } else {
-                        tmp
-                    }
-                } else {
-                    null
-                },
-                volume_envelope = volume_envelope,
-                filter_cutoff = filter_cutoff,
-                vibrato_frequency = vib_freq,
-                vibrato_pitch = vibrato_pitch_rel,
-                vibrato_delay = vib_lfo_delay
+        val output = mutableListOf<SampleHandle>()
 
-                //modulation_lfo = if (this.ignore_lfo) {
-                //    null
-                //} else {
-                //    SampleHandle.LFO(
-                //        sample_rate = this.sample_rate,
-                //        frequency = mod_lfo_freq,
-                //        volume = mod_lfo_to_volume / 100F, // Centibels -> bels
-                //        default_pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
-                //        filter = mod_lfo_filter,
-                //        delay = mod_lfo_delay
-                //    )
-                //},
-                //modulation_envelope = modulation_envelope,
-                //modulators = new_modulators
+        for (i in 0 until sample_directive.sample!!.size) {
+            val working_sample = sample_directive.sample!![i]
+            if (working_sample.data.size == 0) {
+                continue
+            }
+            output.add(
+                SampleHandle(
+                    data = working_sample.data,
+                    sample_rate = this.sample_rate,
+                    pan = pan,
+                    pitch_shift = pitch_shift,
+                    initial_attenuation = max(0F, min(1440F, initial_attenuation)) / 100F, // Centibels -> bels
+                    stereo_mode = working_sample.sample_type,
+                    loop_points = if (loop_mode != null && (loop_mode!! and 1) == 1) {
+                        val tmp = Pair(
+                            working_sample.loop_start + (sample_directive.loopStartOffset ?: 0) + (global_sample_directive.loopStartOffset ?: 0),
+                            working_sample.loop_end + (sample_directive.loopEndOffset ?: 0) + (global_sample_directive.loopEndOffset ?: 0)
+                        )
+                        if (tmp.first == tmp.second) {
+                            null
+                        } else {
+                            tmp
+                        }
+                    } else {
+                        null
+                    },
+                    volume_envelope = volume_envelope,
+                    filter_cutoff = filter_cutoff,
+                    vibrato_frequency = vib_freq,
+                    vibrato_pitch = vibrato_pitch_rel,
+                    vibrato_delay = vib_lfo_delay
+
+                    //modulation_lfo = if (this.ignore_lfo) {
+                    //    null
+                    //} else {
+                    //    SampleHandle.LFO(
+                    //        sample_rate = this.sample_rate,
+                    //        frequency = mod_lfo_freq,
+                    //        volume = mod_lfo_to_volume / 100F, // Centibels -> bels
+                    //        default_pitch = 2F.pow(mod_lfo_pitch.toFloat() / 1200F),
+                    //        filter = mod_lfo_filter,
+                    //        delay = mod_lfo_delay
+                    //    )
+                    //},
+                    //modulation_envelope = modulation_envelope,
+                    //modulators = new_modulators
+                )
             )
         }
+
+        return output
     }
 
     //fun resample(sample_data: ShortArray, pitch_shift: Float): ShortArray {

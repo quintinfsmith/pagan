@@ -12,6 +12,7 @@
 #include "VolumeEnvelope.h"
 #include <cmath>
 #include "Oscillator.h"
+
 class NoFrameDataException: public std::exception {};
 
 int SampleHandleUUIDGen = 0;
@@ -88,7 +89,7 @@ class SampleHandle {
         }
 
         void secondary_setup(PitchedBuffer** input_buffers, int count) {
-            this->RC = 1.0 / (filter_cutoff * M_2_PI);
+            this->RC = 1.0 / (this->filter_cutoff * M_2_PI);
             float dt =  1.0 / this->sample_rate;
             this->smoothing_factor = dt / (this->RC + dt);
 

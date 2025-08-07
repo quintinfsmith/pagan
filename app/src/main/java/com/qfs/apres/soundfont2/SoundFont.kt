@@ -354,6 +354,7 @@ class SoundFont(val context: Context, uri: Uri) {
             if (this.irom == null) {
                 throw NoIROMDeclared()
             }
+
             this.read_rom_hook(sample.data_placeholder.first, sample.data_placeholder.second)
         } else {
             val data_placeholder = sample.data_placeholder

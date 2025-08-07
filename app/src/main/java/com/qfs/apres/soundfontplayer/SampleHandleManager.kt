@@ -112,7 +112,7 @@ class SampleHandleManager(
                 sample,
                 p_instrument,
                 preset
-            )
+            ) ?: continue
 
             //new_handle.volume_profile = velocity.toFloat()  * .6F / 128.toFloat()
             output.add(new_handle)
@@ -155,7 +155,7 @@ class SampleHandleManager(
                 //p_instrument.instrument?.global_zone ?: SampleDirective(),
                 p_instrument,
                 preset
-            )
+            ) ?: continue
             //new_handle.volume_profile = (event.get_velocity().toFloat() * .6F / 128F)
             output.add(new_handle)
             if (new_linked_handle != null) {

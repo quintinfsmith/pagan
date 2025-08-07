@@ -18,22 +18,22 @@ import androidx.core.content.ContextCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InvalidMergeException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
-import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
-import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
@@ -599,6 +599,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         override fun draw(canvas: Canvas) {
             // TODO: deal with draw Allocations. preallocate in different function?
             super.draw(canvas)
+            val opus_manager = this.editor_table.get_opus_manager()
+
+            // Don't Redraw while in flux
+            if (opus_manager.project_changing) {
+                return
+            }
 
             val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
             val line_height = this.resources.getDimension(R.dimen.line_height).toInt().toFloat()
@@ -608,7 +614,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()
-            val opus_manager = this.editor_table.get_opus_manager()
+
             val channels = opus_manager.get_all_channels()
             val horizontal_scroll_view = (this.parent.parent as HorizontalScrollView)
             val vertical_scroll_view = (horizontal_scroll_view.parent as ScrollView)

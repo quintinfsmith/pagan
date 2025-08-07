@@ -1358,7 +1358,7 @@ class ActivityEditor : PaganActivity() {
 
     private fun _project_save() {
         this.loading_reticle_show()
-        this.active_project = this.get_project_manager().save(this.get_opus_manager(), this.active_project)
+        this.active_project = this.get_project_manager().save(this.get_opus_manager(), this.active_project, this.configuration.indent_json)
         this.feedback_msg(this.getString(R.string.feedback_project_saved))
         this.update_menu_options()
         this.findViewById<View?>(R.id.btnDeleteProject)?.isEnabled = true

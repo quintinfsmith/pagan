@@ -114,10 +114,10 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                         output.add(start_position, start_position, previous_tail.second, working_values, EffectTransition.Instant)
                         when (working_event.transition) {
                             EffectTransition.RLinear ->  {
-                                output.add(start_position, end_position, previous_tail.second, working_values, EffectTransition.Linear)
+                                output.add(start_position, end_position, working_values, previous_tail.second, EffectTransition.Linear)
                             }
                             EffectTransition.RInstant -> {
-                                output.add(end_position, end_position, previous_tail.second, working_values, EffectTransition.Instant)
+                                output.add(end_position, end_position, working_values, previous_tail.second, EffectTransition.Instant)
                             }
                             else -> {}
                         }

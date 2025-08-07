@@ -908,17 +908,17 @@ class ActionTracker {
                 EffectTransition.Linear,
                 main.get_effect_transition_icon(EffectTransition.Linear),
                 main.getString(R.string.effect_transition_linear)
+            ),
+            Triple(
+                EffectTransition.RInstant,
+                main.get_effect_transition_icon(EffectTransition.RInstant),
+                main.getString(R.string.effect_transition_rinstant)
+            ),
+            Triple(
+                EffectTransition.RLinear,
+                main.get_effect_transition_icon(EffectTransition.RLinear),
+                main.getString(R.string.effect_transition_rlinear)
             )
-            //Triple(
-            //    EffectTransition.RInstant,
-            //    main.get_effect_transition_icon(EffectTransition.RInstant),
-            //    main.getString(R.string.effect_transition_rinstant)
-            //),
-            //Triple(
-            //    EffectTransition.RLinear,
-            //    main.get_effect_transition_icon(EffectTransition.RLinear),
-            //    main.getString(R.string.effect_transition_rlinear)
-            //)
         )
 
         val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>

@@ -13,8 +13,11 @@ abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition =
     abstract fun get_event_instant(position: Rational, preceding_event: EffectEvent): EffectEvent
 
     fun is_reset_transition(): Boolean {
-        // reset types not implemented yet
-        return false
+        return when (this.transition) {
+            EffectTransition.RInstant,
+            EffectTransition.RLinear -> true
+            else -> false
+        }
     }
 
 }

@@ -81,7 +81,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         var previous_tail = Pair(0F, initial_value)
 
         val size = this.beat_count()
-        val default_size = 1F / size.toFloat()
+        val default_size = 1F
         for (b in 0 until size) {
             val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), this.get_tree(b), default_size, 0F))
             while (stack.isNotEmpty()) {
@@ -103,7 +103,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                         continue
                     }
 
-                    val start_position = (b.toFloat() / size.toFloat()) + working_item.relative_offset
+                    val start_position = b.toFloat() + working_item.relative_offset
                     val end_position = start_position + (working_event.duration * working_item.relative_width)
 
                     if (start_position > previous_tail.first) {

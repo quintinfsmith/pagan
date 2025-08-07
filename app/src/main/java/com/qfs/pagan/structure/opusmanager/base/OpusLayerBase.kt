@@ -1159,6 +1159,10 @@ open class OpusLayerBase: Effectable {
         val controller = this.get_controller<T>(type)
         var output = controller.get_latest_event(beat, position)
 
+        // TODO: Start here
+        // return controller.get_tree(cursor.beat, cursor.get_position()).get_event() ?: controller.get_latest_non_reset_transition_event(cursor.beat, cursor.get_position()).copy()
+
+
         if (output != null) {
             try {
                 val (actual_beat, actual_position) = this.controller_global_get_actual_position<T>(type, beat, position)

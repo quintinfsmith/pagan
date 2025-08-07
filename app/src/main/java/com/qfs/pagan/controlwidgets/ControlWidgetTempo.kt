@@ -9,7 +9,7 @@ import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import kotlin.math.roundToInt
 
-class ControlWidgetTempo(default: OpusTempoEvent, _level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusTempoEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, default, CtlLineLevel.Global, is_initial_event, R.layout.control_widget_tempo, callback) {
+class ControlWidgetTempo(_level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusTempoEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, CtlLineLevel.Global, is_initial_event, R.layout.control_widget_tempo, callback) {
     private lateinit var input: Button
     val min = 0f
     val max = 512f
@@ -18,7 +18,6 @@ class ControlWidgetTempo(default: OpusTempoEvent, _level: CtlLineLevel, is_initi
     override fun on_inflated() {
         this.input = this.inner.findViewById(R.id.tempo_value_button)
         (this.input as MaterialButton).setIconResource(R.drawable.tempo_widget_icon)
-        this.input.text = "${this.working_event.value} BPM"
         this.input.setOnClickListener {
             (this.context as ActivityEditor).get_action_interface().set_tempo_at_cursor()
         }

@@ -6,10 +6,10 @@ import android.widget.Button
 import android.widget.LinearLayout
 import androidx.core.view.isEmpty
 import com.qfs.pagan.ContextMenuWithController
-import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.R
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
 class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
@@ -215,6 +215,7 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
     fun <T: EffectEvent> get_control_event(): T {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
+
         return when (cursor.ctl_level!!) {
             CtlLineLevel.Global -> opus_manager.get_current_global_controller_event(
                 cursor.ctl_type!!,

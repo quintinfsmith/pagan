@@ -116,7 +116,6 @@ import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -2952,7 +2951,6 @@ class ActivityEditor : PaganActivity() {
             EffectType.Tempo -> {
                 val controller = controller_set.get<OpusTempoEvent>(cursor.ctl_type!!)
                 ControlWidgetTempo(
-                    controller.initial_event,
                     cursor.ctl_level!!,
                     true,
                     this
@@ -2963,7 +2961,6 @@ class ActivityEditor : PaganActivity() {
             EffectType.Volume -> {
                 val controller = controller_set.get<OpusVolumeEvent>(cursor.ctl_type!!)
                 ControlWidgetVolume(
-                    controller.initial_event,
                     cursor.ctl_level!!,
                     true,
                     this
@@ -2974,7 +2971,6 @@ class ActivityEditor : PaganActivity() {
             EffectType.Velocity -> {
                 val controller = controller_set.get<OpusVelocityEvent>(cursor.ctl_type!!)
                 ControlWidgetVelocity(
-                    controller.initial_event,
                     cursor.ctl_level!!,
                     true,
                     this
@@ -2986,7 +2982,6 @@ class ActivityEditor : PaganActivity() {
             EffectType.Pan -> {
                 val controller = controller_set.get<OpusPanEvent>(cursor.ctl_type!!)
                 ControlWidgetPan(
-                    controller.initial_event,
                     cursor.ctl_level!!,
                     true,
                     this
@@ -3014,22 +3009,11 @@ class ActivityEditor : PaganActivity() {
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val controller_set = opus_manager.get_active_active_control_set() ?: return
-
-        val controller = controller_set.get<EffectEvent>(cursor.ctl_type!!)
-        val default = controller.get_latest_event(cursor.beat, cursor.get_position())?.copy() ?: controller.initial_event.copy()
-
-
-        val (actual_beat, actual_position) = controller.get_blocking_position(cursor.beat, cursor.get_position()) ?: Pair(cursor.beat, cursor.get_position())
-        val tree = controller.get_tree(actual_beat, actual_position)
-        if (!tree.has_event()) {
-            default.duration = 1
-        }
+        val default= controller.get_tree(cursor.beat, cursor.get_position()).get_event() ?: controller.get_latest_non_reset_transition_event(cursor.beat, cursor.get_position()).copy()
 
         val widget = when (cursor.ctl_type!!) {
             EffectType.Tempo -> {
                 ControlWidgetTempo(
-                    default as OpusTempoEvent,
                     cursor.ctl_level!!,
                     false,
                     this
@@ -3039,7 +3023,6 @@ class ActivityEditor : PaganActivity() {
             }
             EffectType.Volume -> {
                 ControlWidgetVolume(
-                    default as OpusVolumeEvent,
                     cursor.ctl_level!!,
                     false,
                     this
@@ -3049,7 +3032,6 @@ class ActivityEditor : PaganActivity() {
             }
             EffectType.Velocity -> {
                 ControlWidgetVelocity(
-                    default as OpusVelocityEvent,
                     cursor.ctl_level!!,
                     false,
                     this
@@ -3060,7 +3042,6 @@ class ActivityEditor : PaganActivity() {
 
             EffectType.Pan -> {
                 ControlWidgetPan(
-                    default as OpusPanEvent,
                     cursor.ctl_level!!,
                     false,
                     this

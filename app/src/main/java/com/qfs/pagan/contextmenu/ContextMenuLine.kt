@@ -12,8 +12,8 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -42,7 +42,6 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         this.button_mute = this.secondary!!.findViewById(R.id.btnMuteLine)
 
         this.widget_volume = ControlWidgetVolume(
-            OpusVolumeEvent(0F),
             CtlLineLevel.Line,
             true,
             this.context

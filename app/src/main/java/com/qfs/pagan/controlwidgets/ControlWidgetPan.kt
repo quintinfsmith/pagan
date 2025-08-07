@@ -9,7 +9,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 
-class ControlWidgetPan(default: OpusPanEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusPanEvent) -> Unit): ControlWidget<OpusPanEvent>(ContextThemeWrapper(context, R.style.pan_widget), default, level, is_initial_event, R.layout.control_widget_pan, callback) {
+class ControlWidgetPan(level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusPanEvent) -> Unit): ControlWidget<OpusPanEvent>(ContextThemeWrapper(context, R.style.pan_widget), level, is_initial_event, R.layout.control_widget_pan, callback) {
     private lateinit var _slider: PanSliderWidget
     private lateinit var _transition_button: Button
 
@@ -20,16 +20,11 @@ class ControlWidgetPan(default: OpusPanEvent, level: CtlLineLevel, is_initial_ev
         this._slider = this.inner.findViewById(R.id.pan_slider)
         this._slider.max = this.max
         this._slider.min = this.min
-        val progress = this.working_event.value * this.max.toFloat() * -1F
-        this._slider.set_progress(progress.toInt(), true)
         this._transition_button = this.inner.findViewById(R.id.pan_transition_type)
 
         if (this.is_initial_event) {
             this._transition_button.visibility = GONE
         } else {
-            (this._transition_button as MaterialButton).setIconResource(
-                this.get_activity().get_effect_transition_icon(this.working_event.transition)
-            )
             this._transition_button.setOnClickListener {
                 val main = this.get_activity()
                 main.get_action_interface().set_ctl_transition()

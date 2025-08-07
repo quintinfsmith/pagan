@@ -10,7 +10,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 
-class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, default, level, is_initial_event, R.layout.control_widget_volume, callback) {
+class ControlWidgetVolume(level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusVolumeEvent) -> Unit): ControlWidget<OpusVolumeEvent>(context, level, is_initial_event, R.layout.control_widget_volume, callback) {
     private lateinit var _slider: SeekBar
     private lateinit var _button: Button
     private lateinit var _transition_button: Button
@@ -22,18 +22,12 @@ class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_init
         this._slider = this.inner.findViewById(R.id.volume_slider)
         this._button = this.inner.findViewById(R.id.volume_button)
         this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
-
-        this.set_text((this.working_event.value * 100).toInt())
         //this._button.set_icon(R.drawable.volume_widget)
         this._button.minEms = 2
 
         if (this.is_initial_event) {
             this._transition_button.visibility = GONE
         } else {
-            (this._transition_button as MaterialButton).setIconResource(
-                this.get_activity().get_effect_transition_icon(this.working_event.transition)
-            )
-
             this._transition_button.setOnClickListener {
                 val main = (this.context as ActivityEditor)
                 main.get_action_interface().set_ctl_transition()
@@ -42,7 +36,6 @@ class ControlWidgetVolume(default: OpusVolumeEvent, level: CtlLineLevel, is_init
 
         this._slider.max = this.max
         this._slider.min = this.min
-        this._slider.progress = (this.working_event.value * this.max.toFloat()).toInt()
 
         var context = this.context
         while (context !is ActivityEditor) {

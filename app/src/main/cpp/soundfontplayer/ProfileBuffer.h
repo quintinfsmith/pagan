@@ -7,7 +7,6 @@
 #include "ProfileBufferFrame.h"
 #include <vector>
 #include "ControllerEventData.h"
-#include <android/log.h>
 
 class ProfileBuffer {
 public:
@@ -39,7 +38,6 @@ public:
         while (this->current_index < this->data->frame_count && this->current_frame > this->data->frames[this->current_index]->end) {
             this->current_index++;
         }
-
         if (this->current_index >= this->data->frame_count) {
             ProfileBufferFrame* bframe_data = this->data->frames[this->data->frame_count - 1];
             auto frame_diff = (float)(bframe_data->end - bframe_data->frame);
@@ -102,9 +100,15 @@ private:
             }
 
             if (frame_changed) {
-                int diff = this->current_frame - bframe->frame;
+                if (bframe->frame <= this->current_frame) {
+                    float diff = (float)this->current_frame - (float)bframe->frame;
+                    for (int i = 0; i < this->data_width; i++) {
+                        this->current_value[i] = bframe->initial_value[i] + (bframe->increment[i] * diff);
+                    }
+                }
+            } else if (this->current_frame == bframe->frame) {
                 for (int i = 0; i < this->data_width; i++) {
-                    this->current_value[i] = bframe->initial_value[i] + (bframe->increment[i] * diff);
+                    this->current_value[i] = bframe->initial_value[i];
                 }
             } else if (this->current_frame > bframe->frame) {
                 for (int i = 0; i < this->data_width; i++) {

@@ -302,15 +302,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
-        println("PARSED")
     }
 
     private fun convert_controller_to_event_data(type_key: Int, controller: EffectController<*>): ControllerEventData {
         val controller_profile = controller.generate_profile()
 
         val control_event_data = HashMap<Int, Triple<Int, FloatArray, FloatArray>>()
-        for (entry in controller_profile.values) {
-            for ((frames, pair) in this.adjust_effect_profile_event_to_tempo(entry.third, entry.first.first, entry.first.second, entry.second.first, entry.second.second)) {
+        for (entry in controller_profile.get_values()) {
+            val adjusted_profile = this.adjust_effect_profile_event_to_tempo(entry.third, entry.first.first, entry.first.second, entry.second.first, entry.second.second)
+            for ((frames, pair) in adjusted_profile) {
                 control_event_data[frames.first] = Triple(frames.second, pair.first, pair.second)
             }
         }

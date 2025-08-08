@@ -114,8 +114,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         data class StackItem(val position: List<Int>, val tree: ReducibleTree<T>?, val relative_width: Float, val relative_offset: Float)
 
         val initial_value = this.initial_event.to_float_array()
-        val output = ControllerProfile()
-        output.add(0F, 0F, floatArrayOf(0F), initial_value, EffectTransition.Instant)
+        val output = ControllerProfile(initial_value)
         var previous_tail = Pair(0F, initial_value)
 
         val size = this.beat_count()

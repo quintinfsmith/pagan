@@ -14,7 +14,7 @@ abstract class ControlWidget<T: EffectEvent>(context: Context, var level: CtlLin
     abstract fun on_set(event: T)
     abstract fun on_inflated()
     internal lateinit var inner: View
-    lateinit var working_event: T
+    var working_event: T? = null
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -30,9 +30,12 @@ abstract class ControlWidget<T: EffectEvent>(context: Context, var level: CtlLin
     }
 
     fun get_event(): T {
-        return this.working_event
+        return this.working_event!!
     }
     fun set_event(event: T, surpress_callback: Boolean = false) {
+        if (event == this.working_event) {
+            return
+        }
         this.working_event = event
         this.on_set(event)
         if (!surpress_callback) {

@@ -23,10 +23,12 @@ import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.SingleFloatEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
+import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.BillableItem
@@ -675,7 +677,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.controller_global_set_event(type, beat, position, event)
             this._queue_global_ctl_cell_change(type, beat)
-            this._ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -691,7 +692,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.controller_line_set_event(type, beat_key, position, event)
             this._queue_line_ctl_cell_change(type, beat_key)
-            this._ui_change_bill.queue_refresh_context_menu()
+
         }
     }
 
@@ -1651,6 +1652,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (this._block_cursor_selection()) {
             return
         }
+
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
@@ -1664,6 +1666,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (this._block_cursor_selection()) {
             return
         }
+
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
@@ -1677,6 +1680,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (this._block_cursor_selection()) {
             return
         }
+
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_ctl_at_global(ctl_type, beat, position)

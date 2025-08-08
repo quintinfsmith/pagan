@@ -8,6 +8,8 @@ abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition:
         return other is SingleFloatEvent && this.value == other.value && super.equals(other)
     }
 
+    abstract override fun copy(): SingleFloatEvent
+
     override fun hashCode(): Int {
         val code = super.hashCode().xor(this.value.toRawBits())
         val shift = this.transition.i
@@ -36,5 +38,4 @@ abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition:
         return copy_event
     }
 
-    abstract override fun copy(): SingleFloatEvent
 }

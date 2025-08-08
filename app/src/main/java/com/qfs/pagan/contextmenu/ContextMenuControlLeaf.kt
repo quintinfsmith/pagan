@@ -222,13 +222,12 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
                 cursor.beat,
                 cursor.get_position()
             )
-            CtlLineLevel.Channel ->
-                opus_manager.get_current_channel_controller_event(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.beat,
-                    cursor.get_position()
-                )
+            CtlLineLevel.Channel -> opus_manager.get_current_channel_controller_event(
+                cursor.ctl_type!!,
+                cursor.channel,
+                cursor.beat,
+                cursor.get_position()
+            )
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
                 opus_manager.get_current_line_controller_event(

@@ -16,17 +16,34 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
     }
 
     fun get_latest_non_reset_transition_event(beat: Int, position: List<Int>): T {
-        val (e_beat, e_position) = this.get_latest_non_reset_transition_event_position(beat, position) ?: return this.initial_event
-        return this.get_tree(e_beat, e_position).get_event()!!
+        val (e_beat, e_position) = this.get_latest_event_position(beat, position) ?: return this.initial_event.copy() as T
+
+        val latest_event = this.get_tree(e_beat, e_position).get_event()!!.copy()
+        val pair = this.get_latest_non_reset_transition_event_position(beat, position)
+        val output = if (pair == null) {
+            this.initial_event.copy()
+        } else {
+            this.get_tree(pair.first, pair.second).get_event()!!.copy()
+        }
+
+        output.transition = latest_event.transition
+        output.duration = 1
+
+        return output as T
     }
     fun get_latest_non_reset_transition_event_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         var working_beat = beat
         var working_position = position
+        var transition: EffectTransition? = null
         while (true) {
             val tree = this.get_tree(working_beat, working_position)
 
             if (tree.has_event() && !tree.event!!.is_reset_transition()) {
                 break
+            }
+
+            if (transition == null && tree.has_event()) {
+                transition = tree.get_event()!!.transition
             }
 
             val tmp_pair = this.get_preceding_event_position(working_beat, working_position) ?: return null

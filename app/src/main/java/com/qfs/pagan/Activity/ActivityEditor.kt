@@ -3009,7 +3009,6 @@ class ActivityEditor : PaganActivity() {
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val default= controller.get_tree(cursor.beat, cursor.get_position()).get_event() ?: controller.get_latest_non_reset_transition_event(cursor.beat, cursor.get_position()).copy()
 
         val widget = when (cursor.ctl_type!!) {
             EffectType.Tempo -> {

@@ -31,15 +31,13 @@ class ControlWidgetPan(level: CtlLineLevel, is_initial_event: Boolean, context: 
             }
         }
 
-
         this._slider.on_change_listener = object: PanSliderWidget.OnSeekBarChangeListener() {
             override fun on_touch_start(slider: PanSliderWidget) { }
             override fun on_touch_stop(slider: PanSliderWidget) {
                 val main = this@ControlWidgetPan.get_activity()
                 main.get_action_interface().set_pan_at_cursor(slider.progress)
             }
-            override fun on_progress_change(slider: PanSliderWidget, value: Int) {
-            }
+            override fun on_progress_change(slider: PanSliderWidget, value: Int) { }
         }
     }
 
@@ -51,5 +49,9 @@ class ControlWidgetPan(level: CtlLineLevel, is_initial_event: Boolean, context: 
         (this._transition_button as MaterialButton).setIconResource(
             this.get_activity().get_effect_transition_icon(event.transition)
         )
+
+        val range = (this.max - this.min) / 2
+        val progress: Int = range + this.min + (-1 * range * event.value).toInt()
+        this._slider.set_progress(progress, true)
     }
 }

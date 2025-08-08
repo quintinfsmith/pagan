@@ -947,7 +947,7 @@ class ActionTracker {
             this.track(TrackedAction.SetVelocityAtCursor, listOf(new_value))
             val new_event = OpusVelocityEvent(
                 new_value.toFloat() / 100F,
-                widget.working_event.duration,
+                widget.get_event().duration,
                 widget.get_event().transition,
             )
             widget.set_event(new_event)
@@ -969,7 +969,7 @@ class ActionTracker {
             this.track(TrackedAction.SetVolumeAtCursor, listOf(new_value))
             val new_event = OpusVolumeEvent(
                 new_value.toFloat() / 100F,
-                widget.working_event.duration,
+                widget.get_event().duration,
                 widget.get_event().transition
             )
             widget.set_event(new_event)
@@ -1323,7 +1323,7 @@ class ActionTracker {
         }
 
         val widget = context_menu.get_widget() as ControlWidgetPan
-        val new_event = widget.working_event.copy() as OpusPanEvent
+        val new_event = widget.get_event().copy()
         new_event.value = (value.toFloat() / widget.max.toFloat()) * -1F
         widget.set_event(new_event)
     }

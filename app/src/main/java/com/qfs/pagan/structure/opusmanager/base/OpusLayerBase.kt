@@ -1114,20 +1114,11 @@ open class OpusLayerBase: Effectable {
      */
     fun <T : EffectEvent> get_current_line_controller_event(type: EffectType, beat_key: BeatKey, position: List<Int>): T {
         val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].get_controller<T>(type)
-        var output = controller.get_latest_event(beat_key.beat, position)
-        if (output != null) {
-            try {
-                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<T>(type, beat_key, position)
-                if (!this.get_line_ctl_tree<T>(type, actual_beat_key, actual_position).has_event()) {
-                    output.duration = 1
-                }
-            } catch (_: InvalidGetCall) {
-                // pass
-            }
-        } else {
-            output = controller.get_initial_event()
+        controller.get_tree(beat_key.beat, position).get_event()?.let {
+            return it
         }
-        return output
+
+        return controller.get_latest_non_reset_transition_event(beat_key.beat, position)
     }
 
     /**
@@ -1135,21 +1126,11 @@ open class OpusLayerBase: Effectable {
      */
     fun <T : EffectEvent> get_current_channel_controller_event(type: EffectType, channel: Int, beat: Int, position: List<Int>): T {
         val controller = this.get_channel(channel).get_controller<T>(type)
-        var output = controller.get_latest_event(beat, position)
-        if (output != null) {
-            try {
-                val (actual_beat, actual_position) = this.controller_channel_get_actual_position<T>(type, channel, beat, position)
-                if (!this.get_channel_ctl_tree<T>(type, channel, actual_beat, actual_position).has_event()) {
-                    output.duration = 1
-                }
-            } catch (_: InvalidGetCall) {
-                // pass
-            }
-        } else {
-            output = controller.get_initial_event()
+        controller.get_tree(beat, position).get_event()?.let {
+            return it
         }
 
-        return output
+        return controller.get_latest_non_reset_transition_event(beat, position)
     }
 
     /**
@@ -1157,26 +1138,12 @@ open class OpusLayerBase: Effectable {
      */
     fun <T : EffectEvent> get_current_global_controller_event(type: EffectType, beat: Int, position: List<Int>): T {
         val controller = this.get_controller<T>(type)
-        var output = controller.get_latest_event(beat, position)
 
-        // TODO: Start here
-        // return controller.get_tree(cursor.beat, cursor.get_position()).get_event() ?: controller.get_latest_non_reset_transition_event(cursor.beat, cursor.get_position()).copy()
-
-
-        if (output != null) {
-            try {
-                val (actual_beat, actual_position) = this.controller_global_get_actual_position<T>(type, beat, position)
-                if (!this.get_global_ctl_tree<T>(type, actual_beat, actual_position).has_event()) {
-                    output.duration = 1
-                }
-            } catch (_: InvalidGetCall) {
-                // pass
-            }
-        } else {
-            output = controller.get_initial_event()
+        controller.get_tree(beat, position).get_event()?.let {
+            return it
         }
 
-        return output
+        return controller.get_latest_non_reset_transition_event(beat, position)
     }
 
     /**

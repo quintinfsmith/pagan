@@ -10,16 +10,16 @@ import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.floor
 import kotlin.math.max
@@ -284,7 +284,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.map_tempo_changes()
         this.get_marked_frames()
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
-
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             if (channel.muted) {
                 return@forEachIndexed
@@ -303,6 +302,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
+        println("PARSED")
     }
 
     private fun convert_controller_to_event_data(type_key: Int, controller: EffectController<*>): ControllerEventData {

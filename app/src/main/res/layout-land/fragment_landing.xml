@@ -46,7 +46,7 @@
             android:layout_weight="1"/>
 
         <Button
-            style="@style/Theme.Pagan.Button"
+            style="@style/landing_button"
             android:id="@+id/btnMostRecent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -63,7 +63,7 @@
             android:orientation="horizontal">
 
             <Button
-                style="@style/Theme.Pagan.Button"
+                style="@style/landing_button"
                 android:id="@+id/btnFrontNew"
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -76,7 +76,7 @@
                 android:layout_width="@dimen/landing_button_space_h" />
 
             <Button
-                style="@style/Theme.Pagan.Button"
+                style="@style/landing_button"
                 android:id="@+id/btnFrontLoad"
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -90,7 +90,7 @@
             android:layout_height="@dimen/landing_button_space" />
 
         <Button
-            style="@style/Theme.Pagan.Button"
+            style="@style/landing_button"
             android:id="@+id/btnFrontImport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -107,7 +107,7 @@
             android:orientation="horizontal">
 
             <Button
-                style="@style/Theme.Pagan.Button"
+                style="@style/landing_button"
                 android:id="@+id/btnFrontSettings"
                 android:layout_width="0dp"
                 android:layout_weight="1"
@@ -119,7 +119,7 @@
                 android:layout_width="@dimen/landing_button_space_h" />
 
             <Button
-                style="@style/Theme.Pagan.Button"
+                style="@style/landing_button"
                 android:id="@+id/btnFrontAbout"
                 android:layout_width="0dp"
                 android:layout_weight="1"

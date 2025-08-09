@@ -3254,13 +3254,12 @@ class ActivityEditor : PaganActivity() {
                 false
             )
 
-        val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
         val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
-        etTranspose.set_range(0, 99999999)
+        etTranspose.set_range(0, 99999999) // arbitrarily large number
         etTranspose.set_value(opus_manager.transpose.first)
 
         val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
-        etTransposeRadix.set_range(1, 99999999)
+        etTransposeRadix.set_range(1, 99999999) // arbitrarily large number
         etTransposeRadix.set_value(opus_manager.transpose.second)
 
         val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
@@ -3284,8 +3283,12 @@ class ActivityEditor : PaganActivity() {
 
         val default_value = opus_manager.tuning_map.size
 
+        val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
         etRadix.set_value(default_value)
-        etRadix.set_range(2, 36)
+        etRadix.set_range(
+            this.resources.getInteger(R.integer.minimum_octave_size),
+            this.resources.getInteger(R.integer.maximum_octave_size)
+        )
         etRadix.value_set_callback = { new_radix: Int? ->
             rvTuningMap.reset_tuning_map(new_radix)
         }

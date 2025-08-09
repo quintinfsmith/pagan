@@ -35,13 +35,16 @@
     <dimen name="octave_label_padding_y">12dp</dimen>
     <dimen name="octave_label_padding_x">3dp</dimen>
 
-    <dimen name="landing_button_space">3dp</dimen>
+    <dimen name="landing_button_space">6dp</dimen>
     <dimen name="landing_button_space_h">6dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
     <dimen name="config_icon_size">24dp</dimen>
     <dimen name="channel_cfg_icon_size">24dp</dimen>
     <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
     <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>
+    <dimen name="settings_div_line_height">4dp</dimen>
+    <dimen name="settings_div_line_width">100dp</dimen>
+    <dimen name="settings_width">400dp</dimen>
 
     <dimen name="channel_option_corner_radius_percussion">12dp</dimen>
     <dimen name="channel_option_corner_radius">40dp</dimen>

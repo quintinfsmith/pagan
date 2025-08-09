@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <integer name="entries_per_line">12</integer>
+    <integer name="minimum_octave_size">2</integer>
+    <integer name="maximum_octave_size">36</integer>
 </resources>

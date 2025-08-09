@@ -32,6 +32,7 @@
     </style>
 
     <style name="button_number_selector">
+        <item name="android:stateListAnimator">@animator/number_selector_button</item>
         <item name="android:lines">1</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <item name="android:background">@drawable/number_selector_button</item>
@@ -48,6 +49,7 @@
     </style>
 
     <style name="song_config_button" parent="Widget.Material3.Button.IconButton.Filled">
+        <item name="android:stateListAnimator">@animator/std_button</item>
         <item name="android:layout_width">@dimen/config_button_width</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:inset">0dp</item>
@@ -64,12 +66,8 @@
         <item name="iconSize">@dimen/channel_cfg_icon_size</item>
     </style>
 
-    <style name="button_front" parent="Theme.Pagan.Button">
-        <item name="android:textSize">24sp</item>
-        <item name="android:padding">10sp</item>
-    </style>
-
     <style name="contextmenu_button" parent="Widget.Material3.Button.IconButton.Filled">
+        <item name="android:stateListAnimator">@animator/std_button</item>
         <item name="android:layout_width">@dimen/icon_button_width</item>
         <item name="android:layout_height">@dimen/icon_button_height</item>
         <item name="android:inset">0dp</item>
@@ -205,6 +203,7 @@
     </style>
 
     <style name="radio_button">
+        <item name="android:stateListAnimator">@animator/std_button</item>
         <item name="android:textColor">@color/radio_text</item>
         <item name="android:textAlignment">center</item>
         <item name="android:textStyle">bold</item>
@@ -311,5 +310,10 @@
     <style name="tail_space">
         <item name="android:layout_height">match_parent</item>
         <item name="android:minWidth">@dimen/trailing_space_width</item>
+    </style>
+
+    <style name="landing_button" parent="Theme.Pagan.Button">
+        <item name="android:background">@drawable/button</item>
+        <item name="android:stateListAnimator">@animator/std_button</item>
     </style>
 </resources>

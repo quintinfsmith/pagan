@@ -118,7 +118,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         if (main.configuration.relative_mode) {
             this.ros_relative_option.visibility = View.VISIBLE
-            this.ros_relative_option.set_state(opus_manager.relative_mode, true, true)
+            this.ros_relative_option.set_state(opus_manager.relative_mode, manual = true, suppress = true)
         } else {
             this.ros_relative_option.visibility = View.GONE
         }
@@ -168,8 +168,8 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
         this.ros_relative_option.set_state(
             opus_manager.relative_mode,
-            true,
-            true
+            manual = true,
+            suppress = true
         )
 
         this.button_split.isEnabled = true

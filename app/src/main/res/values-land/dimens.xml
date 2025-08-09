@@ -13,4 +13,5 @@
     <dimen name="icon_button_width">49dp</dimen>
     <dimen name="context_icon_size">24dp</dimen>
     <dimen name="contextmenu_icon_corner">12dp</dimen>
+
 </resources>

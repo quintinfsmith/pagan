@@ -87,10 +87,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     fun get_state(): Int? {
-        if (this._active_button == null) {
-            return null
-        }
-        return this._active_button!!.value
+        return this._active_button?.value
     }
 
     fun set_state(new_state: Int, manual: Boolean = false, suppress_callback: Boolean = false) {
@@ -104,7 +101,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
                 if (manual) {
                     button.set_active(true)
                 }
-                return
+                break
             }
         }
     }
@@ -220,23 +217,25 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
     }
 
     fun set_active_button(view: NumberSelectorButton, surpress_callback: Boolean = false) {
-        if (this._active_button != view && this._active_button != null) {
-            this._active_button!!.set_active(false)
+        this._active_button?.let {
+            if (it != view) {
+                it.set_active(false)
+            }
         }
+
         this.unset_active_button()
 
         this._active_button = view
 
-        if (!surpress_callback && this._on_change_hook != null) {
-            this._on_change_hook!!(this)
+        if (!surpress_callback) {
+            this._on_change_hook?.let {
+                it(this)
+            }
         }
     }
 
     fun unset_active_button() {
-        if (this._active_button == null) {
-            return
-        }
-        this._active_button!!.set_active(false)
+        this._active_button?.set_active(false)
         this._active_button = null
     }
 }

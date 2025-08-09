@@ -6,38 +6,28 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <LinearLayout
+        android:layout_gravity="center_horizontal|center_vertical"
         android:orientation="vertical"
         android:paddingTop="16dp"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:layout_width="match_parent"
+        android:layout_width="@dimen/settings_width"
         android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:paddingTop="8dp"
-            android:orientation="horizontal"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/main_fg"
+            android:text="@string/label_settings_sf"/>
+
+        <Button
+            android:theme="@style/song_config_button"
+            android:id="@+id/btnChooseSoundFont"
+            android:text="@string/btn_settings_sfmute"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/main_fg"
-                android:text="@string/label_settings_sf"
-                android:paddingTop="@dimen/normal_padding"
-                android:paddingEnd="15dp" />
-
-            <Button
-                android:theme="@style/song_config_button"
-                android:id="@+id/btnChooseSoundFont"
-                android:text="@string/btn_settings_sfmute"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:maxWidth="400dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_height="wrap_content" />
 
 
         <LinearLayout
@@ -80,31 +70,21 @@
             </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:paddingTop="8dp"
-            android:orientation="horizontal"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/main_fg"
+            android:text="@string/label_settings_projects_directory"
+            android:paddingTop="4dp"/>
+
+        <Button
+            android:theme="@style/song_config_button"
+            android:id="@+id/btn_set_project_directory"
+            android:text="@string/btn_settings_set_project_directory"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/main_fg"
-                android:text="@string/label_settings_projects_directory"
-                android:paddingTop="@dimen/normal_padding"
-                android:paddingEnd="15dp" />
-
-            <Button
-                android:theme="@style/song_config_button"
-                android:id="@+id/btn_set_project_directory"
-                android:text="@string/btn_settings_set_project_directory"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:maxWidth="400dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-
-                android:layout_height="wrap_content" />
-        </LinearLayout>
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_height="wrap_content" />
 
         <LinearLayout
             android:id="@+id/ll_external_projects_warning"
@@ -129,34 +109,26 @@
             </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:paddingTop="8dp"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/main_fg"
-                android:text="@string/label_settings_soundfont_directory"
-                android:paddingTop="@dimen/normal_padding"
-                android:paddingEnd="15dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/main_fg"
+            android:text="@string/label_settings_soundfont_directory"
+            android:paddingTop="4dp"/>
 
-            <Button
-                android:theme="@style/song_config_button"
-                android:id="@+id/btn_settings_set_soundfont_directory"
-                android:text="@string/btn_settings_set_soundfont_directory"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:maxWidth="400dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
+        <Button
+            android:theme="@style/song_config_button"
+            android:id="@+id/btn_settings_set_soundfont_directory"
+            android:text="@string/btn_settings_set_soundfont_directory"
+            android:layout_width="match_parent"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_height="wrap_content" />
+
         <LinearLayout
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
                 <TextView
@@ -177,12 +149,19 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
+                    android:textColor="@color/main_fg"
                     android:id="@+id/tvSampleRate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=""
                     android:paddingStart="15dp"/>
         </LinearLayout>
+
+        <Space
+            android:layout_gravity="center_horizontal"
+            android:layout_width="@dimen/settings_div_line_width"
+            android:layout_height="@dimen/settings_div_line_height"/>
+
         <LinearLayout
             android:id="@+id/llClipSameLineRelease"
             android:orientation="horizontal"
@@ -201,6 +180,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
         </LinearLayout>
+
+        <Space
+            android:layout_gravity="center_horizontal"
+            android:layout_width="@dimen/settings_div_line_width"
+            android:layout_height="@dimen/settings_div_line_height"/>
+
         <LinearLayout
             android:id="@+id/llRelativeEnabled"
             android:orientation="horizontal"
@@ -219,6 +204,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="48dp"/>
         </LinearLayout>
+
+        <Space
+            android:layout_gravity="center_horizontal"
+            android:layout_width="@dimen/settings_div_line_width"
+            android:layout_height="@dimen/settings_div_line_height"/>
+
         <LinearLayout
             android:id="@+id/llUsePreferredSF"
             android:orientation="horizontal"
@@ -237,6 +228,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
         </LinearLayout>
+
+        <Space
+            android:layout_gravity="center_horizontal"
+            android:layout_width="@dimen/settings_div_line_width"
+            android:layout_height="@dimen/settings_div_line_height"/>
 
         <LinearLayout
             android:id="@+id/llEnableMidi"
@@ -257,12 +253,18 @@
                 android:layout_height="48dp"/>
         </LinearLayout>
 
+        <Space
+            android:layout_gravity="center_horizontal"
+            android:layout_width="@dimen/settings_div_line_width"
+            android:layout_height="@dimen/settings_div_line_height"/>
+
         <LinearLayout
             android:id="@+id/llAllowStdPercussion"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:textColor="@color/main_fg"
                 android:text="@string/label_settings_allow_std_percussion"
                 android:layout_weight="1"
                 android:layout_width="0dp"
@@ -276,8 +278,8 @@
         </LinearLayout>
 
         <LinearLayout
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:id="@+id/llLockOrientation"
             android:orientation="vertical"
             android:layout_width="match_parent"
@@ -298,15 +300,11 @@
                 android:layout_gravity="center"
                 android:orientation="horizontal">
 
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent" />
-
                 <RadioButton
                     android:id="@+id/rbOrientationLandscape"
                     style="@style/radio_button_start"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:drawablePadding="0dp"
@@ -324,7 +322,8 @@
                 <RadioButton
                     android:id="@+id/rbOrientationUser"
                     style="@style/radio_button_center"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:lines="1"
@@ -341,7 +340,8 @@
                 <RadioButton
                     android:id="@+id/rbOrientationPortrait"
                     style="@style/radio_button_end"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:lines="1"
@@ -351,18 +351,12 @@
                     android:paddingBottom="@dimen/setting_radio_padding_v"
                     android:text="@string/settings_orientation_portrait" />
 
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent" />
-
             </RadioGroup>
-
         </LinearLayout>
 
         <LinearLayout
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:id="@+id/llNightMode"
             android:orientation="vertical"
             android:layout_width="match_parent"
@@ -383,15 +377,11 @@
                 android:layout_gravity="center"
                 android:orientation="horizontal">
 
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent" />
-
                 <RadioButton
                     android:id="@+id/rbNightModeYes"
                     style="@style/radio_button_start"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:drawablePadding="0dp"
@@ -409,7 +399,8 @@
                 <RadioButton
                     android:id="@+id/rbNightModeSystem"
                     style="@style/radio_button_center"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:lines="1"
@@ -426,7 +417,8 @@
                 <RadioButton
                     android:id="@+id/rbNightModeNo"
                     style="@style/radio_button_end"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:lines="1"
@@ -435,11 +427,6 @@
                     android:paddingEnd="@dimen/setting_radio_padding_h"
                     android:paddingBottom="@dimen/setting_radio_padding_v"
                     android:text="@string/settings_night_mode_no" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent" />
 
             </RadioGroup>
 

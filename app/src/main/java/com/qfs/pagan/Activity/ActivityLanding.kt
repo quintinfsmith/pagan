@@ -108,6 +108,7 @@ class ActivityLanding : PaganActivity() {
         toolbar.background = null
 
         this.findViewById<View>(R.id.btnMostRecent).let { most_recent_button ->
+            this.loading_reticle_show()
             most_recent_button.setOnClickListener {
                 this.startActivity(
                     Intent(this, ActivityEditor::class.java).apply {
@@ -118,19 +119,23 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<View>(R.id.btnFrontSettings).setOnClickListener {
+            this.loading_reticle_show()
             this.startActivity(Intent(this, ActivitySettings::class.java))
         }
 
         this.findViewById<View>(R.id.btnFrontAbout).setOnClickListener {
+            this.loading_reticle_show()
             this.startActivity(Intent(this, ActivityAbout::class.java))
         }
 
         this.findViewById<View>(R.id.btnFrontNew).setOnClickListener {
+            this.loading_reticle_show()
             this.startActivity(Intent(this, ActivityEditor::class.java))
         }
 
         this.findViewById<View>(R.id.btnFrontLoad).setOnClickListener {
             this.dialog_load_project { uri : Uri ->
+                this.loading_reticle_show()
                 this.startActivity(
                     Intent(this, ActivityEditor::class.java).apply {
                         this.data = uri
@@ -140,6 +145,7 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<View>(R.id.btnFrontImport).setOnClickListener {
+            this.loading_reticle_show()
             this.result_launcher_import_project.launch(
                 Intent().apply {
                     this.setAction(Intent.ACTION_GET_CONTENT)
@@ -202,6 +208,7 @@ class ActivityLanding : PaganActivity() {
     override fun on_soundfont_directory_set(uri: Uri) {}
     override fun onResume() {
         super.onResume()
+        this.loading_reticle_hide()
         this.update_view_visibilities()
     }
 }

@@ -58,7 +58,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         var invalidate_queued = false
         init {
             this.table_line_paint.color = ContextCompat.getColor(this.context, R.color.table_lines)
-            this.table_line_paint.strokeWidth = 1F
+            this.table_line_paint.strokeWidth = this.context.resources.getDimension(R.dimen.stroke_leaf)
 
             this.text_paint_offset.textSize = this.resources.getDimension(R.dimen.text_size_offset)
             this.text_paint_offset.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
@@ -621,13 +621,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val scroll_y = vertical_scroll_view.scrollY
             val scroll_x = horizontal_scroll_view.scrollX
 
-            canvas.drawRect(
-                scroll_x.toFloat(),
-                scroll_y.toFloat(),
-                (scroll_x + horizontal_scroll_view.measuredWidth).toFloat(),
-                (scroll_y + vertical_scroll_view.measuredHeight).toFloat(),
-                this.table_line_paint
-            )
+            //canvas.drawRect(
+            //    scroll_x.toFloat(),
+            //    scroll_y.toFloat(),
+            //    (scroll_x + horizontal_scroll_view.measuredWidth).toFloat(),
+            //    (scroll_y + vertical_scroll_view.measuredHeight).toFloat(),
+            //    this.table_line_paint
+            //)
 
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))

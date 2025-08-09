@@ -19,4 +19,5 @@
     <dimen name="contextmenu_secondary_padding_end">12dp</dimen>
     <dimen name="contextmenu_secondary_padding_start">12dp</dimen>
     <dimen name="contextmenu_secondary_padding_bottom">12dp</dimen>
+    <dimen name="settings_width">400dp</dimen>
 </resources>

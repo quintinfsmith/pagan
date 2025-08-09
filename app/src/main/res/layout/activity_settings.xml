@@ -6,23 +6,33 @@
 
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     tools:context=".Activity.ActivitySettings">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <LinearLayout
+        android:fitsSystemWindows="true"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+        <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@drawable/baseline_arrow_back_24"
-            app:contentInsetStartWithNavigation="0dp"
-            app:titleTextAppearance="@style/TextAppearance.AppCompat.Small"
-            app:titleTextColor="@color/on_surface" />
-    </com.google.android.material.appbar.AppBarLayout>
+            android:layout_height="wrap_content">
 
-    <include layout="@layout/fragment_global_settings" />
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:navigationIcon="@drawable/baseline_arrow_back_24"
+                app:contentInsetStartWithNavigation="0dp"
+                app:titleTextAppearance="@style/TextAppearance.AppCompat.Small"
+                app:titleTextColor="@color/on_surface" />
+        </com.google.android.material.appbar.AppBarLayout>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <include layout="@layout/background_etching"/>
+            <include layout="@layout/fragment_global_settings" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

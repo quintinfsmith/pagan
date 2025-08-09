@@ -5,6 +5,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="link_color">#2a2a46</color>
 
+    <color name="main_background_etching">#22FFFFFF</color>
+
     <color name="leaf_main">#765BD5</color>
     <color name="leaf_spill">#5944a3</color>
     <color name="leaf_text">#000000</color>
@@ -62,7 +64,7 @@
     <color name="main_bg">#e0e0e0</color>
     <color name="main_fg">#2A2A46</color>
     <color name="table_lines">#000000</color>
-    <color name="channel_even">#C1D1E3</color>
+    <color name="channel_even">#22C1D1E3</color>
     <color name="channel_even_text">@color/main_fg</color>
     <color name="button">#FFFFFF</color>
     <color name="button_text">@color/main_fg</color>

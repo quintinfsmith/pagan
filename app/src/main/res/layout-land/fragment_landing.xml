@@ -8,22 +8,14 @@
 
     <LinearLayout
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="10"
         android:padding="4dp"
+        android:layout_gravity="center_vertical"
         android:orientation="vertical">
-
-        <Space
-            android:layout_height="0dp"
-            android:layout_width="match_parent"
-            android:layout_weight="1"/>
 
         <include layout="@layout/warning_no_soundfont" />
 
-        <Space
-            android:layout_height="0dp"
-            android:layout_width="match_parent"
-            android:layout_weight="1"/>
 
     </LinearLayout>
 
@@ -35,15 +27,11 @@
 
     <LinearLayout
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="10"
         android:padding="4dp"
+        android:layout_gravity="center"
         android:orientation="vertical">
-
-        <Space
-            android:layout_height="0dp"
-            android:layout_width="match_parent"
-            android:layout_weight="1"/>
 
         <Button
             style="@style/landing_button"
@@ -125,13 +113,8 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="@string/btn_landing_about"/>
-
         </LinearLayout>
 
-        <Space
-            android:layout_height="0dp"
-            android:layout_width="match_parent"
-            android:layout_weight="1"/>
     </LinearLayout>
 
 </LinearLayout>

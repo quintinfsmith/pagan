@@ -29,7 +29,12 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <include layout="@layout/fragment_main" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <include layout="@layout/background_etching"/>
+            <include layout="@layout/fragment_main" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
 
     <LinearLayout

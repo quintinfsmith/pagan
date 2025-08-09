@@ -5,7 +5,7 @@
         android:topLeftRadius="4dp"
         android:bottomRightRadius="24dp"
         android:topRightRadius="24dp" />
-    <solid android:color="#0fff" />
+    <solid android:color="@color/main_bg" />
     <stroke
         android:width="@dimen/radio_stroke"
         android:color="@color/radio_unchecked" />

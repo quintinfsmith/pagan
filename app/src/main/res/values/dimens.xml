@@ -26,7 +26,7 @@
     <dimen name="inline_color_picker_button_size">41dp</dimen>
     <dimen name="color_picker_display_padding">8dp</dimen>
     <dimen name="color_picker_popup_width">400dp</dimen>
-
+    <dimen name="table_line_stroke">1dp</dimen>
     <dimen name="icon_spacing">4dp</dimen>
     <dimen name="text_size_offset">18sp</dimen>
     <dimen name="text_size_octave">14sp</dimen>
@@ -44,7 +44,7 @@
     <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>
     <dimen name="settings_div_line_height">4dp</dimen>
     <dimen name="settings_div_line_width">100dp</dimen>
-    <dimen name="settings_width">400dp</dimen>
+    <dimen name="settings_width">320dp</dimen>
 
     <dimen name="channel_option_corner_radius_percussion">12dp</dimen>
     <dimen name="channel_option_corner_radius">40dp</dimen>

@@ -10,7 +10,7 @@
     <item app:state_focused="false"
         app:state_muted="false"
         app:state_focused_secondary="false"
-        android:color="@color/channel_even" />
+        android:color="@color/line_label" />
 
     <item app:state_focused="false"
         app:state_muted="false"

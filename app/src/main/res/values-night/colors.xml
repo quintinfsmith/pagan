@@ -15,6 +15,7 @@
     <color name="main_bg">#1d1d1d</color>
     <color name="main_fg">#ececec</color>
     <color name="table_lines">#C3C3C3</color>
+    <color name="line_label">#232323</color>
     <color name="channel_even">#232323</color>
     <color name="channel_even_text">@color/main_fg</color>
     <color name="button">#acacac</color>

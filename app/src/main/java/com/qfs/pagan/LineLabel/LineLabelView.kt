@@ -6,6 +6,7 @@ import android.view.DragEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.content.ContextCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.LineLabelColumnLayout
 import com.qfs.pagan.R
@@ -67,7 +68,7 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
         val ctl_line = opus_manager.get_ctl_line_from_row(this.row)
         val (pointer, ctl_level, ctl_type) = opus_manager.get_ctl_line_info(ctl_line)
 
-        this.setBackgroundColor(resources.getColor(R.color.table_lines))
+        this.setBackgroundColor(ContextCompat.getColor(this.context, R.color.table_lines))
         this.addView(
             when (ctl_level) {
                 null -> {

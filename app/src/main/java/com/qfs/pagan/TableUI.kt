@@ -611,6 +611,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
             val channel_gap_height = this.resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
 
+            val stroke_width = this.context.resources.getDimension(R.dimen.stroke_leaf)
+
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()
             var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat()

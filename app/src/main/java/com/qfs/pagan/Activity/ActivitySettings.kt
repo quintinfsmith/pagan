@@ -79,7 +79,7 @@ class ActivitySettings : PaganActivity() {
 
                                     try {
                                         SoundFont(this, new_file.uri)
-                                        this.configuration.soundfont = this@ActivitySettings.coax_relative_soundfont_path(new_file.uri)
+                                        this.configuration.soundfont = this@ActivitySettings.coerce_relative_soundfont_path(new_file.uri)
                                         this.loading_reticle_hide()
                                     } catch (e: Exception) {
                                         this.feedback_msg(this.getString(R.string.feedback_invalid_sf2_file))
@@ -419,7 +419,7 @@ class ActivitySettings : PaganActivity() {
 
         val dialog = this.dialog_popup_sortable_menu(this.getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
             override fun on_submit(index: Int, value: Uri) {
-                this@ActivitySettings.configuration.soundfont = this@ActivitySettings.coax_relative_soundfont_path(value)
+                this@ActivitySettings.configuration.soundfont = this@ActivitySettings.coerce_relative_soundfont_path(value)
                 this@ActivitySettings.set_soundfont_button_text()
                 this@ActivitySettings.update_result()
             }

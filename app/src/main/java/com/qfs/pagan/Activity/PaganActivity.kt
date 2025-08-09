@@ -596,14 +596,16 @@ open class PaganActivity: AppCompatActivity() {
         return working_file.uri
     }
 
-    fun coax_relative_soundfont_path(soundfont_uri: Uri): String? {
-        if (this.configuration.soundfont_directory == null || soundfont_uri.authority != this.configuration.soundfont_directory!!.authority) {
+    fun coerce_relative_soundfont_path(soundfont_uri: Uri): String? {
+        println("${soundfont_uri.authority}")
+        if (this.configuration.soundfont_directory == null) {
             return null
         }
 
         val parent_segments = this.configuration.soundfont_directory!!.pathSegments
         val child_segments = soundfont_uri.pathSegments
 
+        println("$parent_segments, $child_segments ---")
         if (parent_segments.size >= child_segments.size || child_segments.subList(0, parent_segments.size) != parent_segments) {
             return null
         }

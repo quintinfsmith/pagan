@@ -1,31 +1,34 @@
 package com.qfs.apres.soundfontplayer
 
-class ControllerEventData(val ptr: Long) {
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-    constructor(frames: Array<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>>, type: Int): this(
+class ControllerEventData(val ptr: Long) {
+    class IndexedProfileBufferFrame(val first_frame: Int, val last_frame: Int, val value: FloatArray, val increment: FloatArray)
+
+    constructor(frames: List<IndexedProfileBufferFrame>, type: EffectType): this(
         ControllerEventData.intermediary_create(frames, type)
     )
 
     companion object {
-        fun intermediary_create(frames: Array<Pair<Pair<Int, Int>, Pair<FloatArray, FloatArray>>>, type: Int): Long {
-            val value_width = frames[0].second.first.size
+        fun intermediary_create(frames: List<IndexedProfileBufferFrame>, type: EffectType): Long {
+            val value_width = frames[0].value.size
             val values = FloatArray(frames.size * value_width)
             val increments = FloatArray(frames.size * value_width)
 
             for (i in 0 until frames.size) {
                 for (j in 0 until value_width) {
-                    values[i * value_width] = frames[i].second.first[j]
-                    increments[i * value_width] = frames[i].second.second[j]
+                    values[i * value_width] = frames[i].value[j]
+                    increments[i * value_width] = frames[i].increment[j]
                 }
             }
 
             return this.create(
-                IntArray(frames.size) { i: Int -> frames[i].first.first },
-                IntArray(frames.size) { i: Int -> frames[i].first.second },
+                IntArray(frames.size) { i: Int -> frames[i].first_frame },
+                IntArray(frames.size) { i: Int -> frames[i].last_frame },
                 value_width,
                 values,
                 increments,
-                type
+                type.i
             )
         }
 

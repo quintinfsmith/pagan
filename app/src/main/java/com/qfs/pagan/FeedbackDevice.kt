@@ -9,6 +9,7 @@ import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -21,7 +22,13 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         var max_frame = -1
         var volume = .6F
         val volume_event_data = ControllerEventData(
-            arrayOf(Pair(Pair(0,0), Pair(floatArrayOf(this.volume), floatArrayOf(0f)))), 2 // VOLUME
+            listOf(ControllerEventData.IndexedProfileBufferFrame(
+                first_frame = 0,
+                last_frame = 0,
+                value = floatArrayOf(this.volume),
+                increment = floatArrayOf(0F)
+            )),
+            EffectType.Volume
         )
         override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
             if (this._handles.isEmpty()) {

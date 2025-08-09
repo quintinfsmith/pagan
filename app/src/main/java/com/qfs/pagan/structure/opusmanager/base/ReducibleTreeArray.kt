@@ -346,7 +346,11 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         return null
     }
 
-    /* Check if replacing a tree would cause overlap */
+    /**
+     * Check if replacing a tree @ [beat]/[position] with [new_tree] would cause overlap
+     * null means false, non-null is the position of the tree blocking the replace action
+     * TODO: needs better name
+     */
     private fun <T: OpusEvent> is_blocked_replace_tree(beat: Int, position: List<Int>, new_tree: ReducibleTree<T>): Pair<Int, List<Int>>? {
         val original_position = this.get_blocking_position(beat, position) ?: Pair(beat, position)
         if (original_position != Pair(beat, position) && !new_tree.is_eventless()) {
@@ -570,12 +574,12 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
 
     fun squish(factor: Int) {
         val new_beats = mutableListOf<ReducibleTree<T>>()
-        for (b in 0 until this.beats.size) {
-            if (b % factor == 0) {
+        for (beat_index in 0 until this.beats.size) {
+            if (beat_index % factor == 0) {
                 new_beats.add(ReducibleTree())
             }
             val working_beat = new_beats.last()
-            working_beat.insert(b % factor, this.beats[b])
+            working_beat.insert(beat_index % factor, this.beats[beat_index])
         }
 
         if (this.beats.size % factor != 0) {

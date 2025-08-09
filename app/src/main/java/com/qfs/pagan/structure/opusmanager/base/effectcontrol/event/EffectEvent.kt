@@ -12,11 +12,11 @@ abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition =
     abstract override fun copy(): EffectEvent
     abstract fun get_event_instant(position: Rational, preceding_event: EffectEvent): EffectEvent
 
-    fun is_reset_transition(): Boolean {
+    fun is_persistent(): Boolean {
         return when (this.transition) {
             EffectTransition.RInstant,
-            EffectTransition.RLinear -> true
-            else -> false
+            EffectTransition.RLinear -> false
+            else -> true
         }
     }
 }

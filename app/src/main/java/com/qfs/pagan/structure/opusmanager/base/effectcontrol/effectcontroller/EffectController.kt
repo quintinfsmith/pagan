@@ -15,11 +15,15 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         return this.initial_event
     }
 
-    fun get_latest_non_reset_transition_event(beat: Int, position: List<Int>): T {
+    /**
+     * Get the real latest event with a persistent transition OR create a theoretical
+     * event with the transition of the latest event and the value of the latest persistent
+     */
+    fun coerce_latest_persistent_event(beat: Int, position: List<Int>): T {
         val (e_beat, e_position) = this.get_latest_event_position(beat, position) ?: return this.initial_event.copy() as T
 
         val latest_event = this.get_tree(e_beat, e_position).get_event()!!.copy()
-        val pair = this.get_latest_non_reset_transition_event_position(beat, position)
+        val pair = this.get_latest_persistent_position(beat, position)
         val output = if (pair == null) {
             this.initial_event.copy()
         } else {
@@ -31,14 +35,15 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
 
         return output as T
     }
-    fun get_latest_non_reset_transition_event_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
+
+    fun get_latest_persistent_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         var working_beat = beat
         var working_position = position
         var transition: EffectTransition? = null
         while (true) {
             val tree = this.get_tree(working_beat, working_position)
 
-            if (tree.has_event() && !tree.event!!.is_reset_transition()) {
+            if (tree.has_event() && tree.event!!.is_persistent()) {
                 break
             }
 
@@ -91,7 +96,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         var pair = this.get_preceding_event_position(event_beat, event_position)
         while (pair != null) {
             val event = this.get_tree(pair.first, pair.second).get_event()!!
-            if (!event.is_reset_transition()) {
+            if (event.is_persistent()) {
                 break
             }
 
@@ -117,10 +122,16 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         val output = ControllerProfile(initial_value)
         var previous_tail = Pair(0F, initial_value)
 
-        val size = this.beat_count()
-        val default_size = 1F
-        for (b in 0 until size) {
-            val stack: MutableList<StackItem> = mutableListOf(StackItem(listOf(), this.get_tree(b), default_size, 0F))
+        for (beat_index in 0 until this.beat_count()) {
+            val stack: MutableList<StackItem> = mutableListOf(
+                StackItem(
+                    position = listOf(),
+                    tree = this.get_tree(beat_index),
+                    relative_width = 1F,
+                    relative_offset = 0F
+                )
+            )
+
             while (stack.isNotEmpty()) {
                 val working_item = stack.removeAt(0)
                 val working_tree = working_item.tree ?: continue
@@ -128,44 +139,71 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                 if (working_tree.has_event()) {
                     val working_event = working_tree.get_event()!!
                     val working_values = working_event.to_float_array()
-                    var is_difference = false
-                    for (i in 0 until working_values.size) {
-                        if (working_values[i] - previous_tail.second[i] != 0F) {
-                            is_difference = true
-                            break
-                        }
-                    }
 
-                    if (!is_difference) {
+                    if (working_values.contentEquals(previous_tail.second)) {
                         continue
                     }
 
-                    val start_position = b.toFloat() + working_item.relative_offset
+                    val start_position = beat_index.toFloat() + working_item.relative_offset
                     val end_position = start_position + (working_event.duration * working_item.relative_width)
 
                     if (start_position > previous_tail.first) {
-                        output.add(previous_tail.first, start_position, previous_tail.second, previous_tail.second, EffectTransition.Instant)
+                        output.add (
+                            ControllerProfile.ProfileEffectEvent(
+                                start_position = previous_tail.first,
+                                end_position = start_position,
+                                start_value = previous_tail.second,
+                                end_value = previous_tail.second,
+                                transition = EffectTransition.Instant
+                            )
+                        )
                     }
 
-                    if (working_event.is_reset_transition()) {
-                        output.add(start_position, start_position, previous_tail.second, working_values, EffectTransition.Instant)
+                    if (!working_event.is_persistent()) {
+                        output.add(
+                            ControllerProfile.ProfileEffectEvent(
+                                start_position = start_position,
+                                end_position = start_position,
+                                start_value = previous_tail.second,
+                                end_value = working_values,
+                                transition = EffectTransition.Instant
+                            )
+                        )
                         when (working_event.transition) {
                             EffectTransition.RLinear ->  {
-                                output.add(start_position, end_position, working_values, previous_tail.second, EffectTransition.Linear)
+                                output.add(
+                                    ControllerProfile.ProfileEffectEvent(
+                                        start_position = start_position,
+                                        end_position = end_position,
+                                        start_value = working_values,
+                                        end_value = previous_tail.second,
+                                        transition = EffectTransition.Linear
+                                    )
+                                )
                             }
                             EffectTransition.RInstant -> {
-                                output.add(end_position, end_position, working_values, previous_tail.second, EffectTransition.Instant)
+                                output.add(
+                                    ControllerProfile.ProfileEffectEvent(
+                                        start_position = end_position,
+                                        end_position = end_position,
+                                        start_value = working_values,
+                                        end_value = previous_tail.second,
+                                        transition = EffectTransition.Instant
+                                    )
+                                )
                             }
                             else -> {}
                         }
                         previous_tail = Pair(end_position, previous_tail.second)
                     } else {
                         output.add(
-                            start_position,
-                            end_position,
-                            previous_tail.second,
-                            working_values,
-                            working_event.transition
+                            ControllerProfile.ProfileEffectEvent(
+                                start_position = start_position,
+                                end_position = end_position,
+                                start_value = previous_tail.second,
+                                end_value = working_values,
+                                transition = working_event.transition
+                            )
                         )
                         previous_tail = Pair(end_position, working_values)
                     }
@@ -174,7 +212,14 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                     for (i in 0 until working_tree.size) {
                         val new_position = working_item.position.toMutableList()
                         new_position.add(i)
-                        stack.add(StackItem(new_position, working_tree[i], new_width, working_item.relative_offset + (new_width * i)))
+                        stack.add(
+                            StackItem(
+                                position = new_position,
+                                tree = working_tree[i],
+                                relative_width = new_width,
+                                relative_offset = working_item.relative_offset + (new_width * i)
+                            )
+                        )
                     }
                 }
             }

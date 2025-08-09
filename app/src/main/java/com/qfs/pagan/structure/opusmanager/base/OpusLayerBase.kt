@@ -34,7 +34,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
-import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -1118,7 +1117,7 @@ open class OpusLayerBase: Effectable {
             return it
         }
 
-        return controller.get_latest_non_reset_transition_event(beat_key.beat, position)
+        return controller.coerce_latest_persistent_event(beat_key.beat, position)
     }
 
     /**
@@ -1130,7 +1129,7 @@ open class OpusLayerBase: Effectable {
             return it
         }
 
-        return controller.get_latest_non_reset_transition_event(beat, position)
+        return controller.coerce_latest_persistent_event(beat, position)
     }
 
     /**
@@ -1143,7 +1142,7 @@ open class OpusLayerBase: Effectable {
             return it
         }
 
-        return controller.get_latest_non_reset_transition_event(beat, position)
+        return controller.coerce_latest_persistent_event(beat, position)
     }
 
     /**
@@ -3650,7 +3649,7 @@ open class OpusLayerBase: Effectable {
                         }
 
                         // Don't track reset_transitions, since their values will not affect next events
-                        if (!event.is_reset_transition()) {
+                        if (event.is_persistent()) {
                             latest_event = event
                         }
 

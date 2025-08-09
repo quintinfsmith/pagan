@@ -623,14 +623,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val scroll_y = vertical_scroll_view.scrollY
             val scroll_x = horizontal_scroll_view.scrollX
 
-            //canvas.drawRect(
-            //    scroll_x.toFloat(),
-            //    scroll_y.toFloat(),
-            //    (scroll_x + horizontal_scroll_view.measuredWidth).toFloat(),
-            //    (scroll_y + vertical_scroll_view.measuredHeight).toFloat(),
-            //    this.table_line_paint
-            //)
-
             for (i in first_x .. last_x) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
                 var y_offset = line_height
@@ -660,6 +652,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 (y + line_height).toInt()
                             )
                             leaf_drawable.draw(canvas)
+                            //if (k == channel.lines.indices.last()) {
+                            //    canvas.drawLine(
+                            //        x,
+                            //        y + line_height,
+                            //        x + width,
+                            //        y + line_height,
+                            //        this.table_line_paint
+                            //    )
+                            //}
 
                             if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active))) {
                                 colored_line_paint.color = line.color!!
@@ -794,7 +795,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         }
                         y_offset += ctl_line_height
                     }
-                    canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height, this.table_line_paint)
+                    //canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height, this.table_line_paint)
                     y_offset += channel_gap_height
                 }
 

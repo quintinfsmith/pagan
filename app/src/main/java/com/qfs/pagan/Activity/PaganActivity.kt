@@ -597,7 +597,6 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     fun coerce_relative_soundfont_path(soundfont_uri: Uri): String? {
-        println("${soundfont_uri.authority}")
         if (this.configuration.soundfont_directory == null) {
             return null
         }
@@ -605,15 +604,15 @@ open class PaganActivity: AppCompatActivity() {
         val parent_segments = this.configuration.soundfont_directory!!.pathSegments
         val child_segments = soundfont_uri.pathSegments
 
-        println("$parent_segments, $child_segments ---")
         if (parent_segments.size >= child_segments.size || child_segments.subList(0, parent_segments.size) != parent_segments) {
             return null
         }
 
-        val coaxed_segments = child_segments.last().split("/").toMutableList()
-        coaxed_segments.removeAt(0)
+        val split_child_path = child_segments.last().split("/")
+        val split_parent_path = parent_segments.last().split("/")
+        val relative_path = split_child_path.subList(split_parent_path.size, split_child_path.size)
 
-        return coaxed_segments.joinToString("/")
+        return relative_path.joinToString("/")
     }
 
     open fun on_soundfont_directory_set(uri: Uri) {}

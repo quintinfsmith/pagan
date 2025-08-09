@@ -407,8 +407,7 @@ class ActivitySettings : PaganActivity() {
         val soundfonts = mutableListOf<Triple<Uri, Int?, String>>()
         for (uri in file_list) {
             val relative_path_segments = uri.pathSegments.last().split("/")
-            val relative_path = relative_path_segments.subList(1, relative_path_segments.size).joinToString("/")
-            soundfonts.add(Triple(uri, null, relative_path))
+            soundfonts.add(Triple(uri, null, relative_path_segments.last()))
         }
 
         val sort_options = listOf(

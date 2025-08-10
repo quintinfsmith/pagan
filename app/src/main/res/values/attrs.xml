@@ -11,7 +11,6 @@
         <attr name="entries_per_line" format="integer" />
     </declare-styleable>
 
-
     <declare-styleable name="states">
         <attr name="state_active" format="boolean"/>
         <attr name="state_alternate" format="boolean"/>
@@ -22,7 +21,6 @@
         <attr name="state_spill" format="boolean" />
         <attr name="state_muted" format="boolean" />
     </declare-styleable>
-
 
     <attr name="icon_size" format="dimension" />
 

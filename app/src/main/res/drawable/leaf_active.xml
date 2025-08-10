@@ -9,7 +9,8 @@
 
     <item android:end="@dimen/stroke_leaf" android:top="@dimen/stroke_leaf" android:bottom="@dimen/stroke_leaf" android:start="@dimen/stroke_leaf">
         <shape android:shape="rectangle">
-            <solid android:color="@color/ctl_leaf_selector"/>
+            <solid android:color="@color/leaf"/>
+            <corners android:radius="0dp"/>
         </shape>
     </item>
 </layer-list>

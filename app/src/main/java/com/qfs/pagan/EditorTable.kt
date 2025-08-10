@@ -50,7 +50,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this._first_column.layoutParams.height = MATCH_PARENT
 
         this._spacer.layoutParams.width = MATCH_PARENT
-        this._spacer.layoutParams.height = this.resources.getDimension(R.dimen.line_height).toInt()
+        this._spacer.layoutParams.height = (this.context.resources.getDimension(R.dimen.line_height) + (this.context.resources.getDimension(R.dimen.stroke_leaf) / 2F)).toInt()
 
         (this.line_label_layout.layoutParams as LayoutParams).weight = 1F
         this.line_label_layout.layoutParams.height = 0

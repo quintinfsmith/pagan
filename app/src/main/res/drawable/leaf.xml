@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:left="1dp" android:top="1dp" android:bottom="1dp" android:right="1dp">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/leaf"/>
-            <corners android:radius="8dp"/>
-            <stroke android:color="@color/leaf_stroke" android:width="@dimen/stroke_leaf"/>
-        </shape>
-    </item>
-</layer-list>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:drawable="@drawable/leaf_inactive"
+        app:state_active="false"
+        app:state_spill="false"/>
+    <item android:drawable="@drawable/leaf_active" />
+</selector>

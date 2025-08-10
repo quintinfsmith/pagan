@@ -65,7 +65,7 @@
     <color name="main_fg">#2A2A46</color>
     <color name="table_lines">#000000</color>
     <color name="line_label">#C1D1E3</color>
-    <color name="channel_even">#22C1D1E3</color>
+    <color name="channel_even">#C1D1E3</color>
     <color name="channel_even_text">@color/main_fg</color>
     <color name="button">#FFFFFF</color>
     <color name="button_text">@color/main_fg</color>
@@ -76,6 +76,7 @@
     <color name="ctl_line">#FFFFFF</color>
     <color name="ctl_line_text">#101010</color>
 
+    <color name="logo_rowan_background">#FFFFFF</color>
     <color name="contextmenu_bg">#CCFFFFFF</color>
 
     <color name="muted_leaf_main">#6E6E6E</color>

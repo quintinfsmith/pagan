@@ -1,19 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:elevation="0dp" >
+    <item android:id="@+id/tintable_background">
         <shape android:shape="rectangle">
-            <padding
-                android:top="0dp"
-                android:left="0dp"
-                android:right="@dimen/stroke_leaf"
-                android:bottom="@dimen/stroke_leaf"/>
-            <solid android:color="@color/table_lines"/>
-        </shape>
-    </item>
-
-    <item android:id ="@+id/tintable_background">
-        <shape android:shape="rectangle">
-            <solid android:width="@dimen/base_leaf_width" android:color="@color/column_label_std_selector"/>
+            <solid android:color="@color/column_label_std_selector"/>
         </shape>
     </item>
 </layer-list>

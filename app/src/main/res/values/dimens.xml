@@ -2,6 +2,10 @@
 <resources>
     <dimen name="normal_padding">1dp</dimen>
     <dimen name="stroke_leaf">1dp</dimen>
+    <dimen name="leaf_padding">10dp</dimen>
+    <dimen name="leaf_radius">24dp</dimen>
+    <dimen name="ctl_leaf_padding">1dp</dimen>
+    <dimen name="ctl_leaf_radius">6dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
     <dimen name="ctl_line_height">30dp</dimen>

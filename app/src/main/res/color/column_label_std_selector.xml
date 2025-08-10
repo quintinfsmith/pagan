@@ -2,7 +2,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item app:state_focused="true"
-        android:color="@color/empty_selected" />
+        android:color="@color/label_selected" />
 
     <item app:state_focused="false"
         app:state_focused_secondary="false"

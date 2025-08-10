@@ -29,8 +29,10 @@
     <color name="ctl_leaf_secondary">#567B80</color>
     <color name="ctl_leaf_selected_text">#FFFFFF</color>
 
-    <color name="empty_selected">@color/blue_sky</color>
+    <color name="empty_selected">#995ba1d6</color>
     <color name="empty_selected_text">#000000</color>
+    <color name="label_selected">@color/blue_sky</color>
+    <color name="label_selected_text">#000000</color>
     <color name="label_selected_secondary">@color/blue_sky</color>
     <color name="label_selected_secondary_text">#000000</color>
     <color name="ctl_line_selected">#3e6e91</color>

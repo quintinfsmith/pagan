@@ -5,7 +5,7 @@
 
     <item app:state_focused="true"
         app:state_muted="false"
-        android:color="@color/empty_selected" />
+        android:color="@color/label_selected" />
 
     <item app:state_focused="false"
         app:state_muted="false"

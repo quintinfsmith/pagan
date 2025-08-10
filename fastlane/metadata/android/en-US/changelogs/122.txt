@@ -1,4 +1,0 @@
-- Style Update
-- Temporary effect transitions (for volume, pan, velocity)
-- Fixed Effects sometimes not triggering
-- Fixed not being able to load soundfonts in certain cases

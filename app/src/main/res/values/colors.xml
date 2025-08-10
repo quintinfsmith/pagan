@@ -65,7 +65,7 @@
     <color name="main_fg">#2A2A46</color>
     <color name="table_lines">#000000</color>
     <color name="line_label">#C1D1E3</color>
-    <color name="channel_even">#C1D1E3</color>
+    <color name="channel_even">#44C1D1E3</color>
     <color name="channel_even_text">@color/main_fg</color>
     <color name="button">#FFFFFF</color>
     <color name="button_text">@color/main_fg</color>

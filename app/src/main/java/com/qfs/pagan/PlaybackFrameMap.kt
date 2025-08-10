@@ -79,24 +79,24 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val frames_to_add = mutableListOf<Float>()
         // First, just get the frame of each beat
         for (i in 1 until this.opus_manager.length + 1) {
-            val beat_position = i.toFloat() / this.opus_manager.length.toFloat()
-            var working_position = (i - 1).toFloat() / this.opus_manager.length.toFloat()
+            val beat_position = i.toFloat()
+            var working_position = (i - 1).toFloat()
 
             while (tempo_index < this._tempo_ratio_map.size) {
                 val tempo_change_position = (this._tempo_ratio_map[tempo_index].first)
-
                 if (tempo_change_position < beat_position) {
                     frames_to_add.add(frames_per_beat * (tempo_change_position - working_position))
 
                     working_position = tempo_change_position
                     frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
                     tempo_index += 1
+
                 } else {
                     break
                 }
             }
             frames_to_add.add(frames_per_beat * (beat_position - working_position))
-            working_frame += (frames_to_add.sum() * this.opus_manager.length).toInt()
+            working_frame += frames_to_add.sum().toInt()
             frames_to_add.clear()
 
             beats.add(working_frame)

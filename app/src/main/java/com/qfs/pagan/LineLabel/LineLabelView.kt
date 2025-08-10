@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.ContextThemeWrapper
 import android.view.DragEvent
 import android.view.View
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.content.ContextCompat
 import com.qfs.pagan.Activity.ActivityEditor
@@ -57,9 +56,6 @@ class LineLabelView(context: Context, var row: Int): LinearLayoutCompat(context)
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         this.set_inner_label()
-        this.layoutParams.width = WRAP_CONTENT
-        this.layoutParams.height = WRAP_CONTENT
-
     }
 
     private fun set_inner_label() {

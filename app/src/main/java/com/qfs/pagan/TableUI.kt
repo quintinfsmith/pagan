@@ -609,11 +609,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-            val line_height = this.resources.getDimension(R.dimen.line_height).toInt().toFloat()
-            val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt().toFloat()
-            val channel_gap_height = this.resources.getDimension(R.dimen.channel_gap_size).toInt().toFloat()
-
-            val half_stroke_width = this.context.resources.getDimension(R.dimen.stroke_leaf) / 2f
+            val line_height = floor(this.resources.getDimension(R.dimen.line_height))
+            val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height))
+            val channel_gap_height = floor(this.resources.getDimension(R.dimen.channel_gap_size))
 
             val first_x = this.editor_table.get_first_visible_column_index()
             val last_x = this.editor_table.get_last_visible_column_index()
@@ -648,10 +646,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
                             leaf_drawable.setState(state)
                             leaf_drawable.setBounds(
-                                (x - half_stroke_width).toInt(),
-                                (y - half_stroke_width).toInt(),
-                                (x + width + half_stroke_width).toInt(),
-                                (y + line_height + half_stroke_width).toInt()
+                                (x).toInt(),
+                                (y).toInt(),
+                                (x + width).toInt(),
+                                (y + line_height).toInt()
                             )
                             leaf_drawable.draw(canvas)
 
@@ -770,7 +768,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             val tree = controller.get_tree(i, listOf())
                             this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                                 val state = this.get_line_control_leaf_state(type, beat_key, position)
-                                this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height, half_stroke_width)
+                                this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                             }
 
                             y_offset += ctl_line_height
@@ -785,12 +783,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val tree = controller.get_tree(i, listOf())
                         this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                             val state = this.get_channel_control_leaf_state(type, j, i, position)
-                            this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height, half_stroke_width)
+                            this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                         }
                         y_offset += ctl_line_height
                     }
 
-                    canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height + half_stroke_width, this.table_line_paint)
+                    canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height, this.table_line_paint)
                     y_offset += channel_gap_height
                 }
 
@@ -801,7 +799,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     val tree = controller.get_tree(i, listOf())
                     this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                         val state = this.get_global_control_leaf_state(type, i, position)
-                        this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height, half_stroke_width)
+                        this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                     }
 
                     y_offset += ctl_line_height
@@ -813,14 +811,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 val state = this.get_column_label_state(i)
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
 
-
                 val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
                 val drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.editor_label_column)!!
                 drawable.setState(state)
                 drawable.setBounds(
-                    (offset + (half_stroke_width / 2f)).toInt(),
+                    (offset).toInt(),
                     scroll_y,
-                    (offset + column_width - (half_stroke_width / 2f)).toInt(),
+                    (offset + column_width).toInt(),
                     (scroll_y + line_height).toInt()
                 )
                 drawable.draw(canvas)
@@ -871,14 +868,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     scroll_y + ((line_height + bounds.height()) / 2),
                     this.text_paint_column
                 )
-                if (i > first_x) {
-                    canvas.drawLine(offset, scroll_y.toFloat(), offset, this.height.toFloat(), this.table_line_paint)
-                }
                 offset += beat_width
             }
-            canvas.drawLine(this.width.toFloat(), scroll_y.toFloat(), this.width.toFloat(), this.height.toFloat(), this.table_line_paint)
-
-            canvas.drawLine(0F, scroll_y + line_height, this.width.toFloat(), (scroll_y + line_height), this.table_line_paint)
         }
 
         private fun get_column_label_state(x: Int): IntArray {
@@ -894,14 +885,14 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
-        fun process_ctl_event_layout(state: IntArray, event: EffectEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float, padding: Float) {
+        fun process_ctl_event_layout(state: IntArray, event: EffectEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
             val ctl_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.ctl_leaf)!!
             ctl_drawable.setState(state)
             ctl_drawable.setBounds(
-                (x - padding).toInt(),
-                (y - padding).toInt(),
-                (x + width + padding).toInt(),
-                (y + ctl_line_height + padding).toInt()
+                (x).toInt(),
+                (y).toInt(),
+                (x + width).toInt(),
+                (y + ctl_line_height).toInt()
             )
             ctl_drawable.draw(canvas)
 

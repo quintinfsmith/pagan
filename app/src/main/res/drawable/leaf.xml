@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:drawable="@drawable/leaf_inactive"
-        app:state_active="false"
-        app:state_spill="false"/>
-    <item android:drawable="@drawable/leaf_active" />
-</selector>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:start="0dp" android:top="0dp" android:bottom="0dp" android:end="0dp">
+    <shape android:shape="rectangle">
+        <solid android:color="@color/table_lines"/>
+        <corners android:radius="0dp"/>
+    </shape>
+</item>
+
+<item android:end="@dimen/stroke_leaf" android:top="0dp" android:bottom="@dimen/stroke_leaf" android:start="0dp">
+    <shape android:shape="rectangle">
+        <solid android:color="@color/leaf"/>
+        <corners android:radius="0dp"/>
+    </shape>
+</item>
+</layer-list>

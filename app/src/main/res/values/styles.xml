@@ -158,7 +158,7 @@
     </style>
 
     <style name="line_label">
-        <item name="android:minWidth">41dp</item>
+        <item name="android:minWidth">@dimen/base_leaf_width</item>
         <item name="android:padding">0dp</item>
         <item name="android:paddingStart">4dp</item>
         <item name="android:paddingEnd">4dp</item>

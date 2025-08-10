@@ -90,16 +90,17 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
             return
         }
 
+        // Draw Colored lines' colors
         val line = channels[this.channel].lines[this.line_offset]
         val line_color = line.color
         if (line_color != null) {
-            val line_height = resources.getDimension(R.dimen.line_height)
+            val line_height = this.resources.getDimension(R.dimen.line_height)
             val paint = Paint()
             paint.color = line_color.toColorLong().toColorInt()
             canvas.drawRect(
                 this.width.toFloat() / 3f,
                 (line_height * 1F / 16F),
-                this.width.toFloat() - resources.getDimension(R.dimen.stroke_leaf),
+                this.width.toFloat() - this.resources.getDimension(R.dimen.stroke_leaf),
                 line_height * 4F / 16F,
                 paint
             )
@@ -119,9 +120,9 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
         val opus_manager = this.get_opus_manager()
 
         val new_state = mutableListOf<Int>()
-        if (opus_manager.is_line_selected(channel, line_offset)) {
+        if (opus_manager.is_line_selected(this.channel, this.line_offset)) {
             new_state.add(R.attr.state_focused)
-        } else if (opus_manager.is_line_selected_secondary(channel, line_offset)) {
+        } else if (opus_manager.is_line_selected_secondary(this.channel, this.line_offset)) {
             new_state.add(R.attr.state_focused_secondary)
         }
 

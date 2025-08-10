@@ -83,7 +83,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             var working_position = (i - 1).toFloat()
 
             while (tempo_index < this._tempo_ratio_map.size) {
-                val tempo_change_position = (this._tempo_ratio_map[tempo_index].first)
+                val tempo_change_position = this._tempo_ratio_map[tempo_index].first
                 if (tempo_change_position < beat_position) {
                     frames_to_add.add(frames_per_beat * (tempo_change_position - working_position))
 
@@ -528,7 +528,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private fun calculate_event_frame_range(beat: Int, duration: Int, relative_width: Float, relative_offset: Float): Pair<Int, Int> {
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         // Find the tempo active at the beginning of the beat
-        var working_position = beat.toFloat() / this.opus_manager.length.toFloat()
+        var working_position = beat.toFloat()
         var working_tempo = 0f
         var tempo_index = 0
 
@@ -545,11 +545,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         // Calculate Start Position
         var start_frame = this._cached_beat_frames!![beat]
-        val target_start_position = (beat.toFloat() + relative_offset) / this.opus_manager.length.toFloat()
+        val target_start_position = beat.toFloat() + relative_offset
         while (tempo_index < this._tempo_ratio_map.size) {
             val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < target_start_position) {
-                start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt() * this.opus_manager.length
+                start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
 
                 working_position = tempo_change_position
                 frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
@@ -560,17 +560,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             }
         }
 
-        start_frame += (frames_per_beat * (target_start_position - working_position)).toInt() * this.opus_manager.length
+        start_frame += (frames_per_beat * (target_start_position - working_position)).toInt()
 
         // Calculate End Position
         working_position = target_start_position
         var end_frame = start_frame
         // Note: divide duration to keep in-line with 0-1 range
-        val target_end_position = target_start_position + ((duration * relative_width) / this.opus_manager.length.toFloat())
+        val target_end_position = target_start_position + (duration * relative_width)
         while (tempo_index < this._tempo_ratio_map.size) {
             val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < target_end_position) {
-                end_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt() * this.opus_manager.length
+                end_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
 
                 working_position = tempo_change_position
                 frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
@@ -581,8 +581,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             }
         }
 
-        end_frame += (frames_per_beat * (target_end_position - working_position)).toInt() * this.opus_manager.length
-
+        end_frame += (frames_per_beat * (target_end_position - working_position)).toInt()
         return Pair(start_frame, end_frame)
     }
 

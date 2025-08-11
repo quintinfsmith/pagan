@@ -11,6 +11,7 @@ import android.media.midi.MidiManager.TRANSPORT_MIDI_BYTE_STREAM
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
+import android.util.Log
 import com.qfs.apres.event.GeneralMIDIEvent
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -284,13 +285,23 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                 if (this.connected_input_ports.contains(input_port)) {
                     this.connected_input_ports.remove(input_port)
                 }
-                input_port.close()
+                try {
+                    input_port.close()
+                } catch (e: IllegalArgumentException) {
+                    Log.d("PaganMidi",  "Attempting to close disconnected device")
+                    // pass
+                }
             }
             this.mapped_input_ports.remove(device_info.id)
         }
         if (this.mapped_output_ports.containsKey(device_info.id)) {
             for (output_port in this.mapped_output_ports[device_info.id]!!) {
-                output_port.close()
+                try {
+                    output_port.close()
+                } catch (e: IllegalArgumentException) {
+                    Log.d("PaganMidi",  "Attempting to close disconnected device")
+                    // pass
+                }
             }
             this.mapped_output_ports.remove(device_info.id)
         }

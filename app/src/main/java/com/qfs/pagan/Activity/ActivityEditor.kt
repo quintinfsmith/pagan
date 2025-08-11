@@ -1015,11 +1015,18 @@ class ActivityEditor : PaganActivity() {
         super.onCreate(savedInstanceState)
 
         this._midi_interface = object : MidiController(this, false) {
-            override fun onDeviceAdded(device_info: MidiDeviceInfo) { }
+            override fun onDeviceAdded(device_info: MidiDeviceInfo) {
+                this@ActivityEditor.runOnUiThread {
+                    this@ActivityEditor.update_menu_options()
+                }
+            }
 
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
-                if (device_info == this@ActivityEditor.editor_view_model.active_midi_device)  {
-                    this@ActivityEditor.set_active_midi_device(null)
+                this@ActivityEditor.runOnUiThread {
+                    this@ActivityEditor.update_menu_options()
+                    if (device_info == this@ActivityEditor.editor_view_model.active_midi_device) {
+                        this@ActivityEditor.set_active_midi_device(null)
+                    }
                 }
             }
         }
@@ -1428,8 +1435,8 @@ class ActivityEditor : PaganActivity() {
 
         val midi = opus_manager.get_midi(start_point)
 
+        this.loading_reticle_hide()
         this.runOnUiThread {
-            this.loading_reticle_hide()
             this.clear_forced_title()
             this.set_playback_button(R.drawable.ic_baseline_pause_24)
         }
@@ -3298,6 +3305,5 @@ class ActivityEditor : PaganActivity() {
         }
 
         this.update_menu_options()
-
     }
 }

@@ -248,6 +248,8 @@
     <string name="effect_transition_linear">Linear</string>
     <string name="effect_transition_rlinear">Linear Revert</string>
     <string name="effect_transition_rinstant">Instant Revert</string>
+    <string name="midi_device_unset">Midi Device Unspecified</string>
+    <string name="playback_device">Playback Device</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

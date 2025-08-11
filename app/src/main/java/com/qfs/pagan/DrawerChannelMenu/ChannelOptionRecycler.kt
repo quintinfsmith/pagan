@@ -11,4 +11,7 @@ class ChannelOptionRecycler(context: Context, attrs: AttributeSet): RecyclerView
         this.itemAnimator = null
     }
 
+    fun notify_soundfont_changed() {
+        (this.adapter as ChannelOptionAdapter?)?.notify_soundfont_changed()
+    }
 }

@@ -1192,7 +1192,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         super.on_project_changed()
 
         this.get_activity()?.let { activity ->
-            activity.disconnect_feedback_device()
             activity.update_channel_instruments()
         }
 
@@ -1205,7 +1204,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun project_change_wrapper(callback: () -> Unit)  {
         this.lock_ui_full {
             this.get_activity()?.let { activity ->
-                activity.disconnect_feedback_device()
                 activity.active_percussion_names.clear()
             }
 
@@ -1302,14 +1300,8 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.set_tuning_map(new_map, mod_events)
 
             val is_tuning_standard = this.is_tuning_standard()
-
-            val activity = this.get_activity()
-            if (activity != null) {
-                if (is_tuning_standard && !was_tuning_standard && activity.configuration.allow_midi_playback) {
-                    activity.enable_physical_midi_output()
-                } else if (!is_tuning_standard && was_tuning_standard) {
-                    activity.block_physical_midi_output()
-                }
+            if (!is_tuning_standard) {
+                this.get_activity()?.set_active_midi_device(null)
             }
 
             this._ui_change_bill.queue_config_drawer_redraw_export_button()

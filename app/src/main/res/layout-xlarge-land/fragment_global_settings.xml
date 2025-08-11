@@ -252,25 +252,6 @@
                 android:layout_width="@dimen/settings_div_line_width"
                 android:layout_height="@dimen/settings_div_line_height"/>
 
-            <LinearLayout
-                android:id="@+id/llEnableMidi"
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <TextView
-                    android:textColor="@color/main_fg"
-                    android:text="@string/label_settings_enable_midi_playback"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:labelFor="@+id/sEnableMidi"
-                    android:layout_height="wrap_content"/>
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:theme="@style/Theme.Pagan.Switch"
-                    android:id="@+id/sEnableMidi"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"/>
-            </LinearLayout>
-
             <Space
                 android:layout_gravity="center_horizontal"
                 android:layout_width="@dimen/settings_div_line_width"

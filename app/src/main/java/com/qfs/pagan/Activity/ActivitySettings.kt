@@ -229,14 +229,6 @@ class ActivitySettings : PaganActivity() {
             }
         }
 
-        this.findViewById<SwitchCompat>(R.id.sEnableMidi).let {
-            it.isChecked = this.configuration.allow_midi_playback
-            it.setOnCheckedChangeListener { _, enabled: Boolean ->
-                this.configuration.allow_midi_playback = enabled
-                this.update_result()
-            }
-        }
-
         this.findViewById<SwitchCompat>(R.id.sAllowStdPercussion).let {
             it.isChecked = this.configuration.allow_std_percussion
             it.setOnCheckedChangeListener { _, enabled: Boolean ->

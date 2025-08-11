@@ -84,7 +84,6 @@ import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.FeedbackDevice
 import com.qfs.pagan.HexEditText
-import com.qfs.pagan.MidiDeviceManagerAdapter
 import com.qfs.pagan.MidiFeedbackDispatcher
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
@@ -138,6 +137,7 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import androidx.core.view.isVisible
 
 class ActivityEditor : PaganActivity() {
     companion object {
@@ -159,6 +159,7 @@ class ActivityEditor : PaganActivity() {
         var action_interface = ActionTracker()
         var opus_manager = OpusLayerInterface()
         var active_project: Uri? = null
+        var active_midi_device: MidiDeviceInfo? = null
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -1013,78 +1014,14 @@ class ActivityEditor : PaganActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        this._midi_interface = object : MidiController(this) {
-            override fun onDeviceAdded(device_info: MidiDeviceInfo) {
-                if (!this@ActivityEditor.update_playback_state_midi(PlaybackState.Ready)) {
-                    return
-                }
-
-                when (this@ActivityEditor.playback_state_soundfont) {
-                    PlaybackState.Playing,
-                    PlaybackState.Queued -> {
-                        this@ActivityEditor.playback_stop()
-                    }
-
-                    else -> { /* pass */ }
-                }
-
-                this@ActivityEditor.runOnUiThread {
-                    this@ActivityEditor.update_menu_options()
-                    if (!this@ActivityEditor.configuration.allow_midi_playback) {
-                        return@runOnUiThread
-                    }
-
-                    this@ActivityEditor.setup_project_config_drawer_export_button()
-
-                    val channel_recycler = this@ActivityEditor.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                    // Should always be null since this can only be changed from a different menu
-                    if (channel_recycler.adapter != null) {
-                        val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                        channel_adapter.notify_soundfont_changed()
-                    }
-                    this@ActivityEditor.active_percussion_names.clear()
-                }
-
-                // Mute audio feedback
-                if (this@ActivityEditor.get_opus_manager().is_tuning_standard()) {
-                    this@ActivityEditor.disconnect_feedback_device()
-                }
-            }
+        this._midi_interface = object : MidiController(this, false) {
+            override fun onDeviceAdded(device_info: MidiDeviceInfo) { }
 
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
-                when (this@ActivityEditor.playback_state_midi) {
-                    PlaybackState.Playing,
-                    PlaybackState.Queued -> {
-                        this@ActivityEditor.playback_stop_midi_output()
-                    }
-
-                    else -> { /* pass */ }
-                }
-
-                // Kludge. need a sleep to give output devices a chance to disconnect
-                Thread.sleep(1000)
-
-                this@ActivityEditor.runOnUiThread {
-                    this@ActivityEditor.update_menu_options()
-                    if (!this@ActivityEditor.is_connected_to_physical_device()) {
-                        this@ActivityEditor.setup_project_config_drawer_export_button()
-
-                        val channel_recycler = this@ActivityEditor.findViewById<ChannelOptionRecycler>(
-                            R.id.rvActiveChannels)
-                        // Should always be null since this can only be changed from a different menu
-                        if (channel_recycler.adapter != null) {
-                            val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                            channel_adapter.notify_soundfont_changed()
-                        }
-
-                        this@ActivityEditor.active_percussion_names.clear()
-                    }
+                if (device_info == this@ActivityEditor.editor_view_model.active_midi_device)  {
+                    this@ActivityEditor.set_active_midi_device(null)
                 }
             }
-        }
-
-        if (!this.configuration.allow_midi_playback) {
-            this.block_physical_midi_output()
         }
 
         this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
@@ -1098,8 +1035,7 @@ class ActivityEditor : PaganActivity() {
                 this@ActivityEditor.get_opus_manager().cursor_select_column(event.get_beat())
                 // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
                 this@ActivityEditor.runOnUiThread {
-                    this@ActivityEditor.findViewById<EditorTable>(R.id.etEditorTable)
-                        ?.scroll_to_position(x = event.get_beat(), force = true)
+                    this@ActivityEditor.findViewById<EditorTable>(R.id.etEditorTable)?.scroll_to_position(x = event.get_beat(), force = true)
                 }
             }
         })
@@ -1124,11 +1060,12 @@ class ActivityEditor : PaganActivity() {
         this.editor_view_model.action_interface.attach_activity(this)
         this.editor_view_model.opus_manager.attach_activity(this)
 
-
         //////////////////////////////////////////
-        this.get_soundfont_uri()?.let { uri ->
-            val sf_file = DocumentFile.fromSingleUri(this, uri)
-            if (sf_file?.exists() == true) {
+        if (this.editor_view_model.active_midi_device == null) {
+            this.get_soundfont_uri()?.let { uri ->
+                val sf_file = DocumentFile.fromSingleUri(this, uri) ?: return@let
+                if (!sf_file.exists()) return@let
+
                 try {
                     this._soundfont = SoundFont(this, uri)
                     this.populate_supported_soundfont_instrument_names()
@@ -1145,20 +1082,18 @@ class ActivityEditor : PaganActivity() {
                         WaveGenerator.StereoMode.Stereo
                     )
 
-                    if (!this.is_connected_to_physical_device()) {
-                        val buffer_size = this.configuration.sample_rate / 4
-                        this._feedback_sample_manager = SampleHandleManager(
-                            this._soundfont!!,
-                            this.configuration.sample_rate,
-                            buffer_size - 2 + (if (buffer_size % 2 == 0) {
-                                2
-                            } else {
-                                1
-                            })
-                            //sample_limit = this.configuration.playback_sample_limit,
-                            //ignore_envelopes_and_lfo = true
-                        )
-                    }
+                    val buffer_size = this.configuration.sample_rate / 4
+                    this._feedback_sample_manager = SampleHandleManager(
+                        this._soundfont!!,
+                        this.configuration.sample_rate,
+                        buffer_size - 2 + (if (buffer_size % 2 == 0) {
+                            2
+                        } else {
+                            1
+                        })
+                        //sample_limit = this.configuration.playback_sample_limit,
+                        //ignore_envelopes_and_lfo = true
+                    )
                 } catch (e: Riff.InvalidRiff) {
                     this.configuration.soundfont = null
                     // Invalid soundfont somehow set
@@ -1252,7 +1187,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId != R.id.itmPlay && item.itemId != R.id.itmPlayMidiOutput) {
+        if (item.itemId != R.id.itmPlay) {
             this.playback_stop()
             this.playback_stop_midi_output()
         }
@@ -1298,29 +1233,30 @@ class ActivityEditor : PaganActivity() {
             }
 
             R.id.itmPlay -> {
-                when (this.playback_state_soundfont) {
-                    PlaybackState.Ready -> {
-                        this.playback_start()
-                    }
-                    PlaybackState.Queued,
-                    PlaybackState.Playing -> {
-                        this.playback_stop()
-                    }
+                if (this.editor_view_model.active_midi_device == null) {
+                    when (this.playback_state_soundfont) {
+                        PlaybackState.Ready -> {
+                            this.playback_start()
+                        }
 
-                    else -> { }
-                }
-            }
+                        PlaybackState.Queued,
+                        PlaybackState.Playing -> {
+                            this.playback_stop()
+                        }
 
-            R.id.itmPlayMidiOutput -> {
-                when (this.playback_state_midi) {
-                    PlaybackState.Ready -> {
-                        this.playback_start_midi_output()
+                        else -> {}
                     }
-                    PlaybackState.Queued,
-                    PlaybackState.Playing -> {
-                        this.playback_stop_midi_output()
+                } else {
+                    when (this.playback_state_midi) {
+                        PlaybackState.Ready -> {
+                            this.playback_start_midi_output()
+                        }
+                        PlaybackState.Queued,
+                        PlaybackState.Playing -> {
+                            this.playback_stop_midi_output()
+                        }
+                        else -> { /* pass */ }
                     }
-                    else -> { /* pass */ }
                 }
             }
 
@@ -1405,26 +1341,19 @@ class ActivityEditor : PaganActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun _enable_blocker_view() {
-        val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay)
-        if (blocker_view != null && blocker_view.visibility != View.VISIBLE) {
+        this.findViewById<LinearLayout?>(R.id.llClearOverlay)?.let { blocker_view ->
+            if (blocker_view.isVisible) {
+                return
+            }
+
             blocker_view.setOnTouchListener { _, motion_event ->
                 /* Allow Scrolling on the y axis when scrolling in the main_recycler */
-                if (motion_event == null) {
-                } else if (motion_event.action == 1) {
+                if (motion_event?.action == 1) {
                     this._blocker_scroll_y = null
-                } else if (motion_event.action != MotionEvent.ACTION_MOVE) {
-                } else {
-                    val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-                    val scroll_view = editor_table.get_scroll_view()
-
-                    if (this._blocker_scroll_y == null) {
-                        this._blocker_scroll_y = (motion_event.y - scroll_view.y)
-                    }
-
+                } else if (motion_event?.action == MotionEvent.ACTION_MOVE) {
+                    val scroll_view = this.findViewById<EditorTable>(R.id.etEditorTable).get_scroll_view()
                     val rel_y = (motion_event.y - scroll_view.y)
-                    val delta_y = this._blocker_scroll_y!! - rel_y
-
-                    scroll_view.scrollBy(0, delta_y.toInt())
+                    scroll_view.scrollBy(0, ((this._blocker_scroll_y ?: rel_y) - rel_y).toInt())
                     this._blocker_scroll_y = rel_y
                 }
                 true
@@ -1482,6 +1411,10 @@ class ActivityEditor : PaganActivity() {
             this.feedback_msg(this.getString(R.string.playback_failed))
             return
         }
+        if (this.editor_view_model.active_midi_device == null) {
+            this.feedback_msg(this.getString(R.string.midi_device_unset))
+            return
+        }
 
         this.force_title_text(this.getString(R.string.reticle_msg_start_playback))
         this.loading_reticle_show()
@@ -1498,7 +1431,7 @@ class ActivityEditor : PaganActivity() {
         this.runOnUiThread {
             this.loading_reticle_hide()
             this.clear_forced_title()
-            this.set_midi_playback_button(R.drawable.ic_baseline_pause_24)
+            this.set_playback_button(R.drawable.ic_baseline_pause_24)
         }
 
         if (!this.update_playback_state_midi(PlaybackState.Playing)) {
@@ -1508,7 +1441,7 @@ class ActivityEditor : PaganActivity() {
 
         thread {
             try {
-                this._midi_interface.open_connected_devices()
+                this._midi_interface.open_output_device(this.editor_view_model.active_midi_device!!)
                 this._virtual_input_device.play_midi(midi) {
                     this.runOnUiThread {
                         this.playback_stop_midi_output()
@@ -1551,7 +1484,7 @@ class ActivityEditor : PaganActivity() {
     fun restore_midi_playback_state() {
         if (this.update_playback_state_midi(PlaybackState.Ready)) {
             this.runOnUiThread {
-                this.set_midi_playback_button(R.drawable.ic_baseline_play_arrow_24)
+                this.set_playback_button(R.drawable.ic_baseline_play_arrow_24)
                 this._disable_blocker_view()
             }
         }
@@ -1617,11 +1550,11 @@ class ActivityEditor : PaganActivity() {
 
     fun update_menu_options() {
         val options_menu = this._options_menu ?: return
-        val play_midi_visible = this.configuration.allow_midi_playback && (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
+        val show_midi_devices = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
+
         options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
-        options_menu.findItem(R.id.itmPlay).isVisible = this._soundfont != null && ! play_midi_visible
-        options_menu.findItem(R.id.itmPlayMidiOutput).isVisible = play_midi_visible
-        options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = this.is_debug_on()
+        options_menu.findItem(R.id.itmPlay).isVisible = (this._soundfont != null) || (this.editor_view_model.active_midi_device != null)
+        options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = show_midi_devices
         options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
     }
 
@@ -1754,7 +1687,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     private fun get_drum_options(channel_index: Int): List<Pair<String, Int>> {
-        if (this._sample_handle_manager == null || this.is_connected_to_physical_device()) {
+        if (this._sample_handle_manager == null || this.editor_view_model.active_midi_device != null) {
             return this._get_default_drum_options()
         }
 
@@ -1869,15 +1802,6 @@ class ActivityEditor : PaganActivity() {
         if (event_value < 0) {
             return // No sound to play
         }
-        if (!this.is_connected_to_physical_device()) {
-            if (this._feedback_sample_manager == null) {
-                this.connect_feedback_device()
-                this.update_channel_instruments()
-            }
-        } else {
-            this.disconnect_feedback_device()
-            this._midi_interface.open_output_devices()
-        }
 
         val opus_manager = this.get_opus_manager()
         val midi_channel = opus_manager.get_channel(channel).get_midi_channel()
@@ -1892,9 +1816,7 @@ class ActivityEditor : PaganActivity() {
             val transpose_offset = 12.0 * opus_manager.transpose.first.toDouble() / opus_manager.transpose.second.toDouble()
             val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
 
-            val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(
-                transpose_offset
-            ))) * 512.0).toInt()
+            val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
             val new_note = (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21
 
             Pair(new_note, bend)
@@ -1907,10 +1829,8 @@ class ActivityEditor : PaganActivity() {
 
         this._feedback_sample_manager?.let { handle_manager : SampleHandleManager ->
             if (this._temporary_feedback_devices[this._current_feedback_device] == null) {
-                this._temporary_feedback_devices[this._current_feedback_device] =
-                    FeedbackDevice(this._feedback_sample_manager!!)
+                this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
             }
-
             val event = NoteOn79(
                 index = 0,
                 channel = midi_channel,
@@ -1928,7 +1848,7 @@ class ActivityEditor : PaganActivity() {
                     note,
                     bend,
                     (velocity * 127F).toInt(),
-                    !opus_manager.is_tuning_standard() || !this.is_connected_to_physical_device()
+                    !opus_manager.is_tuning_standard()
                 )
             } catch (e: VirtualMidiInputDevice.DisconnectedException) {
                 // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
@@ -2036,12 +1956,7 @@ class ActivityEditor : PaganActivity() {
         this.active_percussion_names.clear()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()
-            val channel_recycler = this.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-            // Should always be null since this can only be changed from a different menu
-            if (channel_recycler.adapter != null) {
-                val channel_adapter = channel_recycler.adapter as ChannelOptionAdapter
-                channel_adapter.notify_soundfont_changed()
-            }
+            this.findViewById<ChannelOptionRecycler?>(R.id.rvActiveChannels)?.notify_soundfont_changed()
             when (this.get_opus_manager().cursor.mode) {
                 CursorMode.Line,
                 CursorMode.Channel -> {
@@ -2634,11 +2549,6 @@ class ActivityEditor : PaganActivity() {
         play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
     }
 
-    fun set_midi_playback_button(drawable: Int) {
-        val play_pause_button = this._options_menu?.findItem(R.id.itmPlayMidiOutput) ?: return
-        play_pause_button.icon = ContextCompat.getDrawable(this, drawable)
-    }
-
     fun get_working_column(): Int {
         val cursor = this.get_opus_manager().cursor
         return when (cursor.mode) {
@@ -2657,7 +2567,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun is_connected_to_physical_device(): Boolean {
-        return this.configuration.allow_midi_playback && this._midi_interface.output_devices_connected()
+        return this._midi_interface.output_devices_connected()
     }
 
     fun disconnect_feedback_device() {
@@ -2674,7 +2584,6 @@ class ActivityEditor : PaganActivity() {
         if (this._soundfont == null) {
             return
         }
-
         this.disconnect_feedback_device()
 
         val buffer_size = this.configuration.sample_rate / 2
@@ -2688,26 +2597,6 @@ class ActivityEditor : PaganActivity() {
             })
         )
         this._current_feedback_device = 0
-    }
-
-    fun block_physical_midi_output() {
-        this._midi_interface.block_physical_devices = true
-        this._midi_interface.close_connected_devices()
-        this.playback_state_midi = PlaybackState.NotReady
-
-        if (this._feedback_sample_manager == null) {
-            this.connect_feedback_device()
-        }
-    }
-
-    fun enable_physical_midi_output() {
-        this._midi_interface.block_physical_devices = false
-        this._midi_interface.open_connected_devices()
-        this.playback_state_midi = PlaybackState.Ready
-
-        if (this.is_connected_to_physical_device()) {
-            this.disconnect_feedback_device()
-        }
     }
 
     fun get_notification(): NotificationCompat.Builder? {
@@ -3303,14 +3192,6 @@ class ActivityEditor : PaganActivity() {
             this.set_soundfont()
         }
 
-        if (original.allow_midi_playback != this.configuration.allow_midi_playback) {
-            if (this.configuration.allow_midi_playback) {
-                this.enable_physical_midi_output()
-            } else {
-                this.block_physical_midi_output()
-            }
-        }
-
         if (original.allow_std_percussion != this.configuration.allow_std_percussion) {
             this.populate_supported_soundfont_instrument_names()
         }
@@ -3336,26 +3217,24 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun dialog_midi_device_management() {
-        val device_management_view: View = LayoutInflater.from(this)
-            .inflate(
-                R.layout.midi_device_management,
-                this._binding.root,
-                false
+
+        val options = mutableListOf<Triple<MidiDeviceInfo?, Int?, String>>(
+            Triple(null, null, "Pagan")
+        )
+
+        for (device_info in this._midi_interface.poll_output_devices()) {
+            options.add(
+                Triple(
+                    device_info,
+                    null,
+                    device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: this.getString( R.string.unknown_midi_device, device_info.id )
+                )
             )
+        }
 
-        val devices_recycler_view = device_management_view.findViewById<RecyclerView>(R.id.midi_devices)
-        devices_recycler_view.layoutManager = LinearLayoutManager(this)
-        val adapter = MidiDeviceManagerAdapter<RecyclerView.ViewHolder>(this._midi_interface)
-        devices_recycler_view.adapter = adapter
-
-
-        AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-            .setTitle(this.getString(R.string.dialog_connected_midi_devices))
-            .setView(device_management_view)
-            .setNeutralButton(android.R.string.ok) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        this.dialog_popup_menu(this.getString(R.string.playback_device), options, this.editor_view_model.active_midi_device) { i: Int, device: MidiDeviceInfo? ->
+            this.set_active_midi_device(device)
+        }
     }
 
     fun get_bottom_padding(): Int {
@@ -3377,5 +3256,48 @@ class ActivityEditor : PaganActivity() {
             EffectTransition.RInstant -> R.drawable.rimmediate
             EffectTransition.RLinear -> R.drawable.rlinear
         }
+    }
+
+    fun set_active_midi_device(device_info: MidiDeviceInfo?) {
+        val current_device_info = this.editor_view_model.active_midi_device
+        if (device_info == current_device_info) {
+            return
+        }
+
+        when (this.playback_state_soundfont) {
+            PlaybackState.Playing,
+            PlaybackState.Queued -> {
+                this.playback_stop()
+            }
+            else -> { /* pass */ }
+        }
+
+        when (this.playback_state_midi) {
+            PlaybackState.Playing,
+            PlaybackState.Queued -> {
+                this.playback_stop_midi_output()
+            }
+            else -> { /* pass */ }
+        }
+        if (current_device_info != null) {
+            this._midi_interface.close_device(current_device_info)
+        } else {
+            this.disconnect_feedback_device()
+        }
+
+        this.editor_view_model.active_midi_device = device_info
+
+        if (device_info != null) {
+            this._midi_interface.open_output_device(device_info)
+            this.disable_soundfont()
+            // These 2 otherwise get handled in set_soundfont()
+            this.populate_supported_soundfont_instrument_names()
+            this.findViewById<ChannelOptionRecycler?>(R.id.rvActiveChannels)?.notify_soundfont_changed()
+        } else {
+            this.set_soundfont()
+        }
+
+        this.update_menu_options()
+
     }
 }

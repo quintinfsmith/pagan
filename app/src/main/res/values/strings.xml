@@ -227,7 +227,6 @@
     <string name="btn_cfg_add_kit_channel">Add Kit Channel</string>
     <string name="generic_warning">Heads Up!</string>
     <string name="multiple_kit_warning">This project has multiple percussion channels but Midi 1.0 only supports 1 percussion channel at a time. The first <i>unmuted</i> percussion channel will be the only one included in the output file.</string>
-    <string name="midi_device_settings">Midi Device Settings</string>
     <string name="dialog_connected_midi_devices">Connected Midi Devices</string>
     <string name="unknown_midi_device">Unknown Device #%1$d</string>
     <string name="fira_sans_license_blurb">Fira Sans bundled under the terms of the SIL Open Font License.</string>

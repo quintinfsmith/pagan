@@ -14,7 +14,6 @@ import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
-import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -23,12 +22,10 @@ import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.SingleFloatEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
-import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.BillableItem
@@ -1191,14 +1188,13 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun on_project_changed() {
         super.on_project_changed()
 
-        this.get_activity()?.let { activity ->
-            activity.update_channel_instruments()
-        }
+        this.get_activity()?.update_channel_instruments()
 
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
         this.initialized = true
 
+        this.get_activity()?.recheck_active_midi_device()
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {
@@ -1300,8 +1296,15 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.set_tuning_map(new_map, mod_events)
 
             val is_tuning_standard = this.is_tuning_standard()
-            if (!is_tuning_standard) {
-                this.get_activity()?.set_active_midi_device(null)
+            if (was_tuning_standard != is_tuning_standard) {
+                this.run_on_ui_thread {
+                    this.get_activity()?.let { activity ->
+                        if (!is_tuning_standard) {
+                            activity.set_active_midi_device(null)
+                        }
+                        activity.update_menu_options()
+                    }
+                }
             }
 
             this._ui_change_bill.queue_config_drawer_redraw_export_button()

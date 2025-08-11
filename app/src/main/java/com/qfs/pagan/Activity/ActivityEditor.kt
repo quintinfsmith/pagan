@@ -59,8 +59,6 @@ import androidx.core.view.isNotEmpty
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModel
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -115,7 +113,6 @@ import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
@@ -889,17 +886,31 @@ class ActivityEditor : PaganActivity() {
             }
         )
 
-        if (this._midi_playback_device != null) {
-            this.playback_state_soundfont = PlaybackState.Ready
-        }
-
-        if (this.is_connected_to_physical_device()) {
-            this.playback_state_midi = PlaybackState.Ready
-        }
+        this.recheck_active_midi_device()
 
         this.update_title_text()
-        this.soundfont_file_check()
     }
+
+    fun recheck_active_midi_device() {
+        this.editor_view_model.active_midi_device?.let {
+            if (this.is_connected_to_physical_device()) {
+                this.playback_state_midi = PlaybackState.Ready
+                this._midi_interface.open_output_device(it)
+            }  else {
+                this.set_active_midi_device(null)
+            }
+        }
+
+        // Second check here if midi device wasn't found
+        if (this.editor_view_model.active_midi_device == null) {
+            if (this._midi_playback_device != null) {
+                this.playback_state_soundfont = PlaybackState.Ready
+            }
+            this.soundfont_file_check()
+        }
+
+    }
+
 
     fun save_to_backup() {
         this.view_model.project_manager.save_to_backup(
@@ -3193,10 +3204,12 @@ class ActivityEditor : PaganActivity() {
     override fun on_paganconfig_change(original: PaganConfiguration) {
         super.on_paganconfig_change(original)
 
-        if (this.configuration.soundfont != original.soundfont) {
-            this.set_soundfont()
-        } else if (this.configuration.sample_rate != original.sample_rate && this.configuration.soundfont != null) {
-            this.set_soundfont()
+        if (this.editor_view_model.active_midi_device == null) {
+            if (this.configuration.soundfont != original.soundfont) {
+                this.set_soundfont()
+            } else if (this.configuration.sample_rate != original.sample_rate && this.configuration.soundfont != null) {
+                this.set_soundfont()
+            }
         }
 
         if (original.allow_std_percussion != this.configuration.allow_std_percussion) {
@@ -3296,6 +3309,7 @@ class ActivityEditor : PaganActivity() {
 
         if (device_info != null) {
             this._midi_interface.open_output_device(device_info)
+            this.playback_state_midi = PlaybackState.Ready
             this.disable_soundfont()
             // These 2 otherwise get handled in set_soundfont()
             this.populate_supported_soundfont_instrument_names()

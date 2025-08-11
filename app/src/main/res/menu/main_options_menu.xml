@@ -26,7 +26,7 @@
         app:showAsAction="never"/>
 
     <item android:id="@+id/itmMidiDeviceInfo"
-        android:title="@string/midi_device_settings"
+        android:title="@string/playback_device"
         app:showAsAction="never"/>
     <item
         android:menuCategory="secondary"

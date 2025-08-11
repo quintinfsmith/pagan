@@ -165,16 +165,16 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                 for (device in this@MidiController.virtual_output_devices) {
                     device.receiveMessage(event)
                 }
-            }
-        }
 
-        if (!this.block_physical_devices) {
-            for (input_port in this.connected_input_ports) {
-                val bytes = event.as_bytes()
-                try {
-                    input_port.send(bytes, 0, bytes.size)
-                } catch (e: java.io.IOException) {
-                    continue
+                if (!this@MidiController.block_physical_devices) {
+                    for (input_port in this@MidiController.connected_input_ports) {
+                        val bytes = event.as_bytes()
+                        try {
+                            input_port.send(bytes, 0, bytes.size)
+                        } catch (e: java.io.IOException) {
+                            continue
+                        }
+                    }
                 }
             }
         }

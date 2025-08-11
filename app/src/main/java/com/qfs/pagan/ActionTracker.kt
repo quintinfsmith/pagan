@@ -1264,10 +1264,9 @@ class ActionTracker {
 
     fun remove_channel(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
-        val use_index = index ?: opus_manager.cursor.channel
-
-        this.track(TrackedAction.RemoveChannel, listOf(use_index))
-        if (opus_manager.channels.isNotEmpty()) {
+        if (opus_manager.channels.size > 1) {
+            val use_index = index ?: opus_manager.cursor.channel
+            this.track(TrackedAction.RemoveChannel, listOf(use_index))
             opus_manager.remove_channel(use_index)
         }
     }

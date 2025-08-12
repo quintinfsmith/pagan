@@ -888,7 +888,6 @@ class ActivityEditor : PaganActivity() {
         )
 
         this.recheck_active_midi_device()
-
         this.update_title_text()
     }
 

@@ -9,11 +9,11 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.qfs.pagandev"
+        applicationId "com.qfs.pagan"
         minSdk 27
         targetSdk 35
-        versionCode 123
-        versionName "1.7.10"
+        versionCode 124
+        versionName "1.7.11"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         ndk.abiFilters 'armeabi-v7a','arm64-v8a','x86','x86_64'
     }

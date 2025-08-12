@@ -873,6 +873,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     override fun onResume() {
+        this.loading_reticle_hide()
         super.onResume()
         this.drawer_lock()
 
@@ -1296,6 +1297,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun open_settings() {
+        this.loading_reticle_show()
         this.result_launcher_settings.launch(
             Intent(this, ActivitySettings::class.java).apply {
                 this@ActivityEditor.active_project?.let {
@@ -1306,6 +1308,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun open_about() {
+        this.loading_reticle_show()
         this.startActivity(Intent(this, ActivityAbout::class.java))
     }
 

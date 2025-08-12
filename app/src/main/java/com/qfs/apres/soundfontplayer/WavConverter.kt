@@ -32,7 +32,7 @@ open class WavConverter(val sample_handle_manager: SampleHandleManager) {
         val buffered_output_stream = BufferedOutputStream(output_stream)
         val data_output_stream = DataOutputStream(buffered_output_stream)
 
-        val empty_chunk = FloatArray(buffer_size * 2) { 0F }
+        val empty_chunk = FloatArray(buffer_size * 2)
         var current_ts = System.currentTimeMillis()
         while (!this.cancel_flagged) {
             val chunk = try {

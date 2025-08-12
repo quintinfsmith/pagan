@@ -199,6 +199,7 @@ class Modulator(val source_operator: Operator, val value: Operator, val destinat
                 )
             }
         }
+
         fun to_string(): String {
             return "index: ${this.index}\ncontinuous: ${this.continuous}\npolar: ${this.polar}\ndirection: ${this.direction}\nsource_type: ${this.type}"
         }

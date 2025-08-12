@@ -5,5 +5,6 @@ enum class EffectType(val i: Int) {
     Volume(1),
     Reverb(2),
     Pan(3),
-    Velocity(4)
+    Velocity(4),
+    Delay(5)
 }

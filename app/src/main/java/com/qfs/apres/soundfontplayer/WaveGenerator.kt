@@ -1,6 +1,12 @@
 package com.qfs.apres.soundfontplayer
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
+    val ptr: Long = WaveGenerator.get_ptr()
+
+    companion object {
+        external fun get_ptr(): Long
+    }
+
     enum class StereoMode {
         Mono,
         Stereo
@@ -29,6 +35,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
 
     external fun merge_arrays(
+        ptr_long: Long,
         arrays: Array<FloatArray>,
         frame_count: Int,
         merge_keys: Array<IntArray>,
@@ -64,6 +71,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         val profiles = this.midi_frame_map.get_effect_buffers()
         val merged_array = this.merge_arrays(
+            this.ptr,
             arrays_to_merge,
             this.buffer_size,
             layers,
@@ -204,5 +212,10 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for ((_,_,buffer) in this.midi_frame_map.get_effect_buffers()) {
             buffer.set_frame(this.frame)
         }
+    }
+
+    private external fun _destroy(ptr: Long)
+    fun destroy() {
+        this._destroy(this.ptr)
     }
 }

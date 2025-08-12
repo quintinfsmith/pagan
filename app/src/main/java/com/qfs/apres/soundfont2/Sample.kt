@@ -36,6 +36,7 @@ data class Sample(
         this.data.ptr = new_data.ptr
         this.data.size = new_data.size
     }
+
 }
 
 // JNI Code, needs manual memory management so leave it unused for now

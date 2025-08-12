@@ -908,7 +908,6 @@ class ActivityEditor : PaganActivity() {
             }
             this.soundfont_file_check()
         }
-
     }
 
 

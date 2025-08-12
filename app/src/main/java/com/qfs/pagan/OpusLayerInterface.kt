@@ -1169,7 +1169,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun remove_channel(channel: Int) {
-
         if (!this._ui_change_bill.is_full_locked()) {
             this.lock_ui_partial {
                 val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
@@ -1193,8 +1192,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
         this.initialized = true
-
-        this.get_activity()?.recheck_active_midi_device()
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {

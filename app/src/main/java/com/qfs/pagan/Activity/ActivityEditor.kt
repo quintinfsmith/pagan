@@ -2857,7 +2857,6 @@ class ActivityEditor : PaganActivity() {
 
         val widget = when (cursor.ctl_type!!) {
             EffectType.Tempo -> {
-                val controller = controller_set.get<OpusTempoEvent>(cursor.ctl_type!!)
                 ControlWidgetTempo(
                     cursor.ctl_level!!,
                     true,
@@ -2867,7 +2866,6 @@ class ActivityEditor : PaganActivity() {
                 }
             }
             EffectType.Volume -> {
-                val controller = controller_set.get<OpusVolumeEvent>(cursor.ctl_type!!)
                 ControlWidgetVolume(
                     cursor.ctl_level!!,
                     true,
@@ -2877,7 +2875,6 @@ class ActivityEditor : PaganActivity() {
                 }
             }
             EffectType.Velocity -> {
-                val controller = controller_set.get<OpusVelocityEvent>(cursor.ctl_type!!)
                 ControlWidgetVelocity(
                     cursor.ctl_level!!,
                     true,
@@ -2888,7 +2885,6 @@ class ActivityEditor : PaganActivity() {
             }
 
             EffectType.Pan -> {
-                val controller = controller_set.get<OpusPanEvent>(cursor.ctl_type!!)
                 ControlWidgetPan(
                     cursor.ctl_level!!,
                     true,

@@ -114,6 +114,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
@@ -2839,25 +2840,10 @@ class ActivityEditor : PaganActivity() {
         this.clear_context_menu()
 
         val opus_manager = this.get_opus_manager()
-        val channels = opus_manager.get_all_channels()
 
         val cursor = opus_manager.cursor
-        val controller_set = when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> {
-                channels[cursor.channel].lines[cursor.line_offset].controllers
-            }
-            CtlLineLevel.Channel -> {
-                val channel = cursor.channel
-                channels[channel].controllers
-            }
-            CtlLineLevel.Global -> {
-                opus_manager.controllers
-            }
-        }
-
         val widget = when (cursor.ctl_type!!) {
             EffectType.Tempo -> {
-                val controller = controller_set.get<OpusTempoEvent>(cursor.ctl_type!!)
                 ControlWidgetTempo(
                     cursor.ctl_level!!,
                     true,
@@ -2867,7 +2853,6 @@ class ActivityEditor : PaganActivity() {
                 }
             }
             EffectType.Volume -> {
-                val controller = controller_set.get<OpusVolumeEvent>(cursor.ctl_type!!)
                 ControlWidgetVolume(
                     cursor.ctl_level!!,
                     true,
@@ -2877,7 +2862,6 @@ class ActivityEditor : PaganActivity() {
                 }
             }
             EffectType.Velocity -> {
-                val controller = controller_set.get<OpusVelocityEvent>(cursor.ctl_type!!)
                 ControlWidgetVelocity(
                     cursor.ctl_level!!,
                     true,
@@ -2888,7 +2872,6 @@ class ActivityEditor : PaganActivity() {
             }
 
             EffectType.Pan -> {
-                val controller = controller_set.get<OpusPanEvent>(cursor.ctl_type!!)
                 ControlWidgetPan(
                     cursor.ctl_level!!,
                     true,
@@ -2899,6 +2882,15 @@ class ActivityEditor : PaganActivity() {
             }
 
             EffectType.Reverb -> TODO()
+            EffectType.Delay -> {
+                ControlWidgetDelay(
+                    cursor.ctl_level!!,
+                    false,
+                    this
+                ) { event: DelayEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
         }
 
 
@@ -2958,6 +2950,15 @@ class ActivityEditor : PaganActivity() {
             }
 
             EffectType.Reverb -> TODO()
+            EffectType.Delay -> {
+                ControlWidgetDelay(
+                    cursor.ctl_level!!,
+                    false,
+                    this
+                ) { event: DelayEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
         }
 
         this.active_context_menu = ContextMenuControlLeaf(

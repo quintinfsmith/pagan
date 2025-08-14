@@ -56,6 +56,7 @@ import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
+import androidx.core.view.isVisible
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModel
@@ -134,7 +135,6 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-import androidx.core.view.isVisible
 
 class ActivityEditor : PaganActivity() {
     companion object {
@@ -976,7 +976,7 @@ class ActivityEditor : PaganActivity() {
     private fun handle_uri(uri: Uri) {
         val type: CompatibleFileType? = try {
             this.get_file_type(uri)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -997,7 +997,7 @@ class ActivityEditor : PaganActivity() {
                 val fallback_msg = try {
                     inner_callback(uri)
                     null
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     when (type) {
                         CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
                         CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
@@ -1111,7 +1111,7 @@ class ActivityEditor : PaganActivity() {
                         //sample_limit = this.configuration.playback_sample_limit,
                         //ignore_envelopes_and_lfo = true
                     )
-                } catch (e: Riff.InvalidRiff) {
+                } catch (_: Riff.InvalidRiff) {
                     this.configuration.soundfont = null
                     // Invalid soundfont somehow set
                 }
@@ -1466,7 +1466,7 @@ class ActivityEditor : PaganActivity() {
                         this.playback_stop_midi_output()
                     }
                 }
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 this.runOnUiThread {
                     this.playback_stop_midi_output()
                 }
@@ -1526,7 +1526,7 @@ class ActivityEditor : PaganActivity() {
         try {
             this._binding.root.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
             this.findViewById<LinearLayout>(R.id.config_drawer)?.refreshDrawableState()
-        } catch (e: UninitializedPropertyAccessException) {
+        } catch (_: UninitializedPropertyAccessException) {
             // pass, if it's not initialized, it's not locked
         }
     }
@@ -1714,7 +1714,7 @@ class ActivityEditor : PaganActivity() {
 
         val preset = try {
             this._sample_handle_manager!!.get_preset(channel.get_midi_channel()) ?: return this._get_default_drum_options()
-        } catch (e: SoundFont.InvalidPresetIndex) {
+        } catch (_: SoundFont.InvalidPresetIndex) {
             return this._get_default_drum_options()
         }
 
@@ -1869,7 +1869,7 @@ class ActivityEditor : PaganActivity() {
                     (velocity * 127F).toInt(),
                     !opus_manager.is_tuning_standard()
                 )
-            } catch (e: VirtualMidiInputDevice.DisconnectedException) {
+            } catch (_: VirtualMidiInputDevice.DisconnectedException) {
                 // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
             }
         }()
@@ -1890,7 +1890,7 @@ class ActivityEditor : PaganActivity() {
 
         val midi = try {
             Midi.Companion.from_bytes(bytes)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw InvalidMIDIFile(uri.toString())
         }
 
@@ -1956,11 +1956,11 @@ class ActivityEditor : PaganActivity() {
         }
         try {
             this._soundfont = SoundFont(this, soundfont_file.uri)
-        } catch (e: Riff.InvalidRiff) {
+        } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(this.getString(R.string.invalid_soundfont))
             return
-        } catch (e: SoundFont.InvalidSoundFont) {
+        } catch (_: SoundFont.InvalidSoundFont) {
             // Possible if user puts the sf2 in their files manually
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg("Invalid Soundfont")
@@ -2218,7 +2218,7 @@ class ActivityEditor : PaganActivity() {
             ) { }
 
             override fun afterTextChanged(s: Editable?) {
-                var string = s.toString()
+                val string = s.toString()
 
                 if (!lockout) {
                     if (string.length == 6) {
@@ -2839,21 +2839,7 @@ class ActivityEditor : PaganActivity() {
         this.clear_context_menu()
 
         val opus_manager = this.get_opus_manager()
-        val channels = opus_manager.get_all_channels()
-
         val cursor = opus_manager.cursor
-        val controller_set = when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> {
-                channels[cursor.channel].lines[cursor.line_offset].controllers
-            }
-            CtlLineLevel.Channel -> {
-                val channel = cursor.channel
-                channels[channel].controllers
-            }
-            CtlLineLevel.Global -> {
-                opus_manager.controllers
-            }
-        }
 
         val widget = when (cursor.ctl_type!!) {
             EffectType.Tempo -> {

@@ -109,7 +109,6 @@ import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.databinding.ActivityEditorBinding
-import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -199,7 +198,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     val editor_view_model: MainViewModel by this.viewModels()
-    private var initial_load = true // Used to prevent save dialog from popping up on first load/new/import
+    private var _initial_load = true // Used to prevent save dialog from popping up on first load/new/import
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _integer_dialog_defaults = HashMap<String, Int>()
     private var _float_dialog_defaults = HashMap<String, Float>()
@@ -372,7 +371,7 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-    private val result_launcher_set_project_directory =
+    private val _result_launcher_set_project_directory =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 result?.data?.also { result_data ->
@@ -389,7 +388,7 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-    private var result_launcher_export_multi_line_wav =
+    private var _result_launcher_export_multi_line_wav =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (this._soundfont == null) {
                 // Throw Error. Currently unreachable by ui
@@ -438,8 +437,8 @@ class ActivityEditor : PaganActivity() {
                         val export_event_handler = MultiExporterEventHandler(this, line_count)
 
                         var y = 0
-                        var c = 0
-                        outer@ for (channel in opus_manager_copy.get_all_channels()) {
+                        outer@ for (c in opus_manager_copy.get_all_channels().indices) {
+                            val channel = opus_manager_copy.get_channel(c)
                             for (l in channel.lines.indices) {
                                 if (skip_lines.contains(Pair(c, l))) {
                                     continue
@@ -460,18 +459,16 @@ class ActivityEditor : PaganActivity() {
                                 val exporter_sample_handle_manager =
                                     SampleHandleManager(this._soundfont!!, 44100, 22050)
 
-                                var c_b = 0
-                                for (channel_copy in opus_manager_copy.get_all_channels()) {
-                                    var l_b = 0
-                                    for (line_copy in channel_copy.lines) {
+                                for (c_b in opus_manager_copy.get_all_channels().indices) {
+                                    val channel_copy = opus_manager_copy.get_channel(c_b)
+                                    for (l_b in channel_copy.lines.indices) {
+                                        val line_copy = channel_copy.get_line(l_b)
                                         if (c_b == c && l_b == l) {
                                             line_copy.unmute()
                                         } else {
                                             line_copy.mute()
                                         }
-                                        l_b += 1
                                     }
-                                    c_b += 1
                                 }
 
 
@@ -491,9 +488,9 @@ class ActivityEditor : PaganActivity() {
                                     tmp_file,
                                     this.configuration,
                                     export_event_handler,
-                                    true,
-                                    true,
-                                    false
+                                    ignore_global_effects = true,
+                                    ignore_channel_effects = true,
+                                    ignore_line_effects = false
                                 )
 
                                 data_output_buffer.close()
@@ -506,14 +503,13 @@ class ActivityEditor : PaganActivity() {
                                     break@outer
                                 }
                             }
-                            c++
                         }
                     }
                 }
             }
         }
 
-    private var result_launcher_export_multi_channel_wav = this.registerForActivityResult(
+    private var _result_launcher_export_multi_channel_wav = this.registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
@@ -565,8 +561,7 @@ class ActivityEditor : PaganActivity() {
                     val export_event_handler = MultiExporterEventHandler(this, channel_count)
 
                     var y = 0
-                    var c = 0
-                    outer@ for (channel in opus_manager_copy.get_all_channels()) {
+                    outer@ for (c in opus_manager_copy.get_all_channels().indices) {
                         if (skip_channels.contains(c)) {
                             continue
                         }
@@ -587,16 +582,14 @@ class ActivityEditor : PaganActivity() {
                         val exporter_sample_handle_manager =
                             SampleHandleManager(this._soundfont!!, 44100, 22050)
 
-                        var c_b = 0
-                        for (channel_copy in opus_manager_copy.get_all_channels()) {
+                        for (c_b in opus_manager_copy.get_all_channels().indices) {
+                            val channel_copy = opus_manager_copy.get_channel(c_b)
                             if (c_b == c) {
                                 channel_copy.unmute()
                             } else {
                                 channel_copy.mute()
                             }
-                            c_b += 1
                         }
-
 
                         val parcel_file_descriptor =
                             this.applicationContext.contentResolver.openFileDescriptor(file_uri, "w")
@@ -613,9 +606,9 @@ class ActivityEditor : PaganActivity() {
                             tmp_file,
                             this.configuration,
                             export_event_handler,
-                            true,
-                            false,
-                            false
+                            ignore_global_effects = true,
+                            ignore_channel_effects = false,
+                            ignore_line_effects = false
                         )
 
                         data_output_buffer.close()
@@ -627,14 +620,13 @@ class ActivityEditor : PaganActivity() {
                         if (export_event_handler.cancelled) {
                             break@outer
                         }
-                        c++
                     }
                 }
             }
         }
     }
 
-    private var result_launcher_export_wav =
+    private var _result_launcher_export_wav =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (this._soundfont == null) {
                 // Throw Error. Currently unreachable by ui
@@ -800,7 +792,7 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-    private var result_launcher_export_project =
+    private var _result_launcher_export_project =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 val opus_manager = this.get_opus_manager()
@@ -814,7 +806,7 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-    private var result_launcher_export_midi =
+    private var _result_launcher_export_midi =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 val opus_manager = this.get_opus_manager()
@@ -1192,7 +1184,7 @@ class ActivityEditor : PaganActivity() {
             this.handle_uri(this.intent.data!!)
         }
 
-        this.initial_load = false
+        this._initial_load = false
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -1324,7 +1316,7 @@ class ActivityEditor : PaganActivity() {
 
     fun project_save() {
         if (this.configuration.project_directory == null || DocumentFile.fromTreeUri(this, this.configuration.project_directory!!)?.exists() != true) {
-            this.result_launcher_set_project_directory.launch(
+            this._result_launcher_set_project_directory.launch(
                 Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
                     intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
                     intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
@@ -2412,7 +2404,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun dialog_save_project(callback: (Boolean) -> Unit) {
-        if (this.initial_load) {
+        if (this._initial_load) {
             callback(false)
         } else if (this.needs_save()) {
             AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
@@ -2449,7 +2441,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_multi_lines_wav() {
-        this.result_launcher_export_multi_line_wav.launch(
+        this._result_launcher_export_multi_line_wav.launch(
             Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
                 it.putExtra(Intent.EXTRA_TITLE, this.get_export_name())
             }
@@ -2457,7 +2449,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_multi_channels_wav() {
-        this.result_launcher_export_multi_channel_wav.launch(
+        this._result_launcher_export_multi_channel_wav.launch(
             Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
                 it.putExtra(Intent.EXTRA_TITLE, this.get_export_name())
             }
@@ -2465,7 +2457,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_wav() {
-        this.result_launcher_export_wav.launch(
+        this._result_launcher_export_wav.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
                 it.addCategory(Intent.CATEGORY_OPENABLE)
                 it.type = "audio/wav"
@@ -2501,7 +2493,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_midi() {
-        this.result_launcher_export_midi.launch(
+        this._result_launcher_export_midi.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
                 it.addCategory(Intent.CATEGORY_OPENABLE)
                 it.type = "audio/midi"
@@ -2512,7 +2504,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun export_project() {
-        this.result_launcher_export_project.launch(
+        this._result_launcher_export_project.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
                 it.addCategory(Intent.CATEGORY_OPENABLE)
                 it.type = "application/json"
@@ -3079,7 +3071,7 @@ class ActivityEditor : PaganActivity() {
                     if (section_name == null) {
                         this.getString(R.string.section_spinner_item, i, keys[i - 1])
                     } else {
-                        "${keys[i - 1]}: ${section_name}"
+                        "${keys[i - 1]}: $section_name"
                     }
                 }
             }

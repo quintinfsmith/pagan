@@ -1811,7 +1811,7 @@ class ActivityEditor : PaganActivity() {
         return this.editor_view_model.opus_manager
     }
 
-    fun play_event(channel: Int, event_value: Int, velocity: Float = .6F) {
+    fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
         if (event_value < 0) {
             return // No sound to play
         }

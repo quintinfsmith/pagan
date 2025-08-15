@@ -20,21 +20,25 @@ class MidiFeedbackDispatcher: VirtualMidiInputDevice() {
 
     private fun gen_index(channel: Int): Int {
         return runBlocking {
-            this@MidiFeedbackDispatcher._index_mutex.withLock {
-                val index = this@MidiFeedbackDispatcher._index_gen[channel] ?: 0
-                this@MidiFeedbackDispatcher._index_gen[channel] = index + 1
-                index
+            this@MidiFeedbackDispatcher.let { that ->
+                that._index_mutex.withLock {
+                    val index = that._index_gen[channel] ?: 0
+                    that._index_gen[channel] = index + 1
+                    index
+                }
             }
         }
     }
 
     fun close() {
         runBlocking {
-            this@MidiFeedbackDispatcher._handle_mutex.withLock {
-                for (handle in this@MidiFeedbackDispatcher._active_handles.keys) {
-                    this@MidiFeedbackDispatcher._note_off(handle)
+            this@MidiFeedbackDispatcher.let { that ->
+                that._handle_mutex.withLock {
+                    for (handle in that._active_handles.keys) {
+                        that._note_off(handle)
+                    }
+                    that._active_handles.clear()
                 }
-                this@MidiFeedbackDispatcher._active_handles.clear()
             }
         }
     }

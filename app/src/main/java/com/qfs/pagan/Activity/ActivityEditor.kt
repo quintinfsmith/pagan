@@ -243,6 +243,8 @@ class ActivityEditor : PaganActivity() {
         var working_y = 0
         var file_uri: Uri? = null
         var cancelled = false
+        val timeout_millis= 5000L
+        val MAX_PROGRESS = 100
 
         val notification_manager = NotificationManagerCompat.from(this.activity)
 
@@ -286,8 +288,8 @@ class ActivityEditor : PaganActivity() {
                 builder.setContentText(this.activity.getString(R.string.export_wav_notification_complete))
                     .clearActions()
                     .setAutoCancel(true)
-                    .setProgress(0, 0, false)
-                    .setTimeoutAfter(5000)
+                    .setProgress(this.MAX_PROGRESS, 0, false)
+                    .setTimeoutAfter(this.timeout_millis)
                     .setSilent(false)
                     .setContentIntent(pending_go_to_intent)
 
@@ -318,7 +320,7 @@ class ActivityEditor : PaganActivity() {
             builder.setContentText(this.activity.getString(R.string.export_cancelled))
                 .setProgress(0, 0, false)
                 .setAutoCancel(true)
-                .setTimeoutAfter(5000)
+                .setTimeoutAfter(this.timeout_millis)
                 .clearActions()
 
             @SuppressLint("MissingPermission")
@@ -330,14 +332,14 @@ class ActivityEditor : PaganActivity() {
         }
 
         override fun on_progress_update(progress: Double) {
-            val progress_rounded = ((progress + this.working_y) * 100.0 / this.total_count.toDouble()).roundToInt()
+            val progress_rounded = ((progress + this.working_y) * this.MAX_PROGRESS / this.total_count.toDouble()).roundToInt()
             this.activity.runOnUiThread {
                 val progress_bar = this.activity.findViewById<ProgressBar>(R.id.export_progress_bar) ?: return@runOnUiThread
                 progress_bar.progress = progress_rounded
             }
 
             val builder = this.activity.get_notification() ?: return
-            builder.setProgress(100, progress_rounded, false)
+            builder.setProgress(this.MAX_PROGRESS, progress_rounded, false)
 
             @SuppressLint("MissingPermission")
             if (this.activity.has_notification_permission()) {
@@ -347,6 +349,7 @@ class ActivityEditor : PaganActivity() {
                 )
             }
         }
+
         fun update(y: Int, file_uri: Uri) {
             this.working_y = y
             this.file_uri = file_uri
@@ -509,8 +512,7 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-    private var _result_launcher_export_multi_channel_wav = this.registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) { result ->
+    private var _result_launcher_export_multi_channel_wav = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (this._soundfont == null) {
             // Throw Error. Currently unreachable by ui
             return@registerForActivityResult
@@ -591,9 +593,7 @@ class ActivityEditor : PaganActivity() {
                             }
                         }
 
-                        val parcel_file_descriptor =
-                            this.applicationContext.contentResolver.openFileDescriptor(file_uri, "w")
-                                ?: continue@outer
+                        val parcel_file_descriptor = this.applicationContext.contentResolver.openFileDescriptor(file_uri, "w") ?: continue@outer
                         val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
                         val buffered_output_stream = BufferedOutputStream(output_stream)
                         val data_output_buffer = DataOutputStream(buffered_output_stream)
@@ -650,8 +650,8 @@ class ActivityEditor : PaganActivity() {
                         tmp_file.deleteOnExit()
                         val exporter_sample_handle_manager = SampleHandleManager(
                             this._soundfont!!,
-                            44100,
-                            22050
+                            this.resources.getInteger(R.integer.EXPORTED_SAMPLE_RATE),
+                            this.resources.getInteger(R.integer.EXPORTED_CHUNK_SIZE)
                         )
 
                         val parcel_file_descriptor =
@@ -668,8 +668,9 @@ class ActivityEditor : PaganActivity() {
                             tmp_file,
                             this.configuration,
                             object : WavConverter.ExporterEventHandler {
-                                val notification_manager =
-                                    NotificationManagerCompat.from(this@ActivityEditor)
+                                val MAX_PROGRESS = 100
+                                val timeout_millis = 5000L
+                                val notification_manager = NotificationManagerCompat.from(this@ActivityEditor)
 
                                 fun close_buffers() {
                                     data_output_buffer.close()
@@ -717,7 +718,7 @@ class ActivityEditor : PaganActivity() {
                                             .clearActions()
                                             .setAutoCancel(true)
                                             .setProgress(0, 0, false)
-                                            .setTimeoutAfter(5000)
+                                            .setTimeoutAfter(this.timeout_millis)
                                             .setSilent(false)
                                             .setContentIntent(pending_go_to_intent)
 
@@ -752,7 +753,7 @@ class ActivityEditor : PaganActivity() {
                                     builder.setContentText(this@ActivityEditor.getString(R.string.export_cancelled))
                                         .setProgress(0, 0, false)
                                         .setAutoCancel(true)
-                                        .setTimeoutAfter(5000)
+                                        .setTimeoutAfter(this.timeout_millis)
                                         .clearActions()
 
                                     @SuppressLint("MissingPermission")
@@ -768,13 +769,13 @@ class ActivityEditor : PaganActivity() {
                                 }
 
                                 override fun on_progress_update(progress: Double) {
-                                    val progress_rounded = (progress * 100.0).roundToInt()
+                                    val progress_rounded = (progress * this.MAX_PROGRESS).toInt()
                                     this@ActivityEditor.runOnUiThread {
                                         this@ActivityEditor.findViewById<ProgressBar>(R.id.export_progress_bar)?.progress = progress_rounded
                                     }
 
                                     val builder = this@ActivityEditor.get_notification() ?: return
-                                    builder.setProgress(100, progress_rounded, false)
+                                    builder.setProgress(this.MAX_PROGRESS, progress_rounded, false)
 
                                     @SuppressLint("MissingPermission")
                                     if (this@ActivityEditor.has_notification_permission()) {
@@ -1037,6 +1038,7 @@ class ActivityEditor : PaganActivity() {
 
         // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
         this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
+            val FORCE_SCROLL = true
             override fun onSongPositionPointer(event: SongPositionPointer) {
                 if (event.get_beat() >= this@ActivityEditor.get_opus_manager().length) {
                     return
@@ -1044,7 +1046,7 @@ class ActivityEditor : PaganActivity() {
                 this@ActivityEditor.get_opus_manager().cursor_select_column(event.get_beat())
                 // Force scroll here, cursor_select_column doesn't scroll if the column is already visible
                 this@ActivityEditor.runOnUiThread {
-                    this@ActivityEditor.findViewById<EditorTable>(R.id.etEditorTable)?.scroll_to_position(x = event.get_beat(), force = true)
+                    this@ActivityEditor.findViewById<EditorTable>(R.id.etEditorTable)?.scroll_to_position(x = event.get_beat(), force = this.FORCE_SCROLL)
                 }
             }
         })
@@ -2428,7 +2430,7 @@ class ActivityEditor : PaganActivity() {
     fun get_default_export_name(): String {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        return "Pagan Op. ${now.format(formatter)}"
+        return this.getString(R.string.default_export_name, now.format(formatter))
     }
 
     fun get_export_name(): String {
@@ -2497,7 +2499,6 @@ class ActivityEditor : PaganActivity() {
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
                 it.addCategory(Intent.CATEGORY_OPENABLE)
                 it.type = "audio/midi"
-                //type = MimeTypes.AUDIO_MIDI
                 it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.mid")
             }
         )
@@ -2832,42 +2833,26 @@ class ActivityEditor : PaganActivity() {
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-
+        val is_initial_event = true
         val widget = when (cursor.ctl_type!!) {
             EffectType.Tempo -> {
-                ControlWidgetTempo(
-                    cursor.ctl_level!!,
-                    true,
-                    this
-                ) { event: OpusTempoEvent ->
+                ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
                     opus_manager.set_initial_event(event)
                 }
             }
             EffectType.Volume -> {
-                ControlWidgetVolume(
-                    cursor.ctl_level!!,
-                    true,
-                    this
-                ) { event: OpusVolumeEvent ->
+                ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
                     opus_manager.set_initial_event(event)
                 }
             }
             EffectType.Velocity -> {
-                ControlWidgetVelocity(
-                    cursor.ctl_level!!,
-                    true,
-                    this
-                ) { event: OpusVelocityEvent ->
+                ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
                     opus_manager.set_initial_event(event)
                 }
             }
 
             EffectType.Pan -> {
-                ControlWidgetPan(
-                    cursor.ctl_level!!,
-                    true,
-                    this
-                ) { event: OpusPanEvent ->
+                ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
                     opus_manager.set_initial_event(event)
                 }
             }
@@ -2892,41 +2877,27 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
+        val is_initial_event = false
         val widget = when (cursor.ctl_type!!) {
             EffectType.Tempo -> {
-                ControlWidgetTempo(
-                    cursor.ctl_level!!,
-                    false,
-                    this
-                ) { event: OpusTempoEvent ->
+                ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
+
             EffectType.Volume -> {
-                ControlWidgetVolume(
-                    cursor.ctl_level!!,
-                    false,
-                    this
-                ) { event: OpusVolumeEvent ->
+                ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
             EffectType.Velocity -> {
-                ControlWidgetVelocity(
-                    cursor.ctl_level!!,
-                    false,
-                    this
-                ) { event: OpusVelocityEvent ->
+                ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
 
             EffectType.Pan -> {
-                ControlWidgetPan(
-                    cursor.ctl_level!!,
-                    false,
-                    this
-                ) { event: OpusPanEvent ->
+                ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
@@ -3089,24 +3060,6 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private fun _get_start_column(): Int {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        return when (cursor.mode) {
-            CursorMode.Single,
-            CursorMode.Column -> {
-                cursor.beat
-            }
-            CursorMode.Range -> {
-                cursor.range!!.first.beat
-            }
-            else -> {
-                val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-                editor_table.get_first_visible_column_index()
-            }
-        }
-    }
-
     private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
         val llContextMenu = this.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
         val llContextMenuSecondary = this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
@@ -3137,11 +3090,11 @@ class ActivityEditor : PaganActivity() {
             )
 
         val etTranspose = viewInflated.findViewById<RangedIntegerInput>(R.id.etTranspose)
-        etTranspose.set_range(0, 99999999) // arbitrarily large number
+        etTranspose.set_range(0)
         etTranspose.set_value(opus_manager.transpose.first)
 
         val etTransposeRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etTransposeRadix)
-        etTransposeRadix.set_range(1, 99999999) // arbitrarily large number
+        etTransposeRadix.set_range(1)
         etTransposeRadix.set_value(opus_manager.transpose.second)
 
         val rvTuningMap = viewInflated.findViewById<TuningMapRecycler>(R.id.rvTuningMap)
@@ -3214,7 +3167,7 @@ class ActivityEditor : PaganActivity() {
     fun dialog_midi_device_management() {
 
         val options = mutableListOf<Triple<MidiDeviceInfo?, Int?, String>>(
-            Triple(null, null, "Pagan")
+            Triple(null, null, this.getString(R.string.device_menu_default_name))
         )
 
         for (device_info in this._midi_interface.poll_output_devices()) {

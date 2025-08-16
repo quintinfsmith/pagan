@@ -249,6 +249,10 @@
     <string name="effect_transition_rinstant">Instant Revert</string>
     <string name="midi_device_unset">Midi Device Unspecified</string>
     <string name="playback_device">Playback Device</string>
+    <string name="default_export_name">Pagan Op. %1$s</string>
+    <string name="offset_dialog_octaves">Octaves</string>
+    <string name="offset_dialog_offset">Offset</string>
+    <string name="device_menu_default_name">Pagan</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

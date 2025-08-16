@@ -11,8 +11,8 @@ import java.util.Locale
 import kotlin.math.max
 
 abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(ContextThemeWrapper(context, R.style.Theme_Pagan_EditText), attrs) {
-    lateinit var max: T
-    lateinit var min: T
+    var max: T? = null
+    var min: T? = null
     var value_set_callback: ((T?) -> Unit)? = null
     abstract var _watcher: RangedTextWatcher<T>
     var confirm_required = true
@@ -45,7 +45,7 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
 
     abstract fun init_range()
 
-    fun set_range(new_min: T, new_max: T) {
+    fun set_range(new_min: T?, new_max: T? = null) {
         this.min = new_min
         this.max = new_max
         this._watcher.min_value = new_min
@@ -82,7 +82,8 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
     }
     override fun get_value(): Int? {
         return try {
-            max(this.min, this.text.toString().toInt())
+            val current_value = this.text.toString().toInt()
+            max(this.min ?: current_value, current_value)
         } catch (nfe: NumberFormatException) {
             null
         }
@@ -110,13 +111,15 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
             return value < min
         }
     }
+
     init {
         this.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
     }
 
     override fun get_value(): Float? {
         return try {
-            max(this.min, this.text.toString().toFloat())
+            val current_value = this.text.toString().toFloat()
+            max(this.min ?: current_value, current_value)
         } catch (nfe: NumberFormatException) {
             null
         }

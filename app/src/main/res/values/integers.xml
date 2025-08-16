@@ -3,4 +3,6 @@
     <integer name="entries_per_line">12</integer>
     <integer name="minimum_octave_size">2</integer>
     <integer name="maximum_octave_size">36</integer>
+    <integer name="EXPORTED_CHUNK_SIZE">22500</integer>
+    <integer name="EXPORTED_SAMPLE_RATE">44100</integer>
 </resources>

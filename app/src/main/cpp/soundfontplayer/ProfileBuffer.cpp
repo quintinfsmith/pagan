@@ -15,6 +15,7 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
     buffer->current_index = 0;
     buffer->data_width = buffer->data->frames[0]->data_width;
     buffer->current_value = (float*)malloc(sizeof(float) * buffer->data_width);
+    buffer->init_id();
     for (int i = 0; i < buffer->data_width; i++) {
         buffer->current_value[i] = 0;
     }
@@ -33,6 +34,7 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(
     auto *ptr = (struct ProfileBuffer *) ptr_long;
     auto* buffer = (ProfileBuffer *)malloc(sizeof(ProfileBuffer));
     ptr->copy_to(buffer);
+    buffer->init_id();
     return (jlong)buffer;
 }
 

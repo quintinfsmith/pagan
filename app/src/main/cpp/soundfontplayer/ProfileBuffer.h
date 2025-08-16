@@ -7,7 +7,7 @@
 #include "ProfileBufferFrame.h"
 #include <vector>
 #include "ControllerEventData.h"
-
+int PROFILE_BUFFER_ID_GEN = 0;
 class ProfileBuffer {
 public:
     ControllerEventData* data;
@@ -15,9 +15,14 @@ public:
     int current_index;
     int data_width;
     float* current_value;
+    int buffer_id = 0;
 
     ~ProfileBuffer() {
         delete this->current_value;
+    }
+
+    void init_id() {
+        this->buffer_id = PROFILE_BUFFER_ID_GEN++;
     }
 
     float* get_next() {

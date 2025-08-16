@@ -114,7 +114,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                     apply_volume(effect_buffer, working_arrays[i], (int)frames);
                     shifted_buffers[shift_buffers_size++] = j;
                 } else if (effect_buffer->data->type == TYPE_DELAY) {
-                    apply_delay(effect_buffer, working_arrays[i], (int)frames);
+                    apply_delay(cache_ptr, effect_buffer, working_arrays[i], (int)frames);
                     shifted_buffers[shift_buffers_size++] = j;
                 }
             }

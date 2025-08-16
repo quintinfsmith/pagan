@@ -2858,12 +2858,13 @@ class ActivityEditor : PaganActivity() {
                 }
             }
 
-            EffectType.Reverb -> TODO()
             EffectType.Delay -> {
-                ControlWidgetDelay( cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
+                ControlWidgetDelay(cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
                     opus_manager.set_event_at_cursor(event)
                 }
             }
+
+            EffectType.Reverb -> TODO()
         }
 
 

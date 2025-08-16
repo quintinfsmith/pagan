@@ -114,6 +114,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
@@ -2857,6 +2858,12 @@ class ActivityEditor : PaganActivity() {
                 }
             }
 
+            EffectType.Delay -> {
+                ControlWidgetDelay(cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
+
             EffectType.Reverb -> TODO()
         }
 
@@ -2903,6 +2910,15 @@ class ActivityEditor : PaganActivity() {
             }
 
             EffectType.Reverb -> TODO()
+            EffectType.Delay -> {
+                ControlWidgetDelay(
+                    cursor.ctl_level!!,
+                    false,
+                    this
+                ) { event: DelayEvent ->
+                    opus_manager.set_event_at_cursor(event)
+                }
+            }
         }
 
         this.active_context_menu = ContextMenuControlLeaf(

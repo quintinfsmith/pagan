@@ -9,10 +9,10 @@
 
 class DelayHandle {
     public:
-        float* frames_left;
+        float* frames_left{};
         int set_position_left = 0;
         int get_position_left = 0;
-        float* frames_right;
+        float* frames_right{};
         int set_position_right = 0;
         int get_position_right = 0;
 
@@ -22,6 +22,7 @@ class DelayHandle {
             }
             this->frames_right[i] += (value * fade);
         }
+
         float get_right() {
             return this->frames_right[this->get_position_right++];
         }
@@ -32,6 +33,7 @@ class DelayHandle {
             }
             this->frames_left[i] += (value * fade);
         }
+
         float get_left() {
             return this->frames_left[this->get_position_left++];
         }
@@ -41,8 +43,8 @@ class WaveGeneratorCache {
     public:
         std::unordered_map<int, DelayHandle*> delays;
         ~WaveGeneratorCache() {
-            for (auto it = this->delays.begin(); it != this->delays.end(); it++) {
-                delete it->second;
+            for (auto & delay : this->delays) {
+                delete delay.second;
             }
         }
 };
@@ -75,7 +77,8 @@ void apply_delay(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buff
     for (int i = 0; i < frame_count; i++) {
         float* frame = effect_buffer->get_next();
         float next_frame = frame[0];
-        float fade = frame[1];
+        float repeat_count = frame[1];
+        float fade = frame[2];
         delay_handle->put_left(next_frame, frame[i], fade);
         delay_handle->put_right(next_frame, frame[i + frame_count], fade);
 

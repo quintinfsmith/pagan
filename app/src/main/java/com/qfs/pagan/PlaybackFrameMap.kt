@@ -310,7 +310,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val control_event_data = mutableListOf< ControllerEventData.IndexedProfileBufferFrame>()
         for (effect_event in controller_profile.get_events()) {
-            control_event_data.addAll(this.convert_to_indexed_profile_buffer_frames(effect_event))
+            control_event_data.addAll(this.convert_to_indexed_profile_buffer_frames(effect_event, control_type))
         }
 
         return ControllerEventData(control_event_data, control_type)
@@ -342,6 +342,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     }
                 }
             }
+
             if (!ignore_channel_controls) {
                 for ((control_type, controller) in channel.controllers.get_all()) {
                     this._effect_profiles.add(
@@ -411,7 +412,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    private fun convert_to_indexed_profile_buffer_frames(effect_event: ControllerProfile.ProfileEffectEvent): List<ControllerEventData.IndexedProfileBufferFrame> {
+    fun convert_delay_event_values(values: FloatArray, frames_per_beat: Int): FloatArray {
+        return FloatArray(values.size) { i: Int ->
+            if (i == 0) {
+                values[i] * frames_per_beat
+            } else {
+                values[i]
+            }
+        }
+    }
+
+    private fun convert_to_indexed_profile_buffer_frames(effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType): List<ControllerEventData.IndexedProfileBufferFrame> {
         val output = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
 
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
@@ -455,7 +466,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 ControllerEventData.IndexedProfileBufferFrame(
                     first_frame = start_frame,
                     last_frame = start_frame,
-                    value = effect_event.end_value,
+                    value = when (event_type) {
+                        EffectType.Delay -> this.convert_delay_event_values(effect_event.end_value, frames_per_beat)
+                        else -> effect_event.end_value
+                    },
                     increment = FloatArray(data_width)
                 )
             )

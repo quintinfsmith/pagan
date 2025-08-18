@@ -121,7 +121,8 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         }
     }
 
-    fun destroy() {
+    override fun destroy() {
         (this.sample_frame_map as ImmediateFrameMap).volume_event_data.destroy()
+        super.destroy()
     }
 }

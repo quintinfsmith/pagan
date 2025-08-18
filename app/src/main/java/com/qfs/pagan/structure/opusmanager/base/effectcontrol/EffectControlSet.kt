@@ -1,5 +1,6 @@
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol
 
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ReverbController
@@ -41,6 +42,7 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
                 EffectType.Reverb -> ReverbController(this.beat_count)
                 EffectType.Pan -> PanController(this.beat_count)
                 EffectType.Velocity -> VelocityController(this.beat_count)
+                EffectType.Delay -> DelayController(this.beat_count)
             }
         } else {
             this.controllers[type] = controller

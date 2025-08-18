@@ -70,6 +70,7 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
             EffectType.Velocity -> R.drawable.velocity
             EffectType.Reverb -> R.drawable.volume // Placeholder TODO
             EffectType.Pan -> R.drawable.pan_icon
+            EffectType.Delay -> R.drawable.volume // Placeholder TODO
         }
     }
 

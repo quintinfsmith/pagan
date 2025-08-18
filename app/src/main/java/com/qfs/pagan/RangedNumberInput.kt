@@ -52,12 +52,13 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
         this._watcher.max_value = new_max
     }
 
-    fun set_value(new_value: Int) {
+    fun set_value(new_value: T) {
         this._watcher.lockout = true
-        this.setText(String.format(Locale.getDefault(), "%d", new_value))
+        this._set_value(new_value)
         this._watcher.lockout = false
     }
 
+    abstract fun _set_value(new_value: T)
     abstract fun get_value(): T?
 
     fun callback() {
@@ -87,6 +88,9 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
         } catch (nfe: NumberFormatException) {
             null
         }
+    }
+    override fun _set_value(new_value: Int) {
+        this.setText(String.format(Locale.getDefault(), "%d", new_value))
     }
 
     override fun init_range() {
@@ -133,5 +137,8 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
         } finally {
             styled_attributes.recycle()
         }
+    }
+    override fun _set_value(new_value: Float) {
+        this.setText(String.format(Locale.getDefault(), "%f", new_value))
     }
 }

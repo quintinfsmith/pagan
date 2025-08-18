@@ -104,6 +104,7 @@ import com.qfs.pagan.contextmenu.ContextMenuLeafPercussion
 import com.qfs.pagan.contextmenu.ContextMenuLine
 import com.qfs.pagan.contextmenu.ContextMenuRange
 import com.qfs.pagan.contextmenu.ContextMenuView
+import com.qfs.pagan.controlwidgets.ControlWidgetDelay
 import com.qfs.pagan.controlwidgets.ControlWidgetPan
 import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity

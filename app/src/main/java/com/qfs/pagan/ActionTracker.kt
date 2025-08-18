@@ -15,10 +15,12 @@ import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
 import com.qfs.pagan.contextmenu.ContextMenuRange
+import com.qfs.pagan.controlwidgets.ControlWidgetDelay
 import com.qfs.pagan.controlwidgets.ControlWidgetPan
 import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -109,6 +111,7 @@ class ActionTracker {
         SetVelocityAtCursor,
         SetTempoAtCursor,
         SetPanAtCursor,
+        SetDelayAtCursor,
         RemoveBeat,
         InsertBeat,
         SetCopyMode,
@@ -144,6 +147,14 @@ class ActionTracker {
                         val notes = entry.get_string(2)
                         val name_ints = this.string_to_ints(name)
                         listOf(name_ints.size) + name_ints + this.string_to_ints(notes)
+                    }
+                    TrackedAction.SetDelayAtCursor -> {
+                        listOf(
+                            entry.get_int(0),
+                            entry.get_int(1),
+                            entry.get_float(2).toBits(),
+                            entry.get_int(3)
+                        )
                     }
                     // STRING
                     TrackedAction.SetTransitionAtCursor,
@@ -271,6 +282,15 @@ class ActionTracker {
                         arrayOf(
                             JSONString(name),
                             JSONString(notes)
+                        )
+                    }
+
+                    TrackedAction.SetDelayAtCursor -> {
+                        arrayOf(
+                            JSONInteger(integers[0]!!),
+                            JSONInteger(integers[1]!!),
+                            JSONFloat(Float.fromBits(integers[2]!!)),
+                            JSONInteger(integers[3]!!)
                         )
                     }
 
@@ -1344,6 +1364,24 @@ class ActionTracker {
         }
     }
 
+    fun set_delay_at_cursor(frequency: Rational, fade: Float, repeat: Int) {
+        val main = this.get_activity()
+
+        this.track(TrackedAction.SetDelayAtCursor, listOf(frequency.numerator, frequency.denominator, fade.toBits(), repeat))
+        val context_menu = main.active_context_menu
+        if (context_menu !is ContextMenuWithController<*>) {
+            return
+        }
+
+        val widget = context_menu.get_widget() as ControlWidgetDelay
+        val new_event = widget.get_event().copy()
+        new_event.frequency = frequency
+        new_event.repeat_decay = fade
+        new_event.repeat = repeat
+
+        widget.set_event(new_event)
+    }
+
     fun insert_beat_after_cursor(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         this.dialog_number_input(this.get_activity().getString(R.string.dlg_insert_beats), 1, 4096, stub_output = repeat) { count: Int ->
@@ -1601,6 +1639,16 @@ class ActionTracker {
 
     fun process_queued_action(token: TrackedAction, integers: List<Int?>) {
         when (token) {
+            TrackedAction.SetDelayAtCursor -> {
+                this.set_delay_at_cursor(
+                    Rational(
+                        integers[0]!!,
+                        integers[1]!!
+                    ),
+                    Float.fromBits(integers[2]!!),
+                    integers[3]!!
+                )
+            }
             TrackedAction.ApplyUndo -> {
                 this.apply_undo()
             }

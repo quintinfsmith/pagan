@@ -10,6 +10,7 @@ import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
 import com.qfs.pagan.RangedFloatInput
 import com.qfs.pagan.RangedIntegerInput
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
@@ -47,7 +48,11 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._numerator.value_set_callback = { value: Int? ->
             this.working_event?.frequency?.numerator = value ?: this.min
             val main = this.get_activity()
-            main.get_action_interface().set_pan_at_cursor(slider.progress)
+            main.get_action_interface().set_delay_at_cursor(
+                this.working_event?.frequency ?: Rational(1, 1),
+                this.working_event?.repeat_decay ?: 1F,
+                this.working_event?.repeat ?: 1
+            )
         }
         this._denominator.value_set_callback = { value: Int? ->
             this.working_event?.frequency?.denominator = value ?: this.min

@@ -19,4 +19,8 @@ abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition =
             else -> true
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other) && other is EffectEvent && other.transition == this.transition
+    }
 }

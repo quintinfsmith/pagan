@@ -43,7 +43,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         profile_info: IntArray,
         profile_keys: IntArray
     ): FloatArray
-    external fun tanh_array(array: FloatArray): FloatArray
+    external fun tanh_array(ptr: Long, array: FloatArray): FloatArray
     fun generate(): FloatArray {
         val working_array = FloatArray(this.buffer_size * 2)
         val start_ts = System.nanoTime()
@@ -85,7 +85,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             working_array[(i * 2) + 1] = merged_array[(i * 2) + 1]
         }
 
-        val output_array = this.tanh_array(working_array)
+        val output_array = this.tanh_array(this.ptr, working_array)
 
         this.frame += this.buffer_size
 

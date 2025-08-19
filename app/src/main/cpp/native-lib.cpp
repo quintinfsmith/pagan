@@ -12,22 +12,6 @@
 #include "soundfontplayer/WaveGeneratorCache.cpp"
 #include "soundfontplayer/Complex.h"
 
-extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobject, jfloatArray input_array) {
-    int input_size = env->GetArrayLength(input_array);
-    jfloat output_ptr[input_size];
-    jfloat* input_ptr = env->GetFloatArrayElements(input_array, nullptr);
-    for (int i = 0; i < input_size; i++) {
-        output_ptr[i] = tanh(input_ptr[i]);
-    }
-
-    env->ReleaseFloatArrayElements(input_array, input_ptr, 0);
-
-    jfloatArray output = env->NewFloatArray(input_size);
-    env->SetFloatArrayRegion(output, 0, input_size, output_ptr);
-    return output;
-}
-
 // extern "C" JNIEXPORT jfloatArray JNICALL
 // Java_com_qfs_pagan_MainActivity_test_array(JNIEnv* env, jobject,  float t) {
 //     float test[10];

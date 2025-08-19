@@ -100,7 +100,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                 break
             }
 
-            pair = this.get_preceding_event_position(event_beat, event_position)
+            pair = this.get_preceding_event_position(pair.first, pair.second)
         }
 
         val preceding_event = if (pair == null) {

@@ -1,0 +1,2 @@
+- reduce feedback volume
+- bugfix: potential for playback to hang

@@ -3605,7 +3605,7 @@ open class OpusLayerBase: Effectable {
     }
 
     fun get_midi(start_beat: Int = 0, end_beat: Int? = null): Midi {
-        data class StackItem<T>(var tree: ReducibleTree<T>, var divisions: Int, var offset: Int, var size: Int)
+        data class StackItem<T>(var tree: ReducibleTree<T>, var divisions: Int, var offset: Int, var size: Int, var position: List<Int>)
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
@@ -3635,7 +3635,7 @@ open class OpusLayerBase: Effectable {
 
             for (i in start_beat until (end_beat ?: this.length)) {
                 val working_tree = controller.get_tree(i)
-                val stack: MutableList<StackItem<U>> = mutableListOf(StackItem(working_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn))
+                val stack: MutableList<StackItem<U>> = mutableListOf(StackItem(working_tree, 1, (i - start_beat) * midi.ppqn, midi.ppqn, listOf()))
                 while (stack.isNotEmpty()) {
                     val current = stack.removeAt(0)
                     if (current.tree.has_event()) {
@@ -3661,7 +3661,8 @@ open class OpusLayerBase: Effectable {
                                     subtree,
                                     current.tree.size,
                                     current.offset + (working_subdiv_size * j),
-                                    working_subdiv_size
+                                    working_subdiv_size,
+                                    current.position + listOf(j)
                                 )
                             )
                         }
@@ -3820,7 +3821,7 @@ open class OpusLayerBase: Effectable {
                 var prev_note = 0
 
                 line.beats.forEachIndexed { b: Int, beat_tree: ReducibleTree<out InstrumentEvent> ->
-                    val stack: MutableList<StackItem<out InstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn))
+                    val stack: MutableList<StackItem<out InstrumentEvent>> = mutableListOf(StackItem(beat_tree, 1, current_tick, midi.ppqn, listOf()))
                     while (stack.isNotEmpty()) {
                         val current = stack.removeAt(0)
                         if (current.tree.has_event()) {
@@ -3858,7 +3859,7 @@ open class OpusLayerBase: Effectable {
                                     channel.get_midi_channel(),
                                     note,
                                     bend,
-                                    (this.get_current_velocity(BeatKey(c, l, b), Rational(current.offset, current.size)) * 100F).toInt(),
+                                    (this.get_current_velocity(BeatKey(c, l, b), current.position) * 100F).toInt(),
                                     event_uuid_gen++
                                 )
                                 pseudo_midi_map.add(Triple(
@@ -3878,10 +3879,11 @@ open class OpusLayerBase: Effectable {
                             for ((i, subtree) in current.tree.divisions) {
                                 stack.add(
                                     StackItem(
-                                        subtree,
-                                        current.tree.size,
-                                        current.offset + (working_subdiv_size * i),
-                                        working_subdiv_size
+                                        tree = subtree,
+                                        divisions = current.tree.size,
+                                        offset = current.offset + (working_subdiv_size * i),
+                                        size = working_subdiv_size,
+                                        position = current.position + listOf(i)
                                     )
                                 )
                             }
@@ -4502,22 +4504,6 @@ open class OpusLayerBase: Effectable {
             val event = controller.coerce_event(beat_key.beat, event_position)
             event.value
         }
-    }
-
-    fun get_current_velocity(beat_key: BeatKey, event_position: Rational): Float {
-        // If the velocity controller exists, use that otherwise consider velocity to be volume
-        val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
-
-        return if (line.controllers.has_controller(EffectType.Velocity)) {
-            val controller = line.get_controller<OpusVelocityEvent>(EffectType.Velocity)
-            val event = controller.coerce_event(beat_key.beat, event_position)
-            event.value
-        } else {
-            val controller = line.get_controller<OpusVolumeEvent>(EffectType.Volume)
-            val event = controller.coerce_event(beat_key.beat, event_position)
-            event.value
-        }
-
     }
 
     internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {

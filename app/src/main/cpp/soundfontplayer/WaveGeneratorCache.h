@@ -9,16 +9,18 @@
 
 class DelayHandle {
     public:
-        float* frames_left{};
-        int set_position_left = 0;
+        std::vector<float> frames_left;
         int get_position_left = 0;
-        float* frames_right{};
-        int set_position_right = 0;
+        std::vector<float> frames_right;
         int get_position_right = 0;
 
         void put_right(int i, float value, float fade) {
-            while (this->set_position_right <= i) {
-                this->frames_right[this->set_position_right++] = 0;
+            int original_size = this->frames_right.size();
+            if (i >= original_size) {
+                this->frames_right.resize(i + 1);
+                for (int x = original_size; x <= i; x++) {
+                    this->frames_right[x] = 0;
+                }
             }
             this->frames_right[i] += (value * fade);
         }
@@ -28,8 +30,12 @@ class DelayHandle {
         }
 
         void put_left(int i, float value, float fade) {
-            while (this->set_position_left <= i) {
-                this->frames_left[this->set_position_left++] = 0;
+            int original_size = this->frames_left.size();
+            if (i >= original_size) {
+                this->frames_left.resize(i + 1);
+                for (int x = original_size; x <= i; x++) {
+                    this->frames_left[x] = 0;
+                }
             }
             this->frames_left[i] += (value * fade);
         }
@@ -41,11 +47,31 @@ class DelayHandle {
 
 class WaveGeneratorCache {
     public:
-        std::unordered_map<int, DelayHandle*> delays;
+        int* delay_keys;
+        DelayHandle* delays;
+        int size = 0;
         ~WaveGeneratorCache() {
-            for (auto & delay : this->delays) {
-                delete delay.second;
+        }
+        bool has_key(int key) {
+            for (int i = 0; i < this->size; i++) {
+                if (this->delay_keys[i] == key) {
+                    return true;
+                }
             }
+            return false;
+        }
+        void new_delay_handle(int key) {
+            this->delay_keys[this->size] = key;
+            this->delays[this->size] = DelayHandle();
+            this->size++;
+        }
+        DelayHandle* get_delay_handle(int key) const {
+            for (int i = 0; i < this->size; i++) {
+                if (this->delay_keys[i] == key) {
+                    return &this->delays[i];
+                }
+            }
+            return nullptr;
         }
 };
 
@@ -66,13 +92,12 @@ void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames
 }
 
 void apply_delay(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buffer, float* working_array, int frame_count) {
-    if (generator_cache->delays.find(effect_buffer->buffer_id) == generator_cache->delays.end()) {
-        generator_cache->delays[effect_buffer->buffer_id] = (DelayHandle*)malloc(sizeof(DelayHandle));
-        generator_cache->delays[effect_buffer->buffer_id]->get_position_left = 0;
-        generator_cache->delays[effect_buffer->buffer_id]->set_position_left = 0;
+    if (!generator_cache->has_key(effect_buffer->buffer_id)) {
+        __android_log_print(ANDROID_LOG_DEBUG, "", "fff %d", "UNT");
+        generator_cache->new_delay_handle(effect_buffer->buffer_id);
     }
 
-    DelayHandle* delay_handle = generator_cache->delays[effect_buffer->buffer_id];
+    DelayHandle* delay_handle = generator_cache->get_delay_handle(effect_buffer->buffer_id);
 
     for (int i = 0; i < frame_count; i++) {
         float* frame = effect_buffer->get_next();

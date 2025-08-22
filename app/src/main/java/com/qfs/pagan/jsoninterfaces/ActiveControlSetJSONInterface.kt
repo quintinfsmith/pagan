@@ -6,6 +6,7 @@ import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
@@ -14,6 +15,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.P
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 
 class ActiveControlSetJSONInterface {
     companion object {
@@ -25,6 +27,7 @@ class ActiveControlSetJSONInterface {
                     "volume" -> ActiveControllerJSONInterface.from_json<OpusVolumeEvent>(json_controller, size)
                     "velocity" -> ActiveControllerJSONInterface.from_json<OpusVelocityEvent>(json_controller, size)
                     "pan" -> ActiveControllerJSONInterface.from_json<OpusPanEvent>(json_controller, size)
+                    "delay" -> ActiveControllerJSONInterface.from_json<DelayEvent>(json_controller, size)
                     else -> throw UnknownControllerException(label)
                 }
 
@@ -33,6 +36,7 @@ class ActiveControlSetJSONInterface {
                     is VolumeController -> EffectType.Volume
                     is PanController -> EffectType.Pan
                     is VelocityController -> EffectType.Velocity
+                    is DelayController -> EffectType.Delay
                     //is ReverbController -> ControlEventType.Reverb
                     else -> throw UnhandledControllerException(controller)
                 }

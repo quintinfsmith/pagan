@@ -6,73 +6,88 @@
 #define PAGAN_WAVEGENERATORCACHE_H
 #include <unordered_map>
 
-
-class DelayHandle {
-    public:
-        std::vector<float> frames_left;
-        int get_position_left = 0;
-        std::vector<float> frames_right;
-        int get_position_right = 0;
-
-        void put_right(int i, float value, float fade) {
-            int original_size = this->frames_right.size();
-            if (i >= original_size) {
-                this->frames_right.resize(i + 1);
-                for (int x = original_size; x <= i; x++) {
-                    this->frames_right[x] = 0;
-                }
-            }
-            this->frames_right[i] += (value * fade);
-        }
-
-        float get_right() {
-            return this->frames_right[this->get_position_right++];
-        }
-
-        void put_left(int i, float value, float fade) {
-            int original_size = this->frames_left.size();
-            if (i >= original_size) {
-                this->frames_left.resize(i + 1);
-                for (int x = original_size; x <= i; x++) {
-                    this->frames_left[x] = 0;
-                }
-            }
-            this->frames_left[i] += (value * fade);
-        }
-
-        float get_left() {
-            return this->frames_left[this->get_position_left++];
-        }
+// TODO: Double check left/right offset
+class DelayHandle {};
+//class DelayHandle {
+//    public:
+//        float* frames;
+//        int size = 0;
+//        int position = 0;
+//
+//        void put_frame(int i, float left_value, float right_value, float fade, int offset = 0) {
+//            if (i >= this->size) {
+//                for (int x = this->size; x <= i; x++) {
+//                    this->frames[2*x] = 0;
+//                    this->frames[(2*x) + 1] = 0;
+//                }
+//                this->size = i + 1;
+//            }
+//
+//            this->frames[(i / 2)] += (right_value * fade);
+//            this->frames[(i / 2) + 1] += (left_value * fade);
+//        }
+//
+//        std::tuple<float, float> get_frame() {
+//            int frame = this->position++ / 2;
+//            return std::tuple(
+//                this->frames[frame],
+//                this->frames[frame + 1]
+//            );
+//        }
+//};
+class BandPassFilter {
+    float high;
+    float low;
 };
 
 class WaveGeneratorCache {
+    std::unordered_map<int, BandPassFilter*>* current_band_pass;
+    std::unordered_map<int, DelayHandle*>* current_delay_handle;
     public:
-        int* delay_keys;
-        DelayHandle* delays;
-        int size = 0;
+        void init() {
+            this->current_band_pass = (std::unordered_map<int, BandPassFilter*>*)malloc(sizeof(std::unordered_map<int, BandPassFilter*>));
+            this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
+        }
         ~WaveGeneratorCache() {
+            delete this->current_band_pass;
+            delete this->current_delay_handle;
         }
-        bool has_key(int key) {
-            for (int i = 0; i < this->size; i++) {
-                if (this->delay_keys[i] == key) {
-                    return true;
-                }
+        bool has_delay_handle(int key) {
+            __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%dl", this);
+            if (this->current_delay_handle == nullptr) {
+                __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%d", 0);
+                this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
             }
-            return false;
+            return this->current_delay_handle->find(key) != this->current_delay_handle->end();
         }
-        void new_delay_handle(int key) {
-            this->delay_keys[this->size] = key;
-            this->delays[this->size] = DelayHandle();
-            this->size++;
-        }
-        DelayHandle* get_delay_handle(int key) const {
-            for (int i = 0; i < this->size; i++) {
-                if (this->delay_keys[i] == key) {
-                    return &this->delays[i];
-                }
-            }
-            return nullptr;
-        }
+        //int* delay_keys;
+        //DelayHandle* delays;
+        //int size = 0;
+
+
+        //bool has_key(int key) {
+        //    for (int i = 0; i < this->size; i++) {
+        //        if (this->delay_keys[i] == key) {
+        //            return true;
+        //        }
+        //    }
+        //    return false;
+        //}
+
+        //void new_delay_handle(int key) {
+        //    this->delay_keys[this->size] = key;
+        //    this->delays[this->size] = DelayHandle();
+        //    this->size++;
+        //}
+
+        //DelayHandle* get_delay_handle(int key) {
+        //    for (int i = 0; i < this->size; i++) {
+        //        if (this->delay_keys[i] == key) {
+        //            return &this->delays[i];
+        //        }
+        //    }
+        //    return nullptr;
+        //}
 };
 
 void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
@@ -91,25 +106,29 @@ void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames
     }
 }
 
+void apply_bandpass(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buffer, float* working_array, int frame_count) {
+}
+
 void apply_delay(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buffer, float* working_array, int frame_count) {
-    if (!generator_cache->has_key(effect_buffer->buffer_id)) {
-        __android_log_print(ANDROID_LOG_DEBUG, "", "fff %d", "UNT");
-        generator_cache->new_delay_handle(effect_buffer->buffer_id);
+    __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%d", 1);
+    if (!generator_cache->has_delay_handle(effect_buffer->buffer_id)) {
+        __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%d", 2);
+     //   generator_cache->new_delay_handle(effect_buffer->buffer_id);
     }
 
-    DelayHandle* delay_handle = generator_cache->get_delay_handle(effect_buffer->buffer_id);
+    //DelayHandle* delay_handle = generator_cache->get_delay_handle(effect_buffer->buffer_id);
 
-    for (int i = 0; i < frame_count; i++) {
-        float* frame = effect_buffer->get_next();
-        float next_frame = frame[0];
-        float repeat_count = frame[1];
-        float fade = frame[2];
-        delay_handle->put_left(next_frame, frame[i], fade);
-        delay_handle->put_right(next_frame, frame[i + frame_count], fade);
+    //for (int i = 0; i < frame_count; i++) {
+    //    float* frame = effect_buffer->get_next();
+    //    float next_frame = frame[0];
+    //    float repeat_count = frame[1];
+    //    float fade = frame[2];
+    //    delay_handle->put_left(next_frame, frame[i], fade);
+    //    delay_handle->put_right(next_frame, frame[i + frame_count], fade);
 
-        working_array[i] += delay_handle->get_left();
-        working_array[i + frame_count] += delay_handle->get_right();
-    }
+    //    working_array[i] += delay_handle->get_left();
+    //    working_array[i + frame_count] += delay_handle->get_right();
+    //}
 }
 
 

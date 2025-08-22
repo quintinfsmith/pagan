@@ -14,14 +14,12 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
     var is_playing = false
     var play_cancelled = false // need a away to cancel between parsing and playing
 
-
     abstract fun on_buffer()
     abstract fun on_buffer_done()
     abstract fun on_start()
     abstract fun on_stop()
     abstract fun on_cancelled()
     abstract fun on_mark(i :Int)
-
 
     fun purge_wave_generator() {
         this.wave_generator.clear()

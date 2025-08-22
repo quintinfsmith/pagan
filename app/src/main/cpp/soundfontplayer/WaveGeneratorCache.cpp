@@ -7,6 +7,7 @@
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_00024Companion_get_1ptr( JNIEnv* env, jobject ) {
     auto* handle = (WaveGeneratorCache*)malloc(sizeof(WaveGeneratorCache));
+    handle->init();
     return (jlong)handle;
 }
 

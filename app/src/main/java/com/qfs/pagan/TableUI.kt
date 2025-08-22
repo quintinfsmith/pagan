@@ -28,6 +28,7 @@ import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
@@ -915,6 +916,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     } else {
                         "0"
                     }
+                }
+                is DelayEvent -> {
+                    "${event.frequency.numerator}/${event.frequency.denominator}"
                 }
                 else -> "???"
             }

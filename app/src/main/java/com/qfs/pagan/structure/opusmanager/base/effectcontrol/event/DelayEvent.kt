@@ -14,6 +14,10 @@ class DelayEvent(var frequency: Rational, var repeat: Int, var repeat_decay: Flo
         )
     }
 
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other) && other is DelayEvent && other.frequency == this.frequency && other.repeat == this.repeat && this.repeat_decay == other.repeat_decay
+    }
+
     override fun copy(): DelayEvent {
         return DelayEvent(
             this.frequency,

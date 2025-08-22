@@ -31,6 +31,10 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._fade = this.inner.findViewById(R.id.fade)
         this._transition_button = this.inner.findViewById(R.id.transition_button)
 
+        this._numerator.set_range(this.min, this.max)
+        this._denominator.set_range(this.min, this.max)
+        this._fade.set_range(0F, 1F)
+
         if (this.is_initial_event) {
             this._transition_button.visibility = GONE
         } else {
@@ -45,25 +49,29 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
             context = (context as ContextThemeWrapper).baseContext
         }
 
+        val main = this.get_activity()
         this._numerator.value_set_callback = { value: Int? ->
-            this.working_event?.frequency?.numerator = value ?: this.min
-            val main = this.get_activity()
             main.get_action_interface().set_delay_at_cursor(
-                this.working_event?.frequency ?: Rational(1, 1),
+                Rational(value ?: this.min, this.working_event?.frequency?.denominator ?: 1),
                 this.working_event?.repeat_decay ?: 1F,
                 this.working_event?.repeat ?: 1
             )
         }
         this._denominator.value_set_callback = { value: Int? ->
-            this.working_event?.frequency?.denominator = value ?: this.min
-            this.set_event(this.working_event!!)
+            main.get_action_interface().set_delay_at_cursor(
+                Rational(this.working_event?.frequency?.numerator ?: this.min, value ?: 1),
+                this.working_event?.repeat_decay ?: 1F,
+                this.working_event?.repeat ?: 1
+            )
         }
 
         this._fade.value_set_callback = { value: Float? ->
-            this.working_event?.repeat_decay = value ?: 0f
-            this.set_event(this.working_event!!)
+            main.get_action_interface().set_delay_at_cursor(
+                this.working_event?.frequency ?: Rational(1, 1),
+                value ?: 0F,
+                this.working_event?.repeat ?: 1
+            )
         }
-
     }
 
     init {
@@ -74,5 +82,8 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._fade.set_value(event.repeat_decay)
         this._denominator.set_value(event.frequency.denominator)
         this._numerator.set_value(event.frequency.numerator)
+        (this._transition_button as MaterialButton).setIconResource(
+            this.get_activity().get_effect_transition_icon(event.transition)
+        )
     }
 }

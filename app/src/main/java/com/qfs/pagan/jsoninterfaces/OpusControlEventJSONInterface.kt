@@ -1,8 +1,11 @@
 package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
 import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
@@ -33,6 +36,14 @@ class OpusControlEventJSONInterface {
                 is OpusPanEvent -> {
                     output["value"] = input.value
                     output["transition"] = input.transition.name
+                }
+                is DelayEvent -> {
+                    output["frequency"] = JSONList(
+                        JSONInteger(input.frequency.numerator),
+                        JSONInteger(input.frequency.denominator)
+                    )
+                    output["echo"] = input.repeat
+                    output["fade"] = input.repeat_decay
                 }
             }
             return output
@@ -107,6 +118,17 @@ class OpusControlEventJSONInterface {
                 map.get_float("value"),
                 map.get_int("duration", 1),
                 EffectTransition.valueOf(map.get_string("transition", "Instant"))
+            )
+        }
+        fun delay_event(map: JSONHashMap): DelayEvent {
+            val freq = map.get_list("frequency")
+            return DelayEvent(
+                Rational(
+                    freq.get_int(0),
+                    freq.get_int(1)
+                ),
+                map.get_int("echo"),
+                map.get_float("fade"),
             )
         }
         // ------------------------

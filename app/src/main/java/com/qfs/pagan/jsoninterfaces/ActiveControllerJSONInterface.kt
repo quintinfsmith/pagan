@@ -7,6 +7,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
@@ -41,6 +42,12 @@ class ActiveControllerJSONInterface {
                     val controller = PanController(size)
                     controller.set_initial_event(OpusControlEventJSONInterface.pan_event(obj.get_hashmap("initial")))
                     this.populate_controller(obj, controller, OpusControlEventJSONInterface::pan_event)
+                    controller
+                }
+                "delay" -> {
+                    val controller = DelayController(size)
+                    controller.set_initial_event(OpusControlEventJSONInterface.delay_event(obj.get_hashmap("initial")))
+                    this.populate_controller(obj, controller, OpusControlEventJSONInterface::delay_event)
                     controller
                 }
                 else -> throw UnknownControllerException(label)
@@ -92,7 +99,6 @@ class ActiveControllerJSONInterface {
             return JSONHashMap(
                 "events" to events,
                 "type" to JSONString(
-
                     when (controller_type) {
                         "Tempo" -> "tempo"
                         "Volume" -> "volume"
@@ -130,6 +136,7 @@ class ActiveControllerJSONInterface {
                 is VolumeController -> "volume"
                 is VelocityController -> "velocity"
                 is PanController -> "pan"
+                is DelayController -> "delay"
                 else -> throw UnhandledControllerException(controller)
             }
             map["visible"] = controller.visible

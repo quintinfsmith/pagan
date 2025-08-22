@@ -10,7 +10,7 @@ class OpusPanEvent(value: Float, duration: Int = 1, transition: EffectTransition
         return floatArrayOf(this.value)
     }
     override fun equals(other: Any?): Boolean {
-        return other is OpusPanEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
+        return super.equals(other) && other is OpusPanEvent && this.value == other.value && this.transition == other.transition
     }
 
     override fun hashCode(): Int {

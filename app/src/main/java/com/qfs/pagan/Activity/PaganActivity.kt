@@ -201,6 +201,8 @@ open class PaganActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         this.enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        this.set_latest_launched_version()
+
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             Log.d("pagandebug", "$paramThrowable")
             this.bkp_crash_report(paramThrowable)
@@ -618,4 +620,30 @@ open class PaganActivity: AppCompatActivity() {
     open fun on_soundfont_directory_set(uri: Uri) {}
     open fun on_project_directory_set(uri: Uri) {}
 
+    fun get_version_name(): String {
+        val package_info = this.applicationContext.packageManager.getPackageInfo(this.applicationContext.packageName,0)
+        return package_info.versionName ?: ""
+    }
+
+    internal fun set_latest_launched_version() {
+        val file = File("${this.dataDir}/v")
+        file.writeText(get_version_name())
+    }
+
+    internal fun get_latest_launched_version(): IntArray? {
+        val file = File("${this.dataDir}/v")
+        if (!file.exists()) return null
+
+        val content = file.readText()
+        val string_split = content.split(".")
+        if (string_split.size != 3) return null
+
+        return try {
+            IntArray(string_split.size) { i: Int ->
+                string_split[i].toInt()
+            }
+        } catch (e: NumberFormatException) {
+            null
+        }
+    }
 }

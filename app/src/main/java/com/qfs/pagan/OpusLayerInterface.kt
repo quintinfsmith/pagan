@@ -56,7 +56,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             Pair(EffectType.Volume, R.drawable.volume),
             Pair(EffectType.Velocity, R.drawable.velocity),
             Pair(EffectType.Pan, R.drawable.pan_icon),
-            Pair(EffectType.Delay, R.drawable.pan_icon)
+            //Pair(EffectType.Delay, R.drawable.pan_icon)
         )
     }
 

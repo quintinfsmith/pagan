@@ -5,15 +5,6 @@
             <solid android:color="@color/leaf"/>
         </shape>
     </item>
-    <item android:width="@dimen/stroke_leaf" android:end="0dp" android:gravity="end">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/table_lines"/>
-        </shape>
-    </item>
-    <item android:height="@dimen/stroke_leaf" android:bottom="0dp" android:gravity="bottom">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/table_lines"/>
-        </shape>
-    </item>
 
+    <item android:drawable="@drawable/leaf_border" />
 </layer-list>

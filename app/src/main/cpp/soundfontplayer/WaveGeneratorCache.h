@@ -52,8 +52,10 @@ class WaveGeneratorCache {
             delete this->current_band_pass;
             delete this->current_delay_handle;
         }
+
         bool has_delay_handle(int key) {
-            __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%dl", this);
+            __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%ld", (long)this);
+            __android_log_print(ANDROID_LOG_DEBUG, "", "UTxxxXX - %ld -", (long)this->current_delay_handle);
             if (this->current_delay_handle == nullptr) {
                 __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%d", 0);
                 this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));

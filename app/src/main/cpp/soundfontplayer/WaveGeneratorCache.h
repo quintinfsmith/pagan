@@ -45,20 +45,48 @@ class WaveGeneratorCache {
     std::unordered_map<int, BandPassFilter*>* current_band_pass;
     std::unordered_map<int, DelayHandle*>* current_delay_handle;
     public:
-        void init() {
+        int sample_rate;
+        float volume_change_velocity;
+        float volume_change_factor;
+        float volume_gravity;
+        void init(int sample_rate) {
+            this->sample_rate = sample_rate;
             this->current_band_pass = (std::unordered_map<int, BandPassFilter*>*)malloc(sizeof(std::unordered_map<int, BandPassFilter*>));
             this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
+
+            this->volume_gravity = 4 / sample_rate;
+            this->volume_change_factor = 1.0;
+            this->volume_change_velocity = 0;
         }
+
         ~WaveGeneratorCache() {
             delete this->current_band_pass;
             delete this->current_delay_handle;
         }
 
+        float weight_volume(float input_value) {
+            float abs_value = fabs(input_value);
+            if (abs_value > this->volume_change_factor) {
+                this->volume_change_velocity += abs_value;
+            }
+
+            float output_value = tanh(input_value / fmax(1, this->volume_change_factor));
+
+            if (this->volume_change_factor > 1) {
+                this->volume_change_velocity -= this->volume_gravity;
+            }
+
+            if ((this->volume_change_factor > 1 && this->volume_change_velocity < 0) || (this->volume_change_factor <= 1 && this->volume_change_velocity > 0)) {
+                this->volume_change_factor += this->volume_change_velocity;
+            } else {
+                this->volume_change_velocity = 0;
+            }
+
+            return output_value;
+        }
+
         bool has_delay_handle(int key) {
-            __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%ld", (long)this);
-            __android_log_print(ANDROID_LOG_DEBUG, "", "UTxxxXX - %ld -", (long)this->current_delay_handle);
             if (this->current_delay_handle == nullptr) {
-                __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%d", 0);
                 this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
             }
             return this->current_delay_handle->find(key) != this->current_delay_handle->end();
@@ -113,9 +141,7 @@ void apply_bandpass(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_b
 }
 
 void apply_delay(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buffer, float* working_array, int frame_count) {
-    __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%d", 1);
     if (!generator_cache->has_delay_handle(effect_buffer->buffer_id)) {
-        __android_log_print(ANDROID_LOG_DEBUG, "", "UNTXX%d", 2);
      //   generator_cache->new_delay_handle(effect_buffer->buffer_id);
     }
 

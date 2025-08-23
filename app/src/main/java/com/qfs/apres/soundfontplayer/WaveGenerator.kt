@@ -1,10 +1,10 @@
 package com.qfs.apres.soundfontplayer
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
-    val ptr: Long = WaveGenerator.get_ptr()
+    val ptr: Long = WaveGenerator.get_ptr(this.sample_rate)
 
     companion object {
-        external fun get_ptr(): Long
+        external fun get_ptr(sample_rate: Int): Long
     }
 
     enum class StereoMode {

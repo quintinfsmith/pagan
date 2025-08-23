@@ -163,12 +163,32 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobjec
     jfloat output_ptr[input_size];
     jfloat* input_ptr = env->GetFloatArrayElements(input_array, nullptr);
 
-    float tfactor = 1;
+    float tfactor = 1.0;
+    float drop_value = 1.0 / 11025;
+    float inc_value = drop_value * 32;
+    float tchange = 0;
+    int lead_size = 12;
+
     for (int i = 0; i < input_size; i++) {
+        //output_ptr[i] = tanh(input_ptr[i]);
+        
+        if (input_size - lead_size > i && fabs(input_ptr[i + lead_size]) > 1) {
+            tchange = fabs(input_ptr[i + lead_size]);
+        }
+
+        float abs_value = fabs(input_ptr[i]);
 
         output_ptr[i] = tanh(input_ptr[i] / fmax(1, tfactor));
 
-        tfactor = ((tfactor * 4) + fabs(input_ptr[i]) / 5);
+        if (tfactor > 1) {
+            tchange -= drop_value;
+        }
+
+        if ((tfactor > 1 && tchange < 0) || (tfactor <= 1 && tchange > 0)) {
+            tfactor += tchange;
+        } else {
+            tchange = 0;
+        }
     }
 
     env->ReleaseFloatArrayElements(input_array, input_ptr, 0);

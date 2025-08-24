@@ -2,6 +2,7 @@
 <resources>
     <dimen name="normal_padding">1dp</dimen>
     <dimen name="stroke_leaf">1dp</dimen>
+    <dimen name="leaf_light_width">2dp</dimen>
     <dimen name="leaf_padding">10dp</dimen>
     <dimen name="leaf_radius">24dp</dimen>
     <dimen name="ctl_leaf_padding">1dp</dimen>

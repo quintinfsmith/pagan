@@ -1,23 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:width="@dimen/stroke_leaf" android:end="0dp" android:gravity="end">
-        <shape android:shape="rectangle">
-            <solid android:color="#AA000000"/>
-        </shape>
-    </item>
-    <item android:height="@dimen/stroke_leaf" android:bottom="0dp" android:gravity="bottom">
-        <shape android:shape="rectangle">
-            <solid android:color="#AA000000"/>
-        </shape>
-    </item>
-    <item android:width="@dimen/stroke_leaf" android:start="0dp" android:gravity="start">
-        <shape android:shape="rectangle">
-            <solid android:color="#AAFFFFFF"/>
-        </shape>
-    </item>
-    <item android:height="@dimen/stroke_leaf" android:top="0dp" android:gravity="top">
-        <shape android:shape="rectangle">
-            <solid android:color="#AAFFFFFF"/>
-        </shape>
-    </item>
-</layer-list>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:state_pressed="false"
+        app:state_focused="false"
+        android:drawable="@drawable/leaf_border_outset"/>
+    <item android:drawable="@drawable/leaf_border_inset"/>
+</selector>

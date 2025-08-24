@@ -93,4 +93,7 @@
     <color name="muted_ctl_line_selected">@color/muted_empty_selected</color>
     <color name="muted_ctl_line">@color/muted_channel_even</color>
     <color name="muted_ctl_line_text">@color/table_lines</color>
+
+    <color name="light_line_bright">#66EEEEFF</color>
+    <color name="light_line_dark">#44000080</color>
 </resources>

@@ -679,23 +679,22 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     val octave_text_bounds = Rect()
                                     this.text_paint_octave.getTextBounds(octave_text, 0, octave_text.length, octave_text_bounds)
 
-                                    val padding_y = this.resources.getDimension(R.dimen.octave_label_padding_y)
-                                    //val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
-                                    val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
-                                    val offset_text_x = x + ((width - offset_text_bounds.width()) / 2)
+                                    val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
 
+                                    val text_height = (offset_text_bounds.height() * 2 / 3) +  octave_text_bounds.height()
+                                    val offset_text_y = y + ((line_height - text_height) / 2)
+                                    val offset_text_x = x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
                                     canvas.drawText(
                                         offset_text,
-                                        offset_text_x,
-                                        offset_text_y,
+                                        offset_text_x + octave_text_bounds.width() + padding_x,
+                                        offset_text_y + offset_text_bounds.height(),
                                         this.text_paint_offset
                                     )
 
-                                    val octave_max_width = (base_width - offset_text_bounds.width()) / 2
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - base_width) / 2) + ((octave_max_width - octave_text_bounds.width()) / 2),
-                                        y + line_height - padding_y,
+                                        offset_text_x,
+                                        offset_text_y + text_height,
                                         this.text_paint_octave
                                     )
                                 }
@@ -717,29 +716,33 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     val prefix_text_bounds = Rect()
                                     this.text_paint_octave.getTextBounds(prefix_text, 0, prefix_text.length, prefix_text_bounds)
 
-                                    val padding_y = this.resources.getDimension(R.dimen.octave_label_padding_y)
-                                    // val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
-                                    val offset_text_y = y + ((line_height + (offset_text_bounds.height() / 2)) / 2)
+                                    val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
 
+                                    val text_height = (offset_text_bounds.height() * 2 / 3) +  octave_text_bounds.height()
+                                    val offset_text_y = y + ((line_height - text_height) / 2)
+                                    val offset_text_x = x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
                                     canvas.drawText(
                                         offset_text,
-                                        x + ((width - offset_text_bounds.width()) / 2),
-                                        offset_text_y,
+                                        offset_text_x + octave_text_bounds.width() + padding_x,
+                                        offset_text_y + offset_text_bounds.height(),
                                         this.text_paint_offset
                                     )
 
-                                    val octave_max_width = (base_width - offset_text_bounds.width()) / 2
                                     canvas.drawText(
                                         octave_text,
-                                        x + ((width - base_width) / 2) + ((octave_max_width - octave_text_bounds.width()) / 2),
-                                        y + line_height - padding_y,
+                                        offset_text_x,
+                                        offset_text_y + text_height,
                                         this.text_paint_octave
                                     )
 
                                     canvas.drawText(
                                         prefix_text,
-                                        x + ((width - base_width) / 2) + ((octave_max_width - prefix_text_bounds.width()) / 2),
-                                        offset_text_y - octave_text_bounds.height(),
+                                        offset_text_x,
+                                        offset_text_y + if (event.offset < 0) {
+                                            prefix_text_bounds.height() * 4
+                                        } else {
+                                            prefix_text_bounds.height()
+                                        },
                                         this.text_paint_octave
                                     )
 

@@ -143,7 +143,7 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                     throw Exception()
                 }
 
-                if (value >= 0) {
+                try {
                     this.ns_offset.set_state(
                         value % radix,
                         manual = true,
@@ -154,6 +154,8 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                         manual = true,
                         suppress_callback = true
                     )
+                } catch (e: IndexOutOfBoundsException) {
+                    // pass
                 }
 
                 //this.button_unset.setImageResource(R.drawable.unset)

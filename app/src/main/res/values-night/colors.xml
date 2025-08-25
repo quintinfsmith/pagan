@@ -8,16 +8,17 @@
     <color name="primary_dark">@color/surface</color>
 
     <color name="surface">#2d2d2d</color>
-    <color name="on_surface">@color/main_fg</color>
+    <color name="on_surface">@color/main_foreground</color>
     <color name="surface_container">#1D1D1D</color>
-    <color name="on_surface_container">@color/main_fg</color>
+    <color name="on_surface_container">@color/main_foreground</color>
 
-    <color name="main_bg">#1d1d1d</color>
-    <color name="main_fg">#ececec</color>
+    <color name="main_background">#1d1d1d</color>
+    <color name="main_foreground">#ececec</color>
     <color name="table_lines">#C3C3C3</color>
     <color name="line_label">#232323</color>
-    <color name="channel_even">#23232323</color>
-    <color name="channel_even_text">@color/main_fg</color>
+    <color name="table_background">#23232323</color>
+    <color name="table_foreground">@color/main_foreground</color>
+
     <color name="button">#acacac</color>
     <color name="button_text">#000000</color>
     <color name="button_text_disabled">#AA000000</color>

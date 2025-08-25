@@ -6,7 +6,7 @@
 
     <item app:state_focused="false"
         app:state_focused_secondary="false"
-        android:color="@color/main_bg" />
+        android:color="@color/main_background" />
 
     <item app:state_focused="false"
         app:state_focused_secondary="true"

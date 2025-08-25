@@ -17,7 +17,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/main_fg"
+            android:textColor="@color/main_foreground"
             android:text="@string/label_settings_sf"/>
 
         <Button
@@ -73,7 +73,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/main_fg"
+            android:textColor="@color/main_foreground"
             android:text="@string/label_settings_projects_directory"
             android:paddingTop="4dp"/>
 
@@ -112,7 +112,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/main_fg"
+            android:textColor="@color/main_foreground"
             android:text="@string/label_settings_soundfont_directory"
             android:paddingTop="4dp"/>
 
@@ -132,7 +132,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
                 <TextView
-                    android:textColor="@color/main_fg"
+                    android:textColor="@color/main_foreground"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_settings_playback_quality"
@@ -149,7 +149,7 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
-                    android:textColor="@color/main_fg"
+                    android:textColor="@color/main_foreground"
                     android:id="@+id/tvSampleRate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -168,7 +168,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:textColor="@color/main_fg"
+                android:textColor="@color/main_foreground"
                 android:text="@string/label_settings_same_line_release"
                 android:layout_weight="1"
                 android:layout_width="0dp"
@@ -192,7 +192,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
                 <TextView
-                    android:textColor="@color/main_fg"
+                    android:textColor="@color/main_foreground"
                     android:text="@string/label_settings_relative"
                     android:layout_weight="1"
                     android:layout_width="0dp"
@@ -216,7 +216,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:textColor="@color/main_fg"
+                android:textColor="@color/main_foreground"
                 android:text="@string/label_settings_use_preferred_sf"
                 android:layout_weight="1"
                 android:layout_width="0dp"
@@ -245,7 +245,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:textColor="@color/main_fg"
+                android:textColor="@color/main_foreground"
                 android:text="@string/label_settings_allow_std_percussion"
                 android:layout_weight="1"
                 android:layout_width="0dp"
@@ -267,7 +267,7 @@
             android:layout_height="wrap_content">
 
             <TextView
-                android:textColor="@color/main_fg"
+                android:textColor="@color/main_foreground"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
                 android:text="@string/settings_screen_orientation"
@@ -344,7 +344,7 @@
             android:layout_height="wrap_content">
 
             <TextView
-                android:textColor="@color/main_fg"
+                android:textColor="@color/main_foreground"
                 android:paddingBottom="4dp"
                 android:textAlignment="center"
                 android:text="@string/settings_night_mode"

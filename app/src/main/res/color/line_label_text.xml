@@ -3,19 +3,19 @@
     <item app:state_focused="false"
         app:state_muted="false"
         app:state_focused_secondary="false"
-        android:color="@color/channel_even_text" />
+        android:color="@color/table_foreground" />
     <item app:state_focused="true"
         app:state_muted="false"
-        android:color="@color/empty_selected_text" />
+        android:color="@color/leaf_empty_selected_foreground" />
     <item app:state_focused="false"
         app:state_muted="false"
         app:state_focused_secondary="true"
-        android:color="@color/empty_selected_text" />
+        android:color="@color/leaf_empty_selected_foreground" />
 
     <item app:state_focused="false"
         app:state_muted="true"
         app:state_focused_secondary="false"
-        android:color="@color/channel_even_text" />
+        android:color="@color/table_foreground" />
 
     <item app:state_focused="true"
         app:state_muted="true"

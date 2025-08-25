@@ -75,7 +75,7 @@ class PanSliderWidget(context: Context, attrs: AttributeSet? = null): LinearLayo
             val handle_point = padding + ((width - (2 * padding)) * relative_n)
 
             this.paint.strokeWidth = 1F
-            this.paint.color = ContextCompat.getColor(this.context, R.color.main_bg)
+            this.paint.color = ContextCompat.getColor(this.context, R.color.main_background)
             canvas.drawOval(
                 (width / 2F) - (padding / 3f),
                 (height / 2F) - (padding / 3f),

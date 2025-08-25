@@ -5,6 +5,5 @@
             <solid android:color="@color/line_label_std_selector"/>
         </shape>
     </item>
-
     <item android:drawable="@drawable/leaf_border" />
 </layer-list>

@@ -31,7 +31,7 @@
         app:state_active="false"
         app:state_spill="false"
         app:state_muted="false"
-        android:color="@color/empty_selected_text" />
+        android:color="@color/leaf_empty_selected_foreground" />
     <item app:state_focused="true"
         app:state_focused_secondary="false"
         app:state_active="true"
@@ -89,7 +89,7 @@
         app:state_active="false"
         app:state_spill="false"
         app:state_muted="true"
-        android:color="@color/empty_selected_text" />
+        android:color="@color/leaf_empty_selected_foreground" />
     <item app:state_focused="true"
         app:state_focused_secondary="false"
         app:state_active="true"

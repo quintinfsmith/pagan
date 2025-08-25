@@ -1,61 +1,37 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.Pagan" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="toolbarNavigationButtonStyle">@style/Theme.Pagan.NavigationButton</item>
+        <item name="actionOverflowMenuStyle">@style/Theme.Pagan.OverflowMenu</item>
+        <item name="actionOverflowButtonStyle">@style/Theme.Pagan.OverflowButton</item>
+        <item name="actionButtonStyle">@style/Theme.Pagan.ActionButton</item>
+        <item name="buttonStyle">@style/Theme.Pagan.Button</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorSurfaceContainerHighest">@color/main_bg</item>
+        <item name="colorSurfaceContainerHighest">@color/main_background</item>
         <item name="colorPrimaryVariant">#000000</item>
-        <item name="android:windowBackground">@color/main_bg</item>
         <item name="colorOnPrimary">@color/primary_text</item>
         <item name="colorSecondary">@color/leaf_main</item>
         <item name="colorSecondaryVariant">@color/leaf_secondary</item>
         <item name="colorOnSecondary">#1A1a1a</item>
-
-        <item name="android:textColorPrimary">@color/on_surface_container</item>'
-
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/on_surface</item>
         <item name="colorSurfaceContainer">@color/surface_container</item>
-        <item name="toolbarNavigationButtonStyle">@style/navigation_button</item>
-        <item name="actionOverflowMenuStyle">@style/overflow_menu</item>
-        <item name="actionOverflowButtonStyle">@style/overflow_button</item>
-        <item name="actionButtonStyle">@style/action_button</item>
-        <item name="buttonStyle">@style/Theme.Pagan.Button</item>
-        <!-- Customize your theme here. -->
+
+        <item name="android:textColorPrimary">@color/on_surface_container</item>
+        <item name="android:windowBackground">@color/main_background</item>
 
         <item name="soundfont_warning_background">@color/blue_sky</item>
         <item name="soundfont_warning_frame">@color/blue_dark</item>
         <item name="soundfont_warning_text">@color/white</item>
         <item name="soundfont_warning_link">@color/link_color</item>
+
     </style>
-    <style name="navigation_button" parent="Widget.AppCompat.Toolbar.Button.Navigation">
-        <item name="tint">@color/on_surface</item>
-    </style>
-    <style name="action_button" parent="@style/Widget.AppCompat.ActionButton">
-        <item name="android:drawableTint">@color/on_surface</item>
-    </style>
-    <style name="overflow_menu" parent="Widget.Material3.PopupMenu.Overflow">
-    </style>
-    <style name="overflow_button" parent="Widget.Material3.Search.ActionButton.Overflow">
-        <item name="android:tint">@color/on_surface</item>
-    </style>
-    <style name="Theme.Pagan.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
-    <style name="Theme.Pagan.SeekBar" parent="Widget.AppCompat.SeekBar">
-        <item name="android:thumbTint">@color/primary</item>
-        <item name="android:progressTint">@color/primary</item>
-    </style>
-    <style name="Theme.Pagan.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
-        <item name="colorSurfaceContainerHighest">@color/main_bg</item>
-    </style>
-    <style name="Theme.Pagan.Button" parent="ThemeOverlay.Material3.Button">
-    </style>
-    <style name="Theme.Pagan.Button.Tonal" parent="ThemeOverlay.Material3.Button.TonalButton">
-    </style>
-    <style name="Theme.Pagan.IconButton" parent="Widget.Material3.Button.IconButton.Filled"></style>
+
     <style name="Theme.Pagan.Dialog" parent="Widget.AppCompat.ButtonBar.AlertDialog">
+            <item name="android:windowBackground">@drawable/dialog_background</item>
+            <item name="android:textColor">@color/on_surface_container</item>
+
         <item name="android:windowIsFloating">true</item>
         <item name="android:background">@null</item>
         <item name="android:windowElevation">4dp</item>
@@ -63,9 +39,6 @@
         <item name="android:paddingEnd">7dp</item>
         <item name="android:paddingTop">4dp</item>
         <item name="android:paddingBottom">4dp</item>
-        <item name="android:windowBackground">@drawable/dialog_background</item>
-        <item name="android:textColor">@color/on_surface_container</item>
-
         <item name="android:windowTitleStyle">@style/Theme.Pagan.Dialog.Title</item>
         <item name="android:windowTitleBackgroundStyle">@style/Theme.Pagan.Dialog.Title.Background</item>
 
@@ -77,21 +50,35 @@
     </style>
 
     <style name="Theme.Pagan.EditText" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="colorPrimary">@color/empty_selected</item>
+        <item name="cornerSize">12dp</item>
+        <item name="cornerFamily">rounded</item>
+
+        <item name="colorPrimary">@color/leaf_empty_selected</item>
+        <item name="colorControlActivated">@color/leaf_empty_selected</item>
+        <item name="colorOutline">@color/on_surface_container</item>
         <item name="android:textColorPrimary">@color/on_surface_container</item>
         <item name="android:textColor">@color/on_surface_container</item>
         <item name="android:editTextColor">@color/on_surface_container</item>
-        <item name="colorControlActivated">@color/empty_selected</item>
-        <item name="colorOutline">@color/on_surface_container</item>
-        <item name="cornerSize">12dp</item>
-        <item name="cornerFamily">rounded</item>
     </style>
+
+    <style name="Theme.Pagan.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.Pagan.OverflowMenu" parent="Widget.Material3.PopupMenu.Overflow"/>
+    <style name="Theme.Pagan.Button" parent="ThemeOverlay.Material3.Button"/>
+    <style name="Theme.Pagan.Button.Tonal" parent="ThemeOverlay.Material3.Button.TonalButton"/>
+    <style name="Theme.Pagan.IconButton" parent="Widget.Material3.Button.IconButton.Filled"/>
 
     <style name="Theme.Pagan.Dialog.Title" parent="MaterialAlertDialog.Material3.Title.Text">
         <item name="android:textAlignment">center</item>
         <item name="android:textColor">@color/on_surface_container</item>
     </style>
 
+    <style name="Theme.Pagan.Dialog.ButtonBar" parent="Widget.AppCompat.ButtonBar">
+        <item name="android:padding">0dp</item>
+    </style>
     <style name="Theme.Pagan.Dialog.Title.Background" parent="MaterialAlertDialog.Material3.Title.Panel">
         <item name="android:padding">0dp</item>
         <item name="android:textSize">20dp</item>
@@ -99,9 +86,27 @@
         <item name="android:textAlignment">center</item>
     </style>
 
-    <style name="Theme.Pagan.Dialog.ButtonBar" parent="Widget.AppCompat.ButtonBar">
-        <item name="android:padding">0dp</item>
+    <style name="Theme.Pagan.NavigationButton" parent="Widget.AppCompat.Toolbar.Button.Navigation">
+        <item name="tint">@color/on_surface</item>
     </style>
+
+    <style name="Theme.Pagan.ActionButton" parent="@style/Widget.AppCompat.ActionButton">
+        <item name="android:drawableTint">@color/on_surface</item>
+    </style>
+
+    <style name="Theme.Pagan.OverflowButton" parent="Widget.Material3.Search.ActionButton.Overflow">
+        <item name="android:tint">@color/on_surface</item>
+    </style>
+
+    <style name="Theme.Pagan.SeekBar" parent="Widget.AppCompat.SeekBar">
+        <item name="android:thumbTint">@color/primary</item>
+        <item name="android:progressTint">@color/primary</item>
+    </style>
+
+    <style name="Theme.Pagan.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="colorSurfaceContainerHighest">@color/main_background</item>
+    </style>
+
     <style name="Theme.Pagan.Dialog.PositiveButton" parent="Theme.Pagan.Button">
         <item name="android:minHeight">@dimen/min_alert_button_height</item>
         <item name="android:minWidth">@dimen/min_alert_button_width</item>
@@ -110,6 +115,7 @@
         <item name="android:paddingStart">@dimen/alert_button_padding_h</item>
         <item name="android:paddingEnd">@dimen/alert_button_padding_h</item>
     </style>
+
     <style name="Theme.Pagan.Dialog.NegativeButton" parent="Theme.Pagan.Button">
         <item name="android:minWidth">@dimen/min_alert_button_width</item>
         <item name="android:minHeight">@dimen/min_alert_button_height</item>
@@ -118,19 +124,17 @@
         <item name="android:paddingBottom">@dimen/alert_button_padding_v</item>
         <item name="android:paddingStart">@dimen/alert_button_padding_h</item>
         <item name="android:paddingEnd">@dimen/alert_button_padding_h</item>
-
-
     </style>
+
     <style name="Theme.Pagan.Dialog.NeutralButton" parent="Widget.Material3.Button.OutlinedButton">
         <item name="android:minWidth">@dimen/min_alert_button_width</item>
         <item name="android:minHeight">@dimen/min_alert_button_height</item>
         <item name="android:layout_marginEnd">24dp</item>
-        <item name="android:textColor">@color/main_fg</item>
-        <item name="colorOutline">@color/main_fg</item>
+        <item name="android:textColor">@color/main_foreground</item>
+        <item name="colorOutline">@color/main_foreground</item>
         <item name="android:paddingTop">@dimen/alert_button_padding_v</item>
         <item name="android:paddingBottom">@dimen/alert_button_padding_v</item>
         <item name="android:paddingStart">@dimen/alert_button_padding_h</item>
         <item name="android:paddingEnd">@dimen/alert_button_padding_h</item>
     </style>
-
 </resources>

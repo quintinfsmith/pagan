@@ -29,8 +29,8 @@
     <color name="ctl_leaf_secondary">#567B80</color>
     <color name="ctl_leaf_selected_text">#FFFFFF</color>
 
-    <color name="empty_selected">#995ba1d6</color>
-    <color name="empty_selected_text">#000000</color>
+    <color name="leaf_empty_selected">#995ba1d6</color>
+    <color name="leaf_empty_selected_foreground">#000000</color>
     <color name="label_selected">@color/blue_sky</color>
     <color name="label_selected_text">#000000</color>
     <color name="label_selected_secondary">@color/blue_sky</color>
@@ -40,8 +40,8 @@
     <color name="label_ctl_selected_secondary">#3e6e91</color>
     <color name="label_ctl_selected_secondary_text">#e1e1e1</color>
 
-    <color name="popup_menu_item_selected_bg">@color/empty_selected</color>
-    <color name="popup_menu_item_selected_fg">@color/empty_selected_text</color>
+    <color name="popup_menu_item_selected_bg">@color/leaf_empty_selected</color>
+    <color name="popup_menu_item_selected_fg">@color/leaf_empty_selected_foreground</color>
 
     <color name="radio_unchecked">#55000000</color>
     <color name="radio_checked">@color/primary</color>
@@ -63,17 +63,17 @@
 
     <color name="primary_dark">@color/primary</color>
 
-    <color name="main_bg">#e0e0e0</color>
-    <color name="main_fg">#2A2A46</color>
+    <color name="main_background">#e0e0e0</color>
+    <color name="main_foreground">#2A2A46</color>
     <color name="table_lines">#000000</color>
     <color name="line_label">#C1D1E3</color>
-    <color name="channel_even">#44C1D1E3</color>
-    <color name="channel_even_text">@color/main_fg</color>
+    <color name="table_background">#44C1D1E3</color>
+    <color name="table_foreground">@color/main_foreground</color>
     <color name="button">#FFFFFF</color>
-    <color name="button_text">@color/main_fg</color>
+    <color name="button_text">@color/main_foreground</color>
     <color name="button_text_disabled">#AA2A2A46</color>
     <color name="button_text_faded">#AA979797</color>
-    <color name="button_alt">@color/main_fg</color>
+    <color name="button_alt">@color/main_foreground</color>
     <color name="button_alt_text">#FFFFFF</color>
     <color name="ctl_line">#FFFFFF</color>
     <color name="ctl_line_text">#101010</color>

@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical|end"
             android:hint="@string/hexcode"
-            android:textColorHint="@color/main_fg"
+            android:textColorHint="@color/main_foreground"
             android:theme="@style/Theme.Pagan.EditText">
 
             <com.qfs.pagan.HexEditText

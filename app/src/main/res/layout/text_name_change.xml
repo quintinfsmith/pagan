@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/dlg_project_name"
-        android:textColorHint="@color/main_fg"
+        android:textColorHint="@color/main_foreground"
         android:theme="@style/Theme.Pagan.EditText">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/dlg_project_notes"
-        android:textColorHint="@color/main_fg"
+        android:textColorHint="@color/main_foreground"
         android:theme="@style/Theme.Pagan.EditText">
 
         <com.google.android.material.textfield.TextInputEditText

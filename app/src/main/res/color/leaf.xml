@@ -30,7 +30,7 @@
         app:state_active="false"
         app:state_spill="false"
         app:state_muted="false"
-        android:color="@color/empty_selected" />
+        android:color="@color/leaf_empty_selected" />
     <item app:state_focused="true"
         app:state_focused_secondary="false"
         app:state_active="true"
@@ -47,7 +47,7 @@
         app:state_active="false"
         app:state_spill="false"
         app:state_muted="false"
-        android:color="@color/empty_selected" />
+        android:color="@color/leaf_empty_selected" />
     <item app:state_focused="false"
         app:state_focused_secondary="true"
         app:state_active="true"
@@ -69,7 +69,7 @@
         app:state_active="false"
         app:state_spill="false"
         app:state_muted="false"
-        android:color="@color/channel_even" />
+        android:color="@color/table_background" />
     <!--item android:color="@color/sample_default" /-->
     <item app:state_focused="false"
         app:state_focused_secondary="false"

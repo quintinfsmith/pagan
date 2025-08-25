@@ -188,7 +188,7 @@
 
     <style name="corner_view">
         <item name="android:clickable">false</item>
-        <item name="android:tint">@color/main_fg</item>
+        <item name="android:tint">@color/main_foreground</item>
         <item name="android:paddingTop">5dp</item>
         <item name="android:paddingLeft">5dp</item>
         <item name="android:paddingRight">2dp</item>
@@ -278,7 +278,7 @@
 
     <style name="contextmenu_primary">
         <item name="android:background">@drawable/contextmenu_primary</item>
-        <item name="android:backgroundTint">@color/main_bg</item>
+        <item name="android:backgroundTint">@color/main_background</item>
         <item name="android:layout_width">@dimen/contextmenu_primary_width</item>
         <item name="android:layout_height">@dimen/contextmenu_primary_height</item>
     </style>
@@ -294,7 +294,7 @@
 
     <style name="contextmenu_secondary">
         <item name="android:background">@drawable/contextmenu_secondary</item>
-        <item name="android:backgroundTint">@color/main_bg</item>
+        <item name="android:backgroundTint">@color/main_background</item>
         <item name="android:layout_width">@dimen/contextmenu_secondary_width</item>
         <item name="android:layout_height">@dimen/contextmenu_secondary_height</item>
     </style>

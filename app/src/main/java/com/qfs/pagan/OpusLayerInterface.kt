@@ -48,8 +48,8 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val channel_controller_domain = listOf(
             Pair(EffectType.Volume, R.drawable.volume),
-            Pair(EffectType.Pan, R.drawable.pan_icon),
-            Pair(EffectType.Delay, R.drawable.pan_icon)
+            Pair(EffectType.Pan, R.drawable.pan_icon)
+            //Pair(EffectType.Delay, R.drawable.pan_icon)
         )
 
         val line_controller_domain = listOf(

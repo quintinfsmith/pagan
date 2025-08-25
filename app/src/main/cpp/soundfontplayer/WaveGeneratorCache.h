@@ -49,8 +49,7 @@ class WaveGeneratorCache {
             this->sample_rate = sample_rate;
         }
 
-        ~WaveGeneratorCache() {
-        }
+        ~WaveGeneratorCache() {}
 
         //  Current no weighting applied
         static float weight_volume(float input_value) {

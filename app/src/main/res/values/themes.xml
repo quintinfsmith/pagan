@@ -20,11 +20,12 @@
         <item name="android:textColorPrimary">@color/on_surface_container</item>
         <item name="android:windowBackground">@color/main_background</item>
 
+        <item name="leaf">@drawable/leaf</item>
+
         <item name="soundfont_warning_background">@color/blue_sky</item>
         <item name="soundfont_warning_frame">@color/blue_dark</item>
         <item name="soundfont_warning_text">@color/white</item>
         <item name="soundfont_warning_link">@color/link_color</item>
-
     </style>
 
     <style name="Theme.Pagan.Dialog" parent="Widget.AppCompat.ButtonBar.AlertDialog">

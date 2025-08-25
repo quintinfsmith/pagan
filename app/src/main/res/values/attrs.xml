@@ -28,4 +28,8 @@
     <attr name="soundfont_warning_background" format="color" />
     <attr name="soundfont_warning_text" format="color" />
     <attr name="soundfont_warning_link" format="color" />
+
+    <declare-styleable name="pagan">
+        <attr name="leaf" format="reference"/>
+    </declare-styleable>
 </resources>

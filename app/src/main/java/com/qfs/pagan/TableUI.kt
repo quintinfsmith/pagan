@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.drawable.Drawable
+import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
 import android.view.View
@@ -57,9 +59,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val tagged_paint_column = Paint()
         var touch_position_x = 0F
         var touch_position_y = 0F
+        val leaf_drawable: Drawable
+
 
         var invalidate_queued = false
         init {
+            val typed_value = TypedValue()
+            this.context.theme.resolveAttribute(R.attr.leaf, typed_value, true)
+            this.leaf_drawable = ContextCompat.getDrawable(this.context, typed_value.resourceId) ?: throw Exception("TODO")
+
             this.table_line_paint.color = ContextCompat.getColor(this.context, R.color.table_lines)
             this.table_line_paint.strokeWidth = this.context.resources.getDimension(R.dimen.stroke_leaf)
 
@@ -644,15 +652,14 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 return@draw_tree
                             }
 
-                            val leaf_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.leaf)!!
-                            leaf_drawable.setState(state)
-                            leaf_drawable.setBounds(
+                            this.leaf_drawable.setState(state)
+                            this.leaf_drawable.setBounds(
                                 (x).toInt(),
                                 (y).toInt(),
                                 (x + width).toInt(),
                                 (y + line_height).toInt()
                             )
-                            leaf_drawable.draw(canvas)
+                            this.leaf_drawable.draw(canvas)
 
                             if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active))) {
                                 colored_line_paint.color = line.color!!

@@ -2101,7 +2101,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                         && position.subList(0, cposition.size) == cposition
             }
             CursorMode.Range -> {
-                (beat == this.cursor.range!!.second.beat) && (this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type)
+                (beat == this.cursor.range!!.second.beat) && (this.cursor.ctl_level == CtlLineLevel.Channel && this.cursor.ctl_type == control_type) && this.cursor.range!!.first.channel == channel
             }
             CursorMode.Column,
             CursorMode.Line,

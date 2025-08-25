@@ -1,5 +1,6 @@
 //
 // Created by pent on 8/12/25.
+// Work in Progress
 //
 
 #ifndef PAGAN_WAVEGENERATORCACHE_H
@@ -42,19 +43,13 @@ class BandPassFilter {
 };
 
 class WaveGeneratorCache {
-    std::unordered_map<int, BandPassFilter*>* current_band_pass;
-    std::unordered_map<int, DelayHandle*>* current_delay_handle;
     public:
         int sample_rate;
         void init(int sample_rate) {
             this->sample_rate = sample_rate;
-            this->current_band_pass = (std::unordered_map<int, BandPassFilter*>*)malloc(sizeof(std::unordered_map<int, BandPassFilter*>));
-            this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
         }
 
         ~WaveGeneratorCache() {
-            delete this->current_band_pass;
-            delete this->current_delay_handle;
         }
 
         //  Current no weighting applied
@@ -62,12 +57,12 @@ class WaveGeneratorCache {
             return tanh(input_value);
         }
 
-        bool has_delay_handle(int key) {
-            if (this->current_delay_handle == nullptr) {
-                this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
-            }
-            return this->current_delay_handle->find(key) != this->current_delay_handle->end();
-        }
+        //bool has_delay_handle(int key) {
+        //    if (this->current_delay_handle == nullptr) {
+        //        this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
+        //    }
+        //    return this->current_delay_handle->find(key) != this->current_delay_handle->end();
+        //}
         //int* delay_keys;
         //DelayHandle* delays;
         //int size = 0;
@@ -118,9 +113,9 @@ void apply_bandpass(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_b
 }
 
 void apply_delay(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buffer, float* working_array, int frame_count) {
-    if (!generator_cache->has_delay_handle(effect_buffer->buffer_id)) {
-     //   generator_cache->new_delay_handle(effect_buffer->buffer_id);
-    }
+   // if (!generator_cache->has_delay_handle(effect_buffer->buffer_id)) {
+   //  //   generator_cache->new_delay_handle(effect_buffer->buffer_id);
+   // }
 
     //DelayHandle* delay_handle = generator_cache->get_delay_handle(effect_buffer->buffer_id);
 

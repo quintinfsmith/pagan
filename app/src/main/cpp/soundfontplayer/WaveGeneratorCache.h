@@ -46,17 +46,10 @@ class WaveGeneratorCache {
     std::unordered_map<int, DelayHandle*>* current_delay_handle;
     public:
         int sample_rate;
-        float volume_change_velocity;
-        float volume_change_factor;
-        float volume_gravity;
         void init(int sample_rate) {
             this->sample_rate = sample_rate;
             this->current_band_pass = (std::unordered_map<int, BandPassFilter*>*)malloc(sizeof(std::unordered_map<int, BandPassFilter*>));
             this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
-
-            this->volume_gravity = 4 / sample_rate;
-            this->volume_change_factor = 1.0;
-            this->volume_change_velocity = 0;
         }
 
         ~WaveGeneratorCache() {
@@ -64,25 +57,9 @@ class WaveGeneratorCache {
             delete this->current_delay_handle;
         }
 
-        float weight_volume(float input_value) {
-            float abs_value = fabs(input_value);
-            if (abs_value > this->volume_change_factor) {
-                this->volume_change_velocity += abs_value;
-            }
-
-            float output_value = tanh(input_value / fmax(1, this->volume_change_factor));
-
-            if (this->volume_change_factor > 1) {
-                this->volume_change_velocity -= this->volume_gravity;
-            }
-
-            if ((this->volume_change_factor > 1 && this->volume_change_velocity < 0) || (this->volume_change_factor <= 1 && this->volume_change_velocity > 0)) {
-                this->volume_change_factor += this->volume_change_velocity;
-            } else {
-                this->volume_change_velocity = 0;
-            }
-
-            return output_value;
+        //  Current no weighting applied
+        static float weight_volume(float input_value) {
+            return tanh(input_value);
         }
 
         bool has_delay_handle(int key) {

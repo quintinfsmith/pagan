@@ -5,8 +5,6 @@
 
     <color name="main_background_etching">#22000000</color>
 
-    <color name="primary_dark">@color/surface</color>
-
     <color name="surface">#2d2d2d</color>
     <color name="on_surface">@color/main_foreground</color>
     <color name="surface_container">#1D1D1D</color>

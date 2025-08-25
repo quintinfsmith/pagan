@@ -61,8 +61,6 @@
     <color name="surface_container">#e8e8e8</color>
     <color name="on_surface_container">#2d2d2d</color>
 
-    <color name="primary_dark">@color/primary</color>
-
     <color name="main_background">#e0e0e0</color>
     <color name="main_foreground">#2A2A46</color>
     <color name="table_lines">#000000</color>

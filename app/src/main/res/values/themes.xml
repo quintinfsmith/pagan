@@ -7,7 +7,6 @@
         <item name="actionButtonStyle">@style/Theme.Pagan.ActionButton</item>
         <item name="buttonStyle">@style/Theme.Pagan.Button</item>
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorSurfaceContainerHighest">@color/main_background</item>
         <item name="colorPrimaryVariant">#000000</item>
         <item name="colorOnPrimary">@color/primary_text</item>
@@ -29,8 +28,8 @@
     </style>
 
     <style name="Theme.Pagan.Dialog" parent="Widget.AppCompat.ButtonBar.AlertDialog">
-            <item name="android:windowBackground">@drawable/dialog_background</item>
-            <item name="android:textColor">@color/on_surface_container</item>
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:textColor">@color/on_surface_container</item>
 
         <item name="android:windowIsFloating">true</item>
         <item name="android:background">@null</item>

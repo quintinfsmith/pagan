@@ -9,7 +9,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Button
         style="@style/contextmenu_button"
-        app:icon="@drawable/tag"
+        app:icon="@drawable/icon_tag"
         android:id="@+id/btnTag"
         android:contentDescription="@string/cd_mark_section"/>
 
@@ -19,7 +19,7 @@
 
     <Button
         style="@style/contextmenu_button"
-        app:icon="@drawable/untag"
+        app:icon="@drawable/icon_untag"
         android:id="@+id/btnUntag"
         android:contentDescription="@string/cd_remove_section_mark"/>
 
@@ -30,7 +30,7 @@
 
     <Button
         style="@style/contextmenu_button"
-        app:icon="@drawable/adjust"
+        app:icon="@drawable/icon_adjust"
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
 
@@ -41,7 +41,7 @@
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnRemoveBeat"
-        app:icon="@drawable/remove_beat"
+        app:icon="@drawable/icon_remove_beat"
         android:contentDescription="@string/cd_remove_beat" />
 
     <Space
@@ -51,6 +51,6 @@
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnInsertBeat"
-        app:icon="@drawable/insert_beat"
+        app:icon="@drawable/icon_insert_beat"
         android:contentDescription="@string/cd_insert_beat" />
 </LinearLayout>

@@ -27,25 +27,25 @@
                     android:id="@+id/btnSplit"
                     android:contentDescription="@string/cd_split"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/split"/>
+                    app:icon="@drawable/icon_split"/>
 
                 <Button
                     android:id="@+id/btnInsert"
                     android:contentDescription="@string/cd_insert"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/insert" />
+                    app:icon="@drawable/icon_insert" />
 
                 <Button
                     android:id="@+id/btnRemove"
                     android:contentDescription="@string/cd_remove"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/remove" />
+                    app:icon="@drawable/icon_remove" />
 
                 <Button
                     android:id="@+id/btnUnset"
                     android:contentDescription="@string/cd_unset"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/unset"/>
+                    app:icon="@drawable/icon_unset"/>
 
                 <Button
                     android:id="@+id/btnDuration"

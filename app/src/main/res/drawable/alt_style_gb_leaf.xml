@@ -6,6 +6,6 @@
         </shape>
     </item>
 
-    <item android:drawable="@drawable/alt_style_gb_leaf_inner_empty" />
+    <!--item android:drawable="@drawable/alt_style_gb_leaf_inner_empty" /-->
     <item android:drawable="@drawable/leaf_border" />
 </layer-list>

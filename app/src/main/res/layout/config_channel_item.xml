@@ -17,7 +17,7 @@
     <Button
         android:layout_gravity="center"
         android:id="@+id/btnClose"
-        app:icon="@drawable/delete_channel"
+        app:icon="@drawable/icon_delete_channel"
         style="@style/recycler_option_x"
         android:layout_height="match_parent"/>
 </LinearLayout>

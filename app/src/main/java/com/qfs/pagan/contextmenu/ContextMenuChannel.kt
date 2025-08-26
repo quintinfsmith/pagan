@@ -83,9 +83,9 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
         (this.button_mute as MaterialButton).setIconResource(
             if (channel.muted) {
-                R.drawable.mute
+                R.drawable.icon_mute
             } else {
-                R.drawable.unmute
+                R.drawable.icon_unmute
             }
         )
     }

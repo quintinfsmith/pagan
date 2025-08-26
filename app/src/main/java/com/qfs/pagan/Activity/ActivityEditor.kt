@@ -1446,7 +1446,7 @@ class ActivityEditor : PaganActivity() {
         this.loading_reticle_hide()
         this.runOnUiThread {
             this.clear_forced_title()
-            this.set_playback_button(R.drawable.ic_baseline_pause_24)
+            this.set_playback_button(R.drawable.icon_pause)
         }
 
         if (!this.update_playback_state_midi(PlaybackState.Playing)) {
@@ -1490,7 +1490,7 @@ class ActivityEditor : PaganActivity() {
     fun restore_playback_state() {
         if (this.update_playback_state_soundfont(PlaybackState.Ready)) {
             this.runOnUiThread {
-                this.set_playback_button(R.drawable.ic_baseline_play_arrow_24)
+                this.set_playback_button(R.drawable.icon_play)
                 this._disable_blocker_view()
             }
         }
@@ -1499,7 +1499,7 @@ class ActivityEditor : PaganActivity() {
     fun restore_midi_playback_state() {
         if (this.update_playback_state_midi(PlaybackState.Ready)) {
             this.runOnUiThread {
-                this.set_playback_button(R.drawable.ic_baseline_play_arrow_24)
+                this.set_playback_button(R.drawable.icon_play)
                 this._disable_blocker_view()
             }
         }
@@ -3213,10 +3213,10 @@ class ActivityEditor : PaganActivity() {
 
     fun get_effect_transition_icon(transition: EffectTransition): Int {
         return when (transition) {
-            EffectTransition.Instant -> R.drawable.immediate
-            EffectTransition.Linear -> R.drawable.linear
-            EffectTransition.RInstant -> R.drawable.rimmediate
-            EffectTransition.RLinear -> R.drawable.rlinear
+            EffectTransition.Instant -> R.drawable.icon_transition_immediate
+            EffectTransition.Linear -> R.drawable.icon_transition_linear
+            EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
+            EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
         }
     }
 

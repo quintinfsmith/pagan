@@ -65,12 +65,12 @@ abstract class LineLabelCtl(context: Context, var ctl_level: CtlLineLevel, var c
 
     fun get_label_icon(): Int {
         return when (this.ctl_type) {
-            EffectType.Tempo -> R.drawable.tempo
-            EffectType.Volume -> R.drawable.volume
-            EffectType.Velocity -> R.drawable.velocity
-            EffectType.Reverb -> R.drawable.volume // Placeholder TODO
-            EffectType.Pan -> R.drawable.pan_icon
-            EffectType.Delay -> R.drawable.volume // Placeholder TODO
+            EffectType.Tempo -> R.drawable.icon_tempo
+            EffectType.Volume -> R.drawable.icon_volume
+            EffectType.Velocity -> R.drawable.icon_velocity
+            EffectType.Reverb -> R.drawable.icon_volume // Placeholder TODO
+            EffectType.Pan -> R.drawable.icon_pan
+            EffectType.Delay -> R.drawable.icon_volume // Placeholder TODO
         }
     }
 

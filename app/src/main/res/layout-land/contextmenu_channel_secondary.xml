@@ -6,7 +6,7 @@
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnMuteChannel"
-        app:icon="@drawable/mute"
+        app:icon="@drawable/icon_mute"
         android:layout_height="match_parent"
         android:contentDescription="@string/cd_channel_mute"/>
 

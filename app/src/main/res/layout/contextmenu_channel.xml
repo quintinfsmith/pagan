@@ -9,7 +9,7 @@
             style="@style/contextmenu_button"
             android:visibility="gone"
             android:id="@+id/btnToggleChannelCtl"
-            app:icon="@drawable/ctl"
+            app:icon="@drawable/icon_ctl"
             android:contentDescription="@string/cd_channel_volume"/>
 
         <Space
@@ -19,7 +19,7 @@
 
         <Button
             style="@style/contextmenu_button"
-            app:icon="@drawable/adjust"
+            app:icon="@drawable/icon_adjust"
             android:id="@+id/btnAdjust"
             android:contentDescription="@string/cd_adjust_selection"/>
 
@@ -30,7 +30,7 @@
         <Button
             style="@style/contextmenu_button"
             android:id="@+id/btnRemoveLine"
-            app:icon="@drawable/remove_channel"
+            app:icon="@drawable/icon_remove_channel"
             android:contentDescription="@string/cd_remove_channel"/>
 
         <Space
@@ -40,7 +40,7 @@
         <Button
             style="@style/contextmenu_button"
             android:id="@+id/btnInsertPercussionChannel"
-            app:icon="@drawable/add_channel_kit"
+            app:icon="@drawable/icon_add_channel_kit"
             android:contentDescription="@string/cd_insert_channel"/>
 
         <Space
@@ -50,6 +50,6 @@
         <Button
             style="@style/contextmenu_button"
             android:id="@+id/btnInsertLine"
-            app:icon="@drawable/add_channel"
+            app:icon="@drawable/icon_add_channel"
             android:contentDescription="@string/cd_insert_channel"/>
 </LinearLayout>

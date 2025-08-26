@@ -123,9 +123,9 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         // TODO: I don't like how I'm doing this. Should be a custom button?
         (this.button_mute as MaterialButton).setIconResource(
             if (opus_manager.get_channel(channel).get_line(line_offset).muted) {
-                R.drawable.mute
+                R.drawable.icon_mute
             } else {
-                R.drawable.unmute
+                R.drawable.icon_unmute
             }
         )
 

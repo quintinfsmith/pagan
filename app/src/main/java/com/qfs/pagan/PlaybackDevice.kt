@@ -74,7 +74,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
             this.activity.runOnUiThread {
                 this.activity.loading_reticle_hide()
                 this.activity.clear_forced_title()
-                this.activity.set_playback_button(R.drawable.ic_baseline_pause_24)
+                this.activity.set_playback_button(R.drawable.icon_pause)
             }
             this._first_beat_passed = true
         }

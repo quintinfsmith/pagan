@@ -31,5 +31,6 @@
 
     <declare-styleable name="pagan">
         <attr name="leaf" format="reference"/>
+        <attr name="font_main" format="reference"/>
     </declare-styleable>
 </resources>

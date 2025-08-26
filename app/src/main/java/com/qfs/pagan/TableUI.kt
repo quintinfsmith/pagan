@@ -17,6 +17,7 @@ import android.widget.HorizontalScrollView
 import android.widget.ScrollView
 import android.widget.Space
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -68,6 +69,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.context.theme.resolveAttribute(R.attr.leaf, typed_value, true)
             this.leaf_drawable = ContextCompat.getDrawable(this.context, typed_value.resourceId) ?: throw Exception("TODO")
 
+            this.context.theme.resolveAttribute(R.attr.font_main, typed_value, true)
+            val font = ResourcesCompat.getFont(this.context, typed_value.resourceId)
+
             this.table_line_paint.color = ContextCompat.getColor(this.context, R.color.table_lines)
             this.table_line_paint.strokeWidth = this.context.resources.getDimension(R.dimen.stroke_leaf)
 
@@ -75,24 +79,24 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.text_paint_offset.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
             this.text_paint_offset.isFakeBoldText = true
             this.text_paint_offset.isAntiAlias = true
-            this.text_paint_offset.typeface = this.context.resources.getFont(R.font.fira_sans)
+            this.text_paint_offset.typeface = font
 
             this.text_paint_octave.textSize = this.resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_octave.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
             this.text_paint_octave.isAntiAlias = true
-            this.text_paint_octave.typeface = this.context.resources.getFont(R.font.fira_sans)
+            this.text_paint_octave.typeface = font
 
             this.text_paint_ctl.textSize = this.resources.getDimension(R.dimen.text_size_ctl)
             this.text_paint_ctl.color = ContextCompat.getColor(this.context, R.color.ctl_leaf_text_selector)
             this.text_paint_ctl.isAntiAlias = true
-            this.text_paint_ctl.typeface = this.context.resources.getFont(R.font.fira_sans)
+            this.text_paint_ctl.typeface = font
 
             //this.text_paint_column.textSize = resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_column.isFakeBoldText = true
             this.text_paint_column.isAntiAlias = true
             this.text_paint_column.strokeWidth = 3F
             this.text_paint_column.textSize = this.resources.getDimension(R.dimen.text_size_octave)
-            this.text_paint_column.typeface = this.context.resources.getFont(R.font.fira_sans)
+            this.text_paint_column.typeface = font
 
             this.tagged_paint_column.style = Paint.Style.STROKE
             this.tagged_paint_column.strokeWidth = 3F

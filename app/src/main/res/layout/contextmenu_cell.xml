@@ -40,7 +40,7 @@
                     android:id="@+id/btnSplit"
                     android:contentDescription="@string/cd_split"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/split"/>
+                    app:icon="@drawable/icon_split"/>
 
                 <Space
                     android:layout_height="match_parent"
@@ -51,7 +51,7 @@
                     android:id="@+id/btnInsert"
                     android:contentDescription="@string/cd_insert"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/insert" />
+                    app:icon="@drawable/icon_insert" />
 
                 <Space
                     android:layout_height="match_parent"
@@ -62,7 +62,7 @@
                     android:id="@+id/btnRemove"
                     android:contentDescription="@string/cd_remove"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/remove" />
+                    app:icon="@drawable/icon_remove" />
 
                 <Space
                     android:layout_height="match_parent"
@@ -86,7 +86,7 @@
                     android:id="@+id/btnUnset"
                     android:contentDescription="@string/cd_unset"
                     style="@style/contextmenu_button"
-                    app:icon="@drawable/unset" />
+                    app:icon="@drawable/icon_unset" />
 
                 <Space
                     android:layout_height="match_parent"

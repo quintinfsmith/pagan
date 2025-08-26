@@ -6,7 +6,7 @@
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnToggleCtl"
-        app:icon="@drawable/hide"
+        app:icon="@drawable/icon_hide"
         android:contentDescription="@string/cd_hide_control_line"/>
 
     <Space
@@ -17,6 +17,6 @@
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnRemoveCtl"
-        app:icon="@drawable/remove_line"
+        app:icon="@drawable/icon_remove_line"
         android:contentDescription="@string/cd_remove_control_line"/>
 </LinearLayout>

@@ -5,13 +5,13 @@
         android:id="@+id/itmPlay"
         android:orderInCategory="0"
         app:showAsAction="always"
-        android:icon="@drawable/ic_baseline_play_arrow_24"/>
+        android:icon="@drawable/icon_play"/>
 
     <item android:title="@string/menu_item_undo"
         android:id="@+id/itmUndo"
         android:orderInCategory="0"
         app:showAsAction="always"
-        android:icon="@drawable/ic_baseline_undo_24"/>
+        android:icon="@drawable/icon_undo"/>
     <item
         android:id="@+id/itmNewProject"
         android:title="@string/menu_item_new_project"

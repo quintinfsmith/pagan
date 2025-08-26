@@ -9,18 +9,18 @@
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnInsertLine"
-        app:icon="@drawable/insert_line"
+        app:icon="@drawable/icon_insert_line"
         android:contentDescription="@string/cd_insert_line" />
 
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnRemoveLine"
-        app:icon="@drawable/remove_line"
+        app:icon="@drawable/icon_remove_line"
         android:contentDescription="@string/cd_remove_line" />
 
     <Button
         style="@style/contextmenu_button"
-        app:icon="@drawable/adjust"
+        app:icon="@drawable/icon_adjust"
         android:id="@+id/btnAdjust"
         android:contentDescription="@string/cd_adjust_selection"/>
 
@@ -36,7 +36,7 @@
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnToggleChannelCtl"
-        app:icon="@drawable/ctl"
+        app:icon="@drawable/icon_ctl"
         android:contentDescription="@string/cd_show_effect_controls"/>
 
     <Space

@@ -5,7 +5,7 @@
     android:orientation="horizontal">
     <Button
         android:id="@+id/btnMuteLine"
-        app:icon="@drawable/mute"
+        app:icon="@drawable/icon_mute"
         style="@style/contextmenu_button"
         android:layout_height="match_parent"
         android:contentDescription="@string/cd_line_mute"/>

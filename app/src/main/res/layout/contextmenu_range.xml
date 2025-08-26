@@ -17,7 +17,7 @@
 
         <Button
             style="@style/contextmenu_button"
-            app:icon="@drawable/adjust"
+            app:icon="@drawable/icon_adjust"
             android:id="@+id/btnAdjust"
             android:contentDescription="@string/cd_adjust_selection"/>
 
@@ -28,7 +28,7 @@
 
         <Button
             style="@style/contextmenu_button"
-            app:icon="@drawable/unset"
+            app:icon="@drawable/icon_unset"
             android:id="@+id/btnEraseSelection"
             android:contentDescription="@string/cd_clear_selection"/>
 

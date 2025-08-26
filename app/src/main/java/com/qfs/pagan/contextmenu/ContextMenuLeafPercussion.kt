@@ -37,10 +37,10 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
         if (current_event_tree.has_event()) {
             val event = current_event_tree.get_event()!!
-            (this.button_unset as MaterialButton).setIconResource(R.drawable.unset)
+            (this.button_unset as MaterialButton).setIconResource(R.drawable.icon_unset)
             this.button_duration.text = this.context.getString(R.string.label_duration, event.duration)
         } else {
-            (this.button_unset as MaterialButton).setIconResource(R.drawable.set_percussion)
+            (this.button_unset as MaterialButton).setIconResource(R.drawable.icon_set_percussion)
             this.button_duration.text = ""
         }
 

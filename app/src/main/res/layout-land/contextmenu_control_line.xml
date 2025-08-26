@@ -9,12 +9,12 @@
         style="@style/contextmenu_button"
         android:id="@+id/btnRemoveCtl"
         android:contentDescription="@string/cd_remove_control_line"
-        app:icon="@drawable/remove_line" />
+        app:icon="@drawable/icon_remove_line" />
 
     <Button
         style="@style/contextmenu_button"
         android:id="@+id/btnToggleCtl"
         android:contentDescription="@string/cd_hide_control_line"
-        app:icon="@drawable/hide" />
+        app:icon="@drawable/icon_hide" />
 
 </LinearLayout>

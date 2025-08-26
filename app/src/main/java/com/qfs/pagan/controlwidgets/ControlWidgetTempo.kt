@@ -17,7 +17,6 @@ class ControlWidgetTempo(_level: CtlLineLevel, is_initial_event: Boolean, contex
 
     override fun on_inflated() {
         this.input = this.inner.findViewById(R.id.tempo_value_button)
-        (this.input as MaterialButton).setIconResource(R.drawable.tempo_widget_icon)
         this.input.setOnClickListener {
             (this.context as ActivityEditor).get_action_interface().set_tempo_at_cursor()
         }

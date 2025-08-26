@@ -7,92 +7,8 @@
 #define PAGAN_WAVEGENERATORCACHE_H
 #include <unordered_map>
 
-// TODO: Double check left/right offset
-class DelayHandle {};
-//class DelayHandle {
-//    public:
-//        float* frames;
-//        int size = 0;
-//        int position = 0;
-//
-//        void put_frame(int i, float left_value, float right_value, float fade, int offset = 0) {
-//            if (i >= this->size) {
-//                for (int x = this->size; x <= i; x++) {
-//                    this->frames[2*x] = 0;
-//                    this->frames[(2*x) + 1] = 0;
-//                }
-//                this->size = i + 1;
-//            }
-//
-//            this->frames[(i / 2)] += (right_value * fade);
-//            this->frames[(i / 2) + 1] += (left_value * fade);
-//        }
-//
-//        std::tuple<float, float> get_frame() {
-//            int frame = this->position++ / 2;
-//            return std::tuple(
-//                this->frames[frame],
-//                this->frames[frame + 1]
-//            );
-//        }
-//};
 
-class BandPassFilter {
-    float high;
-    float low;
-};
-
-class WaveGeneratorCache {
-    public:
-        int sample_rate;
-        void init(int sample_rate) {
-            this->sample_rate = sample_rate;
-        }
-
-        ~WaveGeneratorCache() {}
-
-        //  Current no weighting applied
-        static float weight_volume(float input_value) {
-            return tanh(input_value);
-        }
-
-        //bool has_delay_handle(int key) {
-        //    if (this->current_delay_handle == nullptr) {
-        //        this->current_delay_handle = (std::unordered_map<int, DelayHandle*>*)malloc(sizeof(std::unordered_map<int, DelayHandle*>));
-        //    }
-        //    return this->current_delay_handle->find(key) != this->current_delay_handle->end();
-        //}
-        //int* delay_keys;
-        //DelayHandle* delays;
-        //int size = 0;
-
-
-        //bool has_key(int key) {
-        //    for (int i = 0; i < this->size; i++) {
-        //        if (this->delay_keys[i] == key) {
-        //            return true;
-        //        }
-        //    }
-        //    return false;
-        //}
-
-        //void new_delay_handle(int key) {
-        //    this->delay_keys[this->size] = key;
-        //    this->delays[this->size] = DelayHandle();
-        //    this->size++;
-        //}
-
-        //DelayHandle* get_delay_handle(int key) {
-        //    for (int i = 0; i < this->size; i++) {
-        //        if (this->delay_keys[i] == key) {
-        //            return &this->delays[i];
-        //        }
-        //    }
-        //    return nullptr;
-        //}
-};
-
-void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
+void apply_pan(EffectProfileBuffer* effect_buffer, float* working_array, int frames) {
     for (int i = 0; i < frames; i++) {
         float pan_value = effect_buffer->get_next()[0];
         working_array[i] *= 1 + pan_value;
@@ -100,7 +16,7 @@ void apply_pan(ProfileBuffer* effect_buffer, float* working_array, int frames) {
     }
 }
 
-void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames) {
+void apply_volume(EffectProfileBuffer* effect_buffer, float* working_array, int frames) {
     for (int i = 0; i < frames; i++) {
         float volume = effect_buffer->get_next()[0];
         working_array[i] *= volume;
@@ -108,10 +24,10 @@ void apply_volume(ProfileBuffer* effect_buffer, float* working_array, int frames
     }
 }
 
-void apply_bandpass(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buffer, float* working_array, int frame_count) {
+void apply_bandpass(EffectProfileBuffer* effect_buffer, float* working_array, int frame_count) {
 }
 
-void apply_delay(WaveGeneratorCache* generator_cache, ProfileBuffer* effect_buffer, float* working_array, int frame_count) {
+void apply_delay(EffectProfileBuffer* effect_buffer, float* working_array, int frame_count) {
    // if (!generator_cache->has_delay_handle(effect_buffer->buffer_id)) {
    //  //   generator_cache->new_delay_handle(effect_buffer->buffer_id);
    // }

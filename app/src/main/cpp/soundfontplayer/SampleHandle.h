@@ -8,7 +8,7 @@
 #include <sstream>
 #include <unordered_map>
 #include "PitchedBuffer.h"
-#include "ProfileBuffer.h"
+#include "EffectProfileBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
 #include "Oscillator.h"
@@ -23,6 +23,7 @@ const int TYPE_VOLUME = 1;
 const int TYPE_REVERB = 2;
 const int TYPE_PAN = 3;
 const int TYPE_DELAY = 5;
+const int TYPE_EQUALIZER = 6;
 
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators

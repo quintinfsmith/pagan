@@ -1,12 +1,6 @@
 package com.qfs.apres.soundfontplayer
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
-    val ptr: Long = WaveGenerator.get_ptr(this.sample_rate)
-
-    companion object {
-        external fun get_ptr(sample_rate: Int): Long
-    }
-
     enum class StereoMode {
         Mono,
         Stereo
@@ -35,7 +29,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
 
     external fun merge_arrays(
-        ptr_long: Long,
         arrays: Array<FloatArray>,
         frame_count: Int,
         merge_keys: Array<IntArray>,
@@ -43,7 +36,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         profile_info: IntArray,
         profile_keys: IntArray
     ): FloatArray
-    external fun tanh_array(ptr: Long, array: FloatArray): FloatArray
+
+    external fun tanh_array(array: FloatArray): FloatArray
     fun generate(): FloatArray {
         val working_array = FloatArray(this.buffer_size * 2)
         val start_ts = System.nanoTime()
@@ -71,7 +65,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         val profiles = this.midi_frame_map.get_effect_buffers()
         val merged_array = this.merge_arrays(
-            this.ptr,
             arrays_to_merge,
             this.buffer_size,
             layers,
@@ -85,17 +78,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             working_array[(i * 2) + 1] = merged_array[(i * 2) + 1]
         }
 
-        val output_array = this.tanh_array(this.ptr, working_array)
+        val output_array = this.tanh_array(working_array)
 
         this.frame += this.buffer_size
 
         if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
             throw DeadException()
         }
-
-        //val delta = 1000000 / (System.nanoTime() - start_ts).toFloat()
-        //val max_delta = this.buffer_size.toFloat() / this.sample_rate.toFloat()
-        // println("---GEN TIME: $delta | $max_delta")
 
         return output_array
     }
@@ -212,10 +201,5 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for ((_,_,buffer) in this.midi_frame_map.get_effect_buffers()) {
             buffer.set_frame(this.frame)
         }
-    }
-
-    private external fun _destroy(ptr: Long)
-    fun destroy() {
-        this._destroy(this.ptr)
     }
 }

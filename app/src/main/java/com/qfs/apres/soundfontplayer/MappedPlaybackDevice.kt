@@ -202,8 +202,4 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
         this.play_queued = true
         this.start_playback(start_frame)
     }
-
-    open fun destroy() {
-        this.wave_generator.destroy()
-    }
 }

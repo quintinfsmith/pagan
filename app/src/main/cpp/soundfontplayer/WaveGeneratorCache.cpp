@@ -4,25 +4,10 @@
 
 #include "WaveGeneratorCache.h"
 
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_WaveGenerator_00024Companion_get_1ptr( JNIEnv* env, jobject , jint sample_rate) {
-    auto* handle = (WaveGeneratorCache*)malloc(sizeof(WaveGeneratorCache));
-    handle->init(sample_rate);
-    return (jlong)handle;
-}
-
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_qfs_apres_soundfontplayer_WaveGenerator__1destroy( JNIEnv* env, jobject, jlong ptr_long ) {
-    auto *ptr = (WaveGeneratorCache *) ptr_long;
-    delete ptr;
-}
-
-
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         JNIEnv* env,
         jobject,
-        jlong ptr_long,
         jobjectArray input_array,
         jint frames,
         jobjectArray merge_keys,
@@ -32,9 +17,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
 ) {
     // NOTE: The array channels are split between first and last half instead of the normal multiplexing
     // The output of this function will be multiplexed though.
-
-    auto *cache_ptr = (WaveGeneratorCache *) ptr_long;
-
     int array_count = env->GetArrayLength(input_array);
 
     float* working_arrays[array_count];
@@ -106,7 +88,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {
                     continue;
                 }
-                auto* effect_buffer = (ProfileBuffer*)effect_buffers[j];
+                auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[j];
 
                 if (effect_buffer->data->type == TYPE_PAN) {
                     apply_pan(effect_buffer, working_arrays[i], (int)frames);
@@ -115,7 +97,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                     apply_volume(effect_buffer, working_arrays[i], (int)frames);
                     shifted_buffers[shift_buffers_size++] = j;
                 } else if (effect_buffer->data->type == TYPE_DELAY) {
-                    apply_delay(cache_ptr, effect_buffer, working_arrays[i], (int)frames);
+                    apply_delay(effect_buffer, working_arrays[i], (int)frames);
                     shifted_buffers[shift_buffers_size++] = j;
                 }
             }
@@ -132,7 +114,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             }
         }
         if (!found) {
-            auto* effect_buffer = (ProfileBuffer*)effect_buffers[i];
+            auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
             effect_buffer->drain((int)frames);
         }
     }
@@ -157,14 +139,13 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobject, jlong ptr_long, jfloatArray input_array) {
-    auto *cache_ptr = (WaveGeneratorCache *) ptr_long;
+Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobject, jfloatArray input_array) {
     int input_size = env->GetArrayLength(input_array);
     jfloat output_ptr[input_size];
     jfloat* input_ptr = env->GetFloatArrayElements(input_array, nullptr);
 
     for (int i = 0; i < input_size; i++) {
-        output_ptr[i] = cache_ptr->weight_volume(input_ptr[i]);
+        output_ptr[i] = tanh(input_ptr[i]);
     }
 
     env->ReleaseFloatArrayElements(input_array, input_ptr, 0);

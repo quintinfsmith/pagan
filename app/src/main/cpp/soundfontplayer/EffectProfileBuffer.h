@@ -2,13 +2,15 @@
 // Created by pent on 5/1/25.
 //
 
-#ifndef PAGAN_PROFILEBUFFER_H
-#define PAGAN_PROFILEBUFFER_H
+#ifndef PAGAN_EFFECTPROFILEBUFFER_H
+#define PAGAN_EFFECTPROFILEBUFFER_H
 #include "ProfileBufferFrame.h"
 #include <vector>
 #include "ControllerEventData.h"
+#include "SampleHandle.h"
+
 int PROFILE_BUFFER_ID_GEN = 0;
-class ProfileBuffer {
+class EffectProfileBuffer {
 public:
     ControllerEventData* data;
     int current_frame;
@@ -16,12 +18,13 @@ public:
     int data_width;
     float* current_value;
     int buffer_id = 0;
+    int type = -1;
 
-    ~ProfileBuffer() {
+    ~EffectProfileBuffer() {
         delete this->current_value;
     }
 
-    void init_id() {
+    void init() {
         this->buffer_id = PROFILE_BUFFER_ID_GEN++;
     }
 
@@ -70,7 +73,7 @@ public:
         }
     }
 
-    void copy_to(ProfileBuffer* new_buffer) const {
+    void copy_to(EffectProfileBuffer* new_buffer) {
         new_buffer->data = this->data;
         new_buffer->current_index = this->current_index;
         new_buffer->data_width = this->data_width;
@@ -81,7 +84,6 @@ public:
         new_buffer->set_frame(0);
     }
 
-    // TODO: This could probably be optimized but not a priority atm.
     void drain(int count) {
         this->set_frame(count + this->current_frame);
     }
@@ -124,4 +126,34 @@ private:
     }
 };
 
-#endif //PAGAN_PROFILEBUFFER_H
+class EqualizerBuffer: public EffectProfileBuffer {};
+class VolumeBuffer: public EffectProfileBuffer {
+    void init() {
+        this->type = TYPE_VOLUME;
+        EffectProfileBuffer::init();
+    }
+    void copy_to(VolumeBuffer* new_buffer) {
+        EffectProfileBuffer::copy_to(new_buffer);
+    }
+};
+class PanBuffer: public  EffectProfileBuffer {
+    void init() {
+        this->type = TYPE_PAN;
+        EffectProfileBuffer::init();
+    }
+
+    void copy_to(PanBuffer* new_buffer) {
+        EffectProfileBuffer::copy_to(new_buffer);
+    }
+};
+class DelayBuffer: public  EffectProfileBuffer {
+    void init() {
+        this->type = TYPE_DELAY;
+        EffectProfileBuffer::init();
+    }
+
+    void copy_to(DelayBuffer* new_buffer) {
+        EffectProfileBuffer::copy_to(new_buffer);
+    }
+};
+#endif //PAGAN_EFFECTPROFILEBUFFER_H

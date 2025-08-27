@@ -9,7 +9,7 @@
 #include "soundfontplayer/ControllerEventData.cpp"
 #include "soundfontplayer/ProfileBuffer.cpp"
 #include "soundfontplayer/SampleHandle.cpp"
-#include "soundfontplayer/WaveGeneratorCache.cpp"
+#include "soundfontplayer/WaveGenerator.cpp"
 #include "soundfontplayer/Complex.h"
 
 // extern "C" JNIEXPORT jfloatArray JNICALL

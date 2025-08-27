@@ -13,65 +13,70 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
 ) {
 
     auto* controller_event_data = (ControllerEventData *)cev_ptr;
-    EffectProfileBuffer* buffer;
+    jlong output;
     switch (controller_event_data->type) {
         case TYPE_DELAY: {
-            buffer = (DelayBuffer*)malloc(sizeof(DelayBuffer));
+            auto* buffer = (DelayBuffer*)malloc(sizeof(DelayBuffer));
+            buffer->init(controller_event_data, start_frame);
+            output = (jlong)buffer;
             break;
         }
         case TYPE_PAN: {
-            buffer = (PanBuffer*)malloc(sizeof(PanBuffer));
+            auto* buffer = (PanBuffer*)malloc(sizeof(PanBuffer));
+            buffer->init(controller_event_data, start_frame);
+            output = (jlong)buffer;
             break;
         }
         case TYPE_VOLUME: {
-            buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
+            auto* buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
+            buffer->init(controller_event_data, start_frame);
+            output = (jlong)buffer;
             break;
         }
         default: {
-            buffer = (EffectProfileBuffer*)malloc(sizeof(EffectProfileBuffer));
+            auto* buffer = (EffectProfileBuffer*)malloc(sizeof(EffectProfileBuffer));
+            buffer->init(controller_event_data, start_frame);
+            output = (jlong)buffer;
         }
     }
 
-    buffer->data = controller_event_data;
-    buffer->current_frame = start_frame;
-    buffer->current_index = 0;
-    buffer->data_width = buffer->data->frames[0]->data_width;
-    buffer->current_value = (float*)malloc(sizeof(float) * buffer->data_width);
-    buffer->init();
-    for (int i = 0; i < buffer->data_width; i++) {
-        buffer->current_value[i] = 0;
-    }
-
-    buffer->set_frame(0);
-
-    return (jlong)buffer;
+    return output;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct EffectProfileBuffer *) ptr_long;
-    EffectProfileBuffer* buffer;
+    jlong output;
     switch (ptr->type) {
         case TYPE_DELAY: {
-            buffer = (DelayBuffer*)malloc(sizeof(DelayBuffer));
+            auto* original =(DelayBuffer*)ptr;
+            auto* buffer = (DelayBuffer*)malloc(sizeof(DelayBuffer));
+            original->copy_to(buffer);
+            output = (jlong)buffer;
+
             break;
         }
         case TYPE_PAN: {
-            buffer = (PanBuffer*)malloc(sizeof(PanBuffer));
+            auto* original =(PanBuffer*)ptr;
+            auto* buffer = (PanBuffer*)malloc(sizeof(PanBuffer));
+            original->copy_to(buffer);
+            output = (jlong)buffer;
             break;
         }
         case TYPE_VOLUME: {
-            buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
+            auto* original =(VolumeBuffer*)ptr;
+            auto* buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
+            original->copy_to(buffer);
+            output = (jlong)buffer;
             break;
         }
         default: {
-            buffer = (EffectProfileBuffer*)malloc(sizeof(EffectProfileBuffer));
+            auto* buffer = (EffectProfileBuffer*)malloc(sizeof(EffectProfileBuffer));
+            ptr->copy_to(buffer);
+            output = (jlong)buffer;
         }
     }
-
-    ptr->copy_to(buffer);
-    buffer->init();
-    return (jlong)buffer;
+    return output;
 }
 
 extern "C" JNIEXPORT jlong JNICALL

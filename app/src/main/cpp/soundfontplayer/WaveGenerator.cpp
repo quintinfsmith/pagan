@@ -2,8 +2,6 @@
 // Created by pent on 8/12/25.
 //
 
-#include "WaveGeneratorCache.h"
-
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         JNIEnv* env,
@@ -88,18 +86,32 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {
                     continue;
                 }
-                auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[j];
-
-                if (effect_buffer->data->type == TYPE_PAN) {
-                    apply_pan(effect_buffer, working_arrays[i], (int)frames);
-                    shifted_buffers[shift_buffers_size++] = j;
-                } else if (effect_buffer->data->type == TYPE_VOLUME) {
-                    apply_volume(effect_buffer, working_arrays[i], (int)frames);
-                    shifted_buffers[shift_buffers_size++] = j;
-                } else if (effect_buffer->data->type == TYPE_DELAY) {
-                    apply_delay(effect_buffer, working_arrays[i], (int)frames);
-                    shifted_buffers[shift_buffers_size++] = j;
+                auto effect_buffer = (EffectProfileBuffer*)effect_buffers[j];
+                switch (effect_buffer->data->type) {
+                    case TYPE_PAN: {
+                        auto* buffer = (PanBuffer *) effect_buffer;
+                        buffer->apply(working_arrays[i], (int) frames);
+                        break;
+                    }
+                    case TYPE_VOLUME: {
+                        auto* buffer = (VolumeBuffer *) effect_buffers[j];
+                        buffer->apply(working_arrays[i], (int) frames);
+                        break;
+                    }
+                    case TYPE_DELAY: {
+                        auto* buffer = (DelayBuffer *) effect_buffer;
+                        buffer->apply(working_arrays[i], (int) frames);
+                        break;
+                    }
+                    case TYPE_EQUALIZER: {
+                        auto* buffer = (EqualizerBuffer *) effect_buffer;
+                        buffer->apply(working_arrays[i], (int) frames);
+                        break;
+                    }
+                    default: continue;
                 }
+
+                shifted_buffers[shift_buffers_size++] = j;
             }
         }
     }

@@ -108,8 +108,8 @@ class ActivityLanding : PaganActivity() {
         toolbar.background = null
 
         this.findViewById<View>(R.id.btnMostRecent).let { most_recent_button ->
-            this.loading_reticle_show()
             most_recent_button.setOnClickListener {
+                this.loading_reticle_show()
                 this.startActivity(
                     Intent(this, ActivityEditor::class.java).apply {
                         this.putExtra("load_backup", true)

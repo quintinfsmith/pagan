@@ -17,12 +17,13 @@ public:
     int current_index;
     int data_width;
     float* current_value;
-    int buffer_id = 0;
-    int type = -1;
+    int buffer_id;
+    int type;
 
     ~EffectProfileBuffer() {
         delete this->current_value;
     }
+
 
     void init(ControllerEventData* controller_event_data, int current_frame) {
         this->buffer_id = PROFILE_BUFFER_ID_GEN++;
@@ -92,15 +93,15 @@ public:
         }
         new_buffer->current_frame = this->current_frame;
         new_buffer->set_frame(0);
+        this->copy_from(new_buffer);
     }
-
     void drain(int count) {
         this->set_frame(count + this->current_frame);
     }
 
-    virtual void apply(float* working_array, int frames) = 0;
 
 private:
+    virtual void copy_from(EffectProfileBuffer* original) = 0;
     void _move_to_next_frame() {
         this->current_frame++;
         if (this->current_index >= this->data->frame_count) {
@@ -139,27 +140,17 @@ private:
 };
 
 class EqualizerBuffer: public EffectProfileBuffer {
+    int type = TYPE_EQUALIZER;
+    void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void init(ControllerEventData* controller_event_data, int current_frame) {
-            EffectProfileBuffer::init(controller_event_data, current_frame);
-            this->type = TYPE_EQUALIZER;
-        }
-        void copy_to(EqualizerBuffer* new_buffer) {
-            EffectProfileBuffer::copy_to(new_buffer);
-        }
-        void apply(float* working_array, int frames) override { }
+        void apply(float* working_array, int frames) { }
 };
 
 class VolumeBuffer: public EffectProfileBuffer {
+    int type = TYPE_VOLUME;
+    void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void init(ControllerEventData* controller_event_data, int current_frame) {
-            EffectProfileBuffer::init(controller_event_data, current_frame);
-            this->type = TYPE_VOLUME;
-        }
-        void copy_to(VolumeBuffer* new_buffer) {
-            EffectProfileBuffer::copy_to(new_buffer);
-        }
-        void apply(float* working_array, int frames) override {
+        void apply(float* working_array, int frames) {
             for (int i = 0; i < frames; i++) {
                 float volume = this->get_next()[0];
                 working_array[i] *= volume;
@@ -168,17 +159,11 @@ class VolumeBuffer: public EffectProfileBuffer {
         }
 };
 
-class PanBuffer: public  EffectProfileBuffer {
+class PanBuffer: public EffectProfileBuffer {
+    int type = TYPE_PAN;
+    void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void init(ControllerEventData* controller_event_data, int current_frame) {
-            EffectProfileBuffer::init(controller_event_data, current_frame);
-            this->type = TYPE_PAN;
-        }
-
-        void copy_to(PanBuffer* new_buffer) {
-            EffectProfileBuffer::copy_to(new_buffer);
-        }
-        virtual void apply(float* working_array, int frames) override {
+        void apply(float* working_array, int frames) {
             for (int i = 0; i < frames; i++) {
                 float pan_value = this->get_next()[0];
                 working_array[i] *= 1 + pan_value;
@@ -187,17 +172,12 @@ class PanBuffer: public  EffectProfileBuffer {
         }
 };
 
-class DelayBuffer: public  EffectProfileBuffer {
+class DelayBuffer: public EffectProfileBuffer {
+    int type = TYPE_DELAY;
+    void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void init(ControllerEventData* controller_event_data, int current_frame) {
-            EffectProfileBuffer::init(controller_event_data, current_frame);
-            this->type = TYPE_DELAY;
-        }
+        void apply(float* working_array, int frames) { }
 
-        void copy_to(DelayBuffer* new_buffer) {
-            EffectProfileBuffer::copy_to(new_buffer);
-        }
-        virtual void apply(float* working_array, int frames) { }
 };
 
 #endif //PAGAN_EFFECTPROFILEBUFFER_H

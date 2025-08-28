@@ -222,16 +222,76 @@ class PanBuffer: public EffectProfileBuffer {
         }
 };
 
+class DelayedFrame {
+    int countdown = 0;
+    float value_left = 0;
+    float value_right = 0;
+    DelayedFrame* next;
+    public:
+        DelayedFrame() {
+            this->value_left = 0;
+            this->value_right = 0;
+            this->next = nullptr;
+        }
+        DelayedFrame(float value_left, float value_right) {
+            this->value_left = value_left;
+            this->value_right = value_right;
+            this->next = nullptr;
+        }
+};
+
 class DelayBuffer: public EffectProfileBuffer {
     int type = TYPE_DELAY;
-    int delay_frame = 0;
+    float active_delay = 0;
+    float active_fpb = 0; // Frames Per Beat
+    int active_delay_in_frames = 0;
+
+    int countdown = 0;
+    DelayedFrame delayed_frames;
+
 
     void copy_from(EffectProfileBuffer* original) override {}
     public:
+        void adjust_existing_delay_frames(int new_size) {
+            DelayedFrame new_frames[new_size];
+        }
         void apply(float* working_array, int array_size) {
             for (int i = 0; i < array_size; i++) {
+                float* frame_data = this->get_next();
+                int repeat = frame_data[1];
+                if (repeat == 0) continue;
+
+                int next_delay = frame_data[0];
+                int next_fpb = frame_data[4];
+
+                if (next_fpb != this->active_fpb || this->active_delay != next_delay) {
+                    // TODO: VV -- Adjust Countdowns Here -- VV
+
+                    this->active_delay = next_delay;
+                    this->active_fpb = next_fpb;
+                    this->active_delay_in_frames = next_delay * next_fpb;
+
+                }
 
 
+                float decay = frame_data[2];
+
+
+                if (this->delay_size <= next_frame) {
+                    DelayedFrame delayed_frame = DelayedFrame {
+                        next_frame - this->delay_size,
+                        working_array[i],
+                        working_array[i +array_size]
+                    }
+                } else {
+
+                }
+
+
+                if (this->countdown > 0) {
+                    this->countdown -= 1;
+                    this->active_delay_frame->next = DelayedFrame();
+                }
             }
         }
 

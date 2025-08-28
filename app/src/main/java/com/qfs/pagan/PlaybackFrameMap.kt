@@ -413,9 +413,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     fun convert_delay_event_values(values: FloatArray, frames_per_beat: Int): FloatArray {
-        return FloatArray(values.size) { i: Int ->
-            if (i == 0) {
-                values[i] * frames_per_beat
+        return FloatArray(values.size + 1) { i: Int ->
+            if (i == values.size) {
+                frames_per_beat.toFloat()
             } else {
                 values[i]
             }

@@ -8,6 +8,7 @@
 #include <vector>
 #include "ControllerEventData.h"
 #include "SampleHandle.h"
+#include "Complex.h"
 
 int PROFILE_BUFFER_ID_GEN = 0;
 class EffectProfileBuffer {
@@ -141,20 +142,69 @@ private:
 
 class EqualizerBuffer: public EffectProfileBuffer {
     int type = TYPE_EQUALIZER;
+    float* working_eq;
     void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void apply(float* working_array, int frames) { }
+        void apply(float* working_array, int array_size) {
+            int i = 0;
+            float *working_input_left;
+            float *working_input_right;
+            int working_input_size = 0;
+            for (int x = 0; x < array_size; x++) {
+                float* next = this->get_next();
+                if (next != this->working_eq) {
+                    this->working_eq = next;
+
+                    int padded_size = 2;
+                    while (padded_size < working_input_size) {
+                        padded_size *= 2;
+                    }
+
+                    Complex* transformed_left = fft(working_input_left, working_input_size, padded_size);
+                    Complex* transformed_right = fft(working_input_right, working_input_size, padded_size);
+                    int size = (int)this->working_eq[0];
+
+                    for (int y = 0; y < size; y++) {
+                        float value = working_eq[(y * 3)];
+                        int first = (int)this->working_eq[(y * 3) + 1];
+                        int last = (int)this->working_eq[(y * 3) + 2];
+                        for (int z = first; z < last; z++) {
+                            transformed_left[z].real *= value;
+                            transformed_right[z].real *= value;
+                        }
+                    }
+
+                    Complex* reverted_left = ifft(transformed_left, working_input_size);
+                    Complex* reverted_right = ifft(transformed_right, working_input_size);
+                    for (int y = 0; y < working_input_size; y++) {
+                        working_array[y + i] = reverted_left[y].real;
+                        working_array[y + array_size + i] = reverted_right[y].real;
+                    }
+
+                    delete transformed_left;
+                    delete reverted_left;
+                    delete transformed_right;
+                    delete reverted_right;
+
+                    working_input_size = 0;
+                    i = x;
+                } else {
+                    working_input_left[working_input_size] = working_array[x];
+                    working_input_right[working_input_size++] = working_array[x + array_size];
+                }
+            }
+        }
 };
 
 class VolumeBuffer: public EffectProfileBuffer {
     int type = TYPE_VOLUME;
     void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void apply(float* working_array, int frames) {
-            for (int i = 0; i < frames; i++) {
+        void apply(float* working_array, int array_size) {
+            for (int i = 0; i < array_size; i++) {
                 float volume = this->get_next()[0];
                 working_array[i] *= volume;
-                working_array[i + frames] *= volume;
+                working_array[i + array_size] *= volume;
             }
         }
 };
@@ -163,20 +213,27 @@ class PanBuffer: public EffectProfileBuffer {
     int type = TYPE_PAN;
     void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void apply(float* working_array, int frames) {
-            for (int i = 0; i < frames; i++) {
+        void apply(float* working_array, int array_size) {
+            for (int i = 0; i < array_size; i++) {
                 float pan_value = this->get_next()[0];
                 working_array[i] *= 1 + pan_value;
-                working_array[i + frames] *= (-1 + pan_value) * -1;
+                working_array[i + array_size] *= (-1 + pan_value) * -1;
             }
         }
 };
 
 class DelayBuffer: public EffectProfileBuffer {
     int type = TYPE_DELAY;
+    int delay_frame = 0;
+
     void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void apply(float* working_array, int frames) { }
+        void apply(float* working_array, int array_size) {
+            for (int i = 0; i < array_size; i++) {
+
+
+            }
+        }
 
 };
 

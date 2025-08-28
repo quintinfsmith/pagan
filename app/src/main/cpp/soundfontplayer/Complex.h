@@ -149,7 +149,6 @@ void _ifft(Complex* input, int size, Complex* output) {
 }
 
 Complex* fft(float* input, int input_size, int new_size) {
-
     auto new_input = (Complex*)malloc(sizeof(Complex) * new_size);
     for (int i = 0; i < input_size; i++) {
         new_input[i] = Complex(input[i], 0);

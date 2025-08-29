@@ -223,75 +223,116 @@ class PanBuffer: public EffectProfileBuffer {
 };
 
 class DelayedFrame {
-    int countdown = 0;
-    float value_left = 0;
-    float value_right = 0;
     DelayedFrame* next;
     public:
+        float value_left = 0;
+        float value_right = 0;
+
+        // Will likely cause error
+        ~DelayedFrame() {
+            if (this->next != nullptr) {
+                delete this->next;
+                this->next = nullptr;
+            }
+        }
+
         DelayedFrame() {
             this->value_left = 0;
             this->value_right = 0;
             this->next = nullptr;
         }
-        DelayedFrame(float value_left, float value_right) {
-            this->value_left = value_left;
-            this->value_right = value_right;
-            this->next = nullptr;
+
+        void set_next(DelayedFrame* next_frame) {
+            this->next = next_frame;
+        }
+
+        DelayedFrame* get_next() {
+            return this->next;
+        }
+        DelayedFrame* init_next() {
+            this->next = (DelayedFrame*)malloc(sizeof(DelayedFrame));
+            return this->next;
         }
 };
 
 class DelayBuffer: public EffectProfileBuffer {
     int type = TYPE_DELAY;
     float active_delay = 0;
-    float active_fpb = 0; // Frames Per Beat
+    int active_fpb = 0; // Frames Per Beat
     int active_delay_in_frames = 0;
 
-    int countdown = 0;
-    DelayedFrame delayed_frames;
+    DelayedFrame* active_input_frame;
 
+    // void delete_chain() {
+    //     DelayedFrame* working_ptr = this->active_input_frame->get_next();
+    //     while (working_ptr->get_next() != this->active_input_frame) {
+    //         DelayedFrame* prev_ptr = working_ptr;
+    //         working_ptr = working_ptr->get_next();
+    //         delete prev_ptr;
+    //     }
+    //     delete working_ptr;
+    //     this->active_input_frame = nullptr;
+    //     this->active_output_frame = nullptr;
+    // }
+
+    void create_chain() {
+        if (this->active_delay_in_frames == 0) return;
+
+        auto* working_ptr = (DelayedFrame*)malloc(sizeof(DelayedFrame));
+        this->active_input_frame = working_ptr;
+
+        for (int i = 0; i < this->active_delay_in_frames - 1; i++) {
+            working_ptr = working_ptr->init_next();
+        }
+
+        working_ptr->set_next(this->active_input_frame);
+    }
+
+    void adjust_chain_size(int next_fpb, float next_delay) {
+
+        if (next_fpb == this->active_fpb && this->active_delay == next_delay) return;
+        // TODO: VV -- Adjust Countdowns Here -- VV
+
+        DelayedFrame* original_ptr = this->active_input_frame;
+        int original_delay = this->active_delay_in_frames;
+
+        this->active_delay = next_delay;
+        this->active_fpb = next_fpb;
+        this->active_delay_in_frames = (int)(this->active_delay * (float)this->active_fpb);
+
+        this->create_chain();
+    }
+
+    void cycle() {
+        this->active_input_frame = this->active_input_frame->get_next();
+    }
 
     void copy_from(EffectProfileBuffer* original) override {}
     public:
-        void adjust_existing_delay_frames(int new_size) {
-            DelayedFrame new_frames[new_size];
-        }
         void apply(float* working_array, int array_size) {
             for (int i = 0; i < array_size; i++) {
-                float* frame_data = this->get_next();
+                float* frame_data = EffectProfileBuffer::get_next();
+
+                //__android_log_print(ANDROID_LOG_DEBUG, "??", "::- %f, %f, %f, %f", frame_data[0], frame_data[1], frame_data[2], frame_data[3]);
                 int repeat = frame_data[1];
                 if (repeat == 0) continue;
 
-                int next_delay = frame_data[0];
-                int next_fpb = frame_data[4];
-
-                if (next_fpb != this->active_fpb || this->active_delay != next_delay) {
-                    // TODO: VV -- Adjust Countdowns Here -- VV
-
-                    this->active_delay = next_delay;
-                    this->active_fpb = next_fpb;
-                    this->active_delay_in_frames = next_delay * next_fpb;
-
-                }
-
-
+                float next_delay = frame_data[0];
                 float decay = frame_data[2];
+                int next_fpb = frame_data[3];
 
+                this->adjust_chain_size(next_fpb, next_delay);
 
-                if (this->delay_size <= next_frame) {
-                    DelayedFrame delayed_frame = DelayedFrame {
-                        next_frame - this->delay_size,
-                        working_array[i],
-                        working_array[i +array_size]
-                    }
-                } else {
+                if (this->active_input_frame == nullptr) continue;
 
-                }
+                this->active_input_frame->value_left += working_array[i] * decay;
+                this->active_input_frame->value_right += working_array[i + array_size] * decay;
 
+                auto* output_frame = this->active_input_frame->get_next();
+                working_array[i] += output_frame->value_left;
+                working_array[i + array_size] += output_frame->value_right;
 
-                if (this->countdown > 0) {
-                    this->countdown -= 1;
-                    this->active_delay_frame->next = DelayedFrame();
-                }
+                this->cycle();
             }
         }
 

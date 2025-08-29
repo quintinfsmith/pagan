@@ -17,8 +17,8 @@ class ControllerEventData(val ptr: Long) {
 
             for (i in 0 until frames.size) {
                 for (j in 0 until value_width) {
-                    values[i * value_width] = frames[i].value[j]
-                    increments[i * value_width] = frames[i].increment[j]
+                    values[(i * value_width) + j] = frames[i].value[j]
+                    increments[(i * value_width) + j] = frames[i].increment[j]
                 }
             }
 

@@ -413,13 +413,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     fun convert_delay_event_values(values: FloatArray, frames_per_beat: Int): FloatArray {
-        return FloatArray(values.size + 1) { i: Int ->
+        val output = FloatArray(values.size + 1) { i: Int ->
             if (i == values.size) {
                 frames_per_beat.toFloat()
             } else {
                 values[i]
             }
         }
+        return output
     }
 
     private fun convert_to_indexed_profile_buffer_frames(effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType): List<ControllerEventData.IndexedProfileBufferFrame> {
@@ -462,15 +463,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         start_frame += (frames_per_beat * (effect_event.start_position - working_position)).toInt()
 
         if (effect_event.transition == EffectTransition.Instant) {
+            val adj_value = when (event_type) {
+                EffectType.Delay -> this.convert_delay_event_values(effect_event.end_value, frames_per_beat)
+                else -> effect_event.end_value
+            }
+
             return listOf(
                 ControllerEventData.IndexedProfileBufferFrame(
                     first_frame = start_frame,
                     last_frame = start_frame,
-                    value = when (event_type) {
-                        EffectType.Delay -> this.convert_delay_event_values(effect_event.end_value, frames_per_beat)
-                        else -> effect_event.end_value
-                    },
-                    increment = FloatArray(data_width)
+                    value = adj_value,
+                    increment = FloatArray(adj_value.size)
                 )
             )
         }

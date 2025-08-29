@@ -9,6 +9,7 @@
 #include "ControllerEventData.h"
 #include "SampleHandle.h"
 #include "Complex.h"
+#include <android/log.h>
 
 int PROFILE_BUFFER_ID_GEN = 0;
 class EffectProfileBuffer {
@@ -222,12 +223,18 @@ class PanBuffer: public EffectProfileBuffer {
         }
 };
 
+class DelayedFrameValue {
+    public:
+        float left = 0;
+        float right = 0;
+        int count = 0;
+        DelayedFrameValue* next = nullptr;
+};
+
 class DelayedFrame {
     DelayedFrame* next;
+    DelayedFrameValue* value_chain = nullptr;
     public:
-        float value_left = 0;
-        float value_right = 0;
-
         // Will likely cause error
         ~DelayedFrame() {
             if (this->next != nullptr) {
@@ -237,8 +244,6 @@ class DelayedFrame {
         }
 
         DelayedFrame() {
-            this->value_left = 0;
-            this->value_right = 0;
             this->next = nullptr;
         }
 
@@ -249,9 +254,64 @@ class DelayedFrame {
         DelayedFrame* get_next() {
             return this->next;
         }
+
         DelayedFrame* init_next() {
             this->next = (DelayedFrame*)malloc(sizeof(DelayedFrame));
+            this->next->value_chain = nullptr;
             return this->next;
+        }
+
+        void get_values(float* pair) {
+            return;
+            DelayedFrameValue* working_ptr = this->value_chain;
+            while (working_ptr != nullptr) {
+                if (working_ptr->count > 0) {
+                    pair[0] += working_ptr->left;
+                    pair[1] += working_ptr->right;
+                }
+                working_ptr = working_ptr->next;
+            }
+        }
+
+        void add_value(float left, float right, int repeat) {
+            DelayedFrameValue* working_ptr = this->value_chain;
+            this->value_chain = (DelayedFrameValue*)malloc(sizeof(DelayedFrameValue));
+            this->value_chain->left = left;
+            this->value_chain->right = right;
+            this->value_chain->count = repeat;
+            this->value_chain->next = working_ptr;
+        }
+
+        void decay(float decay) {
+            DelayedFrameValue* working_ptr = this->value_chain;
+            while (working_ptr != nullptr) {
+                working_ptr->left *= decay;
+                working_ptr->right *= decay;
+                working_ptr->count -= 1;
+                working_ptr = working_ptr->next;
+            }
+
+            //// Prune values with count <= 0;
+            //// remove dead initial values first
+            //working_ptr = this->value_chain;
+            //while (working_ptr != nullptr && working_ptr->count == 0) {
+            //    DelayedFrameValue* orig = working_ptr;
+            //    working_ptr = working_ptr->next;
+            //    delete orig;
+            //}
+            //this->value_chain = working_ptr;
+
+            //// now remove dead values in chain
+            //while (working_ptr != nullptr && working_ptr->next != nullptr) {
+            //    if (working_ptr->next->count == 0) {
+            //        DelayedFrameValue* orig = working_ptr->next;
+            //        working_ptr->next = working_ptr->next->next;
+            //        __android_log_print(ANDROID_LOG_DEBUG, "", "DELETE %ld", (long)orig);
+            //        delete orig;
+            //    } else {
+            //        working_ptr = working_ptr->next;
+            //    }
+            //}
         }
 };
 
@@ -289,7 +349,6 @@ class DelayBuffer: public EffectProfileBuffer {
     }
 
     void adjust_chain_size(int next_fpb, float next_delay) {
-
         if (next_fpb == this->active_fpb && this->active_delay == next_delay) return;
         // TODO: VV -- Adjust Countdowns Here -- VV
 
@@ -313,7 +372,6 @@ class DelayBuffer: public EffectProfileBuffer {
             for (int i = 0; i < array_size; i++) {
                 float* frame_data = EffectProfileBuffer::get_next();
 
-                //__android_log_print(ANDROID_LOG_DEBUG, "??", "::- %f, %f, %f, %f", frame_data[0], frame_data[1], frame_data[2], frame_data[3]);
                 int repeat = frame_data[1];
                 if (repeat == 0) continue;
 
@@ -325,12 +383,15 @@ class DelayBuffer: public EffectProfileBuffer {
 
                 if (this->active_input_frame == nullptr) continue;
 
-                this->active_input_frame->value_left += working_array[i] * decay;
-                this->active_input_frame->value_right += working_array[i + array_size] * decay;
+                this->active_input_frame->add_value(working_array[i] * decay, working_array[i + array_size] * decay, repeat);
 
                 auto* output_frame = this->active_input_frame->get_next();
-                working_array[i] += output_frame->value_left;
-                working_array[i + array_size] += output_frame->value_right;
+                float decay_value[2] = {0,0};
+                output_frame->get_values(decay_value);
+                output_frame->decay(decay);
+
+                working_array[i] += decay_value[0];
+                working_array[i + array_size] += decay_value[1];
 
                 this->cycle();
             }

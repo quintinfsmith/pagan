@@ -129,7 +129,7 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<View>(R.id.btnFrontNew).setOnClickListener {
-            this.loading_reticle_show()
+            //this.loading_reticle_show()
             this.startActivity(Intent(this, ActivityEditor::class.java))
         }
 

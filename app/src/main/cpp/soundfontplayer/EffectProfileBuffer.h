@@ -233,9 +233,9 @@ class DelayedFrameValue {
 
 class DelayedFrame {
     DelayedFrame* next;
-    DelayedFrameValue* value_chain = nullptr;
     public:
-        // Will likely cause error
+        DelayedFrameValue* value_chain = nullptr;
+        // FIXME: Will likely cause error
         ~DelayedFrame() {
             if (this->next != nullptr) {
                 delete this->next;
@@ -262,7 +262,6 @@ class DelayedFrame {
         }
 
         void get_values(float* pair) {
-            return;
             DelayedFrameValue* working_ptr = this->value_chain;
             while (working_ptr != nullptr) {
                 if (working_ptr->count > 0) {
@@ -285,33 +284,34 @@ class DelayedFrame {
         void decay(float decay) {
             DelayedFrameValue* working_ptr = this->value_chain;
             while (working_ptr != nullptr) {
-                working_ptr->left *= decay;
-                working_ptr->right *= decay;
-                working_ptr->count -= 1;
+                if (working_ptr->count > 0) {
+                    working_ptr->left *= decay;
+                    working_ptr->right *= decay;
+                    working_ptr->count -= 1;
+                }
                 working_ptr = working_ptr->next;
             }
 
-            //// Prune values with count <= 0;
-            //// remove dead initial values first
-            //working_ptr = this->value_chain;
-            //while (working_ptr != nullptr && working_ptr->count == 0) {
-            //    DelayedFrameValue* orig = working_ptr;
-            //    working_ptr = working_ptr->next;
-            //    delete orig;
-            //}
-            //this->value_chain = working_ptr;
+            // Prune values with count <= 0;
+            // remove dead initial values first
+            working_ptr = this->value_chain;
+            while (working_ptr != nullptr && working_ptr->count == 0) {
+                DelayedFrameValue* orig = working_ptr;
+                working_ptr = working_ptr->next;
+                delete orig;
+            }
+            this->value_chain = working_ptr;
 
-            //// now remove dead values in chain
-            //while (working_ptr != nullptr && working_ptr->next != nullptr) {
-            //    if (working_ptr->next->count == 0) {
-            //        DelayedFrameValue* orig = working_ptr->next;
-            //        working_ptr->next = working_ptr->next->next;
-            //        __android_log_print(ANDROID_LOG_DEBUG, "", "DELETE %ld", (long)orig);
-            //        delete orig;
-            //    } else {
-            //        working_ptr = working_ptr->next;
-            //    }
-            //}
+            // now remove dead values in chain
+            while (working_ptr != nullptr && working_ptr->next != nullptr) {
+                if (working_ptr->next->count == 0) {
+                    DelayedFrameValue* orig = working_ptr->next;
+                    working_ptr->next = working_ptr->next->next;
+                    delete orig;
+                } else {
+                    working_ptr = working_ptr->next;
+                }
+            }
         }
 };
 
@@ -340,6 +340,7 @@ class DelayBuffer: public EffectProfileBuffer {
 
         auto* working_ptr = (DelayedFrame*)malloc(sizeof(DelayedFrame));
         this->active_input_frame = working_ptr;
+        working_ptr->value_chain = nullptr;
 
         for (int i = 0; i < this->active_delay_in_frames - 1; i++) {
             working_ptr = working_ptr->init_next();

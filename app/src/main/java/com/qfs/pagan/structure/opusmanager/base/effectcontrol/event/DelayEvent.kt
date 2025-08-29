@@ -7,15 +7,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 class DelayEvent(var frequency: Rational, var repeat: Int, var repeat_decay: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
     override val event_type: EffectType = EffectType.Delay
     override fun to_float_array(): FloatArray {
-        // DEBUG
-        return floatArrayOf(1F / 1F, 3F, .6F)
-
-
-        //return floatArrayOf(
-        //    (this.frequency.denominator / this.frequency.numerator).toFloat(), // convert frequency to wave length
-        //    this.repeat.toFloat(),
-        //    this.repeat_decay
-        //)
+        return floatArrayOf(
+            (this.frequency.denominator / this.frequency.numerator).toFloat(), // convert frequency to wave length
+            this.repeat.toFloat(),
+            this.repeat_decay
+        )
     }
 
     override fun equals(other: Any?): Boolean {

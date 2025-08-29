@@ -17,6 +17,7 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
     switch (controller_event_data->type) {
         case TYPE_DELAY: {
             auto* derived_buffer = (DelayBuffer*)malloc(sizeof(DelayBuffer));
+            derived_buffer->also_init();
             buffer = derived_buffer;
             break;
         }

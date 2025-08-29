@@ -26,7 +26,6 @@ public:
         delete this->current_value;
     }
 
-
     void init(ControllerEventData* controller_event_data, int current_frame) {
         this->buffer_id = PROFILE_BUFFER_ID_GEN++;
 
@@ -221,6 +220,7 @@ class PanBuffer: public EffectProfileBuffer {
                 working_array[i + array_size] *= (-1 + pan_value) * -1;
             }
         }
+
 };
 
 class DelayedFrameValue {
@@ -229,14 +229,30 @@ class DelayedFrameValue {
         float right = 0;
         int count = 0;
         DelayedFrameValue* next = nullptr;
+
+        ~DelayedFrameValue() {
+            if (this->next != nullptr) {
+                delete this->next;
+            }
+        }
 };
 
 class DelayedFrame {
     DelayedFrame* next;
     public:
-        DelayedFrameValue* value_chain = nullptr;
+        DelayedFrameValue* value_chain;
+
+        void init() {
+            this->next = nullptr;
+            this->value_chain = nullptr;
+        }
+
         // FIXME: Will likely cause error
         ~DelayedFrame() {
+            if (this->value_chain != nullptr) {
+                delete this->value_chain;
+            }
+
             if (this->next != nullptr) {
                 delete this->next;
                 this->next = nullptr;
@@ -245,6 +261,18 @@ class DelayedFrame {
 
         DelayedFrame() {
             this->next = nullptr;
+        }
+
+        void move_to(DelayedFrame* new_frame) {
+            __android_log_print(ANDROID_LOG_DEBUG, "", "-----2");
+
+            auto* ptr = this->value_chain;
+            __android_log_print(ANDROID_LOG_DEBUG, "", "-----");
+            while (ptr != nullptr) {
+                __android_log_print(ANDROID_LOG_DEBUG, "", "%ld", (long)ptr);
+                new_frame->add_value(ptr->left, ptr->right, ptr->count);
+                ptr = ptr->next;
+            }
         }
 
         void set_next(DelayedFrame* next_frame) {
@@ -257,7 +285,7 @@ class DelayedFrame {
 
         DelayedFrame* init_next() {
             this->next = (DelayedFrame*)malloc(sizeof(DelayedFrame));
-            this->next->value_chain = nullptr;
+            this->next->init();
             return this->next;
         }
 
@@ -298,6 +326,8 @@ class DelayedFrame {
             while (working_ptr != nullptr && working_ptr->count == 0) {
                 DelayedFrameValue* orig = working_ptr;
                 working_ptr = working_ptr->next;
+
+                orig->next = nullptr;
                 delete orig;
             }
             this->value_chain = working_ptr;
@@ -307,12 +337,14 @@ class DelayedFrame {
                 if (working_ptr->next->count == 0) {
                     DelayedFrameValue* orig = working_ptr->next;
                     working_ptr->next = working_ptr->next->next;
+                    orig->next = nullptr;
                     delete orig;
                 } else {
                     working_ptr = working_ptr->next;
                 }
             }
         }
+
 };
 
 class DelayBuffer: public EffectProfileBuffer {
@@ -339,8 +371,9 @@ class DelayBuffer: public EffectProfileBuffer {
         if (this->active_delay_in_frames == 0) return;
 
         auto* working_ptr = (DelayedFrame*)malloc(sizeof(DelayedFrame));
+        working_ptr->init();
+
         this->active_input_frame = working_ptr;
-        working_ptr->value_chain = nullptr;
 
         for (int i = 0; i < this->active_delay_in_frames - 1; i++) {
             working_ptr = working_ptr->init_next();
@@ -351,7 +384,6 @@ class DelayBuffer: public EffectProfileBuffer {
 
     void adjust_chain_size(int next_fpb, float next_delay) {
         if (next_fpb == this->active_fpb && this->active_delay == next_delay) return;
-        // TODO: VV -- Adjust Countdowns Here -- VV
 
         DelayedFrame* original_ptr = this->active_input_frame;
         int original_delay = this->active_delay_in_frames;
@@ -361,6 +393,26 @@ class DelayBuffer: public EffectProfileBuffer {
         this->active_delay_in_frames = (int)(this->active_delay * (float)this->active_fpb);
 
         this->create_chain();
+
+        if (original_ptr != nullptr && this->active_input_frame != nullptr) {
+            int current_chain_position = 0;
+            auto* working_real_node = this->active_input_frame;
+
+            float relative_factor = (float)this->active_delay_in_frames / (float)original_delay;
+            for (int i = 0; i < original_delay; i++) {
+                int new_position = i * relative_factor;
+                while (new_position > current_chain_position) {
+                    working_real_node = working_real_node->get_next();
+                    current_chain_position++;
+                }
+                __android_log_print(ANDROID_LOG_DEBUG, "", "%d | %ld | %ld", original_delay, (long)original_ptr, (long)working_real_node);
+                original_ptr->move_to(working_real_node);
+                auto* bkp = original_ptr;
+                original_ptr = original_ptr->get_next();
+                delete bkp;
+            }
+        }
+
     }
 
     void cycle() {
@@ -397,7 +449,12 @@ class DelayBuffer: public EffectProfileBuffer {
                 this->cycle();
             }
         }
-
+        void also_init() {
+            this->active_input_frame = nullptr;
+            this->active_delay = 0;
+            this->active_fpb = 0; // Frames Per Beat
+            this->active_delay_in_frames = 0;
+        }
 };
 
 #endif //PAGAN_EFFECTPROFILEBUFFER_H

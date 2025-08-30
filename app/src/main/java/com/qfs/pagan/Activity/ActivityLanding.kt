@@ -199,7 +199,7 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<LinearLayout>(R.id.llSFWarningLanding).visibility = if (this.is_soundfont_available()) {
-            View.INVISIBLE
+            View.GONE
         } else {
             View.VISIBLE
         }

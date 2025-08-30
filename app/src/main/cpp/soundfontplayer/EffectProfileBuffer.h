@@ -412,7 +412,6 @@ class DelayBuffer: public EffectProfileBuffer {
                 delete bkp;
             }
         }
-
     }
 
     void cycle() {
@@ -454,6 +453,11 @@ class DelayBuffer: public EffectProfileBuffer {
             this->active_delay = 0;
             this->active_fpb = 0; // Frames Per Beat
             this->active_delay_in_frames = 0;
+        }
+        ~DelayBuffer() {
+            if (this->active_input_frame != nullptr) {
+                delete this->active_input_frame;
+            }
         }
 };
 

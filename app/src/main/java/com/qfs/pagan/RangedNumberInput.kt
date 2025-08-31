@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import android.content.Context
+import android.graphics.Rect
 import android.graphics.Typeface
 import android.text.InputType
 import android.util.AttributeSet
@@ -18,6 +19,7 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
     abstract var _watcher: RangedTextWatcher<T>
     var confirm_required = true
     var auto_resize = false
+    var confirm_on_unfocus = false
 
     init {
         /*
@@ -77,6 +79,13 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
             return
         }
         this.value_set_callback!!(this.get_value())
+    }
+
+    override fun onFocusChanged(focused: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
+        super.onFocusChanged(focused, direction, previouslyFocusedRect)
+        if (!focused && this.confirm_on_unfocus) {
+            this.callback()
+        }
     }
 }
 

@@ -8,7 +8,7 @@ class DelayEvent(var numerator: Int, var denominator: Int, var echo: Int, var fa
     override val event_type: EffectType = EffectType.Delay
     override fun to_float_array(): FloatArray {
         return floatArrayOf(
-            (this.denominator / this.numerator).toFloat(), // convert frequency to wave length
+            this.denominator.toFloat() / this.numerator.toFloat(), // convert frequency to wave length
             this.echo.toFloat(),
             this.fade
         )

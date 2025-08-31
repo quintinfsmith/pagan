@@ -2,6 +2,9 @@ package com.qfs.pagan
 
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
+import android.widget.LinearLayout
+import kotlin.math.max
 
 abstract class RangedTextWatcher<T: Number>(private var _number_input: RangedNumberInput<T>, var min_value: T?, var max_value: T?): TextWatcher {
     var lockout = false
@@ -9,26 +12,33 @@ abstract class RangedTextWatcher<T: Number>(private var _number_input: RangedNum
         this._number_input.addTextChangedListener(this)
     }
 
-    override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+    override fun beforeTextChanged(original_sequence: CharSequence?, insert_position: Int, remove_length: Int, insert_length: Int) {
         if (this.lockout) {
             return
         }
         if (! (this._number_input as RangedNumberInput<*>).confirm_required) {
             return
         }
-        if (p0 == "\n") {
+        if (original_sequence == "\n") {
             this._number_input.callback()
         }
     }
 
-    override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+    override fun onTextChanged(original_sequence: CharSequence?, insert_position: Int, remove_length: Int, insert_length: Int) { }
 
     override fun afterTextChanged(p0: Editable?) {
+        if (this._number_input.auto_resize) {
+            val new_length = this._number_input.text?.length ?: 0
+            this._number_input.layoutParams.width = (this._number_input.context.resources.getDimension(R.dimen.character_width) * max(1, new_length)).toInt()
+            this._number_input.requestLayout()
+        }
+
         if (this.lockout) {
             return
         }
 
         val value: T? = this._number_input.get_value()
+
 
         this.min_value?.let {
             if (value == null || this.lt(value, it)) {
@@ -44,6 +54,7 @@ abstract class RangedTextWatcher<T: Number>(private var _number_input: RangedNum
         if (! (this._number_input as RangedNumberInput<*>).confirm_required) {
             this._number_input.callback()
         }
+
     }
     private fun _gt(value: T?, max: T?): Boolean {
         return (value == null || max == null) || this.gt(value, max)

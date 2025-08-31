@@ -4,25 +4,26 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-class DelayEvent(var frequency: Rational, var repeat: Int, var repeat_decay: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
+class DelayEvent(var numerator: Int, var denominator: Int, var echo: Int, var fade: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
     override val event_type: EffectType = EffectType.Delay
     override fun to_float_array(): FloatArray {
         return floatArrayOf(
-            (this.frequency.denominator / this.frequency.numerator).toFloat(), // convert frequency to wave length
-            this.repeat.toFloat(),
-            this.repeat_decay
+            (this.denominator / this.numerator).toFloat(), // convert frequency to wave length
+            this.echo.toFloat(),
+            this.fade
         )
     }
 
     override fun equals(other: Any?): Boolean {
-        return super.equals(other) && other is DelayEvent && other.frequency == this.frequency && other.repeat == this.repeat && this.repeat_decay == other.repeat_decay
+        return super.equals(other) && other is DelayEvent && other.numerator == this.numerator && other.denominator == this.denominator && other.echo == this.echo && this.fade == other.fade
     }
 
     override fun copy(): DelayEvent {
         return DelayEvent(
-            this.frequency,
-            this.repeat,
-            this.repeat_decay,
+            this.numerator,
+            this.denominator,
+            this.echo,
+            this.fade,
             this.duration,
             this.transition
         )

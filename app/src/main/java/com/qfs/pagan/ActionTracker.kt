@@ -20,7 +20,6 @@ import com.qfs.pagan.controlwidgets.ControlWidgetPan
 import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
-import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -32,7 +31,6 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
@@ -1364,10 +1362,10 @@ class ActionTracker {
         }
     }
 
-    fun set_delay_at_cursor(frequency: Rational, fade: Float, repeat: Int) {
+    fun set_delay_at_cursor(numerator: Int, denominator: Int, fade: Float, repeat: Int) {
         val main = this.get_activity()
 
-        this.track(TrackedAction.SetDelayAtCursor, listOf(frequency.numerator, frequency.denominator, fade.toBits(), repeat))
+        this.track(TrackedAction.SetDelayAtCursor, listOf(numerator, denominator, fade.toBits(), repeat))
         val context_menu = main.active_context_menu
         if (context_menu !is ContextMenuWithController<*>) {
             return
@@ -1375,9 +1373,10 @@ class ActionTracker {
 
         val widget = context_menu.get_widget() as ControlWidgetDelay
         val new_event = widget.get_event().copy()
-        new_event.frequency = frequency
-        new_event.repeat_decay = fade
-        new_event.repeat = repeat
+        new_event.numerator = numerator
+        new_event.denominator = denominator
+        new_event.fade = fade
+        new_event.echo = repeat
 
         widget.set_event(new_event)
     }
@@ -1641,10 +1640,8 @@ class ActionTracker {
         when (token) {
             TrackedAction.SetDelayAtCursor -> {
                 this.set_delay_at_cursor(
-                    Rational(
-                        integers[0]!!,
-                        integers[1]!!
-                    ),
+                    integers[0]!!,
+                    integers[1]!!,
                     Float.fromBits(integers[2]!!),
                     integers[3]!!
                 )

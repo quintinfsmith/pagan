@@ -252,6 +252,7 @@
     <string name="offset_dialog_octaves">Octaves</string>
     <string name="offset_dialog_offset">Offset</string>
     <string name="device_menu_default_name">Pagan</string>
+    <string name="contextmenu_delay_attenuation">Attenuation:</string>
 
     <string-array name="midi_instruments">
         <item>Grand Acoustic Piano</item>

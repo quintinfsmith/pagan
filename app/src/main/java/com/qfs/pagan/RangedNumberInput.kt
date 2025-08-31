@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import android.text.InputType
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
+import android.view.Gravity
 import android.view.KeyEvent
 import android.widget.TextView
 import java.util.Locale
@@ -16,6 +17,7 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
     var value_set_callback: ((T?) -> Unit)? = null
     abstract var _watcher: RangedTextWatcher<T>
     var confirm_required = true
+    var auto_resize = false
 
     init {
         /*
@@ -26,6 +28,7 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
         this.filters = arrayOf(NumeralFilter())
         this.typeface = Typeface.MONOSPACE
         this.setSelectAllOnFocus(true)
+
         this.textAlignment = TEXT_ALIGNMENT_TEXT_END
 
         this.init_range()
@@ -44,6 +47,14 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
     }
 
     abstract fun init_range()
+
+    fun set_auto_resize(value: Boolean) {
+        if (value) {
+            this.textAlignment = TEXT_ALIGNMENT_CENTER
+        } else {
+            this.textAlignment = TEXT_ALIGNMENT_TEXT_END
+        }
+    }
 
     fun set_range(new_min: T?, new_max: T? = null) {
         this.min = new_min

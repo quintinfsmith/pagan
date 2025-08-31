@@ -394,6 +394,7 @@ class DelayBuffer: public EffectProfileBuffer {
 
         this->create_chain();
 
+        // Adjust existing chain to fit into new one
         if (original_ptr != nullptr && this->active_input_frame != nullptr) {
             int current_chain_position = 0;
             auto* working_real_node = this->active_input_frame;
@@ -405,7 +406,6 @@ class DelayBuffer: public EffectProfileBuffer {
                     working_real_node = working_real_node->get_next();
                     current_chain_position++;
                 }
-                __android_log_print(ANDROID_LOG_DEBUG, "", "%d | %ld | %ld", original_delay, (long)original_ptr, (long)working_real_node);
                 original_ptr->move_to(working_real_node);
                 auto* bkp = original_ptr;
                 original_ptr = original_ptr->get_next();
@@ -424,23 +424,23 @@ class DelayBuffer: public EffectProfileBuffer {
             for (int i = 0; i < array_size; i++) {
                 float* frame_data = EffectProfileBuffer::get_next();
 
-                int repeat = frame_data[1];
-                if (repeat == 0) continue;
+                int echo = frame_data[1];
+                if (echo == 0) continue;
 
                 float next_delay = frame_data[0];
-                float decay = frame_data[2];
+                float fade = frame_data[2];
                 int next_fpb = frame_data[3];
 
                 this->adjust_chain_size(next_fpb, next_delay);
 
                 if (this->active_input_frame == nullptr) continue;
 
-                this->active_input_frame->add_value(working_array[i] * decay, working_array[i + array_size] * decay, repeat);
+                this->active_input_frame->add_value(working_array[i] * fade, working_array[i + array_size] * fade, echo);
 
                 auto* output_frame = this->active_input_frame->get_next();
                 float decay_value[2] = {0,0};
                 output_frame->get_values(decay_value);
-                output_frame->decay(decay);
+                output_frame->decay(fade);
 
                 working_array[i] += decay_value[0];
                 working_array[i + array_size] += decay_value[1];

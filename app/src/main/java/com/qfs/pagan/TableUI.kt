@@ -932,7 +932,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                 }
                 is DelayEvent -> {
-                    "${event.frequency.numerator}/${event.frequency.denominator}"
+                    "${event.numerator}/${event.denominator}"
                 }
                 else -> "???"
             }

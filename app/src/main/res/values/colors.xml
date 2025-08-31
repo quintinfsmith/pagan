@@ -100,4 +100,5 @@
     <color name="alt_style_gb_01">#444</color>
     <color name="alt_style_gb_10">#888</color>
     <color name="alt_style_gb_11">#CCC</color>
+    <color name="context_menu_background_icon">#33FFFFFF</color>
 </resources>

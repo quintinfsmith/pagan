@@ -2830,50 +2830,53 @@ class ActivityEditor : PaganActivity() {
     }
 
     internal fun set_context_menu_control_line() {
-        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
-        this.clear_context_menu()
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val is_initial_event = true
-        val widget = when (cursor.ctl_type!!) {
-            EffectType.Tempo -> {
-                ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
-                    opus_manager.set_initial_event(event)
+
+        if (!(this.active_context_menu?.matches_cursor(cursor) ?: false)) {
+            this.clear_context_menu()
+            val is_initial_event = true
+            val widget = when (cursor.ctl_type!!) {
+                EffectType.Tempo -> {
+                    ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
+                        opus_manager.set_initial_event(event)
+                    }
                 }
-            }
-            EffectType.Volume -> {
-                ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
-                    opus_manager.set_initial_event(event)
+                EffectType.Volume -> {
+                    ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
+                        opus_manager.set_initial_event(event)
+                    }
                 }
-            }
-            EffectType.Velocity -> {
-                ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
-                    opus_manager.set_initial_event(event)
+                EffectType.Velocity -> {
+                    ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
+                        opus_manager.set_initial_event(event)
+                    }
                 }
+
+                EffectType.Pan -> {
+                    ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
+                        opus_manager.set_initial_event(event)
+                    }
+                }
+
+                EffectType.Delay -> {
+                    ControlWidgetDelay(cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
+                        opus_manager.set_initial_event(event)
+                    }
+                }
+
+                EffectType.Reverb -> TODO()
             }
 
-            EffectType.Pan -> {
-                ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
-                    opus_manager.set_initial_event(event)
-                }
-            }
 
-            EffectType.Delay -> {
-                ControlWidgetDelay(cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
-                    opus_manager.set_initial_event(event)
-                }
-            }
-
-            EffectType.Reverb -> TODO()
+            this.active_context_menu = ContextMenuControlLine(
+                widget,
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        } else {
+            this.active_context_menu?.refresh()
         }
-
-
-        this.active_context_menu = ContextMenuControlLine(
-            widget,
-            this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-            this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-        )
 
         this.show_context_menus()
     }
@@ -2884,48 +2887,49 @@ class ActivityEditor : PaganActivity() {
 
         if (!(this.active_context_menu?.matches_cursor(cursor) ?: false)) {
             this.clear_context_menu()
+            val is_initial_event = false
+            val widget = when (cursor.ctl_type!!) {
+                EffectType.Tempo -> {
+                    ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
+                        opus_manager.set_event_at_cursor(event)
+                    }
+                }
+
+                EffectType.Volume -> {
+                    ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
+                        opus_manager.set_event_at_cursor(event)
+                    }
+                }
+
+                EffectType.Velocity -> {
+                    ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
+                        opus_manager.set_event_at_cursor(event)
+                    }
+                }
+
+                EffectType.Pan -> {
+                    ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
+                        opus_manager.set_event_at_cursor(event)
+                    }
+                }
+
+                EffectType.Delay -> {
+                    ControlWidgetDelay(cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
+                        opus_manager.set_event_at_cursor(event)
+                    }
+                }
+
+                EffectType.Reverb -> TODO()
+            }
+
+            this.active_context_menu = ContextMenuControlLeaf(
+                widget,
+                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
+                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
+            )
+        } else {
+            this.active_context_menu?.refresh()
         }
-
-
-        val is_initial_event = false
-        val widget = when (cursor.ctl_type!!) {
-            EffectType.Tempo -> {
-                ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
-                    opus_manager.set_event_at_cursor(event)
-                }
-            }
-
-            EffectType.Volume -> {
-                ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
-                    opus_manager.set_event_at_cursor(event)
-                }
-            }
-            EffectType.Velocity -> {
-                ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
-                    opus_manager.set_event_at_cursor(event)
-                }
-            }
-
-            EffectType.Pan -> {
-                ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
-                    opus_manager.set_event_at_cursor(event)
-                }
-            }
-
-            EffectType.Delay -> {
-                ControlWidgetDelay( cursor.ctl_level!!, is_initial_event, this ) { event: DelayEvent ->
-                    opus_manager.set_event_at_cursor(event)
-                }
-            }
-
-            EffectType.Reverb -> TODO()
-        }
-
-        this.active_context_menu = ContextMenuControlLeaf(
-            widget,
-            this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-            this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-        )
         this.show_context_menus()
     }
 

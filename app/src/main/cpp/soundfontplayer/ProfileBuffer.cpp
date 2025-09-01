@@ -95,3 +95,20 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_set_1frame_1jni(JNIEnv* env, jo
     auto *ptr = (EffectProfileBuffer *) ptr_long;
     ptr->set_frame(frame);
 }
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, jobject, jlong ptr_long) {
+    auto *ptr = (EffectProfileBuffer *) ptr_long;
+
+    switch (ptr->data->type) {
+        case TYPE_DELAY: {
+            auto* typed_ptr = (DelayBuffer*) ptr_long;
+            // DEBUG
+            return true;
+            //return typed_ptr->has_pending_echoes();
+        }
+        default: {
+            return false;
+        }
+    }
+}

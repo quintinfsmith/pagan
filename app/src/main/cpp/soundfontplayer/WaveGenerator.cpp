@@ -135,6 +135,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     for (int i = 0; i < frames * 2; i++) {
         output_ptr[i] = 0;
     }
+
     // move the merged and modified signal into a single array,
     // Multiplexing the channels
     for (int i = 0; i < current_array_count; i++) {

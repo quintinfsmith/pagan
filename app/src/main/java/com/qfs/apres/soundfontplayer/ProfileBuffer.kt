@@ -10,6 +10,11 @@ class ProfileBuffer(val ptr: Long) {
         external fun create(data_ptr: Long, start_frame: Int): Long
     }
 
+    external fun allow_empty_jni(ptr: Long): Boolean
+    fun allow_empty(): Boolean {
+        return this.allow_empty_jni(this.ptr)
+    }
+
     external fun set_frame_jni(ptr: Long, frame: Int)
     fun set_frame(frame: Int) {
         this.set_frame_jni(this.ptr, frame)

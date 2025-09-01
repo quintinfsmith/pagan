@@ -40,25 +40,40 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     external fun tanh_array(array: FloatArray): FloatArray
     fun generate(): FloatArray {
         val working_array = FloatArray(this.buffer_size * 2)
-        val start_ts = System.nanoTime()
 
         val first_frame = this.frame
         this.update_active_sample_handles(this.frame)
 
+        val forced_empty_frames = mutableSetOf<IntArray>()
         if (this._active_sample_handles.isEmpty()) {
-            this.frame += this.buffer_size
-            for ( (_, _, buffer) in this.midi_frame_map.get_effect_buffers()) {
-                buffer.set_frame(this.frame)
+            for ( (layer_id, key, buffer) in this.midi_frame_map.get_effect_buffers()) {
+                if (buffer.allow_empty()) {
+                    forced_empty_frames.add(intArrayOf(layer_id, key))
+                }
             }
-            throw EmptyException()
+
+            if (forced_empty_frames.isEmpty()) {
+                this.frame += this.buffer_size
+                for ((_, _, buffer) in this.midi_frame_map.get_effect_buffers()) {
+                    buffer.set_frame(this.frame)
+                }
+                throw EmptyException()
+            }
         }
 
         val separated_lines_map: HashMap<Int, Pair<FloatArray, IntArray>> = this@WaveGenerator.generate_sample_arrays(first_frame)
+        if (forced_empty_frames.isNotEmpty()) {
+            val empty_frames = FloatArray(this.buffer_size * 2)
+            for (merge_keys in forced_empty_frames) {
+                separated_lines_map[separated_lines_map.size] = Pair(empty_frames, merge_keys)
+            }
+        }
 
         val keys = separated_lines_map.keys.toList()
         val arrays_to_merge = Array(keys.size) { i: Int ->
             separated_lines_map[keys[i]]!!.first
         }
+
         val layers = Array(keys.size) { i: Int ->
             separated_lines_map[keys[i]]!!.second
         }

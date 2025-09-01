@@ -87,6 +87,7 @@ public:
 
     void copy_to(EffectProfileBuffer* new_buffer) {
         new_buffer->data = this->data;
+        new_buffer->type = this->type;
         new_buffer->current_index = this->current_index;
         new_buffer->data_width = this->data_width;
         for (int i = 0; i < this->data_width; i++) {
@@ -231,27 +232,25 @@ class DelayedFrameValue {
         DelayedFrameValue* next = nullptr;
 
         ~DelayedFrameValue() {
-            if (this->next != nullptr) {
-                delete this->next;
-            }
+            delete this->next;
         }
 };
 
 class DelayedFrame {
     DelayedFrame* next;
+    int value_count = 0; // Track if there are any pending echoes
     public:
         DelayedFrameValue* value_chain;
 
         void init() {
             this->next = nullptr;
             this->value_chain = nullptr;
+            this->value_count = 0;
         }
 
         // FIXME: Will likely cause error
         ~DelayedFrame() {
-            if (this->value_chain != nullptr) {
-                delete this->value_chain;
-            }
+            delete this->value_chain;
 
             if (this->next != nullptr) {
                 delete this->next;
@@ -264,12 +263,8 @@ class DelayedFrame {
         }
 
         void move_to(DelayedFrame* new_frame) {
-            __android_log_print(ANDROID_LOG_DEBUG, "", "-----2");
-
             auto* ptr = this->value_chain;
-            __android_log_print(ANDROID_LOG_DEBUG, "", "-----");
             while (ptr != nullptr) {
-                __android_log_print(ANDROID_LOG_DEBUG, "", "%ld", (long)ptr);
                 new_frame->add_value(ptr->left, ptr->right, ptr->count);
                 ptr = ptr->next;
             }
@@ -307,6 +302,7 @@ class DelayedFrame {
             this->value_chain->right = right;
             this->value_chain->count = repeat;
             this->value_chain->next = working_ptr;
+            this->value_count += 1;
         }
 
         void decay(float decay) {
@@ -329,6 +325,7 @@ class DelayedFrame {
 
                 orig->next = nullptr;
                 delete orig;
+                this->value_count -= 1;
             }
             this->value_chain = working_ptr;
 
@@ -339,6 +336,7 @@ class DelayedFrame {
                     working_ptr->next = working_ptr->next->next;
                     orig->next = nullptr;
                     delete orig;
+                    this->value_count -= 1;
                 } else {
                     working_ptr = working_ptr->next;
                 }
@@ -448,16 +446,23 @@ class DelayBuffer: public EffectProfileBuffer {
                 this->cycle();
             }
         }
+
         void also_init() {
             this->active_input_frame = nullptr;
             this->active_delay = 0;
             this->active_fpb = 0; // Frames Per Beat
             this->active_delay_in_frames = 0;
         }
+
         ~DelayBuffer() {
             if (this->active_input_frame != nullptr) {
                 delete this->active_input_frame;
             }
+        }
+
+        bool has_pending_echoes() {
+            if (this->active_input_frame == nullptr) return false;
+
         }
 };
 

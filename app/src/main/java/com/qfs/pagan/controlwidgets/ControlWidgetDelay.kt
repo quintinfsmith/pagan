@@ -56,8 +56,7 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
                 value ?: DEFAULT_NUMERATOR,
                 this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
                 this.working_event?.fade ?: DEFAULT_FADE,
-                this.working_event?.echo ?: DEFAULT_REPEAT,
-                surpress_callback = true
+                this.working_event?.echo ?: DEFAULT_REPEAT
             )
         }
 
@@ -66,8 +65,7 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
                 this.working_event?.numerator ?: DEFAULT_NUMERATOR,
                 value ?: DEFAULT_DENOMINATOR,
                 this.working_event?.fade ?: DEFAULT_FADE,
-                this.working_event?.echo ?: DEFAULT_REPEAT,
-                surpress_callback = true
+                this.working_event?.echo ?: DEFAULT_REPEAT
             )
         }
 
@@ -85,15 +83,14 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
             }
         })
 
-        this._echo.value_set_callback = { value: Int? ->
-            main.get_action_interface().set_delay_at_cursor(
-                this.working_event?.numerator ?: DEFAULT_NUMERATOR,
-                this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
-                this.working_event?.fade ?: DEFAULT_FADE,
-                value ?: DEFAULT_REPEAT,
-                surpress_callback = true
-            )
-        }
+        // this._echo.value_set_callback = { value: Int? ->
+        //     main.get_action_interface().set_delay_at_cursor(
+        //         this.working_event?.numerator ?: DEFAULT_NUMERATOR,
+        //         this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
+        //         this.working_event?.fade ?: DEFAULT_FADE,
+        //         value ?: DEFAULT_REPEAT
+        //     )
+        // }
     }
 
     init {

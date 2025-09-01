@@ -8,6 +8,9 @@ import android.widget.RadioGroup
 import android.widget.TextView
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_range, R.layout.contextmenu_range_secondary, primary_container, secondary_container) {
@@ -15,6 +18,8 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
     lateinit var button_adjust: Button
     lateinit var radio_mode: RadioGroup
     lateinit var label: TextView
+
+    var active_corners: Pair<BeatKey, BeatKey>? = null
 
     override fun init_properties() {
         this.button_erase = this.primary!!.findViewById(R.id.btnEraseSelection)
@@ -91,6 +96,12 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
                 else ->  this.context.resources.getString(R.string.label_copy_range)
             }
         }
+    }
+
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Range
+                && cursor.ctl_level == null
+                && cursor.get_ordered_range() == this.active_corners
     }
 
 }

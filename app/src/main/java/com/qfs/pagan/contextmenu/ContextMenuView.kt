@@ -4,6 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int?, primary_container: ViewGroup, secondary_container: ViewGroup) {
     val primary: ViewGroup?
@@ -32,14 +34,15 @@ abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int
         this.refresh()
     }
 
+    abstract fun matches_cursor(cursor: OpusManagerCursor): Boolean
     abstract fun init_properties()
     abstract fun setup_interactions()
     abstract fun refresh()
 
-
     fun get_activity(): ActivityEditor {
         return this.context as ActivityEditor
     }
+
     fun get_opus_manager(): OpusLayerInterface {
         return this.get_activity().get_opus_manager()
     }

@@ -11,6 +11,8 @@ import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_line_ctl_leaf, R.layout.contextmenu_line_ctl_leaf_secondary, primary_container, secondary_container),
@@ -22,6 +24,13 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
     lateinit var button_remove: Button
     lateinit var button_duration: Button
     lateinit var button_unset: Button
+
+    var active_ctl_level: CtlLineLevel? = null
+    var active_ctl_type: EffectType? = null
+    var active_channel: Int? = null
+    var active_line_offset: Int? = null
+    var active_position: List<Int>? = null
+    var active_beat: Int? = null
 
     var first_refresh_skipped = false
     init {
@@ -154,9 +163,26 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
             this.first_refresh_skipped = true
             return
         }
+
+
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val current_event = this.get_control_event<T>()
+
+        this.active_beat = cursor.beat
+        this.active_position = cursor.get_position()
+
+        this.active_ctl_type = cursor.ctl_type
+        this.active_ctl_level = cursor.ctl_level
+        this.active_channel = when (cursor.ctl_level) {
+            CtlLineLevel.Line,
+            CtlLineLevel.Channel -> cursor.channel
+            else -> null
+        }
+        this.active_line_offset = when (cursor.ctl_level) {
+            CtlLineLevel.Line -> cursor.line_offset
+            else -> null
+        }
 
         if (this.widget_wrapper.isEmpty()) {
             this.init_widget()
@@ -246,5 +272,19 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
     private fun long_click_button_duration(): Boolean {
         this.get_activity().get_action_interface().set_ctl_duration<T>(1)
         return true
+    }
+
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Single
+                && cursor.ctl_type == this.active_ctl_type
+                && cursor.position == this.active_position
+                && cursor.beat == this.active_beat
+                && cursor.ctl_level == this.active_ctl_level
+                && when (cursor.ctl_level) {
+                    CtlLineLevel.Global  -> true
+                    CtlLineLevel.Channel -> this.active_channel == cursor.channel
+                    CtlLineLevel.Line -> this.active_channel == cursor.channel && this.active_line_offset == cursor.line_offset
+                    else -> false
+                }
     }
 }

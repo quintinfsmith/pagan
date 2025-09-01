@@ -5,6 +5,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.R
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_cell_percussion, null, primary_container, secondary_container) {
@@ -13,6 +16,9 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     lateinit var button_unset: Button
     lateinit var button_remove: Button
     lateinit var button_duration: Button
+
+    var active_beatkey: BeatKey? = null
+    var active_position: List<Int>? = null
 
     override fun init_properties() {
         val primary = this.primary!!
@@ -28,6 +34,9 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
         this.button_insert.visibility = View.VISIBLE
 
         val opus_manager = this.get_opus_manager()
+
+        this.active_beatkey = opus_manager.cursor.get_beatkey()
+        this.active_position = opus_manager.cursor.get_position()
 
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
@@ -157,5 +166,11 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
     private fun click_button_unset() {
         this.get_activity().get_action_interface().toggle_percussion()
+    }
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Single
+                && cursor.ctl_level == null
+                && cursor.get_beatkey() == this.active_beatkey
+                && cursor.get_position() == this.active_position
     }
 }

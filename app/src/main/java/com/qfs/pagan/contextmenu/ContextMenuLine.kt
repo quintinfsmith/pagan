@@ -18,6 +18,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
     R.layout.contextmenu_row, R.layout.contextmenu_row_secondary, primary_container, secondary_container),
@@ -30,6 +31,9 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var button_mute: Button
     lateinit var widget_volume: ControlWidgetVolume
     lateinit var spacer: Space
+
+    var active_channel: Int? = null
+    var active_line_offset: Int? = null
 
     override fun init_properties() {
         val primary = this.primary!!
@@ -70,6 +74,9 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         if (cursor.mode != CursorMode.Line) {
             throw InvalidModeException(cursor.mode, CursorMode.Line)
         }
+
+        this.active_channel = cursor.channel
+        this.active_line_offset = cursor.line_offset
 
         val channel = cursor.channel
         val line_offset = cursor.line_offset
@@ -237,5 +244,12 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
 
     override fun get_widget(): ControlWidget<OpusVolumeEvent> {
         return this.widget_volume
+    }
+
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Line
+                && cursor.ctl_level == null
+                && cursor.line_offset == this.active_line_offset
+                && cursor.channel == this.active_channel
     }
 }

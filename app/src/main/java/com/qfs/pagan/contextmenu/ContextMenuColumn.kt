@@ -4,6 +4,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import com.qfs.pagan.R
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(R.layout.contextmenu_column, null, primary_parent, secondary_parent) {
     lateinit var button_insert: Button
@@ -11,6 +13,8 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
     lateinit var button_adjust: Button
     lateinit var button_tag: Button
     lateinit var button_untag: Button
+
+    var active_beat: Int? = null
 
     override fun init_properties() {
         this.button_insert = this.primary!!.findViewById(R.id.btnInsertBeat)
@@ -22,6 +26,8 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
 
     override fun refresh() {
         val opus_manager = this.get_opus_manager()
+        this.active_beat = opus_manager.cursor.beat
+
         this.button_remove.isEnabled = opus_manager.length > 1
         if (opus_manager.is_beat_tagged(opus_manager.cursor.beat)) {
             this.button_untag.visibility = View.VISIBLE
@@ -66,7 +72,7 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
         this.button_tag.setOnClickListener {
             val activity = this.get_activity()
             val opus_manager = activity.get_opus_manager()
-            if (opus_manager.is_beat_tagged(opus_manager.cursor.beat)) {
+            if (opus_manager.is_beat_tagged(this.active_beat!!)) {
                 activity.get_action_interface().tag_column()
             } else {
                 activity.get_action_interface().tag_column(null, null, true)
@@ -99,5 +105,9 @@ class ContextMenuColumn(primary_parent: ViewGroup, secondary_parent: ViewGroup):
     fun long_click_button_insert_beat(): Boolean {
         this.get_activity().get_action_interface().insert_beat_after_cursor()
         return true
+    }
+
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Column && cursor.beat == this.active_beat && cursor.ctl_level == null
     }
 }

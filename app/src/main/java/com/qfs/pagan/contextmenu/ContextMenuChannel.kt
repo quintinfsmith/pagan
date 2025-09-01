@@ -8,6 +8,8 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
+import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 /*
     CHANNEL_CTLS. Channel controls are not currently considered in playback, so I'll comment out the controls for a future release
@@ -22,6 +24,8 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     lateinit var button_toggle_controllers: Button
     lateinit var button_mute: Button
     lateinit var button_adjust: Button
+
+    var active_channel: Int? = null
 
     override fun init_properties() {
         val primary = this.primary!!
@@ -42,23 +46,24 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             throw InvalidModeException(opus_manager.cursor.mode, CursorMode.Line)
         }
 
+        this.active_channel = opus_manager.cursor.channel
+
         this.button_choose_instrument.visibility = View.VISIBLE
 
-        val channel_index = opus_manager.cursor.channel
-        val channel = opus_manager.get_channel(channel_index)
-        val instrument = opus_manager.get_channel_instrument(channel_index)
+        val channel = opus_manager.get_channel(this.active_channel!!)
+        val instrument = opus_manager.get_channel_instrument(this.active_channel!!)
         val midi_program = channel.midi_program
 
         val defaults = main.resources.getStringArray(R.array.midi_instruments)
         val supported_instruments = main.get_supported_instrument_names()
-        val label = supported_instruments[instrument] ?: if (opus_manager.is_percussion(channel_index)) {
+        val label = supported_instruments[instrument] ?: if (opus_manager.is_percussion(this.active_channel!!)) {
             "$midi_program"
         } else {
             main.resources.getString(R.string.unknown_instrument, defaults[midi_program])
         }
         this.button_choose_instrument.text = label
 
-        this.button_adjust.visibility = if (opus_manager.is_percussion(channel_index)) {
+        this.button_adjust.visibility = if (opus_manager.is_percussion(this.active_channel!!)) {
             View.GONE
         } else {
             View.VISIBLE
@@ -67,8 +72,8 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         this.button_remove.isEnabled = opus_manager.channels.size > 1
 
         var show_control_toggle = false
-        for ((ctl_type, icon_id) in OpusLayerInterface.Companion.channel_controller_domain) {
-            if (opus_manager.is_channel_ctl_visible(ctl_type, channel_index)) {
+        for ((ctl_type, _) in OpusLayerInterface.Companion.channel_controller_domain) {
+            if (opus_manager.is_channel_ctl_visible(ctl_type, this.active_channel!!)) {
                 continue
             }
             show_control_toggle = true
@@ -184,6 +189,10 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         this.get_activity().get_action_interface().set_channel_instrument(cursor.channel)
+    }
+
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Channel && cursor.channel == this.active_channel && cursor.ctl_level == null
     }
 
 }

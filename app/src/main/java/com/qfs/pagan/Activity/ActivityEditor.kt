@@ -97,7 +97,7 @@ import com.qfs.pagan.TuningMapRecyclerAdapter
 import com.qfs.pagan.contextmenu.ContextMenuChannel
 import com.qfs.pagan.contextmenu.ContextMenuColumn
 import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
-import com.qfs.pagan.contextmenu.ContextMenuControlLeafB
+import com.qfs.pagan.contextmenu.ContextMenuControlLeafRange
 import com.qfs.pagan.contextmenu.ContextMenuControlLine
 import com.qfs.pagan.contextmenu.ContextMenuLeaf
 import com.qfs.pagan.contextmenu.ContextMenuLeafPercussion
@@ -2879,11 +2879,13 @@ class ActivityEditor : PaganActivity() {
     }
 
     internal fun set_context_menu_line_control_leaf() {
-        // KLUDGE: due to the Generics, i need a better way of checking type here. for now i'm forcing refresh
-        this.clear_context_menu()
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
+
+        if (!(this.active_context_menu?.matches_cursor(cursor) ?: false)) {
+            this.clear_context_menu()
+        }
+
 
         val is_initial_event = false
         val widget = when (cursor.ctl_type!!) {
@@ -2928,8 +2930,8 @@ class ActivityEditor : PaganActivity() {
     }
 
     internal fun set_context_menu_line_control_leaf_b() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafB>()) {
-            this.active_context_menu = ContextMenuControlLeafB(
+        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafRange>()) {
+            this.active_context_menu = ContextMenuControlLeafRange(
                 this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
                 this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
             )

@@ -7,8 +7,11 @@ import com.qfs.pagan.NumberSelector
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeOptionSelector
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import kotlin.math.abs
 
 class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGroup): ContextMenuView(
@@ -21,6 +24,10 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     lateinit var ns_octave: NumberSelector
     lateinit var ns_offset: NumberSelector
     lateinit var ros_relative_option: RelativeOptionSelector
+
+    var active_beatkey: BeatKey? = null
+    var active_position: List<Int>? = null
+
 
     override fun init_properties() {
         val primary = this.primary!!
@@ -112,6 +119,9 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
     override fun refresh() {
         val main = this.get_activity()
         val opus_manager = this.get_opus_manager()
+
+        this.active_beatkey = opus_manager.cursor.get_beatkey()
+        this.active_position = opus_manager.cursor.get_position()
 
         val radix = opus_manager.tuning_map.size
         this.ns_offset.set_max(radix - 1)
@@ -236,5 +246,12 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
 
     private fun interact_rosRelativeOption(view: RelativeOptionSelector) {
         this.get_activity().get_action_interface().set_relative_mode(view.get_state() ?: return)
+    }
+
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Single
+                && cursor.ctl_level == null
+                && cursor.get_beatkey() == this.active_beatkey
+                && cursor.get_position() == this.active_position
     }
 }

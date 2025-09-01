@@ -7,7 +7,10 @@ import com.qfs.pagan.ContextMenuWithController
 import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, primary_parent: ViewGroup, secondary_parent: ViewGroup): ContextMenuView(
     R.layout.contextmenu_control_line, R.layout.contextmenu_control_line_secondary, primary_parent, secondary_parent),
@@ -15,6 +18,12 @@ class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, prima
     lateinit var button_toggle_line_control: Button
     lateinit var button_remove_line_control: Button
     var first_refresh_skipped = false
+
+    var active_ctl_type: EffectType? = null
+    var active_ctl_level: CtlLineLevel? = null
+    var active_channel: Int? = null
+    var active_line_offset: Int? = null
+
     init {
         this.init_widget()
         this.refresh()
@@ -65,9 +74,7 @@ class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, prima
         }
     }
 
-    override fun init_properties() {
-    }
-
+    override fun init_properties() { }
     override fun setup_interactions() { }
 
     override fun refresh() {
@@ -75,10 +82,35 @@ class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, prima
             this.first_refresh_skipped = true
             return
         }
+        val cursor = this.get_opus_manager().cursor
+        this.active_ctl_type = cursor.ctl_type
+        this.active_ctl_level = cursor.ctl_level
+        this.active_channel = when (cursor.ctl_level) {
+            CtlLineLevel.Line,
+            CtlLineLevel.Channel -> cursor.channel
+            else -> null
+        }
+        this.active_line_offset = when (cursor.ctl_level) {
+            CtlLineLevel.Line -> cursor.line_offset
+            else -> null
+        }
+
         this.widget.set_event(this.get_control_event(), true)
     }
 
     override fun get_widget(): ControlWidget<T> {
         return this.widget
+    }
+
+    override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
+        return cursor.mode == CursorMode.Line
+                && cursor.ctl_type == this.active_ctl_type
+                && cursor.ctl_level == this.active_ctl_level
+                && when (cursor.ctl_level) {
+            CtlLineLevel.Global -> true
+            CtlLineLevel.Channel -> this.active_channel == cursor.channel
+            CtlLineLevel.Line -> this.active_channel == cursor.channel && this.active_line_offset == cursor.line_offset
+            else -> false
+        }
     }
 }

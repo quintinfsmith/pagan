@@ -27,6 +27,7 @@ import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
@@ -57,28 +58,46 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val text_paint_octave = Paint()
         val text_paint_ctl = Paint()
         val text_paint_column = Paint()
+        val text_paint_line_label_std = Paint()
+        val text_paint_line_label_ctl = Paint()
         val tagged_paint_column = Paint()
         var touch_position_x = 0F
         var touch_position_y = 0F
         val leaf_drawable: Drawable
         val line_label_drawable: Drawable
         val ctl_label_drawable: Drawable
+        val corner_drawable: Drawable
 
         var invalidate_queued = false
         init {
             val typed_value = TypedValue()
             this.context.theme.resolveAttribute(R.attr.leaf, typed_value, true)
             this.leaf_drawable = ContextCompat.getDrawable(this.context, typed_value.resourceId) ?: throw Exception("TODO")
+
             this.context.theme.resolveAttribute(R.attr.line_label, typed_value, true)
             this.line_label_drawable = ContextCompat.getDrawable(this.context, typed_value.resourceId) ?: throw Exception("TODO")
+
             this.context.theme.resolveAttribute(R.attr.ctl_line_label, typed_value, true)
             this.ctl_label_drawable = ContextCompat.getDrawable(this.context, typed_value.resourceId) ?: throw Exception("TODO")
+
+            this.context.theme.resolveAttribute(R.attr.corner_button, typed_value, true)
+            this.corner_drawable = ContextCompat.getDrawable(this.context, typed_value.resourceId) ?: throw Exception("TODO")
 
             this.context.theme.resolveAttribute(R.attr.font_main, typed_value, true)
             val font = ResourcesCompat.getFont(this.context, typed_value.resourceId)
 
             this.table_line_paint.color = ContextCompat.getColor(this.context, R.color.table_lines)
             this.table_line_paint.strokeWidth = this.context.resources.getDimension(R.dimen.stroke_leaf)
+
+            this.text_paint_line_label_std.textSize = this.resources.getDimension(R.dimen.text_size_line_label)
+            this.text_paint_line_label_std.color = ContextCompat.getColor(this.context, R.color.line_label_text)
+            this.text_paint_line_label_std.isAntiAlias = true
+            this.text_paint_line_label_std.typeface = font
+
+            this.text_paint_line_label_ctl.textSize = this.resources.getDimension(R.dimen.text_size_line_label)
+            this.text_paint_line_label_ctl.color = ContextCompat.getColor(this.context, R.color.line_label_text)
+            this.text_paint_line_label_ctl.isAntiAlias = true
+            this.text_paint_line_label_ctl.typeface = font
 
             this.text_paint_offset.textSize = this.resources.getDimension(R.dimen.text_size_offset)
             this.text_paint_offset.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
@@ -479,6 +498,23 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return output
         }
 
+        fun get_standard_line_state(channel: Int, line_offset: Int): IntArray {
+            val opus_manager = this.editor_table.get_opus_manager()
+
+            val new_state = mutableListOf<Int>()
+            if (opus_manager.is_line_selected(channel, line_offset)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_line_selected_secondary(channel, line_offset)) {
+                new_state.add(R.attr.state_focused_secondary)
+            }
+
+            if (opus_manager.get_channel(channel).get_line(line_offset).muted) {
+                new_state.add(R.attr.state_muted)
+            }
+
+            return new_state.toIntArray()
+        }
+
         fun get_standard_leaf_state(beat_key: BeatKey, position: List<Int>): IntArray {
             val opus_manager = this.editor_table.get_opus_manager()
 
@@ -578,6 +614,23 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return new_state.toIntArray()
         }
 
+        fun get_global_control_line_state(type: EffectType): IntArray {
+            val new_state = mutableListOf<Int>()
+            val opus_manager = this.editor_table.get_opus_manager()
+
+            if (opus_manager.is_global_control_line_selected(type)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_global_control_line_selected_secondary(type)) {
+                new_state.add(R.attr.state_focused_secondary)
+            }
+
+            new_state.add(R.attr.state_channel_even)
+
+            return new_state.toIntArray()
+        }
+
+
+
         fun get_channel_control_leaf_state(type: EffectType, channel: Int, beat: Int, position: List<Int>): IntArray {
             val new_state = mutableListOf<Int>()
             val opus_manager = this.editor_table.get_opus_manager()
@@ -613,6 +666,22 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             if (opus_manager.get_channel(channel).muted) {
+                new_state.add(R.attr.state_muted)
+            }
+
+            return new_state.toIntArray()
+        }
+
+        fun get_channel_control_line_state(type: EffectType, channel: Int): IntArray {
+            val new_state = mutableListOf<Int>()
+            val opus_manager = this.editor_table.get_opus_manager()
+            if (opus_manager.is_channel_control_line_selected(type, channel)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_channel_control_line_selected_secondary(type, channel)) {
+                new_state.add(R.attr.state_focused_secondary)
+            }
+
+            if (opus_manager.channels[channel].muted) {
                 new_state.add(R.attr.state_muted)
             }
 
@@ -657,6 +726,23 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             val channel = opus_manager.get_channel(beat_key.channel)
             if (channel.muted || channel.get_line(beat_key.line_offset).muted) {
+                new_state.add(R.attr.state_muted)
+            }
+
+            return new_state.toIntArray()
+        }
+
+        fun get_line_control_line_state(type: EffectType, channel: Int, line_offset: Int): IntArray {
+            val new_state = mutableListOf<Int>()
+            val opus_manager = this.editor_table.get_opus_manager()
+
+            if (opus_manager.is_line_control_line_selected(type, channel, line_offset)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_line_control_line_selected_secondary(type, channel, line_offset)) {
+                new_state.add(R.attr.state_focused_secondary)
+            }
+
+            if (opus_manager.channels[channel].get_line(line_offset).muted) {
                 new_state.add(R.attr.state_muted)
             }
 
@@ -726,7 +812,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 return@draw_tree
                             }
 
-                            this.leaf_drawable.setState(state)
+                            this.leaf_drawable.state = state
                             this.leaf_drawable.setBounds(
                                 (x).toInt(),
                                 (y).toInt(),
@@ -957,30 +1043,50 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             // ------------------- Draw Line Labels ----------------------------
-            var y_offset = line_height + scroll_y;
+            var y_offset = line_height;
             for (j in channels.indices) {
                 for (k in channels[j].lines.indices) {
-                    this.line_label_drawable.setState(state)
+                    this.line_label_drawable.state = this.get_standard_line_state(j, k)
                     this.line_label_drawable.setBounds(
-                        (scroll_x).toInt(),
+                        scroll_x,
                         (y_offset).toInt(),
                         (scroll_x + line_label_width).toInt(),
                         (y_offset + line_height).toInt()
                     )
                     this.line_label_drawable.draw(canvas)
+                    this.draw_line_label_text(
+                        canvas,
+                        j,
+                        k,
+                        this.line_label_drawable.state,
+                        scroll_x.toFloat(),
+                        y_offset,
+                        line_label_width,
+                        line_height
+                    )
 
-                    y_offset += ctl_line_height
+                    y_offset += line_height
                     for ((type, controller) in channels[j].lines[k].controllers.get_all()) {
                         if (!controller.visible) continue
 
-                        this.ctl_label_drawable.setState(state)
+                        this.ctl_label_drawable.state = this.get_line_control_line_state(type, j, k)
                         this.ctl_label_drawable.setBounds(
-                            (scroll_x).toInt(),
+                            scroll_x,
                             (y_offset).toInt(),
                             (scroll_x + line_label_width).toInt(),
                             (y_offset + ctl_line_height).toInt()
                         )
                         this.ctl_label_drawable.draw(canvas)
+
+                        this.draw_ctl_label_text(
+                            canvas,
+                            type,
+                            this.ctl_label_drawable.state,
+                            scroll_x.toFloat(),
+                            y_offset,
+                            line_label_width,
+                            ctl_line_height
+                        )
 
                         y_offset += ctl_line_height
                     }
@@ -988,33 +1094,118 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 for ((type, controller) in channels[j].controllers.get_all()) {
                     if (!controller.visible) continue
 
-                    this.ctl_label_drawable.setState(state)
+                    this.ctl_label_drawable.state = this.get_channel_control_line_state(type, j)
                     this.ctl_label_drawable.setBounds(
-                        (scroll_x).toInt(),
+                        scroll_x,
                         (y_offset).toInt(),
                         (scroll_x + line_label_width).toInt(),
                         (y_offset + ctl_line_height).toInt()
                     )
                     this.ctl_label_drawable.draw(canvas)
 
+                    this.draw_ctl_label_text(
+                        canvas,
+                        type,
+                        this.ctl_label_drawable.state,
+                        scroll_x.toFloat(),
+                        y_offset,
+                        line_label_width,
+                        ctl_line_height
+                    )
+
+
                     y_offset += ctl_line_height
                 }
+                canvas.drawRect(scroll_x.toFloat(), y_offset, scroll_x + line_label_width, y_offset + channel_gap_height, this.table_line_paint)
+                y_offset += channel_gap_height
             }
+
             for ((type, controller) in opus_manager.controllers.get_all()) {
                 if (!controller.visible) continue
 
-                this.ctl_label_drawable.setState(state)
+                this.ctl_label_drawable.state = this.get_global_control_line_state(type)
                 this.ctl_label_drawable.setBounds(
-                    (scroll_x).toInt(),
+                    scroll_x,
                     (y_offset).toInt(),
                     (scroll_x + line_label_width).toInt(),
                     (y_offset + ctl_line_height).toInt()
                 )
                 this.ctl_label_drawable.draw(canvas)
 
+                this.draw_ctl_label_text(
+                    canvas,
+                    type,
+                    this.ctl_label_drawable.state,
+                    scroll_x.toFloat(),
+                    y_offset,
+                    line_label_width,
+                    ctl_line_height
+                )
+
                 y_offset += ctl_line_height
             }
 
+            // Draw Corner Button
+            this.corner_drawable.setBounds(
+                scroll_x,
+                scroll_y,
+                (scroll_x + line_label_width).toInt(),
+                (scroll_y + line_height).toInt()
+            )
+            this.corner_drawable.draw(canvas)
+        }
+
+        private fun draw_line_label_text(canvas: Canvas, channel: Int, line_offset: Int, state: IntArray, x: Float, y: Float, width: Float, height: Float) {
+            val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.line_label_text)!!
+            this.text_paint_line_label_std.color = color_list.getColorForState(state, Color.MAGENTA)
+
+            val opus_manager = this.get_activity().get_opus_manager()
+            val (channel_text, line_offset_text) = if (opus_manager.is_percussion(channel)) {
+                Pair(
+                    "!$channel",
+                    (opus_manager.get_channel(channel).get_line(line_offset) as OpusLinePercussion).instrument.toString()
+                )
+            } else {
+                Pair(channel.toString(), line_offset.toString())
+            }
+            val channel_text_bounds = Rect()
+            val line_offset_text_bounds = Rect()
+
+            this.text_paint_line_label_std.getTextBounds(channel_text, 0, channel_text.length, channel_text_bounds)
+            this.text_paint_line_label_std.getTextBounds(line_offset_text, 0, line_offset_text.length, line_offset_text_bounds)
+
+            val padding = this.resources.getDimension(R.dimen.line_label_padding)
+            canvas.drawText(channel_text, padding + x, padding + y + channel_text_bounds.height(), this.text_paint_line_label_std)
+            canvas.drawText(line_offset_text, x + width - line_offset_text_bounds.width() - padding, y + height - padding, this.text_paint_line_label_std)
+        }
+
+        private fun draw_ctl_label_text(canvas: Canvas, type: EffectType, state: IntArray, x: Float, y: Float, width: Float, height: Float) {
+            val color_list = ContextCompat.getColorStateList(this.get_activity(), R.color.line_label_ctl_text)!!
+            val ctl_drawable = ContextCompat.getDrawable(
+            this.get_activity(),
+            when (type) {
+                    EffectType.Tempo -> R.drawable.icon_tempo
+                    EffectType.Volume -> R.drawable.icon_volume
+                    EffectType.Velocity -> R.drawable.icon_velocity
+                    EffectType.Reverb -> R.drawable.icon_volume // Placeholder TODO
+                    EffectType.Pan -> R.drawable.icon_pan
+                    EffectType.Delay -> R.drawable.icon_volume // Placeholder TODO
+                }
+            )!!
+
+            val padding = this.resources.getDimension(R.dimen.line_label_padding)
+            val adj_width = width - (2 * padding)
+            val adj_height = height - (2 * padding)
+
+            ctl_drawable.setBounds(
+                (x + padding + ((adj_width - adj_height) / 2)).toInt(),
+                (y + padding).toInt(),
+                (x + padding + ((adj_width + adj_height) / 2)).toInt(),
+                (y + height - padding).toInt()
+            )
+
+            ctl_drawable.setTint(color_list.getColorForState(state, Color.MAGENTA))
+            ctl_drawable.draw(canvas)
         }
 
         private fun get_column_label_state(x: Int): IntArray {
@@ -1032,7 +1223,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
         fun process_ctl_event_layout(state: IntArray, event: EffectEvent?, canvas: Canvas, x: Float, y: Float, width: Float, ctl_line_height: Float) {
             val ctl_drawable = ContextCompat.getDrawable(this.get_activity(), R.drawable.ctl_leaf)!!
-            ctl_drawable.setState(state)
+            ctl_drawable.state = state
             ctl_drawable.setBounds(
                 (x).toInt(),
                 (y).toInt(),
@@ -1049,7 +1240,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 is OpusVolumeEvent -> (event.value).toString()
                 is OpusVelocityEvent -> (event.value).toString()
                 is OpusTempoEvent -> event.value.roundToInt().toString()
-                is OpusReverbEvent -> "TODO"
                 is OpusPanEvent -> {
                     if (event.value > 0F) {
                         val n = (event.value * 10).roundToInt()

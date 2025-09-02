@@ -34,5 +34,6 @@
         <attr name="line_label" format="reference"/>
         <attr name="ctl_line_label" format="reference"/>
         <attr name="font_main" format="reference"/>
+        <attr name="corner_button" format="reference"/>
     </declare-styleable>
 </resources>

@@ -238,23 +238,21 @@ class DelayedFrameValue {
 
 class DelayedFrame {
     DelayedFrame* next;
-    int value_count = 0; // Track if there are any pending echoes
     public:
         DelayedFrameValue* value_chain;
 
         void init() {
             this->next = nullptr;
             this->value_chain = nullptr;
-            this->value_count = 0;
         }
 
-        // FIXME: Will likely cause error
         ~DelayedFrame() {
             delete this->value_chain;
 
             if (this->next != nullptr) {
-                delete this->next;
+                auto* tmp = this->next;
                 this->next = nullptr;
+                delete tmp;
             }
         }
 
@@ -302,10 +300,10 @@ class DelayedFrame {
             this->value_chain->right = right;
             this->value_chain->count = repeat;
             this->value_chain->next = working_ptr;
-            this->value_count += 1;
         }
 
-        void decay(float decay) {
+        // return number of values removed
+        int decay(float decay) {
             DelayedFrameValue* working_ptr = this->value_chain;
             while (working_ptr != nullptr) {
                 if (working_ptr->count > 0) {
@@ -316,6 +314,7 @@ class DelayedFrame {
                 working_ptr = working_ptr->next;
             }
 
+            int output = 0;
             // Prune values with count <= 0;
             // remove dead initial values first
             working_ptr = this->value_chain;
@@ -325,7 +324,7 @@ class DelayedFrame {
 
                 orig->next = nullptr;
                 delete orig;
-                this->value_count -= 1;
+                output++;
             }
             this->value_chain = working_ptr;
 
@@ -336,11 +335,13 @@ class DelayedFrame {
                     working_ptr->next = working_ptr->next->next;
                     orig->next = nullptr;
                     delete orig;
-                    this->value_count -= 1;
+                    output++;
                 } else {
                     working_ptr = working_ptr->next;
                 }
             }
+
+            return output;
         }
 
 };
@@ -350,20 +351,17 @@ class DelayBuffer: public EffectProfileBuffer {
     float active_delay = 0;
     int active_fpb = 0; // Frames Per Beat
     int active_delay_in_frames = 0;
+    int active_value_count = 0;
 
     DelayedFrame* active_input_frame;
 
-    // void delete_chain() {
-    //     DelayedFrame* working_ptr = this->active_input_frame->get_next();
-    //     while (working_ptr->get_next() != this->active_input_frame) {
-    //         DelayedFrame* prev_ptr = working_ptr;
-    //         working_ptr = working_ptr->get_next();
-    //         delete prev_ptr;
-    //     }
-    //     delete working_ptr;
-    //     this->active_input_frame = nullptr;
-    //     this->active_output_frame = nullptr;
-    // }
+    void delete_chain() {
+        if (this->active_input_frame == nullptr) return;
+        this->active_value_count = 0;
+
+        delete this->active_input_frame;
+        this->active_input_frame = nullptr;
+    }
 
     void create_chain() {
         if (this->active_delay_in_frames == 0) return;
@@ -423,7 +421,10 @@ class DelayBuffer: public EffectProfileBuffer {
                 float* frame_data = EffectProfileBuffer::get_next();
 
                 int echo = frame_data[1];
-                if (echo == 0) continue;
+                if (echo == 0) {
+                    this->delete_chain();
+                    continue;
+                }
 
                 float next_delay = frame_data[0];
                 float fade = frame_data[2];
@@ -433,12 +434,15 @@ class DelayBuffer: public EffectProfileBuffer {
 
                 if (this->active_input_frame == nullptr) continue;
 
-                this->active_input_frame->add_value(working_array[i] * fade, working_array[i + array_size] * fade, echo);
+                if (working_array[i] != 0 && working_array[i + array_size] != 0) {
+                    this->active_input_frame->add_value(working_array[i] * fade, working_array[i + array_size] * fade, echo);
+                    this->active_value_count++;
+                }
 
                 auto* output_frame = this->active_input_frame->get_next();
                 float decay_value[2] = {0,0};
                 output_frame->get_values(decay_value);
-                output_frame->decay(fade);
+                this->active_value_count -= output_frame->decay(fade);
 
                 working_array[i] += decay_value[0];
                 working_array[i + array_size] += decay_value[1];
@@ -452,6 +456,7 @@ class DelayBuffer: public EffectProfileBuffer {
             this->active_delay = 0;
             this->active_fpb = 0; // Frames Per Beat
             this->active_delay_in_frames = 0;
+            this->active_value_count = 0;
         }
 
         ~DelayBuffer() {
@@ -462,7 +467,7 @@ class DelayBuffer: public EffectProfileBuffer {
 
         bool has_pending_echoes() {
             if (this->active_input_frame == nullptr) return false;
-
+            return this->active_value_count != 0;
         }
 };
 

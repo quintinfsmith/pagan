@@ -36,13 +36,19 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._fade = this.inner.findViewById(R.id.fade)
 
         this._echo.set_auto_resize(true)
-        this._echo.confirm_required = false
-        this._echo.set_range(0, 99)
         this._numerator.set_auto_resize(true)
-        this._numerator.confirm_required = false
-        this._numerator.set_range(this.min, this.max)
         this._denominator.set_auto_resize(true)
+
+        this._echo.confirm_required = false
+        this._numerator.confirm_required = false
         this._denominator.confirm_required = false
+
+        this._echo.textAlignment = TEXT_ALIGNMENT_CENTER
+        this._numerator.textAlignment = TEXT_ALIGNMENT_CENTER
+        this._denominator.textAlignment = TEXT_ALIGNMENT_CENTER
+
+        this._echo.set_range(0, 99)
+        this._numerator.set_range(this.min, this.max)
         this._denominator.set_range(this.min, this.max)
 
         var context = this.context
@@ -83,14 +89,14 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
             }
         })
 
-        // this._echo.value_set_callback = { value: Int? ->
-        //     main.get_action_interface().set_delay_at_cursor(
-        //         this.working_event?.numerator ?: DEFAULT_NUMERATOR,
-        //         this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
-        //         this.working_event?.fade ?: DEFAULT_FADE,
-        //         value ?: DEFAULT_REPEAT
-        //     )
-        // }
+        this._echo.value_set_callback = { value: Int? ->
+            main.get_action_interface().set_delay_at_cursor(
+                this.working_event?.numerator ?: DEFAULT_NUMERATOR,
+                this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
+                this.working_event?.fade ?: DEFAULT_FADE,
+                value ?: DEFAULT_REPEAT
+            )
+        }
     }
 
     init {

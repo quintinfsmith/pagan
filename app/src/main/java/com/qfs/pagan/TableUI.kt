@@ -19,6 +19,7 @@ import android.widget.Space
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -932,7 +933,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                 }
                 is DelayEvent -> {
-                    "${event.numerator}/${event.denominator}"
+                    if (event.echo == 0 || event.fade == 0f) {
+                        "-"
+                    } else {
+                        val rational = Rational(event.numerator, event.denominator)
+                        rational.reduce()
+                        "${event.echo}x${rational.numerator}/${rational.denominator}"
+                    }
                 }
                 else -> "???"
             }

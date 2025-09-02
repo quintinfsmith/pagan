@@ -39,7 +39,7 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
         this.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
             if (action_id != null) {
                 if (this.confirm_required && this.value_set_callback != null) {
-                    this.value_set_callback!!(this.get_value())
+                    this.callback()
                 }
                 false
             } else {
@@ -75,14 +75,15 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
     abstract fun get_value(): T?
 
     fun callback() {
-        if (this.value_set_callback == null) {
-            return
+        this.value_set_callback?.let {
+            val backup_selection = Pair(this.selectionStart, this.selectionEnd)
+            it(this.get_value())
+            this.setSelection(backup_selection.first, backup_selection.second)
         }
-        this.value_set_callback!!(this.get_value())
     }
 
-    override fun onFocusChanged(focused: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
-        super.onFocusChanged(focused, direction, previouslyFocusedRect)
+    override fun onFocusChanged(focused: Boolean, direction: Int, previous_rect: Rect?) {
+        super.onFocusChanged(focused, direction, previous_rect)
         if (!focused && this.confirm_on_unfocus) {
             this.callback()
         }
@@ -101,6 +102,7 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
     init {
         this.inputType = InputType.TYPE_CLASS_NUMBER
     }
+
     override fun get_value(): Int? {
         return try {
             val current_value = this.text.toString().toInt()

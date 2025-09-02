@@ -155,7 +155,10 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun reset_table_size() {
         val (pix_width, pix_height) = this._calculate_table_size()
-        this.table_ui.set_size(pix_width, pix_height + this.resources.getDimension(R.dimen.line_height).toInt())
+        this.table_ui.set_size(
+            pix_width + this.resources.getDimension(R.dimen.line_label_width).toInt(),
+            pix_height + this.resources.getDimension(R.dimen.line_height).toInt()
+        )
     }
 
     fun new_row(y: Int) {
@@ -584,7 +587,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_first_visible_column_index(): Int {
-        val scroll_container_offset = this.table_ui.inner_scroll_view.scrollX
+        val line_label_width = this.resources.getDimension(R.dimen.line_label_width).toInt()
+        val scroll_container_offset = this.table_ui.inner_scroll_view.scrollX - line_label_width
         val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x)
@@ -592,7 +596,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_last_visible_column_index(): Int {
-        val scroll_container_offset = this.table_ui.get_scroll_x_max()
+        val line_label_width = this.resources.getDimension(R.dimen.line_label_width).toInt()
+        val scroll_container_offset = this.table_ui.get_scroll_x_max() - line_label_width
         val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x, this._column_width_map.size - 1)

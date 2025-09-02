@@ -9,6 +9,7 @@
     <dimen name="ctl_leaf_radius">6dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
+    <dimen name="line_label_width">41dp</dimen>
     <dimen name="ctl_line_height">30dp</dimen>
     <dimen name="base_leaf_width">41dp</dimen>
     <dimen name="channel_gap_size">5dp</dimen>

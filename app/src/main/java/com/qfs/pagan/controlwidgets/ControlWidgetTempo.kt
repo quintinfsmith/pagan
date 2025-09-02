@@ -12,7 +12,7 @@ import kotlin.math.roundToInt
 class ControlWidgetTempo(_level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusTempoEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, CtlLineLevel.Global, is_initial_event, R.layout.control_widget_tempo, callback) {
     private lateinit var input: Button
     val min = 0f
-    val max = 512f
+    val max = 1024f
 
 
     override fun on_inflated() {

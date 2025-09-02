@@ -5,6 +5,7 @@ import android.view.ContextThemeWrapper
 import android.widget.Button
 import android.widget.NumberPicker
 import android.widget.SeekBar
+import android.widget.TextView
 import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
@@ -18,6 +19,7 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
     private lateinit var _numerator: RangedIntegerInput
     private lateinit var _denominator: RangedIntegerInput
     private lateinit var _fade: SeekBar
+    private lateinit var _label: TextView
     companion object {
         val DEFAULT_NUMERATOR = 1
         val DEFAULT_DENOMINATOR = 1
@@ -34,6 +36,7 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._numerator = this.inner.findViewById(R.id.numerator)
         this._denominator = this.inner.findViewById(R.id.denominator)
         this._fade = this.inner.findViewById(R.id.fade)
+        this._label = this.inner.findViewById(R.id.fade_label)
 
         this._echo.set_auto_resize(true)
         this._numerator.set_auto_resize(true)
@@ -108,5 +111,6 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._denominator.set_value(event.denominator)
         this._numerator.set_value(event.numerator)
         this._echo.set_value(event.echo)
+        this._label.text = this.context.getString(R.string.contextmenu_delay_attenuation, ((1F - event.fade) * 100).toInt())
     }
 }

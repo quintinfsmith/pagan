@@ -43,20 +43,21 @@ class OpusLayerInterface : OpusLayerHistory() {
     companion object {
         @Suppress("unused")
         val global_controller_domain = listOf(
-            Pair(EffectType.Tempo, R.drawable.icon_tempo)
+            Pair(EffectType.Tempo, R.drawable.icon_tempo),
+            Pair(EffectType.Delay, R.drawable.icon_echo)
         )
 
         val channel_controller_domain = listOf(
             Pair(EffectType.Volume, R.drawable.icon_volume),
-            Pair(EffectType.Pan, R.drawable.icon_pan)
-            //Pair(EffectType.Delay, R.drawable.pan_icon)
+            Pair(EffectType.Pan, R.drawable.icon_pan),
+            Pair(EffectType.Delay, R.drawable.icon_echo)
         )
 
         val line_controller_domain = listOf(
             Pair(EffectType.Volume, R.drawable.icon_volume),
             Pair(EffectType.Velocity, R.drawable.icon_velocity),
             Pair(EffectType.Pan, R.drawable.icon_pan),
-            Pair(EffectType.Delay, R.drawable.icon_velocity)
+            Pair(EffectType.Delay, R.drawable.icon_echo)
         )
     }
 

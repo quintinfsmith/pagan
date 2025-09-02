@@ -263,7 +263,9 @@ class DelayedFrame {
         void move_to(DelayedFrame* new_frame) {
             auto* ptr = this->value_chain;
             while (ptr != nullptr) {
-                new_frame->add_value(ptr->left, ptr->right, ptr->count);
+                if (ptr->count > 0) {
+                    new_frame->add_value(ptr->left, ptr->right, ptr->count);
+                }
                 ptr = ptr->next;
             }
         }
@@ -343,7 +345,6 @@ class DelayedFrame {
 
             return output;
         }
-
 };
 
 class DelayBuffer: public EffectProfileBuffer {
@@ -378,36 +379,17 @@ class DelayBuffer: public EffectProfileBuffer {
         working_ptr->set_next(this->active_input_frame);
     }
 
-    void adjust_chain_size(int next_fpb, float next_delay) {
+    void set_chain_size(int next_fpb, float next_delay) {
         if (next_fpb == this->active_fpb && this->active_delay == next_delay) return;
 
         DelayedFrame* original_ptr = this->active_input_frame;
-        int original_delay = this->active_delay_in_frames;
+        delete original_ptr;
 
         this->active_delay = next_delay;
         this->active_fpb = next_fpb;
         this->active_delay_in_frames = (int)(this->active_delay * (float)this->active_fpb);
 
         this->create_chain();
-
-        // Adjust existing chain to fit into new one
-        if (original_ptr != nullptr && this->active_input_frame != nullptr) {
-            int current_chain_position = 0;
-            auto* working_real_node = this->active_input_frame;
-
-            float relative_factor = (float)this->active_delay_in_frames / (float)original_delay;
-            for (int i = 0; i < original_delay; i++) {
-                int new_position = i * relative_factor;
-                while (new_position > current_chain_position) {
-                    working_real_node = working_real_node->get_next();
-                    current_chain_position++;
-                }
-                original_ptr->move_to(working_real_node);
-                auto* bkp = original_ptr;
-                original_ptr = original_ptr->get_next();
-                delete bkp;
-            }
-        }
     }
 
     void cycle() {
@@ -430,7 +412,7 @@ class DelayBuffer: public EffectProfileBuffer {
                 float fade = frame_data[2];
                 int next_fpb = frame_data[3];
 
-                this->adjust_chain_size(next_fpb, next_delay);
+                this->set_chain_size(next_fpb, next_delay);
 
                 if (this->active_input_frame == nullptr) continue;
 

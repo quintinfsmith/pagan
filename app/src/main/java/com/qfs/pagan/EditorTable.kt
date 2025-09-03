@@ -23,38 +23,12 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
-    val line_label_layout = LineLabelColumnLayout(this)
     internal var table_ui = TableUI(this)
-    private val _spacer: LinearLayout = LayoutInflater.from(context).inflate(R.layout.corner, this, false) as LinearLayout
-    private val _first_column = LinearLayout(context, attrs)
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        this._spacer.setOnClickListener {
-            this.get_activity().shortcut_dialog()
-        }
-
-        this._spacer.setOnLongClickListener {
-            this.get_opus_manager().force_cursor_select_column(0)
-            true
-        }
-
-        this.addView(this._first_column)
-        this._first_column.orientation = VERTICAL
-        this._first_column.addView(this._spacer)
-        this._first_column.addView(this.line_label_layout)
 
         this.addView(this.table_ui)
-
-        this._first_column.layoutParams.width = WRAP_CONTENT
-        this._first_column.layoutParams.height = MATCH_PARENT
-
-        this._spacer.layoutParams.width = MATCH_PARENT
-        this._spacer.layoutParams.height = this.context.resources.getDimension(R.dimen.line_height).toInt()
-
-        (this.line_label_layout.layoutParams as LayoutParams).weight = 1F
-        this.line_label_layout.layoutParams.height = 0
-        this.line_label_layout.layoutParams.width = WRAP_CONTENT
 
         (this.table_ui.layoutParams as LayoutParams).weight = 1F
         this.table_ui.layoutParams.width = 0
@@ -140,7 +114,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
     fun clear() {
         this.get_activity().runOnUiThread {
-            this.line_label_layout.clear()
             this.table_ui.clear()
             this.reset_table_size()
         }
@@ -148,7 +121,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun setup(height: Int, width: Int) {
         // NOTE: Needs column map initialized first
-        this.line_label_layout.insert_labels(0, height)
         this.table_ui.add_columns(0, width)
         this.reset_table_size()
     }
@@ -164,12 +136,10 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     fun new_row(y: Int) {
         this.reset_table_size()
         this.table_ui.insert_row(y)
-        this.line_label_layout.insert_label(y)
     }
 
     fun remove_rows(y: Int, count: Int) {
         this.reset_table_size()
-        this.line_label_layout.remove_labels(y, count)
         this.table_ui.remove_rows(y, count)
     }
 
@@ -201,7 +171,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         if (!state_only) {
             this.reset_table_size()
         }
-        this.line_label_layout.notify_item_changed(y)
         this.table_ui.notify_row_change(y, state_only)
     }
 
@@ -242,7 +211,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun update_line_label(y: Int) {
-        this.line_label_layout.notify_item_changed(y)
+        // TODO
     }
 
     fun update_column_label(x: Int) {
@@ -564,11 +533,9 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
         if (context_menu_top + vertical_scroll_view.scrollY < target_y + row_height) {
             val adj_y = (target_y + row_height) - context_menu_top.toInt()
-            this.line_label_layout.scrollTo(0, adj_y)
             this.table_ui.scroll(null, adj_y)
         } else if (target_y < vertical_scroll_view.scrollY) {
             val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
-            this.line_label_layout.scrollTo(0, target_y - line_height)
             this.table_ui.scroll(null, target_y - line_height)
         }
     }
@@ -602,10 +569,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x, this._column_width_map.size - 1)
         return column_position
-    }
-
-    fun get_line_label_layout(): LineLabelColumnLayout {
-        return this.line_label_layout
     }
 
     // width map functions ---------------------------------------

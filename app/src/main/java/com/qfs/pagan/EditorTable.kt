@@ -3,10 +3,8 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.Configuration
 import android.util.AttributeSet
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import androidx.core.view.isGone
 import com.qfs.pagan.Activity.ActivityEditor
@@ -35,8 +33,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this.table_ui.layoutParams.height = MATCH_PARENT
     }
 
-    fun get_column_from_leaf(x: Int, fallback: Int = 0): Int {
-        return this._inv_column_map[x] ?: fallback
+    fun get_column_from_leaf(x: Int): Int? {
+        return this._inv_column_map[x]
     }
 
     fun get_visible_row_from_pixel(y: Float): Int? {
@@ -241,9 +239,12 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         this.table_ui.scroll(pixel_x, null)
     }
 
+    /**
+     * Given an offset [x] in pixels, get the
+     */
     fun get_column_offset(x: Int): Int {
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-        return this._column_width_maxes.subList(0, x).sum() * base_width.toInt()
+        return (this._column_width_maxes.subList(0, x).sum() * base_width.toInt())
     }
 
     fun get_column_rect(x: Int): Rectangle? {
@@ -558,7 +559,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val scroll_container_offset = this.table_ui.inner_scroll_view.scrollX - line_label_width
         val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
-        val column_position = this.get_column_from_leaf(reduced_x)
+        val column_position = this.get_column_from_leaf(reduced_x) ?: 0
         return column_position
     }
 
@@ -567,7 +568,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val scroll_container_offset = this.table_ui.get_scroll_x_max() - line_label_width
         val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
-        val column_position = this.get_column_from_leaf(reduced_x, this._column_width_map.size - 1)
+        val column_position = this.get_column_from_leaf(reduced_x) ?: (this._column_width_map.size - 1)
         return column_position
     }
 

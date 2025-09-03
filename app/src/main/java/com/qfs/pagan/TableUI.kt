@@ -421,6 +421,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 return
             }
 
+            val dragging = this.table_ui._dragging ?: Pair(-1, -1)
+
             val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
             val line_height = floor(this.resources.getDimension(R.dimen.line_height))
             val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height))
@@ -447,130 +449,181 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val colored_line_paint = Paint()
 
                         val beat_key = BeatKey(j, k, i)
-                        val tree = opus_manager.get_tree(beat_key, listOf())
-                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
-                            // It's technically possible for this to be called during a project change. I've only had it happen once, but...
-                            // TODO: ensure that *cannot* happen
-                            val state = try {
-                                this.get_standard_leaf_state(beat_key, position)
-                            } catch (e: IndexOutOfBoundsException) {
-                                return@draw_tree
-                            }
+                        if (dragging.first != j || (dragging.second > -1 && dragging.second != k)) {
+                            val tree = opus_manager.get_tree(beat_key, listOf())
+                            this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                                // It's technically possible for this to be called during a project change. I've only had it happen once, but...
+                                // TODO: ensure that *cannot* happen
+                                val state = try {
+                                    this.get_standard_leaf_state(beat_key, position)
+                                } catch (e: IndexOutOfBoundsException) {
+                                    return@draw_tree
+                                }
 
-                            this.leaf_drawable.state = state
-                            this.leaf_drawable.setBounds(
-                                (x).toInt(),
-                                (y).toInt(),
-                                (x + width).toInt(),
-                                (y + line_height).toInt()
-                            )
-                            this.leaf_drawable.draw(canvas)
-
-                            if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active))) {
-                                colored_line_paint.color = line.color!!
-                                canvas.drawRect(
-                                    x,
-                                    y + (line_height * 1 / 16),
-                                    x + width - this.resources.getDimension(R.dimen.stroke_leaf),
-                                    y + (line_height * 4 / 16),
-                                    colored_line_paint
+                                this.leaf_drawable.state = state
+                                this.leaf_drawable.setBounds(
+                                    (x).toInt(),
+                                    (y).toInt(),
+                                    (x + width).toInt(),
+                                    (y + line_height).toInt()
                                 )
-                            }
+                                this.leaf_drawable.draw(canvas)
 
-                            val color_list = ContextCompat.getColorStateList(this.context, R.color.leaf_text_selector)!!
-                            this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)
-                            this.text_paint_offset.color = color_list.getColorForState(state, Color.MAGENTA)
-
-                            when (event) {
-                                is AbsoluteNoteEvent -> {
-                                    val offset_text = "${event.note % opus_manager.tuning_map.size}"
-                                    val offset_text_bounds = Rect()
-                                    this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, offset_text_bounds)
-
-                                    val octave_text = "${event.note / opus_manager.tuning_map.size}"
-                                    val octave_text_bounds = Rect()
-                                    this.text_paint_octave.getTextBounds(octave_text, 0, octave_text.length, octave_text_bounds)
-
-                                    val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
-
-                                    val text_height = (offset_text_bounds.height() * 2 / 3) +  octave_text_bounds.height()
-                                    val offset_text_y = y + ((line_height - text_height) / 2)
-                                    val offset_text_x = x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
-                                    canvas.drawText(
-                                        offset_text,
-                                        offset_text_x + octave_text_bounds.width() + padding_x,
-                                        offset_text_y + offset_text_bounds.height(),
-                                        this.text_paint_offset
-                                    )
-
-                                    canvas.drawText(
-                                        octave_text,
-                                        offset_text_x,
-                                        offset_text_y + text_height,
-                                        this.text_paint_octave
+                                if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(
+                                        R.attr.state_active
+                                    ))
+                                ) {
+                                    colored_line_paint.color = line.color!!
+                                    canvas.drawRect(
+                                        x,
+                                        y + (line_height * 1 / 16),
+                                        x + width - this.resources.getDimension(R.dimen.stroke_leaf),
+                                        y + (line_height * 4 / 16),
+                                        colored_line_paint
                                     )
                                 }
 
-                                is RelativeNoteEvent -> {
-                                    val offset_text = "${abs(event.offset) % opus_manager.tuning_map.size}"
-                                    val offset_text_bounds = Rect()
-                                    this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, offset_text_bounds)
+                                val color_list = ContextCompat.getColorStateList(
+                                    this.context,
+                                    R.color.leaf_text_selector
+                                )!!
+                                this.text_paint_octave.color =
+                                    color_list.getColorForState(state, Color.MAGENTA)
+                                this.text_paint_offset.color =
+                                    color_list.getColorForState(state, Color.MAGENTA)
 
-                                    val octave_text = "${abs(event.offset) / opus_manager.tuning_map.size}"
-                                    val octave_text_bounds = Rect()
-                                    this.text_paint_octave.getTextBounds(octave_text, 0, octave_text.length, octave_text_bounds)
+                                when (event) {
+                                    is AbsoluteNoteEvent -> {
+                                        val offset_text =
+                                            "${event.note % opus_manager.tuning_map.size}"
+                                        val offset_text_bounds = Rect()
+                                        this.text_paint_offset.getTextBounds(
+                                            offset_text,
+                                            0,
+                                            offset_text.length,
+                                            offset_text_bounds
+                                        )
 
-                                    val prefix_text = if (event.offset < 0) {
-                                        this.context.getString(R.string.pfx_subtract)
-                                    } else {
-                                        this.context.getString(R.string.pfx_add)
+                                        val octave_text =
+                                            "${event.note / opus_manager.tuning_map.size}"
+                                        val octave_text_bounds = Rect()
+                                        this.text_paint_octave.getTextBounds(
+                                            octave_text,
+                                            0,
+                                            octave_text.length,
+                                            octave_text_bounds
+                                        )
+
+                                        val padding_x =
+                                            this.resources.getDimension(R.dimen.octave_label_padding_x)
+
+                                        val text_height =
+                                            (offset_text_bounds.height() * 2 / 3) + octave_text_bounds.height()
+                                        val offset_text_y = y + ((line_height - text_height) / 2)
+                                        val offset_text_x =
+                                            x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
+                                        canvas.drawText(
+                                            offset_text,
+                                            offset_text_x + octave_text_bounds.width() + padding_x,
+                                            offset_text_y + offset_text_bounds.height(),
+                                            this.text_paint_offset
+                                        )
+
+                                        canvas.drawText(
+                                            octave_text,
+                                            offset_text_x,
+                                            offset_text_y + text_height,
+                                            this.text_paint_octave
+                                        )
                                     }
-                                    val prefix_text_bounds = Rect()
-                                    this.text_paint_octave.getTextBounds(prefix_text, 0, prefix_text.length, prefix_text_bounds)
 
-                                    val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
+                                    is RelativeNoteEvent -> {
+                                        val offset_text =
+                                            "${abs(event.offset) % opus_manager.tuning_map.size}"
+                                        val offset_text_bounds = Rect()
+                                        this.text_paint_offset.getTextBounds(
+                                            offset_text,
+                                            0,
+                                            offset_text.length,
+                                            offset_text_bounds
+                                        )
 
-                                    val text_height = (offset_text_bounds.height() * 2 / 3) +  octave_text_bounds.height()
-                                    val offset_text_y = y + ((line_height - text_height) / 2)
-                                    val offset_text_x = x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
-                                    canvas.drawText(
-                                        offset_text,
-                                        offset_text_x + octave_text_bounds.width() + padding_x,
-                                        offset_text_y + offset_text_bounds.height(),
-                                        this.text_paint_offset
-                                    )
+                                        val octave_text =
+                                            "${abs(event.offset) / opus_manager.tuning_map.size}"
+                                        val octave_text_bounds = Rect()
+                                        this.text_paint_octave.getTextBounds(
+                                            octave_text,
+                                            0,
+                                            octave_text.length,
+                                            octave_text_bounds
+                                        )
 
-                                    canvas.drawText(
-                                        octave_text,
-                                        offset_text_x,
-                                        offset_text_y + text_height,
-                                        this.text_paint_octave
-                                    )
-
-                                    canvas.drawText(
-                                        prefix_text,
-                                        offset_text_x,
-                                        offset_text_y + if (event.offset < 0) {
-                                            prefix_text_bounds.height() * 4
+                                        val prefix_text = if (event.offset < 0) {
+                                            this.context.getString(R.string.pfx_subtract)
                                         } else {
-                                            prefix_text_bounds.height()
-                                        },
-                                        this.text_paint_octave
-                                    )
+                                            this.context.getString(R.string.pfx_add)
+                                        }
+                                        val prefix_text_bounds = Rect()
+                                        this.text_paint_octave.getTextBounds(
+                                            prefix_text,
+                                            0,
+                                            prefix_text.length,
+                                            prefix_text_bounds
+                                        )
 
-                                }
+                                        val padding_x =
+                                            this.resources.getDimension(R.dimen.octave_label_padding_x)
 
-                                is PercussionEvent -> {
-                                    val offset_text = this.resources.getString(R.string.percussion_label)
-                                    val bounds = Rect()
-                                    this.text_paint_offset.getTextBounds(offset_text, 0, offset_text.length, bounds)
+                                        val text_height =
+                                            (offset_text_bounds.height() * 2 / 3) + octave_text_bounds.height()
+                                        val offset_text_y = y + ((line_height - text_height) / 2)
+                                        val offset_text_x =
+                                            x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
+                                        canvas.drawText(
+                                            offset_text,
+                                            offset_text_x + octave_text_bounds.width() + padding_x,
+                                            offset_text_y + offset_text_bounds.height(),
+                                            this.text_paint_offset
+                                        )
 
-                                    canvas.drawText(
-                                        offset_text,
-                                        x + ((width - bounds.width()) / 2),
-                                        y + ((line_height + (bounds.height() / 2)) / 2),
-                                        this.text_paint_offset
-                                    )
+                                        canvas.drawText(
+                                            octave_text,
+                                            offset_text_x,
+                                            offset_text_y + text_height,
+                                            this.text_paint_octave
+                                        )
+
+                                        canvas.drawText(
+                                            prefix_text,
+                                            offset_text_x,
+                                            offset_text_y + if (event.offset < 0) {
+                                                prefix_text_bounds.height() * 4
+                                            } else {
+                                                prefix_text_bounds.height()
+                                            },
+                                            this.text_paint_octave
+                                        )
+
+                                    }
+
+                                    is PercussionEvent -> {
+                                        val offset_text =
+                                            this.resources.getString(R.string.percussion_label)
+                                        val bounds = Rect()
+                                        this.text_paint_offset.getTextBounds(
+                                            offset_text,
+                                            0,
+                                            offset_text.length,
+                                            bounds
+                                        )
+
+                                        canvas.drawText(
+                                            offset_text,
+                                            x + ((width - bounds.width()) / 2),
+                                            y + ((line_height + (bounds.height() / 2)) / 2),
+                                            this.text_paint_offset
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -581,25 +634,28 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             if (!controller.visible) {
                                 continue
                             }
-                            val tree = controller.get_tree(i, listOf())
-                            this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
-                                val state = this.get_line_control_leaf_state(type, beat_key, position)
-                                this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
+                            if (dragging.first != j || (dragging.second > -1 && dragging.second != k)) {
+                                val tree = controller.get_tree(i, listOf())
+                                this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                                    val state = this.get_line_control_leaf_state(type, beat_key, position)
+                                    this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
+                                }
                             }
 
                             y_offset += ctl_line_height
                         }
                     }
 
-
                     for ((type, controller) in channel.controllers.get_all()) {
                         if (!controller.visible) {
                             continue
                         }
-                        val tree = controller.get_tree(i, listOf())
-                        this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
-                            val state = this.get_channel_control_leaf_state(type, j, i, position)
-                            this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
+                        if (dragging.first != j || dragging.second != -1) {
+                            val tree = controller.get_tree(i, listOf())
+                            this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                                val state = this.get_channel_control_leaf_state(type, j, i, position)
+                                this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
+                            }
                         }
                         y_offset += ctl_line_height
                     }
@@ -1005,6 +1061,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     private var _last_x_position: Float? = null
     private var _dragging: Pair<Int, Int>? = null
 
+    private var line_drag_map = mutableListOf<Triple<IntRange, Pair<Int, Int>, Boolean>>()
+    private var channel_drag_map = mutableListOf<Triple<IntRange, Int, Boolean>>()
+
     var touch_position_x = 0F
     var touch_position_y = 0F
 
@@ -1022,36 +1081,46 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 this._initial_y_scroll_position = null
                 this@TableUI._dragging = null
             } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
+                val y_relative = motion_event.y - this.y
+                val x_relative = motion_event.x - this.x
                 if (this._initial_y_scroll_position == null) {
-                    this._initial_y_scroll_position = Pair((motion_event.y - this.y), this@TableUI.scrollY)
+                    this._initial_y_scroll_position = Pair(y_relative, this@TableUI.scrollY)
                 }
 
-                if (this@TableUI._dragging == null && motion_event.x < this.resources.getDimension(R.dimen.line_label_width)) {
-                    println("!!!")
-                    val (line_info, beat, position) = this@TableUI._get_current_line_info_and_position(
-                        motion_event.x,
-                        motion_event.y
-                    ) ?: return super.onTouchEvent(motion_event)
-                    val row_position = this@TableUI.editor_table.get_visible_row_from_pixel(motion_event.y) ?: return super.onTouchEvent( motion_event )
-                    println("! $row_position !!")
+
+                if (this@TableUI._dragging == null && x_relative < this.resources.getDimension(R.dimen.line_label_width)) {
+                    this@TableUI.recache_drag_maps()
+                    val (line_info, beat, position) = this@TableUI._get_current_line_info_and_position(x_relative, y_relative) ?: return super.onTouchEvent(motion_event)
+                    val row_position = this@TableUI.editor_table.get_visible_row_from_pixel(y_relative) ?: return super.onTouchEvent( motion_event )
                     if (row_position == -1) return super.onTouchEvent(motion_event)
+
                     val opus_manager = this@TableUI.get_activity().get_opus_manager()
-                    val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(
-                        opus_manager.get_ctl_line_from_row(
-                            row_position
-                        )
-                    )
+                    val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(row_position))
+
                     this@TableUI._dragging = when (ctl_line_level) {
                         null,
                         CtlLineLevel.Line -> opus_manager.get_channel_and_line_offset(pointer)
-
                         CtlLineLevel.Channel -> Pair(pointer, -1)
                         CtlLineLevel.Global -> null
                     }
                 } else if (this@TableUI._dragging != null) {
-                    println("DRAGGING ${this@TableUI._dragging}")
+                    if (this@TableUI._dragging!!.second == -1) {
+                        for ((y_range, channel, is_top) in this@TableUI.channel_drag_map) {
+                            if (y_range.contains(y_relative.toInt())) {
+                                println("CHANELL: $channel, ${if (is_top) "TOP" else "BOT"}")
+                                break
+                            }
+                        }
+                    } else {
+                        for ((y_range, line_pair, is_top) in this@TableUI.line_drag_map) {
+                            if (y_range.contains(y_relative.toInt())) {
+                                println("LINE: $line_pair, ${if (is_top) "TOP" else "BOT"}")
+                                break
+                            }
+                        }
+                    }
                 } else {
-                    val diff = this._initial_y_scroll_position!!.first - (motion_event.y - this.y)
+                    val diff = this._initial_y_scroll_position!!.first - y_relative
                     this@TableUI.scrollBy(0, diff.roundToInt())
                 }
             } else {
@@ -1062,19 +1131,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
-    private fun enable_line_drag(line_info: Triple<Int, CtlLineLevel?, EffectType?>) {
-        val opus_manager = this.editor_table.get_opus_manager()
-        val (pointer, ctl_line_level, ctl_type) = line_info
-        println("DRAG! $line_info")
-        this._dragging = when (ctl_line_level) {
-            null -> opus_manager.get_channel_and_line_offset(pointer)
-            CtlLineLevel.Line -> opus_manager.get_channel_and_line_offset(pointer)
-            CtlLineLevel.Channel -> Pair(pointer, -1)
-            CtlLineLevel.Global -> return // Nothing to drag
-        }
-
-
-    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -1571,14 +1627,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     }
 
     private fun _get_current_line_info_and_position(x_touch: Float, y_touch: Float): Triple<Triple<Int, CtlLineLevel?, EffectType?>?, Int?, List<Int>?>?  {
+        val side_column_width = this.resources.getDimension(R.dimen.line_label_width)
         val y = y_touch
-        val x = x_touch - this.resources.getDimension(R.dimen.line_label_width)
+        val x = x_touch - side_column_width
 
         val row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return null
 
         val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val opus_manager = this.editor_table.get_opus_manager()
-        val beat: Int? = if (x < 0) {
+        val beat: Int? = if (x_touch - this.inner_scroll_view.scrollX < side_column_width) {
             null
         } else {
             this.editor_table.get_column_from_leaf((x / min_leaf_width).toInt())
@@ -1650,4 +1707,51 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
+    /**
+     * Drag maps are stored so that when dragging a line or channel, we don't need to keep calculating
+     *  which channel or line the cursor occupies
+     */
+    fun recache_drag_maps() {
+        this.line_drag_map.clear()
+        this.channel_drag_map.clear()
+
+        val line_height = this.resources.getDimension(R.dimen.line_height)
+        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
+        val channel_gap_height = this.resources.getDimension(R.dimen.channel_gap_size)
+
+        val opus_manager = this.editor_table.get_opus_manager()
+        var running_height = line_height // Include top line
+        for (c in opus_manager.channels.indices) {
+            var working_channel_height = 0f
+            val channel = opus_manager.get_channel(c)
+            for (l in channel.lines.indices) {
+                var working_line_height = line_height
+                val line  = channel.get_line(l)
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (!controller.visible) continue
+                    working_line_height += ctl_line_height
+                }
+
+                val pivot_a = (running_height + working_channel_height).toInt()
+                val pivot_b = (running_height + ((working_channel_height + working_line_height) / 2F)).toInt()
+                val pivot_c = (running_height + working_channel_height + working_line_height).toInt()
+                this.line_drag_map.add(Triple(pivot_a until pivot_b, Pair(c, l), true))
+                this.line_drag_map.add(Triple(pivot_b until pivot_c, Pair(c, l), false))
+                working_channel_height += working_line_height
+            }
+
+            for ((_, controller) in channel.controllers.get_all()) {
+                if (!controller.visible) continue
+                working_channel_height += ctl_line_height
+            }
+
+            val pivot_a = running_height.toInt()
+            val pivot_b = (running_height + (working_channel_height / 2F)).toInt()
+            val pivot_c = (running_height + working_channel_height).toInt()
+            this.channel_drag_map.add(Triple(pivot_a until pivot_b, c, true))
+            this.channel_drag_map.add(Triple(pivot_b until pivot_c, c, false))
+
+            running_height += working_channel_height + channel_gap_height
+        }
+    }
 }

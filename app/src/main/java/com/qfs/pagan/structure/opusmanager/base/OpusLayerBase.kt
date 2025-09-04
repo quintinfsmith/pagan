@@ -1521,9 +1521,14 @@ open class OpusLayerBase: Effectable {
             throw IncompatibleChannelException(channel_index_from, channel_index_to)
         }
         this.new_line(channel_index_to, line_offset_to)
-        this.swap_lines(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
+        var adj_line_offset_from = line_offset_from
+        if (channel_index_to == channel_index_from && line_offset_to < line_offset_from) {
+            adj_line_offset_from += 1
+        }
+
+        this.swap_lines(channel_index_from, adj_line_offset_from, channel_index_to, line_offset_to)
         if (this.get_channel(channel_index_from).lines.size > 1) {
-            this.remove_line(channel_index_from, line_offset_from)
+            this.remove_line(channel_index_from, adj_line_offset_from)
         } else {
             this.remove_channel(channel_index_from)
         }
@@ -1793,7 +1798,12 @@ open class OpusLayerBase: Effectable {
 
     open fun move_channel(channel_index: Int, new_channel_index: Int) {
         val channel = this.channels.removeAt(channel_index)
-        this.channels.add(new_channel_index, channel)
+        val adj_new_channel_index = if (channel_index < new_channel_index) {
+            new_channel_index - 1
+        } else {
+            new_channel_index
+        }
+        this.channels.add(adj_new_channel_index, channel)
         this.recache_line_maps()
     }
 

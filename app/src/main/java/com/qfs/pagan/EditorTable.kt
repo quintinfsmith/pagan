@@ -2,10 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.content.res.Configuration
-import android.graphics.Color
 import android.util.AttributeSet
-import android.view.KeyEvent.ACTION_DOWN
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
@@ -13,6 +10,7 @@ import androidx.core.view.isGone
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import kotlin.math.floor
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -40,10 +38,10 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_visible_row_from_pixel(y: Float): Int? {
-        val line_height = this.resources.getDimension(R.dimen.line_height)
-        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
-        val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size)
-        var check_y = line_height // consider column labels
+        println("GETT: $y")
+        val line_height = floor(this.resources.getDimension(R.dimen.line_height))
+        val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height))
+        val channel_gap_size = floor(this.resources.getDimension(R.dimen.channel_gap_size))
         var output = 0
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
@@ -52,58 +50,47 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             return -1
         }
 
+        var check_y = line_height // consider column labels
         for (i in channels.indices) {
             val channel = channels[i]
             for (j in channel.lines.indices) {
                 val line = channel.lines[j]
 
                 check_y += line_height
-                if (check_y >= y) {
-                    return output
-                } else {
-                    output += 1
-                }
+                if (check_y >= y) return output
+
+                output += 1
 
                 for ((_, controller) in line.controllers.get_all()) {
-                    if (!controller.visible) {
-                        continue
-                    }
+                    if (!controller.visible) continue
+
                     check_y += ctl_line_height
-                    if (check_y >= y) {
-                        return output
-                    } else {
-                        output += 1
-                    }
-                }
-            }
-            for ((_, controller) in channel.controllers.get_all()) {
-                if (!controller.visible) {
-                    continue
-                }
-                check_y += ctl_line_height
-                if (check_y >= y) {
-                    return output
-                } else {
+                    if (check_y >= y) return output
+
                     output += 1
                 }
+            }
+
+            for ((_, controller) in channel.controllers.get_all()) {
+                if (!controller.visible) continue
+
+                check_y += ctl_line_height
+                if (check_y >= y) return output
+
+                output += 1
             }
 
             check_y += channel_gap_size
-            if (check_y >= y) {
-                return null
-            }
+            if (check_y >= y) return null
         }
 
         for ((_, controller) in opus_manager.controllers.get_all()) {
-            if (!controller.visible) {
-                continue
-            }
+            if (!controller.visible) continue
+
             check_y += ctl_line_height
-            if (check_y >= y) {
-                return output
-            } else {
-                output += 1
-            }
+            if (check_y >= y) return output
+
+            output += 1
         }
 
         return output

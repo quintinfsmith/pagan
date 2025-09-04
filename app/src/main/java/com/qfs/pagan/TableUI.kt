@@ -143,13 +143,22 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             this.setOnClickListener {
-                val (line_info, beat, position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnClickListener
-                this.table_ui.on_click_listener(line_info, beat, position)
+                if (this.table_ui._dragging == null) {
+                    val (line_info, beat, position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnClickListener
+                    this.table_ui.on_click_listener(line_info, beat, position)
+                }
             }
 
             this.setOnLongClickListener {
-                val (line_info, beat, position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnLongClickListener false
-                this.table_ui.on_long_click_listener(line_info, beat, position)
+                if (this.table_ui._dragging == null) {
+                    val (line_info, beat, position) = this.table_ui._get_current_line_info_and_position(
+                        this.table_ui.touch_position_x,
+                        this.table_ui.touch_position_y
+                    ) ?: return@setOnLongClickListener false
+                    this.table_ui.on_long_click_listener(line_info, beat, position)
+                } else {
+                    true
+                }
             }
 
 
@@ -1120,6 +1129,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             when (motion_event?.action) {
                 ACTION_UP -> {
                     this._initial_y_scroll_position = null
+                    this@TableUI.do_action_up(motion_event)
                 }
                 ACTION_MOVE -> {
                     val y_relative = motion_event.y - this.y
@@ -1149,12 +1159,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val y_relative = motion_event.y - this.y
         if (x_relative < this.resources.getDimension(R.dimen.line_label_width)) {
             this.recache_drag_maps()
-            val (line_info, beat, position) = this._get_current_line_info_and_position(x_relative, y_relative + this.scrollY) ?: return
+            println("AAA")
             val row_position = this.editor_table.get_visible_row_from_pixel(y_relative + this.scrollY) ?: return
             if (row_position == -1) return
+            println("ROWPOS: $row_position")
 
             val opus_manager = this.get_activity().get_opus_manager()
-            val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(
+            val (pointer, ctl_line_level, _) = opus_manager.get_ctl_line_info(
                 opus_manager.get_ctl_line_from_row(
                     row_position
                 )
@@ -1162,7 +1173,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
             this._dragging_index = -1
-            this._dragging = if (opus_manager.get_channel(channel).lines.size == 1 || (opus_manager.cursor.mode == CursorMode.Channel && opus_manager.cursor.channel == channel)) {
+            this._dragging = if (opus_manager.cursor.mode == CursorMode.Channel && opus_manager.cursor.channel == channel) {
                 Pair(channel, -1)
             } else {
                 when (ctl_line_level) {
@@ -1172,7 +1183,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     CtlLineLevel.Global -> null
                 }
             }
-            println("${this._dragging}")
+            println("DRAGGIN:G ${this._dragging}")
         }
     }
 
@@ -1182,10 +1193,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return
         }
 
-        val (drag_channel, drag_line_offset) = this._dragging!!
+        val (_, drag_line_offset) = this._dragging!!
         if (drag_line_offset == -1) {
             for (i in this.channel_drag_map.indices) {
-                val (y_range, channel, is_top) = this.channel_drag_map[i]
+                val (y_range, _, _) = this.channel_drag_map[i]
                 if (y_range.contains(y)) {
                     this._dragging_index = i
                     break
@@ -1193,7 +1204,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         } else {
             for (i in this.line_drag_map.indices) {
-                val (y_range, line_pair, is_top) = this.line_drag_map[i]
+                val (y_range, _, _) = this.line_drag_map[i]
                 if (y_range.contains(y)) {
                     this._dragging_index = i
                     break
@@ -1204,10 +1215,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     }
 
     private fun do_action_up(motion_event: MotionEvent?): Boolean {
-        println("UUUP")
         if (motion_event?.action != ACTION_UP) return true
         if (this._dragging != null) {
-            println("-----END DRAG----- ${this._dragging}")
             val y_relative = (motion_event.y - this.y) + this.scrollY
             this.update_cached_line_drag_position(y_relative.toInt())
 
@@ -1221,6 +1230,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                 } else {
                     val (_, line_pair, is_top) = this.line_drag_map[this._dragging_index]
+                    println("CAPTURE $line_pair")
                     if (line_pair != this._dragging) {
                         action_interface.move_line(
                             drag_channel,
@@ -1241,17 +1251,17 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
         return true
     }
-    override fun onInterceptTouchEvent(event: MotionEvent?): Boolean {
-        when (event?.action) {
+    override fun onInterceptTouchEvent(motion_event: MotionEvent?): Boolean {
+        when (motion_event?.action) {
             MotionEvent.ACTION_MOVE -> {
                 if (this._dragging == null) {
-                    this.set_dragging(event)
+                    this.set_dragging(motion_event)
                 }
-                this.update_cached_line_drag_position((event.y - this.y).toInt())
+                this.update_cached_line_drag_position((motion_event.y - this.y).toInt())
             }
-            MotionEvent.ACTION_UP -> this.do_action_up(event)
+            MotionEvent.ACTION_UP -> this.do_action_up(motion_event)
         }
-        return super.onInterceptTouchEvent(event)
+        return super.onInterceptTouchEvent(motion_event)
     }
 
     override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
@@ -1263,6 +1273,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     return false
                 }
             }
+            MotionEvent.ACTION_UP -> this.do_action_up(motion_event)
         }
         return super.onTouchEvent(motion_event)
     }
@@ -1743,7 +1754,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val y = y_touch
         val x = x_touch - side_column_width
 
-        val row_position = this.editor_table.get_visible_row_from_pixel(y) ?: return null
+        println("BBB")
+        val row_position = this.editor_table.get_visible_row_from_pixel(y - this.y + this.scrollY) ?: return null
 
         val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val opus_manager = this.editor_table.get_opus_manager()
@@ -1827,9 +1839,9 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.line_drag_map.clear()
         this.channel_drag_map.clear()
 
-        val line_height = this.resources.getDimension(R.dimen.line_height)
-        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
-        val channel_gap_height = this.resources.getDimension(R.dimen.channel_gap_size)
+        val line_height = floor(this.resources.getDimension(R.dimen.line_height))
+        val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height))
+        val channel_gap_height = floor(this.resources.getDimension(R.dimen.channel_gap_size))
 
         val opus_manager = this.editor_table.get_opus_manager()
         var running_height = line_height // Include top line

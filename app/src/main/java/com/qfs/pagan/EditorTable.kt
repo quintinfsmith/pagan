@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Color
 import android.util.AttributeSet
 import android.view.KeyEvent.ACTION_DOWN
 import android.view.MotionEvent
@@ -29,7 +30,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         super.onAttachedToWindow()
 
         this.addView(this.table_ui)
-
         (this.table_ui.layoutParams as LayoutParams).weight = 1F
         this.table_ui.layoutParams.width = 0
         this.table_ui.layoutParams.height = MATCH_PARENT

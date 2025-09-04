@@ -1514,6 +1514,21 @@ open class OpusLayerBase: Effectable {
     }
 
     /**
+     * Move line at [line_offset_from] in [channel_index_from], to [line_offset_to] / [channel_index_to]
+     */
+    open fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
+        if (this.is_percussion(channel_index_from) != this.is_percussion(channel_index_to)) {
+            throw IncompatibleChannelException(channel_index_from, channel_index_to)
+        }
+        this.new_line(channel_index_to, line_offset_to)
+        this.swap_lines(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
+        if (this.get_channel(channel_index_from).lines.size > 1) {
+            this.remove_line(channel_index_from, line_offset_from)
+        } else {
+            this.remove_channel(channel_index_from)
+        }
+    }
+    /**
      * Swap line [line_offset_a] of channel [channel_index_a] with line [line_offset_b] of channel [channel_index_b].
      * When swapping lines in percussion, the percussion instruments are left in place and the events are switched.
      */
@@ -1559,8 +1574,6 @@ open class OpusLayerBase: Effectable {
         if (beat_index > this.length) {
             throw IndexOutOfBoundsException()
         }
-
-
 
         this.length += 1
         for (channel in this.channels) {

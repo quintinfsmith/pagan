@@ -32,7 +32,6 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
@@ -106,6 +105,7 @@ class ActionTracker {
         RemoveLine,
         InsertChannel,
         RemoveChannel,
+        MoveChannel,
         SetTransitionAtCursor,
         SetVolumeAtCursor,
         SetVelocityAtCursor,
@@ -132,7 +132,8 @@ class ActionTracker {
         UnMuteLine,
         AdjustSelection,
         TagColumn,
-        UntagColumn
+        UntagColumn,
+        MoveLine
     }
 
     companion object {
@@ -1291,6 +1292,16 @@ class ActionTracker {
         }
     }
 
+    fun move_channel(index_from: Int, index_to: Int, before: Boolean = true) {
+        val opus_manager = this.get_opus_manager()
+        val adj_to_index = index_to + if (before) 0 else 1
+        if (adj_to_index == index_from) return
+
+        this.track(TrackedAction.MoveChannel, listOf(index_from, adj_to_index))
+        opus_manager.move_channel(index_from, adj_to_index)
+    }
+
+
     fun insert_line(count: Int? = null) {
         val main = this.get_activity()
         val opus_manager = main.get_opus_manager()
@@ -2069,6 +2080,12 @@ class ActionTracker {
             TrackedAction.UntagColumn -> {
                 this.untag_column(integers[0]!!)
             }
+            TrackedAction.MoveLine -> {
+                this.move_line(integers[0]!!, integers[1]!!, integers[2]!!, integers[3]!!)
+            }
+            TrackedAction.MoveChannel -> {
+                this.move_channel(integers[0]!!, integers[1]!!)
+            }
         }
     }
 
@@ -2254,6 +2271,28 @@ class ActionTracker {
             opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
         }
     }
+
+    fun move_line(channel_from: Int, line_offset_from: Int, channel_to: Int, line_offset_to: Int, before: Boolean = true) {
+        try {
+            val adj_to_index = line_offset_to + if (before) 0 else 1
+            if (adj_to_index == line_offset_from && channel_from == channel_to) return
+
+            this.get_opus_manager().move_line(
+                channel_from,
+                line_offset_from,
+                channel_to,
+                adj_to_index
+            )
+            this.track(
+                TrackedAction.MoveLine,
+                listOf(channel_from, line_offset_from, channel_to, adj_to_index)
+            )
+        } catch (e: IncompatibleChannelException) {
+            val activity = this.get_activity()
+            activity.feedback_msg(activity.getString(R.string.std_percussion_swap))
+        }
+    }
+
 
     // TODO: Reimplement once i figure out how action tracking will work with split activities
     //fun import(uri: Uri? = null) {

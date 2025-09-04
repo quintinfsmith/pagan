@@ -308,8 +308,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_column(beat)
     }
 
-    // ----- Cursor handled in lower order functions ^^^^^^^^^^^^ //
-
     fun offset_selection(amount: Int) {
         val (minimum, maximum) = this.get_min_and_max_in_selection() ?: return // Null means Single or Unset, can return
 

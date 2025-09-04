@@ -3,6 +3,8 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.Configuration
 import android.util.AttributeSet
+import android.view.KeyEvent.ACTION_DOWN
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout

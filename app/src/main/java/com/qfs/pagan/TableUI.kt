@@ -8,7 +8,10 @@ import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
+import android.view.KeyEvent.ACTION_DOWN
+import android.view.KeyEvent.ACTION_UP
 import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_MOVE
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1034,6 +1037,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         fun invalidate_wrapper() {
             this.invalidate_queued = true
         }
+
+        override fun onTouchEvent(event: MotionEvent?): Boolean {
+            when (event?.action) {
+                ACTION_DOWN -> this.table_ui.do_action_down(event)
+            }
+            return super.onTouchEvent(event)
+        }
     }
 
     companion object {
@@ -1075,62 +1085,127 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
 
         override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
-            if (motion_event  == null) {
-                // pass
-            } else if (motion_event.action == MotionEvent.ACTION_UP) {
-                this._initial_y_scroll_position = null
-                this@TableUI._dragging = null
-            } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
-                val y_relative = motion_event.y - this.y
-                val x_relative = motion_event.x - this.x
-                if (this._initial_y_scroll_position == null) {
-                    this._initial_y_scroll_position = Pair(y_relative, this@TableUI.scrollY)
-                }
-
-
-                if (this@TableUI._dragging == null && x_relative < this.resources.getDimension(R.dimen.line_label_width)) {
-                    this@TableUI.recache_drag_maps()
-                    val (line_info, beat, position) = this@TableUI._get_current_line_info_and_position(x_relative, y_relative) ?: return super.onTouchEvent(motion_event)
-                    val row_position = this@TableUI.editor_table.get_visible_row_from_pixel(y_relative) ?: return super.onTouchEvent( motion_event )
-                    if (row_position == -1) return super.onTouchEvent(motion_event)
-
-                    val opus_manager = this@TableUI.get_activity().get_opus_manager()
-                    val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(row_position))
-
-                    this@TableUI._dragging = when (ctl_line_level) {
-                        null,
-                        CtlLineLevel.Line -> opus_manager.get_channel_and_line_offset(pointer)
-                        CtlLineLevel.Channel -> Pair(pointer, -1)
-                        CtlLineLevel.Global -> null
-                    }
-                } else if (this@TableUI._dragging != null) {
-                    if (this@TableUI._dragging!!.second == -1) {
-                        for ((y_range, channel, is_top) in this@TableUI.channel_drag_map) {
-                            if (y_range.contains(y_relative.toInt())) {
-                                println("CHANELL: $channel, ${if (is_top) "TOP" else "BOT"}")
-                                break
-                            }
-                        }
+            when (motion_event?.action) {
+                ACTION_UP -> {
+                    if (this@TableUI._dragging == null) {
+                        this._initial_y_scroll_position = null
                     } else {
-                        for ((y_range, line_pair, is_top) in this@TableUI.line_drag_map) {
-                            if (y_range.contains(y_relative.toInt())) {
-                                println("LINE: $line_pair, ${if (is_top) "TOP" else "BOT"}")
-                                break
-                            }
-                        }
+                        this@TableUI.do_action_up(motion_event)
                     }
-                } else {
-                    val diff = this._initial_y_scroll_position!!.first - y_relative
-                    this@TableUI.scrollBy(0, diff.roundToInt())
                 }
-            } else {
-                // pass
+                ACTION_MOVE -> {
+                    val y_relative = motion_event.y - this.y
+                    if (this._initial_y_scroll_position == null) {
+                        this._initial_y_scroll_position = Pair(y_relative, this@TableUI.scrollY)
+                    }
+
+                    if (this@TableUI._dragging == null) {
+                        val diff = this._initial_y_scroll_position!!.first - y_relative
+                        this@TableUI.scrollBy(0, diff.roundToInt())
+                    } else {
+                        return false
+                    }
+                }
             }
 
             return super.onTouchEvent(motion_event)
         }
     }
 
+    private fun do_action_down(motion_event: MotionEvent?) {
+        if (motion_event?.action != ACTION_DOWN) return
+        println("DOWN, ${this._dragging}")
+
+        val x_relative = motion_event.x - this.x
+        val y_relative = motion_event.y - this.y
+        if (x_relative < this.resources.getDimension(R.dimen.line_label_width)) {
+            this.recache_drag_maps()
+            val (line_info, beat, position) = this._get_current_line_info_and_position(x_relative, y_relative + this.scrollY) ?: return
+            val row_position = this.editor_table.get_visible_row_from_pixel(y_relative + this.scrollY) ?: return
+            if (row_position == -1) return
+
+            val opus_manager = this.get_activity().get_opus_manager()
+            val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(
+                opus_manager.get_ctl_line_from_row(
+                    row_position
+                )
+            )
+
+            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+            this._dragging = if (opus_manager.get_channel(channel).lines.size == 1 || (opus_manager.cursor.mode == CursorMode.Channel && opus_manager.cursor.channel == channel)) {
+                Pair(channel, -1)
+            } else {
+                when (ctl_line_level) {
+                    null,
+                    CtlLineLevel.Line -> Pair(channel, line_offset)
+                    CtlLineLevel.Channel -> Pair(pointer, -1)
+                    CtlLineLevel.Global -> null
+                }
+            }
+        }
+    }
+
+    private fun do_action_up(motion_event: MotionEvent?): Boolean {
+        if (motion_event?.action != ACTION_UP) return true
+        if (this._dragging != null) {
+            println("-----END DRAG----- ${this._dragging}")
+            val y_relative = (motion_event.y - this.y) + this.scrollY
+            val action_interface = this.get_action_interface()
+            val (drag_channel, drag_line_offset) = this._dragging!!
+            if (drag_line_offset == -1) {
+                for ((y_range, channel, is_top) in this.channel_drag_map) {
+                    if (y_range.contains(y_relative.toInt())) {
+                        if (channel != drag_channel) {
+                            action_interface.move_channel(drag_channel, channel, is_top)
+                        }
+                        break
+                    }
+                }
+            } else {
+                for ((y_range, line_pair, is_top) in this.line_drag_map) {
+                    if (y_range.contains(y_relative.toInt())) {
+                        if (line_pair != this._dragging) {
+                            action_interface.move_line(
+                                drag_channel,
+                                drag_line_offset,
+                                line_pair.first,
+                                line_pair.second,
+                                is_top
+                            )
+                        }
+                        break
+                    }
+                }
+            }
+            this._dragging = null
+            this._last_x_position = null
+        }
+
+        return true
+    }
+
+    override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
+        when (motion_event?.action) {
+            MotionEvent.ACTION_MOVE -> {
+                if (this._last_x_position == null) {
+                    this._last_x_position = motion_event.x
+                }
+
+                if (this._dragging == null) {
+                    val rel_x = this._last_x_position!! - motion_event.x
+                    this.inner_scroll_view.scrollBy(rel_x.toInt(), 0)
+                }
+
+                this._last_x_position = motion_event.x
+            }
+        }
+        return super.onTouchEvent(motion_event)
+        // return if (this._dragging != null) {
+        //     false
+        // } else {
+        //     super.onTouchEvent(motion_event)
+        // }
+    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -1254,32 +1329,17 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
-    override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
-        if (motion_event  == null) {
-            // pass
-        } else if (motion_event.action == MotionEvent.ACTION_UP) {
-            this._last_x_position = null
-        } else if (motion_event.action == MotionEvent.ACTION_MOVE) {
-            if (this._last_x_position == null) {
-                this._last_x_position = motion_event.x
-            }
+    //override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
+    //    println("FUCLK: $motion_event")
+    //    when (motion_event?.action) {
+    //    }
 
-            if (this._dragging == null) {
-                val rel_x = this._last_x_position!! - motion_event.x
-                this.inner_scroll_view.scrollBy(rel_x.toInt(), 0)
-            } else {
-                println("???")
-                val (line_info, beat, position) = this._get_current_line_info_and_position(motion_event.x, motion_event.y) ?: return false
-                println("$line_info, $beat, $position")
-            }
-
-            this._last_x_position = motion_event.x
-        } else {
-            // pass
-        }
-
-        return super.onTouchEvent(motion_event)
-    }
+    //    return if (this._dragging != null) {
+    //        false
+    //    } else {
+    //        super.onTouchEvent(motion_event)
+    //    }
+    //}
 
     /*
          Kludge. There is *currently* no spot-updating even though there are functions that make it look that way

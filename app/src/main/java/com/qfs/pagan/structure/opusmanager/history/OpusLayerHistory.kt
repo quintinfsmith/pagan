@@ -1941,7 +1941,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+    override fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
+        this._remember {
+            super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
+        }
+    }
     fun set_name_and_notes(name: String?, notes: String?) {
         this._remember {
             if (name != this.project_name) {
@@ -1952,6 +1956,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
             }
         }
     }
+
 
     // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

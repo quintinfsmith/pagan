@@ -17,6 +17,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.concurrent.thread
 
 class ActivityLanding : PaganActivity() {
     private lateinit var _binding: ActivityLandingBinding
@@ -110,7 +111,7 @@ class ActivityLanding : PaganActivity() {
         this.findViewById<View>(R.id.btnMostRecent).let { most_recent_button ->
             most_recent_button.setOnClickListener {
                 this.loading_reticle_show()
-                this.startActivity(
+                this@ActivityLanding.startActivity(
                     Intent(this, ActivityEditor::class.java).apply {
                         this.putExtra("load_backup", true)
                     }
